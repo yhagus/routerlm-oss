@@ -1,0 +1,25 @@
+{
+  "name": "lobakai",
+  "version": "1.0.0",
+  "description": "LobakAI — local AI gateway (Bun + Hono backend, Vue + Vite dashboard)",
+  "private": true,
+  "scripts": {
+    "dev": "bun --filter '*' dev",
+    "dev:backend": "bun run --cwd backend dev",
+    "start:backend": "bun run --cwd backend start",
+    "test:backend": "bun run --cwd backend test",
+    "typecheck:backend": "bun run --cwd backend typecheck",
+    "dev:frontend": "bun run --cwd frontend dev",
+    "build:frontend": "bun run --cwd frontend build",
+    "preview:frontend": "bun run --cwd frontend preview",
+    "typecheck:frontend": "bun run --cwd frontend typecheck",
+    "test:frontend": "bun run --cwd frontend test",
+    "typecheck": "bun run typecheck:backend && bun run typecheck:frontend",
+    "test": "bun run test:backend && bun run test:frontend",
+    "build": "bun run build:frontend"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}

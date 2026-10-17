@@ -1,0 +1,46 @@
+# --- dependencies ---
+node_modules/
+
+# --- build output ---
+dist/
+/build
+/coverage
+*.tsbuildinfo
+frontend/node_modules/
+backend/node_modules/
+
+# --- runtime data + logs ---
+data/
+/logs/
+/zed-mitm-logs/
+*.log
+
+# --- env files (commit .env.example only) ---
+.env*
+!.env.example
+
+# --- editor / OS ---
+.DS_Store
+.idea/
+.vscode/
+*.pem
+
+# --- local tooling dirs (not part of the product) ---
+.claude/
+.codegraph/
+.opencode/
+.docs/
+.repo/
+.script/
+.PR/
+.sandbox/
+/sandbox/*
+
+# --- deployment (generated/host-specific) ---
+deploy*.sh
+docker-compose.override.yml
+
+# --- qoder hook build artifacts (compiled per-host; wrong-arch .so breaks LD_PRELOAD) ---
+backend/src/vendor/src/qoder/inject/linux/*.so
+# NOTE: the committed macos dylib + runtime-info binaries under vendor/src/qoder/
+# remain tracked (frozen v1 snapshot). Only the linux .so rebuilds per-host.

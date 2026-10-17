@@ -1,0 +1,61 @@
+const qoderProvider = {
+  id: "qoder",
+  priority: 30,
+  alias: "qd",
+  uiAlias: "qd",
+  display: {
+    name: "Qoder",
+    icon: "water_drop",
+    color: "#EC4899",
+    website: "https://qoder.com",
+    notice: {
+      signupUrl: "https://qoder.com",
+    },
+  },
+  category: "oauth",
+  authModes: ["oauth"],
+  hasOAuth: true,
+  authHint: "Personal Access Token (pt-...) từ https://qoder.com/account/integrations",
+  transport: {
+    baseUrl: "https://api2.qoder.sh/algo/api/v2/service/pro/sse/agent_chat_generation?FetchKeys=llm_model_result&AgentId=agent_common&Encode=1",
+    headers: {} as Record<string, any>,
+    forceStream: true,
+    timeoutMs: 120000,
+    stallTimeoutMs: 300000,
+    usage: {
+      url: "https://openapi.qoder.sh/api/v2/quota/usage",
+    },
+  },
+  models: [
+    { id: "auto", name: "Auto", contextWindow: 180000, vision: true },
+    { id: "ultimate", name: "Ultimate", contextWindow: 180000, vision: true, reasoning: true },
+    { id: "performance", name: "Performance", contextWindow: 272000, vision: true },
+    { id: "efficient", name: "Efficient", contextWindow: 180000, vision: true },
+    { id: "lite", name: "Lite", contextWindow: 180000 },
+    { id: "qmodel_latest", name: "Qwen3.7-Max", contextWindow: 1000000 },
+    { id: "qmodel_38max", name: "Qwen 3.8 Max", contextWindow: 1000000, vision: true },
+    { id: "qmodel", name: "Qwen3.6-Plus", contextWindow: 180000, vision: true },
+    { id: "dmodel", name: "DeepSeek-V4-Pro", contextWindow: 180000, vision: true, reasoning: true },
+    { id: "dfmodel", name: "DeepSeek-V4-Flash", contextWindow: 180000, vision: true, reasoning: true },
+    { id: "gmodel", name: "GLM 5.3", contextWindow: 1000000, vision: true, reasoning: true },
+    { id: "gm51model", name: "GLM 5.2", contextWindow: 1000000, vision: true, reasoning: true },
+    { id: "kmodel_latest", name: "Kimi K3", contextWindow: 1000000, vision: true, reasoning: true },
+    { id: "kmodel", name: "Kimi-K2.6", contextWindow: 256000, vision: true },
+    { id: "mmodel", name: "MiniMax-M2.7", contextWindow: 180000, vision: true },
+  ],
+  oauth: {
+    openApiBaseUrl: "https://openapi.qoder.sh",
+    centerBaseUrl: "https://center.qoder.sh",
+    chatBaseUrl: "https://api2.qoder.sh",
+    deviceTokenUrl: "https://openapi.qoder.sh/api/v1/deviceToken/poll",
+    refreshUrl: "https://center.qoder.sh/algo/api/v3/user/refresh_token",
+    userInfoUrl: "https://openapi.qoder.sh/api/v1/userinfo",
+    quotaUsageUrl: "https://openapi.qoder.sh/api/v2/quota/usage",
+    loginUrl: "https://qoder.com/device/selectAccounts",
+  },
+  features: {
+    usage: true,
+  },
+};
+
+export default qoderProvider;

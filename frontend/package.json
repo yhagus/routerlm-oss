@@ -1,0 +1,49 @@
+{
+  "name": "@lobakai/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 20130",
+    "build": "vue-tsc --build && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 20130",
+    "typecheck": "vue-tsc --build",
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@lucide/vue": "^1.51.0",
+    "@tanstack/vue-query": "^5.66.8",
+    "@vueuse/core": "^15.0.0",
+    "ai": "^7.0.127",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.511.0",
+    "material-symbols": "0.44.6",
+    "motion-v": "^2.5.2",
+    "pinia": "^3.0.3",
+    "reka-ui": "^2.10.5",
+    "shiki": "^4.5.0",
+    "tailwind-merge": "^3.3.0",
+    "tw-animate-css": "^1.3.0",
+    "vue": "^3.5.17",
+    "vue-router": "^4.5.1",
+    "vue-stick-to-bottom": "^1.0.1",
+    "vue-stream-markdown": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^22.15.21",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^18.0.1",
+    "prettier": "^3.9.6",
+    "shadcn-vue": "^2.2.0",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.9.2",
+    "vite": "^7.0.6",
+    "vitest": "^3.2.4",
+    "vue-tsc": "^2.2.12"
+  }
+}

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 64" role="img" aria-labelledby="lobak-title">
+  <title id="lobak-title">LobakAI</title>
+  <style>
+    .wordmark { stroke: #176453; }
+    @media (prefers-color-scheme: dark) { .wordmark { stroke: #e7efe9; } }
+    .bulb { transform-box: view-box; transform-origin: 32px 51px; animation: wobble 3.4s ease-in-out infinite alternate; }
+    .spark { transform-box: fill-box; transform-origin: center; animation: twinkle 2.6s ease-in-out infinite; }
+    @keyframes wobble { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+    @keyframes twinkle { 0%, 100% { opacity: .55; transform: scale(.7); } 50% { opacity: 1; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .bulb, .spark { animation: none; } }
+  </style>
+  <defs>
+    <linearGradient id="lobak-tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f8468"/>
+      <stop offset="1" stop-color="#124c3f"/>
+    </linearGradient>
+    <linearGradient id="lobak-bulb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b0124f"/>
+      <stop offset=".5" stop-color="#dc2460"/>
+      <stop offset=".82" stop-color="#f48fb1"/>
+      <stop offset="1" stop-color="#fde4ec"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#lobak-tile)"/>
+  <g class="bulb">
+    <path fill="url(#lobak-bulb)" d="M32 13C34.5 16.5 40 19 44.5 22.5C49 26 51 31 51 35.5C51 44.5 42.5 51 32 51C21.5 51 13 44.5 13 35.5C13 31 15 26 19.5 22.5C24 19 29.5 16.5 32 13Z"/>
+    <ellipse cx="23.5" cy="31" rx="2.8" ry="5.5" fill="#ffffff" opacity=".55" transform="rotate(35 23.5 31)"/>
+  </g>
+  <path class="spark" fill="#ffd66b" d="M52 43Q52.6 48.4 58 49Q52.6 49.6 52 55Q51.4 49.6 46 49Q51.4 48.4 52 43Z"/>
+  <g class="wordmark" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M84 16V48H104"/>
+    <ellipse cx="129" cy="32" rx="13" ry="16"/>
+    <path d="M154 16V48M154 16H166A8 8 0 0 1 166 32H154M154 32H168A8 8 0 0 1 168 48H154"/>
+    <path d="M186 48L198 16L210 48M190.5 37H205.5"/>
+    <path d="M222 16V48M240 16L224 33M228.5 28.5L241 48"/>
+  </g>
+</svg>

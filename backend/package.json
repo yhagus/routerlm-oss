@@ -1,0 +1,40 @@
+{
+  "name": "@lobakai/backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/main.ts",
+    "start": "bun run src/main.ts",
+    "test": "bun test --preload ./tests/fetchHarness.ts",
+    "typecheck": "tsc --noEmit",
+    "loadtest": "BUN_CONFIG_MAX_HTTP_REQUESTS=65336 bun run loadtest/harness.ts",
+    "import:legacy": "bun run src/db/importLegacyCli.ts",
+    "migrate:usage-api-key": "bun run src/db/migrateUsageApiKey.ts"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "drizzle-orm": "^0.44.7",
+    "got-scraping": "^4.1.0",
+    "hono": "^4.13.2",
+    "jose": "^6.2.9",
+    "mmdb-lib": "^3.0.3",
+    "node-forge": "^1.3.3",
+    "node-machine-id": "^1.1.12",
+    "open": "^11.0.0",
+    "ora": "^9.1.0",
+    "cloakbrowser": "^0.5.10",
+    "playwright-core": "^1.53.0",
+    "puppeteer-core": "^25.10.0",
+    "sql.js": "^1.14.1",
+    "undici": "^7.19.2",
+    "uuid": "^13.0.0"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.6.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.9.2"
+  }
+}

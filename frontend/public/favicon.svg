@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="lobak-tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f8468"/>
+      <stop offset="1" stop-color="#124c3f"/>
+    </linearGradient>
+    <linearGradient id="lobak-bulb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b0124f"/>
+      <stop offset=".5" stop-color="#dc2460"/>
+      <stop offset=".82" stop-color="#f48fb1"/>
+      <stop offset="1" stop-color="#fde4ec"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#lobak-tile)"/>
+  <g>
+    <path fill="url(#lobak-bulb)" d="M32 13C34.5 16.5 40 19 44.5 22.5C49 26 51 31 51 35.5C51 44.5 42.5 51 32 51C21.5 51 13 44.5 13 35.5C13 31 15 26 19.5 22.5C24 19 29.5 16.5 32 13Z"/>
+    <ellipse cx="23.5" cy="31" rx="2.8" ry="5.5" fill="#ffffff" opacity=".55" transform="rotate(35 23.5 31)"/>
+  </g>
+  <path fill="#ffd66b" d="M52 43Q52.6 48.4 58 49Q52.6 49.6 52 55Q51.4 49.6 46 49Q51.4 48.4 52 43Z"/>
+</svg>

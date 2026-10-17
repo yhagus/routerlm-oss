@@ -1,0 +1,35 @@
+services:
+  lobakai:
+    build: .
+    image: lobakai:latest
+    container_name: lobakai
+    restart: always
+    ports:
+      - "20129:20129"
+      - "20130:20130"
+    volumes:
+      - lobakai-data:/app/data
+    env_file:
+      - .env
+    environment:
+      DATA_DIR: /app/data
+      BACKEND_DATABASE_PATH: /app/data/data.sqlite
+      BACKEND_HOST: "0.0.0.0"
+      BACKEND_PORT: "20129"
+      VITE_BACKEND_ORIGIN: "http://127.0.0.1:20129"
+      VITE_HOST: "0.0.0.0"
+      NODE_ENV: production
+      HEADROOM_URL: http://headroom:8787
+    depends_on:
+      - headroom
+
+  headroom:
+    image: ghcr.io/chopratejas/headroom:latest
+    container_name: headroom
+    restart: always
+    ports:
+      - "8787:8787"
+
+volumes:
+  lobakai-data:
+    name: lobakai-data

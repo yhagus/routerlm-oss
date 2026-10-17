@@ -1,0 +1,40 @@
+{
+  "routes": [
+    {
+      "name": "health",
+      "method": "GET",
+      "path": "/api/health",
+      "compareHeaders": ["content-type", "access-control-allow-origin", "access-control-allow-methods", "access-control-allow-headers"]
+    },
+    { "name": "public-models", "method": "GET", "path": "/v1/models", "normalizePaths": ["created"] },
+    { "name": "public-models-root-alias", "method": "GET", "path": "/v1", "normalizePaths": ["created"] },
+    { "name": "public-models-api-alias", "method": "GET", "path": "/api/v1/models", "normalizePaths": ["created"] },
+    { "name": "public-models-chat", "method": "GET", "path": "/v1/models/chat", "normalizePaths": ["created"] },
+    { "name": "public-models-embedding", "method": "GET", "path": "/v1/models/embedding", "normalizePaths": ["created"] },
+    { "name": "public-models-image", "method": "GET", "path": "/v1/models/image", "normalizePaths": ["created"] },
+    { "name": "public-models-tts", "method": "GET", "path": "/v1/models/tts", "normalizePaths": ["created"] },
+    { "name": "public-models-stt", "method": "GET", "path": "/v1/models/stt", "normalizePaths": ["created"] },
+    { "name": "public-models-image-to-text", "method": "GET", "path": "/v1/models/image-to-text", "normalizePaths": ["created"] },
+    { "name": "public-models-web", "method": "GET", "path": "/v1/models/web", "normalizePaths": ["created"] },
+    { "name": "public-models-unknown-kind", "method": "GET", "path": "/v1/models/notakind" },
+    { "name": "public-models-deep-path", "method": "GET", "path": "/v1/models/a/b/c" },
+    { "name": "public-models-info-missing", "method": "GET", "path": "/v1/models/info?id=nope/notreal" },
+    { "name": "gemini-models-list-disabled", "method": "GET", "path": "/v1beta/models" },
+    { "name": "gemini-generate-invalid-model", "method": "POST", "path": "/v1beta/models/bad..model:generateContent", "headers": { "content-type": "application/json" }, "body": { "contents": [{ "role": "user", "parts": [{ "text": "hi" }] }] } },
+    { "name": "chat-missing-model", "method": "POST", "path": "/v1/chat/completions", "headers": { "content-type": "application/json" }, "body": { "messages": [{ "role": "user", "content": "hi" }] } },
+    { "name": "chat-empty-messages", "method": "POST", "path": "/v1/chat/completions", "headers": { "content-type": "application/json" }, "body": { "model": "openai/gpt-5.2-mini", "messages": [] } },
+    { "name": "chat-unknown-model", "method": "POST", "path": "/v1/chat/completions", "headers": { "content-type": "application/json" }, "body": { "model": "nosuchprov/nosuchmodel", "messages": [{ "role": "user", "content": "hi" }], "stream": false } },
+    { "name": "claude-messages-unknown-model", "method": "POST", "path": "/v1/messages", "headers": { "content-type": "application/json" }, "body": { "model": "nosuchprov/nosuchmodel", "messages": [{ "role": "user", "content": "hi" }], "max_tokens": 10 } },
+    { "name": "embeddings-missing-input", "method": "POST", "path": "/v1/embeddings", "headers": { "content-type": "application/json" }, "body": { "model": "openai/text-embedding-3-small" } },
+    { "name": "images-missing-prompt", "method": "POST", "path": "/v1/images/generations", "headers": { "content-type": "application/json" }, "body": { "model": "openai/gpt-image-1" } },
+    { "name": "search-missing-query", "method": "POST", "path": "/v1/search", "headers": { "content-type": "application/json" }, "body": { "provider": "tavily" } },
+    { "name": "fetch-missing-url", "method": "POST", "path": "/v1/web/fetch", "headers": { "content-type": "application/json" }, "body": {} },
+    { "name": "admin-providers-unauthenticated", "method": "GET", "path": "/api/providers" },
+    { "name": "admin-settings-unauthenticated", "method": "GET", "path": "/api/settings" },
+    { "name": "admin-combos-unauthenticated", "method": "GET", "path": "/api/combos" },
+    { "name": "admin-keys-unauthenticated", "method": "GET", "path": "/api/keys" },
+    { "name": "admin-usage-stats-unauthenticated", "method": "GET", "path": "/api/usage/stats?period=all" },
+    { "name": "connect-discovery", "method": "GET", "path": "/api/connect", "normalizePaths": ["discoveredAt", "cachedAt"] },
+    { "name": "voices-unauthenticated-list", "method": "GET", "path": "/v1/audio/voices" }
+  ]
+}

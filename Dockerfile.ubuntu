@@ -1,0 +1,53 @@
+# syntax=docker/dockerfile:1.7
+# Ubuntu 24.04 LTS app image — Bun build + two-process run (backend + frontend).
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
+
+# Toolchain: curl/unzip for the bun installer.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git \
+      curl \
+      ca-certificates \
+      unzip \
+      gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Bun (per-arch release zip; TARGETARCH injected by BuildKit)
+ARG BUN_VERSION=1.3.14
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+      amd64|x64)  BUN_ZIP=bun-linux-x64.zip ;; \
+      arm64)      BUN_ZIP=bun-linux-aarch64.zip ;; \
+      *) echo "unsupported arch ${TARGETARCH}" && exit 1 ;; \
+    esac \
+    && curl -fsSL -o /tmp/bun.zip \
+       "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${BUN_ZIP}" \
+    && unzip -q /tmp/bun.zip -d /tmp/bun \
+    && install -m 755 /tmp/bun/${BUN_ZIP%.zip}/bun /usr/local/bin/bun \
+    && ln -sf /usr/local/bin/bun /usr/local/bin/bunx \
+    && rm -rf /tmp/bun /tmp/bun.zip \
+    && bun --version
+
+COPY package.json bun.lock ./
+COPY backend/package.json backend/
+COPY frontend/package.json frontend/
+RUN bun install --frozen-lockfile
+
+COPY . ./
+ENV NODE_ENV=production
+RUN bun run build:frontend
+
+# Runtime
+ENV BACKEND_HOST=0.0.0.0
+ENV BACKEND_PORT=20129
+ENV DATA_DIR=/app/data
+ENV BACKEND_DATABASE_PATH=/app/data/data.sqlite
+ENV VITE_HOST=0.0.0.0
+RUN mkdir -p /app/data
+
+EXPOSE 20129 20130
+VOLUME /app/data
+
+CMD ["./start.sh"]
