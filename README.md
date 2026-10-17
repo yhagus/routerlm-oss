@@ -88,8 +88,4 @@ The importer does not modify the source database.
 
 ## Documentation
 
-Read `docs/ARCHITECTURE.md` for the runtime design.
-
 Read `gitbook/content/en/` for user documentation sources.
-
-Read `docs/parity/` for archived migration records.

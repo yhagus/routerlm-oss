@@ -1,6 +1,0 @@
-{
-  "name": "dsh",
-  "private": true,
-  "type": "module",
-  "bin": { "dsh": "./dsh.ts" }
-}

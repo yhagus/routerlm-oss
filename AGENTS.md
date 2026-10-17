@@ -7,7 +7,6 @@ LobakAI runs a Bun backend and a Vue dashboard.
 - `backend/` contains the Bun and Hono API server.
 - `frontend/` contains the Vue and Vite dashboard.
 - `backend/src/services/` holds typed product domains: `chat`, `providers`, `billing`, `media`, `platform`, `common`.
-- `docs/` contains product and migration records.
 - `gitbook/` contains the published documentation site.
 
 ## Runtime
@@ -72,16 +71,6 @@ Use literal and unambiguous words.
 
 - Tautological tests are considered harmful.
 - Tests should be done when all tasks has been successfully. tldr; we completely finish the task, and then do a one session containing many tests, and start fixing if there are any failed tests, then run last tests. That way, we run tests much lesser.
-
-## Agent skills
-
-### Issue tracker
-
-Issues live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
-
-### Domain docs
-
-Single-context: `CONTEXT.md` at the repo root, decisions in `docs/adr/`. See `docs/agents/domain.md`.
 
 <!-- CODEGRAPH_START -->
 ## CodeGraph
