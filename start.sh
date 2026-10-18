@@ -9,7 +9,7 @@ ROOT="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 BACKEND_PID=$!
 
 # Frontend preview on :20130 (proxies /api,/v1,/v1beta,/responses,/codex to backend)
-(cd "$ROOT/frontend" && exec bun run preview) &
+(cd "$ROOT/frontend" && exec bun run preview --host "${VITE_HOST:-127.0.0.1}") &
 FRONTEND_PID=$!
 
 stop() {
