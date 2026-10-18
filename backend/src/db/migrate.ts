@@ -22,8 +22,9 @@ CREATE INDEX IF NOT EXISTS idx_pn_type ON providerNodes(type);
 CREATE TABLE IF NOT EXISTS proxyPools (id TEXT PRIMARY KEY, isActive INTEGER DEFAULT 1, testStatus TEXT, data TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_pp_active ON proxyPools(isActive);
 CREATE INDEX IF NOT EXISTS idx_pp_status ON proxyPools(testStatus);
-CREATE TABLE IF NOT EXISTS apiKeys (id TEXT PRIMARY KEY, key TEXT UNIQUE NOT NULL, name TEXT, machineId TEXT, isActive INTEGER DEFAULT 1, comboAccessMode TEXT DEFAULT 'blacklist', comboAccessList TEXT DEFAULT '[]', modelAccessMode TEXT DEFAULT 'whitelist', modelAccessList TEXT DEFAULT '[]', visibility TEXT DEFAULT 'private', isDefault INTEGER DEFAULT 0, limitMode TEXT DEFAULT 'none', limitValue INTEGER, maxConcurrency INTEGER, status TEXT DEFAULT 'submitted', connectionPins TEXT DEFAULT '{}', usageRequests INTEGER DEFAULT 0, usageTokens INTEGER DEFAULT 0, features TEXT DEFAULT '{}', createdAt TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS apiKeys (id TEXT PRIMARY KEY, key TEXT UNIQUE NOT NULL, name TEXT, machineId TEXT, isActive INTEGER DEFAULT 1, comboAccessMode TEXT DEFAULT 'blacklist', comboAccessList TEXT DEFAULT '[]', modelAccessMode TEXT DEFAULT 'whitelist', modelAccessList TEXT DEFAULT '[]', visibility TEXT DEFAULT 'private', isDefault INTEGER DEFAULT 0, limitMode TEXT DEFAULT 'none', limitValue INTEGER, maxConcurrency INTEGER, connectionPins TEXT DEFAULT '{}', usageRequests INTEGER DEFAULT 0, usageTokens INTEGER DEFAULT 0, features TEXT DEFAULT '{}', parentId TEXT, createdAt TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_ak_key ON apiKeys(key);
+CREATE INDEX IF NOT EXISTS idx_ak_parent ON apiKeys(parentId);
 CREATE TABLE IF NOT EXISTS apiKeyConfig (id INTEGER PRIMARY KEY CHECK (id = 1), prefix TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS combos (id TEXT PRIMARY KEY, name TEXT UNIQUE NOT NULL, kind TEXT, models TEXT NOT NULL, identityEnabled INTEGER DEFAULT 0, accountFilters TEXT DEFAULT '{}', useCustomAccountOrder INTEGER DEFAULT 0, capabilities TEXT DEFAULT '{}', createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_combo_name ON combos(name);
@@ -142,19 +143,22 @@ export function applyMigrations(sqlite: Database): void {
   if (!autoclawColumns.some((column) => column.name === "payload")) {
     sqlite.exec("ALTER TABLE autoclawTasks ADD COLUMN payload TEXT NOT NULL DEFAULT '{}'");
   }
-  // "event" API keys carry a lifecycle status, a concurrency cap, and
-  // per-combo-model connection pins. Add the columns to existing databases.
+  // "event" API keys carry a concurrency cap and per-combo-model connection
+  // pins. Add the columns to existing databases.
   const apiKeyColumns = sqlite.query("PRAGMA table_info(apiKeys)").all() as Array<{ name: string }>;
-  if (!apiKeyColumns.some((column) => column.name === "status")) {
-    sqlite.exec("ALTER TABLE apiKeys ADD COLUMN status TEXT DEFAULT 'submitted'");
-  }
   if (!apiKeyColumns.some((column) => column.name === "maxConcurrency")) {
     sqlite.exec("ALTER TABLE apiKeys ADD COLUMN maxConcurrency INTEGER");
   }
   if (!apiKeyColumns.some((column) => column.name === "connectionPins")) {
     sqlite.exec("ALTER TABLE apiKeys ADD COLUMN connectionPins TEXT DEFAULT '{}'");
   }
+  // Schema 22 turns "event" keys into secretless parents of participant keys.
+  // Pre-22 event keys hold a working secret, so they become private keys.
+  const version = sqlite.query("SELECT value FROM _meta WHERE key = 'schemaVersion'").get() as { value?: string } | null;
+  if (version && Number(version.value) < 22) {
+    sqlite.exec("UPDATE apiKeys SET visibility = 'private' WHERE visibility = 'event'");
+  }
   sqlite.query("INSERT OR IGNORE INTO settings (id, data) VALUES (1, ?)").run(JSON.stringify({ requireLogin: true, requireApiKey: false }));
   sqlite.query("INSERT OR IGNORE INTO apiKeyConfig (id, prefix) VALUES (1, 'sk-')").run();
-  sqlite.query("INSERT OR REPLACE INTO _meta (key, value) VALUES ('schemaVersion', '21')").run();
+  sqlite.query("INSERT OR REPLACE INTO _meta (key, value) VALUES ('schemaVersion', '22')").run();
 }

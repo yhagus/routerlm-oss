@@ -31,6 +31,15 @@ const dashboardChildren: RouteRecordRaw[] = [
     },
   },
   {
+    path: "endpoint/events/:id",
+    name: "event-key-detail",
+    component: view(() => import("@/views/EventKeyDetailView.vue")),
+    meta: {
+      title: "Event",
+      description: "Event link and participant keys",
+    },
+  },
+  {
     path: "providers",
     name: "providers",
     component: view(() => import("@/views/ProvidersView.vue")),
@@ -317,6 +326,12 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
+      component: () => import("@/views/HomeStatsView.vue"),
+      meta: { public: true },
+    },
+    {
+      path: "/event/:id",
+      name: "event-public",
       component: () => import("@/views/HomeStatsView.vue"),
       meta: { public: true },
     },

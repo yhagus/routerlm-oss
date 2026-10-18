@@ -218,7 +218,8 @@ export interface ApiKey {
   limitMode: string;
   limitValue: number | null;
   maxConcurrency?: number | null;
-  status?: "draft" | "submitted" | "revoked" | string;
+  parentId?: string | null;
+  childCount?: number;
   connectionPins?: Record<string, Record<string, string[]>>;
   comboAccessMode?: "blacklist" | "whitelist" | string;
   comboAccessList?: string[];
@@ -233,6 +234,12 @@ export interface ApiKey {
     lastUsed?: string | null;
   };
   createdAt?: string;
+}
+
+export interface PublicEvent {
+  id: string;
+  name: string | null;
+  participants: number;
 }
 
 export interface ApiKeyPagination {

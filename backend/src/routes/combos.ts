@@ -21,7 +21,8 @@ export function comboRoutes(runtime: Runtime) {
       const allowed = new Set(keyIds);
       const comboName = String(combo.name);
       let updated = 0;
-      for (const key of runtime.repos.keys.list()) {
+      // Participant keys inherit combo access from their event parent.
+      for (const key of runtime.repos.keys.list().filter((item) => !item.parentId)) {
         const mode = key.comboAccessMode === "whitelist" ? "whitelist" : "blacklist";
         const list = Array.isArray(key.comboAccessList) ? key.comboAccessList : [];
         const listed = list.includes(comboName);

@@ -146,11 +146,12 @@ export interface ApiKeyRecord {
   limitMode: string;
   limitValue: number | null;
   maxConcurrency: number | null;
-  status: string;
   connectionPins: Record<string, Record<string, string[]>>;
   usageRequests: number;
   usageTokens: number;
   features: Record<string, unknown>;
+  // Set on participant keys created through an event's public page.
+  parentId: string | null;
   createdAt: string;
 }
 
@@ -219,6 +220,9 @@ export interface Repositories {
       list(): ApiKeyRecord[];
       getSecret(id: string): string | null;
       getByKey(key: string): ApiKeyRecord | null;
+      listChildren(parentId: string): ApiKeyRecord[];
+      countChildren(): Map<string, number>;
+      hasChildNamed(parentId: string, name: string): boolean;
       getDefaultPublicKey(): { record: ApiKeyRecord; key: string } | null;
       create(input: Record<string, unknown>): { record: ApiKeyRecord; key: string };
       update(id: string, patch: Record<string, unknown>): ApiKeyRecord | null;
@@ -640,11 +644,11 @@ function mapKey(row: Record<string, unknown>): ApiKeyRecord {
     limitMode: String(row.limitMode ?? "none"),
     limitValue: row.limitValue == null ? null : Number(row.limitValue),
     maxConcurrency: row.maxConcurrency == null ? null : Number(row.maxConcurrency),
-    status: String(row.status ?? "submitted"),
     connectionPins: json(row.connectionPins, {}),
     usageRequests: Number(row.usageRequests ?? 0),
     usageTokens: Number(row.usageTokens ?? 0),
     features: json(row.features, {}),
+    parentId: (row.parentId as string | null) ?? null,
     createdAt: String(row.createdAt),
   };
 }
@@ -1620,22 +1624,56 @@ export function createRepositories(_db: unknown, rawSqlite: Database): Repositor
         return row?.key || null;
       },
       getByKey(key) {
-        if (keysBySecret.has(key)) {
-          const cached = keysBySecret.get(key);
-          if (!cached) return null;
-          if (!cached.isActive) return null;
-          if (cached.visibility === "event" && cached.status !== "submitted") return null;
-          return { ...cached };
+        let record: ApiKeyRecord | null | undefined = keysBySecret.get(key);
+        if (record === undefined) {
+          const row = sqlite.query("SELECT * FROM apiKeys WHERE key = ? AND isActive = 1").get(key) as Record<string, unknown> | null;
+          if (!row) {
+            keysBySecret.set(key, null);
+            return null;
+          }
+          record = withPendingKeyUsage(mapKey(row));
+          cacheKey(record);
         }
-        const row = sqlite.query("SELECT * FROM apiKeys WHERE key = ? AND isActive = 1").get(key) as Record<string, unknown> | null;
-        if (!row) {
-          keysBySecret.set(key, null);
-          return null;
-        }
-        const record = withPendingKeyUsage(mapKey(row));
-        cacheKey(record);
-        if (record.visibility === "event" && record.status !== "submitted") return null;
-        return { ...record };
+        if (!record || !record.isActive) return null;
+        if (record.visibility !== "event") return { ...record };
+        // An event parent has no usable secret. A participant key takes its
+        // access policy from the parent at read time, so parent edits apply
+        // without touching the cached participant record.
+        if (!record.parentId) return null;
+        const parent = keysById.get(record.parentId) ?? (() => {
+          const row = sqlite.query("SELECT * FROM apiKeys WHERE id = ?").get(record.parentId) as Record<string, unknown> | null;
+          if (!row) return null;
+          const mapped = withPendingKeyUsage(mapKey(row));
+          cacheKey(mapped);
+          return mapped;
+        })();
+        if (!parent || !parent.isActive) return null;
+        return {
+          ...record,
+          comboAccessMode: parent.comboAccessMode,
+          comboAccessList: [...parent.comboAccessList],
+          modelAccessMode: parent.modelAccessMode,
+          modelAccessList: [...parent.modelAccessList],
+          limitMode: parent.limitMode,
+          limitValue: parent.limitValue,
+          maxConcurrency: parent.maxConcurrency,
+          connectionPins: parent.connectionPins,
+          features: parent.features,
+        };
+      },
+      listChildren(parentId) {
+        return (sqlite.query("SELECT * FROM apiKeys WHERE parentId = ? ORDER BY createdAt DESC").all(parentId) as Record<string, unknown>[]).map((row) => {
+          const record = mapKey(row);
+          const cached = keysById.get(record.id);
+          return cached ? { ...cached } : withPendingKeyUsage(record);
+        });
+      },
+      countChildren() {
+        const rows = sqlite.query("SELECT parentId, COUNT(*) AS total FROM apiKeys WHERE parentId IS NOT NULL GROUP BY parentId").all() as Array<{ parentId: string; total: number }>;
+        return new Map(rows.map((row) => [row.parentId, Number(row.total)]));
+      },
+      hasChildNamed(parentId, name) {
+        return Boolean(sqlite.query("SELECT 1 FROM apiKeys WHERE parentId = ? AND LOWER(name) = LOWER(?) LIMIT 1").get(parentId, name));
       },
       // The connect endpoint hands the raw default public key to local clients.
       getDefaultPublicKey() {
@@ -1646,10 +1684,10 @@ export function createRepositories(_db: unknown, rawSqlite: Database): Repositor
         const key = String(input.key || `sk-${crypto.randomUUID().replaceAll("-", "")}`);
         const timestamp = now();
         const maxConcurrency = input.maxConcurrency == null ? null : Math.max(0, Math.floor(Number(input.maxConcurrency)) || 0) || null;
-        const record = { id: String(input.id || id()), key, keyPrefix: input.keyPrefix == null ? key.slice(0, 12) : String(input.keyPrefix), name: input.name == null ? null : String(input.name), isActive: input.isActive === false || input.isActive === 0 ? 0 : 1, visibility: String(input.visibility || "private"), isDefault: input.isDefault ? 1 : 0, comboAccessMode: String(input.comboAccessMode || "blacklist"), comboAccessList: JSON.stringify(input.comboAccessList || []), modelAccessMode: String(input.modelAccessMode || "whitelist"), modelAccessList: JSON.stringify(input.modelAccessList || []), limitMode: String(input.limitMode || "none"), limitValue: input.limitValue == null ? null : Number(input.limitValue), maxConcurrency, status: String(input.status || "submitted"), connectionPins: JSON.stringify(input.connectionPins || {}), features: JSON.stringify(input.features || {}), createdAt: timestamp };
+        const record = { id: String(input.id || id()), key, keyPrefix: input.keyPrefix == null ? key.slice(0, 12) : String(input.keyPrefix), name: input.name == null ? null : String(input.name), isActive: input.isActive === false || input.isActive === 0 ? 0 : 1, visibility: String(input.visibility || "private"), isDefault: input.isDefault ? 1 : 0, comboAccessMode: String(input.comboAccessMode || "blacklist"), comboAccessList: JSON.stringify(input.comboAccessList || []), modelAccessMode: String(input.modelAccessMode || "whitelist"), modelAccessList: JSON.stringify(input.modelAccessList || []), limitMode: String(input.limitMode || "none"), limitValue: input.limitValue == null ? null : Number(input.limitValue), maxConcurrency, connectionPins: JSON.stringify(input.connectionPins || {}), features: JSON.stringify(input.features || {}), parentId: input.parentId == null ? null : String(input.parentId), createdAt: timestamp };
         if (record.isDefault) sqlite.query("UPDATE apiKeys SET isDefault = 0 WHERE visibility = 'public'").run();
-        sqlite.query(`INSERT INTO apiKeys (id, key, name, machineId, isActive, comboAccessMode, comboAccessList, modelAccessMode, modelAccessList, visibility, isDefault, limitMode, limitValue, maxConcurrency, status, connectionPins, usageRequests, usageTokens, features, createdAt)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(record.id, record.key, record.name, input.machineId || null, record.isActive, record.comboAccessMode, record.comboAccessList, record.modelAccessMode, record.modelAccessList, record.visibility, record.isDefault, record.limitMode, record.limitValue, record.maxConcurrency, record.status, record.connectionPins, 0, 0, record.features, record.createdAt);
+        sqlite.query(`INSERT INTO apiKeys (id, key, name, machineId, isActive, comboAccessMode, comboAccessList, modelAccessMode, modelAccessList, visibility, isDefault, limitMode, limitValue, maxConcurrency, connectionPins, usageRequests, usageTokens, features, parentId, createdAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(record.id, record.key, record.name, input.machineId || null, record.isActive, record.comboAccessMode, record.comboAccessList, record.modelAccessMode, record.modelAccessList, record.visibility, record.isDefault, record.limitMode, record.limitValue, record.maxConcurrency, record.connectionPins, 0, 0, record.features, record.parentId, record.createdAt);
         const created = mapKey(sqlite.query("SELECT * FROM apiKeys WHERE id = ?").get(record.id) as Record<string, unknown>);
         cacheKey(created);
         return { record: created, key };
@@ -1683,11 +1721,6 @@ export function createRepositories(_db: unknown, rawSqlite: Database): Repositor
         } else {
           next.connectionPins = currentKey.connectionPins;
         }
-        if (patch.status !== undefined && ["draft", "submitted", "revoked"].includes(String(patch.status))) {
-          next.status = String(patch.status);
-        } else {
-          next.status = currentKey.status;
-        }
         next.isDefault = currentKey.visibility === "public" && patch.isDefault === true
           ? true
           : patch.isDefault === false
@@ -1704,8 +1737,8 @@ export function createRepositories(_db: unknown, rawSqlite: Database): Repositor
           next.usageTokens = currentKey.usageTokens;
         }
         if (next.isDefault) sqlite.query("UPDATE apiKeys SET isDefault = 0 WHERE isDefault = 1").run();
-        sqlite.query(`UPDATE apiKeys SET name = ?, isActive = ?, visibility = ?, isDefault = ?, comboAccessMode = ?, comboAccessList = ?, modelAccessMode = ?, modelAccessList = ?, limitMode = ?, limitValue = ?, maxConcurrency = ?, status = ?, connectionPins = ?, usageRequests = ?, usageTokens = ?, features = ? WHERE id = ?`).run(
-          next.name ?? null, next.isActive === false ? 0 : 1, next.visibility, next.isDefault ? 1 : 0, next.comboAccessMode, JSON.stringify(next.comboAccessList), next.modelAccessMode, JSON.stringify(next.modelAccessList), next.limitMode, next.limitValue, next.maxConcurrency, next.status, JSON.stringify(next.connectionPins || {}), next.usageRequests, next.usageTokens, JSON.stringify(next.features || {}), keyId,
+        sqlite.query(`UPDATE apiKeys SET name = ?, isActive = ?, visibility = ?, isDefault = ?, comboAccessMode = ?, comboAccessList = ?, modelAccessMode = ?, modelAccessList = ?, limitMode = ?, limitValue = ?, maxConcurrency = ?, connectionPins = ?, usageRequests = ?, usageTokens = ?, features = ? WHERE id = ?`).run(
+          next.name ?? null, next.isActive === false ? 0 : 1, next.visibility, next.isDefault ? 1 : 0, next.comboAccessMode, JSON.stringify(next.comboAccessList), next.modelAccessMode, JSON.stringify(next.modelAccessList), next.limitMode, next.limitValue, next.maxConcurrency, JSON.stringify(next.connectionPins || {}), next.usageRequests, next.usageTokens, JSON.stringify(next.features || {}), keyId,
         );
         const updated = mapKey(sqlite.query("SELECT * FROM apiKeys WHERE id = ?").get(keyId) as Record<string, unknown>);
         dropKey(currentKey);
@@ -1713,11 +1746,17 @@ export function createRepositories(_db: unknown, rawSqlite: Database): Repositor
         return updated;
       },
       remove(keyId) {
-        const current = sqlite.query("SELECT id, key FROM apiKeys WHERE id = ?").get(keyId) as { id?: string; key?: string } | null;
-        const removed = sqlite.query("DELETE FROM apiKeys WHERE id = ?").run(keyId).changes > 0;
+        // Removing an event parent also removes its participant keys.
+        const targets = sqlite.query("SELECT id, key FROM apiKeys WHERE id = ? OR parentId = ?").all(keyId, keyId) as Array<{ id: string; key: string }>;
+        const removed = sqlite.transaction(() => {
+          sqlite.query("DELETE FROM apiKeys WHERE parentId = ?").run(keyId);
+          return sqlite.query("DELETE FROM apiKeys WHERE id = ?").run(keyId).changes > 0;
+        })();
         if (removed) {
-          keyUsageDeltas.delete(keyId);
-          dropKey(current);
+          for (const target of targets) {
+            keyUsageDeltas.delete(target.id);
+            dropKey(target);
+          }
         }
         return removed;
       },

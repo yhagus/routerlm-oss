@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import type { Runtime } from "../runtime";
 import { publicModelName, type ApiKeyRecord } from "../db/repositories";
+import { normalizeApiKeyPrefix } from "../services/platform/apiKeys";
+
+const MAX_PARTICIPANT_NAME = 64;
 
 // Proxies forward a comma-separated chain ("client, proxy, ..."); mask every hop.
 export function maskIp(value: string): string {
@@ -142,8 +145,43 @@ function totalProviderQuota(runtime: Runtime, provider: string): { used: number;
   return { used, total, remaining: Math.max(0, total - used) };
 }
 
+// An active event parent, or null. Participant keys and other types do not count.
+function activeEvent(runtime: Runtime, id: string): ApiKeyRecord | null {
+  const record = runtime.repos.keys.list().find((key) => key.id === id);
+  return record && record.visibility === "event" && !record.parentId && record.isActive ? record : null;
+}
+
 export function publicStatsRoutes(runtime: Runtime) {
-  return new Hono().get("/stats", (c) => {
+  return new Hono()
+  .get("/events/:id", (c) => {
+    const event = activeEvent(runtime, c.req.param("id"));
+    if (!event) return c.json({ error: "Event not found or inactive" }, 404);
+    return c.json({ id: event.id, name: event.name, participants: runtime.repos.keys.countChildren().get(event.id) || 0 });
+  })
+  .post("/events/:id/keys", async (c) => {
+    const event = activeEvent(runtime, c.req.param("id"));
+    if (!event) return c.json({ error: "Event not found or inactive" }, 404);
+    const body = await c.req.json<{ name?: unknown }>().catch(() => ({} as { name?: unknown }));
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    if (!name) return c.json({ error: "Name is required" }, 400);
+    if (name.length > MAX_PARTICIPANT_NAME) return c.json({ error: `Name must be at most ${MAX_PARTICIPANT_NAME} characters` }, 400);
+    if (runtime.repos.keys.hasChildNamed(event.id, name)) return c.json({ error: "This name is already taken in this event" }, 409);
+    const prefix = normalizeApiKeyPrefix(runtime.repos.settings.get().apiKeyPrefix);
+    // Anonymous visitors receive this key, so use a full random secret instead
+    // of the machine-id format that exposes the machine id.
+    const key = `${prefix}${crypto.randomUUID().replaceAll("-", "")}`;
+    runtime.repos.keys.create({
+      key,
+      keyPrefix: prefix,
+      name,
+      visibility: "event",
+      parentId: event.id,
+      isActive: 1,
+      keyHash: await runtime.auth.hashApiKey(key),
+    });
+    return c.json({ key, name }, 201);
+  })
+  .get("/stats", (c) => {
     const value = (c.req.query("apikey") || c.req.query("key") || "").trim();
     if (!value) return c.json({ error: "Missing apikey query parameter" }, 400);
     const record = runtime.repos.keys.getByKey(value);

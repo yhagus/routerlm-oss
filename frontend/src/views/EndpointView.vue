@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useRouter } from "vue-router";
 import { Copy } from "lucide-vue-next";
 import { api } from "@/lib/api";
 import { number } from "@/lib/format";
@@ -48,6 +49,7 @@ type ConfirmState = {
 
 const queryClient = useQueryClient();
 const notices = useNotificationStore();
+const router = useRouter();
 const settings = useQuery({
   queryKey: ["settings"],
   queryFn: api.settings.get,
@@ -387,8 +389,13 @@ async function handleCreateKey() {
         requestsPerSecond: optionalInt(newKeyRequestsPerSecond.value),
       },
     });
-    createdKey.value = result.key;
     resetCreate();
+    // Event keys have no secret; their detail page holds the public link.
+    if (visibility === "event") {
+      await router.push({ name: "event-key-detail", params: { id: result.id } });
+      return;
+    }
+    createdKey.value = result.key;
     keysSearchInput.value = "";
     keysSearch.value = "";
     keysVisibilityTab.value = visibility;
@@ -445,7 +452,10 @@ function confirmPause(key: ApiKey, value: boolean) {
 function confirmDelete(key: ApiKey) {
   confirmState.value = {
     title: "Delete API Key",
-    message: "Delete this API key?",
+    message:
+      key.visibility === "event"
+        ? `Delete event "${key.name}"?\n\nAll participant keys of this event are deleted too.`
+        : "Delete this API key?",
     onConfirm: async () => {
       const deleted = await api.keys.remove(key.id);
       if (deleted) {
@@ -624,24 +634,8 @@ function confirmResetUsage(key: ApiKey) {
   };
 }
 
-function confirmSubmit(key: ApiKey) {
-  confirmState.value = {
-    title: "Submit API Key",
-    message: `Submit event key "${key.name}"?\n\nThe key becomes active and its configuration is locked. It can only be revoked afterwards. This cannot be undone.`,
-    onConfirm: async () => {
-      await updateKey(key.id, { action: "submit" });
-    },
-  };
-}
-
-function confirmRevoke(key: ApiKey) {
-  confirmState.value = {
-    title: "Revoke API Key",
-    message: `Revoke event key "${key.name}"?\n\nThe key stops working immediately and cannot be deleted or re-enabled. This cannot be undone.`,
-    onConfirm: async () => {
-      await updateKey(key.id, { action: "revoke" });
-    },
-  };
+function openEvent(key: ApiKey) {
+  void router.push({ name: "event-key-detail", params: { id: key.id } });
 }
 
 // Connections per combo are loaded lazily into pinConnections, keyed by
@@ -979,8 +973,7 @@ async function enableTunnel(kind: "cloudflare" | "tailscale") {
         @open-stats="openUsageStats"
         @show-tracker="openTracker"
         @delete="confirmDelete"
-        @submit="confirmSubmit"
-        @revoke="confirmRevoke"
+        @open-event="openEvent"
         @edit-pins="openConnectionPins"
       />
     </Card>
@@ -996,7 +989,7 @@ async function enableTunnel(kind: "cloudflare" | "tailscale") {
             required
           />
         </div>
-        <div class="flex flex-col gap-1.5">
+        <div v-if="newKeyVisibility !== 'event'" class="flex flex-col gap-1.5">
           <label for="key-prefix" class="text-sm font-medium"
             >Key Prefix (optional)</label
           ><Input
@@ -1009,7 +1002,7 @@ async function enableTunnel(kind: "cloudflare" | "tailscale") {
             trailing hyphen is added automatically.
           </p>
         </div>
-        <div class="flex flex-col gap-1.5">
+        <div v-if="newKeyVisibility !== 'event'" class="flex flex-col gap-1.5">
           <label for="key-custom" class="text-sm font-medium"
             >Custom API Key (optional)</label
           ><Input
@@ -1075,7 +1068,7 @@ async function enableTunnel(kind: "cloudflare" | "tailscale") {
               newKeyVisibility === "public"
                 ? "Public keys work for API calls and can be set as the default key."
                 : newKeyVisibility === "event"
-                  ? "Event keys start as drafts. Submit locks the configuration; revoke disables it permanently. The type cannot be changed later."
+                  ? "Event keys have no secret. Visitors of the event link create their own keys, which inherit this configuration."
                   : "Private keys work for API calls."
             }}
           </p>

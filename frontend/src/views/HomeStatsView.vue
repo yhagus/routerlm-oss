@@ -42,6 +42,61 @@ function submitKey() {
   if (!value) return;
   void router.push({ query: { apikey: value } });
 }
+
+// On /event/:id a visitor enters a name and receives a participant key.
+const eventId = computed(() => String(route.params.id || ""));
+const event = useQuery({
+  queryKey: computed(() => ["public-event", eventId.value]),
+  queryFn: () => api.publicEvents.get(eventId.value),
+  enabled: computed(() => Boolean(eventId.value)),
+  retry: false,
+});
+const participantName = ref("");
+const joinError = ref("");
+const joining = ref(false);
+const eventStorageKey = (id: string) => `event:${id}`;
+function readEventKey(id: string): string {
+  try {
+    return localStorage.getItem(eventStorageKey(id)) || "";
+  } catch {
+    return "";
+  }
+}
+// A returning visitor goes straight to the key this browser created.
+watch(
+  eventId,
+  (id) => {
+    if (!id || apikey.value) return;
+    const saved = readEventKey(id);
+    if (saved) void router.replace({ query: { apikey: saved } });
+  },
+  { immediate: true },
+);
+async function joinEvent() {
+  const name = participantName.value.trim();
+  if (!name || joining.value) return;
+  joining.value = true;
+  joinError.value = "";
+  try {
+    const result = await api.publicEvents.join(eventId.value, name);
+    try {
+      localStorage.setItem(eventStorageKey(eventId.value), result.key);
+    } catch {
+      // Storage is a convenience only.
+    }
+    notices.push("success", "API key created. Copy and save it now.");
+    await router.replace({ query: { apikey: result.key } });
+  } catch (error) {
+    joinError.value =
+      error instanceof ApiError && error.status === 409
+        ? "This name is already taken. Use a different name."
+        : error instanceof Error
+          ? error.message
+          : "Could not create the API key.";
+  } finally {
+    joining.value = false;
+  }
+}
 const stats = useQuery({
   queryKey: computed(() => ["public-stats", apikey.value]),
   queryFn: () => api.publicStats.get(apikey.value),
@@ -267,7 +322,53 @@ async function copy(value: string) {
         </div>
       </div>
 
-      <div v-if="!apikey" class="py-10">
+      <div v-if="!apikey && eventId" class="py-10">
+        <Card class="p-10 text-center">
+          <div
+            class="mx-auto grid size-11 place-items-center rounded-xl bg-accent text-accent-foreground"
+          >
+            <KeyRound class="size-4" />
+          </div>
+          <template v-if="event.isPending.value">
+            <Skeleton class="mx-auto mt-4 h-5 w-48" />
+            <Skeleton class="mx-auto mt-3 h-4 w-72" />
+          </template>
+          <template v-else-if="event.isError.value">
+            <h2 class="mt-4 font-semibold">Event not found or inactive</h2>
+            <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Check the link with the event organizer.
+            </p>
+          </template>
+          <template v-else>
+            <h2 class="mt-4 font-semibold">{{ event.data.value?.name }}</h2>
+            <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Enter your name to get your own API key for this event.
+            </p>
+            <form
+              class="mx-auto mt-5 flex max-w-md flex-col gap-2 sm:flex-row"
+              @submit.prevent="joinEvent"
+            >
+              <Input
+                v-model="participantName"
+                placeholder="Your name"
+                aria-label="Your name"
+                autocomplete="name"
+                maxlength="64"
+              />
+              <Button
+                type="submit"
+                :disabled="!participantName.trim() || joining"
+                >{{ joining ? "Creating..." : "Get API key" }}</Button
+              >
+            </form>
+            <p v-if="joinError" class="mt-2 text-xs text-red-500">
+              {{ joinError }}
+            </p>
+          </template>
+        </Card>
+      </div>
+
+      <div v-else-if="!apikey" class="py-10">
         <Card class="p-10 text-center">
           <div
             class="mx-auto grid size-11 place-items-center rounded-xl bg-accent text-accent-foreground"

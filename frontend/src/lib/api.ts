@@ -16,6 +16,7 @@ import type {
   ProviderNode,
   ProviderQuotaSummary,
   ProxyPool,
+  PublicEvent,
   PublicKeyStats,
   UsageHistoryPage,
   UsageRecord,
@@ -783,6 +784,20 @@ export const api = {
       request<{ key: ApiKey }>(`/api/keys/${encodeURIComponent(id)}`, {
         cache: "no-store",
       }),
+    children: (
+      id: string,
+      params: { page?: number; pageSize?: number; search?: string } = {},
+    ) => {
+      const query = new URLSearchParams(
+        Object.entries(params)
+          .filter(([, value]) => value !== undefined)
+          .map(([key, value]) => [key, String(value)]),
+      );
+      return request<ApiKeysResponse>(
+        `/api/keys/${encodeURIComponent(id)}/children?${query}`,
+        { cache: "no-store" },
+      );
+    },
     reveal: (id: string) =>
       request<{ key: string }>(`/api/keys/${encodeURIComponent(id)}/secret`, {
         cache: "no-store",
@@ -1240,6 +1255,17 @@ export const api = {
       request<PublicKeyStats>(
         `/api/public/stats?apikey=${encodeURIComponent(apikey)}`,
         { cache: "no-store" },
+      ),
+  },
+  publicEvents: {
+    get: (id: string) =>
+      request<PublicEvent>(`/api/public/events/${encodeURIComponent(id)}`, {
+        cache: "no-store",
+      }),
+    join: (id: string, name: string) =>
+      request<{ key: string; name: string }>(
+        `/api/public/events/${encodeURIComponent(id)}/keys`,
+        { method: "POST", body: json({ name }) },
       ),
   },
   pricing: {

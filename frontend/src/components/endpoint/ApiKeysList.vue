@@ -49,8 +49,7 @@ const emit = defineEmits<{
   openStats: [key: ApiKey];
   showTracker: [key: ApiKey];
   delete: [key: ApiKey];
-  submit: [key: ApiKey];
-  revoke: [key: ApiKey];
+  openEvent: [key: ApiKey];
   editPins: [key: ApiKey];
 }>();
 
@@ -215,8 +214,7 @@ function selectAction(
     | "openStats"
     | "showTracker"
     | "editPins"
-    | "submit"
-    | "revoke"
+    | "openEvent"
     | "delete",
 ) {
   const key = activeKey.value;
@@ -230,8 +228,7 @@ function selectAction(
     else if (action === "openStats") emit("openStats", key);
     else if (action === "showTracker") emit("showTracker", key);
     else if (action === "editPins") emit("editPins", key);
-    else if (action === "submit") emit("submit", key);
-    else if (action === "revoke") emit("revoke", key);
+    else if (action === "openEvent") emit("openEvent", key);
     else emit("delete", key);
   });
 }
@@ -240,33 +237,8 @@ function isEvent(key: ApiKey | null): boolean {
   return key?.visibility === "event";
 }
 
-function isDraft(key: ApiKey | null): boolean {
-  return isEvent(key) && key?.status === "draft";
-}
-
-function isSubmitted(key: ApiKey | null): boolean {
-  return isEvent(key) && key?.status === "submitted";
-}
-
-function isRevoked(key: ApiKey | null): boolean {
-  return isEvent(key) && key?.status === "revoked";
-}
-
-// Draft event keys are fully editable; submitted keys are locked (revoke
-// only); revoked keys are frozen. Non-event keys always allow edits.
-function canEdit(key: ApiKey | null): boolean {
-  if (!isEvent(key)) return true;
-  return isDraft(key);
-}
-
-function canDelete(key: ApiKey | null): boolean {
-  if (!isEvent(key)) return true;
-  return isDraft(key);
-}
-
 function canOpenStats(key: ApiKey | null): boolean {
   if (!key || key.isActive === false) return false;
-  if (isEvent(key)) return isSubmitted(key);
   return key.visibility === "public";
 }
 
@@ -389,28 +361,6 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
                       >
                       <Badge v-else variant="secondary">Private</Badge>
                       <Badge
-                        v-if="
-                          key.visibility === 'event' && key.status === 'draft'
-                        "
-                        variant="secondary"
-                        >Draft</Badge
-                      >
-                      <Badge
-                        v-else-if="
-                          key.visibility === 'event' &&
-                          key.status === 'submitted'
-                        "
-                        variant="success"
-                        >Submitted</Badge
-                      >
-                      <Badge
-                        v-else-if="
-                          key.visibility === 'event' && key.status === 'revoked'
-                        "
-                        variant="destructive"
-                        >Revoked</Badge
-                      >
-                      <Badge
                         v-if="key.visibility === 'public' && key.isDefault"
                         variant="warning"
                         >Default</Badge
@@ -448,11 +398,26 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
                       <template v-if="Number(key.maxConcurrency) > 0">
                         · Max {{ key.maxConcurrency }} concurrent
                       </template>
+                      <template v-if="isEvent(key)">
+                        · {{ number(key.childCount || 0) }} participants
+                      </template>
                     </p>
                   </td>
                   <td class="px-3.75 py-[7.5px] align-middle">
                     <div class="flex items-center gap-1">
                       <Button
+                        v-if="isEvent(key)"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Open event detail"
+                        title="Open event detail"
+                        @click="emit('openEvent', key)"
+                        ><span class="material-symbols-outlined text-[16px]"
+                          >arrow_forward</span
+                        ></Button
+                      >
+                      <Button
+                        v-else
                         variant="ghost"
                         size="icon"
                         aria-label="Copy API key"
@@ -497,7 +462,6 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
                   <td class="px-3.75 py-[7.5px] align-middle">
                     <div class="flex items-center justify-end gap-1">
                       <Toggle
-                        v-if="key.visibility !== 'event'"
                         size="sm"
                         :checked="key.isActive !== false"
                         :title="
@@ -640,7 +604,6 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
         @click.stop
       >
         <button
-          v-if="canEdit(activeKey)"
           type="button"
           role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
@@ -652,7 +615,6 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
           >Combo access
         </button>
         <button
-          v-if="canEdit(activeKey)"
           type="button"
           role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
@@ -664,7 +626,7 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
           >Model access
         </button>
         <button
-          v-if="isDraft(activeKey)"
+          v-if="isEvent(activeKey)"
           type="button"
           role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
@@ -688,7 +650,6 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
           >Set as default
         </button>
         <button
-          v-if="canEdit(activeKey)"
           type="button"
           role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
@@ -700,7 +661,7 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
           >Usage limit
         </button>
         <button
-          v-if="showResetUsage() && canEdit(activeKey)"
+          v-if="showResetUsage()"
           type="button"
           role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
@@ -712,24 +673,16 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
           >Reset usage
         </button>
         <button
-          v-if="isDraft(activeKey)"
+          v-if="isEvent(activeKey)"
           type="button"
           role="menuitem"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-emerald-600 hover:bg-accent dark:text-emerald-400"
-          @click="selectAction('submit')"
+          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
+          @click="selectAction('openEvent')"
         >
-          <span class="material-symbols-outlined text-[16px]">send</span>Submit
-          key
-        </button>
-        <button
-          v-if="isSubmitted(activeKey)"
-          type="button"
-          role="menuitem"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
-          @click="selectAction('revoke')"
-        >
-          <span class="material-symbols-outlined text-[16px]">block</span>Revoke
-          key
+          <span
+            class="material-symbols-outlined text-[16px] text-muted-foreground"
+            >groups</span
+          >Event detail
         </button>
         <button
           v-if="canOpenStats(activeKey)"
@@ -744,7 +697,6 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
           >Open usage stats
         </button>
         <button
-          v-if="canEdit(activeKey)"
           type="button"
           role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
@@ -755,9 +707,8 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
             >monitoring</span
           >Show Tracker
         </button>
-        <div v-if="canDelete(activeKey)" class="my-1 border-t" />
+        <div class="my-1 border-t" />
         <button
-          v-if="canDelete(activeKey)"
           type="button"
           role="menuitem"
           class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"

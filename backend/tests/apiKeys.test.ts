@@ -101,95 +101,92 @@ describe("v1 endpoint API-key contracts", () => {
     }
   });
 
-  test("runs the event key lifecycle draft → submitted → revoked", async () => {
+  test("participants join an event through its public link and inherit its policy", async () => {
     const instance = await runtime();
     try {
       const app = createApp(instance);
-      const created = await app.request("/api/keys", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: "Event key", visibility: "event", maxConcurrency: 5 }),
-      });
+      const json = (body: unknown) => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const created = await app.request("/api/keys", json({ name: "Hackathon", visibility: "event", maxConcurrency: 5 }));
       expect(created.status).toBe(201);
-      const body = await created.json() as { id: string; key: string; status: string; maxConcurrency: number };
-      expect(body.status).toBe("draft");
-      expect(body.maxConcurrency).toBe(5);
+      const event = await created.json() as { id: string; key: string | null };
+      expect(event.key).toBeNull();
+      // The parent's placeholder secret never authenticates.
+      const placeholder = instance.repos.keys.getSecret(event.id)!;
+      expect(instance.repos.keys.getByKey(placeholder)).toBeNull();
+      expect((await app.request(`/api/keys/${event.id}/secret`)).status).toBe(400);
 
-      // A draft is not active: the key lookup used by the gateway rejects it.
-      expect(instance.repos.keys.getByKey(body.key)).toBeNull();
+      const info = await app.request(`/api/public/events/${event.id}`);
+      expect(await info.json()).toEqual({ id: event.id, name: "Hackathon", participants: 0 });
 
-      // Revoking a draft is invalid.
-      const earlyRevoke = await app.request(`/api/keys/${body.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "revoke" }),
-      });
-      expect(earlyRevoke.status).toBe(400);
+      const joined = await app.request(`/api/public/events/${event.id}/keys`, json({ name: "Alice" }));
+      expect(joined.status).toBe(201);
+      const alice = await joined.json() as { key: string };
+      // Names are unique per event regardless of case.
+      expect((await app.request(`/api/public/events/${event.id}/keys`, json({ name: " alice " }))).status).toBe(409);
+      expect((await app.request(`/api/public/events/${event.id}/keys`, json({ name: "  " }))).status).toBe(400);
 
-      // Draft config is still editable.
-      const edit = await app.request(`/api/keys/${body.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ connectionPins: { comboA: { "openai/gpt": ["conn-1"] } } }),
-      });
-      expect(edit.status).toBe(200);
+      // A parent policy edit reaches the participant key without touching it.
+      await app.request(`/api/keys/${event.id}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ comboAccessMode: "whitelist", comboAccessList: ["comboA"] }) });
+      const resolved = instance.repos.keys.getByKey(alice.key)!;
+      expect(resolved.comboAccessMode).toBe("whitelist");
+      expect(resolved.comboAccessList).toEqual(["comboA"]);
+      expect(resolved.maxConcurrency).toBe(5);
 
-      // Submit activates the key.
-      const submitted = await app.request(`/api/keys/${body.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "submit" }),
-      });
-      expect(submitted.status).toBe(200);
-      expect((await submitted.json()).key.status).toBe("submitted");
-      expect(instance.repos.keys.getByKey(body.key)?.status).toBe("submitted");
+      // Participants stay out of the top-level key list but show in the event.
+      const list = await (await app.request("/api/keys?visibility=event")).json() as { keys: Array<{ id: string; childCount: number }> };
+      expect(list.keys.map((key) => key.id)).toEqual([event.id]);
+      expect(list.keys[0].childCount).toBe(1);
+      const children = await (await app.request(`/api/keys/${event.id}/children`)).json() as { keys: Array<{ name: string; key?: string }> };
+      expect(children.keys.map((key) => key.name)).toEqual(["Alice"]);
+      expect(children.keys[0].key).toBeUndefined();
 
-      // A submitted key is locked: config edits are rejected.
-      const locked = await app.request(`/api/keys/${body.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ limitMode: "requests", limitValue: 10 }),
-      });
-      expect(locked.status).toBe(403);
+      // A participant key does not accept its own policy.
+      const participantId = instance.repos.keys.listChildren(event.id)[0].id;
+      const policyEdit = await app.request(`/api/keys/${participantId}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ limitMode: "requests", limitValue: 3 }) });
+      expect(policyEdit.status).toBe(400);
 
-      // A submitted key cannot be deleted.
-      const deleteSubmitted = await app.request(`/api/keys/${body.id}`, { method: "DELETE" });
-      expect(deleteSubmitted.status).toBe(403);
+      // Pausing the event closes the link and disables every participant key.
+      await app.request(`/api/keys/${event.id}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ isActive: false }) });
+      expect(instance.repos.keys.getByKey(alice.key)).toBeNull();
+      expect((await app.request(`/api/public/events/${event.id}`)).status).toBe(404);
+      expect((await app.request(`/api/public/events/${event.id}/keys`, json({ name: "Bob" }))).status).toBe(404);
 
-      // Revoke deactivates it permanently.
-      const revoked = await app.request(`/api/keys/${body.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "revoke" }),
-      });
-      expect(revoked.status).toBe(200);
-      expect((await revoked.json()).key.status).toBe("revoked");
-      expect(instance.repos.keys.getByKey(body.key)).toBeNull();
-
-      // A revoked key cannot be changed or deleted.
-      const changeRevoked = await app.request(`/api/keys/${body.id}`, {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "submit" }),
-      });
-      expect(changeRevoked.status).toBe(403);
-      const deleteRevoked = await app.request(`/api/keys/${body.id}`, { method: "DELETE" });
-      expect(deleteRevoked.status).toBe(403);
+      // Deleting the event deletes its participants.
+      expect((await app.request(`/api/keys/${event.id}`, { method: "DELETE" })).status).toBe(200);
+      expect(instance.repos.keys.list()).toHaveLength(0);
     } finally {
       instance.close();
     }
   });
 
-  test("allows deleting a draft event key", async () => {
+  test("public event routes reject keys that are not event parents", async () => {
     const instance = await runtime();
     try {
       const app = createApp(instance);
-      const draft = instance.repos.keys.create({ name: "Draft", key: "sk-draft", visibility: "event", status: "draft", isActive: false }).record;
-      const response = await app.request(`/api/keys/${draft.id}`, { method: "DELETE" });
-      expect(response.status).toBe(200);
-      expect(instance.repos.keys.list().find((key) => key.id === draft.id)).toBeUndefined();
+      const privateKey = instance.repos.keys.create({ name: "Private", key: "sk-private", visibility: "private" }).record;
+      expect((await app.request(`/api/public/events/${privateKey.id}`)).status).toBe(404);
+      expect((await app.request("/api/public/events/missing")).status).toBe(404);
     } finally {
       instance.close();
+    }
+  });
+
+  test("schema 22 turns old event keys into private keys", async () => {
+    const { Database } = await import("bun:sqlite");
+    const { applyMigrations } = await import("../src/db/migrate");
+    const sqlite = new Database(":memory:");
+    try {
+      applyMigrations(sqlite);
+      sqlite.query("INSERT INTO apiKeys (id, key, name, visibility, createdAt) VALUES ('old', 'sk-old', 'Old event', 'event', ?)").run(new Date().toISOString());
+      sqlite.query("UPDATE _meta SET value = '21' WHERE key = 'schemaVersion'").run();
+      applyMigrations(sqlite);
+      expect(sqlite.query("SELECT visibility FROM apiKeys WHERE id = 'old'").get()).toEqual({ visibility: "private" });
+      // A current database keeps its event parents.
+      sqlite.query("UPDATE apiKeys SET visibility = 'event' WHERE id = 'old'").run();
+      applyMigrations(sqlite);
+      expect(sqlite.query("SELECT visibility FROM apiKeys WHERE id = 'old'").get()).toEqual({ visibility: "event" });
+    } finally {
+      sqlite.close();
     }
   });
 
