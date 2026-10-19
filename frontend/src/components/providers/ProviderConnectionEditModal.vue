@@ -20,7 +20,14 @@ const emit = defineEmits<{
   save: [updates: Record<string, unknown>];
 }>();
 
-const form = reactive({ name: "", priority: 1, apiKey: "", group: "" });
+// maxInFlight is a string so an empty field means "no limit".
+const form = reactive({
+  name: "",
+  priority: 1,
+  apiKey: "",
+  group: "",
+  maxInFlight: "",
+});
 const region = ref("");
 const testing = ref(false);
 const testResult = ref<"success" | "failed" | null>(null);
@@ -45,6 +52,8 @@ watch(
       priority: connection.priority || 1,
       apiKey: "",
       group: String(field("group") || ""),
+      maxInFlight:
+        Number(field("maxInFlight")) >= 1 ? String(field("maxInFlight")) : "",
     });
     const specific = (field("providerSpecificData") || {}) as Record<
       string,
@@ -137,6 +146,7 @@ async function handleSubmit() {
       name: form.name,
       priority: form.priority,
       group: form.group.trim() || null,
+      maxInFlight: Number(form.maxInFlight) >= 1 ? Number(form.maxInFlight) : null,
     };
     if (!isOAuth.value && form.apiKey) {
       let isValid = validationResult.value === "success";
@@ -226,6 +236,23 @@ async function handleSubmit() {
         />
         <p class="text-xs text-muted-foreground">
           Optional label to organize accounts within this provider.
+        </p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium" for="edit-connection-max-in-flight"
+          >Max concurrent</label
+        >
+        <Input
+          id="edit-connection-max-in-flight"
+          v-model="form.maxInFlight"
+          type="number"
+          min="1"
+          placeholder="No limit"
+        />
+        <p class="text-xs text-muted-foreground">
+          When this account is full, new requests go to the next account.
+          Empty uses the provider default.
         </p>
       </div>
 

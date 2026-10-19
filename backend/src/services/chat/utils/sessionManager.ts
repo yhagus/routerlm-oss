@@ -215,6 +215,13 @@ export function resolveSessionIdentity({ headers, body, connectionId, workspaceI
     return { sessionId: deriveSessionId(connectionId), ephemeral: false };
 }
 
+// Conversation id for account affinity, before any Connection is chosen.
+// Client session first, then the accumulated-assistant-text hash. Null when
+// neither exists (a first turn without a client session id).
+export function resolveAffinitySessionId(headers: any, body: any, scope = "") {
+    return extractClientSessionId(headers, body, scope) || assistantTextSessionId(`${scope}:affinity`, body);
+}
+
 export function resolveSessionId(opts: any = {}) {
     return resolveSessionIdentity(opts).sessionId;
 }

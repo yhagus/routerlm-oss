@@ -36,6 +36,7 @@ import ProviderConnectionTable from "@/components/providers/ProviderConnectionTa
 import ProviderConnectionEditModal from "@/components/providers/ProviderConnectionEditModal.vue";
 import ProviderModelRow from "@/components/providers/ProviderModelRow.vue";
 import BulkProxyModal from "@/components/providers/BulkProxyModal.vue";
+import BulkMaxInFlightModal from "@/components/providers/BulkMaxInFlightModal.vue";
 import AddApiKeyModal from "@/components/providers/AddApiKeyModal.vue";
 import BulkImportModal from "@/components/providers/BulkImportModal.vue";
 import NoAuthProxyCard from "@/components/providers/NoAuthProxyCard.vue";
@@ -1199,6 +1200,8 @@ const showEditModal = ref(false);
 const editingConnection = ref<ProviderConnection | null>(null);
 const showEditNodeModal = ref(false);
 const showBulkProxyModal = ref(false);
+const showBulkMaxInFlightModal = ref(false);
+const bulkMaxInFlightRunning = ref(false);
 const showBulkImport = ref<
   "codex" | "qoder" | "grok-cli" | "codebuddy-intl-cli" | null
 >(null);
@@ -1931,6 +1934,18 @@ async function handleStickyLimitChange(value: string) {
   });
 }
 
+// Session affinity is on unless explicitly turned off.
+const sessionAffinityOn = computed(
+  () => providerSettings.value.sessionAffinity !== false,
+);
+
+async function handleSessionAffinityToggle(enabled: boolean) {
+  await updateProviderStrategy((entry) => {
+    if (enabled) delete entry.sessionAffinity;
+    else entry.sessionAffinity = false;
+  });
+}
+
 async function handleMaxInFlightChange(value: string) {
   const limit = Math.floor(Number(value));
   await updateProviderStrategy((entry) => {
@@ -2398,7 +2413,20 @@ const bulkActionItems = computed<DropdownMenuAction[]>(() => {
     );
   }
 
+  if (activePools.value.length) {
+    items.push({
+      key: "apply-proxy",
+      label: "Apply Proxy",
+      disabled: bulkToggleRunning.value || bulkMaxInFlightRunning.value,
+    });
+  }
+
   items.push(
+    {
+      key: "max-in-flight",
+      label: "Set Max Concurrent",
+      disabled: bulkToggleRunning.value || bulkMaxInFlightRunning.value,
+    },
     {
       key: "clear-wait",
       label: `Clear wait (${selectedWaitingConnections.value.length})`,
@@ -2449,12 +2477,40 @@ async function handleBulkAction(key: string) {
     case "clear-wait":
       await handleBulkClearWait();
       break;
+    case "apply-proxy":
+      showBulkProxyModal.value = true;
+      break;
+    case "max-in-flight":
+      showBulkMaxInFlightModal.value = true;
+      break;
     case "set-active":
       await handleBulkSetActive(true);
       break;
     case "set-inactive":
       await handleBulkSetActive(false);
       break;
+  }
+}
+
+async function handleBulkMaxInFlight(limit: number | null) {
+  const ids = selectedConnectionIds.value;
+  if (!ids.length || bulkMaxInFlightRunning.value) return;
+  bulkMaxInFlightRunning.value = true;
+  let failed = 0;
+  try {
+    const results = await Promise.allSettled(
+      ids.map((id) => api.providers.update(id, { maxInFlight: limit })),
+    );
+    for (const r of results) if (r.status === "rejected") failed += 1;
+    showBulkMaxInFlightModal.value = false;
+    await refresh();
+    if (failed > 0) {
+      window.alert(
+        `Updated ${ids.length - failed} connection(s), ${failed} failed.`,
+      );
+    }
+  } finally {
+    bulkMaxInFlightRunning.value = false;
   }
 }
 
@@ -3544,9 +3600,21 @@ const knownProvider = computed(
                 @change="handleStickyLimitChange(stickyLimit)"
               />
             </div>
+            <div
+              class="flex items-center gap-2"
+              title="Keep each conversation and API key on the same account for prompt cache hits. A full account spills one request, then the conversation returns."
+            >
+              <span class="text-xs font-medium text-muted-foreground"
+                >Session affinity</span
+              >
+              <Toggle
+                :checked="sessionAffinityOn"
+                @change="handleSessionAffinityToggle"
+              />
+            </div>
             <label
               class="flex items-center gap-2"
-              title="Maximum in-flight requests per connection. Empty means no limit."
+              title="Default maximum in-flight requests per connection. An account's own Max concurrent overrides it. Empty means no limit."
             >
               <span class="text-xs font-medium text-muted-foreground"
                 >Max in-flight</span
@@ -4216,6 +4284,13 @@ const knownProvider = computed(
       :proxy-pools="activePools"
       @close="showBulkProxyModal = false"
       @apply="applyProxyAssignments"
+    />
+    <BulkMaxInFlightModal
+      :open="showBulkMaxInFlightModal"
+      :count="selectedConnectionIds.length"
+      :applying="bulkMaxInFlightRunning"
+      @close="showBulkMaxInFlightModal = false"
+      @apply="handleBulkMaxInFlight"
     />
     <BulkImportModal
       :open="Boolean(showBulkImport)"

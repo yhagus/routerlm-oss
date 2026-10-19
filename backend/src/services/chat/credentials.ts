@@ -7,7 +7,8 @@ import { GROK_CLI_FREE_USAGE_WINDOW_MS } from "../providers/config/grokCli.ts";
 import { parseGrokCliFreeUsageTokens } from "../billing/usage/grok-cli.js";
 import { getCodeBuddyIntlCliUsage } from "../billing/usage/codebuddy-cn.js";
 import { laterUntil, storedConnection, unavailableUntil } from "./fallback";
-import { connectionInFlight, maxInFlightPerConnection, type SlotOwner } from "./inFlightSlots";
+import { connectionInFlight, connectionInFlightLimit, type SlotOwner } from "./inFlightSlots";
+import { affinityEnabled, freeHome, rememberHome, type AffinityKeys } from "./sessionAffinity";
 import { ALIMS_EXHAUSTED_MARKER_PREFIX, alimsExhaustedMarkerKey, isAlimsFreeTierExhausted, isAlimsModelExhausted } from "../providers/alimsFreeTier.js";
 import {
   applyGrokCliFamilyExhaustion,
@@ -304,18 +305,19 @@ export function connectionProxyOptions(credentials: Record<string, any>): Record
   };
 }
 
-// The Connections below the per-Connection in-flight limit
-// (providerStrategies[provider].maxInFlightPerConnection). `saturated` is true
-// when the limit removed every Connection.
+// The Connections below their in-flight limit (the Connection's own
+// data.maxInFlight, else providerStrategies[provider].maxInFlightPerConnection).
+// `saturated` is true when the limit removed every Connection.
 export function connectionsWithFreeSlots(
   owner: SlotOwner,
   settings: Record<string, any>,
-  provider: string,
+  _provider: string,
   connections: ProviderConnection[],
 ): { connections: ProviderConnection[]; saturated: boolean } {
-  const inFlightLimit = maxInFlightPerConnection(settings, provider);
-  if (inFlightLimit === null) return { connections, saturated: false };
-  const free = connections.filter((connection) => connectionInFlight(owner, connection.id) < inFlightLimit);
+  const free = connections.filter((connection) => {
+    const limit = connectionInFlightLimit(settings, connection);
+    return limit === null || connectionInFlight(owner, connection.id) < limit;
+  });
   return { connections: free, saturated: connections.length > 0 && free.length === 0 };
 }
 
@@ -325,7 +327,7 @@ export function connectionsWithFreeSlots(
 export function selectChatConnection(
   runtime: Runtime,
   provider: string,
-  options: { model?: string | null; excludeIds?: Set<string>; allowedIds?: string[] | null; preferredId?: string | null; accountOrder?: string[] | null } = {} as any,
+  options: { model?: string | null; excludeIds?: Set<string>; allowedIds?: string[] | null; preferredId?: string | null; accountOrder?: string[] | null; affinity?: AffinityKeys | null } = {} as any,
 ): ConnectionSelection {
   const excludeIds = options.excludeIds || new Set<string>();
   const entry = getProviderRegistryEntry(provider);
@@ -403,9 +405,14 @@ export function selectChatConnection(
     if (strict.length > 0) connections = strict;
   }
 
+  // An explicit x-connection-id pin wins over session affinity.
+  let pinned = false;
   if (options.preferredId) {
     const preferred = connections.find((connection) => connection.id === options.preferredId);
-    if (preferred) connections = [preferred, ...connections.filter((connection) => connection.id !== options.preferredId)];
+    if (preferred) {
+      pinned = true;
+      connections = [preferred, ...connections.filter((connection) => connection.id !== options.preferredId)];
+    }
   }
 
   // v1 sortConnectionsByOrder: combos with custom account order pin the try
@@ -425,13 +432,18 @@ export function selectChatConnection(
   // A Connection at its in-flight limit is not eligible. Fill-first then
   // picks the first Connection with free capacity, and round-robin rotates
   // only through Connections with free capacity.
+  const eligibleIds = new Set(connections.map((connection) => connection.id));
   const free = connectionsWithFreeSlots(runtime, settings, provider, connections);
   if (free.saturated) return { selected: null, remaining: 0, saturated: true };
   connections = free.connections;
   const strategy = settings.providerStrategies?.[provider]?.fallbackStrategy || settings.fallbackStrategy || "fill-first";
-  let chosen = connections[0];
+  const affinity = !pinned && options.affinity && affinityEnabled(settings, provider) ? options.affinity : null;
+  const home = affinity ? freeHome(affinity, connections) : null;
+  let chosen = home ?? connections[0];
 
-  if (strategy === "round-robin") {
+  // A free home skips the strategy, so round-robin state moves only for
+  // requests that the strategy places.
+  if (!home && strategy === "round-robin") {
     // Sticky rotation: keep using the most recently used eligible account
     // until its consecutive-use budget is spent, then advance to the next
     // eligible account in order, wrapping to the first after the last.
@@ -452,6 +464,7 @@ export function selectChatConnection(
       consecutiveUseCount: chosen.id === recent.id ? recentCount + 1 : 1,
     });
   }
+  if (affinity) rememberHome(affinity, eligibleIds, chosen.id);
 
   return {
     selected: {

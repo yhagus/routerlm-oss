@@ -19,6 +19,12 @@ const emit = defineEmits<{
 }>();
 
 const updating = ref(false);
+// The selection when one exists, else every connection of the provider.
+const targets = computed(() =>
+  props.selectedConnections.length
+    ? props.selectedConnections
+    : props.connections,
+);
 const activePools = computed(() =>
   props.proxyPools.filter((pool) => pool.isActive === true),
 );
@@ -54,7 +60,7 @@ function apply(
 
 function applySinglePool(proxyPoolId: string | null) {
   return apply(
-    props.connections.map((connection) => ({
+    targets.value.map((connection) => ({
       connectionId: connection.id,
       proxyPoolId,
     })),
@@ -67,7 +73,7 @@ function applyOneToOne() {
     return;
   }
   return apply(
-    props.connections.map((connection, index) => ({
+    targets.value.map((connection, index) => ({
       connectionId: connection.id,
       proxyPoolId: activePools.value[index % activePools.value.length].id,
     })),
@@ -78,7 +84,7 @@ function applyOneToOne() {
 <template>
   <Modal
     :open="open"
-    :title="`Apply Proxy (${connections.length} connections)`"
+    :title="`Apply Proxy (${targets.length} ${selectedConnections.length ? 'selected' : 'connections'})`"
     @close="close"
   >
     <div class="flex flex-col gap-3">
@@ -106,7 +112,7 @@ function applyOneToOne() {
             class="material-symbols-outlined text-[18px] text-muted-foreground"
             >link_off</span
           >
-          <span class="text-sm">None (unbind all)</span>
+          <span class="text-sm">None (unbind)</span>
         </button>
         <button
           v-for="pool in proxyPools"

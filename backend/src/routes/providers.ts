@@ -11,6 +11,7 @@ import { fetchAutoclawAccount } from "../services/providers/autoclawIdentity";
 import { fetchExperientialLabsAccount } from "../services/providers/experientialLabsIdentity";
 import { autoclawRefresh } from "../services/chat/autoclawExecutor";
 import { computeProviderQuotaSummary } from "../services/billing/quotaSummary";
+import { positiveLimit } from "../services/chat/inFlightSlots";
 // The v1 model registry is JavaScript and intentionally remains the source of truth.
 import { getModelsByProviderId } from "../services/providers/config/providerModels.ts";
 import { ALIMS_EXHAUSTED_MARKER_PREFIX, ALIMS_INTL_PROVIDER, alimsExhaustedMarkerKey, isAlimsModelExhausted } from "../services/providers/alimsFreeTier.js";
@@ -440,6 +441,8 @@ export function providerRoutes(runtime: Runtime) {
           ...((body.data || {}) as Record<string, unknown>),
           ...v1FlatDataPatch(body),
           ...(body.proxyPoolId !== undefined ? { proxyPoolId: (body.proxyPoolId === "__none__" ? null : (body.proxyPoolId || null)) as string | null } : {}),
+          // Per-Connection in-flight limit. Empty, zero or invalid clears it (no limit).
+          ...(body.maxInFlight !== undefined ? { maxInFlight: positiveLimit(body.maxInFlight) } : {}),
         },
       });
       if (current.provider === "autoclaw") onAutoclawConnectionChanged(runtime, current.id);

@@ -73,6 +73,15 @@ export function maxInFlightPerConnection(settings: Record<string, any>, provider
   return positiveLimit(settings.providerStrategies?.[provider]?.maxInFlightPerConnection);
 }
 
+// The in-flight limit of one Connection. The Connection's own data.maxInFlight
+// wins; else the provider-wide maxInFlightPerConnection applies; else no limit.
+export function connectionInFlightLimit(
+  settings: Record<string, any>,
+  connection: { provider: string; data?: Record<string, unknown> | null },
+): number | null {
+  return positiveLimit(connection.data?.maxInFlight) ?? maxInFlightPerConnection(settings, connection.provider);
+}
+
 // Synchronous on purpose: call it right after selection, before any await,
 // so two requests cannot both take the last slot of one Connection.
 export function acquireConnectionSlot(

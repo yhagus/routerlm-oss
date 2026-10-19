@@ -248,6 +248,8 @@ const rows = computed(() =>
       field(connection, "connectionProxyEnabled", false as boolean) === true &&
       Boolean(field(connection, "connectionProxyUrl", ""));
     const hasAnyProxy = Boolean(boundProxyPoolId) || hasLegacyProxy;
+    const ownMaxInFlight = Number(field(connection, "maxInFlight", 0));
+    const maxInFlight = ownMaxInFlight >= 1 ? Math.floor(ownMaxInFlight) : null;
 
     const isAutoclawProvider = props.providerId === "autoclaw";
     const autoPing =
@@ -282,6 +284,7 @@ const rows = computed(() =>
       oneByOneLabel,
       boundProxyPoolId,
       hasAnyProxy,
+      maxInFlight,
       autoPing,
       showAutoPing,
       probed: props.codebuddyProbed?.[connection.id]?.probed === true,
@@ -513,6 +516,13 @@ function formatRegistered(value: string) {
                   class="shrink-0"
                   title="Proxy bound"
                   >Proxy</Badge
+                >
+                <Badge
+                  v-if="row.maxInFlight"
+                  variant="secondary"
+                  class="shrink-0"
+                  :title="`Max ${row.maxInFlight} concurrent request(s)`"
+                  >≤{{ row.maxInFlight }}</Badge
                 >
                 <CooldownTimer
                   v-if="row.isCooldown && row.connection.isActive !== false"

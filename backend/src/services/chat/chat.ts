@@ -16,6 +16,8 @@ import { stripUnsupportedModalities } from "./translator/concerns/modality.js";
 import { prefetchRemoteImages } from "./translator/concerns/prefetch.js";
 import { dedupeTools } from "./utils/toolDeduper.js";
 import { buildGrokCliCompactionResponse } from "./grokCliCompaction.js";
+import { affinityKeysFor } from "./sessionAffinity";
+import { resolveAffinitySessionId } from "./utils/sessionManager.js";
 import { getProjectIdForConnection } from "../providers/discovery/projectId.ts";
 import { extractUsage } from "../common/usageTracking.ts";
 import * as logger from "./sse/utils/logger.js";
@@ -388,7 +390,8 @@ async function runExecutorModelAttemptWithSlots(runtime: Runtime, attempt: Model
       : null;
   let toolNameMap: Map<string, string> | null = null;
   const attempts = fallbackAttempts(settings);
-  const select = (excludeIds: Set<string>) => selectChatConnection(runtime, provider, { model, excludeIds, allowedIds, accountOrder, preferredId });
+  const affinity = affinityKeysFor(provider, input.apiKey?.id || null, resolveAffinitySessionId(input.headers || {}, clientBody, provider));
+  const select = (excludeIds: Set<string>) => selectChatConnection(runtime, provider, { model, excludeIds, allowedIds, accountOrder, preferredId, affinity });
 
   while (true) {
     // The step takes the Connection slot before the first await after
