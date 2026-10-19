@@ -1,3 +1,27 @@
+# v1.2.0 (2026-10-19)
+
+## Per-account concurrency
+
+- Each account can set its own max concurrent requests. Empty means no limit.
+- The account limit overrides the provider "Max in-flight" default.
+- A full account sends new requests to the next account.
+- When all accounts are full, the client gets 503 with `Retry-After`.
+- Set the limit per row in Edit Connection, or on a selection with "Set Max Concurrent".
+
+## Session affinity
+
+- Each conversation and each API key gets a home account. This keeps upstream prompt caches warm.
+- A full home sends one request to another account. The next request returns to the home.
+- A home on cooldown or failed moves the conversation to the account that serves it.
+- New conversations of one API key start on the home of that key.
+- Round-robin now spreads conversations, not single requests.
+- Each provider has a "Session affinity" switch. It is on by default.
+
+## Proxy
+
+- "Apply Proxy" applies to the selected accounts. With no selection, it applies to all accounts.
+- "Apply Proxy" is also in the bulk actions menu.
+
 # v1.1.0 (2026-10-19)
 
 ## Event API keys
