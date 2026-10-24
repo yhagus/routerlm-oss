@@ -18,10 +18,10 @@ Use a supported macOS, Linux, or Windows environment.
 
 ## Install with npm
 
-Install the `routerlm` package globally and start it.
+Install the `@ciwergrp/routerlm` package globally and start it with the `routerlm` command.
 
 ```bash
-npm install -g routerlm
+npm install -g @ciwergrp/routerlm
 routerlm
 ```
 
@@ -33,7 +33,7 @@ See [cli/README.md](cli/README.md) for every option and the `connect` and `show`
 
 ## Publish the npm package
 
-Each `v*.*.*` tag push publishes `routerlm` to npm with the version from the tag.
+Each `v*.*.*` tag push publishes `@ciwergrp/routerlm` to npm with the version from the tag.
 
 The workflow reads an npm automation token from the `NPM_TOKEN` repository secret.
 

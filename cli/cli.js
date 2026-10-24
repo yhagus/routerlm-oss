@@ -27,8 +27,9 @@ if (args[0] === "connect" || args[0] === "show") {
   return;
 }
 
-const APP_NAME = pkg.name;
-const INSTALL_CMD_LATEST = `npm i -g ${APP_NAME}@latest --prefer-online`;
+// The npm package is scoped; the command it installs is not.
+const APP_NAME = "routerlm";
+const INSTALL_CMD_LATEST = `npm i -g ${pkg.name}@latest --prefer-online`;
 const DEFAULT_PORT = 20130;
 const DEFAULT_HOST = "0.0.0.0";
 // The backend only binds loopback or all interfaces (backend/src/config.ts).
@@ -69,7 +70,7 @@ Options:
 
 Commands:
   connect <server-url> Configure local CLI tools for a remote server
-                      (npx ${APP_NAME} connect http://host:${DEFAULT_PORT} — no install needed)
+                      (npx ${pkg.name} connect http://host:${DEFAULT_PORT} — no install needed)
   show [tool…]        Show each CLI tool's current config and models
                       (e.g. ${APP_NAME} show claude)
 `);
@@ -266,7 +267,7 @@ function checkForUpdate() {
     };
     const safetyTimeout = setTimeout(() => done(null), 8000);
 
-    const req = https.get(`https://registry.npmjs.org/${pkg.name}/latest`, { timeout: 3000 }, (res) => {
+    const req = https.get(`https://registry.npmjs.org/${pkg.name.replace("/", "%2F")}/latest`, { timeout: 3000 }, (res) => {
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
@@ -423,7 +424,7 @@ function startServer(updatePromise) {
 
     // Without a terminal there is no menu: keep serving until stopped.
     if (!process.stdin.isTTY || showLog) {
-      console.log(`\n🚀 ${pkg.name} v${pkg.version}`);
+      console.log(`\n🚀 ${APP_NAME} v${pkg.version}`);
       console.log(`Dashboard: ${dashboardUrl}`);
       console.log(`API:       http://${displayHost}:${BACKEND_PORT}/v1 (also ${serverUrl}/v1)`);
       return;

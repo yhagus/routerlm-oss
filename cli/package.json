@@ -1,5 +1,5 @@
 {
-  "name": "routerlm",
+  "name": "@ciwergrp/routerlm",
   "version": "0.0.0-dev",
   "description": "LobakAI local AI gateway and dashboard. Start it with `routerlm`.",
   "comment_build": "Template for the published manifest. `bun run build:cli` writes cli/dist/package.json with the release version and the backend dependencies that backend/src actually imports.",

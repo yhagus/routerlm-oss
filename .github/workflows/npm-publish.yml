@@ -1,7 +1,8 @@
 name: npm package
 
 # A version tag is the only release gate, as for the Docker image.
-# The package version comes from the tag: v1.3.0 publishes routerlm@1.3.0.
+# The package version comes from the tag: v1.3.0 publishes @ciwergrp/routerlm@1.3.0.
+# Scoped packages are private by default, hence --access public.
 on:
   push:
     tags: ["v*.*.*"]
@@ -43,7 +44,7 @@ jobs:
           test "$(node cli.js --version)" = "${GITHUB_REF_NAME#v}"
           npm pack --dry-run
 
-      # Prereleases (v1.3.0-beta.1) go to the "next" dist-tag so `npm i -g routerlm`
+      # Prereleases (v1.3.0-beta.1) go to the "next" dist-tag so `npm i -g @ciwergrp/routerlm`
       # keeps installing the latest stable release.
       - name: Publish
         working-directory: cli/dist

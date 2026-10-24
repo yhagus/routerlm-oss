@@ -1,15 +1,15 @@
 # routerlm
 
-LobakAI is a local AI gateway and dashboard. `routerlm` installs and starts it.
+LobakAI is a local AI gateway and dashboard. The `@ciwergrp/routerlm` package installs it, and the `routerlm` command starts it.
 
 ## Install and start
 
 ```bash
-npm install -g routerlm
+npm install -g @ciwergrp/routerlm
 routerlm
 
 # Or run it without installing
-npx routerlm
+npx @ciwergrp/routerlm
 ```
 
 The dashboard opens at `http://localhost:20130/dashboard`.
@@ -39,9 +39,9 @@ The default host is `0.0.0.0`, so other machines on your network can reach the s
 `routerlm connect` points the CLI tools on this machine at a LobakAI server that runs somewhere else. It starts no local server.
 
 ```bash
-npx routerlm connect http://<server-host>:20130                       # pick tools interactively
-npx routerlm connect http://<server-host>:20130 --tools claude,codex  # or choose up front
-npx routerlm connect --reset --tools claude,codex                     # undo
+npx @ciwergrp/routerlm connect http://<server-host>:20130                       # pick tools interactively
+npx @ciwergrp/routerlm connect http://<server-host>:20130 --tools claude,codex  # or choose up front
+npx @ciwergrp/routerlm connect --reset --tools claude,codex                     # undo
 ```
 
 The command logs in with the dashboard password. It reuses or creates an API key named `cli-<hostname>`. Then it writes each tool's config and backs up the original once as `*.bak-routerlm`.

@@ -1,4 +1,4 @@
-// Stages the publishable `routerlm` package in cli/dist:
+// Stages the publishable `@ciwergrp/routerlm` package in cli/dist:
 //   cli.js, src/          launcher + connect/show commands
 //   app/backend/src       Bun backend, run as-is by the bundled Bun
 //   app/frontend/dist     built dashboard (run `bun run build:frontend` first)

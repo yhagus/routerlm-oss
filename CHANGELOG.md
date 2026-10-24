@@ -2,7 +2,7 @@
 
 ## npm package
 
-- Install with `npm install -g routerlm`, then start with `routerlm`. Bun ships with the package.
+- Install with `npm install -g @ciwergrp/routerlm`, then start with `routerlm`. Bun ships with the package.
 - The dashboard runs on port 20130 and the API on port 20129, as in Docker.
 - `routerlm` takes the 9router options: `--port`, `--host`, `--no-browser`, `--log`, `--skip-update`, `--help` and `--version`.
 - `routerlm connect <url>` points local CLI tools at a remote server. `routerlm show` prints their current config.
