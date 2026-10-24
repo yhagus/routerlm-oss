@@ -12,6 +12,7 @@ import type {
   Probe407Job,
 } from "@/types/api";
 import { getThinkingLevels, resolveThinkingSuffix } from "@/lib/thinkingLevels";
+import { isFreeModelId } from "@/lib/modelOptions";
 import { getCapabilitiesForModel } from "@/lib/providerCapabilities";
 import { getProviderAlias, providerMeta } from "@/lib/providerMeta";
 import { getProviderCustomModelRows } from "@/lib/providerCustomModels";
@@ -1003,6 +1004,36 @@ const allModels = computed(() => builtInModels.value);
 const displayModels = computed(() =>
   allModels.value.filter((m) => !disabledModelIds.value.has(m.id)),
 );
+// "Only Free" narrows the Available Models card to -free / :free variants.
+const modelPriceFilter = ref<"all" | "free">("all");
+const modelPriceFilterOptions = [
+  { value: "all", label: "All Models" },
+  { value: "free", label: "Only Free" },
+];
+const hasFreeModels = computed(() =>
+  [...customModelRows.value, ...displayModels.value].some((m) =>
+    isFreeModelId(m.id),
+  ),
+);
+const onlyFreeModels = computed(
+  () => modelPriceFilter.value === "free" && hasFreeModels.value,
+);
+const visibleCustomModelRows = computed(() =>
+  onlyFreeModels.value
+    ? customModelRows.value.filter((m) => isFreeModelId(m.id))
+    : customModelRows.value,
+);
+const visibleDisplayModels = computed(() =>
+  onlyFreeModels.value
+    ? displayModels.value.filter((m) => isFreeModelId(m.id))
+    : displayModels.value,
+);
+watch(providerId, () => {
+  modelPriceFilter.value = "all";
+});
+function selectModelPriceFilter(value: string | number) {
+  modelPriceFilter.value = value === "free" ? "free" : "all";
+}
 const disabledDisplayModels = computed(() =>
   allModels.value.filter((m) => disabledModelIds.value.has(m.id)),
 );
@@ -4140,6 +4171,14 @@ const knownProvider = computed(
         <h2 class="text-lg font-semibold">Available Models</h2>
         <div class="flex flex-wrap items-center gap-2">
           <Select
+            v-if="hasFreeModels"
+            :model-value="modelPriceFilter"
+            :options="modelPriceFilterOptions"
+            class="w-auto min-w-28"
+            aria-label="Model filter"
+            @update:model-value="selectModelPriceFilter"
+          />
+          <Select
             v-if="providerThinkingLevels"
             :model-value="thinkingMode"
             :options="thinkingOptions"
@@ -4158,9 +4197,9 @@ const knownProvider = computed(
               Active All
             </Button>
             <Button
-              v-if="displayModels.length"
+              v-if="visibleDisplayModels.length"
               variant="secondary"
-              @click="handleDisableAll(displayModels.map((m) => m.id))"
+              @click="handleDisableAll(visibleDisplayModels.map((m) => m.id))"
             >
               <span class="material-symbols-outlined text-sm">block</span>
               Disable All
@@ -4192,7 +4231,7 @@ const knownProvider = computed(
       />
       <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderModelRow
-          v-for="model in customModelRows"
+          v-for="model in visibleCustomModelRows"
           :key="`custom-${model.fullModel}`"
           :model="{ id: model.id, name: model.name }"
           :full-model="`${providerDisplayAlias}/${model.id}`"
@@ -4212,7 +4251,7 @@ const knownProvider = computed(
           "
         />
         <ProviderModelRow
-          v-for="model in displayModels"
+          v-for="model in visibleDisplayModels"
           :key="model.id"
           :model="model"
           :full-model="`${providerDisplayAlias}/${model.id}`"

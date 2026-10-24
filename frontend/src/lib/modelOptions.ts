@@ -26,3 +26,8 @@ export function modelOptionId(model: ModelOptionSource): string {
 export function modelOptionIds(models: ModelOptionSource[]): string[] {
   return [...new Set(models.map(modelOptionId).filter(Boolean))].sort();
 }
+
+// Free model variants are published as "<model>-free" or "<model>:free".
+export function isFreeModelId(id: unknown): boolean {
+  return typeof id === "string" && /[-:]free$/i.test(id.trim());
+}
