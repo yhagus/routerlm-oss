@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Database,
   Eye,
-  Gift,
   Globe,
   Image as ImageIcon,
   Images,
@@ -57,7 +56,6 @@ const navItems: NavItem[] = [
   { label: "Vision Adapter", to: "/dashboard/vision-adapter", icon: Eye },
   { label: "Usage", to: "/dashboard/usage", icon: ChartNoAxesCombined },
   { label: "Quota Tracker", to: "/dashboard/quota", icon: Database },
-  { label: "Free Tracker", to: "/dashboard/free-tracker", icon: Gift },
   { label: "Token Saver", to: "/dashboard/token-saver", icon: Zap },
   { label: "CLI Tools", to: "/dashboard/cli-tools", icon: TerminalSquare },
 ];
@@ -71,8 +69,6 @@ const systemItems: NavItem[] = [
 const logsItems: NavItem[] = [
   { label: "Console", to: "/dashboard/console-log", icon: ScrollText },
   { label: "Scheduler", to: "/dashboard/scheduler", icon: Timer },
-];
-const debugItems: NavItem[] = [
   { label: "Queue Jobs", to: "/dashboard/queue-jobs", icon: ListChecks },
 ];
 const mediaItems: NavItem[] = [
@@ -133,7 +129,8 @@ watch(
   (path) => {
     if (
       path.startsWith("/dashboard/console-log") ||
-      path.startsWith("/dashboard/scheduler")
+      path.startsWith("/dashboard/scheduler") ||
+      path.startsWith("/dashboard/queue-jobs")
     ) {
       logsOpen.value = true;
     }
@@ -320,7 +317,8 @@ onMounted(async () => {
             cn(
               'group flex w-full items-center gap-3 rounded-[7px] px-3 py-1.5 text-left transition-all',
               route.path.startsWith('/dashboard/console-log') ||
-                route.path.startsWith('/dashboard/scheduler')
+                route.path.startsWith('/dashboard/scheduler') ||
+                route.path.startsWith('/dashboard/queue-jobs')
                 ? 'bg-primary/12 font-semibold text-primary'
                 : 'text-muted-foreground hover:bg-primary/10 hover:text-primary',
             )
@@ -353,31 +351,6 @@ onMounted(async () => {
             <span class="text-sm">{{ item.label }}</span>
           </RouterLink>
         </div>
-        <RouterLink
-          v-for="item in debugItems"
-          :key="item.to"
-          :to="item.to"
-          :class="
-            cn(
-              'group flex items-center gap-3 rounded-[7px] px-3 py-1.5 transition-all',
-              active(item)
-                ? 'bg-primary/12 font-semibold text-primary'
-                : 'text-muted-foreground hover:bg-primary/10 hover:text-primary',
-            )
-          "
-          @click="$emit('close')"
-        >
-          <component
-            :is="item.icon"
-            :class="
-              cn(
-                'size-[17px] transition-transform',
-                active(item) ? 'stroke-[2.3]' : 'group-hover:translate-x-0.5',
-              )
-            "
-          />
-          <span class="text-sm font-medium">{{ item.label }}</span>
-        </RouterLink>
         <RouterLink
           v-if="translatorEnabled"
           to="/dashboard/translator"
