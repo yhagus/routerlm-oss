@@ -1,5 +1,6 @@
 import { createApp } from "./app";
 import { loadRuntimeConfig } from "./config";
+import { createDashboardFetch } from "./dashboardServer";
 import { createRuntime } from "./runtime";
 import { initializeApp, shutdownAppInit } from "./services/platform/appInit";
 import { setShutdownHandler } from "./services/platform/shutdown";
@@ -22,6 +23,19 @@ const server = Bun.serve({
 
 console.log(`[Backend] Listening on ${server.url}`);
 
+// The npm CLI has no Vite preview, so the backend serves the built dashboard
+// on its own port when DASHBOARD_DIR points at frontend/dist.
+const dashboardDir = process.env.DASHBOARD_DIR?.trim();
+const dashboard = dashboardDir
+  ? Bun.serve({
+      hostname: config.host,
+      port: Number(process.env.DASHBOARD_PORT?.trim() || 20130),
+      fetch: createDashboardFetch(dashboardDir, app.fetch),
+      idleTimeout: 255,
+    })
+  : null;
+if (dashboard) console.log(`[Dashboard] Listening on ${dashboard.url}`);
+
 let stopping = false;
 async function stop(reason: string) {
   if (stopping) return;
@@ -32,7 +46,7 @@ async function stop(reason: string) {
   // Usage and request details and closes SQLite. Exit only after that.
   let exitCode = 0;
   try {
-    await server.stop();
+    await Promise.all([server.stop(), dashboard?.stop()]);
     shutdownAppInit();
     runtime.close();
   } catch (error) {

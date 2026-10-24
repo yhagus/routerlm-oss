@@ -16,7 +16,8 @@
     "test:frontend": "bun run --cwd frontend test",
     "typecheck": "bun run typecheck:backend && bun run typecheck:frontend",
     "test": "bun run test:backend && bun run test:frontend",
-    "build": "bun run build:frontend"
+    "build": "bun run build:frontend",
+    "build:cli": "bun run build:frontend && node cli/scripts/build.mjs"
   },
   "workspaces": [
     "backend",

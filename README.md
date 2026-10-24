@@ -16,6 +16,31 @@ Install Bun 1.3.14 or a compatible later release.
 
 Use a supported macOS, Linux, or Windows environment.
 
+## Install with npm
+
+Install the `routerlm` package globally and start it.
+
+```bash
+npm install -g routerlm
+routerlm
+```
+
+The package ships Bun, so you only need Node.js 18 or later.
+
+The dashboard opens at `http://localhost:20130/dashboard`.
+
+See [cli/README.md](cli/README.md) for every option and the `connect` and `show` commands.
+
+## Publish the npm package
+
+Each `v*.*.*` tag push publishes `routerlm` to npm with the version from the tag.
+
+The workflow reads an npm automation token from the `NPM_TOKEN` repository secret.
+
+A tag with a suffix, such as `v1.3.0-beta.1`, publishes under the `next` dist-tag.
+
+Build the package locally with `bun run build:cli`. The output lands in `cli/dist`.
+
 ## Start from source
 
 Install workspace dependencies.
