@@ -8,10 +8,17 @@ import {
   Menu,
   Power,
   Search,
+  Sparkles,
   X,
 } from "lucide-vue-next";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { api } from "@/lib/api";
+import {
+  changelogSection,
+  markChangelogSeen,
+  parseChangelog,
+  seenChangelogVersion,
+} from "@/lib/changelog";
 import { providerMeta } from "@/lib/providerMeta";
 import { useSessionStore } from "@/stores/session";
 import { useNotificationStore } from "@/stores/notifications";
@@ -21,6 +28,7 @@ import ConfirmModal from "@/components/ui/ConfirmModal.vue";
 import LanguageSwitcher from "@/components/app/LanguageSwitcher.vue";
 import ChangelogModal from "@/components/app/ChangelogModal.vue";
 import ThemeToggle from "@/components/app/ThemeToggle.vue";
+import changelogContent from "../../../../CHANGELOG.md?raw";
 
 defineEmits<{ menu: [] }>();
 const route = useRoute();
@@ -38,6 +46,32 @@ const identity = ref<{
   loginMethod: "OIDC" | "Password";
 } | null>(null);
 const changelogOpen = ref(false);
+const changelogVersion = ref<string | null>(null);
+// Set to the running version while its change log entry is still unread.
+const unreadVersion = ref<string | null>(null);
+
+function openChangelog(version: string | null) {
+  changelogVersion.value = version;
+  changelogOpen.value = true;
+  if (version && version === unreadVersion.value) {
+    markChangelogSeen(version);
+    unreadVersion.value = null;
+  }
+}
+
+async function loadUnreadChangelog() {
+  try {
+    const { currentVersion } = await api.version.get();
+    const section = changelogSection(
+      parseChangelog(changelogContent),
+      currentVersion,
+    );
+    if (section && seenChangelogVersion() !== section.version)
+      unreadVersion.value = section.version;
+  } catch {
+    /* Without the version the header simply omits the button. */
+  }
+}
 
 const page = computed(() => {
   const path = route.path;
@@ -109,6 +143,7 @@ function reloadPage() {
 
 onMounted(async () => {
   document.addEventListener("click", closeMenu);
+  void loadUnreadChangelog();
   try {
     const status = await api.auth.status();
     if (status.loginMethod === "OIDC" && status.displayName)
@@ -196,6 +231,17 @@ onUnmounted(() => document.removeEventListener("click", closeMenu));
           <X class="size-3.5" />
         </button>
       </div>
+      <Button
+        v-if="unreadVersion"
+        variant="outline"
+        size="sm"
+        class="gap-1.5 rounded-full border-primary/40 text-primary"
+        :aria-label="`What's new in v${unreadVersion}`"
+        @click="openChangelog(unreadVersion)"
+        ><Sparkles class="size-3.5" /><span class="hidden sm:inline"
+          >What's new</span
+        ><span class="font-semibold">v{{ unreadVersion }}</span></Button
+      >
       <ThemeToggle />
       <LanguageSwitcher />
       <div
@@ -226,7 +272,7 @@ onUnmounted(() => document.removeEventListener("click", closeMenu));
           <button
             class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-secondary"
             @click="
-              changelogOpen = true;
+              openChangelog(unreadVersion);
               menuOpen = false;
             "
           >
@@ -254,7 +300,11 @@ onUnmounted(() => document.removeEventListener("click", closeMenu));
       </div>
     </div>
   </header>
-  <ChangelogModal :open="changelogOpen" @close="changelogOpen = false" />
+  <ChangelogModal
+    :open="changelogOpen"
+    :version="changelogVersion"
+    @close="changelogOpen = false"
+  />
   <ConfirmModal
     :open="shutdownOpen"
     title="Shutdown LobakAI"
