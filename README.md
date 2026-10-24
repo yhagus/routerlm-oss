@@ -2,115 +2,131 @@
 
 # LobakAI
 
-LobakAI provides a local AI gateway and dashboard.
+[![npm](https://img.shields.io/npm/v/@ciwergrp/routerlm.svg)](https://www.npmjs.com/package/@ciwergrp/routerlm)
+[![GHCR](https://img.shields.io/badge/GHCR-yhagus%2Frouterlm--oss-blue?logo=github)](https://github.com/yhagus/routerlm-oss/pkgs/container/routerlm-oss)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-The gateway supports OpenAI-compatible and provider-specific endpoints.
+LobakAI is a local AI gateway with a dashboard.
 
-The backend uses Bun, Hono, and SQLite.
+It serves OpenAI-compatible and provider-specific endpoints on top of many AI providers and accounts.
 
-The dashboard uses Vue and Vite.
+| Part | Stack | Port |
+|---|---|---|
+| Gateway API | Bun, Hono, SQLite | `20129` |
+| Dashboard | Vue, Vite | `20130` |
 
-## Requirements
+## Quick start
 
-Install Bun 1.3.14 or a compatible later release.
+Pick one way to run LobakAI.
 
-Use a supported macOS, Linux, or Windows environment.
+### npm
 
-## Install with npm
-
-Install the `@ciwergrp/routerlm` package globally and start it with the `routerlm` command.
+You need Node.js 18 or later. The package ships Bun.
 
 ```bash
 npm install -g @ciwergrp/routerlm
 routerlm
 ```
 
-The package ships Bun, so you only need Node.js 18 or later.
-
 The dashboard opens at `http://localhost:20130/dashboard`.
 
-See [cli/README.md](cli/README.md) for every option and the `connect` and `show` commands.
+### Docker
 
-## Publish the npm package
+```bash
+docker run -d --name lobakai \
+  -p 20129:20129 -p 20130:20130 \
+  -v lobakai-data:/app/data \
+  -e JWT_SECRET="replace-this-secret" \
+  -e INITIAL_PASSWORD="replace-this-password" \
+  ghcr.io/yhagus/routerlm-oss:latest
+```
 
-Each `v*.*.*` tag push publishes `@ciwergrp/routerlm` to npm with the version from the tag.
+The image supports `linux/amd64` and `linux/arm64`. See [DOCKER.md](DOCKER.md) for Compose and data paths.
 
-The workflow reads an npm automation token from the `NPM_TOKEN` repository secret.
+### From source
 
-A tag with a suffix, such as `v1.3.0-beta.1`, publishes under the `next` dist-tag.
-
-Build the package locally with `bun run build:cli`. The output lands in `cli/dist`.
-
-## Start from source
-
-Install workspace dependencies.
+You need Bun 1.3.14 or later.
 
 ```bash
 bun install
+cp backend/.env.example backend/.env   # set JWT_SECRET and INITIAL_PASSWORD
+bun run dev:backend                    # terminal 1
+bun run dev:frontend                   # terminal 2
 ```
 
-Configure the backend before production use.
+## Use the gateway
+
+1. Open the dashboard and sign in. The default password is `123456` unless you set `INITIAL_PASSWORD`.
+2. Connect a provider on the Providers page.
+3. Copy an API key from the dashboard.
+4. Point your tool at `http://localhost:20129/v1`. The dashboard port forwards `/v1` too.
+
+Change the password before you expose the server to a network.
+
+## The `routerlm` command
+
+| Command | Purpose |
+|---|---|
+| `routerlm` | Start the server and show the interface menu |
+| `routerlm --port 8080` | Use another dashboard port. Set `BACKEND_PORT` to move the API. |
+| `routerlm --host 127.0.0.1` | Accept local connections only. The default is `0.0.0.0`. |
+| `routerlm --no-browser` | Don't open the browser |
+| `routerlm --log` | Show server logs |
+| `routerlm --skip-update` | Skip the update check |
+| `routerlm connect <url>` | Point local CLI tools (Claude Code, Codex, OpenCode, …) at a LobakAI server |
+| `routerlm show [tool…]` | Print each CLI tool's current base URL, masked key, and models |
+
+`routerlm` replaces an instance that is already running. Update with `npm i -g @ciwergrp/routerlm@latest`.
+
+See [cli/README.md](cli/README.md) for every `connect` option.
+
+## Data
+
+| Install | Database |
+|---|---|
+| npm or source on macOS and Linux | `~/.lobakai/db/data.sqlite` |
+| npm or source on Windows | `%APPDATA%/lobakai/db/data.sqlite` |
+| Docker | `/app/data/data.sqlite` |
+
+An existing `~/.9router` folder keeps working when `~/.lobakai` does not exist. Set `DATA_DIR` to use another folder.
+
+The backend can import a legacy SQLite database once. Set `LEGACY_DATABASE_PATH`, then run `bun run --cwd backend import:legacy`. The source database stays unchanged.
+
+## Self-hosting from source
 
 ```bash
-cp backend/.env.example backend/.env
+bun run build            # build the dashboard
+bun run start:backend    # API on 20129
+bun run preview:frontend # dashboard on 20130
 ```
 
-Set `JWT_SECRET` and `INITIAL_PASSWORD` in `backend/.env`.
+Use `ecosystem.config.cjs` for PM2, or `docker compose up -d` for Docker.
 
-Start the backend in one terminal.
+## Development
 
-```bash
-bun run dev:backend
-```
+| Task | Command |
+|---|---|
+| Type-check | `bun run typecheck` |
+| Test | `bun run test` |
+| Build the npm package | `bun run build:cli` (output in `cli/dist`) |
 
-Start the frontend in another terminal.
+## Releases
 
-```bash
-bun run dev:frontend
-```
+Push a `v*.*.*` tag to release. The tag sets the version.
 
-Open the dashboard at `http://127.0.0.1:20130`.
+| Workflow | Publishes |
+|---|---|
+| `docker-publish.yml` | `ghcr.io/yhagus/routerlm-oss` with the version, `major.minor`, and `latest` tags |
+| `npm-publish.yml` | `@ciwergrp/routerlm` on npm, with provenance |
 
-Send gateway requests to `http://127.0.0.1:20129/v1`.
+A tag with a suffix, such as `v1.3.0-beta.1`, publishes to the npm `next` dist-tag. `latest` stays on the last stable release.
 
-## Production commands
-
-Build the dashboard before previewing it.
-
-```bash
-bun run build
-bun run start:backend
-```
-
-Start the dashboard preview in another process.
-
-```bash
-bun run preview:frontend
-```
-
-Use `ecosystem.config.cjs` for PM2 deployments.
-
-Use `docker compose up -d` for Docker deployments.
-
-## Verification
-
-Run the complete validation suite before release.
-
-```bash
-bun run typecheck
-bun run test
-```
-
-## Data migration
-
-The backend can import a legacy SQLite database once.
-
-Set `LEGACY_DATABASE_PATH` to the source database.
-
-Run `bun run --cwd backend import:legacy`.
-
-The importer does not modify the source database.
+The npm workflow reads a token from the `NPM_TOKEN` repository secret. The token needs read and write access to the `@ciwergrp` scope and must bypass 2FA.
 
 ## Documentation
 
-Read `gitbook/content/en/` for user documentation sources.
+User documentation sources live in `gitbook/content/en/`. See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
+## License
+
+MIT. The `routerlm` launcher and the `connect` and `show` commands are ported from [9router](https://github.com/decolua/9router).
