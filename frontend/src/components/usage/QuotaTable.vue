@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Port of v1 usage/components/ProviderLimits/QuotaTable.js
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import {
   formatBalance,
   formatResetTime,
@@ -14,8 +14,20 @@ const props = withDefaults(
     compact?: boolean;
     sortMode?: string;
     showSortLabel?: boolean;
+    // Show at most this many rows at once. CodeBuddy CLI connections can carry
+    // 30+ bonus packs. 0 shows everything.
+    maxVisible?: number;
+    // How the overflow is handled: a "Show all" toggle (default) or left/right
+    // pagination. 0 maxVisible disables both.
+    paginate?: boolean;
   }>(),
-  { compact: false, sortMode: "default", showSortLabel: false },
+  {
+    compact: false,
+    sortMode: "default",
+    showSortLabel: false,
+    maxVisible: 5,
+    paginate: false,
+  },
 );
 
 const normalizedQuotas = computed(() =>
@@ -43,6 +55,46 @@ const sortedQuotas = computed(() => {
   }
   return normalizedQuotas.value;
 });
+
+const overflows = computed(
+  () => props.maxVisible > 0 && sortedQuotas.value.length > props.maxVisible,
+);
+
+// Toggle mode ("Show all") — used on the provider detail cards.
+const expanded = ref(false);
+const canCollapse = computed(() => overflows.value && !props.paginate);
+const hiddenCount = computed(
+  () => sortedQuotas.value.length - props.maxVisible,
+);
+
+// Pagination mode (left/right) — used on the Quota Tracker, where one account
+// can hold many quota rows.
+const canPaginate = computed(() => overflows.value && props.paginate);
+const page = ref(0);
+const pageCount = computed(() =>
+  props.maxVisible > 0
+    ? Math.max(1, Math.ceil(sortedQuotas.value.length / props.maxVisible))
+    : 1,
+);
+// Keep the page in range when the quota list shrinks (e.g. after a refresh).
+watch(pageCount, (count) => {
+  if (page.value > count - 1) page.value = count - 1;
+});
+
+const visibleQuotas = computed(() => {
+  if (canPaginate.value) {
+    const start = page.value * props.maxVisible;
+    return sortedQuotas.value.slice(start, start + props.maxVisible);
+  }
+  if (canCollapse.value && !expanded.value) {
+    return sortedQuotas.value.slice(0, props.maxVisible);
+  }
+  return sortedQuotas.value;
+});
+const pageStart = computed(() => page.value * props.maxVisible + 1);
+const pageEnd = computed(() =>
+  Math.min((page.value + 1) * props.maxVisible, sortedQuotas.value.length),
+);
 
 function formatResetTimeDisplay(resetTime: string | null) {
   if (!resetTime) return null;
@@ -117,7 +169,7 @@ function colors(remaining: number) {
       <table class="w-full table-fixed text-left">
         <tbody>
           <tr
-            v-for="quota in sortedQuotas"
+            v-for="quota in visibleQuotas"
             :key="`${quota.name}-${quota.index}`"
             class="border-b border-border/60 transition-colors hover:bg-muted/50"
           >
@@ -208,6 +260,47 @@ function colors(remaining: number) {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <button
+      v-if="canCollapse"
+      type="button"
+      class="flex w-full items-center justify-center gap-1 rounded-md py-1 font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+      :class="compact ? 'text-[10px]' : 'text-xs'"
+      @click.stop="expanded = !expanded"
+    >
+      <span class="material-symbols-outlined text-[14px]">{{
+        expanded ? "expand_less" : "expand_more"
+      }}</span>
+      {{ expanded ? "Show less" : `Show all (${hiddenCount} more)` }}
+    </button>
+
+    <div
+      v-if="canPaginate"
+      class="flex items-center justify-between gap-2 pt-0.5 font-medium text-muted-foreground"
+      :class="compact ? 'text-[10px]' : 'text-xs'"
+    >
+      <button
+        type="button"
+        class="grid size-5 place-items-center rounded-md transition-colors hover:bg-muted/50 hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+        :disabled="page <= 0"
+        aria-label="Previous quotas"
+        @click.stop="page = Math.max(0, page - 1)"
+      >
+        <span class="material-symbols-outlined text-[14px]">chevron_left</span>
+      </button>
+      <span class="tabular-nums"
+        >{{ pageStart }}–{{ pageEnd }} of {{ sortedQuotas.length }}</span
+      >
+      <button
+        type="button"
+        class="grid size-5 place-items-center rounded-md transition-colors hover:bg-muted/50 hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+        :disabled="page >= pageCount - 1"
+        aria-label="Next quotas"
+        @click.stop="page = Math.min(pageCount - 1, page + 1)"
+      >
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+      </button>
     </div>
   </div>
 </template>

@@ -1217,6 +1217,7 @@ watch([page, pageSize, accountFilter, providerFilter], () => {
                 v-else
                 :quotas="quotaData[conn.id]?.quotas || []"
                 compact
+                paginate
                 sort-mode="default"
                 :show-sort-label="
                   conn.provider === 'codex' && quotaSortMode !== 'default'
