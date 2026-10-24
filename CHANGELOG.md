@@ -1,3 +1,19 @@
+# v1.3.0 (2026-10-24)
+
+## npm package
+
+- Install with `npm install -g routerlm`, then start with `routerlm`. Bun ships with the package.
+- The dashboard runs on port 20130 and the API on port 20129, as in Docker.
+- `routerlm` takes the 9router options: `--port`, `--host`, `--no-browser`, `--log`, `--skip-update`, `--help` and `--version`.
+- `routerlm connect <url>` points local CLI tools at a remote server. `routerlm show` prints their current config.
+- Each version tag publishes the package to npm.
+
+## Providers
+
+- "Export API Keys" in the bulk actions menu downloads the selected API keys as a text file, one key per line.
+- The ZenMux logo shows on the provider detail page.
+- "Total Available" lists each currency on its own, such as "0 USD + 0.266 CNY", instead of adding them up.
+
 # v1.2.0 (2026-10-19)
 
 ## Per-account concurrency
