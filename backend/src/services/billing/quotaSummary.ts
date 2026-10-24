@@ -37,6 +37,8 @@ export interface ProviderQuotaSummary {
   kind: "balance" | "percentage" | null;
   totalBalance: number | null;
   unit: string | null;
+  /** Balance totals per unit, in first-seen order; mixed units (e.g. USD + CNY) must not be summed. */
+  balancesByUnit: Array<{ unit: string; balance: number }>;
   remainingPercent: number | null;
   totalCreditBalance: number;
   quotaMeters: SummaryQuotaMeter[];
@@ -271,6 +273,7 @@ export function computeProviderQuotaSummary(
     kind: null,
     totalBalance: null,
     unit: null,
+    balancesByUnit: [],
     remainingPercent: null,
     totalCreditBalance: 0,
     quotaMeters: [],
@@ -333,6 +336,12 @@ export function computeProviderQuotaSummary(
     summary.kind = "balance";
     summary.totalBalance = balanceRows.reduce((sum, row) => sum + (row.balance || 0), 0);
     summary.unit = balanceRows.find((row) => row.unit)?.unit || "points";
+    const byUnit = new Map<string, number>();
+    for (const row of balanceRows) {
+      const unit = row.unit || "points";
+      byUnit.set(unit, (byUnit.get(unit) || 0) + (row.balance || 0));
+    }
+    summary.balancesByUnit = [...byUnit].map(([unit, balance]) => ({ unit, balance }));
   } else {
     summary.kind = "percentage";
     summary.remainingPercent = weightedRemaining(allRows);

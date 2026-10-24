@@ -347,6 +347,15 @@ const codexPlanCounts = computed<Array<[string, number]>>(() => {
   );
 });
 
+// Mixed currencies are listed side by side ("0 USD + 0.266 CNY"), never summed.
+function formatBalancesByUnit(
+  balances: Array<{ unit: string; balance: number }>,
+): string {
+  return balances
+    .map(({ unit, balance }) => `${formatBalance(balance)} ${unit}`)
+    .join(" + ");
+}
+
 const quotaSummary = computed(() => {
   // Prefer the server-side aggregate: it covers every active connection of
   // the provider, not just the ones rendered on the current page.
@@ -355,7 +364,9 @@ const quotaSummary = computed(() => {
     if (aggregate.kind === "balance") {
       return {
         kind: "balance" as const,
-        value: `${formatBalance(aggregate.totalBalance || 0)} ${aggregate.unit || "points"}`,
+        value: aggregate.balancesByUnit?.length
+          ? formatBalancesByUnit(aggregate.balancesByUnit)
+          : `${formatBalance(aggregate.totalBalance || 0)} ${aggregate.unit || "points"}`,
         remaining: null,
       };
     }
@@ -370,14 +381,16 @@ const quotaSummary = computed(() => {
   if (!meters.length) return null;
   const balanceMeters = meters.filter((meter) => meter.kind === "balance");
   if (balanceMeters.length) {
-    const totalBalance = balanceMeters.reduce(
-      (sum, meter) => sum + meter.balance,
-      0,
-    );
-    const unit = balanceMeters[0].unit || "points";
+    const byUnit = new Map<string, number>();
+    for (const meter of balanceMeters) {
+      const unit = meter.unit || "points";
+      byUnit.set(unit, (byUnit.get(unit) || 0) + meter.balance);
+    }
     return {
       kind: "balance" as const,
-      value: `${formatBalance(totalBalance)} ${unit}`,
+      value: formatBalancesByUnit(
+        [...byUnit].map(([unit, balance]) => ({ unit, balance })),
+      ),
       remaining: null,
     };
   }

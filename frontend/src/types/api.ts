@@ -53,6 +53,7 @@ export interface ProviderQuotaSummary {
   kind: "balance" | "percentage" | null;
   totalBalance: number | null;
   unit: string | null;
+  balancesByUnit?: Array<{ unit: string; balance: number }>;
   remainingPercent: number | null;
   totalCreditBalance: number;
   quotaMeters: SummaryQuotaMeter[];

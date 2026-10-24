@@ -110,6 +110,18 @@ describe("quotaSummary helpers", () => {
     expect(summary.unit).toBe("points");
   });
 
+  test("computeProviderQuotaSummary keeps mixed-currency balances apart", () => {
+    const summary = computeProviderQuotaSummary("deepseek-harness", 2, [
+      readySnapshot({ quotas: { "Recharge (USD)": { balance: 0, unit: "USD" }, "Bonus (CNY)": { balance: 0.2, unit: "CNY" } } }),
+      readySnapshot({ quotas: { "Bonus (CNY)": { balance: 0.066, unit: "CNY" } } }),
+    ], 2, 0);
+    expect(summary.kind).toBe("balance");
+    expect(summary.balancesByUnit).toEqual([
+      { unit: "USD", balance: 0 },
+      { unit: "CNY", balance: 0.266 },
+    ]);
+  });
+
   test("computeProviderQuotaSummary weights percentages across connections", () => {
     const summary = computeProviderQuotaSummary("claude", 2, [
       readySnapshot({ quotas: { "session (5h)": { used: 20, total: 100 } } }),
@@ -138,6 +150,7 @@ describe("quotaSummary helpers", () => {
       kind: null,
       totalBalance: null,
       unit: null,
+      balancesByUnit: [],
       remainingPercent: null,
       totalCreditBalance: 0,
       quotaMeters: [],
