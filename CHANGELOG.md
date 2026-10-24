@@ -1,3 +1,24 @@
+# v1.5.0 (2026-10-24)
+
+## Providers
+
+- Added the OrcaRouter provider. Connect it with an OrcaRouter API key (`sk-orca-...`).
+- OrcaRouter fetches its model list from the account. Embedding, image and video models are left out.
+- On a provider's detail page, an "All Models / Only Free" filter shows next to the Thinking select. "Only Free" lists models whose id ends in `-free` or `:free`. The filter shows only when the provider has a free model.
+
+## Dashboard
+
+- A "What's new" button shows in the header after an update. It opens the change log for the running version.
+- The Change Log dialog opens on one version. Select "Show all versions" to see the full history.
+
+## npm package
+
+- The command is now `rlm`. Start LobakAI with `rlm`, `rlm connect <url>` and `rlm show`. The `routerlm` command is removed. The package name stays `@ciwergrp/routerlm`.
+
+## Releases
+
+- Each version tag creates a GitHub release. Its notes come from the matching section of this change log.
+
 # v1.4.0 (2026-10-24)
 
 ## Providers
