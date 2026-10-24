@@ -1,3 +1,24 @@
+# v1.4.0 (2026-10-24)
+
+## Providers
+
+- Removed the CodeBuddy CN and Dudul providers. CodeBuddy CLI is unaffected.
+- Updated the Claude Code provider to match the 2.1.310 release (CLI version, bundled SDK version, and beta flags).
+
+## Quota
+
+- Quota lists longer than 5 items are now condensed. On a provider's detail page a "Show all" toggle reveals the rest.
+- On Quota Tracker, each account pages through its quota items with left/right controls. The number of accounts is not limited.
+
+## Vision Adapter
+
+- The model picker now scopes by provider: pick a provider, then choose from its models, instead of typing the id by hand.
+
+## Navigation
+
+- Queue Jobs moved under the "Logs" group.
+- Removed the "Free Tracker" item from the sidebar.
+
 # v1.3.0 (2026-10-24)
 
 ## npm package
