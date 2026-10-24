@@ -1,5 +1,5 @@
 /**
- * `routerlm show [tools…]` — print the LobakAI settings currently written in
+ * `rlm show [tools…]` — print the LobakAI settings currently written in
  * each CLI tool's LOCAL config: base URL, (masked) API key and models.
  *
  * Read-only and offline: never contacts a server and never prints a full key.
@@ -9,14 +9,14 @@ const { TOOLS, TOOL_IDS, resolveTools } = require("./connectTools");
 const { __test__: { maskKey } } = require("./connect");
 
 const HELP = `
-Usage: routerlm show [tool…] [options]
+Usage: rlm show [tool…] [options]
 
 Show the LobakAI settings each CLI tool on THIS machine is currently using.
 Read-only: reads local config files, contacts no server.
 
-  routerlm show                 # every supported tool
-  routerlm show claude          # one tool
-  routerlm show claude codex    # several (or: --tools claude,codex)
+  rlm show                 # every supported tool
+  rlm show claude          # one tool
+  rlm show claude codex    # several (or: --tools claude,codex)
 
 Tools: ${TOOL_IDS.join(", ")}, all
 

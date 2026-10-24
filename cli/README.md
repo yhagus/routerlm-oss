@@ -1,12 +1,12 @@
-# routerlm
+# @ciwergrp/routerlm
 
-LobakAI is a local AI gateway and dashboard. The `@ciwergrp/routerlm` package installs it, and the `routerlm` command starts it.
+LobakAI is a local AI gateway and dashboard. The `@ciwergrp/routerlm` package installs it, and the `rlm` command starts it.
 
 ## Install and start
 
 ```bash
 npm install -g @ciwergrp/routerlm
-routerlm
+rlm
 
 # Or run it without installing
 npx @ciwergrp/routerlm
@@ -21,13 +21,13 @@ Bun ships with the package. You only need Node.js 18 or later and npm.
 ## Options
 
 ```bash
-routerlm                    # Start with default settings
-routerlm --port 8080        # Dashboard port (default 20130)
-routerlm --host 127.0.0.1   # Local-only (default 0.0.0.0)
-routerlm --no-browser       # Don't open the browser
-routerlm --log              # Show server logs
-routerlm --skip-update      # Skip the update check
-routerlm --help             # Show all options
+rlm                    # Start with default settings
+rlm --port 8080        # Dashboard port (default 20130)
+rlm --host 127.0.0.1   # Local-only (default 0.0.0.0)
+rlm --no-browser       # Don't open the browser
+rlm --log              # Show server logs
+rlm --skip-update      # Skip the update check
+rlm --help             # Show all options
 ```
 
 Set `BACKEND_PORT` to move the API off port 20129.
@@ -36,7 +36,7 @@ The default host is `0.0.0.0`, so other machines on your network can reach the s
 
 ## Connect CLI tools to a remote server
 
-`routerlm connect` points the CLI tools on this machine at a LobakAI server that runs somewhere else. It starts no local server.
+`rlm connect` points the CLI tools on this machine at a LobakAI server that runs somewhere else. It starts no local server.
 
 ```bash
 npx @ciwergrp/routerlm connect http://<server-host>:20130                       # pick tools interactively
@@ -59,18 +59,18 @@ Supported tools: `claude`, `codex`, `opencode`, `droid`, `crush`, `kilo`, `cline
 | `--print-env` | Also print `OPENAI_BASE_URL` and `OPENAI_API_KEY`. |
 | `--reset` | Remove the LobakAI settings from the selected tools. |
 
-Run `routerlm connect --help` for details.
+Run `rlm connect --help` for details.
 
 Over plain `http://`, the password and API key travel unencrypted. Use a trusted LAN or VPN, or put HTTPS in front.
 
 ## Check the current config
 
-`routerlm show` prints the base URL, masked API key, and models each tool uses. It reads local files only.
+`rlm show` prints the base URL, masked API key, and models each tool uses. It reads local files only.
 
 ```bash
-routerlm show                 # every supported tool
-routerlm show claude codex    # selected tools
-routerlm show claude --json   # machine-readable
+rlm show                 # every supported tool
+rlm show claude codex    # selected tools
+rlm show claude --json   # machine-readable
 ```
 
 ## Data location
@@ -82,7 +82,7 @@ An existing `~/.9router` folder keeps working when `~/.lobakai` does not exist. 
 
 ## Acknowledgments
 
-The `routerlm` launcher and the `connect` and `show` commands are ported from the [9router](https://github.com/decolua/9router) CLI (MIT).
+The `rlm` launcher and the `connect` and `show` commands are ported from the [9router](https://github.com/decolua/9router) CLI (MIT).
 
 ## License
 

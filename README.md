@@ -3,7 +3,9 @@
 # LobakAI
 
 [![npm](https://img.shields.io/npm/v/@ciwergrp/routerlm.svg)](https://www.npmjs.com/package/@ciwergrp/routerlm)
+[![npm downloads](https://img.shields.io/npm/dt/@ciwergrp/routerlm.svg?label=npm%20downloads)](https://www.npmjs.com/package/@ciwergrp/routerlm)
 [![GHCR](https://img.shields.io/badge/GHCR-yhagus%2Frouterlm--oss-blue?logo=github)](https://github.com/yhagus/routerlm-oss/pkgs/container/routerlm-oss)
+[![GHCR downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyhagus%2Frouterlm-oss%2Fbadges%2Fghcr-downloads.json)](https://github.com/yhagus/routerlm-oss/pkgs/container/routerlm-oss)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 LobakAI is a local AI gateway with a dashboard.
@@ -25,7 +27,7 @@ You need Node.js 18 or later. The package ships Bun.
 
 ```bash
 npm install -g @ciwergrp/routerlm
-routerlm
+rlm
 ```
 
 The dashboard opens at `http://localhost:20130/dashboard`.
@@ -63,20 +65,20 @@ bun run dev:frontend                   # terminal 2
 
 Change the password before you expose the server to a network.
 
-## The `routerlm` command
+## The `rlm` command
 
 | Command | Purpose |
 |---|---|
-| `routerlm` | Start the server and show the interface menu |
-| `routerlm --port 8080` | Use another dashboard port. Set `BACKEND_PORT` to move the API. |
-| `routerlm --host 127.0.0.1` | Accept local connections only. The default is `0.0.0.0`. |
-| `routerlm --no-browser` | Don't open the browser |
-| `routerlm --log` | Show server logs |
-| `routerlm --skip-update` | Skip the update check |
-| `routerlm connect <url>` | Point local CLI tools (Claude Code, Codex, OpenCode, …) at a LobakAI server |
-| `routerlm show [tool…]` | Print each CLI tool's current base URL, masked key, and models |
+| `rlm` | Start the server and show the interface menu |
+| `rlm --port 8080` | Use another dashboard port. Set `BACKEND_PORT` to move the API. |
+| `rlm --host 127.0.0.1` | Accept local connections only. The default is `0.0.0.0`. |
+| `rlm --no-browser` | Don't open the browser |
+| `rlm --log` | Show server logs |
+| `rlm --skip-update` | Skip the update check |
+| `rlm connect <url>` | Point local CLI tools (Claude Code, Codex, OpenCode, …) at a LobakAI server |
+| `rlm show [tool…]` | Print each CLI tool's current base URL, masked key, and models |
 
-`routerlm` replaces an instance that is already running. Update with `npm i -g @ciwergrp/routerlm@latest`.
+`rlm` replaces an instance that is already running. Update with `npm i -g @ciwergrp/routerlm@latest`.
 
 See [cli/README.md](cli/README.md) for every `connect` option.
 
@@ -88,9 +90,17 @@ See [cli/README.md](cli/README.md) for every `connect` option.
 | npm or source on Windows | `%APPDATA%/lobakai/db/data.sqlite` |
 | Docker | `/app/data/data.sqlite` |
 
-An existing `~/.9router` folder keeps working when `~/.lobakai` does not exist. Set `DATA_DIR` to use another folder.
+Set `DATA_DIR` to use another folder.
 
-The backend can import a legacy SQLite database once. Set `LEGACY_DATABASE_PATH`, then run `bun run --cwd backend import:legacy`. The source database stays unchanged.
+## Coming from 9router
+
+LobakAI is based on [9router](https://github.com/decolua/9router) and stays backward compatible with its database. Reusing an existing 9router database is fine:
+
+- When `~/.lobakai` does not exist, LobakAI uses an existing `~/.9router` folder as is.
+- Or import a 9router database once: set `LEGACY_DATABASE_PATH`, then run `bun run --cwd backend import:legacy`. The source database stays unchanged.
+
+> [!WARNING]
+> Going back is not supported. LobakAI adds, renames, and removes providers, so its provider list no longer matches 9router's. Loading a LobakAI database or a "Download Backup" file into 9router can leave connections under providers 9router does not know, and those connections can be dropped together with their credentials. Keep a copy of your 9router database before you switch, and do not import a LobakAI backup into 9router.
 
 ## Self-hosting from source
 
@@ -118,6 +128,11 @@ Push a `v*.*.*` tag to release. The tag sets the version.
 |---|---|
 | `docker-publish.yml` | `ghcr.io/yhagus/routerlm-oss` with the version, `major.minor`, and `latest` tags |
 | `npm-publish.yml` | `@ciwergrp/routerlm` on npm, with provenance |
+| `release.yml` | A GitHub release for the tag. Its notes come from that version's section in `CHANGELOG.md`, plus install commands. |
+
+Write the `CHANGELOG.md` section for a version before you push its tag.
+
+`badges.yml` refreshes the GHCR download badge once a day. GitHub has no API for container download counts, so it reads the total from the package page and writes `ghcr-downloads.json` to the `badges` branch.
 
 A tag with a suffix, such as `v1.3.0-beta.1`, publishes to the npm `next` dist-tag. `latest` stays on the last stable release.
 
@@ -129,4 +144,4 @@ User documentation sources live in `gitbook/content/en/`. See [CHANGELOG.md](CHA
 
 ## License
 
-MIT. The `routerlm` launcher and the `connect` and `show` commands are ported from [9router](https://github.com/decolua/9router).
+MIT. The `rlm` launcher and the `connect` and `show` commands are ported from [9router](https://github.com/decolua/9router).

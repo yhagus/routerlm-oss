@@ -1,0 +1,77 @@
+name: GitHub release
+
+# Every version tag gets a GitHub release. The notes are that version's
+# section of CHANGELOG.md plus install commands, so write the changelog
+# entry before pushing the tag. Re-running updates the existing release.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the previous tag, for the compare link
+
+      - name: Write release notes
+        run: |
+          tag="$GITHUB_REF_NAME"
+          version="${tag#v}"
+          repo_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+
+          # Body of the "# v<version> (<date>)" heading, up to the next version heading.
+          awk -v tag="$tag" '
+            index($0, "# " tag " ") == 1 || $0 == "# " tag { found = 1; next }
+            found && /^# v/ { exit }
+            found { print }
+          ' CHANGELOG.md > section.md
+
+          previous="$(git describe --tags --abbrev=0 --match 'v*.*.*' "$tag^" 2>/dev/null || true)"
+
+          {
+            if grep -q '[^[:space:]]' section.md; then
+              cat section.md
+            else
+              echo "No CHANGELOG.md entry for $tag."
+              echo
+            fi
+            echo "## Install"
+            echo
+            echo '```bash'
+            echo "npm install -g @ciwergrp/routerlm@$version"
+            echo "rlm"
+            echo '```'
+            echo
+            echo '```bash'
+            echo "docker pull ghcr.io/$GITHUB_REPOSITORY:$version"
+            echo '```'
+            echo
+            echo "- npm: https://www.npmjs.com/package/@ciwergrp/routerlm/v/$version"
+            echo "- Container: $repo_url/pkgs/container/${GITHUB_REPOSITORY#*/}"
+            if [ -n "$previous" ]; then
+              echo
+              echo "**Full changelog:** $repo_url/compare/$previous...$tag"
+            fi
+          } > notes.md
+          cat notes.md
+
+      # Prereleases (v1.5.0-beta.1) are marked as such and never become "Latest".
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          if [[ "$tag" == *-* ]]; then flags=(--prerelease --latest=false); else flags=(--latest); fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --title "LobakAI $tag" --notes-file notes.md "${flags[@]}"
+          else
+            gh release create "$tag" --verify-tag --title "LobakAI $tag" --notes-file notes.md "${flags[@]}"
+          fi

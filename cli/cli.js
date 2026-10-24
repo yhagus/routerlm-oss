@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `routerlm` launcher. Mirrors the 9router CLI: start the server, check npm for
+// `rlm` launcher. Mirrors the 9router CLI: start the server, check npm for
 // a newer release in parallel, then show the interface menu. The server itself
 // is the Bun backend (app/backend) serving the API on BACKEND_PORT and the built
 // dashboard (app/frontend/dist) on --port.
@@ -14,8 +14,8 @@ const path = require("path");
 const pkg = require("./package.json");
 const args = process.argv.slice(2);
 
-// `routerlm connect <url>` configures local CLI tools against a remote server and
-// `routerlm show` prints what they're set to. Neither starts a local server.
+// `rlm connect <url>` configures local CLI tools against a remote server and
+// `rlm show` prints what they're set to. Neither starts a local server.
 if (args[0] === "connect" || args[0] === "show") {
   const { run } = require(args[0] === "show" ? "./src/commands/show" : "./src/commands/connect");
   run(args.slice(1))
@@ -28,7 +28,7 @@ if (args[0] === "connect" || args[0] === "show") {
 }
 
 // The npm package is scoped; the command it installs is not.
-const APP_NAME = "routerlm";
+const APP_NAME = "rlm";
 const INSTALL_CMD_LATEST = `npm i -g ${pkg.name}@latest --prefer-online`;
 const DEFAULT_PORT = 20130;
 const DEFAULT_HOST = "0.0.0.0";
@@ -204,7 +204,7 @@ function compareVersions(a, b) {
   return 0;
 }
 
-// Kill earlier routerlm servers. Matches this install's backend entry file only,
+// Kill earlier rlm servers. Matches this install's backend entry file only,
 // so other Bun/Node processes are never touched.
 function killAllAppProcesses() {
   const pids = [];

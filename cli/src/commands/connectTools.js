@@ -1,5 +1,5 @@
 /**
- * Per-tool config writers for `routerlm connect` (ported from 9router's CLI).
+ * Per-tool config writers for `rlm connect` (ported from 9router's CLI).
  * Provider ids match backend/src/services/platform/cliTools.ts ("lobakai") so a
  * tool configured here is recognized by the dashboard's CLI tools page.
  *

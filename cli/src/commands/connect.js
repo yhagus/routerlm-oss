@@ -1,5 +1,5 @@
 /**
- * `routerlm connect <server-url>` — point local CLI tools (Claude Code, Codex, …) at a
+ * `rlm connect <server-url>` — point local CLI tools (Claude Code, Codex, …) at a
  * REMOTE LobakAI server. Nothing runs locally: we log in with the dashboard
  * password, reuse/create an API key for this machine, then write the tool's
  * settings files (see connectTools.js). Works via `npx @ciwergrp/routerlm connect …` with no global install.
@@ -14,7 +14,7 @@ const { TOOL_IDS, CLAUDE_MODELS, resolveTools } = require("./connectTools");
 const { getDataDir } = require("../dataDir");
 
 const HELP = `
-Usage: routerlm connect <server-url> [options]
+Usage: rlm connect <server-url> [options]
 
 Configure CLI tools on THIS machine to use a remote LobakAI server.
 No local server is started. Run without installing:
