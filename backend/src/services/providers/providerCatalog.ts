@@ -165,6 +165,42 @@ const bitdeerEntry: RegistryEntry = {
   passthroughModels: true,
 };
 
+const orcarouterEntry: RegistryEntry = {
+  id: "orcarouter",
+  priority: 124,
+  alias: "orcarouter",
+  display: {
+    name: "OrcaRouter",
+    color: "#2563EB",
+    textIcon: "OR",
+    website: "https://www.orcarouter.ai",
+    notice: { apiKeyUrl: "https://www.orcarouter.ai/console" },
+  },
+  category: "apikey",
+  authType: "apikey",
+  authModes: ["apikey"],
+  serviceKinds: ["llm"],
+  transport: {
+    baseUrl: "https://api.orcarouter.ai/v1/chat/completions",
+    validateUrl: "https://api.orcarouter.ai/v1/models",
+    format: "openai",
+  },
+  // Every chat model speaks chat completions; only a subset supports
+  // /v1/responses or /v1/messages, so keep the single universal transport.
+  transports: [
+    { format: "openai", baseUrl: "https://api.orcarouter.ai/v1/chat/completions", auth: { combined: true, header: "Authorization", scheme: "bearer" } },
+  ] satisfies ProviderTransport[],
+  models: [
+    { id: "orcarouter/fusion", name: "Fusion" },
+    { id: "orcarouter/free", name: "Free" },
+    { id: "openai/gpt-4o-mini", name: "GPT-4o mini" },
+    { id: "anthropic/claude-sonnet-4.6", name: "Claude Sonnet 4.6" },
+    { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+    { id: "deepseek/deepseek-chat", name: "DeepSeek Chat" },
+  ],
+  passthroughModels: true,
+};
+
 function entryToCatalog(entry: RegistryEntry): ProviderCatalogEntry {
   const category = typeof entry.category === "string" ? entry.category : null;
   const defaultMode = category === "oauth" ? "oauth" : category === "native" ? "native" : category === "webCookie" ? "cookie" : category === "apikey" ? "apikey" : null;
@@ -197,7 +233,7 @@ function entryToCatalog(entry: RegistryEntry): ProviderCatalogEntry {
   };
 }
 
-const runtimeEntries = [...(registry as RegistryEntry[]), zenmuxEntry, gmiCloudEntry, autoclawEntry, bitdeerEntry];
+const runtimeEntries = [...(registry as RegistryEntry[]), zenmuxEntry, gmiCloudEntry, autoclawEntry, bitdeerEntry, orcarouterEntry];
 const catalog = runtimeEntries.map(entryToCatalog);
 const byId = new Map(catalog.map((entry) => [entry.id, entry]));
 const byAlias = new Map(catalog.flatMap((entry) => [[entry.id, entry], [entry.alias, entry]]));

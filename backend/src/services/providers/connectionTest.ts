@@ -579,6 +579,10 @@ async function testApiKeyConnection(connection: Record<string, any>, effectivePr
         const res = await fetchWithConnectionProxy("https://api-inference.bitdeer.ai/v1/models", { headers: { Authorization: `Bearer ${connection.apiKey}` } }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
       }
+      case "orcarouter": {
+        const res = await fetchWithConnectionProxy("https://api.orcarouter.ai/v1/models", { headers: { Authorization: `Bearer ${connection.apiKey}` } }, effectiveProxy);
+        return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
+      }
       case "experiential-labs": {
         const account = await fetchExperientialLabsAccount(connection.apiKey || "");
         return account
@@ -988,6 +992,11 @@ export async function validateProviderApiKey(runtime: Runtime, body: Record<stri
       case "bitdeer": {
         const bitdeerRes = await fetch("https://api-inference.bitdeer.ai/v1/models", { headers: { Authorization: `Bearer ${apiKey}` } });
         isValid = bitdeerRes.ok;
+        break;
+      }
+      case "orcarouter": {
+        const orcarouterRes = await fetch("https://api.orcarouter.ai/v1/models", { headers: { Authorization: `Bearer ${apiKey}` } });
+        isValid = orcarouterRes.ok;
         break;
       }
       case "experiential-labs": {

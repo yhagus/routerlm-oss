@@ -140,6 +140,27 @@ export async function discoverProviderModels(connection: ProviderConnection, run
       return { ok: false, error: error instanceof Error ? error.message : "ZenMux model discovery failed", url, models: [] as any[]};
     }
   }
+  if (connection.provider === "orcarouter") {
+    const url = getProviderModelDiscoveryUrl("orcarouter");
+    const apiKey = token(connection);
+    if (!url || !apiKey) return { ok: false, status: 401, error: "No OrcaRouter API key found", models: staticModels(connection) };
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { accept: "application/json", authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!response.ok) return { ok: false, status: response.status, error: `Failed to fetch OrcaRouter models: ${response.status}`, url, models: staticModels(connection) };
+      // The catalog also lists embedding, image and video models. Keep the
+      // ones that chat completions can serve.
+      const models = parseModels(await response.json()).filter((model) =>
+        Array.isArray(model.supported_endpoint_types) && model.supported_endpoint_types.includes("openai")
+      );
+      return { ok: true, status: response.status, url, models: models.length ? models : staticModels(connection) };
+    } catch (error: any) {
+      return { ok: false, error: error instanceof Error ? error.message : "OrcaRouter model discovery failed", url, models: staticModels(connection) };
+    }
+  }
   const url = modelUrl(connection);
   if (!url) return { ok: false, error: "Provider has no model discovery URL", models: staticModels(connection) };
   try {

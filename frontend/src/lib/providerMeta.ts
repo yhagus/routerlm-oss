@@ -290,6 +290,21 @@ export const PROVIDER_META: Record<string, ProviderMeta> = {
       type: "openai",
     },
   },
+  orcarouter: {
+    alias: "orcarouter",
+    name: "OrcaRouter",
+    color: "#2563EB",
+    textIcon: "OR",
+    notice: {
+      apiKeyUrl: "https://www.orcarouter.ai/console",
+    },
+    website: "https://www.orcarouter.ai",
+    authModes: ["apikey"],
+    modelsFetcher: {
+      url: "https://api.orcarouter.ai/v1/models",
+      type: "openai",
+    },
+  },
   "glm-cn": {
     alias: "glm-cn",
     name: "GLM (China)",
