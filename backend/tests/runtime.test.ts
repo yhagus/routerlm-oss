@@ -92,6 +92,37 @@ describe("v2 runtime", () => {
     }
   });
 
+  test("exports selected API keys as text, one per line", async () => {
+    const instance = await runtime();
+    try {
+      const first = instance.repos.providers.create({ provider: "zenmux", authType: "apikey", isActive: true, credentials: { apiKey: "sk-first" } });
+      const inactive = instance.repos.providers.create({ provider: "zenmux", authType: "apikey", isActive: false, credentials: { apiKey: "sk-inactive" } });
+      const duplicate = instance.repos.providers.create({ provider: "zenmux", authType: "apikey", isActive: true, credentials: { apiKey: "sk-first" } });
+      instance.repos.providers.create({ provider: "zenmux", authType: "apikey", isActive: true, credentials: { apiKey: "sk-unselected" } });
+      const oauth = instance.repos.providers.create({ provider: "codex", authType: "oauth", isActive: true, credentials: { apiKey: "sk-oauth" } });
+      const app = createApp(instance);
+
+      const response = await app.request("/api/providers/export/api-keys", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ connectionIds: [first.id, inactive.id, duplicate.id, oauth.id] }),
+      });
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("text/plain");
+      expect(response.headers.get("cache-control")).toBe("no-store");
+      expect((await response.text()).split("\n").sort()).toEqual(["sk-first", "sk-inactive"]);
+
+      const empty = await app.request("/api/providers/export/api-keys", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ connectionIds: [oauth.id] }),
+      });
+      expect(empty.status).toBe(400);
+    } finally {
+      instance.close();
+    }
+  });
+
   test("rejects unknown providers and missing credentials", async () => {
     const instance = await runtime();
     try {

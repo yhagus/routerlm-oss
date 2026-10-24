@@ -395,6 +395,11 @@ export const api = {
         method: "POST",
         body: json({ connectionIds }),
       }),
+    exportApiKeys: (connectionIds: string[]) =>
+      request<string>("/api/providers/export/api-keys", {
+        method: "POST",
+        body: json({ connectionIds }),
+      }),
     exportAlimsApiKeys: () =>
       request<string>("/api/providers/export/alims-api-keys", {
         method: "POST",

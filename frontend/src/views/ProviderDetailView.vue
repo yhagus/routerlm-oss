@@ -1325,6 +1325,11 @@ function hasActiveWaitWindow(connection: ProviderConnection): boolean {
 const selectedWaitingConnections = computed(() =>
   selectedConnections.value.filter(hasActiveWaitWindow),
 );
+const selectedApiKeyConnections = computed(() =>
+  selectedConnections.value.filter(
+    (connection) => connection.authType === "apikey",
+  ),
+);
 const selectedUnboundConnections = computed(() =>
   selectedConnections.value.filter(
     (connection) =>
@@ -2139,6 +2144,29 @@ async function exportSelectedCodebuddyIntlCliTokens() {
   }
 }
 
+async function exportSelectedApiKeys() {
+  try {
+    const keys = await api.providers.exportApiKeys(
+      selectedApiKeyConnections.value.map((connection) => connection.id),
+    );
+    const file = new Blob([keys.endsWith("\n") ? keys : `${keys}\n`], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${providerId.value}-api-keys-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    window.alert(
+      error instanceof Error ? error.message : "Unable to export API keys",
+    );
+  }
+}
+
 async function exportAlimsApiKeys() {
   try {
     const keys = await api.providers.exportAlimsApiKeys();
@@ -2413,6 +2441,13 @@ const bulkActionItems = computed<DropdownMenuAction[]>(() => {
     );
   }
 
+  if (selectedApiKeyConnections.value.length) {
+    items.push({
+      key: "export-api-keys",
+      label: `Export API Keys (${selectedApiKeyConnections.value.length})`,
+    });
+  }
+
   if (activePools.value.length) {
     items.push({
       key: "apply-proxy",
@@ -2476,6 +2511,9 @@ async function handleBulkAction(key: string) {
       break;
     case "clear-wait":
       await handleBulkClearWait();
+      break;
+    case "export-api-keys":
+      await exportSelectedApiKeys();
       break;
     case "apply-proxy":
       showBulkProxyModal.value = true;
@@ -3148,6 +3186,10 @@ function capsFor(modelId: string): Record<string, unknown> | null {
   return { ...resolved, ...override };
 }
 
+const headerIconFailed = ref(false);
+watch(providerId, () => {
+  headerIconFailed.value = false;
+});
 const headerIconPath = computed(() => {
   if (isCompatible.value)
     return providerNode.value?.type === "anthropic-compatible"
@@ -3207,12 +3249,24 @@ const knownProvider = computed(
           class="flex size-12 shrink-0 items-center justify-center rounded-lg"
           :style="{ backgroundColor: `${meta.color || '#888'}15` }"
         >
+          <template v-if="providerId === 'zenmux'">
+            <img
+              src="/providers/zenmux-light.svg"
+              :alt="providerName"
+              class="max-h-12 max-w-12 rounded-lg object-contain dark:hidden"
+            />
+            <img
+              src="/providers/zenmux-dark.svg"
+              :alt="providerName"
+              class="hidden max-h-12 max-w-12 rounded-lg object-contain dark:block"
+            />
+          </template>
           <img
-            v-if="headerIconPath"
+            v-else-if="headerIconPath && !headerIconFailed"
             :src="headerIconPath"
             :alt="providerName"
             class="max-h-12 max-w-12 rounded-lg object-contain"
-            @error="headerIconPath = undefined"
+            @error="headerIconFailed = true"
           />
           <span
             v-else

@@ -176,6 +176,19 @@ export function providerRoutes(runtime: Runtime) {
       if (tokens.length === 0) return c.json({ error: "No selected active CodeBuddy Intl CLI connections contain a refresh token" }, 400);
       return c.body(tokens.join("\n"), 200, { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" });
     })
+    .post("/export/api-keys", async (c) => {
+      const body = await c.req.json<{ connectionIds?: unknown }>().catch((): { connectionIds?: unknown } => ({}));
+      const selectedIds = new Set(Array.isArray(body.connectionIds) ? body.connectionIds.filter((id: unknown): id is string => typeof id === "string") : []);
+      const keys = runtime.repos.providers.list(true)
+        .filter((connection) => selectedIds.has(connection.id) && connection.authType === "apikey")
+        .map((connection) => stringValue(connection.credentials.apiKey, connection.data?.apiKey))
+        .filter((key): key is string => key !== null)
+        .map((key) => key.trim())
+        .filter((key) => Boolean(key) && !/[\r\n]/.test(key));
+      const unique = [...new Set(keys)];
+      if (unique.length === 0) return c.json({ error: "No selected connections contain an API key" }, 400);
+      return c.body(unique.join("\n"), 200, { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" });
+    })
     .post("/export/alims-api-keys", (c) => {
       const keys = runtime.repos.providers.list(true)
         .filter((connection) => connection.provider === "alims-intl" && connection.isActive !== false)
