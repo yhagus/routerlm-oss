@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
   ChevronDown,
@@ -20,9 +20,12 @@ import Input from "@/components/ui/input.vue";
 import Label from "@/components/ui/label.vue";
 import Badge from "@/components/ui/badge.vue";
 import Modal from "@/components/ui/modal.vue";
+import Select from "@/components/ui/select.vue";
+import Combobox from "@/components/ui/combobox.vue";
 import ConfirmModal from "@/components/ui/ConfirmModal.vue";
 import { useNotificationStore } from "@/stores/notifications";
 import { getCapabilitiesForModel } from "@/lib/providerCapabilities";
+import { PROVIDER_META } from "@/lib/providerMeta";
 
 const queryClient = useQueryClient();
 const notices = useNotificationStore();
@@ -35,8 +38,53 @@ const adapters = useQuery({
 const showEditor = ref(false);
 const editing = ref<VisionAdapter | null>(null);
 const name = ref("");
-const modelDraft = ref("");
 const models = ref<string[]>([]);
+// Model picker: choose a provider first, then its models are the only options.
+const selectedProvider = ref("");
+const selectedModel = ref("");
+
+const catalog = useQuery({
+  queryKey: ["models", "chat"],
+  queryFn: () => api.models.list("chat"),
+});
+const catalogModels = computed(() => catalog.data.value?.data || []);
+
+function providerLabel(id: string): string {
+  return PROVIDER_META[id]?.name || id;
+}
+
+const providerOptions = computed(() => {
+  const ids = new Set<string>();
+  for (const entry of catalogModels.value) {
+    if (entry.provider) ids.add(entry.provider);
+  }
+  return [...ids]
+    .map((id) => ({ value: id, label: providerLabel(id) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+});
+
+const modelOptions = computed(() => {
+  if (!selectedProvider.value) return [];
+  return catalogModels.value
+    .filter((entry) => entry.provider === selectedProvider.value)
+    .map((entry) => ({
+      value: entry.id,
+      label: entry.name && entry.name !== entry.model ? `${entry.name} · ${entry.id}` : entry.id,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+});
+
+// Reset the model when the provider changes so a stale cross-provider id can't be added.
+watch(selectedProvider, () => {
+  selectedModel.value = "";
+});
+
+function addSelectedModel() {
+  const id = selectedModel.value.trim();
+  if (!id || models.value.includes(id)) return;
+  models.value.push(id);
+  selectedModel.value = "";
+}
 const busy = ref(false);
 const removeTarget = ref<VisionAdapter | null>(null);
 const removing = ref(false);
@@ -46,7 +94,8 @@ function openCreate() {
   editing.value = null;
   name.value = "";
   models.value = [];
-  modelDraft.value = "";
+  selectedProvider.value = "";
+  selectedModel.value = "";
   showEditor.value = true;
 }
 
@@ -54,15 +103,9 @@ function openEdit(adapter: VisionAdapter) {
   editing.value = adapter;
   name.value = adapter.name;
   models.value = Array.isArray(adapter.models) ? [...adapter.models] : [];
-  modelDraft.value = "";
+  selectedProvider.value = "";
+  selectedModel.value = "";
   showEditor.value = true;
-}
-
-function addModel() {
-  const trimmed = modelDraft.value.trim();
-  if (!trimmed || models.value.includes(trimmed)) return;
-  models.value.push(trimmed);
-  modelDraft.value = "";
 }
 
 function removeModel(index: number) {
@@ -310,25 +353,43 @@ const globalAdapter = computed(
 
         <div class="space-y-1.5">
           <Label>Models (ordered)</Label>
-          <div class="flex gap-2">
-            <Input
-              v-model="modelDraft"
-              placeholder="provider/model-id"
-              class="flex-1"
-              @keydown.enter.prevent="addModel"
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <Select
+              v-model="selectedProvider"
+              :options="providerOptions"
+              :placeholder="
+                catalog.isPending.value ? 'Loading providers...' : 'Select provider'
+              "
+              :disabled="catalog.isPending.value"
+              class="sm:w-48"
+              aria-label="Provider"
+            />
+            <Combobox
+              v-model="selectedModel"
+              :options="modelOptions"
+              :disabled="!selectedProvider"
+              allow-custom
+              placeholder="Select model"
+              :search-placeholder="
+                selectedProvider ? 'Search models...' : 'Pick a provider first'
+              "
+              empty-text="No models for this provider"
+              class="min-w-0 flex-1"
+              aria-label="Model"
             />
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              :disabled="!modelDraft.trim()"
-              @click="addModel"
+              :disabled="!selectedModel.trim()"
+              @click="addSelectedModel"
             >
               <Plus class="size-4" />Add
             </Button>
           </div>
           <p class="text-xs text-muted-foreground">
-            Models are tried in order. Vision-capable models are recommended.
+            Pick a provider, then one of its models. Models are tried in order;
+            vision-capable models are recommended.
           </p>
         </div>
 
