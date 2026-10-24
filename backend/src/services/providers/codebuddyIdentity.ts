@@ -1,6 +1,6 @@
 import { getProviderRegistryEntry } from "./providerCatalog";
 
-const CODEBUDDY_PROVIDERS = new Set(["codebuddy-cn", "codebuddy-intl-cli"]);
+const CODEBUDDY_PROVIDERS = new Set(["codebuddy-intl-cli"]);
 
 export function isCodebuddyProvider(provider: string): boolean {
   return CODEBUDDY_PROVIDERS.has(provider);

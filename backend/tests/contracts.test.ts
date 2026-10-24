@@ -69,17 +69,14 @@ describe("v2 dashboard contracts", () => {
     const instance = await runtime();
     const originalFetch = globalThis.fetch;
     clearFreeTrackerCache();
-    globalThis.fetch = (async (input) => {
-      if (String(input).includes("inferhub.dev")) {
-        return new Response("<h2>Example free</h2><div>free/example/model</div>", { status: 200 });
-      }
-      return Response.json({ keys: [{ quota_credits: 100, remaining_credits: 75, status: "active" }] });
+    globalThis.fetch = (async (_input) => {
+      return new Response("<h2>Example free</h2><div>free/example/model</div>", { status: 200 });
     }) as typeof fetch;
     try {
       const app = createApp(instance);
       const feed = await app.request("/api/free-tracker");
       expect(feed.status).toBe(200);
-      expect((await feed.json()).sources.length).toBe(2);
+      expect((await feed.json()).sources.length).toBe(1);
 
       const patch = await app.request("/api/free-tracker", {
         method: "PATCH",

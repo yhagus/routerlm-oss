@@ -38,7 +38,7 @@ export default {
       scheme: "bearer",
     },
     usage: {
-      // Same Tencent billing endpoint as codebuddy-cn/intl — returns the
+      // Tencent CodeBuddy billing endpoint — returns the
       // data.Response.Data.Accounts[] shape. Only the X-IDE-Type: CLI
       // header differs from codebuddy-intl.
       url: "https://www.codebuddy.ai/v2/billing/meter/get-user-resource",

@@ -247,60 +247,6 @@ export async function refreshCodexToken(refreshToken: any, log?: any) {
   }, log);
 }
 
-// CodeBuddy (Tencent) refresh — POST /v2/plugin/auth/token/refresh with the
-// refresh token carried in the X-Refresh-Token header (not a form body),
-// matching the official CodeBuddy CLI. Response: { code: 0, data: <token> }.
-export async function refreshCodebuddyToken(refreshToken: any, log?: any) {
-  if (!refreshToken) return null;
-  return dedupRefresh("codebuddy-cn", refreshToken, async () => {
-    const oauth = PROVIDER_OAUTH["codebuddy-cn"] || {};
-    const response = await fetch(oauth.refreshUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "User-Agent": oauth.userAgent,
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Domain": "copilot.tencent.com",
-        "X-Refresh-Token": refreshToken,
-        "X-Auth-Refresh-Source": "plugin",
-        "X-Product": "SaaS",
-      },
-      body: "{}",
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      log?.error?.("TOKEN_REFRESH", "Failed to refresh CodeBuddy token", {
-        status: response.status,
-        error: errorText,
-      });
-      return null;
-    }
-
-    const data = await response.json();
-    if (data.code !== 0 || !data.data?.accessToken) {
-      log?.error?.("TOKEN_REFRESH", "CodeBuddy token refresh returned no token", {
-        code: data.code,
-        msg: data.msg,
-      });
-      return null;
-    }
-
-    log?.info?.("TOKEN_REFRESH", "Successfully refreshed CodeBuddy token", {
-      hasNewAccessToken: !!data.data.accessToken,
-      hasNewRefreshToken: !!data.data.refreshToken,
-      expiresIn: data.data.expiresIn,
-    });
-
-    return {
-      accessToken: data.data.accessToken,
-      refreshToken: data.data.refreshToken || refreshToken,
-      expiresIn: data.data.expiresIn,
-    };
-  }, log);
-}
-
 // CodeBuddy International CLI refresh — codebuddy.ai token endpoint with the CLI platform.
 export async function refreshCodebuddyIntlCliToken(refreshToken: any, log?: any) {
   if (!refreshToken) return null;

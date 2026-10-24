@@ -30,7 +30,6 @@ describe("v2 specialized executor path", () => {
     expect(getV2Executor("codex")).toBeTruthy();
     expect(getV2Executor("qoder")).toBeTruthy();
     expect(getV2Executor("gcli")).toBe(getV2Executor("grok-cli"));
-    expect(getV2Executor("codebuddy")).toBe(getV2Executor("codebuddy-cn"));
     expect(getV2Executor("openai")).toBeTruthy();
   });
 

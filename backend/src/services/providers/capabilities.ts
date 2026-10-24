@@ -116,8 +116,7 @@ export const MODEL_CAPABILITIES = {
 const CODEX_GPT_56_SOL_CAPS  = { vision: true, reasoning: true, search: true, thinkingFormat: "openai", contextWindow: 372000, maxOutput: 128000 };
 const CODEX_GPT_56_DEFAULT_CAPS = { vision: true, reasoning: true, search: true, thinkingFormat: "openai", contextWindow: 272000, maxOutput: 128000 };
 
-// CodeBuddy gateway model metadata (CN, intl, and intl-CLI share the same
-// catalog). vision = upstream supportsImages. Every model reasons via
+// CodeBuddy gateway model metadata (shared by the Tencent CodeBuddy gateways). vision = upstream supportsImages. Every model reasons via
 // OpenAI-style reasoning_effort; `thinkingCanDisable:false` marks models that
 // cannot turn thinking off.
 const CODEBUDDY_CAPABILITIES: Record<string, Record<string, unknown>> = {
@@ -158,14 +157,9 @@ export const PROVIDER_CAPABILITIES = {
     "gpt-5.6-luna":              CODEX_GPT_56_DEFAULT_CAPS,
     "gpt-5.6-luna-review":       CODEX_GPT_56_DEFAULT_CAPS,
   },
-  // CodeBuddy.cn — authoritative per-model metadata from the gateway's model
-  // config (contextWindow=maxInputTokens, maxOutput=maxOutputTokens, vision=
-  // supportsImages). Every model reasons via OpenAI-style reasoning_effort
-  // (see registry thinkingFormat). `onlyReasoning` models can't turn thinking
-  // off → thinkingCanDisable:false (clamped to minimal instead of disabled).
-  "codebuddy-cn": CODEBUDDY_CAPABILITIES,
-  // CodeBuddy intl CLI (.ai) shares the CN gateway's
-  // model catalog, including the vision models (glm-5v-turbo, minimax, kimi,
+  // CodeBuddy intl CLI (.ai) — authoritative per-model metadata from the
+  // gateway's model config (contextWindow=maxInputTokens, maxOutput=
+  // maxOutputTokens, vision=supportsImages), including the vision models (glm-5v-turbo, minimax, kimi,
   // deepseek-v4-*). Without this block the media filter treats them as
   // text-only and strips every image before it reaches upstream.
   "codebuddy-intl-cli": CODEBUDDY_CAPABILITIES,

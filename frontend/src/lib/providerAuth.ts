@@ -8,7 +8,6 @@ const oauthProviders = new Set([
   "antigravity",
   "codex",
   "qoder",
-  "codebuddy-cn",
   "codebuddy-intl-cli",
   "grok-cli",
 ]);

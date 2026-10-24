@@ -387,7 +387,6 @@ export function parseQuotaData(
             });
           }
         break;
-      case "codebuddy-cn":
       case "codebuddy-intl-cli":
         if (quotas)
           for (const [name, quota] of Object.entries(quotas)) {

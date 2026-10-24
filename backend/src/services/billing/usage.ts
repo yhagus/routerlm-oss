@@ -7,7 +7,7 @@ import { getClaudeUsage } from "./usage/claude.js";
 import { getCodexUsage, consumeCodexRateLimitResetCredit, getCodexRateLimitResetCredits } from "./usage/codex.js";
 
 export { consumeCodexRateLimitResetCredit, getCodexRateLimitResetCredits };
-import { getCodeBuddyCnUsage, getCodeBuddyIntlCliUsage } from "./usage/codebuddy-cn.js";
+import { getCodeBuddyIntlCliUsage } from "./usage/codebuddy.js";
 import { getGrokCliUsage } from "./usage/grok-cli.js";
 import { getDeepseekUsage } from "./usage/deepseek.js";
 import { getDeepseekHarnessUsage } from "./usage/deepseek-harness.js";
@@ -29,7 +29,6 @@ const USAGE_HANDLERS: Record<string, any> = {
   qoder: (c: any) => getQoderUsage(c.accessToken, c.providerSpecificData, c.proxyOptions),
   glm: (c: any) => getGlmUsage(c.apiKey, c.provider, c.proxyOptions),
   "glm-cn": (c: any) => getGlmUsage(c.apiKey, c.provider, c.proxyOptions),
-  "codebuddy-cn": (c: any) => getCodeBuddyCnUsage(c.accessToken, c.apiKey, c.providerSpecificData, c.proxyOptions),
   "codebuddy-intl-cli": (c: any) => getCodeBuddyIntlCliUsage(c.accessToken, c.apiKey, c.providerSpecificData, c.proxyOptions),
   "grok-cli": (c: any) => getGrokCliUsage(c.accessToken, c.providerSpecificData, c.proxyOptions),
   deepseek: (c: any) => getDeepseekUsage(c.apiKey, c.proxyOptions),

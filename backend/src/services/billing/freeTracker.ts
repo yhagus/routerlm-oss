@@ -1,6 +1,4 @@
 export const INFERHUB_URL = "https://inferhub.dev/pricing";
-export const DUDUL_CREDITS_URL = "https://dudul.dev/api/credits";
-export const DUDUL_SOURCE_URL = "https://dudul.dev/";
 
 interface Pool {
   id: string;
@@ -40,7 +38,6 @@ interface TrackerSource {
 interface CachedPayloads {
   cachedAt: number;
   inferhub: { ok: true; payload: SourcePayload } | { ok: false; error: string };
-  dudul: { ok: true; payload: SourcePayload } | { ok: false; error: string };
 }
 
 let cache: CachedPayloads | null = null;
@@ -101,50 +98,6 @@ export function parseInferhubFreePools(html: string): Pool[] {
   });
 }
 
-const DUDUL_FREE_MODELS = ["deepseek-v4-flash", "kimi-k2.7-code", "kimi-k3", "minimax-m3", "qwen3.7-max", "qwen3.7-plus"];
-
-export function parseDudulCredits(raw: unknown): Pool[] {
-  const keys = raw && typeof raw === "object" && Array.isArray((raw as { keys?: unknown }).keys)
-    ? (raw as { keys: unknown[] }).keys
-    : [];
-  let quota = 0;
-  let remaining = 0;
-  for (const value of keys) {
-    if (!value || typeof value !== "object") continue;
-    const key = value as { status?: unknown; quota_credits?: unknown; remaining_credits?: unknown };
-    if (key.status && String(key.status).toLowerCase() !== "active") continue;
-    const total = Number(key.quota_credits);
-    const available = Number(key.remaining_credits);
-    if (!Number.isFinite(total) || total <= 0) continue;
-    quota += total;
-    remaining += Math.min(Number.isFinite(available) ? Math.max(0, available) : 0, total);
-  }
-  if (quota <= 0) return [];
-  const remainingPercent = Math.min(100, Math.max(0, Math.round(remaining / quota * 100)));
-  return [{
-    id: "dudul",
-    name: "Dudul",
-    prefix: "dudul/",
-    kind: "shared",
-    usedPercent: 100 - remainingPercent,
-    remainingPercent,
-    models: [...DUDUL_FREE_MODELS],
-  }];
-}
-
-async function fetchJsonSource(fetchImpl: typeof fetch, url: string, source: string): Promise<SourcePayload> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), source === "InferHub" ? 20_000 : 15_000);
-  try {
-    const response = await fetchImpl(url, { headers: { Accept: "application/json", "User-Agent": "LobakAI-FreeTracker/2.0" }, signal: controller.signal });
-    if (!response.ok) throw new Error(`${source} returned HTTP ${response.status}`);
-    const raw = await response.json();
-    return { source: source.toLowerCase(), sourceUrl: source === "Dudul" ? DUDUL_SOURCE_URL : INFERHUB_URL, fetchedAt: new Date().toISOString(), pools: parseDudulCredits(raw) };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 async function fetchInferhub(fetchImpl: typeof fetch): Promise<SourcePayload> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20_000);
@@ -168,11 +121,8 @@ async function settled<T>(operation: Promise<T>, label: string): Promise<{ ok: t
 async function fetchPayloads(fetchImpl: typeof fetch): Promise<CachedPayloads & { cached: boolean }> {
   const now = Date.now();
   if (cache && now - cache.cachedAt < CACHE_TTL_MS) return { ...cache, cached: true };
-  const [inferhub, dudul] = await Promise.all([
-    settled(fetchInferhub(fetchImpl), "InferHub"),
-    settled(fetchJsonSource(fetchImpl, DUDUL_CREDITS_URL, "Dudul"), "Dudul"),
-  ]);
-  cache = { cachedAt: now, inferhub, dudul };
+  const inferhub = await settled(fetchInferhub(fetchImpl), "InferHub");
+  cache = { cachedAt: now, inferhub };
   return { ...cache, cached: false };
 }
 
@@ -204,19 +154,15 @@ export async function buildFreeTrackerSources(settings: Record<string, unknown>,
     fetchedAt = result.inferhub.payload.fetchedAt;
     sources.push(flatten(result.inferhub.payload.pools, { id: "inferhub", name: "InferHub", icon: "/providers/inferhub.png", sourceUrl: INFERHUB_URL, note: "Shared bars are community pools, not your local account quota." }, visibility.inferhub === true));
   } else errors.push(result.inferhub.error);
-  if (result.dudul.ok) {
-    fetchedAt ||= result.dudul.payload.fetchedAt;
-    sources.push(flatten(result.dudul.payload.pools, { id: "dudul", name: "Dudul", icon: "/providers/dudul.png", sourceUrl: DUDUL_SOURCE_URL, note: "Shared credits across Dudul free keys (public pool)." }, visibility.dudul === true));
-  } else errors.push(result.dudul.error);
   if (!sources.length) throw new Error(errors[0] || "Failed to fetch free model quotas");
-  const primary = result.inferhub.ok ? result.inferhub.payload : result.dudul.ok ? result.dudul.payload : null;
+  const primary = result.inferhub.ok ? result.inferhub.payload : null;
   return {
     sources,
     fetchedAt: fetchedAt || new Date().toISOString(),
     cached: result.cached,
     pools: primary?.pools || [],
-    source: result.inferhub.ok ? "inferhub" : "dudul",
-    sourceUrl: result.inferhub.ok ? INFERHUB_URL : DUDUL_SOURCE_URL,
+    source: "inferhub",
+    sourceUrl: INFERHUB_URL,
     ...(errors.length ? { partialErrors: errors } : {}),
   };
 }

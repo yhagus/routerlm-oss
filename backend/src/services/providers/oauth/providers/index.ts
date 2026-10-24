@@ -10,7 +10,6 @@ import deepseekHarness from "./deepseek-harness.ts";
 import grokCli from "./grok-cli.ts";
 import antigravity from "./antigravity.ts";
 import qoder from "./qoder.ts";
-import codebuddyCn from "./codebuddy-cn.ts";
 import codebuddyIntlCli from "./codebuddy-intl-cli.ts";
 
 // Provider configurations
@@ -21,7 +20,6 @@ const PROVIDERS = {
   "grok-cli": grokCli,
   antigravity,
   qoder,
-  "codebuddy-cn": codebuddyCn,
   "codebuddy-intl-cli": codebuddyIntlCli,
 };
 

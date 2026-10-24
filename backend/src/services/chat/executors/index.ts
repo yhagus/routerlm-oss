@@ -8,7 +8,6 @@ import { GrokCliExecutor } from "./grok-cli.js";
 import { GrokVideoExecutor } from "./grok-video.js";
 import { PerplexityWebExecutor } from "./perplexity-web.js";
 import { CommandCodeExecutor } from "./commandcode.js";
-import { CodeBuddyExecutor } from "./codebuddy-cn.js";
 import { CodeBuddyIntlCliExecutor } from "./codebuddy-intl-cli.js";
 import { DefaultExecutor } from "./default.js";
 
@@ -25,7 +24,6 @@ const executors = {
   "grok-video": new GrokVideoExecutor(),
   "perplexity-web": new PerplexityWebExecutor(),
   commandcode: new CommandCodeExecutor(),
-  "codebuddy-cn": new CodeBuddyExecutor(),
   "codebuddy-intl-cli": new CodeBuddyIntlCliExecutor(),
 };
 
@@ -52,5 +50,4 @@ export { GrokWebExecutor } from "./grok-web.js";
 export { GrokCliExecutor } from "./grok-cli.js";
 export { PerplexityWebExecutor } from "./perplexity-web.js";
 export { CommandCodeExecutor } from "./commandcode.js";
-export { CodeBuddyExecutor } from "./codebuddy-cn.js";
 export { CodeBuddyIntlCliExecutor } from "./codebuddy-intl-cli.js";

@@ -20,10 +20,8 @@ afterEach(() => {
 
 describe("applyCodebuddyReasoningSummary", () => {
   test("injects auto for codebuddy providers on plain bodies (CLI default)", () => {
-    for (const provider of ["codebuddy-intl-cli", "codebuddy-cn", "codebuddy"]) {
-      const body = { model: "m", messages: [] };
-      expect(applyCodebuddyReasoningSummary(body, provider, null)).toMatchObject({ reasoning_summary: "auto" });
-    }
+    const body = { model: "m", messages: [] };
+    expect(applyCodebuddyReasoningSummary(body, "codebuddy-intl-cli", null)).toMatchObject({ reasoning_summary: "auto" });
   });
 
   test("leaves non-codebuddy providers untouched", () => {
@@ -42,7 +40,7 @@ describe("applyCodebuddyReasoningSummary", () => {
       model: "m",
       reasoning_effort: "none",
     });
-    expect(applyCodebuddyReasoningSummary({ model: "m", reasoning_effort: "off" }, "codebuddy-cn", null)).toEqual({
+    expect(applyCodebuddyReasoningSummary({ model: "m", reasoning_effort: "off" }, "codebuddy-intl-cli", null)).toEqual({
       model: "m",
       reasoning_effort: "off",
     });

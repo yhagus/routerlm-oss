@@ -121,16 +121,6 @@ export const PROVIDER_META: Record<string, ProviderMeta> = {
       "⚠️ Risk Notice: This provider uses a subscription/OAuth session not officially licensed for proxy/router use. Account may be restricted or banned. Use at your own risk.",
     website: "https://claude.ai",
   },
-  "codebuddy-cn": {
-    alias: "cbcn",
-    name: "CodeBuddy CN",
-    color: "#006EFF",
-    notice: {
-      signupUrl: "https://copilot.tencent.com",
-    },
-    website: "https://copilot.tencent.com",
-    authModes: ["oauth", "apikey"],
-  },
   "codebuddy-intl-cli": {
     alias: "cbai-cli",
     name: "CodeBuddy CLI",
@@ -211,21 +201,6 @@ export const PROVIDER_META: Record<string, ProviderMeta> = {
     },
     website: "https://deepseek.com/harness",
     authModes: ["oauth"],
-  },
-  dudul: {
-    alias: "dudul",
-    name: "Dudul",
-    color: "#c2f046",
-    textIcon: "DD",
-    notice: {
-      text: "OpenAI-compatible API. API key auth.",
-      apiKeyUrl: "https://dudul.dev/",
-    },
-    website: "https://dudul.dev",
-    modelsFetcher: {
-      url: "https://dudul.dev/v1/models",
-      type: "openai",
-    },
   },
   "edge-tts": {
     alias: "edge-tts",

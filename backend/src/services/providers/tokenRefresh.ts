@@ -28,7 +28,6 @@ export async function refreshProviderToken(connection: ProviderConnection): Prom
     if (connection.provider === "grok-cli") result = await adapters.refreshGrokCliToken(refreshToken);
     else if (connection.provider === "codex") result = await adapters.refreshCodexToken(refreshToken);
     else if (connection.provider === "claude" || connection.provider === "anthropic") result = await adapters.refreshClaudeOAuthToken(refreshToken);
-    else if (connection.provider === "codebuddy") result = await adapters.refreshCodebuddyToken(refreshToken);
     if (result?.accessToken) return result as RefreshedCredentials;
   } catch {
     // Fall through to the standard OAuth2 refresh request below.

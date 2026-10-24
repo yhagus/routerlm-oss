@@ -10,7 +10,6 @@ import Button from "@/components/ui/button.vue";
 import Input from "@/components/ui/input.vue";
 
 const DEVICE_CODE_PROVIDERS = [
-  "codebuddy-cn",
   "codebuddy-intl-cli",
   "qoder",
   "grok-cli",

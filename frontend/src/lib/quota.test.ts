@@ -113,7 +113,7 @@ describe("Grok CLI quota tracker", () => {
 
 describe("CodeBuddy quota tracker", () => {
   test("preserves the credit balance alongside the percentage inputs", () => {
-    const quotas = parseQuotaData("codebuddy-cn", {
+    const quotas = parseQuotaData("codebuddy-intl-cli", {
       quotas: { Monthly: { used: 144.14, total: 250, resetAt: "2026-10-01T00:00:00.000Z" } },
     });
 

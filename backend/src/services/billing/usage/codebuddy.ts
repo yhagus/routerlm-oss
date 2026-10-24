@@ -1,7 +1,5 @@
 /**
- * CodeBuddy CN usage handler
- *
- * Scoped to the "codebuddy-cn" provider; codebuddy-intl-cli reuses the shared parser.
+ * CodeBuddy usage handler (Tencent billing endpoint), used by codebuddy-intl-cli.
  *
  * Quota lives behind a Tencent billing endpoint (POST, payload wrapped twice
  * under data.Response.Data). It mixes two credit types that must NOT be merged:
@@ -21,8 +19,6 @@
 import { proxyAwareFetch } from "../../common/proxyFetch.ts";
 import { PROVIDERS } from "../../providers/index.ts";
 import { U, parseResetTime } from "./shared.js";
-
-const PROVIDER_ID = "codebuddy-cn";
 
 // Prefer the *Precise string fields (exact), fall back to the numeric ones.
 function num(precise: any, plain: any) {
@@ -61,21 +57,21 @@ async function getCodeBuddyUsage(providerId: any, accessToken: any, apiKey: any,
     }, proxyOptions);
 
     if (response.status === 401 || response.status === 403) {
-      return { message: "CodeBuddy CN credential invalid or expired." };
+      return { message: "CodeBuddy credential invalid or expired." };
     }
     if (!response.ok) {
-      return { message: `CodeBuddy CN quota API error (${response.status}).` };
+      return { message: `CodeBuddy quota API error (${response.status}).` };
     }
 
     const json = await response.json();
     if (json?.code !== 0) {
-      return { message: `CodeBuddy CN quota error: ${json?.msg || "unknown"}` };
+      return { message: `CodeBuddy quota error: ${json?.msg || "unknown"}` };
     }
 
     const data = json?.data?.Response?.Data || {};
     const accounts = Array.isArray(data.Accounts) ? data.Accounts : [];
     if (accounts.length === 0) {
-      return { message: "CodeBuddy CN connected. No credit package found." };
+      return { message: "CodeBuddy connected. No credit package found." };
     }
 
     const cycleEndMs = (acc: any) => {
@@ -136,13 +132,7 @@ async function getCodeBuddyUsage(providerId: any, accessToken: any, apiKey: any,
   }
 }
 
-export async function getCodeBuddyCnUsage(accessToken: any, apiKey: any, providerSpecificData: any, proxyOptions: any = null) {
-  return getCodeBuddyUsage(PROVIDER_ID, accessToken, apiKey, providerSpecificData, proxyOptions);
-}
-
-// codebuddy-intl-cli hits the same Tencent billing endpoint as CN
-// (same URL; only the X-IDE-Type: CLI header differs), so it returns the
-// same data.Response.Data.Accounts[] shape — delegate to the shared parser.
+// codebuddy-intl-cli returns the data.Response.Data.Accounts[] shape parsed above.
 export async function getCodeBuddyIntlCliUsage(accessToken: any, apiKey: any, providerSpecificData: any, proxyOptions: any = null) {
   return getCodeBuddyUsage("codebuddy-intl-cli", accessToken, apiKey, providerSpecificData, proxyOptions);
 }

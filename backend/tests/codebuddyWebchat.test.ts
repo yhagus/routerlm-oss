@@ -109,7 +109,7 @@ describe("codebuddy webchat", () => {
     const instance = await runtime();
     try {
       const connection = instance.repos.providers.create({
-        provider: "codebuddy-cn",
+        provider: "qoder",
         authType: "oauth",
         credentials: { accessToken: "at-1" },
       });

@@ -5,7 +5,7 @@ import { checkFallbackError, isModelLockActive } from "./accountFallback.js";
 import { MAX_RATE_LIMIT_COOLDOWN_MS } from "../providers/config/errorConfig.ts";
 import { GROK_CLI_FREE_USAGE_WINDOW_MS } from "../providers/config/grokCli.ts";
 import { parseGrokCliFreeUsageTokens } from "../billing/usage/grok-cli.js";
-import { getCodeBuddyIntlCliUsage } from "../billing/usage/codebuddy-cn.js";
+import { getCodeBuddyIntlCliUsage } from "../billing/usage/codebuddy.js";
 import { laterUntil, storedConnection, unavailableUntil } from "./fallback";
 import { connectionInFlight, connectionInFlightLimit, type SlotOwner } from "./inFlightSlots";
 import { affinityEnabled, freeHome, rememberHome, type AffinityKeys } from "./sessionAffinity";

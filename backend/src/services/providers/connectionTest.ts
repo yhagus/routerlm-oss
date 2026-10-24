@@ -161,7 +161,6 @@ const OAUTH_TEST_CONFIG: Record<string, Record<string, any>> = {
     authPrefix: "Bearer ",
     refreshable: false,
   },
-  "codebuddy-cn": { tokenExists: true },
   "codebuddy-intl-cli": { tokenExists: true },
   // DeepSeek Harness account — probe the Platform current-user endpoint with
   // the account token (x-dsh-auth-token). No refresh token exists: a rejected
@@ -736,7 +735,7 @@ async function testApiKeyConnection(connection: Record<string, any>, effectivePr
 }
 
 // v1 probeRegistryOpenAICompatible: generic OpenAI-compatible registry providers
-// (dudul, …) via transport.validateUrl or baseUrl-derived /models.
+// via transport.validateUrl or baseUrl-derived /models.
 async function probeRegistryOpenAICompatible(connection: Record<string, any>, effectiveProxy: Record<string, any> | null = null): Promise<{ valid: boolean; error: string | null }> {
   const cfg = PROVIDERS[connection.provider];
   if (!cfg || (cfg.format && cfg.format !== "openai") || (!cfg.validateUrl && !cfg.baseUrl)) {

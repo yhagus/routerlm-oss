@@ -6,8 +6,8 @@ import { fetchCodebuddyAccount, isCodebuddyProvider } from "../services/provider
 // exposes the stable HTTP contract and persists the normalized token result.
 import { getProvider, generateAuthData, exchangeTokens, requestDeviceCode, pollForToken } from "../services/providers/oauth/providers/index.ts";
 
-const NO_PKCE_DEVICE_PROVIDERS = new Set(["codebuddy-cn", "qoder", "grok-cli"]);
-const NO_PKCE_POLL_PROVIDERS = new Set(["codebuddy-cn", "grok-cli"]);
+const NO_PKCE_DEVICE_PROVIDERS = new Set(["qoder", "grok-cli"]);
+const NO_PKCE_POLL_PROVIDERS = new Set(["grok-cli"]);
 
 function tokenData(value: Record<string, unknown>) {
   const providerSpecificData = value.providerSpecificData && typeof value.providerSpecificData === "object" ? value.providerSpecificData : {};

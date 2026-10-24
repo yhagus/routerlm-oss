@@ -157,7 +157,7 @@ describe("codebuddy invite chain", () => {
     const instance = await runtime();
     try {
       const connection = instance.repos.providers.create({
-        provider: "codebuddy-cn",
+        provider: "qoder",
         authType: "oauth",
         credentials: {},
         data: { accessToken: "at-1", refreshToken: "rt-1", codebuddyUserId: "uid-1" },
@@ -183,7 +183,7 @@ describe("codebuddy invite chain", () => {
     try {
       const ok = cliConnection(instance);
       const bad = instance.repos.providers.create({
-        provider: "codebuddy-cn",
+        provider: "qoder",
         authType: "oauth",
         credentials: {},
         data: { accessToken: "at-2", refreshToken: "rt-2", codebuddyUserId: "uid-2" },

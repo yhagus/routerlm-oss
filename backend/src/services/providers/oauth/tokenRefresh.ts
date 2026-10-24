@@ -6,7 +6,6 @@ import {
   refreshClaudeOAuthToken,
   refreshGoogleToken,
   refreshCodexToken,
-  refreshCodebuddyToken,
   refreshCodebuddyIntlCliToken,
   classifyOAuthRefreshError,
 } from "./tokenRefresh/providers.ts";
@@ -17,7 +16,6 @@ export {
   refreshClaudeOAuthToken,
   refreshGoogleToken,
   refreshCodexToken,
-  refreshCodebuddyToken,
   refreshCodebuddyIntlCliToken,
   classifyOAuthRefreshError,
 };
@@ -46,7 +44,6 @@ const REFRESH_HANDLERS = {
   codex: (c: any, log: any) => refreshCodexToken(c.refreshToken, log),
   "grok-cli": (c: any, log: any) => refreshGrokCliToken(c.refreshToken, log),
   gcli: (c: any, log: any) => refreshGrokCliToken(c.refreshToken, log),
-  "codebuddy-cn": (c: any, log: any) => refreshCodebuddyToken(c.refreshToken, log),
   "codebuddy-intl-cli": (c: any, log: any) => refreshCodebuddyIntlCliToken(c.refreshToken, log),
 };
 

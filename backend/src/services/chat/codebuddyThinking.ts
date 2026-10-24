@@ -11,7 +11,7 @@
 // upstream reasoning path. This helper restores CLI parity at the product
 // layer (executors stay generic): set `reasoning_summary: "auto"`
 // unless the caller explicitly opted out.
-const CODEBUDDY_PROVIDERS = new Set(["codebuddy-cn", "codebuddy-intl-cli", "codebuddy"]);
+const CODEBUDDY_PROVIDERS = new Set(["codebuddy-intl-cli"]);
 
 // Explicit thinking opt-outs. The executors delete these effort
 // values ("gateway has no none, just omit"), so never inject under them.

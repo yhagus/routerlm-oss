@@ -54,9 +54,6 @@ export function getOAuthClientMetadata() {
 // OpenAI OAuth Configuration (Authorization Code Flow with PKCE)
 export const OPENAI_CONFIG = { ...PROVIDER_OAUTH["openai"] };
 
-// CodeBuddy (Tencent) OAuth Configuration (Browser OAuth Polling Flow)
-export const CODEBUDDY_CONFIG = { ...PROVIDER_OAUTH["codebuddy-cn"] };
-
 // CodeBuddy International CLI — same .ai domain but CLI platform identity.
 export const CODEBUDDY_INTL_CLI_CONFIG = { ...PROVIDER_OAUTH["codebuddy-intl-cli"] };
 
@@ -74,7 +71,6 @@ export const PROVIDERS = {
   QODER: "qoder",
   ANTIGRAVITY: "antigravity",
   OPENAI: "openai",
-  CODEBUDDY: "codebuddy-cn",
   CODEBUDDY_INTL_CLI: "codebuddy-intl-cli",
   GROK_CLI: "grok-cli",
 };

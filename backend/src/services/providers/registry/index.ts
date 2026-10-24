@@ -8,7 +8,6 @@ import p5 from "./black-forest-labs.ts";
 import p6 from "./brave-search.ts";
 import p7 from "./cartesia.ts";
 import p8 from "./claude.ts";
-import p9 from "./codebuddy-cn.ts";
 import p10 from "./codex.ts";
 import p11 from "./comfyui.ts";
 import p12 from "./commandcode.ts";
@@ -16,7 +15,6 @@ import p13 from "./coqui.ts";
 import p14 from "./deepgram.ts";
 import p15 from "./deepseek.ts";
 import p16 from "./deepseek-harness.ts";
-import p17 from "./dudul.ts";
 import p18 from "./edge-tts.ts";
 import p19 from "./elevenlabs.ts";
 import p20 from "./exa.ts";
@@ -71,7 +69,6 @@ const REGISTRY: any[] = [
   p6,
   p7,
   p8,
-  p9,
   p10,
   p11,
   p12,
@@ -79,7 +76,6 @@ const REGISTRY: any[] = [
   p14,
   p15,
   p16,
-  p17,
   p18,
   p19,
   p20,
