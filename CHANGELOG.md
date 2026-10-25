@@ -1,3 +1,14 @@
+# v1.6.0 (2026-10-26)
+
+## Providers
+
+- A custom provider can have a logo. Upload it in the "Add custom provider" form or in the Edit dialog. Select "Remove" to delete it.
+- The logo is stored in the database. A database backup includes it.
+- The detail page of a custom provider uses the same layout as other API key providers. Edit and Delete are in the page header.
+- On a custom provider's detail page, "Import from /models" adds the models from the endpoint. "Add Model" adds one model with its capabilities.
+- The Add API Key form of a custom provider no longer asks for a default model.
+- The Providers list shows custom providers with their logo and connection status. "Test all" tests their connections.
+
 # v1.5.0 (2026-10-24)
 
 ## Providers

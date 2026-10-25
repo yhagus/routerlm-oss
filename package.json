@@ -1,6 +1,6 @@
 {
   "name": "lobakai",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "LobakAI — local AI gateway (Bun + Hono backend, Vue + Vite dashboard)",
   "private": true,
   "scripts": {
