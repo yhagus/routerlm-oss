@@ -41,7 +41,7 @@ import BulkMaxInFlightModal from "@/components/providers/BulkMaxInFlightModal.vu
 import AddApiKeyModal from "@/components/providers/AddApiKeyModal.vue";
 import BulkImportModal from "@/components/providers/BulkImportModal.vue";
 import NoAuthProxyCard from "@/components/providers/NoAuthProxyCard.vue";
-import CompatibleModelsSection from "@/components/providers/CompatibleModelsSection.vue";
+import ProviderLogoInput from "@/components/providers/ProviderLogoInput.vue";
 import QoderModelContextWindows from "@/components/providers/QoderModelContextWindows.vue";
 import AlimsModelAvailability from "@/components/providers/AlimsModelAvailability.vue";
 import InspirationCenterModal from "@/components/providers/InspirationCenterModal.vue";
@@ -982,8 +982,12 @@ const disabledModelIds = computed(
   () => new Set((disabled.data.value || []).map((item) => item.id)),
 );
 const aliasMap = computed(() => aliases.data.value || {});
-const builtInModels = computed(
-  () => (models.data.value?.data || []) as Array<{ id: string; name?: string }>,
+// A custom provider has no model catalog. Its /models response only repeats
+// its custom models, which must stay custom rows so they can be deleted.
+const builtInModels = computed(() =>
+  isCompatible.value
+    ? []
+    : ((models.data.value?.data || []) as Array<{ id: string; name?: string }>),
 );
 const customModelRows = computed(() =>
   getProviderCustomModelRows({
@@ -1265,7 +1269,7 @@ const selectedConnectionIds = ref<string[]>([]);
 const modelTestResults = ref<Record<string, "ok" | "error">>({});
 const modelsTestError = ref("");
 const testingModelIds = ref(new Set<string>());
-const importingQoderModels = ref(false);
+const importingModels = ref(false);
 const oneByOneRunning = ref(false);
 const oneByOneStopping = ref(false);
 const oneByOneCurrentConnectionId = ref<string | null>(null);
@@ -1284,20 +1288,9 @@ const nodeForm = reactive({
   prefix: "",
   baseUrl: "",
   apiType: "chat",
+  logo: null as string | null,
 });
-watch(
-  providerNode,
-  (node) => {
-    if (node)
-      Object.assign(nodeForm, {
-        name: node.name || "",
-        prefix: node.prefix || "",
-        baseUrl: node.baseUrl || node.base_url || "",
-        apiType: node.apiType || node.api_type || "chat",
-      });
-  },
-  { immediate: true },
-);
+const nodeFormError = ref("");
 
 const allSelected = computed(
   () =>
@@ -3145,16 +3138,16 @@ async function handleTestModel(modelId: string) {
   }
 }
 
-async function handleImportQoderModels() {
-  if (importingQoderModels.value) return;
+async function handleImportModels() {
+  if (importingModels.value) return;
   const activeConnection = allConnections.value.find(
     (c) => c.isActive !== false,
   );
   if (!activeConnection) {
-    window.alert("Please add an active Qoder connection first");
+    window.alert(`Please add an active ${providerName.value} connection first`);
     return;
   }
-  importingQoderModels.value = true;
+  importingModels.value = true;
   try {
     const result = await api.providers.models(activeConnection.id);
     const modelRows = (result.data || []) as Array<{
@@ -3169,7 +3162,10 @@ async function handleImportQoderModels() {
     for (const model of modelRows) {
       const modelId = model.id || model.name;
       if (!modelId) continue;
-      const cleanModelId = modelId.replace(/^qoder\//, "");
+      const cleanModelId =
+        providerId.value === "qoder"
+          ? modelId.replace(/^qoder\//, "")
+          : stripAlias(modelId);
       const alreadyExists =
         customModelRows.value.some((entry) => entry.id === cleanModelId) ||
         Object.values(aliasMap.value).includes(
@@ -3187,25 +3183,40 @@ async function handleImportQoderModels() {
       `Error fetching models: ${error instanceof Error ? error.message : error}`,
     );
   } finally {
-    importingQoderModels.value = false;
+    importingModels.value = false;
   }
 }
 
 async function handleUpdateNode(formData: Record<string, unknown>) {
+  nodeFormError.value = "";
   try {
     await api.nodes.update(providerId.value, formData);
     await queryClient.invalidateQueries({ queryKey: ["provider-nodes"] });
     await refresh();
     showEditNodeModal.value = false;
-  } catch {
-    /* ignore */
+  } catch (error) {
+    nodeFormError.value = describeApiError(error);
   }
+}
+
+function openEditNode() {
+  const node = providerNode.value;
+  if (!node) return;
+  Object.assign(nodeForm, {
+    name: node.name || "",
+    prefix: node.prefix || "",
+    baseUrl: node.baseUrl || node.base_url || "",
+    apiType: node.apiType || node.api_type || "chat",
+    logo: node.logo || null,
+  });
+  nodeFormError.value = "";
+  showEditNodeModal.value = true;
 }
 
 function handleDeleteNode() {
   confirmState.value = {
-    title: "Delete Compatible Node",
-    message: `Delete this ${isAnthropicCompatible.value ? "Anthropic" : "OpenAI"} Compatible node?`,
+    title: "Delete Custom Provider",
+    message: `Delete ${providerName.value}? Its connections are deleted too. This action cannot be undone.`,
     confirmText: "Delete",
     onConfirm: async () => {
       confirmState.value = null;
@@ -3231,10 +3242,11 @@ function capsFor(modelId: string): Record<string, unknown> | null {
 }
 
 const headerIconFailed = ref(false);
-watch(providerId, () => {
+watch([providerId, () => providerNode.value?.logo], () => {
   headerIconFailed.value = false;
 });
 const headerIconPath = computed(() => {
+  if (providerNode.value?.logo) return providerNode.value.logo;
   if (isCompatible.value)
     return providerNode.value?.type === "anthropic-compatible"
       ? "/providers/anthropic-m.png"
@@ -3242,6 +3254,19 @@ const headerIconPath = computed(() => {
         ? "/providers/oai-r.png"
         : "/providers/oai-cc.png";
   return providerLogo(providerId.value);
+});
+
+const compatibleEndpoint = computed(() => {
+  const node = providerNode.value;
+  if (!node) return null;
+  const base = (node.baseUrl || node.base_url || "").replace(/\/$/, "");
+  if (isAnthropicCompatible.value)
+    return { label: "Anthropic compatible · Messages API", url: `${base}/messages` };
+  const responses = (node.apiType || node.api_type) === "responses";
+  return {
+    label: `OpenAI compatible · ${responses ? "Responses API" : "Chat Completions"}`,
+    url: `${base}/${responses ? "responses" : "chat/completions"}`,
+  };
 });
 
 const knownProvider = computed(
@@ -3288,73 +3313,95 @@ const knownProvider = computed(
         <span class="material-symbols-outlined text-lg">arrow_back</span>
         Back to Providers
       </RouterLink>
-      <div class="flex min-w-0 items-center gap-3 sm:gap-4">
-        <div
-          class="flex size-12 shrink-0 items-center justify-center rounded-lg"
-          :style="{ backgroundColor: `${meta.color || '#888'}15` }"
-        >
-          <template v-if="providerId === 'zenmux'">
-            <img
-              src="/providers/zenmux-light.svg"
-              :alt="providerName"
-              class="max-h-12 max-w-12 rounded-lg object-contain dark:hidden"
-            />
-            <img
-              src="/providers/zenmux-dark.svg"
-              :alt="providerName"
-              class="hidden max-h-12 max-w-12 rounded-lg object-contain dark:block"
-            />
-          </template>
-          <img
-            v-else-if="headerIconPath && !headerIconFailed"
-            :src="headerIconPath"
-            :alt="providerName"
-            class="max-h-12 max-w-12 rounded-lg object-contain"
-            @error="headerIconFailed = true"
-          />
-          <span
-            v-else
-            class="text-sm font-bold"
-            :style="{ color: meta.color || '#888' }"
-            >{{ meta.textIcon || providerId.slice(0, 2).toUpperCase() }}</span
+      <div
+        class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="flex min-w-0 items-center gap-3 sm:gap-4">
+          <div
+            class="flex size-12 shrink-0 items-center justify-center rounded-lg"
+            :style="{ backgroundColor: `${meta.color || '#888'}15` }"
           >
-        </div>
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-3">
-            <h1
-              class="truncate text-2xl font-semibold tracking-tight sm:text-3xl"
+            <template v-if="providerId === 'zenmux'">
+              <img
+                src="/providers/zenmux-light.svg"
+                :alt="providerName"
+                class="max-h-12 max-w-12 rounded-lg object-contain dark:hidden"
+              />
+              <img
+                src="/providers/zenmux-dark.svg"
+                :alt="providerName"
+                class="hidden max-h-12 max-w-12 rounded-lg object-contain dark:block"
+              />
+            </template>
+            <img
+              v-else-if="headerIconPath && !headerIconFailed"
+              :src="headerIconPath"
+              :alt="providerName"
+              class="max-h-12 max-w-12 rounded-lg object-contain"
+              @error="headerIconFailed = true"
+            />
+            <span
+              v-else
+              class="text-sm font-bold"
+              :style="{ color: meta.color || '#888' }"
+              >{{ meta.textIcon || providerId.slice(0, 2).toUpperCase() }}</span
             >
-              {{ providerName }}
-            </h1>
-            <a
-              v-if="
-                meta.notice?.apiKeyUrl || meta.notice?.signupUrl || meta.website
-              "
-              :href="
-                meta.notice?.apiKeyUrl || meta.notice?.signupUrl || meta.website
-              "
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-            >
-              <span class="material-symbols-outlined text-sm">open_in_new</span>
-              {{
-                meta.notice?.apiKeyUrl ? "Get API Key" : "Sign up / Learn more"
-              }}
-            </a>
           </div>
-          <p class="text-muted-foreground">
-            {{
-              providerQuotaSummary.data.value?.totalConnectionCount ??
-              allConnections.length
-            }}
-            connection{{
-              (providerQuotaSummary.data.value?.totalConnectionCount ??
-                allConnections.length) === 1
-                ? ""
-                : "s"
-            }}
-          </p>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-3">
+              <h1
+                class="truncate text-2xl font-semibold tracking-tight sm:text-3xl"
+              >
+                {{ providerName }}
+              </h1>
+              <a
+                v-if="
+                  meta.notice?.apiKeyUrl || meta.notice?.signupUrl || meta.website
+                "
+                :href="
+                  meta.notice?.apiKeyUrl || meta.notice?.signupUrl || meta.website
+                "
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <span class="material-symbols-outlined text-sm">open_in_new</span>
+                {{
+                  meta.notice?.apiKeyUrl ? "Get API Key" : "Sign up / Learn more"
+                }}
+              </a>
+            </div>
+            <p class="text-muted-foreground">
+              {{
+                providerQuotaSummary.data.value?.totalConnectionCount ??
+                allConnections.length
+              }}
+              connection{{
+                (providerQuotaSummary.data.value?.totalConnectionCount ??
+                  allConnections.length) === 1
+                  ? ""
+                  : "s"
+              }}
+            </p>
+            <p
+              v-if="compatibleEndpoint"
+              class="mt-0.5 break-all text-xs text-muted-foreground"
+            >
+              {{ compatibleEndpoint.label }} ·
+              <span class="font-mono">{{ compatibleEndpoint.url }}</span>
+            </p>
+          </div>
+        </div>
+        <div
+          v-if="isCompatible"
+          class="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:items-center"
+        >
+          <Button variant="secondary" @click="openEditNode">
+            <span class="material-symbols-outlined text-sm">edit</span> Edit
+          </Button>
+          <Button variant="secondary" @click="handleDeleteNode">
+            <span class="material-symbols-outlined text-sm">delete</span> Delete
+          </Button>
         </div>
       </div>
     </div>
@@ -3528,68 +3575,6 @@ const knownProvider = computed(
         Get API Key →
       </a>
     </div>
-
-    <!-- Compatible node details -->
-    <Card v-if="isCompatible && providerNode" class="p-5 sm:p-6">
-      <div
-        class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
-      >
-        <div class="min-w-0">
-          <h2 class="text-lg font-semibold">
-            {{
-              isAnthropicCompatible
-                ? "Anthropic Compatible Details"
-                : "OpenAI Compatible Details"
-            }}
-          </h2>
-          <p class="break-all text-sm text-muted-foreground">
-            {{
-              isAnthropicCompatible
-                ? "Messages API"
-                : providerNode.apiType === "responses"
-                  ? "Responses API"
-                  : "Chat Completions"
-            }}
-            · {{ (providerNode.baseUrl || "").replace(/\/$/, "") }}/{{
-              isAnthropicCompatible
-                ? "messages"
-                : providerNode.apiType === "responses"
-                  ? "responses"
-                  : "chat/completions"
-            }}
-          </p>
-        </div>
-        <div class="grid grid-cols-1 gap-2 sm:flex sm:items-center">
-          <Button
-            size="sm"
-            class="w-full sm:w-auto"
-            @click="
-              addConnectionError = '';
-              showAddApiKeyModal = true;
-            "
-          >
-            <span class="material-symbols-outlined text-sm">add</span> Add API
-            Key
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            class="w-full sm:w-auto"
-            @click="showEditNodeModal = true"
-          >
-            <span class="material-symbols-outlined text-sm">edit</span> Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            class="w-full sm:w-auto"
-            @click="handleDeleteNode"
-          >
-            <span class="material-symbols-outlined text-sm">delete</span> Delete
-          </Button>
-        </div>
-      </div>
-    </Card>
 
     <!-- Connections -->
     <NoAuthProxyCard
@@ -3864,7 +3849,7 @@ const knownProvider = computed(
             />
           </div>
           <div
-            v-if="allConnections.length && !isCompatible"
+            v-if="allConnections.length"
             class="flex flex-wrap items-center gap-2 sm:ml-auto"
           >
             <Button
@@ -4023,7 +4008,7 @@ const knownProvider = computed(
             </Button>
             <Button @click="triggerAddConnection">
               <span class="material-symbols-outlined text-sm">add</span>
-              {{ isCompatible ? "Add API Key" : "Add Connection" }}
+              Add Connection
             </Button>
           </template>
         </div>
@@ -4187,49 +4172,51 @@ const knownProvider = computed(
             aria-label="Thinking level"
             @update:model-value="selectThinkingMode"
           />
-          <template v-if="!isCompatible">
-            <Button
-              v-if="disabledModelIds.size > 0"
-              variant="secondary"
-              @click="handleEnableAll"
+          <Button
+            v-if="isCompatible"
+            variant="secondary"
+            :disabled="importingModels || !hasActiveConnection"
+            :title="
+              hasActiveConnection
+                ? 'Import models from the /models endpoint'
+                : 'Add an active connection to import models'
+            "
+            @click="handleImportModels"
+          >
+            <span
+              class="material-symbols-outlined text-sm"
+              :class="{ 'animate-spin': importingModels }"
+              >{{ importingModels ? "progress_activity" : "download" }}</span
             >
-              <span class="material-symbols-outlined text-sm">restart_alt</span>
-              Active All
-            </Button>
-            <Button
-              v-if="visibleDisplayModels.length"
-              variant="secondary"
-              @click="handleDisableAll(visibleDisplayModels.map((m) => m.id))"
-            >
-              <span class="material-symbols-outlined text-sm">block</span>
-              Disable All
-            </Button>
-            <Button variant="secondary" @click="openAddCustomModel">
-              <span class="material-symbols-outlined text-sm">add</span> Add
-              Model
-            </Button>
-          </template>
+            {{ importingModels ? "Importing..." : "Import from /models" }}
+          </Button>
+          <Button
+            v-if="disabledModelIds.size > 0"
+            variant="secondary"
+            @click="handleEnableAll"
+          >
+            <span class="material-symbols-outlined text-sm">restart_alt</span>
+            Active All
+          </Button>
+          <Button
+            v-if="visibleDisplayModels.length"
+            variant="secondary"
+            @click="handleDisableAll(visibleDisplayModels.map((m) => m.id))"
+          >
+            <span class="material-symbols-outlined text-sm">block</span>
+            Disable All
+          </Button>
+          <Button variant="secondary" @click="openAddCustomModel">
+            <span class="material-symbols-outlined text-sm">add</span> Add
+            Model
+          </Button>
         </div>
       </div>
       <p v-if="modelsTestError" class="mb-3 break-words text-xs text-red-500">
         {{ modelsTestError }}
       </p>
 
-      <CompatibleModelsSection
-        v-if="isCompatible"
-        :provider-storage-alias="providerStorageAlias"
-        :provider-display-alias="providerDisplayAlias"
-        :model-aliases="aliasMap"
-        :custom-models="(customModels.data.value || []) as any"
-        :connections="allConnections"
-        :is-anthropic="isAnthropicCompatible"
-        @add-custom-model="(modelId: string) => handleAddCustomModel(modelId)"
-        @delete-custom-model="
-          (modelId: string) => handleDeleteCustomModel(modelId)
-        "
-        @delete-alias="(alias: string) => handleDeleteAlias(alias)"
-      />
-      <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderModelRow
           v-for="model in visibleCustomModelRows"
           :key="`custom-${model.fullModel}`"
@@ -4271,15 +4258,15 @@ const knownProvider = computed(
             allConnections.some((c) => c.isActive !== false)
           "
           class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-blue-500/40 px-3 py-2 text-xs text-blue-600 transition-colors hover:border-blue-500 hover:bg-blue-500/5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto dark:text-blue-400"
-          :disabled="importingQoderModels"
-          @click="handleImportQoderModels"
+          :disabled="importingModels"
+          @click="handleImportModels"
         >
           <span
             class="material-symbols-outlined text-sm"
-            :class="{ 'animate-spin': importingQoderModels }"
-            >{{ importingQoderModels ? "progress_activity" : "download" }}</span
+            :class="{ 'animate-spin': importingModels }"
+            >{{ importingModels ? "progress_activity" : "download" }}</span
           >
-          {{ importingQoderModels ? "Fetching..." : "Fetch Qoder Models" }}
+          {{ importingModels ? "Fetching..." : "Fetch Qoder Models" }}
         </button>
 
         <div v-if="suggestedNotAdded.length" class="col-span-full mt-2">
@@ -4333,8 +4320,6 @@ const knownProvider = computed(
       :open="showAddApiKeyModal"
       :provider="providerId"
       :provider-name="providerName"
-      :is-compatible="isCompatible"
-      :is-anthropic="isAnthropicCompatible"
       :proxy-pools="activePools"
       :error="addConnectionError"
       :existing-names="
@@ -4713,30 +4698,31 @@ const knownProvider = computed(
     </Modal>
     <Modal
       :open="showEditNodeModal && Boolean(providerNode)"
-      title="Edit Compatible Node"
+      title="Edit custom provider"
+      size="lg"
       @close="showEditNodeModal = false"
     >
       <form
         v-if="providerNode"
-        class="flex flex-col gap-4"
+        class="space-y-4"
         @submit.prevent="handleUpdateNode({ ...nodeForm })"
       >
         <div class="space-y-2">
-          <Label for="node-name">Name</Label
-          ><Input id="node-name" v-model="nodeForm.name" required />
+          <Label for="node-logo">Logo</Label>
+          <ProviderLogoInput
+            id="node-logo"
+            v-model="nodeForm.logo"
+            :label="nodeForm.name"
+          />
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="space-y-2">
-            <Label for="node-prefix">Prefix</Label
-            ><Input id="node-prefix" v-model="nodeForm.prefix" required />
+            <Label for="node-name">Name</Label
+            ><Input id="node-name" v-model="nodeForm.name" required />
           </div>
           <div class="space-y-2">
-            <Label for="node-api-type">API type</Label
-            ><Select
-              id="node-api-type"
-              v-model="nodeForm.apiType"
-              :options="compatibleApiTypeOptions"
-            />
+            <Label for="node-prefix">Prefix</Label
+            ><Input id="node-prefix" v-model="nodeForm.prefix" required />
           </div>
         </div>
         <div class="space-y-2">
@@ -4748,6 +4734,17 @@ const knownProvider = computed(
             required
           />
         </div>
+        <div v-if="!isAnthropicCompatible" class="space-y-2">
+          <Label for="node-api-type">API type</Label
+          ><Select
+            id="node-api-type"
+            v-model="nodeForm.apiType"
+            :options="compatibleApiTypeOptions"
+          />
+        </div>
+        <p v-if="nodeFormError" class="text-xs text-destructive" role="alert">
+          {{ nodeFormError }}
+        </p>
         <div class="flex justify-end gap-2">
           <Button
             type="button"

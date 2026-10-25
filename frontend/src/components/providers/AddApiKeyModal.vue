@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Port of v1 AddApiKeyModal — single + bulk API-key add with validation,
-// provider-specific fields (regions, cookie),
-// compatible-endpoint default model, and proxy-pool selection.
+// provider-specific fields (regions, cookie), and proxy-pool selection.
+// Custom providers use the same form as built-in API key providers.
 import { computed, reactive, ref, watch } from "vue";
 import { api } from "@/lib/api";
 import type { ProxyPool } from "@/types/api";
@@ -20,8 +20,6 @@ const props = defineProps<{
   open: boolean;
   provider: string;
   providerName: string;
-  isCompatible: boolean;
-  isAnthropic: boolean;
   proxyPools: ProxyPool[];
   error: string;
   existingNames: string[];
@@ -63,7 +61,6 @@ const credentialPlaceholder = computed(() =>
 const form = reactive({
   name: "",
   apiKey: "",
-  defaultModel: "",
   priority: 1,
   proxyPoolId: NONE_PROXY_POOL_VALUE,
 });
@@ -85,7 +82,6 @@ watch(
     Object.assign(form, {
       name: "",
       apiKey: "",
-      defaultModel: "",
       priority: 1,
       proxyPoolId: NONE_PROXY_POOL_VALUE,
     });
@@ -124,7 +120,6 @@ async function handleValidate() {
 const canSubmit = computed(() => {
   if (!form.apiKey) return false;
   if (!form.name) return false;
-  if (props.isCompatible && !form.defaultModel.trim()) return false;
   return true;
 });
 
@@ -152,7 +147,6 @@ async function handleSubmit() {
     emit("save", {
       name: form.name,
       apiKey: form.apiKey,
-      defaultModel: props.isCompatible ? form.defaultModel.trim() : undefined,
       priority: form.priority,
       proxyPoolId:
         form.proxyPoolId === NONE_PROXY_POOL_VALUE ? null : form.proxyPoolId,
@@ -312,28 +306,12 @@ async function handleBulkSubmit() {
             :options="regionOptions"
           />
         </div>
-        <div v-if="isCompatible" class="space-y-2">
-          <label class="text-sm font-medium" for="add-key-model"
-            >Default Model</label
-          >
-          <Input
-            id="add-key-model"
-            v-model="form.defaultModel"
-            :placeholder="
-              isAnthropic ? 'claude-3-5-sonnet-latest' : 'gpt-4o-mini'
-            "
-          />
-        </div>
         <Badge
           v-if="validationResult"
           :variant="validationResult === 'success' ? 'success' : 'destructive'"
           >{{ validationResult === "success" ? "Valid" : "Invalid" }}</Badge
         >
         <p v-if="error" class="break-words text-xs text-red-500">{{ error }}</p>
-        <p v-if="isCompatible" class="text-xs text-muted-foreground">
-          Enter the model ID exactly as your compatible endpoint expects it.
-          This model will be saved as the connection default.
-        </p>
 
         <div class="space-y-2">
           <label class="text-sm font-medium" for="add-key-priority"

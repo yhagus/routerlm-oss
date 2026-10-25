@@ -2,7 +2,6 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import {
-  CheckCircle2,
   LayoutGrid,
   List,
   LoaderCircle,
@@ -17,15 +16,14 @@ import type { ProviderConnection, ProviderNode } from "@/types/api";
 import PageHeader from "@/components/app/PageHeader.vue";
 import EmptyState from "@/components/app/EmptyState.vue";
 import Button from "@/components/ui/button.vue";
-import Badge from "@/components/ui/badge.vue";
 import Input from "@/components/ui/input.vue";
 import Label from "@/components/ui/label.vue";
 import Select from "@/components/ui/select.vue";
 import Card from "@/components/ui/card.vue";
-import Skeleton from "@/components/ui/skeleton.vue";
 import TabSwitcher from "@/components/ui/tab-switcher.vue";
 import { useNotificationStore } from "@/stores/notifications";
-import ProviderLogo from "@/components/app/ProviderLogo.vue";
+import ProviderListItem from "@/components/providers/ProviderListItem.vue";
+import ProviderLogoInput from "@/components/providers/ProviderLogoInput.vue";
 import Modal from "@/components/ui/modal.vue";
 
 type CatalogEntry = {
@@ -358,6 +356,7 @@ const form = reactive({
   baseUrl: "",
   apiKey: "",
   apiType: "chat",
+  logo: null as string | null,
 });
 // The ID follows the name until the user edits the ID field directly.
 const idEdited = ref(false);
@@ -444,8 +443,8 @@ function entryRows(section: string) {
   });
   return rows;
 }
-async function toggle(entry: CatalogEntry) {
-  const rows = connectionsFor(entry.id);
+async function toggle(providerId: string) {
+  const rows = connectionsFor(providerId);
   if (!rows.length) return;
   const active = rows.some((row) => row.isActive);
   await Promise.all(
@@ -473,11 +472,11 @@ async function test(id: string) {
     await queryClient.invalidateQueries({ queryKey: ["providers"] });
   }
 }
-async function batchTest(section: string) {
+async function batchTest(group: string, providerIds: string[]) {
   const ids = [
     ...new Set(
-      catalog[section].flatMap((entry) =>
-        connectionsFor(entry.id).map((p) => p.id),
+      providerIds.flatMap((providerId) =>
+        connectionsFor(providerId).map((p) => p.id),
       ),
     ),
   ];
@@ -485,7 +484,7 @@ async function batchTest(section: string) {
     notices.push("info", "No connections in this provider group.");
     return;
   }
-  testing.value = section;
+  testing.value = group;
   let passed = 0;
   await Promise.all(
     ids.map(async (id) => {
@@ -512,6 +511,7 @@ const createNode = useMutation({
           ? "anthropic-compatible"
           : "openai-compatible",
       ...(form.kind === "openai" ? { apiType: form.apiType } : {}),
+      ...(form.logo ? { logo: form.logo } : {}),
       data: form.apiKey ? { apiKey: form.apiKey } : {},
     }),
   onSuccess: () => {
@@ -527,6 +527,7 @@ const createNode = useMutation({
       baseUrl: "",
       apiKey: "",
       apiType: "chat",
+      logo: null,
     });
   },
   onError: (error) => notices.push("error", error.message),
@@ -729,44 +730,58 @@ onBeforeUnmount(() => sectionObserver?.disconnect());
                 >{{ customRows.length }}</span
               >
             </h2>
+            <Button
+              v-if="customRows.length"
+              variant="outline"
+              size="sm"
+              :disabled="testing === CUSTOM_SECTION_ID"
+              @click="
+                batchTest(
+                  CUSTOM_SECTION_ID,
+                  customRows.map((node) => node.id),
+                )
+              "
+              ><LoaderCircle
+                v-if="testing === CUSTOM_SECTION_ID"
+                class="size-4 animate-spin"
+              /><Zap v-else class="size-4" />{{
+                testing === CUSTOM_SECTION_ID ? "Testing..." : "Test all"
+              }}</Button
+            >
           </div>
           <ul
             v-if="customRows.length && directory"
             class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
           >
             <li v-for="node in customRows" :key="node.id">
-              <RouterLink
-                :to="`/dashboard/providers/${node.id}`"
+              <ProviderListItem
+                :id="node.id"
+                :name="nodeName(node)"
+                :logo="node.logo"
+                :status="status(node.id)"
+                :loading="providers.isPending.value"
+                directory
                 :title="node.baseUrl || node.base_url || undefined"
-                class="flex h-11 items-center gap-2.5 rounded-lg border bg-card px-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                ><span class="min-w-0 flex-1 truncate text-sm font-medium">{{
-                  nodeName(node)
-                }}</span
-                ><span class="shrink-0 text-xs text-muted-foreground">{{
-                  node.type === "anthropic-compatible" ? "Anthropic" : "OpenAI"
-                }}</span></RouterLink
-              >
+                @toggle="toggle(node.id)"
+              />
             </li>
           </ul>
           <div
             v-else-if="customRows.length"
             class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
-            <RouterLink
+            <ProviderListItem
               v-for="node in customRows"
+              :id="node.id"
               :key="node.id"
-              :to="`/dashboard/providers/${node.id}`"
-              class="rounded-[10px] border bg-card p-[15px] transition-colors hover:border-primary"
-              ><div class="flex items-start justify-between gap-2">
-                <p class="truncate font-medium">{{ nodeName(node) }}</p>
-                <Badge class="shrink-0 rounded-[5px]" variant="secondary">{{
-                  node.type === "anthropic-compatible" ? "Anthropic" : "OpenAI"
-                }}</Badge>
-              </div>
-              <p class="mt-1 truncate text-xs text-muted-foreground">
-                {{ node.baseUrl || node.base_url }}
-              </p></RouterLink
-            >
+              :name="nodeName(node)"
+              :logo="node.logo"
+              :status="status(node.id)"
+              :loading="providers.isPending.value"
+              :directory="false"
+              :title="node.baseUrl || node.base_url || undefined"
+              @toggle="toggle(node.id)"
+            />
           </div>
           <div
             v-else
@@ -811,7 +826,12 @@ onBeforeUnmount(() => sectionObserver?.disconnect());
               variant="outline"
               size="sm"
               :disabled="testing === section"
-              @click="batchTest(section)"
+              @click="
+                batchTest(
+                  section,
+                  catalog[section].map((entry) => entry.id),
+                )
+              "
               ><LoaderCircle
                 v-if="testing === section"
                 class="size-4 animate-spin"
@@ -825,155 +845,32 @@ onBeforeUnmount(() => sectionObserver?.disconnect());
             class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
           >
             <li v-for="entry in entryRows(section)" :key="entry.id">
-              <RouterLink
-                :to="`/dashboard/providers/${entry.id}`"
-                class="group flex h-11 items-center gap-2.5 rounded-lg border bg-card px-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                :class="{ 'opacity-55': status(entry.id).disabled }"
-                ><ProviderLogo
-                  :provider="entry.id"
-                  :label="entry.name"
-                  size="size-6"
-                /><span class="min-w-0 flex-1 truncate text-sm font-medium">{{
-                  entry.name
-                }}</span
-                ><button
-                  v-if="status(entry.id).total"
-                  type="button"
-                  class="hidden size-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent group-focus-within:grid group-hover:grid"
-                  :title="
-                    status(entry.id).disabled
-                      ? 'Enable provider'
-                      : 'Disable provider'
-                  "
-                  :aria-label="
-                    status(entry.id).disabled
-                      ? `Enable ${entry.name}`
-                      : `Disable ${entry.name}`
-                  "
-                  @click.prevent.stop="toggle(entry)"
-                >
-                  <CheckCircle2
-                    class="size-4"
-                    :class="
-                      status(entry.id).disabled
-                        ? 'text-muted-foreground'
-                        : 'text-success'
-                    "
-                  /></button
-                ><span
-                  class="flex shrink-0 items-center gap-2 text-xs tabular-nums"
-                  ><Skeleton
-                    v-if="providers.isPending.value"
-                    class="h-3 w-6"
-                  /><span
-                    v-else-if="status(entry.id).disabled"
-                    class="inline-flex items-center gap-1 text-muted-foreground"
-                    title="Disabled"
-                    ><span
-                      class="size-1.5 rounded-full border border-current"
-                      aria-hidden="true"
-                    /><span class="sr-only">Disabled</span></span
-                  ><template v-else-if="status(entry.id).total"
-                    ><span
-                      v-if="status(entry.id).good"
-                      class="inline-flex items-center gap-1 text-success"
-                      :title="`${status(entry.id).good} connected`"
-                      ><span
-                        class="size-1.5 rounded-full bg-success"
-                        aria-hidden="true"
-                      />{{ status(entry.id).good
-                      }}<span class="sr-only"> connected</span></span
-                    ><span
-                      v-if="status(entry.id).bad"
-                      class="inline-flex items-center gap-0.5 text-destructive"
-                      :title="`${status(entry.id).bad} error`"
-                      ><X class="size-2.5" aria-hidden="true" />{{
-                        status(entry.id).bad
-                      }}<span class="sr-only"> error</span></span
-                    ></template
-                  ><span
-                    v-else
-                    class="text-muted-foreground"
-                    title="No connections"
-                    ><span aria-hidden="true">–</span
-                    ><span class="sr-only">No connections</span></span
-                  ></span
-                ></RouterLink
-              >
+              <ProviderListItem
+                :id="entry.id"
+                :name="entry.name"
+                :provider="entry.id"
+                :status="status(entry.id)"
+                :loading="providers.isPending.value"
+                directory
+                @toggle="toggle(entry.id)"
+              />
             </li>
           </ul>
           <div
             v-else
             class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
-            <RouterLink
+            <ProviderListItem
               v-for="entry in entryRows(section)"
+              :id="entry.id"
               :key="entry.id"
-              :to="`/dashboard/providers/${entry.id}`"
-              class="group rounded-[10px] border bg-card p-[15px] transition-colors hover:border-primary"
-              :class="{ 'opacity-55': status(entry.id).disabled }"
-              ><div class="flex items-start justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-3">
-                  <ProviderLogo :provider="entry.id" :label="entry.name" />
-                  <div class="min-w-0">
-                    <p class="truncate font-medium">{{ entry.name }}</p>
-                    <div
-                      class="mt-1 flex flex-wrap items-center gap-1.5 text-xs"
-                    >
-                      <Badge
-                        v-if="status(entry.id).disabled"
-                        variant="secondary"
-                        class="rounded-[5px]"
-                        >Disabled</Badge
-                      ><template v-else
-                        ><Badge
-                          v-if="status(entry.id).good"
-                          variant="success"
-                          class="rounded-[5px]"
-                          >{{ status(entry.id).good }} connected</Badge
-                        ><Badge
-                          v-if="status(entry.id).bad"
-                          variant="destructive"
-                          class="rounded-[5px]"
-                          >{{ status(entry.id).bad }} error</Badge
-                        ><Skeleton
-                          v-if="providers.isPending.value"
-                          class="h-4 w-20"
-                        /><span
-                          v-else-if="!status(entry.id).total"
-                          class="text-muted-foreground"
-                          >No connections</span
-                        ></template
-                      >
-                    </div>
-                  </div>
-                </div>
-                <button
-                  v-if="status(entry.id).total"
-                  type="button"
-                  class="shrink-0 rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent focus-visible:opacity-100 group-hover:opacity-100"
-                  :title="
-                    status(entry.id).disabled
-                      ? 'Enable provider'
-                      : 'Disable provider'
-                  "
-                  :aria-label="
-                    status(entry.id).disabled
-                      ? `Enable ${entry.name}`
-                      : `Disable ${entry.name}`
-                  "
-                  @click.prevent.stop="toggle(entry)"
-                >
-                  <CheckCircle2
-                    class="size-4"
-                    :class="
-                      status(entry.id).disabled
-                        ? 'text-muted-foreground'
-                        : 'text-success'
-                    "
-                  />
-                </button></div
-            ></RouterLink>
+              :name="entry.name"
+              :provider="entry.id"
+              :status="status(entry.id)"
+              :loading="providers.isPending.value"
+              :directory="false"
+              @toggle="toggle(entry.id)"
+            />
           </div>
         </section>
       </div>
@@ -1037,6 +934,14 @@ onBeforeUnmount(() => sectionObserver?.disconnect());
             :options="kindOptions"
             aria-labelledby="custom-kind-label"
             class="w-full"
+          />
+        </div>
+        <div class="space-y-2">
+          <Label for="compatible-logo">Logo</Label>
+          <ProviderLogoInput
+            id="compatible-logo"
+            v-model="form.logo"
+            :label="form.name"
           />
         </div>
         <div class="grid gap-4 sm:grid-cols-2">

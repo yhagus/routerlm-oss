@@ -25,6 +25,20 @@ function nodeIdError(runtime: Runtime, id: string): { error: string; status: 400
   return null;
 }
 
+// The logo lives inside providerNodes.data as a data URL, so a database backup
+// carries it. The dashboard downscales raster images before upload.
+const LOGO_PATTERN = /^data:image\/(?:png|jpeg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/;
+const MAX_LOGO_LENGTH = 200_000;
+
+// undefined: leave the stored logo as it is. null: remove the logo.
+function parseLogo(value: unknown): { logo?: string | null; error?: string } {
+  if (value === undefined) return {};
+  if (value === null || value === "") return { logo: null };
+  if (typeof value !== "string" || !LOGO_PATTERN.test(value)) return { error: "Logo must be a base64 PNG, JPEG, WebP, GIF or SVG data URL" };
+  if (value.length > MAX_LOGO_LENGTH) return { error: "Logo is too large" };
+  return { logo: value };
+}
+
 function validType(value: unknown): value is NodeType {
   return value === "openai-compatible" || value === "anthropic-compatible" || value === "custom-embedding";
 }
@@ -145,7 +159,10 @@ export function providerNodeRoutes(runtime: Runtime) {
       if (!prefix) return c.json({ error: "Prefix is required" }, 400);
       if (!validType(type)) return c.json({ error: "Invalid provider node type" }, 400);
       if (type === "openai-compatible" && !["chat", "responses"].includes(String(body.apiType))) return c.json({ error: "Invalid OpenAI compatible API type" }, 400);
-      return c.json({ node: runtime.repos.nodes.create({ ...body, id: id || undefined, name, prefix, type, baseUrl: normalizeBaseUrl(type, body.baseUrl) }) }, 201);
+      const { logo, error: logoError } = parseLogo(body.logo);
+      if (logoError) return c.json({ error: logoError }, 400);
+      const { logo: _unvalidatedLogo, ...data } = (body.data && typeof body.data === "object" ? body.data : {}) as Record<string, unknown>;
+      return c.json({ node: runtime.repos.nodes.create({ ...body, id: id || undefined, name, prefix, type, baseUrl: normalizeBaseUrl(type, body.baseUrl), data: { ...data, ...(logo ? { logo } : {}) } }) }, 201);
     })
     .put("/:id", async (c) => {
       const id = c.req.param("id");
@@ -159,7 +176,15 @@ export function providerNodeRoutes(runtime: Runtime) {
       if (!prefix) return c.json({ error: "Prefix is required" }, 400);
       if (!baseUrl) return c.json({ error: "Base URL is required" }, 400);
       if (current.type === "openai-compatible" && !["chat", "responses"].includes(String(body.apiType))) return c.json({ error: "Invalid OpenAI compatible API type" }, 400);
-      const node = runtime.repos.nodes.update(id, { name, prefix, baseUrl: normalizeBaseUrl(current.type as NodeType, baseUrl), ...(current.type === "openai-compatible" ? { apiType: body.apiType } : {}) })!;
+      const { logo, error: logoError } = parseLogo(body.logo);
+      if (logoError) return c.json({ error: logoError }, 400);
+      const node = runtime.repos.nodes.update(id, {
+        name,
+        prefix,
+        baseUrl: normalizeBaseUrl(current.type as NodeType, baseUrl),
+        ...(current.type === "openai-compatible" ? { apiType: body.apiType } : {}),
+        ...(logo !== undefined ? { data: { logo } } : {}),
+      })!;
       for (const connection of runtime.repos.providers.list(true).filter((item) => item.provider === id)) {
         runtime.repos.providers.patch(connection.id, {
           data: { prefix: node.prefix, ...(node.type === "openai-compatible" ? { apiType: node.apiType } : {}), baseUrl: node.baseUrl, nodeName: node.name },

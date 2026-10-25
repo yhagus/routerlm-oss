@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { providerLogo } from "@/lib/providerAssets";
 
+// `src` overrides the bundled asset, e.g. a custom provider's uploaded logo.
 const props = withDefaults(
-  defineProps<{ provider?: string; label?: string; size?: string }>(),
+  defineProps<{ provider?: string; label?: string; size?: string; src?: string }>(),
   { size: "size-9" },
 );
 const failed = ref(false);
+watch(
+  () => [props.src, props.provider],
+  () => {
+    failed.value = false;
+  },
+);
 </script>
 
 <template>
@@ -16,7 +23,14 @@ const failed = ref(false);
       props.size,
     ]"
   >
-    <template v-if="props.provider === 'zenmux'">
+    <img
+      v-if="props.src && !failed"
+      :src="props.src"
+      :alt="`${label || provider || 'Provider'} logo`"
+      class="size-full object-contain"
+      @error="failed = true"
+    />
+    <template v-else-if="props.provider === 'zenmux'">
       <img
         src="/providers/zenmux-light.svg"
         :alt="`${label || 'ZenMux'} logo`"
@@ -30,7 +44,7 @@ const failed = ref(false);
     </template>
     <template v-else>
       <img
-        v-if="!failed && providerLogo(provider)"
+        v-if="!props.src && !failed && providerLogo(provider)"
         :src="providerLogo(provider)"
         :alt="`${label || provider || 'Provider'} logo`"
         class="size-full object-contain"

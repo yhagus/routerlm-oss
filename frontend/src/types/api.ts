@@ -151,6 +151,7 @@ export interface ProviderNode {
   base_url?: string | null;
   apiType?: string | null;
   baseUrl?: string | null;
+  logo?: string | null;
   data: string | Record<string, unknown>;
 }
 

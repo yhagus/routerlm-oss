@@ -149,3 +149,46 @@ describe("user-chosen provider node ids", () => {
     }
   });
 });
+
+describe("provider node logo", () => {
+  const LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  const json = (body: Record<string, unknown>) => ({ headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const base = { id: "logo-node", name: "Logo", prefix: "logo", type: "openai-compatible", apiType: "chat", baseUrl: "https://logo.test/v1" };
+  const edit = { name: "Logo", prefix: "logo", apiType: "chat", baseUrl: "https://logo.test/v1" };
+
+  test("stores the logo in node data, keeps it on unrelated edits and removes it on null", async () => {
+    const instance = await runtime();
+    try {
+      const app = createApp(instance);
+      expect((await app.request("/api/provider-nodes", { method: "POST", ...json({ ...base, logo: LOGO }) })).status).toBe(201);
+      expect(instance.repos.nodes.get("logo-node")?.logo).toBe(LOGO);
+
+      await app.request("/api/provider-nodes/logo-node", { method: "PUT", ...json({ ...edit, name: "Renamed" }) });
+      expect(instance.repos.nodes.get("logo-node")).toMatchObject({ name: "Renamed", logo: LOGO });
+
+      await app.request("/api/provider-nodes/logo-node", { method: "PUT", ...json({ ...edit, logo: null }) });
+      expect(instance.repos.nodes.get("logo-node")?.logo).toBeNull();
+    } finally {
+      instance.close();
+    }
+  });
+
+  test("rejects a logo that is not a base64 image data URL or is too large", async () => {
+    const instance = await runtime();
+    try {
+      const app = createApp(instance);
+      const remote = await app.request("/api/provider-nodes", { method: "POST", ...json({ ...base, logo: "https://logo.test/logo.png" }) });
+      expect(remote.status).toBe(400);
+      const html = await app.request("/api/provider-nodes", { method: "POST", ...json({ ...base, logo: "data:text/html;base64,PGgxPg==" }) });
+      expect(html.status).toBe(400);
+      const smuggled = await app.request("/api/provider-nodes", { method: "POST", ...json({ ...base, data: { logo: "data:text/html;base64,PGgxPg==" } }) });
+      expect(smuggled.status).toBe(201);
+      expect(instance.repos.nodes.get("logo-node")?.logo).toBeUndefined();
+      const large = await app.request("/api/provider-nodes/logo-node", { method: "PUT", ...json({ ...edit, logo: `data:image/png;base64,${"A".repeat(200_000)}` }) });
+      expect(large.status).toBe(400);
+      expect(await large.json()).toEqual({ error: "Logo is too large" });
+    } finally {
+      instance.close();
+    }
+  });
+});
