@@ -133,7 +133,8 @@ describe("v1 dashboard chat playground routes", () => {
       const app = createApp(instance);
       globalThis.fetch = (async () => { throw new Error("version lookup must stay offline"); }) as unknown as typeof fetch;
       const version = await app.request("/api/version");
-      expect(await version.json()).toEqual({ currentVersion: "1.0.0" });
+      const pkg = await Bun.file(new URL("../package.json", import.meta.url)).json();
+      expect(await version.json()).toEqual({ currentVersion: pkg.version });
 
       // v1's ALWAYS_PROTECTED: requireLogin=false must not unlock these.
       const update = await app.request("/api/version/update", { method: "POST" });
