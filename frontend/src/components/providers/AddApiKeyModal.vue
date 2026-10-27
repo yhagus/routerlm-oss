@@ -73,7 +73,16 @@ const saving = ref(false);
 const mode = ref<"single" | "bulk">("single");
 const bulkText = ref("");
 const bulkResult = ref<{ success: number; failed: number } | null>(null);
-const bulkPlaceholder = "name1|sk-key1\nname2|sk-key2\nsk-key-only-auto-named";
+const bulkPlaceholder = computed(() =>
+  props.provider === "river"
+    ? "name1|sk-key1|refresh_token:client_id\nname2|sk-key2|refresh_token:client_id\nname3|sk-key3"
+    : "name1|sk-key1\nname2|sk-key2\nsk-key-only-auto-named",
+);
+const bulkHint = computed(() =>
+  props.provider === "river"
+    ? "Format: name|apiKey|refreshToken:clientId. Add both session values to show the wallet balance; without them credit shows \"-\"."
+    : "One key per line. Format: name|apiKey or just apiKey (auto-named by index).",
+);
 
 watch(
   () => props.open,
@@ -175,6 +184,14 @@ async function handleBulkSubmit() {
         name: entry.name,
         priority: 1,
         testStatus: "unknown",
+        ...(entry.refreshToken && entry.clientId
+          ? {
+              providerSpecificData: {
+                riverRefreshToken: entry.refreshToken,
+                riverClientId: entry.clientId,
+              },
+            }
+          : {}),
       });
       success++;
     } catch {
@@ -217,9 +234,7 @@ async function handleBulkSubmit() {
 
       <div v-if="mode === 'bulk'" class="flex flex-col gap-3">
         <p class="text-xs text-muted-foreground">
-          One key per line. Format:
-          <code>name|apiKey</code>
-          or just <code>apiKey</code> (auto-named by index).
+          {{ bulkHint }}
         </p>
         <textarea
           v-model="bulkText"

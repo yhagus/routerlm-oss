@@ -178,6 +178,19 @@ export function extractQuotaRows(
             });
           }
         break;
+      case "river":
+        if (quotas)
+          for (const [name, quota] of Object.entries(quotas)) {
+            rows.push({
+              name,
+              modelKey: name,
+              used: 0,
+              total: 0,
+              balance: numberOr(quota.balance, 0),
+              unit: typeof quota.unit === "string" ? quota.unit : "USD",
+            });
+          }
+        break;
       case "claude":
       default:
         if (provider.toLowerCase() === "claude" && (payload as RawQuota).message) break;

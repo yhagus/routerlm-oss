@@ -471,6 +471,22 @@ export function parseQuotaData(
             });
           }
         break;
+      case "river":
+        // USD wallets always render as a balance row. Missing session values
+        // arrive as null, so the row stays visible while the notice shows "-".
+        if (quotas)
+          for (const [name, quota] of Object.entries(quotas)) {
+            normalizedQuotas.push({
+              name,
+              modelKey: name,
+              used: 0,
+              total: 0,
+              unit: quota.unit || "USD",
+              balance: Number(quota.balance) || 0,
+              resetAt: null,
+            });
+          }
+        break;
       default:
         if (quotas)
           for (const [name, quota] of Object.entries(quotas)) {

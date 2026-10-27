@@ -5,12 +5,25 @@
 export interface BulkAddEntry {
   name: string;
   apiKey: string;
+  refreshToken?: string;
+  clientId?: string;
   skipped: boolean;
 }
 
 interface ParsedLine {
   baseName: string;
   apiKey: string;
+  refreshToken?: string;
+  clientId?: string;
+}
+
+function parseSession(value: string | undefined): Pick<ParsedLine, "refreshToken" | "clientId"> {
+  const separator = value?.indexOf(":") ?? -1;
+  if (separator < 1) return {};
+  const refreshToken = value!.slice(0, separator).trim();
+  const clientId = value!.slice(separator + 1).trim();
+  if (!refreshToken || !clientId) return {};
+  return { refreshToken, clientId };
 }
 
 function parseLine(line: string): ParsedLine | null {
@@ -18,8 +31,8 @@ function parseLine(line: string): ParsedLine | null {
 
   if (parts.length >= 2) {
     const baseName = parts[0].trim();
-    const apiKey = parts.slice(1).join("|").trim();
-    return { baseName: baseName || "Key", apiKey };
+    const apiKey = parts[1].trim();
+    return { baseName: baseName || "Key", apiKey, ...parseSession(parts[2]) };
   }
 
   return { baseName: "Key", apiKey: parts[0].trim() };
@@ -55,6 +68,8 @@ export function planBulkAdd(
     out.push({
       name,
       apiKey: parsed.apiKey,
+      refreshToken: parsed.refreshToken,
+      clientId: parsed.clientId,
       skipped: false,
     });
   }

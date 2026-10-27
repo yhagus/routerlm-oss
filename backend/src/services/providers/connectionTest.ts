@@ -14,6 +14,7 @@ import { getDefaultModel } from "./config/providerModels.ts";
 import { refreshProviderCredentials, shouldRefreshCredentials } from "./oauth/oauthCredentialManager.ts";
 import { proxyAwareFetch } from "../common/proxyFetch.ts";
 import { deepseekHarnessPlatformHeaders } from "./deepseekHarnessPlatform.ts";
+import { authenticateRiver, riverCredentialPair } from "./riverAuth.ts";
 import { credentialToken, refreshAfterAuthFailure } from "./refreshCoordinator";
 import { ANTIGRAVITY_CONFIG, CLAUDE_CONFIG } from "./oauth/constants/oauth.ts";
 
@@ -766,6 +767,50 @@ async function probeRegistryOpenAICompatible(connection: Record<string, any>, ef
   }
 }
 
+// River AI: the inference key is the credential under test. A valid key also
+// refreshes the wallet session, which rotates the WorkOS refresh token.
+async function testRiverConnection(runtime: Runtime, connection: Record<string, any>, effectiveProxy: Record<string, any> | null = null): Promise<Record<string, any>> {
+  let keyResponse: Response;
+  try {
+    keyResponse = await fetchWithConnectionProxy("https://api.river.ai/v1/models", {
+      headers: { Authorization: `Bearer ${connection.apiKey}` },
+    }, effectiveProxy);
+  } catch (error: any) {
+    return { valid: false, error: (error as Error).message, refreshed: false };
+  }
+  if (keyResponse.status === 401 || keyResponse.status === 403) {
+    return { valid: false, error: "Invalid API key", refreshed: false };
+  }
+
+  const pair = riverCredentialPair(connection);
+  if (!pair) {
+    await runtime.quotaSnapshots.requestRefresh(connection.id);
+    return { valid: true, error: "Credit session not configured (missing refresh token or client ID)", refreshed: false };
+  }
+
+  try {
+    const session = await authenticateRiver(pair.refreshToken, pair.clientId, effectiveProxy);
+    runtime.repos.providers.patch(connection.id, {
+      data: {
+        riverAccessToken: session.accessToken,
+        riverRefreshToken: session.refreshToken,
+        riverAccessExpiresAt: session.expiresAt,
+        riverAuthError: null,
+        ...(session.email ? { riverEmail: session.email } : {}),
+      },
+    });
+    await runtime.quotaSnapshots.requestRefresh(connection.id);
+    const snapshot = runtime.quotaSnapshots.getSnapshot(connection.id);
+    if (snapshot?.status === "error") {
+      return { valid: true, error: `Session refreshed, quota failed: ${snapshot.lastError}`, refreshed: true };
+    }
+    return { valid: true, error: null, refreshed: true };
+  } catch (error: any) {
+    await runtime.quotaSnapshots.requestRefresh(connection.id);
+    return { valid: false, error: (error as Error).message, refreshed: false };
+  }
+}
+
 // v1 testSingleConnection: probe, persist status/tokens, return the row test result.
 export async function testSingleConnection(runtime: Runtime, id: string): Promise<ConnectionTestResult> {
   const connection = runtime.repos.providers.get(id);
@@ -785,7 +830,9 @@ export async function testSingleConnection(runtime: Runtime, id: string): Promis
 
   const start = Date.now();
   let result: Record<string, any>;
-  if (connection.authType === "apikey" || connection.authType === "cookie") {
+  if (connection.provider === "river") {
+    result = await testRiverConnection(runtime, shaped, effectiveProxy);
+  } else if (connection.authType === "apikey" || connection.authType === "cookie") {
     // The probe refreshes through the refresh coordinator, which stores the
     // new tokens and joins a refresh that a request already started.
     result = await testApiKeyConnection(shaped, effectiveProxy, () => refreshAfterAuthFailure(runtime, connection.id, credentialToken(shaped)));

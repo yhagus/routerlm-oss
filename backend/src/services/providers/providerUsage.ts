@@ -9,6 +9,7 @@ import { resolveV1ProviderSpecificData } from "../chat/credentials";
 import { credentialToken, refreshConnectionCredentials } from "./refreshCoordinator";
 import { getAutoclawUsage } from "../billing/usageAutoclaw";
 import { getUsageForProvider } from "../billing/usage.js";
+import { getRiverUsage } from "../billing/usage/river.ts";
 import { buildGrokCliFreeQuota } from "../billing/usage/grok-cli.js";
 import { GROK_CLI_FREE_USAGE_WINDOW_MS } from "./config/grokCli.ts";
 import {
@@ -242,6 +243,26 @@ export async function fetchConnectionUsageFromProvider(runtime: Runtime, connect
     // through the executor and reads a points wallet instead of v1 usage.js.
     if (connection.provider === "autoclaw") {
       return await fetchAutoclawUsage(runtime, connection, proxyOptions);
+    }
+
+    // River AI reads its wallet through a WorkOS console session, not the
+    // inference key. Persist rotated session tokens as they arrive.
+    if (connection.provider === "river") {
+      const connectionId = connection.id;
+      const usage = await getRiverUsage(
+        connection.data as Record<string, unknown>,
+        proxyOptions,
+        (session) => {
+          runtime.repos.providers.patch(connectionId, {
+            data: {
+              riverAccessToken: session.accessToken,
+              riverRefreshToken: session.refreshToken,
+              riverAccessExpiresAt: session.expiresAt,
+            },
+          });
+        },
+      );
+      return { status: 200, body: usage as Record<string, unknown> };
     }
 
     let usage = (await getUsageForProvider(v1ShapedConnection(connection), proxyOptions)) as Record<string, any>;

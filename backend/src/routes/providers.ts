@@ -10,6 +10,7 @@ import { createProbe407Job, deleteProbe407Damaged, getProbe407Job, listProbe407D
 import { fetchAutoclawAccount } from "../services/providers/autoclawIdentity";
 import { fetchExperientialLabsAccount } from "../services/providers/experientialLabsIdentity";
 import { autoclawRefresh } from "../services/chat/autoclawExecutor";
+import { authenticateRiver } from "../services/providers/riverAuth.ts";
 import { computeProviderQuotaSummary } from "../services/billing/quotaSummary";
 import { positiveLimit } from "../services/chat/inFlightSlots";
 // The v1 model registry is JavaScript and intentionally remains the source of truth.
@@ -179,13 +180,21 @@ export function providerRoutes(runtime: Runtime) {
     .post("/export/api-keys", async (c) => {
       const body = await c.req.json<{ connectionIds?: unknown }>().catch((): { connectionIds?: unknown } => ({}));
       const selectedIds = new Set(Array.isArray(body.connectionIds) ? body.connectionIds.filter((id: unknown): id is string => typeof id === "string") : []);
-      const keys = runtime.repos.providers.list(true)
+      const lines = runtime.repos.providers.list(true)
         .filter((connection) => selectedIds.has(connection.id) && connection.authType === "apikey")
-        .map((connection) => stringValue(connection.credentials.apiKey, connection.data?.apiKey))
-        .filter((key): key is string => key !== null)
-        .map((key) => key.trim())
-        .filter((key) => Boolean(key) && !/[\r\n]/.test(key));
-      const unique = [...new Set(keys)];
+        .map((connection) => {
+          const key = stringValue(connection.credentials.apiKey, connection.data?.apiKey)?.trim();
+          if (!key || /[\r\n]/.test(key)) return null;
+          if (connection.provider !== "river") return key;
+          // River round-trips the optional wallet session in the bulk format.
+          const refreshToken = stringValue(connection.data?.riverRefreshToken, connection.data?.refreshToken)?.trim();
+          const clientId = stringValue(connection.data?.riverClientId, connection.data?.clientId)?.trim();
+          const name = connection.name?.trim();
+          const prefix = name ? `${name}|` : "";
+          return refreshToken && clientId ? `${prefix}${key}|${refreshToken}:${clientId}` : `${prefix}${key}`;
+        })
+        .filter((line): line is string => line !== null);
+      const unique = [...new Set(lines)];
       if (unique.length === 0) return c.json({ error: "No selected connections contain an API key" }, 400);
       return c.body(unique.join("\n"), 200, { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" });
     })
@@ -312,6 +321,32 @@ export function providerRoutes(runtime: Runtime) {
           baseUrl: node.baseUrl,
           nodeName: node.name,
         });
+      }
+      if (provider === "river") {
+        // River wallet reads need a console session, not the inference key.
+        // Both values are optional: without them the row stays valid but the
+        // credit counter shows "-". Authentication is best-effort on create.
+        const data = input.data as Record<string, unknown>;
+        const refreshToken = stringValue(data.riverRefreshToken, body.refreshToken);
+        const clientId = stringValue(data.riverClientId, body.clientId);
+        if (refreshToken) data.riverRefreshToken = refreshToken;
+        if (clientId) data.riverClientId = clientId;
+        if (refreshToken && clientId) {
+          try {
+            const session = await authenticateRiver(refreshToken, clientId);
+            Object.assign(data, {
+              riverAccessToken: session.accessToken,
+              riverRefreshToken: session.refreshToken,
+              riverAccessExpiresAt: session.expiresAt,
+            });
+            if (!(input as Record<string, unknown>).email && session.email) Object.assign(input, { email: session.email });
+          } catch (error: any) {
+            data.riverAuthError = error instanceof Error ? error.message : String(error);
+          }
+        }
+        const connection = runtime.repos.providers.create(input);
+        void runtime.quotaSnapshots.requestRefresh(connection.id);
+        return c.json({ connection: safe(connection) }, 201);
       }
       if (provider === "autoclaw") {
         // The pasted value is a refresh token, not an API key. Initial access

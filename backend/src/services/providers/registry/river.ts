@@ -24,5 +24,10 @@ export default {
   models: [
     { id: "zai-org/GLM-5.3-Flash", name: "GLM 5.3 Flash" },
   ],
+  features: {
+    // Wallet balance display via /api/usage. Needs a refresh token + client ID.
+    usage: true,
+    usageApikey: true,
+  },
   passthroughModels: true,
 };
