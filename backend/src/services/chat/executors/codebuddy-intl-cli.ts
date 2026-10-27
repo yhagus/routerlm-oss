@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { DefaultExecutor } from "./default.js";
 import { dbgAlways } from "../utils/debugLog.js";
+import { CODEBUDDY_ACCOUNT_RESTRICTED_CODE } from "../../providers/codebuddyRestricted";
+import { refreshProviderCredentials } from "../../providers/oauth/oauthCredentialManager.ts";
 
 /**
  * CodeBuddyIntlCliExecutor — talks to https://www.codebuddy.ai/v2/chat/completions
@@ -39,6 +41,7 @@ const QUOTA_RESET_OFFSET_MS = 8 * 60 * 60 * 1000;
 // surfaced as the error we emit.
 const ERR = {
   sessionDead: "CodeBuddy CLI session expired; re-login required",
+  accountRestricted: "CodeBuddy CLI account restricted by provider; appeal required",
   quota: "CodeBuddy CLI quota exhausted",
   rateLimited: "CodeBuddy CLI rate limit reached",
   unavailable: "CodeBuddy CLI is temporarily unavailable",
@@ -335,6 +338,13 @@ export class CodeBuddyIntlCliExecutor extends DefaultExecutor {
     return result;
   }
 
+  // DefaultExecutor only refreshes claude/codex; without this override the
+  // chat 401/403 retry and the daily probe never renew a CodeBuddy token.
+  async refreshCredentials(credentials: any, log: any, proxyOptions: any = null) {
+    if (!credentials?.refreshToken) return null;
+    return refreshProviderCredentials("codebuddy-intl-cli", credentials, log, proxyOptions);
+  }
+
   parseError(response: any, bodyText: any) {
     const status = response?.status ?? 502;
     const text = String(bodyText || "");
@@ -359,6 +369,9 @@ export class CodeBuddyIntlCliExecutor extends DefaultExecutor {
     // be diagnosed (canonical messages below intentionally hide provider text).
     dbgAlways("CODEBUDDY-CLI", `parseError status=${status} code=${codeStr ?? "n/a"} raw=${text.slice(0, 500)}`);
 
+    if (code === CODEBUDDY_ACCOUNT_RESTRICTED_CODE) {
+      return { status: 403, message: ERR.accountRestricted, code: codeStr };
+    }
     if (status === 401 || code === SESSION_DEAD_CODE || lower.includes(SESSION_DEAD_TEXT)) {
       return { status: 401, message: ERR.sessionDead, disableAccount: true, code: codeStr };
     }

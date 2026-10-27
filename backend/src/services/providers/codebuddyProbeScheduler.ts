@@ -19,8 +19,10 @@ import { fetchDailyCheckin, type DailyCheckinResult } from "./codebuddyCheckin";
 import { proxyAwareFetch } from "../common/proxyFetch";
 import { registerScheduler, logSchedulerAction } from "../schedulerHistory";
 import { refreshExpiringCredentials } from "./refreshCoordinator";
+import { codebuddyRestrictedAt } from "./codebuddyRestricted";
 
 const TASK_ID = "daily_probe";
+const RESTRICTED_SKIP_MESSAGE = "Account restricted by CodeBuddy; token refreshed, check-in and report skipped.";
 const PROVIDER_IDS = ["codebuddy-intl-cli"];
 const DEFAULT_INTERVAL_MINUTES = 60;
 const SETTINGS_KEY_CLI = "codebuddyIntlCliDailyProbe";
@@ -145,6 +147,19 @@ export async function runCodebuddyProbeForConnection(runtime: Runtime, connectio
   const connection = runtime.repos.providers.get(connectionId);
   if (!connection || !PROVIDER_IDS.includes(connection.provider)) {
     return { ok: false, status: "error", alreadyDone: false, error: "Connection not eligible for CodeBuddy probe.", checkin: null, reported: false };
+  }
+
+  // A restricted account only keeps its token fresh, so it still works once an
+  // appeal succeeds. Check-in and the activity report would send more traffic
+  // from a flagged account, so they are skipped and no daily record is written.
+  if (codebuddyRestrictedAt(connection.data as Record<string, unknown>)) {
+    try {
+      await resolveProbe(runtime, connection);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, status: "error", alreadyDone: false, error: message, checkin: null, reported: false };
+    }
+    return { ok: false, status: "error", alreadyDone: false, error: RESTRICTED_SKIP_MESSAGE, checkin: null, reported: false };
   }
 
   const day = codebuddyProbeDayKey();

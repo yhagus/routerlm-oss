@@ -10,6 +10,7 @@ import { laterUntil, storedConnection, unavailableUntil } from "./fallback";
 import { connectionInFlight, connectionInFlightLimit, type SlotOwner } from "./inFlightSlots";
 import { affinityEnabled, freeHome, rememberHome, type AffinityKeys } from "./sessionAffinity";
 import { ALIMS_EXHAUSTED_MARKER_PREFIX, alimsExhaustedMarkerKey, isAlimsFreeTierExhausted, isAlimsModelExhausted } from "../providers/alimsFreeTier.js";
+import { CODEBUDDY_RESTRICTED_MARKER, codebuddyRestrictedAt, isCodebuddyAccountRestricted } from "../providers/codebuddyRestricted";
 import {
   applyGrokCliFamilyExhaustion,
   clearAllGrokCliFamilyExhaustion,
@@ -388,6 +389,9 @@ export function selectChatConnection(
     // Bitdeer accounts with a 402 "insufficient balance" are sticky-exhausted
     // until a successful request or manual reset clears the marker.
     if (bitdeerExhaustedUntil(connection.data as Record<string, unknown>)) return false;
+    // CodeBuddy accounts restricted for unusual activity stay out of rotation
+    // until a manual reset; the daily probe still refreshes their token.
+    if (codebuddyRestrictedAt(connection.data as Record<string, unknown>)) return false;
     return true;
   });
 
@@ -551,6 +555,7 @@ export async function markAccountUnavailable(
   const grokCliFreeUsageExhausted = isGrokCliFreeUsageExhausted(provider, status, errorText);
   const alimsFreeTierExhausted = isAlimsFreeTierExhausted(provider, status, upstreamCode);
   const bitdeerBalanceExhausted = isBitdeerInsufficientBalance(provider, status, errorText);
+  const codebuddyRestricted = isCodebuddyAccountRestricted(provider, upstreamCode);
   const grokCliFamily = grokCliFreeUsageExhausted
     ? parseGrokCliQuotaFamilyFromError(errorText) || grokCliQuotaFamily(model)
     : null;
@@ -616,6 +621,10 @@ export async function markAccountUnavailable(
     // Sticky exhaustion marker — cleared on next success or manual reset.
     data[BITDEER_EXHAUSTED_MARKER] = new Date().toISOString();
   }
+  if (codebuddyRestricted) {
+    // Sticky until a manual reset or a successful request clears it.
+    data[CODEBUDDY_RESTRICTED_MARKER] = new Date().toISOString();
+  }
   runtime.repos.providers.patch(connection.id, disableAccount ? { data, isActive: false } : { data });
   return true;
 }
@@ -649,6 +658,7 @@ export function clearAccountError(runtime: Runtime, connection: ProviderConnecti
   const grokCliFamily = grokCliQuotaFamily(model);
   const hasGrokCliQuotaMarker = hasGrokCliFamilyMarker(data, model);
   const hasBitdeerExhaustionMarker = Boolean(data[BITDEER_EXHAUSTED_MARKER]);
+  const hasCodebuddyRestrictedMarker = Boolean(data[CODEBUDDY_RESTRICTED_MARKER]);
   const alimsMarkerKey = model ? alimsExhaustedMarkerKey(model) : null;
   const hasAlimsExhaustionMarker = Boolean(alimsMarkerKey && data[alimsMarkerKey] === true);
   const hasErrorState = data.testStatus === "unavailable" || Boolean(data.lastError);
@@ -658,12 +668,13 @@ export function clearAccountError(runtime: Runtime, connection: ProviderConnecti
     const expiry = lockExpiry(key);
     return expiry > 0 && expiry <= now;
   });
-  if (keysToClear.length === 0 && !hasErrorState && !hasGrokCliQuotaMarker && !hasAlimsExhaustionMarker && !hasBitdeerExhaustionMarker) return;
+  if (keysToClear.length === 0 && !hasErrorState && !hasGrokCliQuotaMarker && !hasAlimsExhaustionMarker && !hasBitdeerExhaustionMarker && !hasCodebuddyRestrictedMarker) return;
   const remainingActive = allLockKeys.filter((key) => !keysToClear.includes(key) && lockExpiry(key) > now);
   const patch: Record<string, unknown> = {};
   for (const key of keysToClear) patch[key] = null;
   if (hasAlimsExhaustionMarker && alimsMarkerKey) patch[alimsMarkerKey] = null;
   if (hasBitdeerExhaustionMarker) patch[BITDEER_EXHAUSTED_MARKER] = null;
+  if (hasCodebuddyRestrictedMarker) patch[CODEBUDDY_RESTRICTED_MARKER] = null;
   if (hasGrokCliQuotaMarker && grokCliFamily) Object.assign(patch, changedFields(data, clearGrokCliFamilyExhaustion(data, grokCliFamily)));
   if (remainingActive.length === 0) {
     patch.testStatus = "active";
@@ -686,6 +697,7 @@ export function clearConnectionLocks(runtime: Runtime, connectionId: string): bo
   for (const key of Object.keys(data)) {
     if (key.startsWith("modelLock_") || key.startsWith(ALIMS_EXHAUSTED_MARKER_PREFIX)) patch[key] = null;
   }
+  if (data[CODEBUDDY_RESTRICTED_MARKER]) patch[CODEBUDDY_RESTRICTED_MARKER] = null;
   patch.testStatus = "active";
   patch.lastError = null;
   patch.errorCode = null;

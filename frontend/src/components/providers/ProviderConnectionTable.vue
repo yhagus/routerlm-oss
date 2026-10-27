@@ -220,6 +220,7 @@ const rows = computed(() =>
         .filter((value) => new Date(value).getTime() > nowMs.value)
         .sort()[0] || null;
     const isCooldown = Boolean(modelLockUntil);
+    const isRestricted = Boolean(field(connection, "codebuddyRestrictedAt", ""));
 
     const oneByOne = props.oneByOneResults[connection.id] || null;
     let oneByOneVariant: BadgeVariant = "secondary";
@@ -280,6 +281,7 @@ const rows = computed(() =>
       group: String(field(connection, "group", "")).trim() || "Ungrouped",
       modelLockUntil,
       isCooldown,
+      isRestricted,
       oneByOneVariant,
       oneByOneLabel,
       boundProxyPoolId,
@@ -528,6 +530,13 @@ function formatRegistered(value: string) {
                   v-if="row.isCooldown && row.connection.isActive !== false"
                   :until="row.modelLockUntil"
                 />
+                <Badge
+                  v-if="row.isRestricted && row.connection.isActive !== false"
+                  variant="destructive"
+                  class="shrink-0"
+                  title="CodeBuddy restricted this account. It is skipped for chat; its token is still refreshed."
+                  >Restricted</Badge
+                >
                 <Badge
                   v-if="row.oneByOneLabel"
                   :variant="row.oneByOneVariant"
@@ -909,9 +918,13 @@ function formatRegistered(value: string) {
           </button>
         </template>
         <button
-          v-if="menuRow.isCooldown"
+          v-if="menuRow.isCooldown || menuRow.isRestricted"
           type="button"
-          title="Drop the local wait window at once. Spends no reset credit."
+          :title="
+            menuRow.isRestricted
+              ? 'Put the account back into rotation after a successful appeal.'
+              : 'Drop the local wait window at once. Spends no reset credit.'
+          "
           class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-accent"
           @click="
             emit('clearCooldown', menuRow.connection.id);
@@ -919,7 +932,7 @@ function formatRegistered(value: string) {
           "
         >
           <span class="material-symbols-outlined text-[14px]">timer_off</span>
-          <span>Clear wait</span>
+          <span>{{ menuRow.isRestricted ? "Clear restriction" : "Clear wait" }}</span>
         </button>
         <button
           v-if="providerId === 'codebuddy-intl-cli' && !menuRow.inviteBound"
