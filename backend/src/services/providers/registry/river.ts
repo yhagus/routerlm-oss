@@ -17,9 +17,12 @@ export default {
   authType: "apikey",
   authModes: ["apikey"],
   transport: {
-    baseUrl: "https://api.river.ai/v1/responses",
-    format: "openai-responses",
+    baseUrl: "https://api.river.ai/v1/chat/completions",
     validateUrl: "https://api.river.ai/v1/models",
+    // River hosts GLM/DeepSeek weights over the OpenAI Chat Completions API and
+    // takes standard reasoning controls (reasoning_effort), not Z.ai's thinking
+    // object — so pin the OpenAI thinking format instead of the *glm-5* default.
+    thinkingFormat: "openai",
   },
   models: [
     { id: "zai-org/GLM-5.3-Flash", name: "GLM 5.3 Flash" },
