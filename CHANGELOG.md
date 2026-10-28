@@ -1,3 +1,9 @@
+# v1.6.1 (2026-10-28)
+
+## Providers
+
+- River AI now talks to the Chat Completions API. Reasoning controls reach the model instead of being sent as an unrecognized object, so thinking works on GLM 5.3 Flash and other River models.
+
 # v1.6.0 (2026-10-26)
 
 ## Providers
