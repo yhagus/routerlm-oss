@@ -59,6 +59,9 @@ describe("alims-intl free-tier exhaustion", () => {
       );
       expect(marked).toBe(true);
       expect(isAlimsKeyExhausted("sk-one", "glm-5")).toBe(true);
+      const stored = instance.repos.providers.get(connection.id)!;
+      expect(Object.keys(stored.data).filter((key) => key.startsWith("modelLock_"))).toEqual([]);
+      expect(stored.data.testStatus).not.toBe("unavailable");
 
       // The exhausted model is skipped; an untried model still selects.
       expect(selectChatConnection(instance, "alims-intl", { model: "glm-5" }).selected).toBeNull();

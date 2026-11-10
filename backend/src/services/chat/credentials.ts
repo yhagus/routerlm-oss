@@ -564,6 +564,14 @@ export async function markAccountUnavailable(
     ? parseGrokCliFreeUsageTokens(errorText) as { used: number; limit: number } | null
     : null;
 
+  // Alibaba free-tier exhaustion is a per-model fact about the key. Record it
+  // and fall back. The key stays free of wait locks and error state, because
+  // its other models still work.
+  if (alimsFreeTierExhausted) {
+    markAlimsKeyExhausted(storedConnection(runtime.repos, connection).data.apiKey, model);
+    return true;
+  }
+
   // Classify against a backoff level. The first pass decides whether the
   // failure falls back; the write uses the level stored at write time.
   const classify = (backoffLevel: number): { shouldFallback: boolean; cooldownMs: number; newBackoffLevel?: number } => {
@@ -612,11 +620,6 @@ export async function markAccountUnavailable(
   };
   if (grokCliFreeUsageExhausted && grokCliFamily) {
     Object.assign(data, changedFields(storedData, applyGrokCliFamilyExhaustion(storedData, grokCliFamily, grokCliFreeUsageTokens)));
-  }
-  if (alimsFreeTierExhausted) {
-    // Sticky per-key marker. Free-tier quota does not reset on a timer, so it
-    // stays until a request for the same model succeeds or an operator resets it.
-    markAlimsKeyExhausted(storedData.apiKey, model);
   }
   if (bitdeerBalanceExhausted) {
     // Sticky exhaustion marker — cleared on next success or manual reset.
