@@ -1,3 +1,9 @@
+# v1.6.4 (2026-11-10)
+
+## Providers
+
+- A free-quota error on an Alibaba Model Studio model no longer puts the key in a wait. The backend marks that model as spent for the key. The other models of the key stay available.
+
 # v1.6.3 (2026-11-10)
 
 ## Chat
