@@ -8,13 +8,12 @@
 // Settings:
 // - maxInFlightRequests: global cap. Missing means the default; 0 means no cap.
 // - maxFallbackConnections: Connections one request tries in the account
-//   Fallback loop. Missing means the default; 0 means no cap.
+//   Fallback loop. Missing or 0 means no cap; a positive number sets the cap.
 // - apiKeys.maxConcurrency: per-key limit. Missing or 0 means no limit.
 import { BUSY_RETRY_AFTER_SECONDS, positiveLimit, slotsInFlight, takeSlot, type SlotOwner } from "./inFlightSlots";
 import { gatewayBusyResponse, type GatewayErrorSource } from "./gatewayError";
 
 export const DEFAULT_MAX_IN_FLIGHT_REQUESTS = 2500;
-export const DEFAULT_MAX_FALLBACK_CONNECTIONS = 5;
 
 const GLOBAL_SLOT = "all";
 
@@ -33,7 +32,7 @@ export function maxInFlightRequests(settings: Record<string, any>): number | nul
 }
 
 export function maxFallbackConnections(settings: Record<string, any>): number | null {
-  return limitSetting(settings.maxFallbackConnections, DEFAULT_MAX_FALLBACK_CONNECTIONS);
+  return positiveLimit(settings.maxFallbackConnections);
 }
 
 function keyLimit(apiKey: AdmissionKey): number | null {
