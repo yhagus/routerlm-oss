@@ -1,3 +1,11 @@
+# v1.6.2 (2026-11-10)
+
+## Providers
+
+- "Clear All Waits" no longer resets the Alibaba Model Studio free-tier availability.
+- The backend now stores spent free-tier models per API key. A key that you remove and add again stays marked as spent.
+- "Reset" on the availability matrix still clears the marks, including marks of removed keys.
+
 # v1.6.1 (2026-10-28)
 
 ## Providers
