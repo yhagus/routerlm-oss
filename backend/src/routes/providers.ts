@@ -15,7 +15,8 @@ import { computeProviderQuotaSummary } from "../services/billing/quotaSummary";
 import { positiveLimit } from "../services/chat/inFlightSlots";
 // The v1 model registry is JavaScript and intentionally remains the source of truth.
 import { getModelsByProviderId } from "../services/providers/config/providerModels.ts";
-import { ALIMS_EXHAUSTED_MARKER_PREFIX, ALIMS_INTL_PROVIDER, alimsExhaustedMarkerKey, isAlimsModelExhausted } from "../services/providers/alimsFreeTier.js";
+import { ALIMS_INTL_PROVIDER } from "../services/providers/alimsFreeTier.js";
+import { alimsExhaustedModels, resetAlimsExhausted } from "../services/providers/alimsExhaustedStore.js";
 
 function safe(connection: ProviderConnection) {
   const data = { ...connection.data } as Record<string, unknown>;
@@ -238,17 +239,16 @@ export function providerRoutes(runtime: Runtime) {
         const id = String(model.id);
         known.set(id, model.name || id);
       }
-      for (const connection of active) {
-        for (const [key, value] of Object.entries(connection.data as Record<string, unknown>)) {
-          if (!value || !key.startsWith(ALIMS_EXHAUSTED_MARKER_PREFIX)) continue;
-          const model = key.slice(ALIMS_EXHAUSTED_MARKER_PREFIX.length);
-          if (model && model !== "__all" && !known.has(model)) known.set(model, model);
+      const exhaustedByConnection = active.map((connection) => alimsExhaustedModels((connection.data as Record<string, unknown>).apiKey));
+      for (const exhaustedModels of exhaustedByConnection) {
+        for (const model of exhaustedModels) {
+          if (model !== "__all" && !known.has(model)) known.set(model, model);
         }
       }
       const models = [...known.entries()].map(([id, name]) => {
         let exhausted = 0;
-        for (const connection of active) {
-          if (isAlimsModelExhausted(connection.data as Record<string, unknown>, id)) exhausted += 1;
+        for (const exhaustedModels of exhaustedByConnection) {
+          if (exhaustedModels.has(id)) exhausted += 1;
         }
         return { id, name, total: active.length, exhausted, available: active.length - exhausted };
       });
@@ -256,22 +256,10 @@ export function providerRoutes(runtime: Runtime) {
     })
     .post("/alims-intl/model-availability/reset", async (c) => {
       // Manual reset: clears the sticky free-tier markers for one model (or all
-      // models when omitted) across Alibaba Studio accounts.
+      // models when omitted) for every Alibaba Studio key, including removed keys.
       const body = await c.req.json<{ model?: string }>().catch((): { model?: string } => ({}));
       const model = typeof body.model === "string" && body.model.trim() ? body.model.trim() : null;
-      let reset = 0;
-      for (const connection of runtime.repos.providers.list(true)) {
-        if (connection.provider !== ALIMS_INTL_PROVIDER) continue;
-        const cleared: Record<string, null> = {};
-        for (const [key, value] of Object.entries(connection.data)) {
-          if (!key.startsWith(ALIMS_EXHAUSTED_MARKER_PREFIX)) continue;
-          if (model && key !== alimsExhaustedMarkerKey(model)) continue;
-          if (value) cleared[key] = null;
-        }
-        if (!Object.keys(cleared).length) continue;
-        runtime.repos.providers.patch(connection.id, { data: cleared });
-        reset += 1;
-      }
+      const reset = resetAlimsExhausted(model);
       return c.json({ ok: true, reset, model });
     })
     .post("/", async (c) => {

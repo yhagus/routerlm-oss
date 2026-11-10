@@ -9,7 +9,8 @@ import { getCodeBuddyIntlCliUsage } from "../billing/usage/codebuddy.js";
 import { laterUntil, storedConnection, unavailableUntil } from "./fallback";
 import { connectionInFlight, connectionInFlightLimit, type SlotOwner } from "./inFlightSlots";
 import { affinityEnabled, freeHome, rememberHome, type AffinityKeys } from "./sessionAffinity";
-import { ALIMS_EXHAUSTED_MARKER_PREFIX, alimsExhaustedMarkerKey, isAlimsFreeTierExhausted, isAlimsModelExhausted } from "../providers/alimsFreeTier.js";
+import { isAlimsFreeTierExhausted } from "../providers/alimsFreeTier.js";
+import { clearAlimsKeyExhausted, isAlimsKeyExhausted, markAlimsKeyExhausted } from "../providers/alimsExhaustedStore.js";
 import { CODEBUDDY_RESTRICTED_MARKER, codebuddyRestrictedAt, isCodebuddyAccountRestricted } from "../providers/codebuddyRestricted";
 import {
   applyGrokCliFamilyExhaustion,
@@ -380,7 +381,7 @@ export function selectChatConnection(
     }
     // Alibaba Studio free-tier exhaustion is per-model and sticky: skip the
     // account for that model until a success or an explicit reset clears it.
-    if (options.model && isAlimsModelExhausted(connection.data as Record<string, unknown>, options.model)) return false;
+    if (options.model && isAlimsKeyExhausted((connection.data as Record<string, unknown>).apiKey, options.model)) return false;
     // Codex plan-based model gating: when planModelMap is configured, each
     // plan can only serve its allowlisted models. When absent, falls back to
     // the legacy freeBlockedModels blocklist (free plan only).
@@ -613,9 +614,9 @@ export async function markAccountUnavailable(
     Object.assign(data, changedFields(storedData, applyGrokCliFamilyExhaustion(storedData, grokCliFamily, grokCliFreeUsageTokens)));
   }
   if (alimsFreeTierExhausted) {
-    // Sticky per-model marker. Free-tier quota does not reset on a timer, so it
+    // Sticky per-key marker. Free-tier quota does not reset on a timer, so it
     // stays until a request for the same model succeeds or an operator resets it.
-    data[alimsExhaustedMarkerKey(model)] = true;
+    markAlimsKeyExhausted(storedData.apiKey, model);
   }
   if (bitdeerBalanceExhausted) {
     // Sticky exhaustion marker — cleared on next success or manual reset.
@@ -659,8 +660,7 @@ export function clearAccountError(runtime: Runtime, connection: ProviderConnecti
   const hasGrokCliQuotaMarker = hasGrokCliFamilyMarker(data, model);
   const hasBitdeerExhaustionMarker = Boolean(data[BITDEER_EXHAUSTED_MARKER]);
   const hasCodebuddyRestrictedMarker = Boolean(data[CODEBUDDY_RESTRICTED_MARKER]);
-  const alimsMarkerKey = model ? alimsExhaustedMarkerKey(model) : null;
-  const hasAlimsExhaustionMarker = Boolean(alimsMarkerKey && data[alimsMarkerKey] === true);
+  const hasAlimsExhaustionMarker = Boolean(model && isAlimsKeyExhausted(data.apiKey, model));
   const hasErrorState = data.testStatus === "unavailable" || Boolean(data.lastError);
   const keysToClear = allLockKeys.filter((key) => {
     if (model && key === `modelLock_${model}`) return true;
@@ -672,7 +672,7 @@ export function clearAccountError(runtime: Runtime, connection: ProviderConnecti
   const remainingActive = allLockKeys.filter((key) => !keysToClear.includes(key) && lockExpiry(key) > now);
   const patch: Record<string, unknown> = {};
   for (const key of keysToClear) patch[key] = null;
-  if (hasAlimsExhaustionMarker && alimsMarkerKey) patch[alimsMarkerKey] = null;
+  if (hasAlimsExhaustionMarker) clearAlimsKeyExhausted(data.apiKey, model);
   if (hasBitdeerExhaustionMarker) patch[BITDEER_EXHAUSTED_MARKER] = null;
   if (hasCodebuddyRestrictedMarker) patch[CODEBUDDY_RESTRICTED_MARKER] = null;
   if (hasGrokCliQuotaMarker && grokCliFamily) Object.assign(patch, changedFields(data, clearGrokCliFamilyExhaustion(data, grokCliFamily)));
@@ -687,15 +687,16 @@ export function clearAccountError(runtime: Runtime, connection: ProviderConnecti
 }
 
 // Manual cooldown reset. Drops every modelLock_* timestamp plus the error
-// state, so a stale wait window stops blocking requests at once. Spends no
-// reset credit. Returns false when the connection does not exist.
+// state, so a stale wait window stops blocking requests at once. Keeps the
+// alims-intl free-tier markers: spent allotments never come back, and only the
+// dedicated model-availability reset may clear them. Spends no reset credit. Returns false when the connection does not exist.
 export function clearConnectionLocks(runtime: Runtime, connectionId: string): boolean {
   const current = runtime.repos.providers.get(connectionId);
   if (!current) return false;
   const data = current.data as Record<string, unknown>;
   const patch: Record<string, unknown> = changedFields(data, clearAllGrokCliFamilyExhaustion(data));
   for (const key of Object.keys(data)) {
-    if (key.startsWith("modelLock_") || key.startsWith(ALIMS_EXHAUSTED_MARKER_PREFIX)) patch[key] = null;
+    if (key.startsWith("modelLock_")) patch[key] = null;
   }
   if (data[CODEBUDDY_RESTRICTED_MARKER]) patch[CODEBUDDY_RESTRICTED_MARKER] = null;
   patch.testStatus = "active";

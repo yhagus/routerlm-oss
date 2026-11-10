@@ -5,7 +5,8 @@ import { createRuntime } from "../src/runtime";
 import { installFetchMock } from "./fetchHarness";
 import { clearAccountError, clearConnectionLocks, markAccountUnavailable, selectChatConnection } from "../src/services/chat/credentials";
 import { extractUpstreamErrorCode, parseUpstreamError } from "../src/services/common/error";
-import { alimsExhaustedMarkerKey, isAlimsFreeTierExhausted } from "../src/services/providers/alimsFreeTier";
+import { isAlimsFreeTierExhausted } from "../src/services/providers/alimsFreeTier";
+import { isAlimsKeyExhausted } from "../src/services/providers/alimsExhaustedStore";
 
 const FREE_TIER_BODY = JSON.stringify({
   error: {
@@ -57,8 +58,7 @@ describe("alims-intl free-tier exhaustion", () => {
         instance, connection, 403, FREE_TIER_BODY, "alims-intl", "glm-5", null, false, "AllocationQuota.FreeTierOnly",
       );
       expect(marked).toBe(true);
-      const stored = instance.repos.providers.get(connection.id)!;
-      expect(stored.data[alimsExhaustedMarkerKey("glm-5")]).toBe(true);
+      expect(isAlimsKeyExhausted("sk-one", "glm-5")).toBe(true);
 
       // The exhausted model is skipped; an untried model still selects.
       expect(selectChatConnection(instance, "alims-intl", { model: "glm-5" }).selected).toBeNull();
@@ -74,8 +74,7 @@ describe("alims-intl free-tier exhaustion", () => {
       const connection = instance.repos.providers.create({ provider: "alims-intl", authType: "apikey", name: "Key One", credentials: { apiKey: "sk-one" } });
       await markAccountUnavailable(instance, connection, 403, FREE_TIER_BODY, "alims-intl", "glm-5", null, false, "AllocationQuota.FreeTierOnly");
       clearAccountError(instance, connection, "glm-5");
-      const stored = instance.repos.providers.get(connection.id)!;
-      expect(stored.data[alimsExhaustedMarkerKey("glm-5")]).toBeFalsy();
+      expect(isAlimsKeyExhausted("sk-one", "glm-5")).toBe(false);
       expect(selectChatConnection(instance, "alims-intl", { model: "glm-5" }).selected).not.toBeNull();
     } finally {
       instance.close();
@@ -103,19 +102,24 @@ describe("alims-intl free-tier exhaustion", () => {
         body: JSON.stringify({ model: "glm-5" }),
       });
       expect(await reset.json()).toMatchObject({ ok: true, reset: 1, model: "glm-5" });
-      expect(instance.repos.providers.get(one.id)!.data[alimsExhaustedMarkerKey("glm-5")]).toBeFalsy();
+      expect(isAlimsKeyExhausted("sk-one", "glm-5")).toBe(false);
     } finally {
       instance.close();
     }
   });
 
-  test("manual lock reset also clears the free-tier marker", async () => {
+  test("manual lock reset keeps the free-tier marker, even after the key is removed and re-added", async () => {
     const instance = await runtime();
     try {
       const connection = instance.repos.providers.create({ provider: "alims-intl", authType: "apikey", name: "Key One", credentials: { apiKey: "sk-one" } });
       await markAccountUnavailable(instance, connection, 403, FREE_TIER_BODY, "alims-intl", "glm-5", null, false, "AllocationQuota.FreeTierOnly");
       clearConnectionLocks(instance, connection.id);
-      expect(instance.repos.providers.get(connection.id)!.data[alimsExhaustedMarkerKey("glm-5")]).toBeFalsy();
+      expect(isAlimsKeyExhausted("sk-one", "glm-5")).toBe(true);
+
+      instance.repos.providers.remove(connection.id);
+      instance.repos.providers.create({ provider: "alims-intl", authType: "apikey", name: "Key One again", credentials: { apiKey: "sk-one" } });
+      expect(selectChatConnection(instance, "alims-intl", { model: "glm-5" }).selected).toBeNull();
+      expect(selectChatConnection(instance, "alims-intl", { model: "kimi-k2.5" }).selected).not.toBeNull();
     } finally {
       instance.close();
     }
