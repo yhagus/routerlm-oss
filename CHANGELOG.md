@@ -1,3 +1,10 @@
+# v1.6.3 (2026-11-10)
+
+## Chat
+
+- Fallback no longer stops after 5 Connections. A request now tries every Connection until one works.
+- To cap Fallback, set `maxFallbackConnections` in settings to a positive number. Zero or no value means no cap.
+
 # v1.6.2 (2026-11-10)
 
 ## Providers
