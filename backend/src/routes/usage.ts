@@ -8,7 +8,7 @@ import { readAutoclawClaims, runAutoclawClaimForConnection, type AutoclawClaimId
 import { listInspirationCenter, runInspirationAllLanguagesForConnection, runInspirationCenterForConnection, runInspirationItemForConnection } from "../services/billing/autoclawTasksScheduler";
 import { normalizeInspirationLanguage } from "../services/billing/autoclawTasks";
 import { readCodebuddyProbe, runCodebuddyProbeForConnection } from "../services/providers/codebuddyProbeScheduler";
-import { bindInviteForConnection, bindInviteForConnections } from "../services/providers/codebuddyInviteBind";
+import { bindInviteForConnection, bindInviteForConnections, fetchInviteCodeForConnection } from "../services/providers/codebuddyInviteBind";
 import { runInviteChainForConnection, runInviteChainForConnections, normalizeProxyPoolId } from "../services/providers/codebuddyInviteChain";
 import { reportAgentTaskForConnection } from "../services/providers/codebuddyTaskReport";
 import { runWebchatForConnection } from "../services/providers/codebuddyWebchat";
@@ -674,6 +674,10 @@ export function usageRoutes(runtime: Runtime) {
       if (connection.provider !== "codebuddy-intl-cli") return c.json({ error: "Daily probe is only available for CodeBuddy intl CLI connections." }, 400);
       const result = await runCodebuddyProbeForConnection(runtime, connectionId);
       return c.json(result);
+    })
+    .get("/codebuddy-invite/:connectionId/code", async (c) => {
+      const result = await fetchInviteCodeForConnection(runtime, c.req.param("connectionId"));
+      return c.json(result, result.ok ? 200 : 400);
     })
     .post("/codebuddy-invite/:connectionId/bind", async (c) => {
       const connectionId = c.req.param("connectionId");

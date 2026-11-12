@@ -1076,6 +1076,14 @@ export const api = {
         ),
     },
     codebuddyInvite: {
+      code: (connectionId: string) =>
+        request<{
+          ok: boolean;
+          connectionId: string;
+          inviteCode?: string;
+          expiresAt?: string | null;
+          error?: string;
+        }>(`/api/usage/codebuddy-invite/${encodeURIComponent(connectionId)}/code`),
       bind: (connectionId: string, inviteCode: string) =>
         request<{
           ok: boolean;

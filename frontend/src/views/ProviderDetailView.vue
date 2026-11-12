@@ -2717,6 +2717,59 @@ async function confirmInviteBind() {
   }
 }
 
+const inviteCodeView = ref<{
+  connection: ProviderConnection;
+  loading: boolean;
+  error: string | null;
+  inviteCode: string;
+  expiresAt: string | null;
+  copied: boolean;
+} | null>(null);
+async function openInviteCode(connectionId: string) {
+  const connection = allConnections.value.find((c) => c.id === connectionId);
+  if (!connection) return;
+  inviteCodeView.value = {
+    connection,
+    loading: true,
+    error: null,
+    inviteCode: "",
+    expiresAt: null,
+    copied: false,
+  };
+  try {
+    const result = await api.usage.codebuddyInvite.code(connectionId);
+    if (inviteCodeView.value?.connection.id !== connectionId) return;
+    inviteCodeView.value = {
+      connection,
+      loading: false,
+      error: result.ok ? null : (result.error ?? "Failed to load invite code"),
+      inviteCode: result.inviteCode ?? "",
+      expiresAt: result.expiresAt ?? null,
+      copied: false,
+    };
+  } catch (error) {
+    if (inviteCodeView.value?.connection.id !== connectionId) return;
+    inviteCodeView.value = {
+      connection,
+      loading: false,
+      error: describeApiError(error),
+      inviteCode: "",
+      expiresAt: null,
+      copied: false,
+    };
+  }
+}
+async function copyInviteCode() {
+  const view = inviteCodeView.value;
+  if (!view?.inviteCode) return;
+  try {
+    await navigator.clipboard.writeText(view.inviteCode);
+    view.copied = true;
+  } catch {
+    /* clipboard unavailable */
+  }
+}
+
 const bulkProbeRunning = ref(false);
 async function handleBulkProbeToggle(enabled: boolean) {
   if (bulkProbeRunning.value) return;
@@ -4101,6 +4154,7 @@ const knownProvider = computed(
           @claim="claimAutoclaw"
           @inspiration="openInspirationCenter"
           @bind-invite="(id) => openInviteBind({ ids: [id] })"
+          @view-invite-code="openInviteCode"
           @probe-history="openCodebuddyProbeHistory"
           @clear-cooldown="handleClearCooldown"
           @account="(id) => (accountDrawerId = id)"
@@ -5043,6 +5097,78 @@ const knownProvider = computed(
             class="rounded-xl border border-border bg-muted/40 px-3 py-8 text-center text-sm text-muted-foreground"
           >
             No reset credit details returned for this account.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CodeBuddy invite code modal -->
+    <div
+      v-if="inviteCodeView"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+    >
+      <div
+        class="w-full max-w-sm overflow-hidden rounded-2xl border border-input bg-background shadow-2xl"
+      >
+        <div
+          class="flex items-start justify-between gap-3 border-b border-border bg-muted/60 px-4 py-3"
+        >
+          <div class="min-w-0">
+            <h3 class="text-base font-semibold">Invite Code</h3>
+            <p class="mt-0.5 truncate text-xs text-muted-foreground">
+              {{
+                inviteCodeView.connection.name ||
+                inviteCodeView.connection.email ||
+                "CodeBuddy account"
+              }}
+            </p>
+          </div>
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Close invite code modal"
+            @click="inviteCodeView = null"
+          >
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+        <div class="p-4">
+          <div
+            v-if="inviteCodeView.loading"
+            class="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground"
+          >
+            <span class="material-symbols-outlined animate-spin text-[20px]"
+              >progress_activity</span
+            >
+            Loading invite code...
+          </div>
+          <div
+            v-else-if="inviteCodeView.error"
+            class="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-300"
+          >
+            {{ inviteCodeView.error }}
+          </div>
+          <div v-else class="space-y-3">
+            <div
+              class="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-3 py-3"
+            >
+              <span class="select-all font-mono text-lg font-semibold tracking-widest">{{
+                inviteCodeView.inviteCode
+              }}</span>
+              <button
+                type="button"
+                class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors hover:bg-accent"
+                @click="copyInviteCode"
+              >
+                <span class="material-symbols-outlined text-[14px]">{{
+                  inviteCodeView.copied ? "check" : "content_copy"
+                }}</span>
+                {{ inviteCodeView.copied ? "Copied" : "Copy" }}
+              </button>
+            </div>
+            <p class="text-xs text-muted-foreground">
+              Expires: {{ inviteCodeView.expiresAt ?? "unknown" }}
+            </p>
           </div>
         </div>
       </div>

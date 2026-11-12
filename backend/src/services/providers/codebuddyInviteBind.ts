@@ -5,6 +5,7 @@ import { proxyAwareFetch } from "../common/proxyFetch";
 import { refreshExpiringCredentials } from "./refreshCoordinator";
 
 const BIND_URL = "https://www.codebuddy.ai/activity/workbuddy/invitation/v2/bind";
+const MY_CODE_URL = "https://www.codebuddy.ai/activity/workbuddy/invitation/v2/my-code";
 const USER_AGENT = "CLI/2.154.0 CodeBuddy/2.154.0";
 const SETTINGS_KEY_CLI = "codebuddyIntlCliDailyProbe";
 const PROVIDERS = new Set(["codebuddy-intl-cli"]);
@@ -43,6 +44,54 @@ export interface InviteBindResult {
   error?: string;
   code?: unknown;
   msg?: unknown;
+}
+
+export interface InviteCodeResult {
+  ok: boolean;
+  connectionId: string;
+  inviteCode?: string;
+  expiresAt?: string | null;
+  error?: string;
+}
+
+export async function fetchInviteCodeForConnection(
+  runtime: Runtime,
+  connectionId: string,
+): Promise<InviteCodeResult> {
+  const connection = runtime.repos.providers.get(connectionId);
+  if (!connection) return { ok: false, connectionId, error: "Connection not found" };
+  if (!PROVIDERS.has(connection.provider)) {
+    return { ok: false, connectionId, error: "Invite code is only available for CodeBuddy intl connections" };
+  }
+  try {
+    const { token, proxy } = await resolveToken(runtime, connection);
+    const response = await proxyAwareFetch(MY_CODE_URL, {
+      method: "GET",
+      headers: {
+        Accept: "application/json, text/plain, */*",
+        Authorization: `Bearer ${token}`,
+        "User-Agent": USER_AGENT,
+        "X-Domain": "www.codebuddy.ai",
+        "X-Product": "SaaS",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    }, proxy);
+    const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const data = (body.data ?? {}) as Record<string, unknown>;
+    const inviteCode = typeof data.invite_code === "string" ? data.invite_code : "";
+    if (response.status === 200 && body.code === 0 && inviteCode) {
+      return {
+        ok: true,
+        connectionId,
+        inviteCode,
+        expiresAt: typeof data.expires_at === "string" ? data.expires_at : null,
+      };
+    }
+    const msg = typeof body.msg === "string" && body.msg ? body.msg : `Invite code lookup failed (HTTP ${response.status})`;
+    return { ok: false, connectionId, error: msg };
+  } catch (error) {
+    return { ok: false, connectionId, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 export async function bindInviteForConnection(

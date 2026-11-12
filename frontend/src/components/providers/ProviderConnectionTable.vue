@@ -86,6 +86,7 @@ const emit = defineEmits<{
   inspiration: [connectionId: string];
   probeHistory: [connectionId: string];
   bindInvite: [connectionId: string];
+  viewInviteCode: [connectionId: string];
   reportTask: [connectionId: string];
   clearCooldown: [connectionId: string];
   account: [connectionId: string];
@@ -966,6 +967,19 @@ function formatRegistered(value: string) {
           <span class="material-symbols-outlined text-[14px] text-green-500">check_circle</span>
           <span>Invite code bound</span>
         </div>
+        <button
+          v-if="providerId === 'codebuddy-intl-cli'"
+          type="button"
+          title="Show the referral invite code of this account."
+          class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-accent"
+          @click="
+            emit('viewInviteCode', menuRow.connection.id);
+            closeMenu();
+          "
+        >
+          <span class="material-symbols-outlined text-[14px]">qr_code_2</span>
+          <span>View invite code</span>
+        </button>
         <div
           v-if="
             menuRow.checkin &&
