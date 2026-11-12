@@ -1,3 +1,9 @@
+# v1.6.5 (2026-11-12)
+
+## Providers
+
+- Each CodeBuddy Intl connection row has a "View invite code" action. It opens a dialog with the invite code of that account and a copy button.
+
 # v1.6.4 (2026-11-10)
 
 ## Providers
