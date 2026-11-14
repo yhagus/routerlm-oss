@@ -1,0 +1,27 @@
+import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
+import { InjectDrizzle } from "@nestjs/drizzle";
+import { asc, count, eq } from "drizzle-orm";
+import type { Database } from "../../../db/relations.js";
+import { models, routes } from "../../../db/schema.js";
+import type { ModelSummary } from "../../models/model.js";
+import { ListModelsQuery } from "../impl/list-models.query.js";
+
+@QueryHandler(ListModelsQuery)
+export class ListModelsHandler implements IQueryHandler<ListModelsQuery> {
+  constructor(@InjectDrizzle() private readonly db: Database) {}
+
+  execute(): Promise<ModelSummary[]> {
+    return this.db
+      .select({
+        id: models.id,
+        name: models.name,
+        isEnabled: models.isEnabled,
+        createdAt: models.createdAt,
+        routeCount: count(routes.id),
+      })
+      .from(models)
+      .leftJoin(routes, eq(routes.modelId, models.id))
+      .groupBy(models.id)
+      .orderBy(asc(models.name));
+  }
+}

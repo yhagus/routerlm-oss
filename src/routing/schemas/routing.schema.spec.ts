@@ -1,4 +1,4 @@
-import { parameterPolicySchema } from "./routing.schemas.js";
+import { parameterPolicySchema } from "./routing.schema.js";
 
 function issuesOf(policy: unknown): string[] {
   const result = parameterPolicySchema.safeParse(policy);
