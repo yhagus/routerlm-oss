@@ -2,6 +2,8 @@
 #   backend -> http://localhost:3000
 #   web     -> http://localhost:3001
 #   db      -> postgres://routerlm:routerlm@localhost:5432/routerlm
+#   redis   -> redis://localhost:6379
+#   worker  -> runs queue jobs, no port
 services:
   db:
     image: postgres:18-alpine
@@ -22,21 +24,57 @@ services:
       retries: 10
     restart: unless-stopped
 
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+      target: backend
     ports:
       - "${BACKEND_PORT:-3000}:3000"
     environment:
       PORT: 3000
       DATABASE_URL: postgres://routerlm:routerlm@db:5432/routerlm
+      REDIS_URL: redis://redis:6379
     volumes:
       - .:/app
       # Keep the container's Linux node_modules instead of the host's.
       - backend_node_modules:/app/node_modules
     depends_on:
       db:
+        condition: service_healthy
+      # The backend survives Redis outages, so starting it is enough.
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    environment:
+      DATABASE_URL: postgres://routerlm:routerlm@db:5432/routerlm
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - .:/app
+      - worker_node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -58,5 +96,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   backend_node_modules:
+  worker_node_modules:
   web_node_modules:
