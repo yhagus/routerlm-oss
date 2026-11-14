@@ -21,6 +21,8 @@ export default defineConfig({
       // Queues connect at boot but fail fast without Redis, so only the tests
       // that run the worker need a reachable Redis here.
       REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
+      // A fixed test-only key; it encrypts nothing real.
+      ENCRYPTION_KEY: 'dGVzdC1vbmx5LWVuY3J5cHRpb24ta2V5LTMyLWJ5dGU=',
     },
   },
 });

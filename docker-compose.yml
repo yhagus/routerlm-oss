@@ -49,6 +49,8 @@ services:
       DATABASE_URL: postgres://routerlm:routerlm@db:5432/routerlm
       WEB_ORIGIN: http://localhost:${WEB_PORT:-3001}
       REDIS_URL: redis://redis:6379
+      # From .env next to this file; see .env.example.
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     volumes:
       - .:/app
       # Keep the container's Linux node_modules instead of the host's.
@@ -69,6 +71,7 @@ services:
     environment:
       DATABASE_URL: postgres://routerlm:routerlm@db:5432/routerlm
       REDIS_URL: redis://redis:6379
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     volumes:
       - .:/app
       - worker_node_modules:/app/node_modules
