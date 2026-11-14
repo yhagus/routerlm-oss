@@ -370,23 +370,15 @@ async function* writeStream(
 
   let usage: TokenUsage | undefined;
   yield chunk({ role: "assistant", content: "" });
-  try {
-    for await (const event of events) {
-      if (event.type === "usage") {
-        usage = event.usage;
-        continue;
-      }
-      const written = writeStreamEvent(event, chunk);
-      if (written !== null) {
-        yield written;
-      }
+  for await (const event of events) {
+    if (event.type === "usage") {
+      usage = event.usage;
+      continue;
     }
-  } catch (error) {
-    if (error instanceof GatewayError) {
-      yield serverSentEvent(writeError(error));
-      return;
+    const written = writeStreamEvent(event, chunk);
+    if (written !== null) {
+      yield written;
     }
-    throw error;
   }
   // Usage goes last, in a chunk without choices, as OpenAI sends it.
   if (request.stream?.includeUsage && usage) {
@@ -452,10 +444,16 @@ function writeError(error: GatewayError): unknown {
   };
 }
 
+/** OpenAI ends a failed stream with the error envelope as a data line, and no `[DONE]`. */
+function writeStreamError(error: GatewayError): string {
+  return serverSentEvent(writeError(error));
+}
+
 export const openAiChatClientConverter: ClientProtocolConverter = {
   protocol: "openai-chat",
   parseRequest,
   writeResponse,
   writeStream,
   writeError,
+  writeStreamError,
 };
