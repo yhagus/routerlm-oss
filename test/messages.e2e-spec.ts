@@ -124,10 +124,7 @@ describe("Messages (e2e)", () => {
   });
 
   function createMessage(body: object) {
-    return request(app.getHttpServer())
-      .post("/v1/messages")
-      .set("x-api-key", apiKey)
-      .send(body);
+    return request(app.getHttpServer()).post("/v1/messages").set("x-api-key", apiKey).send(body);
   }
 
   it("serves images, tools, reasoning and a JSON schema from an openai-chat upstream, as our Model", async () => {
