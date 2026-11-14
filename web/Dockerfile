@@ -15,4 +15,6 @@ ENV HOST=0.0.0.0 \
     PORT=3000
 EXPOSE 3000
 
-CMD ["bun", "run", "dev"]
+# Re-sync the node_modules volume with bun.lock on every start, so
+# dependency changes apply without recreating the volume.
+CMD ["sh", "-c", "bun install --frozen-lockfile --ignore-scripts && exec bun run dev"]

@@ -11,4 +11,6 @@ COPY . .
 ENV PORT=3000
 EXPOSE 3000
 
-CMD ["bun", "run", "start:dev"]
+# Re-sync the node_modules volume with bun.lock on every start, so
+# dependency changes apply without recreating the volume.
+CMD ["sh", "-c", "bun install --frozen-lockfile && exec bun run start:dev"]

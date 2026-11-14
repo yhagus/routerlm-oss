@@ -57,6 +57,24 @@ $ bun run test:e2e
 $ bun run test:cov
 ```
 
+## Database
+
+The backend uses PostgreSQL through [Drizzle ORM](https://orm.drizzle.team).
+`docker compose up -d` starts a `db` service (Postgres 18) and points the
+backend at it. To run the backend on the host instead, copy `.env.example` to
+`.env`; it targets the compose database on `localhost:5432`.
+
+The schema lives in `src/db/schema.ts`. After changing it, generate a migration
+into `drizzle/` and apply it:
+
+```bash
+$ docker compose exec backend bun run db:generate
+$ docker compose exec backend bun run db:migrate
+```
+
+`bun run db:push` syncs the schema without a migration (local prototyping only),
+and `bun run db:studio` opens Drizzle Studio.
+
 ## CQRS and MCP
 
 CQRS handlers live under `src/cqrs` and use the official `@nestjs/cqrs` package.
