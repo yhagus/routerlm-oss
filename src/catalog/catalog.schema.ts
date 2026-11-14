@@ -23,6 +23,12 @@ export const providerQuirksSchema = z.strictObject({
   /** openai-chat only. The Provider accepts `prompt_cache_key`. */
   acceptsPromptCacheKey: z.boolean().optional(),
   /**
+   * anthropic-messages only. How many cache markers the gateway may add per
+   * request, when it differs from Anthropic's four; 0 adds none. Markers the
+   * client set are sent as they are.
+   */
+  cacheMarkerLimit: z.int().nonnegative().optional(),
+  /**
    * openai-chat only. The Provider wants the output limit as
    * `max_completion_tokens` (OpenAI's reasoning models refuse `max_tokens`).
    */
