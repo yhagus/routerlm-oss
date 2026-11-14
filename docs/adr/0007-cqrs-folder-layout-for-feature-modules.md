@@ -23,6 +23,7 @@ Each folder only exists when it has something in it. `api-keys` went first as th
 ## Consequences
 
 - More files per module: each operation has a command or query class, a handler and an entry in `handlers/index.ts`.
-- Infrastructure modules (`config`, `db`, `redis`, `queue`, `snapshot`) keep their current layout. So do the inference hot path and its `protocols/*` adapters, so no bus dispatch is added to the code that serves a request.
+- Infrastructure modules (`config`, `db`, `redis`, `queue`, `snapshot`) keep their current layout. So do the inference hot path and its `protocols/*` adapters, so no bus dispatch is added to the code that serves a request. `playground` (one streaming endpoint that runs through inference), `auth` (sign-in and sessions) and `catalog` (seed tooling) keep their current layout for the same reasons.
+- Inside a converted module, infrastructure files that other modules import (BullMQ producers and processors, scheduled jobs, ciphers, stores, auth providers) stay at the module root.
 - `EventBus` runs in memory and loses events if the process dies. Work that must not be lost, such as Usage Log writes, stays on BullMQ.
 - Providers that other modules use, such as `ApiKeyAuth`, stay plain injectable classes and are exported as before.
