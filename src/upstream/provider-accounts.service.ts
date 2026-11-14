@@ -6,7 +6,7 @@ import type { Database } from "../db/relations.js";
 import { providerAccounts } from "../db/schema.js";
 import { CooldownStore } from "./cooldown-store.js";
 import { ProviderKeyCipher } from "./provider-key-cipher.js";
-import { UpstreamChangeSignal } from "./upstream-change-signal.js";
+import { SnapshotService } from "../snapshot/snapshot.service.js";
 import type { NewProviderAccount, ProviderAccountChanges } from "./upstream.schemas.js";
 
 const KEY_HINT_LENGTH = 4;
@@ -39,7 +39,7 @@ export class ProviderAccountsService {
   constructor(
     @InjectDrizzle() private readonly db: Database,
     private readonly keyCipher: ProviderKeyCipher,
-    private readonly changeSignal: UpstreamChangeSignal,
+    private readonly snapshot: SnapshotService,
     private readonly cooldowns: CooldownStore,
   ) {}
 
@@ -62,7 +62,7 @@ export class ProviderAccountsService {
         .insert(providerAccounts)
         .values({ ...fields, ...this.storedKey(key) })
         .returning(providerAccountColumns);
-      await this.changeSignal.changed();
+      await this.snapshot.changed();
       return created;
     } catch (error) {
       if (hasPostgresErrorCode(error, FOREIGN_KEY_VIOLATION)) {
@@ -96,7 +96,7 @@ export class ProviderAccountsService {
     if (!updated) {
       throw new NotFoundException("Provider Account not found");
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
     return updated;
   }
 
@@ -108,7 +108,7 @@ export class ProviderAccountsService {
     if (deleted.length === 0) {
       throw new NotFoundException("Provider Account not found");
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
   }
 
   private storedKey(key: string): StoredKey {

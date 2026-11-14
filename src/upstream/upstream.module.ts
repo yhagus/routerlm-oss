@@ -9,7 +9,6 @@ import { ProviderAccountsService } from "./provider-accounts.service.js";
 import { ProviderKeyCipher } from "./provider-key-cipher.js";
 import { ProvidersController } from "./providers.controller.js";
 import { ProvidersService } from "./providers.service.js";
-import { UpstreamChangeSignal } from "./upstream-change-signal.js";
 import { UpstreamModelsController } from "./upstream-models.controller.js";
 import { UpstreamModelsService } from "./upstream-models.service.js";
 
@@ -21,7 +20,6 @@ import { UpstreamModelsService } from "./upstream-models.service.js";
     ProvidersService,
     ProviderAccountsService,
     UpstreamModelsService,
-    UpstreamChangeSignal,
     CooldownStore,
     ProviderAccountHealth,
     {
@@ -32,7 +30,7 @@ import { UpstreamModelsService } from "./upstream-models.service.js";
     },
   ],
   // The gateway decrypts Provider Account keys, and keeps their Cooldown and
-  // health; the snapshot refresh hooks into the signal.
-  exports: [ProviderKeyCipher, UpstreamChangeSignal, CooldownStore, ProviderAccountHealth],
+  // health.
+  exports: [ProviderKeyCipher, CooldownStore, ProviderAccountHealth],
 })
 export class UpstreamModule {}

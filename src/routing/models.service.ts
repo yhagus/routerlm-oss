@@ -4,7 +4,7 @@ import { and, asc, count, eq } from "drizzle-orm";
 import { hasPostgresErrorCode, UNIQUE_VIOLATION } from "../db/postgres-errors.js";
 import type { Database } from "../db/relations.js";
 import { models, providerAccounts, providers, routes, upstreamModels } from "../db/schema.js";
-import { RoutingChangeSignal } from "./routing-change-signal.js";
+import { SnapshotService } from "../snapshot/snapshot.service.js";
 import type { ModelChanges, NewModel } from "./routing.schemas.js";
 
 /** A Model as the dashboard API returns it. */
@@ -42,7 +42,7 @@ export type ModelDetail = Model & { routes: RouteSummary[] };
 export class ModelsService {
   constructor(
     @InjectDrizzle() private readonly db: Database,
-    private readonly changeSignal: RoutingChangeSignal,
+    private readonly snapshot: SnapshotService,
   ) {}
 
   listModels(): Promise<ModelSummary[]> {
@@ -71,7 +71,7 @@ export class ModelsService {
   async createModel(newModel: NewModel): Promise<Model> {
     try {
       const [created] = await this.db.insert(models).values(newModel).returning();
-      await this.changeSignal.changed();
+      await this.snapshot.changed();
       return created;
     } catch (error) {
       throw toModelWriteError(error, newModel.name);
@@ -92,7 +92,7 @@ export class ModelsService {
     if (!updated) {
       throw new NotFoundException("Model not found");
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
     return updated;
   }
 
@@ -105,7 +105,7 @@ export class ModelsService {
     if (deleted.length === 0) {
       throw new NotFoundException("Model not found");
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
   }
 
   private listRoutes(modelId: string): Promise<RouteSummary[]> {

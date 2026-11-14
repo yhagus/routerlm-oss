@@ -9,7 +9,7 @@ import {
 import type { Database } from "../db/relations.js";
 import { upstreamModels } from "../db/schema.js";
 import { deleteUnlessRouted } from "./routed-models.js";
-import { UpstreamChangeSignal } from "./upstream-change-signal.js";
+import { SnapshotService } from "../snapshot/snapshot.service.js";
 import type { NewUpstreamModel, UpstreamModelChanges } from "./upstream.schemas.js";
 
 /** An Upstream Model as the dashboard API returns it. */
@@ -19,7 +19,7 @@ export type UpstreamModel = typeof upstreamModels.$inferSelect;
 export class UpstreamModelsService {
   constructor(
     @InjectDrizzle() private readonly db: Database,
-    private readonly changeSignal: UpstreamChangeSignal,
+    private readonly snapshot: SnapshotService,
   ) {}
 
   listUpstreamModels(): Promise<UpstreamModel[]> {
@@ -32,7 +32,7 @@ export class UpstreamModelsService {
   async createUpstreamModel(newUpstreamModel: NewUpstreamModel): Promise<UpstreamModel> {
     try {
       const [created] = await this.db.insert(upstreamModels).values(newUpstreamModel).returning();
-      await this.changeSignal.changed();
+      await this.snapshot.changed();
       return created;
     } catch (error) {
       throw toUpstreamModelWriteError(error, newUpstreamModel.upstreamModelId);
@@ -56,7 +56,7 @@ export class UpstreamModelsService {
     if (!updated) {
       throw new NotFoundException("Upstream Model not found");
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
     return updated;
   }
 
@@ -76,7 +76,7 @@ export class UpstreamModelsService {
         await this.db.delete(upstreamModels).where(eq(upstreamModels.id, upstreamModelId));
       },
     );
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
   }
 }
 
