@@ -210,4 +210,17 @@ describe("Prompt caching (e2e)", () => {
     expect(promptCacheKeyOf(first)).toEqual(expect.any(String));
     expect(promptCacheKeyOf(second)).toBe(promptCacheKeyOf(first));
   });
+
+  it("sends no prompt cache key to an openai-chat Provider without the quirk", async () => {
+    await insertOpenAiChatModel(app, db, { modelName: "smart", baseUrl: upstream.baseUrl });
+    upstream.reply({
+      kind: "json",
+      status: 200,
+      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+    });
+
+    await sendChat("Hi");
+
+    expect(promptCacheKeyOf(upstream.lastRequest)).toBeUndefined();
+  });
 });

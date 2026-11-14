@@ -128,6 +128,69 @@ describe("openAiChatUpstreamConverter", () => {
     expect(JSON.parse(written.body)).not.toHaveProperty("prompt_cache_key");
   });
 
+  describe("client cache markers", () => {
+    const MARKED_REQUEST: InferenceRequest = {
+      model: "smart",
+      system: [{ type: "text", text: "You are terse.", cacheMarker: {} }],
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Long document.", cacheMarker: { ttl: "1h" } },
+            { type: "text", text: "Summarize it." },
+          ],
+        },
+        { role: "assistant", content: [{ type: "text", text: "Done.", cacheMarker: {} }] },
+        { role: "tool", toolCallId: "call_1", content: [{ type: "text", text: "ok" }] },
+      ],
+      tools: [],
+      stream: null,
+    };
+
+    it("writes them as cache_control on the marked content parts for a Provider that accepts them", () => {
+      const written = openAiChatUpstreamConverter.writeRequest(MARKED_REQUEST, {
+        ...TARGET,
+        quirks: { acceptsCacheControl: true },
+      });
+
+      expect(written.body).toBe(
+        JSON.stringify({
+          model: "acme-large-2026",
+          messages: [
+            {
+              role: "system",
+              content: [
+                { type: "text", text: "You are terse.", cache_control: { type: "ephemeral" } },
+              ],
+            },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Long document.", cache_control: { type: "ephemeral" } },
+                { type: "text", text: "Summarize it." },
+              ],
+            },
+            {
+              role: "assistant",
+              content: [{ type: "text", text: "Done.", cache_control: { type: "ephemeral" } }],
+            },
+            { role: "tool", tool_call_id: "call_1", content: "ok" },
+          ],
+        }),
+      );
+    });
+
+    it("drops them for a Provider whose quirks don't accept them", () => {
+      const written = openAiChatUpstreamConverter.writeRequest(MARKED_REQUEST, TARGET);
+
+      expect(written.body).not.toContain("cache_control");
+      expect(JSON.parse(written.body).messages[0]).toEqual({
+        role: "system",
+        content: "You are terse.",
+      });
+    });
+  });
+
   it("parses a recorded response with reasoning, text, a tool call and cached tokens", () => {
     const parsed = openAiChatUpstreamConverter.parseResponse(
       JSON.parse(fixture("upstream-response-tool-call.json")),

@@ -46,7 +46,8 @@ interface FailedAttempt {
  * Measures one inference request as it goes, for its Usage Log and Attempts
  * (spec "Records"). Its measurements are counts, sizes, ids and times. The
  * only content it holds is for an Error Capture, and the job carries it only
- * when the request failed (ADR 0004). `finish` turns it into the usage job.
+ * when the request or one of its Attempts failed (ADR 0004, ADR 0006).
+ * `finish` turns it into the usage job.
  */
 export class UsageMeter {
   private readonly usageLogId = randomUUID();
@@ -187,10 +188,18 @@ export class UsageMeter {
     };
   }
 
-  /** Spec "Records": only failed requests are captured; a client leaving is not a failure. */
+  /**
+   * Spec "Records" and ADR 0006: every failed Attempt is captured, even one
+   * Fallback recovered from. The client request alone is captured only when
+   * the request failed before any Attempt did; a client leaving is not a failure.
+   */
   private errorCaptureOf(httpStatus: number, isCancelled: boolean): ErrorCaptureRecord | null {
     const hasFailed = httpStatus >= FIRST_ERROR_STATUS || this.errorCode !== null;
-    if (!this.clientRequest || !hasFailed || isCancelled) {
+    const hasFailedAttempts = this.failedAttempts.length > 0;
+    if (!this.clientRequest) {
+      return null;
+    }
+    if (!hasFailedAttempts && (!hasFailed || isCancelled)) {
       return null;
     }
     return {

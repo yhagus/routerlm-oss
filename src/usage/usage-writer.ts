@@ -81,9 +81,9 @@ export class UsageWriter {
 }
 
 /**
- * One capture per failed Attempt, which names the hop that failed (gateway to
- * that Provider Account). A request that failed before any Attempt failed
- * gets one capture with no Attempt: the hop from client to gateway.
+ * One capture per failed Attempt, linked to that Attempt (and so to its
+ * Provider Account). A request that failed before any Attempt failed gets one
+ * capture with no Attempt: the client's request to the gateway.
  */
 function errorCaptureRowsOf(
   usageLogId: string,

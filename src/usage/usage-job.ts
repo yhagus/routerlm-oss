@@ -55,9 +55,10 @@ export interface FailedAttemptCapture {
 }
 
 /**
- * The content of a failed request, for its Error Captures: the one place
- * content is kept (ADR 0004). The worker writes one capture per failed
- * Attempt or, when none failed, one for the client request itself.
+ * The content of a failed request or failed Attempt, for its Error Captures:
+ * the one place content is kept (ADR 0004, ADR 0006). The worker writes one
+ * capture per failed Attempt or, when none failed, one for the client request
+ * itself.
  */
 export interface ErrorCaptureRecord {
   request: CapturedMessage;
@@ -67,7 +68,7 @@ export interface ErrorCaptureRecord {
 /**
  * Measurements of one inference request, enqueued by the backend and written
  * by the worker. Only `errorCapture` holds content, and only for a failed
- * request with a valid API Key (ADR 0004).
+ * request or failed Attempt of an authenticated caller (ADR 0004, ADR 0006).
  */
 export interface UsageJob {
   /** Chosen by the backend, so a retried job never writes the Usage Log twice. */
@@ -93,6 +94,9 @@ export interface UsageJob {
   isCancelled: boolean;
   /** In the order they were made. */
   attempts: AttemptRecord[];
-  /** Null for a request that succeeded, was cancelled, or had no valid API Key. */
+  /**
+   * Null when no Attempt failed and the request succeeded or was cancelled,
+   * and for a caller with neither a valid API Key nor a Playground session.
+   */
   errorCapture: ErrorCaptureRecord | null;
 }

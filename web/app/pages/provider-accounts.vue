@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Pencil, Plus, Power, Trash2, Wallet } from "@lucide/vue";
 import { computed, ref } from "vue";
-import { apiErrorMessage } from "~/lib/api";
 import {
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
   optionalNumber,
@@ -17,7 +16,6 @@ type ProviderAccountDialog =
   | { kind: "delete"; account: ProviderAccount };
 
 const { $dashboardApi } = useNuxtApp();
-const { showToast } = useToast();
 const [{ data: accounts, error: loadError, refresh }, { data: providers, error: providersError }] =
   await Promise.all([
     useDashboardApi<ProviderAccount[]>("/provider-accounts"),
@@ -43,15 +41,17 @@ function cooldownNote(account: ProviderAccount): string | null {
   return endsAt.getTime() > Date.now() ? `until ${timeFormat.format(endsAt)}` : null;
 }
 
-const dialog = ref<ProviderAccountDialog | null>(null);
-const isDialogOpen = computed({
-  get: () => dialog.value !== null,
-  set: (isOpen) => {
-    if (!isOpen) dialog.value = null;
-  },
-});
-const isSaving = ref(false);
-const dialogError = ref("");
+const {
+  dialog,
+  isDialogOpen,
+  isSaving,
+  dialogError,
+  showDialog,
+  closeDialog,
+  submitDialog,
+  deleteRow,
+  toggleRow,
+} = useEditableList<ProviderAccountDialog>("/provider-accounts", refresh);
 
 interface ProviderAccountForm {
   providerId: string;
@@ -64,8 +64,7 @@ interface ProviderAccountForm {
 const form = ref<ProviderAccountForm>({ providerId: "", name: "", key: "", priority: 0 });
 
 function openDialog(next: ProviderAccountDialog): void {
-  dialog.value = next;
-  dialogError.value = "";
+  showDialog(next);
   if (next.kind === "create") {
     form.value = {
       providerId: providerOptions.value[0]?.value ?? "",
@@ -83,61 +82,43 @@ function openDialog(next: ProviderAccountDialog): void {
 async function saveAccount(): Promise<void> {
   const current = dialog.value;
   if (!current || current.kind === "delete") return;
-  isSaving.value = true;
-  dialogError.value = "";
   const fields = { name: form.value.name, priority: optionalNumber(form.value.priority) ?? 0 };
-  try {
-    if (current.kind === "create") {
-      await $dashboardApi("/provider-accounts", {
-        method: "POST",
-        body: { providerId: form.value.providerId, key: form.value.key, ...fields },
-      });
-      showToast(`Added ${fields.name}`);
-    } else {
-      // An empty key field keeps the stored key.
-      const key = form.value.key === "" ? {} : { key: form.value.key };
+  const failureMessage = "Couldn't save the Provider Account.";
+  if (current.kind === "create") {
+    await submitDialog(
+      async () => {
+        await $dashboardApi("/provider-accounts", {
+          method: "POST",
+          body: { providerId: form.value.providerId, key: form.value.key, ...fields },
+        });
+        form.value.key = "";
+      },
+      `Added ${fields.name}`,
+      failureMessage,
+    );
+    return;
+  }
+  // An empty key field keeps the stored key.
+  const key = form.value.key === "" ? {} : { key: form.value.key };
+  await submitDialog(
+    async () => {
       await $dashboardApi(`/provider-accounts/${current.account.id}`, {
         method: "PATCH",
         body: { ...fields, ...key },
       });
-      showToast(`Saved ${fields.name}`);
-    }
-    form.value.key = "";
-    dialog.value = null;
-    await refresh();
-  } catch (error) {
-    dialogError.value = apiErrorMessage(error, "Couldn't save the Provider Account.");
-  } finally {
-    isSaving.value = false;
-  }
+      form.value.key = "";
+    },
+    `Saved ${fields.name}`,
+    failureMessage,
+  );
 }
 
-async function deleteAccount(account: ProviderAccount): Promise<void> {
-  isSaving.value = true;
-  dialogError.value = "";
-  try {
-    await $dashboardApi(`/provider-accounts/${account.id}`, { method: "DELETE" });
-    showToast(`Deleted ${account.name}`);
-    dialog.value = null;
-    await refresh();
-  } catch (error) {
-    dialogError.value = apiErrorMessage(error, "Couldn't delete the Provider Account.");
-  } finally {
-    isSaving.value = false;
-  }
+function deleteAccount(account: ProviderAccount): Promise<void> {
+  return deleteRow(account, account.name, "Couldn't delete the Provider Account.");
 }
 
-async function toggleAccount(account: ProviderAccount): Promise<void> {
-  try {
-    await $dashboardApi(`/provider-accounts/${account.id}`, {
-      method: "PATCH",
-      body: { isEnabled: !account.isEnabled },
-    });
-    showToast(`${account.isEnabled ? "Disabled" : "Enabled"} ${account.name}`);
-    await refresh();
-  } catch (error) {
-    showToast(apiErrorMessage(error, `Couldn't update ${account.name}.`));
-  }
+function toggleAccount(account: ProviderAccount): Promise<void> {
+  return toggleRow(account, account.name);
 }
 </script>
 
@@ -271,7 +252,7 @@ async function toggleAccount(account: ProviderAccount): Promise<void> {
       /></label>
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
       <div class="dialog__actions">
-        <button class="button" type="button" @click="dialog = null">Cancel</button>
+        <button class="button" type="button" @click="closeDialog">Cancel</button>
         <button class="button button--primary" type="submit" :disabled="isSaving">
           {{ dialog.kind === "create" ? "Add Provider Account" : "Save" }}
         </button>
@@ -287,7 +268,7 @@ async function toggleAccount(account: ProviderAccount): Promise<void> {
   >
     <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
     <div class="dialog__actions">
-      <button class="button" type="button" @click="dialog = null">Cancel</button>
+      <button class="button" type="button" @click="closeDialog">Cancel</button>
       <button
         class="button button--danger"
         type="button"

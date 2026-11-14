@@ -37,7 +37,7 @@ const attemptHop = computed(() =>
     <section class="panel capture-panel">
       <header class="panel-heading">
         <div>
-          <h2>Failed hop: {{ failedHopLabel(capture.failedHop) }}</h2>
+          <h2>Failed at: {{ failedHopLabel(capture.failedHop) }}</h2>
           <p v-if="attemptHop">
             The gateway's Attempt on this Provider Account failed:
             {{ attemptOutcomeLabel(attemptHop) }}.

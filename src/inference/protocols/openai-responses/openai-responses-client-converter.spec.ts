@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { parseFailureOf } from "../../../../test/support/parse-failure.js";
 import { GatewayError } from "../../gateway-error.js";
 import type {
   InferenceRequest,
@@ -13,15 +14,7 @@ function fixture(name: string): string {
 }
 
 function parseFailure(body: unknown): GatewayError {
-  try {
-    openAiResponsesClientConverter.parseRequest(body);
-  } catch (error) {
-    if (error instanceof GatewayError) {
-      return error;
-    }
-    throw error;
-  }
-  throw new Error("Expected the request to be refused");
+  return parseFailureOf(openAiResponsesClientConverter, body);
 }
 
 const MINIMAL_REQUEST = { model: "smart", input: "Hi" };

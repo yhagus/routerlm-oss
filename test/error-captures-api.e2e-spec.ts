@@ -91,7 +91,7 @@ describe("Error Captures API (e2e)", () => {
     return request(app.getHttpServer()).get(`/api/error-captures${path}`).set("Cookie", cookie);
   }
 
-  it("lists a Usage Log's captures newest first, naming the hop that failed", async () => {
+  it("lists a Usage Log's captures newest first, naming what failed", async () => {
     await db.insert(errorCaptures).values([
       {
         usageLogId,

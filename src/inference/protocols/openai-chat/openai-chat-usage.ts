@@ -20,14 +20,19 @@ export const usageSchema = z.object({
 });
 export type OpenAiUsage = z.infer<typeof usageSchema>;
 
+/**
+ * A count the upstream didn't report stays null, which flags the Usage Log
+ * incomplete (spec "Records"). Cache reads are part of Chat Completions
+ * (`cached_tokens`), so a missing one is unreported. Cache writes are not:
+ * only Providers with explicit caching add a count, and the others write
+ * nothing to bill, so a usage object without one means zero writes.
+ */
 export function tokenUsageOf(usage: OpenAiUsage | undefined): TokenUsage {
   const promptTokens = usage?.prompt_tokens ?? null;
   const cacheReadTokens =
     usage?.prompt_tokens_details?.cached_tokens ?? usage?.prompt_cache_hit_tokens ?? null;
-  // Chat Completions has no cache writes unless the Provider reports them, so
-  // once the prompt is counted, an absent write count is a real zero.
   const cacheWriteTokens =
-    usage?.prompt_tokens_details?.cache_creation_input_tokens ?? (promptTokens === null ? null : 0);
+    usage === undefined ? null : (usage.prompt_tokens_details?.cache_creation_input_tokens ?? 0);
   return {
     inputTokens:
       promptTokens === null

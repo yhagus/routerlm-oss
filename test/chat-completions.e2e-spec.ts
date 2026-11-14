@@ -62,11 +62,11 @@ describe("Chat Completions (e2e)", () => {
     await app.close();
   });
 
-  function chat(body: unknown) {
+  function chat(body: object) {
     return request(app.getHttpServer())
       .post("/v1/chat/completions")
       .set("Authorization", `Bearer ${apiKey}`)
-      .send(body as object);
+      .send(body);
   }
 
   it("serves a request with images, tools, reasoning and a JSON schema from the upstream, as our Model", async () => {

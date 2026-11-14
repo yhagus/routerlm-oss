@@ -7,8 +7,14 @@ import request from "supertest";
 import type { Database } from "../src/db/relations.js";
 import { attempts, errorCaptures, usageLogs } from "../src/db/schema.js";
 import { FakeUpstream, openAiChatFixture } from "./support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel, UPSTREAM_KEY } from "./support/inference.js";
+import {
+  addProviderAccount,
+  insertApiKey,
+  insertOpenAiChatModel,
+  UPSTREAM_KEY,
+} from "./support/inference.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
+import { untilUsageQueueIsDrained } from "./support/usage-queue.js";
 
 // Needs Redis at REDIS_URL, in its own database (see usage-records.e2e-spec.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
@@ -20,6 +26,7 @@ const { USAGE_QUEUE } = await import("../src/queue/queue-names.js");
 
 const PROMPT_TEXT = "Which umbrella should I pack for Lisbon?";
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: PROMPT_TEXT }] };
+const BACKUP_KEY = "sk-backup-secret-9876543210";
 const SESSION_COOKIE = "__Host-sid=dashboard-session";
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;
@@ -31,6 +38,7 @@ describe("Error Captures written for failed requests (e2e)", () => {
   let upstream: FakeUpstream;
   let usageQueue: Queue;
   let apiKey: string;
+  let providerId: string;
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -43,9 +51,12 @@ describe("Error Captures written for failed requests (e2e)", () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await untilUsageQueueIsDrained();
+    await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
-    await insertOpenAiChatModel(app, db, { modelName: "smart", baseUrl: upstream.baseUrl });
+    ({ providerId } = await insertOpenAiChatModel(app, db, {
+      modelName: "smart",
+      baseUrl: upstream.baseUrl,
+    }));
     ({ key: apiKey } = await insertApiKey(app, db));
   });
 
@@ -56,24 +67,12 @@ describe("Error Captures written for failed requests (e2e)", () => {
     await app.close();
   });
 
-  function chat(body: unknown, key = apiKey) {
+  function chat(body: object, key = apiKey) {
     return request(app.getHttpServer())
       .post("/v1/chat/completions")
       .set("Authorization", `Bearer ${key}`)
       .set("Cookie", SESSION_COOKIE)
-      .send(body as object);
-  }
-
-  async function untilUsageQueueIsDrained(): Promise<void> {
-    const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
-    while (Date.now() < deadline) {
-      const counts = await usageQueue.getJobCounts("waiting", "active", "delayed");
-      if (Object.values(counts).every((count) => count === 0)) {
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-    throw new Error("The worker did not finish the usage jobs");
+      .send(body);
   }
 
   /** The captures of the one request made, once the worker has written its Usage Log. */
@@ -149,6 +148,26 @@ describe("Error Captures written for failed requests (e2e)", () => {
     await chat(CHAT_REQUEST).expect(200);
 
     expect((await writtenCaptures()).captures).toEqual([]);
+  });
+
+  it("captures a failed Attempt that Fallback recovered from, but not the successful request", async () => {
+    await addProviderAccount(app, db, providerId, { key: BACKUP_KEY, priority: 1 });
+    upstream.reply({ kind: "json", status: 429, body: { error: "slow down" } });
+    upstream.reply({
+      kind: "json",
+      status: 200,
+      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+    });
+
+    await chat(CHAT_REQUEST).expect(200);
+
+    const written = await writtenCaptures();
+    expect(written.captures).toEqual([
+      expect.objectContaining({
+        attemptId: written.attempts[0].id,
+        responseBody: JSON.stringify({ error: "slow down" }),
+      }),
+    ]);
   });
 
   it("stores no capture for a request without a valid API Key", async () => {

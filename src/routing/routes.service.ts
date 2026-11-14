@@ -5,7 +5,7 @@ import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "../db/postgres-erro
 import type { Database } from "../db/relations.js";
 import { routes } from "../db/schema.js";
 import { type ModelDetail, ModelsService } from "./models.service.js";
-import { RoutingChangeSignal } from "./routing-change-signal.js";
+import { SnapshotService } from "../snapshot/snapshot.service.js";
 import type { NewRoute, RouteChanges, RouteOrder } from "./routing.schemas.js";
 
 /** Adds, changes, removes and reorders a Model's Routes. Each write returns the Model as it now is. */
@@ -14,7 +14,7 @@ export class RoutesService {
   constructor(
     @InjectDrizzle() private readonly db: Database,
     private readonly models: ModelsService,
-    private readonly changeSignal: RoutingChangeSignal,
+    private readonly snapshot: SnapshotService,
   ) {}
 
   async addRoute(modelId: string, newRoute: NewRoute): Promise<ModelDetail> {
@@ -27,7 +27,7 @@ export class RoutesService {
     } catch (error) {
       throw toRouteWriteError(error);
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
     return this.models.getModel(modelId);
   }
 
@@ -46,7 +46,7 @@ export class RoutesService {
     if (!updated) {
       throw new NotFoundException("Route not found");
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
     return this.models.getModel(modelId);
   }
 
@@ -58,7 +58,7 @@ export class RoutesService {
     if (removed.length === 0) {
       throw new NotFoundException("Route not found");
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
   }
 
   /** Saves the new order as each Route's priority: the first listed gets 0 and is tried first. */
@@ -79,7 +79,7 @@ export class RoutesService {
         await tx.update(routes).set({ priority }).where(eq(routes.id, routeId));
       }
     });
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
     return this.models.getModel(modelId);
   }
 }

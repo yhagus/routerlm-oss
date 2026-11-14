@@ -81,7 +81,7 @@ describe("Fallback (e2e)", () => {
     ["429 without Retry-After", RATE_LIMITED],
     ["429 with Retry-After", { ...RATE_LIMITED, headers: { "retry-after": "120" } }],
     ["5xx", SERVER_ERROR],
-    ["connect timeout", { kind: "hang" }],
+    ["upstream that never answers", { kind: "hang" }],
     ["total timeout", { kind: "headers-only" }],
     ["connection reset", { kind: "reset" }],
   ])("falls back to the next Provider Account after a %s", async (_failure, failedReply) => {
@@ -91,6 +91,14 @@ describe("Fallback (e2e)", () => {
     await chat().expect(200);
 
     expect(attemptedKeys()).toEqual([UPSTREAM_KEY, BACKUP_KEY]);
+  });
+
+  it("waits past the connect timeout for a non-stream answer that arrives within the total timeout", async () => {
+    upstream.reply({ ...SUCCESS, delayMs: FAST_TIMEOUTS.connectTimeoutMs + 100 });
+
+    await chat().expect(200);
+
+    expect(attemptedKeys()).toEqual([UPSTREAM_KEY]);
   });
 
   it("falls back to the next Provider Account when a stream sends no first token in time", async () => {
@@ -192,13 +200,39 @@ describe("Fallback (e2e)", () => {
     },
   );
 
-  it("makes at most 5 Attempts per request", async () => {
-    for (const priority of [2, 3, 4, 5]) {
+  it.each<[string, FakeReply, number, string]>([
+    ["rate limits", RATE_LIMITED, 429, "upstream_rate_limited"],
+    ["server errors", SERVER_ERROR, 502, "upstream_error"],
+  ])(
+    "answers without an Attempt when every Provider Account is in Cooldown after %s",
+    async (_cause, failure, status, code) => {
+      upstream.reply(failure);
+      upstream.reply(failure);
+      await chat().expect(status);
+
+      const response = await chat().expect(status);
+
+      expect(response.body.error.code).toBe(code);
+      expect(upstream.requests).toHaveLength(2);
+    },
+  );
+
+  /** Adds Provider Accounts after the primary and backup ones, up to `total` in all. */
+  async function addProviderAccountsUpTo(total: number): Promise<void> {
+    for (let priority = 2; priority < total; priority += 1) {
       await addProviderAccount(app, db, providerId, { key: `${BACKUP_KEY}-${priority}`, priority });
     }
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      upstream.reply(SERVER_ERROR);
+  }
+
+  function queueReplies(reply: FakeReply, count: number): void {
+    for (let attempt = 0; attempt < count; attempt += 1) {
+      upstream.reply(reply);
     }
+  }
+
+  it("makes at most 5 Attempts per request", async () => {
+    await addProviderAccountsUpTo(6);
+    queueReplies(SERVER_ERROR, 6);
 
     await chat().expect(502);
 

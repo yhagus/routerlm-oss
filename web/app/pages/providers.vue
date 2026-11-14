@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Network, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
-import { computed, ref } from "vue";
-import { apiErrorMessage } from "~/lib/api";
+import { ref } from "vue";
 import {
   type AuthStyle,
   type Provider,
@@ -18,7 +17,6 @@ type ProviderDialog =
   | { kind: "delete"; provider: Provider };
 
 const { $dashboardApi } = useNuxtApp();
-const { showToast } = useToast();
 const {
   data: providers,
   error: loadError,
@@ -39,15 +37,17 @@ const reasoningOptions = [
   { label: "Turns with tool calls", value: "tool-call-turns" },
 ];
 
-const dialog = ref<ProviderDialog | null>(null);
-const isDialogOpen = computed({
-  get: () => dialog.value !== null,
-  set: (isOpen) => {
-    if (!isOpen) dialog.value = null;
-  },
-});
-const isSaving = ref(false);
-const dialogError = ref("");
+const {
+  dialog,
+  isDialogOpen,
+  isSaving,
+  dialogError,
+  showDialog,
+  closeDialog,
+  submitDialog,
+  deleteRow,
+  toggleRow,
+} = useEditableList<ProviderDialog>("/providers", refresh);
 
 interface ProviderForm {
   slug: string;
@@ -77,8 +77,7 @@ const form = ref<ProviderForm>({
 });
 
 function openDialog(next: ProviderDialog): void {
-  dialog.value = next;
-  dialogError.value = "";
+  showDialog(next);
   if (next.kind === "delete") return;
   const provider = next.kind === "edit" ? next.provider : undefined;
   form.value = {
@@ -116,8 +115,6 @@ function quirksFromForm(): ProviderQuirks {
 async function saveProvider(): Promise<void> {
   const current = dialog.value;
   if (!current || current.kind === "delete") return;
-  isSaving.value = true;
-  dialogError.value = "";
   const fields = {
     name: form.value.name,
     protocol: form.value.protocol,
@@ -125,52 +122,29 @@ async function saveProvider(): Promise<void> {
     authStyle: form.value.authStyle,
     quirks: quirksFromForm(),
   };
-  try {
-    if (current.kind === "create") {
-      await $dashboardApi("/providers", {
-        method: "POST",
-        body: { slug: form.value.slug, ...fields },
-      });
-      showToast(`Added ${fields.name}`);
-    } else {
-      await $dashboardApi(`/providers/${current.provider.id}`, { method: "PATCH", body: fields });
-      showToast(`Saved ${fields.name}`);
-    }
-    dialog.value = null;
-    await refresh();
-  } catch (error) {
-    dialogError.value = apiErrorMessage(error, "Couldn't save the Provider.");
-  } finally {
-    isSaving.value = false;
+  const failureMessage = "Couldn't save the Provider.";
+  if (current.kind === "create") {
+    await submitDialog(
+      () =>
+        $dashboardApi("/providers", { method: "POST", body: { slug: form.value.slug, ...fields } }),
+      `Added ${fields.name}`,
+      failureMessage,
+    );
+    return;
   }
+  await submitDialog(
+    () => $dashboardApi(`/providers/${current.provider.id}`, { method: "PATCH", body: fields }),
+    `Saved ${fields.name}`,
+    failureMessage,
+  );
 }
 
-async function deleteProvider(provider: Provider): Promise<void> {
-  isSaving.value = true;
-  dialogError.value = "";
-  try {
-    await $dashboardApi(`/providers/${provider.id}`, { method: "DELETE" });
-    showToast(`Deleted ${provider.name}`);
-    dialog.value = null;
-    await refresh();
-  } catch (error) {
-    dialogError.value = apiErrorMessage(error, "Couldn't delete the Provider.");
-  } finally {
-    isSaving.value = false;
-  }
+function deleteProvider(provider: Provider): Promise<void> {
+  return deleteRow(provider, provider.name, "Couldn't delete the Provider.");
 }
 
-async function toggleProvider(provider: Provider): Promise<void> {
-  try {
-    await $dashboardApi(`/providers/${provider.id}`, {
-      method: "PATCH",
-      body: { isEnabled: !provider.isEnabled },
-    });
-    showToast(`${provider.isEnabled ? "Disabled" : "Enabled"} ${provider.name}`);
-    await refresh();
-  } catch (error) {
-    showToast(apiErrorMessage(error, `Couldn't update ${provider.name}.`));
-  }
+function toggleProvider(provider: Provider): Promise<void> {
+  return toggleRow(provider, provider.name);
 }
 
 function quirkSummary(quirks: ProviderQuirks): string {
@@ -331,7 +305,7 @@ function quirkSummary(quirks: ProviderQuirks): string {
       </p>
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
       <div class="dialog__actions">
-        <button class="button" type="button" @click="dialog = null">Cancel</button>
+        <button class="button" type="button" @click="closeDialog">Cancel</button>
         <button class="button button--primary" type="submit" :disabled="isSaving">
           {{ dialog.kind === "create" ? "Add Provider" : "Save" }}
         </button>
@@ -347,7 +321,7 @@ function quirkSummary(quirks: ProviderQuirks): string {
   >
     <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
     <div class="dialog__actions">
-      <button class="button" type="button" @click="dialog = null">Cancel</button>
+      <button class="button" type="button" @click="closeDialog">Cancel</button>
       <button
         class="button button--danger"
         type="button"

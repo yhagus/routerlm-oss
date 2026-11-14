@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Cpu, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
 import { computed, ref } from "vue";
-import { apiErrorMessage } from "~/lib/api";
 import {
   CAPABILITIES,
   type Capability,
@@ -21,7 +20,6 @@ type UpstreamModelDialog =
 const ALL_PROVIDERS = "";
 
 const { $dashboardApi } = useNuxtApp();
-const { showToast } = useToast();
 const [
   { data: upstreamModels, error: loadError, refresh },
   { data: providers, error: providersError },
@@ -58,15 +56,17 @@ function formatPrice(price: number | null): string {
   return price === null ? "—" : priceFormat.format(price);
 }
 
-const dialog = ref<UpstreamModelDialog | null>(null);
-const isDialogOpen = computed({
-  get: () => dialog.value !== null,
-  set: (isOpen) => {
-    if (!isOpen) dialog.value = null;
-  },
-});
-const isSaving = ref(false);
-const dialogError = ref("");
+const {
+  dialog,
+  isDialogOpen,
+  isSaving,
+  dialogError,
+  showDialog,
+  closeDialog,
+  submitDialog,
+  deleteRow,
+  toggleRow,
+} = useEditableList<UpstreamModelDialog>("/upstream-models", refresh);
 
 /** Number inputs hold a number, or "" when empty. */
 type NumberInput = number | string;
@@ -114,8 +114,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
 }
 
 function openDialog(next: UpstreamModelDialog): void {
-  dialog.value = next;
-  dialogError.value = "";
+  showDialog(next);
   if (next.kind === "create") form.value = emptyForm();
   if (next.kind === "edit") form.value = formFor(next.upstreamModel);
 }
@@ -123,8 +122,6 @@ function openDialog(next: UpstreamModelDialog): void {
 async function saveUpstreamModel(): Promise<void> {
   const current = dialog.value;
   if (!current || current.kind === "delete") return;
-  isSaving.value = true;
-  dialogError.value = "";
   const fields = {
     upstreamModelId: form.value.upstreamModelId,
     capabilities: form.value.capabilities,
@@ -135,57 +132,40 @@ async function saveUpstreamModel(): Promise<void> {
     cacheReadPrice: optionalNumber(form.value.cacheReadPrice),
     cacheWritePrice: optionalNumber(form.value.cacheWritePrice),
   };
-  try {
-    if (current.kind === "create") {
-      await $dashboardApi("/upstream-models", {
-        method: "POST",
-        body: { providerId: form.value.providerId, ...fields },
-      });
-      showToast(`Added ${fields.upstreamModelId}`);
-    } else {
-      await $dashboardApi(`/upstream-models/${current.upstreamModel.id}`, {
+  const failureMessage = "Couldn't save the Upstream Model.";
+  if (current.kind === "create") {
+    await submitDialog(
+      () =>
+        $dashboardApi("/upstream-models", {
+          method: "POST",
+          body: { providerId: form.value.providerId, ...fields },
+        }),
+      `Added ${fields.upstreamModelId}`,
+      failureMessage,
+    );
+    return;
+  }
+  await submitDialog(
+    () =>
+      $dashboardApi(`/upstream-models/${current.upstreamModel.id}`, {
         method: "PATCH",
         body: fields,
-      });
-      showToast(`Saved ${fields.upstreamModelId}`);
-    }
-    dialog.value = null;
-    await refresh();
-  } catch (error) {
-    dialogError.value = apiErrorMessage(error, "Couldn't save the Upstream Model.");
-  } finally {
-    isSaving.value = false;
-  }
+      }),
+    `Saved ${fields.upstreamModelId}`,
+    failureMessage,
+  );
 }
 
-async function deleteUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
-  isSaving.value = true;
-  dialogError.value = "";
-  try {
-    await $dashboardApi(`/upstream-models/${upstreamModel.id}`, { method: "DELETE" });
-    showToast(`Deleted ${upstreamModel.upstreamModelId}`);
-    dialog.value = null;
-    await refresh();
-  } catch (error) {
-    dialogError.value = apiErrorMessage(error, "Couldn't delete the Upstream Model.");
-  } finally {
-    isSaving.value = false;
-  }
+function deleteUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
+  return deleteRow(
+    upstreamModel,
+    upstreamModel.upstreamModelId,
+    "Couldn't delete the Upstream Model.",
+  );
 }
 
-async function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
-  try {
-    await $dashboardApi(`/upstream-models/${upstreamModel.id}`, {
-      method: "PATCH",
-      body: { isEnabled: !upstreamModel.isEnabled },
-    });
-    showToast(
-      `${upstreamModel.isEnabled ? "Disabled" : "Enabled"} ${upstreamModel.upstreamModelId}`,
-    );
-    await refresh();
-  } catch (error) {
-    showToast(apiErrorMessage(error, `Couldn't update ${upstreamModel.upstreamModelId}.`));
-  }
+function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
+  return toggleRow(upstreamModel, upstreamModel.upstreamModelId);
 }
 </script>
 
@@ -356,7 +336,7 @@ async function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> 
       </div>
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
       <div class="dialog__actions">
-        <button class="button" type="button" @click="dialog = null">Cancel</button>
+        <button class="button" type="button" @click="closeDialog">Cancel</button>
         <button class="button button--primary" type="submit" :disabled="isSaving">
           {{ dialog.kind === "create" ? "Add Upstream Model" : "Save" }}
         </button>
@@ -372,7 +352,7 @@ async function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> 
   >
     <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
     <div class="dialog__actions">
-      <button class="button" type="button" @click="dialog = null">Cancel</button>
+      <button class="button" type="button" @click="closeDialog">Cancel</button>
       <button
         class="button button--danger"
         type="button"

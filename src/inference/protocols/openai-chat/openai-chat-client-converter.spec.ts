@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { parseFailureOf } from "../../../../test/support/parse-failure.js";
 import { GatewayError } from "../../gateway-error.js";
 import type {
   InferenceRequest,
@@ -25,15 +26,7 @@ async function textOf(chunks: AsyncIterable<string>): Promise<string> {
 }
 
 function parseFailure(body: unknown): GatewayError {
-  try {
-    openAiChatClientConverter.parseRequest(body);
-  } catch (error) {
-    if (error instanceof GatewayError) {
-      return error;
-    }
-    throw error;
-  }
-  throw new Error("Expected the request to be refused");
+  return parseFailureOf(openAiChatClientConverter, body);
 }
 
 const CONTEXT = {

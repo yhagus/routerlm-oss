@@ -1,7 +1,7 @@
 import type { ClientProtocol, GatewayErrorCode, RecordedAttemptFailure } from "../db/schema.js";
 
 /**
- * Which hop of the request failed: the client's request to the gateway, or
+ * What failed: the client's request to the gateway, or
  * one Attempt from the gateway to a Provider Account. Names are null once
  * that Provider Account or Provider is deleted.
  */
@@ -36,7 +36,7 @@ export interface ErrorCaptureSummary {
 export interface ErrorCaptureDetail extends ErrorCaptureSummary {
   requestHeaders: Record<string, string>;
   requestBody: string;
-  /** Null for the client-to-gateway hop, and for an Attempt that got no response. */
+  /** Null for a capture of the client request alone, and for an Attempt that got no response. */
   responseHeaders: Record<string, string> | null;
   responseBody: string | null;
 }

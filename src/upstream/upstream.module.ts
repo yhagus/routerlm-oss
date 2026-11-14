@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { RedisModule } from "../redis/redis.module.js";
 import { SnapshotModule } from "../snapshot/snapshot.module.js";
 import { ConfigService } from "@nestjs/config";
 import type { Env } from "../config/env.schema.js";
@@ -9,19 +10,17 @@ import { ProviderAccountsService } from "./provider-accounts.service.js";
 import { ProviderKeyCipher } from "./provider-key-cipher.js";
 import { ProvidersController } from "./providers.controller.js";
 import { ProvidersService } from "./providers.service.js";
-import { UpstreamChangeSignal } from "./upstream-change-signal.js";
 import { UpstreamModelsController } from "./upstream-models.controller.js";
 import { UpstreamModelsService } from "./upstream-models.service.js";
 
 /** Dashboard management of Providers, Upstream Models and Provider Accounts. */
 @Module({
-  imports: [SnapshotModule],
+  imports: [SnapshotModule, RedisModule],
   controllers: [ProvidersController, UpstreamModelsController, ProviderAccountsController],
   providers: [
     ProvidersService,
     ProviderAccountsService,
     UpstreamModelsService,
-    UpstreamChangeSignal,
     CooldownStore,
     ProviderAccountHealth,
     {
@@ -32,7 +31,7 @@ import { UpstreamModelsService } from "./upstream-models.service.js";
     },
   ],
   // The gateway decrypts Provider Account keys, and keeps their Cooldown and
-  // health; the snapshot refresh hooks into the signal.
-  exports: [ProviderKeyCipher, UpstreamChangeSignal, CooldownStore, ProviderAccountHealth],
+  // health.
+  exports: [ProviderKeyCipher, CooldownStore, ProviderAccountHealth],
 })
 export class UpstreamModule {}

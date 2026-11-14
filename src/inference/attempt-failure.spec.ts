@@ -6,25 +6,37 @@ function failure(reason: AttemptFailedError["reason"]): AttemptFailedError {
 
 describe("exhaustionError", () => {
   it("answers 429 upstream_rate_limited when every Attempt was rate limited", () => {
-    const error = exhaustionError([failure("rate_limited"), failure("rate_limited")]);
+    const error = exhaustionError([failure("rate_limited"), failure("rate_limited")], []);
 
     expect([error.status, error.code]).toEqual([429, "upstream_rate_limited"]);
   });
 
   it("answers 504 upstream_timeout when every Attempt timed out", () => {
-    const error = exhaustionError([failure("timeout"), failure("timeout")]);
+    const error = exhaustionError([failure("timeout"), failure("timeout")], []);
 
     expect([error.status, error.code]).toEqual([504, "upstream_timeout"]);
   });
 
   it("answers 502 upstream_error when the Attempts failed in different ways", () => {
-    const error = exhaustionError([failure("rate_limited"), failure("timeout")]);
+    const error = exhaustionError([failure("rate_limited"), failure("timeout")], []);
+
+    expect([error.status, error.code]).toEqual([502, "upstream_error"]);
+  });
+
+  it("answers 429 upstream_rate_limited without an Attempt when every Provider Account is in Cooldown after a rate limit", () => {
+    const error = exhaustionError([], ["rate_limited", "rate_limited"]);
+
+    expect([error.status, error.code]).toEqual([429, "upstream_rate_limited"]);
+  });
+
+  it("answers 502 upstream_error without an Attempt when a Cooldown has another cause", () => {
+    const error = exhaustionError([], ["rate_limited", "server_error"]);
 
     expect([error.status, error.code]).toEqual([502, "upstream_error"]);
   });
 
   it("answers 502 upstream_error when no Provider Account could be tried", () => {
-    const error = exhaustionError([]);
+    const error = exhaustionError([], []);
 
     expect([error.status, error.code]).toEqual([502, "upstream_error"]);
   });

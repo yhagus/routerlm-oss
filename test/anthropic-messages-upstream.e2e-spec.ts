@@ -94,11 +94,11 @@ describe("Chat Completions served by an anthropic-messages upstream (e2e)", () =
     await app.close();
   });
 
-  function chat(body: unknown) {
+  function chat(body: object) {
     return request(app.getHttpServer())
       .post("/v1/chat/completions")
       .set("Authorization", `Bearer ${apiKey}`)
-      .send(body as object);
+      .send(body);
   }
 
   it("translates images, tool results, reasoning and a JSON schema to Anthropic Messages and back", async () => {

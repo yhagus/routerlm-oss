@@ -3,7 +3,7 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import type { Database } from "../db/relations.js";
 import { providerAccounts } from "../db/schema.js";
-import { UpstreamChangeSignal } from "./upstream-change-signal.js";
+import { SnapshotService } from "../snapshot/snapshot.service.js";
 
 // Enough to tell failures apart on the dashboard; the rest is in the logs.
 const LAST_ERROR_MAX_LENGTH = 500;
@@ -19,7 +19,7 @@ export class ProviderAccountHealth {
 
   constructor(
     @InjectDrizzle() private readonly db: Database,
-    private readonly changeSignal: UpstreamChangeSignal,
+    private readonly snapshot: SnapshotService,
   ) {}
 
   /** Keeps the failure as the Provider Account's last error, for the dashboard. */
@@ -55,6 +55,6 @@ export class ProviderAccountHealth {
       this.logger.error(`Provider Account ${providerAccountId} not disabled: ${String(error)}`);
       return;
     }
-    await this.changeSignal.changed();
+    await this.snapshot.changed();
   }
 }

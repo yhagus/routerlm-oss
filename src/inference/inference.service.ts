@@ -148,9 +148,9 @@ export class InferenceService {
     const cacheKey = promptCacheKey(requestOwnerOf(caller), model.id);
 
     // Accounts in Cooldown when the request arrived, plus the ones that fail during it.
-    const skippedAccountIds = new Set(
-      (await this.cooldowns.cooldownEnds(providerAccountIdsOf(routes))).keys(),
-    );
+    const enabledAccountIds = enabledProviderAccountIdsOf(routes);
+    const cooldowns = await this.cooldowns.cooldowns(enabledAccountIds);
+    const skippedAccountIds = new Set(cooldowns.keys());
     const failures: AttemptFailedError[] = [];
     const targets = attemptTargets(routes, (account) => skippedAccountIds.has(account.id));
     for (const target of targets) {
@@ -187,7 +187,10 @@ export class InferenceService {
         }
       }
     }
-    throw exhaustionError(failures);
+    throw exhaustionError(
+      failures,
+      enabledAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
+    );
   }
 
   /** The Model the request names, if the caller may use it (spec step 3). */
@@ -339,7 +342,7 @@ export class InferenceService {
       case "connection_error":
       case "stream_interrupted":
         void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
-        await this.cooldowns.startCooldown(providerAccount.id, failure.retryAfter);
+        await this.cooldowns.startCooldown(providerAccount.id, failure.reason, failure.retryAfter);
         return;
     }
   }
@@ -404,8 +407,11 @@ function withCacheBreakpointsFor(
   return withAutomaticCacheBreakpoints(request, cacheMarkerLimit ?? DEFAULT_CACHE_MARKER_LIMIT);
 }
 
-function providerAccountIdsOf(routes: SnapshotRoute[]): string[] {
+/** The Provider Accounts Fallback may try, unless they are in Cooldown. */
+function enabledProviderAccountIdsOf(routes: SnapshotRoute[]): string[] {
   return routes.flatMap((route) =>
-    route.upstreamModel.provider.providerAccounts.map((account) => account.id),
+    route.upstreamModel.provider.providerAccounts
+      .filter((account) => account.isEnabled)
+      .map((account) => account.id),
   );
 }

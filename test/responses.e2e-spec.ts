@@ -122,11 +122,11 @@ describe("Responses (e2e)", () => {
     await app.close();
   });
 
-  function createResponse(body: unknown) {
+  function createResponse(body: object) {
     return request(app.getHttpServer())
       .post("/v1/responses")
       .set("Authorization", `Bearer ${apiKey}`)
-      .send(body as object);
+      .send(body);
   }
 
   it("serves images, tools, reasoning and a JSON schema from an openai-chat upstream, as our Model", async () => {
