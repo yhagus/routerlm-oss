@@ -156,6 +156,23 @@ async function saveRouteOverride(
   if (isSaved) await refresh();
 }
 
+const isSavingCacheBreakpoints = ref(false);
+
+async function toggleCacheBreakpoints(): Promise<void> {
+  if (!model.value) return;
+  const hasAutomaticCacheBreakpoints = !model.value.hasAutomaticCacheBreakpoints;
+  isSavingCacheBreakpoints.value = true;
+  try {
+    await $dashboardApi(modelPath, { method: "PATCH", body: { hasAutomaticCacheBreakpoints } });
+    showToast(`Turned automatic cache breakpoints ${hasAutomaticCacheBreakpoints ? "on" : "off"}`);
+    await refresh();
+  } catch (error) {
+    showToast(apiErrorMessage(error, "Couldn't update the cache breakpoints."));
+  } finally {
+    isSavingCacheBreakpoints.value = false;
+  }
+}
+
 async function toggleModel(): Promise<void> {
   if (!model.value) return;
   const { isEnabled, name } = model.value;
@@ -360,7 +377,29 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
       </div>
     </section>
 
-    <!-- Slot: the automatic cache breakpoints switch (#18) goes here. -->
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Prompt caching</h2>
+          <p>
+            On Routes to anthropic-messages Providers, the gateway marks the end of the tools, the
+            end of the system prompt and the latest turn for caching, unless the client marked the
+            request itself.
+          </p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <label class="check-field"
+          ><input
+            type="checkbox"
+            :checked="model.hasAutomaticCacheBreakpoints"
+            :disabled="isSavingCacheBreakpoints"
+            @change="toggleCacheBreakpoints"
+          />
+          Automatic cache breakpoints</label
+        >
+      </div>
+    </section>
   </template>
 
   <AppDialog
