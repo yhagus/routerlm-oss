@@ -5,6 +5,7 @@ import type {
   InferenceResponse,
   InferenceStreamEvent,
 } from "../../internal-format.js";
+import { writeClientStream } from "../client-protocol-converter.js";
 import { anthropicMessagesClientConverter } from "./anthropic-messages-client-converter.js";
 
 function fixture(name: string): string {
@@ -304,7 +305,7 @@ describe("anthropicMessagesClientConverter", () => {
     }
 
     const written = await textOf(
-      anthropicMessagesClientConverter.writeStream(failing(), STREAMING_REQUEST, CONTEXT),
+      writeClientStream(anthropicMessagesClientConverter, failing(), STREAMING_REQUEST, CONTEXT),
     );
 
     expect(written).toContain('"text":"Hel"');
