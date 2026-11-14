@@ -54,7 +54,7 @@ const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
         <thead>
           <tr>
             <th>Time</th>
-            <th>Failed hop</th>
+            <th>Failed at</th>
             <th>Model</th>
             <th>API Key</th>
             <th>Client got</th>

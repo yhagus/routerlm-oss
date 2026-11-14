@@ -1,5 +1,5 @@
 /**
- * Which hop of a request failed: the client's request to the gateway, or one
+ * What failed: the client's request to the gateway, or one
  * Attempt from the gateway to a Provider Account. Names are null once that
  * Provider Account or Provider is deleted.
  */
@@ -34,7 +34,7 @@ export interface ErrorCaptureSummary {
 export interface ErrorCaptureDetail extends ErrorCaptureSummary {
   requestHeaders: Record<string, string>;
   requestBody: string;
-  /** Null for the client-to-gateway hop, and for an Attempt that got no response. */
+  /** Null for a capture of the client request alone, and for an Attempt that got no response. */
   responseHeaders: Record<string, string> | null;
   responseBody: string | null;
 }
@@ -56,7 +56,7 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   stream_interrupted: "Stream interrupted",
 };
 
-/** The hop in words: "Client → gateway", or "Gateway → <Provider> · <Provider Account>". */
+/** What failed, in words: "Client → gateway", or "Gateway → <Provider> · <Provider Account>". */
 export function failedHopLabel(hop: FailedHop): string {
   if (hop.kind === "client-to-gateway") return "Client → gateway";
   const provider = hop.providerName ?? "Deleted Provider";
