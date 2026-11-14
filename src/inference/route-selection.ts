@@ -57,15 +57,31 @@ export function capableRoutes(model: SnapshotModel, request: InferenceRequest): 
   });
 }
 
+/** The Route and Provider Account an Attempt goes to. */
+export interface AttemptTarget {
+  route: SnapshotRoute;
+  providerAccount: SnapshotProviderAccount;
+}
+
 /**
- * The Provider Account an Attempt on this Route uses: always the first healthy
- * one by priority, never round-robin, because upstream caches are per account.
+ * Where the Attempts of a request go, in order (spec "Inference path" step 6):
+ * each Route's enabled Provider Accounts by priority, then the next Route.
+ * Always the first healthy one, never round-robin, because upstream caches are
+ * per account. `isSkipped` is asked lazily, as each target comes up, so a
+ * Provider Account that failed earlier in the same request is skipped on a
+ * later Route of the same Provider.
  */
-export function firstUsableProviderAccount(
-  route: SnapshotRoute,
-): SnapshotProviderAccount | undefined {
-  // Cooldown (#12) also makes an account unusable.
-  return route.upstreamModel.provider.providerAccounts.find((account) => account.isEnabled);
+export function* attemptTargets(
+  routes: SnapshotRoute[],
+  isSkipped: (providerAccount: SnapshotProviderAccount) => boolean,
+): Generator<AttemptTarget> {
+  for (const route of routes) {
+    for (const providerAccount of route.upstreamModel.provider.providerAccounts) {
+      if (providerAccount.isEnabled && !isSkipped(providerAccount)) {
+        yield { route, providerAccount };
+      }
+    }
+  }
 }
 
 function estimatedPromptTokens(request: InferenceRequest): number {

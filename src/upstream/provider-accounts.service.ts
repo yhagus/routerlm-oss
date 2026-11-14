@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "../db/postgres-errors.js";
 import type { Database } from "../db/relations.js";
 import { providerAccounts } from "../db/schema.js";
+import { CooldownStore } from "./cooldown-store.js";
 import { ProviderKeyCipher } from "./provider-key-cipher.js";
 import { UpstreamChangeSignal } from "./upstream-change-signal.js";
 import type { NewProviderAccount, ProviderAccountChanges } from "./upstream.schemas.js";
@@ -28,6 +29,9 @@ const providerAccountColumns = {
 /** A Provider Account as the dashboard API returns it: never the key, only its last four characters. */
 export type ProviderAccount = Omit<typeof providerAccounts.$inferSelect, "encryptedKey">;
 
+/** A Provider Account in the dashboard's list, with when its Cooldown ends (null when not in one). */
+export type ListedProviderAccount = ProviderAccount & { cooldownEndsAt: Date | null };
+
 type StoredKey = Pick<ProviderAccount, "keyLastFour"> & { encryptedKey: string };
 
 @Injectable()
@@ -36,13 +40,19 @@ export class ProviderAccountsService {
     @InjectDrizzle() private readonly db: Database,
     private readonly keyCipher: ProviderKeyCipher,
     private readonly changeSignal: UpstreamChangeSignal,
+    private readonly cooldowns: CooldownStore,
   ) {}
 
-  listProviderAccounts(): Promise<ProviderAccount[]> {
-    return this.db
+  async listProviderAccounts(): Promise<ListedProviderAccount[]> {
+    const accounts = await this.db
       .select(providerAccountColumns)
       .from(providerAccounts)
       .orderBy(asc(providerAccounts.providerId), asc(providerAccounts.priority));
+    const cooldownEnds = await this.cooldowns.cooldownEnds(accounts.map((account) => account.id));
+    return accounts.map((account) => ({
+      ...account,
+      cooldownEndsAt: cooldownEnds.get(account.id) ?? null,
+    }));
   }
 
   async createProviderAccount(newAccount: NewProviderAccount): Promise<ProviderAccount> {

@@ -10,7 +10,11 @@ import {
   Post,
 } from "@nestjs/common";
 import { DashboardController } from "../auth/dashboard-controller.decorator.js";
-import { type ProviderAccount, ProviderAccountsService } from "./provider-accounts.service.js";
+import {
+  type ListedProviderAccount,
+  type ProviderAccount,
+  ProviderAccountsService,
+} from "./provider-accounts.service.js";
 import {
   type NewProviderAccount,
   newProviderAccountSchema,
@@ -23,7 +27,7 @@ export class ProviderAccountsController {
   constructor(private readonly providerAccounts: ProviderAccountsService) {}
 
   @Get()
-  listProviderAccounts(): Promise<ProviderAccount[]> {
+  listProviderAccounts(): Promise<ListedProviderAccount[]> {
     return this.providerAccounts.listProviderAccounts();
   }
 

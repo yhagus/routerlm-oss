@@ -7,8 +7,14 @@ export type FakeReply =
   | { kind: "json"; status: number; body: unknown; headers?: Record<string, string> }
   /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
   | { kind: "stream"; events: string; holdOpen?: boolean }
+  /** Sends the stream's first events, then drops the connection. */
+  | { kind: "stream-then-reset"; events: string }
   /** Never sends headers, as an upstream that stopped answering. */
-  | { kind: "hang" };
+  | { kind: "hang" }
+  /** Sends a 200 and its headers, then nothing: no body, no stream event. */
+  | { kind: "headers-only" }
+  /** Drops the connection without answering. */
+  | { kind: "reset" };
 
 /** A request the fake upstream received. */
 export interface ReceivedRequest {
@@ -138,7 +144,18 @@ export class FakeUpstream {
           response.end();
         }
         return;
+      case "stream-then-reset":
+        response.writeHead(200, { "content-type": "text/event-stream" });
+        response.write(reply.events, () => response.destroy());
+        return;
       case "hang":
+        return;
+      case "headers-only":
+        response.writeHead(200, { "content-type": "application/json" });
+        response.flushHeaders();
+        return;
+      case "reset":
+        response.destroy();
         return;
     }
   }

@@ -59,3 +59,20 @@ export function gatewayErrorFor(failure: AttemptFailedError): GatewayError {
   const [code, message] = FAILURE_MESSAGES[failure.reason];
   return new GatewayError(code, message);
 }
+
+/**
+ * What the client is told when Fallback ran out of Attempts (spec "Error
+ * contract"): 429 if every Attempt was rate limited, 504 if every one timed
+ * out, otherwise 502. With no Attempt at all, nothing could be tried: 502.
+ */
+export function exhaustionError(failures: AttemptFailedError[]): GatewayError {
+  const [firstFailure] = failures;
+  if (!firstFailure) {
+    return new GatewayError("upstream_error", "No upstream is available for this Model");
+  }
+  const failedTheSameWay = failures.every((failure) => failure.reason === firstFailure.reason);
+  if (failedTheSameWay) {
+    return gatewayErrorFor(firstFailure);
+  }
+  return new GatewayError("upstream_error", "The upstream failed to answer");
+}
