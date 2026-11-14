@@ -3,7 +3,11 @@ import { computed, onMounted, ref } from "vue";
 export type ThemePreference = "system" | "light" | "dark";
 
 export const THEME_STORAGE_KEY = "routerlm-theme";
-const ORDER: ThemePreference[] = ["system", "light", "dark"];
+const NEXT: Record<ThemePreference, ThemePreference> = {
+  system: "light",
+  light: "dark",
+  dark: "system",
+};
 const LABELS: Record<ThemePreference, string> = {
   system: "System theme",
   light: "Light theme",
@@ -38,9 +42,7 @@ export function useTheme() {
     preference.value = readPreference();
   });
 
-  const nextPreference = computed(
-    () => ORDER[(ORDER.indexOf(preference.value) + 1) % ORDER.length]!,
-  );
+  const nextPreference = computed(() => NEXT[preference.value]);
   const label = computed(() => LABELS[preference.value]);
   const nextLabel = computed(() => LABELS[nextPreference.value]);
 

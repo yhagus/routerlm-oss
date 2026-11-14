@@ -46,7 +46,8 @@ function onKeydown(event: KeyboardEvent) {
   } else if (event.key === "Escape") open.value = false;
 }
 function onDocumentPointerdown(event: PointerEvent) {
-  if (root.value && !root.value.contains(event.target as Node)) open.value = false;
+  if (!(event.target instanceof Node)) return;
+  if (root.value && !root.value.contains(event.target)) open.value = false;
 }
 onMounted(() => document.addEventListener("pointerdown", onDocumentPointerdown));
 onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocumentPointerdown));

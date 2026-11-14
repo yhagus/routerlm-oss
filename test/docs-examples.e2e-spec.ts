@@ -1,5 +1,4 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import type { AddressInfo } from "node:net";
 import { fileURLToPath } from "node:url";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { CATALOG_DIRECTORY, loadCatalog } from "../src/catalog/load-catalog.js";
@@ -19,6 +18,7 @@ import {
 } from "./support/docs-examples.js";
 import { FakeUpstream, openAiChatFixture } from "./support/fake-upstream.js";
 import { insertApiKey, insertOpenAiChatModel } from "./support/inference.js";
+import { portOf } from "./support/port-of.js";
 import { createTestApp } from "./support/test-app.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
 
@@ -60,13 +60,6 @@ function replyFor(upstream: FakeUpstream, block: CodeBlock): void {
       body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
     });
   }
-}
-
-function portOf(address: AddressInfo | string | null): number {
-  if (address === null || typeof address === "string") {
-    throw new Error("The app is not listening on a TCP port");
-  }
-  return address.port;
 }
 
 describe("Client documentation (e2e)", () => {

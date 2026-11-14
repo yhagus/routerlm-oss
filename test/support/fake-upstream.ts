@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import type { AddressInfo } from "node:net";
+import { text as readBody } from "node:stream/consumers";
+import { portOf } from "./port-of.js";
 
 /** What the fake upstream answers to the next request. */
 export type FakeReply =
@@ -74,8 +75,7 @@ export class FakeUpstream {
 
   /** What a Provider row's base URL should be. */
   get baseUrl(): string {
-    const { port } = this.server.address() as AddressInfo;
-    return `http://127.0.0.1:${port}/v1`;
+    return `http://127.0.0.1:${portOf(this.server.address())}/v1`;
   }
 
   get lastRequest(): ReceivedRequest {
@@ -108,11 +108,7 @@ export class FakeUpstream {
   }
 
   private async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
-    const chunks: Buffer[] = [];
-    for await (const chunk of request) {
-      chunks.push(chunk as Buffer);
-    }
-    const text = Buffer.concat(chunks).toString("utf8");
+    const text = await readBody(request);
     this.requests.push({
       method: request.method ?? "",
       path: request.url ?? "",

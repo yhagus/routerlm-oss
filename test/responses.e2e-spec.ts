@@ -1,4 +1,3 @@
-import type { AddressInfo } from "node:net";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import OpenAI from "openai";
 import request from "supertest";
@@ -14,6 +13,7 @@ import {
   insertApiKey,
   insertOpenAiChatModel,
 } from "./support/inference.js";
+import { portOf } from "./support/port-of.js";
 import { createTestApp } from "./support/test-app.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
 
@@ -85,13 +85,6 @@ function namedEventsOf(text: string): NamedEvent[] {
         data: JSON.parse(dataLine.slice("data: ".length)),
       };
     });
-}
-
-function portOf(address: AddressInfo | string | null): number {
-  if (address === null || typeof address === "string") {
-    throw new Error("The app is not listening on a TCP port");
-  }
-  return address.port;
 }
 
 describe("Responses (e2e)", () => {

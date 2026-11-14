@@ -172,7 +172,8 @@ const tooltipStyle = computed(() => {
 });
 
 function onPointer(event: PointerEvent) {
-  const rect = (event.currentTarget as SVGElement).getBoundingClientRect();
+  if (!(event.currentTarget instanceof Element)) return;
+  const rect = event.currentTarget.getBoundingClientRect();
   const ratio = (event.clientX - rect.left - PAD.left) / innerWidth.value;
   const index = Math.round(ratio * (props.points.length - 1));
   active.value = Math.min(props.points.length - 1, Math.max(0, index));

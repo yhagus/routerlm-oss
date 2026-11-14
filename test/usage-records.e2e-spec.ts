@@ -1,4 +1,3 @@
-import type { AddressInfo } from "node:net";
 import { getQueueToken } from "@nestjs/bullmq";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -10,6 +9,7 @@ import { attempts, upstreamModels, usageLogs } from "../src/db/schema.js";
 import { SnapshotService } from "../src/snapshot/snapshot.service.js";
 import { FakeUpstream, openAiChatFixture } from "./support/fake-upstream.js";
 import { addProviderAccount, insertApiKey, insertOpenAiChatModel } from "./support/inference.js";
+import { portOf } from "./support/port-of.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
 import { untilUsageQueueIsDrained } from "./support/usage-queue.js";
 
@@ -208,7 +208,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
     const firstChunk = openAiChatFixture("upstream-stream-tool-call.sse").split("\n\n")[0] + "\n\n";
     upstream.reply({ kind: "stream", events: firstChunk, holdOpen: true });
     const server = await app.listen(0, "127.0.0.1");
-    const { port } = server.address() as AddressInfo;
+    const port = portOf(server.address());
     const client = new AbortController();
 
     const response = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {

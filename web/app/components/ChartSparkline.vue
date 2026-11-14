@@ -38,7 +38,8 @@ const area = computed(
 const shown = computed(() => active.value ?? props.values.length - 1);
 
 function onPointer(event: PointerEvent) {
-  const rect = (event.currentTarget as SVGElement).getBoundingClientRect();
+  if (!(event.currentTarget instanceof Element)) return;
+  const rect = event.currentTarget.getBoundingClientRect();
   const index = Math.round(
     ((event.clientX - rect.left - PAD) / (width.value - PAD * 2)) * (props.values.length - 1),
   );

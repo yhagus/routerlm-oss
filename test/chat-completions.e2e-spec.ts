@@ -1,4 +1,3 @@
-import type { AddressInfo } from "node:net";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import pg from "pg";
 import request from "supertest";
@@ -10,6 +9,7 @@ import {
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
 } from "./support/inference.js";
+import { portOf } from "./support/port-of.js";
 import { createTestApp } from "./support/test-app.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
 
@@ -139,7 +139,7 @@ describe("Chat Completions (e2e)", () => {
     upstream.reply({ kind: "stream", events: firstChunk, holdOpen: true });
     const upstreamClosed = upstream.waitForDisconnect();
     const server = await app.listen(0, "127.0.0.1");
-    const { port } = server.address() as AddressInfo;
+    const port = portOf(server.address());
     const client = new AbortController();
 
     const response = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
