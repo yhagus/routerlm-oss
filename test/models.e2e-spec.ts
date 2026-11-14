@@ -142,6 +142,30 @@ describe("Models (e2e)", () => {
     ]);
   });
 
+  it("overrides a Route's timeouts, and clears an override back to the gateway default", async () => {
+    const acme = await createUpstreamModel("acme", "acme-large", []);
+    const modelId = await createModel("smart");
+    const routeId = await addRoute(modelId, acme.upstreamModelId);
+    const routeUrl = `/api/models/${modelId}/routes/${routeId}`;
+
+    await request(app.getHttpServer())
+      .patch(routeUrl)
+      .set("Cookie", cookie)
+      .send({ connectTimeoutMs: 2000, firstTokenTimeoutMs: 30_000, totalTimeoutMs: 120_000 })
+      .expect(200);
+    const model = await request(app.getHttpServer())
+      .patch(routeUrl)
+      .set("Cookie", cookie)
+      .send({ firstTokenTimeoutMs: null })
+      .expect(200);
+
+    expect(model.body.routes[0]).toMatchObject({
+      connectTimeoutMs: 2000,
+      firstTokenTimeoutMs: null,
+      totalTimeoutMs: 120_000,
+    });
+  });
+
   it("refuses a Route order that leaves out one of the Model's Routes", async () => {
     const acme = await createUpstreamModel("acme", "acme-large", []);
     const modelId = await createModel("smart");

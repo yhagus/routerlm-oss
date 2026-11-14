@@ -16,7 +16,10 @@ export type ModelSummary = Pick<Model, "id" | "name" | "isEnabled" | "createdAt"
 };
 
 /** One Route as the Model page shows it: where it sends requests and whether anything can serve them. */
-export type RouteSummary = Pick<typeof routes.$inferSelect, "id" | "priority" | "isEnabled"> & {
+export type RouteSummary = Pick<
+  typeof routes.$inferSelect,
+  "id" | "priority" | "isEnabled" | "connectTimeoutMs" | "firstTokenTimeoutMs" | "totalTimeoutMs"
+> & {
   provider: Pick<typeof providers.$inferSelect, "id" | "slug" | "name" | "isEnabled">;
   upstreamModel: Pick<
     typeof upstreamModels.$inferSelect,
@@ -106,6 +109,9 @@ export class ModelsService {
           id: routes.id,
           priority: routes.priority,
           isEnabled: routes.isEnabled,
+          connectTimeoutMs: routes.connectTimeoutMs,
+          firstTokenTimeoutMs: routes.firstTokenTimeoutMs,
+          totalTimeoutMs: routes.totalTimeoutMs,
           provider: {
             id: providers.id,
             slug: providers.slug,
