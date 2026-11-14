@@ -1987,6 +1987,35 @@ tbody tr:hover {
   justify-content: flex-end;
   gap: 8px;
 }
+.status-badge--bad {
+  color: var(--danger);
+}
+.model-choices {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.model-choices__hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.model-choices__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.key-reveal {
+  display: flex;
+  gap: 8px;
+}
+.key-reveal__value {
+  flex: 1;
+  min-width: 0;
+}
 
 /* Longer forms: Providers, Upstream Models, Provider Accounts */
 .dialog--wide {
