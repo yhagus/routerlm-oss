@@ -12,6 +12,7 @@ import { InferenceModule } from "./inference/inference.module.js";
 import { QueueModule } from "./queue/queue.module.js";
 import { RoutingModule } from "./routing/routing.module.js";
 import { UpstreamModule } from "./upstream/upstream.module.js";
+import { UsageModule } from "./usage/usage.module.js";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UpstreamModule } from "./upstream/upstream.module.js";
     UpstreamModule,
     RoutingModule,
     InferenceModule,
+    UsageModule,
   ],
   controllers: [AppController],
   // Validates every `@Body({ schema })`, `@Param({ schema })`… against its zod schema.

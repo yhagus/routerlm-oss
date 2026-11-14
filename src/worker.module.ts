@@ -1,9 +1,14 @@
 import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { DrizzleModule } from "@nestjs/drizzle";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { type Env, envSchema } from "./config/env.schema.js";
+import { relations } from "./db/relations.js";
 import { PingProcessor } from "./queue/ping.processor.js";
 import { QUEUE_NAMES } from "./queue/queue-names.js";
+import { UsageWriter } from "./usage/usage-writer.js";
+import { UsageProcessor } from "./usage/usage.processor.js";
 
 /**
  * Root module of the worker process (src/worker.ts). Queue processors are
@@ -12,6 +17,14 @@ import { QUEUE_NAMES } from "./queue/queue-names.js";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
+    DrizzleModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        drizzle,
+        connection: config.get("DATABASE_URL", { infer: true }),
+        relations,
+      }),
+    }),
     BullModule.forRootAsync({
       inject: [ConfigService],
       // Unlike the backend's producer connection, workers keep BullMQ's
@@ -22,6 +35,6 @@ import { QUEUE_NAMES } from "./queue/queue-names.js";
     }),
     BullModule.registerQueue(...QUEUE_NAMES.map((name) => ({ name }))),
   ],
-  providers: [PingProcessor],
+  providers: [PingProcessor, UsageProcessor, UsageWriter],
 })
 export class WorkerModule {}

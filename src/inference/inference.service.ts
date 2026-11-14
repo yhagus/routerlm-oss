@@ -4,6 +4,8 @@ import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/api-key.js";
 import type { SnapshotModel, SnapshotRoute } from "../snapshot/snapshot.js";
 import { SnapshotService } from "../snapshot/snapshot.service.js";
 import { CooldownStore } from "../upstream/cooldown-store.js";
+import type { UsageJob } from "../usage/usage-job.js";
+import { UsageProducer } from "../usage/usage.producer.js";
 import { ProviderAccountHealth } from "../upstream/provider-account-health.js";
 import { ProviderKeyCipher } from "../upstream/provider-key-cipher.js";
 import {
@@ -23,6 +25,8 @@ import {
 import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "./protocols/converters.js";
 import { type AttemptTarget, attemptTargets, capableRoutes } from "./route-selection.js";
 import { DEFAULT_TIMEOUTS, type UpstreamCall, UpstreamClient } from "./upstream-client.js";
+import { UsageMeter } from "./usage-meter.js";
+import type { ClientConnection } from "./client-connection.js";
 
 /** What the client gets back: a JSON body, or the text of an event stream. */
 export type InferenceResult =
@@ -31,6 +35,11 @@ export type InferenceResult =
 
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
+
+const HTTP_OK = 200;
+const HTTP_INTERNAL_SERVER_ERROR = 500;
+/** Recorded when the client left before any response; nginx's "client closed request". */
+const CLIENT_CLOSED_REQUEST = 499;
 
 /**
  * The inference path (spec "Inference path" steps 2 to 8) for any client
@@ -48,16 +57,46 @@ export class InferenceService {
     private readonly upstream: UpstreamClient,
     private readonly cooldowns: CooldownStore,
     private readonly providerAccountHealth: ProviderAccountHealth,
+    private readonly usage: UsageProducer,
   ) {}
 
+  /** Serves the request and enqueues its usage job once it is answered (spec step 9). */
   async infer(
     converter: ClientProtocolConverter,
     body: unknown,
     principal: ApiKeyPrincipal,
+    client: ClientConnection,
+  ): Promise<InferenceResult> {
+    const meter = new UsageMeter(
+      { kind: "api-key", apiKeyId: principal.apiKeyId },
+      converter.protocol,
+      client.requestBytes,
+    );
+    try {
+      const result = await this.serve(converter, body, principal, client.signal, meter);
+      if (result.kind === "stream") {
+        return { kind: "stream", chunks: this.meteredStream(result.chunks, meter, client.signal) };
+      }
+      meter.responseWritten(JSON.stringify(result.body));
+      this.usage.enqueue(meter.finish(HTTP_OK, false));
+      return result;
+    } catch (error) {
+      this.usage.enqueue(failedRequestUsage(meter, converter, error));
+      throw error;
+    }
+  }
+
+  private async serve(
+    converter: ClientProtocolConverter,
+    body: unknown,
+    principal: ApiKeyPrincipal,
     clientSignal: AbortSignal,
+    meter: UsageMeter,
   ): Promise<InferenceResult> {
     const clientRequest = converter.parseRequest(body);
+    meter.requestParsed(clientRequest.stream !== null);
     const model = this.resolveModel(clientRequest.model, principal);
+    meter.modelResolved(model.id);
     // Routes are selected under the Model's policy (spec step 4 before 5); a
     // Route override applies only to the Attempts on its own Route.
     const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));
@@ -89,12 +128,14 @@ export class InferenceService {
         clientRequest,
         effectiveParameterPolicy(model.parameterPolicy, target.route.parameterPolicyOverride),
       );
+      meter.attemptStarted(target);
       try {
-        return await this.attempt(converter, request, context, target, clientSignal);
+        return await this.attempt(converter, request, context, target, clientSignal, meter);
       } catch (error) {
         if (!(error instanceof AttemptFailedError)) {
           throw error;
         }
+        meter.attemptFailed(error);
         failures.push(error);
         skippedAccountIds.add(target.providerAccount.id);
         await this.afterFailedAttempt(error, target);
@@ -129,18 +170,23 @@ export class InferenceService {
     context: ResponseContext,
     target: AttemptTarget,
     clientSignal: AbortSignal,
+    meter: UsageMeter,
   ): Promise<InferenceResult> {
     const call = this.upstreamCallFor(request, target, clientSignal);
     if (!request.stream) {
       const response = await this.upstream.complete(call);
+      meter.attemptAnswered();
+      meter.usageReported(response.usage);
+      meter.attemptSucceeded();
       return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
     const events = await this.upstream.openStream(call);
+    meter.attemptAnswered();
     return {
       kind: "stream",
       chunks: writeClientStream(
         converter,
-        this.reportingFailures(events, target),
+        this.reportingFailures(events, target, meter),
         request,
         context,
       ),
@@ -189,9 +235,16 @@ export class InferenceService {
   private async *reportingFailures(
     events: AsyncIterable<InferenceStreamEvent>,
     target: AttemptTarget,
+    meter: UsageMeter,
   ): AsyncIterable<InferenceStreamEvent> {
     try {
-      yield* events;
+      for await (const event of events) {
+        if (event.type === "usage") {
+          meter.usageReported(event.usage);
+        }
+        yield event;
+      }
+      meter.attemptSucceeded();
     } catch (error) {
       if (error instanceof ClientCancelledError) {
         return;
@@ -199,8 +252,28 @@ export class InferenceService {
       if (!(error instanceof AttemptFailedError)) {
         throw error;
       }
+      meter.attemptFailed(error);
       await this.afterFailedAttempt(error, target);
-      throw gatewayErrorFor(error);
+      const gatewayError = gatewayErrorFor(error);
+      meter.failedWith(gatewayError.code);
+      throw gatewayError;
+    }
+  }
+
+  /** Counts the bytes sent and enqueues the usage job when the stream ends, however it ends. */
+  private async *meteredStream(
+    chunks: AsyncIterable<string>,
+    meter: UsageMeter,
+    clientSignal: AbortSignal,
+  ): AsyncIterable<string> {
+    try {
+      for await (const chunk of chunks) {
+        meter.responseWritten(chunk);
+        yield chunk;
+      }
+    } finally {
+      // The status went out with the first chunk; a later failure is an error event.
+      this.usage.enqueue(meter.finish(HTTP_OK, clientSignal.aborted));
     }
   }
 
@@ -240,6 +313,22 @@ export class InferenceService {
         return;
     }
   }
+}
+
+/** The usage job of a request that ended in an exception instead of a response. */
+function failedRequestUsage(
+  meter: UsageMeter,
+  converter: ClientProtocolConverter,
+  error: unknown,
+): UsageJob {
+  if (error instanceof GatewayError) {
+    return meter.finishWithError(error, converter.writeError(error));
+  }
+  if (error instanceof ClientCancelledError) {
+    return meter.finish(CLIENT_CLOSED_REQUEST, true);
+  }
+  // A bug: Nest answers 500.
+  return meter.finish(HTTP_INTERNAL_SERVER_ERROR, false);
 }
 
 function providerAccountIdsOf(routes: SnapshotRoute[]): string[] {
