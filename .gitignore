@@ -6,3 +6,4 @@ coverage/
 .env
 .DS_Store
 .claude/worktrees/
+test/.docs-examples/

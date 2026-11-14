@@ -12,8 +12,11 @@ export interface ChartPoint {
   tick: string;
   /** Full label for the tooltip and the screen-reader table. */
   title: string;
-  /** One value per series, in series order. */
-  values: number[];
+  /**
+   * One value per series, in series order. Null means no data (a rate over
+   * zero requests): an unstacked line breaks there, a stacked band counts it as 0.
+   */
+  values: (number | null)[];
 }
 
 export interface Segment {

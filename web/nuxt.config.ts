@@ -9,7 +9,15 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   // Authenticated operations console: client-rendered, no SEO surface.
   ssr: false,
-  modules: ["@unocss/nuxt"],
+  modules: ["@unocss/nuxt", "@nuxt/content"],
+  content: {
+    // node:sqlite, so the build needs no native addon. Under Bun (the dev
+    // image) @nuxt/content falls back to bun:sqlite.
+    experimental: { sqliteConnector: "native" },
+    // Plain code blocks in the theme's ink: a single highlight theme is
+    // unreadable in the other color scheme.
+    build: { markdown: { highlight: false } },
+  },
   runtimeConfig: {
     // Where server/api/[...path].ts forwards dashboard calls. NUXT_BACKEND_URL overrides it.
     backendUrl: "http://localhost:3000",
