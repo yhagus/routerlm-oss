@@ -76,6 +76,24 @@ $ docker compose exec backend bun run db:migrate
 `bun run db:push` syncs the schema without a migration (local prototyping only),
 and `bun run db:studio` opens Drizzle Studio.
 
+## Queue and worker
+
+Background jobs go through [BullMQ](https://docs.bullmq.io) on Redis, set by
+`REDIS_URL`. The backend only enqueues jobs; a separate worker process
+(`src/worker.ts`, a Nest application context without HTTP) runs them.
+`docker compose up -d` starts a `redis` service and a `worker` service that
+restarts when a file under `src/` changes. If Redis is unreachable, the backend
+logs the failed enqueue and keeps serving requests.
+
+```bash
+# worker on the host (watch mode, production)
+$ bun run worker:dev
+$ bun run worker:prod
+```
+
+`bun run test:e2e` needs Redis at `REDIS_URL` (default `redis://localhost:6379`)
+for the worker test.
+
 ## Observability
 
 In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.

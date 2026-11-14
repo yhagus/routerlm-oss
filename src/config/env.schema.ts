@@ -6,6 +6,7 @@ export const envSchema = z.object({
   DATABASE_URL: z.url({ error: "DATABASE_URL is not set or not a URL; see .env.example" }),
   // The web app's origin: its server forwards dashboard calls here with this Origin.
   WEB_ORIGIN: z.url().default("http://localhost:3001"),
+  REDIS_URL: z.url({ error: "REDIS_URL is not set or not a URL; see .env.example" }),
 });
 
 export type Env = z.infer<typeof envSchema>;

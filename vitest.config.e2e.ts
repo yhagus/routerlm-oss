@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 // E2E tests truncate tables, so they get their own database rather than the
 // app's DATABASE_URL (which bun loads from .env). test/global-setup.ts creates
@@ -11,11 +11,16 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    // Agent worktrees under .claude/ hold their own copies of the specs.
+    exclude: [...configDefaults.exclude, '.claude/**'],
     globalSetup: ['./test/global-setup.ts'],
     // Test files share the database and truncate it, so they run one at a time.
     fileParallelism: false,
     env: {
       DATABASE_URL: process.env.TEST_DATABASE_URL,
+      // Queues connect at boot but fail fast without Redis, so only the tests
+      // that run the worker need a reachable Redis here.
+      REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
     },
   },
 });
