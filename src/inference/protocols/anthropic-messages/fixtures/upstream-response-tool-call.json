@@ -1,0 +1,30 @@
+{
+  "id": "msg_upstream_01XFDUDYJgAACzvnptvVoYEL",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-test-5",
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "The user wants the weather in Paris.",
+      "signature": "EqQBCgIYAhIM1gbcDa9GJwZA2b3h"
+    },
+    { "type": "redacted_thinking", "data": "EmwKAhgBEgy3va3pzix/LafPsn4a" },
+    { "type": "text", "text": "Checking the weather." },
+    {
+      "type": "tool_use",
+      "id": "toolu_01weather",
+      "name": "get_weather",
+      "input": { "city": "Paris" }
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 30,
+    "cache_read_input_tokens": 100,
+    "output_tokens": 40,
+    "service_tier": "standard"
+  }
+}

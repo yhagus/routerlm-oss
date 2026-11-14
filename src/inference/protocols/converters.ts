@@ -1,4 +1,5 @@
 import type { AuthStyle, ClientProtocol, UpstreamProtocol } from "../../db/schema.js";
+import { anthropicMessagesUpstreamConverter } from "./anthropic-messages/anthropic-messages-upstream-converter.js";
 import type { ClientProtocolConverter } from "./client-protocol-converter.js";
 import { openAiChatClientConverter } from "./openai-chat/openai-chat-client-converter.js";
 import { openAiChatUpstreamConverter } from "./openai-chat/openai-chat-upstream-converter.js";
@@ -16,6 +17,7 @@ export const UPSTREAM_PROTOCOL_CONVERTERS: Partial<
   Record<UpstreamProtocol, UpstreamProtocolConverter>
 > = {
   "openai-chat": openAiChatUpstreamConverter,
+  "anthropic-messages": anthropicMessagesUpstreamConverter,
 };
 
 /** The header carrying a Provider Account key, in the Provider's auth style. */

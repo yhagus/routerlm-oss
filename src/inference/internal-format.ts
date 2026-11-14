@@ -4,15 +4,25 @@
 // input, function tools, reasoning and structured output. Parameter Policy keys
 // are the field names of InferenceRequest.
 
+/**
+ * A prompt-cache breakpoint the client set: the upstream may cache the prompt
+ * up to and including the part that carries it.
+ */
+export interface CacheMarker {
+  ttl?: "5m" | "1h";
+}
+
 export interface TextPart {
   type: "text";
   text: string;
+  cacheMarker?: CacheMarker;
 }
 
 /** An image the client sent inline (base64) or by URL. */
 export interface ImagePart {
   type: "image";
   source: { type: "url"; url: string } | { type: "base64"; mediaType: string; data: string };
+  cacheMarker?: CacheMarker;
 }
 
 /**
@@ -48,6 +58,7 @@ export interface FunctionTool {
   /** JSON Schema of the arguments. */
   parameters: Record<string, unknown>;
   strict?: boolean;
+  cacheMarker?: CacheMarker;
 }
 
 export type ToolChoice =

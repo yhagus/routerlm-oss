@@ -126,6 +126,7 @@ export class InferenceService {
         baseUrl: provider.baseUrl,
         upstreamModelId: upstreamModel.upstreamModelId,
         quirks: provider.quirks,
+        maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
       },
       authHeaders: upstreamAuthHeaders(
         provider.authStyle,

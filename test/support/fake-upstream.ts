@@ -29,6 +29,14 @@ export function openAiChatFixture(name: string): string {
   );
 }
 
+/** A recorded upstream fixture from the anthropic-messages converter's tests. */
+export function anthropicMessagesFixture(name: string): string {
+  return readFileSync(
+    new URL(`../../src/inference/protocols/anthropic-messages/fixtures/${name}`, import.meta.url),
+    "utf8",
+  );
+}
+
 /**
  * A local HTTP server standing in for a Provider, so no test calls a real
  * one. Queue replies with `reply()`; each request takes the next one.

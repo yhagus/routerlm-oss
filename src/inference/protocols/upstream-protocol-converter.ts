@@ -24,6 +24,8 @@ export interface UpstreamTarget {
   /** The model name as the Provider spells it. */
   upstreamModelId: string;
   quirks: ProviderQuirks;
+  /** The Upstream Model's output limit, for Protocols that require one on every request. */
+  maxOutputTokens?: number;
 }
 
 /**
