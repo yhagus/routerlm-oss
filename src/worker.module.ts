@@ -5,6 +5,10 @@ import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { type Env, envSchema } from "./config/env.schema.js";
 import { relations } from "./db/relations.js";
+import {
+  ErrorCaptureRetention,
+  ErrorCaptureRetentionProcessor,
+} from "./error-captures/error-capture-retention.js";
 import { PingProcessor } from "./queue/ping.processor.js";
 import { QUEUE_NAMES } from "./queue/queue-names.js";
 import { UsageWriter } from "./usage/usage-writer.js";
@@ -35,6 +39,12 @@ import { UsageProcessor } from "./usage/usage.processor.js";
     }),
     BullModule.registerQueue(...QUEUE_NAMES.map((name) => ({ name }))),
   ],
-  providers: [PingProcessor, UsageProcessor, UsageWriter],
+  providers: [
+    PingProcessor,
+    UsageProcessor,
+    UsageWriter,
+    ErrorCaptureRetention,
+    ErrorCaptureRetentionProcessor,
+  ],
 })
 export class WorkerModule {}
