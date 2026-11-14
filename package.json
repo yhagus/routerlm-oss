@@ -8,8 +8,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "format": "oxfmt src test",
-    "format:check": "oxfmt --check src test",
+    "format": "oxfmt src test scripts",
+    "format:check": "oxfmt --check src test scripts",
     "start": "bun run src/main.ts",
     "start:dev": "bun --watch src/main.ts",
     "start:debug": "bun --inspect --watch src/main.ts",
@@ -17,7 +17,9 @@
     "worker": "bun run src/worker.ts",
     "worker:dev": "bun --watch src/worker.ts",
     "worker:prod": "node dist/worker.js",
-    "lint": "oxlint --type-aware src/ test/",
+    "lint": "oxlint --type-aware src/ test/ scripts/",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check": "bun run lint && bun run format:check && bun run typecheck && bun run test",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
@@ -27,7 +29,11 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun run src/catalog/seed.ts"
+    "db:seed": "bun run src/catalog/seed.ts",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "[ ! -f scripts/pre-commit.ts ] || bun scripts/pre-commit.ts"
   },
   "dependencies": {
     "@nestjs/authentication": "0.1.6",
@@ -60,6 +66,7 @@
     "oxfmt": "^0.78.0",
     "oxlint": "^1.93.0",
     "oxlint-tsgolint": "^7.0.2007",
+    "simple-git-hooks": "2.14.0",
     "supertest": "^7.3.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",

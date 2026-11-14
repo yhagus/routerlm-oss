@@ -20,6 +20,6 @@
     "strictPropertyInitialization": false,
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["legacy", "node_modules", "dist"]
 }
