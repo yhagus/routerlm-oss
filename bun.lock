@@ -5,13 +5,10 @@
     "": {
       "name": "routerlm-nest",
       "dependencies": {
-        "@modelcontextprotocol/server": "^2.4.0",
         "@nestjs/common": "^12.5.0",
         "@nestjs/config": "^12.1.1",
         "@nestjs/core": "^12.5.0",
-        "@nestjs/cqrs": "^12.1.3",
         "@nestjs/drizzle": "^0.0.2",
-        "@nestjs/mcp": "^0.0.4",
         "@nestjs/platform-node": "^12.5.0",
         "drizzle-orm": "^1.0.0-rc.5",
         "pg": "^8.23.1",
@@ -113,10 +110,6 @@
 
     "@lukeed/csprng": ["@lukeed/csprng@1.1.0", "", {}, "sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA=="],
 
-    "@modelcontextprotocol/core": ["@modelcontextprotocol/core@2.4.0", "", { "dependencies": { "zod": "^4.2.0" } }, "sha512-z8QBKqdfXLPzkLQuG4xp8hrVEMm1PZ1IgxMN2sMbJiFiAKOWXnAzogXn2W4aqIBlP1ea6U5yiqVquvUNM1Cj6Q=="],
-
-    "@modelcontextprotocol/server": ["@modelcontextprotocol/server@2.4.0", "", { "dependencies": { "@modelcontextprotocol/core": "2.4.0", "zod": "^4.2.0" } }, "sha512-rgR9yxSaAJ+bcsi/XroT/S2AfPiIWloXAnrdfYSCms9ivVju0ishu/wW0J21Ho6+ZOR1r7RyeRbjiRuF87ix5Q=="],
-
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.2.6", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1 || 2.0.0-beta.2", "@emnapi/runtime": "^1.7.1 || 2.0.0-beta.2" } }, "sha512-mRyDmEw9/fCDXCGfL1sbgIw/GUK0PVxRW4YwgPN61F3LQ+fSyoBFarJVzgGyhF6kRzEQZ0FejDqm4WLXSeqQmw=="],
 
     "@nestjs/cli": ["@nestjs/cli@12.0.13", "", { "dependencies": { "@angular-devkit/core": "22.2.6", "@angular-devkit/schematics": "22.2.6", "@angular-devkit/schematics-cli": "22.2.6", "@inquirer/prompts": "8.7.5", "@nestjs/schematics": "^12.0.13", "ansis": "4.5.0", "chokidar": "5.0.0", "cli-table3": "0.6.5", "commander": "15.0.0", "jsonc-parser": "3.3.1", "minimatch": "11.0.5", "node-emoji": "2.2.0", "ora": "9.4.1", "tsconfig-paths": "4.2.0", "typescript": "~6.0.2" }, "peerDependencies": { "@rspack/core": "^1.7.7 || ^2.1.10", "@swc/cli": "^0.8.0", "@swc/core": "^1.15.18", "fork-ts-checker-webpack-plugin": "^9.1.0", "ts-loader": "^9.5.4", "tsconfig-paths-webpack-plugin": "^4.2.0", "webpack": "^5.105.4", "webpack-node-externals": "^3.0.0" }, "optionalPeers": ["@rspack/core", "@swc/cli", "@swc/core", "fork-ts-checker-webpack-plugin", "ts-loader", "tsconfig-paths-webpack-plugin", "webpack", "webpack-node-externals"], "bin": { "nest": "bin/nest.js" } }, "sha512-dfb9zbM4VRUQnkjt0IyhYWxiScDq/4j8m6Y5f6PKvg6LK47XbzBeWKCBdqVFQV85uAHdJiMa8nyemAu0xvujRQ=="],
@@ -127,11 +120,7 @@
 
     "@nestjs/core": ["@nestjs/core@12.5.0", "", { "dependencies": { "fast-safe-stringify": "2.1.1", "iterare": "1.2.1", "path-to-regexp": "8.4.2", "tslib": "2.9.1", "uid": "2.0.2" }, "peerDependencies": { "@nestjs/common": "^12.0.0", "@nestjs/microservices": "^12.0.0", "@nestjs/platform-express": "^12.0.0", "@nestjs/websockets": "^12.0.0", "reflect-metadata": "^0.1.12 || ^0.2.0", "rxjs": "^7.1.0" }, "optionalPeers": ["@nestjs/microservices", "@nestjs/platform-express", "@nestjs/websockets"] }, "sha512-o6auZGZNwIhc0NT7YDxK3j9EKt3k651moerLD5NSsU0EY2fqTRO8PBBJXIprVHVLnzYNWwFfgsUUzDFSPo0vAg=="],
 
-    "@nestjs/cqrs": ["@nestjs/cqrs@12.1.3", "", { "peerDependencies": { "@nestjs/common": "^12.0.0", "@nestjs/core": "^12.0.0", "reflect-metadata": "^0.1.13 || ^0.2.0", "rxjs": "^7.3.0" } }, "sha512-o79LQNPqYGdBCNlKpUIohFXmw6PoWSclnranam+cYoreOBxpRT7dwjyn96VYL9NO7LtfI9PUrICvmEwtbYl6Ww=="],
-
     "@nestjs/drizzle": ["@nestjs/drizzle@0.0.2", "", { "peerDependencies": { "@nestjs/common": "^11.0.0 || ^12.0.0", "@nestjs/core": "^11.0.0 || ^12.0.0", "drizzle-orm": ">=0.35.0 || >=1.0.0-0", "reflect-metadata": "^0.1.13 || ^0.2.0" } }, "sha512-9jBMBcqxPLV7BNuqoOQ/6boSH7z1cA6psKKiArHgJgDefBqniQExYjVNhE/GrqJd3vBEwCXkWXwpEvCi8qRIZg=="],
-
-    "@nestjs/mcp": ["@nestjs/mcp@0.0.4", "", { "peerDependencies": { "@modelcontextprotocol/client": "^2.4.0", "@modelcontextprotocol/server": "^2.4.0", "@nestjs/common": "^12.0.0", "@nestjs/core": "^12.0.0", "reflect-metadata": "^0.1.13 || ^0.2.0", "rxjs": "^7.1.0" }, "optionalPeers": ["@modelcontextprotocol/client"] }, "sha512-f3oc2kcZmgy1tOFS/pzhKWrINWUIJqwxAuxGFeAXLqxzqIBSPsbK6XXX3EKErDKq68zGPejp+Jx7l538guSoSw=="],
 
     "@nestjs/platform-node": ["@nestjs/platform-node@12.5.0", "", { "dependencies": { "@fastify/proxy-addr": "5.1.2", "content-type": "2.1.0", "cookie": "0.7.2", "cookie-signature": "1.2.2", "cors": "2.8.6", "encodeurl": "2.0.1", "fast-querystring": "1.1.2", "find-my-way": "9.10.0", "light-my-request": "6.8.0", "mime-types": "3.0.2", "multer": "2.5.0", "on-finished": "2.4.2", "path-to-regexp": "8.4.2", "qs": "6.17.1", "secure-json-parse": "4.1.1", "send": "1.2.1", "serve-static": "2.2.1", "tslib": "2.9.1", "type-is": "2.1.0" }, "peerDependencies": { "@nestjs/common": "^12.0.0", "@nestjs/core": "^12.0.0", "rxjs": "^7.1.0" } }, "sha512-hlsEGk7OMAYmp7Eiv5cKbCajNpcsGZo7M+MdWrgdnDdz+QDUu6jfsz6t1234W43Mgi7Aqc7mSdh2suJO+lf+CQ=="],
 
