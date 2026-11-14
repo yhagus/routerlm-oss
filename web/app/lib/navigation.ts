@@ -55,7 +55,9 @@ export const navigationGroups: NavigationGroup[] = [
   },
 ];
 
-/** The page a path belongs to, for the breadcrumb. */
+/** The page a path belongs to, for the breadcrumb. `/models/<id>` belongs to Models. */
 export function findNavigationItem(path: string): NavigationItem | undefined {
-  return navigationGroups.flatMap((group) => group.items).find((item) => item.path === path);
+  return navigationGroups
+    .flatMap((group) => group.items)
+    .find((item) => item.path === path || path.startsWith(`${item.path}/`));
 }
