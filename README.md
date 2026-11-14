@@ -58,6 +58,19 @@ $ bun run test:e2e
 $ bun run test:cov
 ```
 
+## Encryption key
+
+Provider Account keys are encrypted at rest with `ENCRYPTION_KEY` (32 random
+bytes in base64). The backend and worker refuse to start without it, also under
+docker compose, which reads it from `.env`:
+
+```bash
+$ cp .env.example .env
+$ echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
+```
+
+Back it up: stored Provider Account keys can't be decrypted without it.
+
 ## Database
 
 The backend uses PostgreSQL through [Drizzle ORM](https://orm.drizzle.team).
