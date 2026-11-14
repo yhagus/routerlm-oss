@@ -26,6 +26,8 @@ export interface UpstreamTarget {
   quirks: ProviderQuirks;
   /** The Upstream Model's output limit, for Protocols that require one on every request. */
   maxOutputTokens?: number;
+  /** Sent only where the Provider's quirks accept a prompt cache key. */
+  promptCacheKey?: string;
 }
 
 /**

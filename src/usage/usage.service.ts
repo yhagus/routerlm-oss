@@ -96,7 +96,7 @@ function whereFilter(filter: UsageFilter): SQL | undefined {
   );
 }
 
-function statusCondition(status: UsageStatus): SQL | undefined {
+export function statusCondition(status: UsageStatus): SQL | undefined {
   switch (status) {
     case "cancelled":
       return eq(usageLogs.isCancelled, true);

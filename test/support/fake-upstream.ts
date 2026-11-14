@@ -22,6 +22,8 @@ export interface ReceivedRequest {
   path: string;
   headers: IncomingMessage["headers"];
   body: unknown;
+  /** The body exactly as sent, for checks on its bytes. */
+  rawBody: string;
 }
 
 /** Sent with every reply, to prove upstream headers never reach the client. */
@@ -109,6 +111,7 @@ export class FakeUpstream {
       path: request.url ?? "",
       headers: request.headers,
       body: text === "" ? undefined : JSON.parse(text),
+      rawBody: text,
     });
 
     this.openResponses.add(response);

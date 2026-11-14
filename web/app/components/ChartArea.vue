@@ -20,10 +20,23 @@ const props = withDefaults(
     /** Stacked bands sum to a total; unstacked draws independent lines. */
     stacked?: boolean;
     formatValue?: (value: number) => string;
+    /** Labels the y-axis ticks. */
+    formatTick?: (value: number) => string;
+    /** The least the y-axis reaches, so small values don't fill the whole height. */
+    scaleFloor?: number;
     unit?: string;
   }>(),
-  { height: 232, stacked: true, formatValue: fullNumber, unit: "" },
+  {
+    height: 232,
+    stacked: true,
+    formatValue: fullNumber,
+    formatTick: compactNumber,
+    scaleFloor: 1,
+    unit: "",
+  },
 );
+
+const NO_DATA = "No data";
 
 const PAD = { top: 10, right: 10, bottom: 26, left: 46 };
 
@@ -39,30 +52,78 @@ const tops = computed(() =>
   props.series.map((_, seriesIndex) =>
     props.points.map((point) =>
       props.stacked
-        ? point.values.slice(0, seriesIndex + 1).reduce((sum, value) => sum + value, 0)
-        : point.values[seriesIndex]!,
+        ? point.values
+            .slice(0, seriesIndex + 1)
+            .reduce<number>((sum, value) => sum + (value ?? 0), 0)
+        : (point.values[seriesIndex] ?? null),
     ),
   ),
 );
-const scale = computed(() => niceTicks(Math.max(1, ...tops.value.flat())));
+const scale = computed(() =>
+  niceTicks(
+    Math.max(
+      props.scaleFloor,
+      ...tops.value.flat().filter((value): value is number => value !== null),
+    ),
+  ),
+);
 
 const x = (index: number) =>
   PAD.left + (props.points.length < 2 ? 0 : (index / (props.points.length - 1)) * innerWidth.value);
 const y = (value: number) => PAD.top + innerHeight.value * (1 - value / scale.value.max);
 
+interface PlottedValue {
+  index: number;
+  value: number;
+}
+
+/** Splits a series at its nulls into the runs of consecutive values a line can join. */
+function runsOf(values: (number | null)[]): PlottedValue[][] {
+  const runs: PlottedValue[][] = [];
+  let current: PlottedValue[] = [];
+  values.forEach((value, index) => {
+    if (value === null) {
+      if (current.length > 0) runs.push(current);
+      current = [];
+      return;
+    }
+    current.push({ index, value });
+  });
+  if (current.length > 0) runs.push(current);
+  return runs;
+}
+
+function linePath(run: PlottedValue[]): string {
+  return run.map(({ index, value }, step) => `${step ? "L" : "M"}${x(index)},${y(value)}`).join("");
+}
+
+/** The area under one run, down to `base` (the band below when stacked, else zero). */
+function areaPath(run: PlottedValue[], base: (number | null)[] | undefined): string {
+  const back = run
+    .toReversed()
+    .map(({ index }) => `L${x(index)},${y(base?.[index] ?? 0)}`)
+    .join("");
+  return `${linePath(run)}${back}Z`;
+}
+
 const shapes = computed(() =>
   props.series.map((series, seriesIndex) => {
-    const top = tops.value[seriesIndex]!;
-    const line = top.map((value, index) => `${index ? "L" : "M"}${x(index)},${y(value)}`).join("");
-    const base = props.stacked && seriesIndex > 0 ? tops.value[seriesIndex - 1]! : top.map(() => 0);
-    const back = base
-      .map((value, index) => [index, value] as const)
-      .reverse()
-      .map(([index, value]) => `L${x(index)},${y(value)}`)
-      .join("");
-    return { key: series.key, color: series.color, line, area: `${line}${back}Z` };
+    const runs = runsOf(tops.value[seriesIndex]!);
+    const base = props.stacked && seriesIndex > 0 ? tops.value[seriesIndex - 1] : undefined;
+    return {
+      key: series.key,
+      color: series.color,
+      line: runs.map(linePath).join(""),
+      area: runs.map((run) => areaPath(run, base)).join(""),
+      // A value with no neighbour draws no line, so it gets a marker instead.
+      isolated: runs.filter((run) => run.length === 1).map(([plotted]) => plotted!),
+    };
   }),
 );
+
+function formatOrNoData(value: number | null | undefined): string {
+  return value === null || value === undefined ? NO_DATA : props.formatValue(value);
+}
 
 const xTicks = computed(() =>
   tickIndices(props.points.length, width.value < 480 ? 4 : 7).map((index) => ({
@@ -77,13 +138,15 @@ const tooltipRows = computed(() => {
   if (!activePoint.value) return [];
   const rows = props.series.map((series, index) => ({
     ...series,
-    value: activePoint.value!.values[index]!,
+    value: activePoint.value!.values[index] ?? null,
   }));
   // Stacked bands read top-down, so list them in the same order.
   return props.stacked ? rows.reverse() : rows;
 });
 const activeTotal = computed(() =>
-  activePoint.value ? activePoint.value.values.reduce((sum, value) => sum + value, 0) : 0,
+  activePoint.value
+    ? activePoint.value.values.reduce<number>((sum, value) => sum + (value ?? 0), 0)
+    : 0,
 );
 const tooltipStyle = computed(() => {
   if (active.value === null) return {};
@@ -155,7 +218,7 @@ function onKey(event: KeyboardEvent) {
             text-anchor="end"
             dy="0.32em"
           >
-            {{ compactNumber(tick) }}
+            {{ formatTick(tick) }}
           </text>
           <text
             v-for="tick in xTicks"
@@ -172,6 +235,15 @@ function onKey(event: KeyboardEvent) {
         <g v-for="shape in shapes" :key="shape.key">
           <path :d="shape.area" :fill="shape.color" fill-opacity="0.1" />
           <path :d="shape.line" :stroke="shape.color" class="chart-line" />
+          <circle
+            v-for="plotted in shape.isolated"
+            :key="plotted.index"
+            :cx="x(plotted.index)"
+            :cy="y(plotted.value)"
+            r="4"
+            :fill="shape.color"
+            class="chart-dot"
+          />
         </g>
         <g v-if="active !== null">
           <line
@@ -181,22 +253,23 @@ function onKey(event: KeyboardEvent) {
             :y1="PAD.top"
             :y2="PAD.top + innerHeight"
           />
-          <circle
-            v-for="(shape, index) in shapes"
-            :key="shape.key"
-            :cx="x(active)"
-            :cy="y(tops[index]![active]!)"
-            r="4"
-            :fill="shape.color"
-            class="chart-dot"
-          />
+          <template v-for="(shape, index) in shapes" :key="shape.key">
+            <circle
+              v-if="tops[index]![active] !== null"
+              :cx="x(active)"
+              :cy="y(tops[index]![active] ?? 0)"
+              r="4"
+              :fill="shape.color"
+              class="chart-dot"
+            />
+          </template>
         </g>
       </svg>
       <div v-if="activePoint" class="chart-tooltip" :style="tooltipStyle">
         <span class="chart-tooltip__title">{{ activePoint.title }}</span>
         <span v-for="row in tooltipRows" :key="row.key" class="chart-tooltip__row"
           ><i class="chart-key chart-key--line" :style="{ background: row.color }" /><strong>{{
-            formatValue(row.value)
+            formatOrNoData(row.value)
           }}</strong
           ><span>{{ row.name }}</span></span
         >
@@ -219,7 +292,7 @@ function onKey(event: KeyboardEvent) {
       <tbody>
         <tr v-for="point in points" :key="point.title">
           <th scope="row">{{ point.title }}</th>
-          <td v-for="(value, index) in point.values" :key="index">{{ formatValue(value) }}</td>
+          <td v-for="(value, index) in point.values" :key="index">{{ formatOrNoData(value) }}</td>
         </tr>
       </tbody>
     </table>
