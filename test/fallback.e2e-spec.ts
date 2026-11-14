@@ -216,4 +216,22 @@ describe("Fallback (e2e)", () => {
     expect(response.text).not.toContain("[DONE]");
     expect(attemptedKeys()).toEqual([UPSTREAM_KEY]);
   });
+
+  it("ends a /v1/messages stream that breaks after its first chunk with an Anthropic error event, without Fallback", async () => {
+    const firstChunk = openAiChatFixture("upstream-stream-tool-call.sse").split("\n\n")[0] + "\n\n";
+    upstream.reply({ kind: "stream-then-reset", events: firstChunk });
+    upstream.reply(STREAM_SUCCESS);
+
+    const response = await request(app.getHttpServer())
+      .post("/v1/messages")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .send({ ...TEXT_REQUEST, max_tokens: 64, stream: true })
+      .expect(200);
+
+    expect(response.text.trim().split("\n\n").at(-1)).toMatch(
+      /^event: error\ndata: \{"type":"error","error":\{.*"code":"upstream_error"/,
+    );
+    expect(response.text).not.toContain("message_stop");
+    expect(attemptedKeys()).toEqual([UPSTREAM_KEY]);
+  });
 });

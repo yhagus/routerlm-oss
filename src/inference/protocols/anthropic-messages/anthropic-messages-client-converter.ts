@@ -511,22 +511,14 @@ async function* writeStream(
   const blocks = new ContentBlockWriter();
   let stopReason: StopReason = "end";
   let usage = UNREPORTED_USAGE;
-  try {
-    for await (const event of events) {
-      if (event.type === "finish") {
-        stopReason = event.stopReason;
-      } else if (event.type === "usage") {
-        usage = event.usage;
-      } else {
-        yield* blocks.write(event);
-      }
+  for await (const event of events) {
+    if (event.type === "finish") {
+      stopReason = event.stopReason;
+    } else if (event.type === "usage") {
+      usage = event.usage;
+    } else {
+      yield* blocks.write(event);
     }
-  } catch (error) {
-    if (error instanceof GatewayError) {
-      yield writeStreamError(error);
-      return;
-    }
-    throw error;
   }
   yield* blocks.closeOpenBlock();
   yield namedEvent("message_delta", {
@@ -538,7 +530,7 @@ async function* writeStream(
 }
 
 /** The event that ends a stream which failed after its first chunk reached the client. */
-export function writeStreamError(error: GatewayError): string {
+function writeStreamError(error: GatewayError): string {
   return namedEvent("error", writeError(error));
 }
 
@@ -657,4 +649,5 @@ export const anthropicMessagesClientConverter: ClientProtocolConverter = {
   writeResponse,
   writeStream,
   writeError,
+  writeStreamError,
 };

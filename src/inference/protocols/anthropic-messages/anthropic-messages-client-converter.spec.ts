@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { writeClientStream } from "../client-protocol-converter.js";
 import { GatewayError } from "../../gateway-error.js";
 import type {
   InferenceRequest,
@@ -304,7 +305,7 @@ describe("anthropicMessagesClientConverter", () => {
     }
 
     const written = await textOf(
-      anthropicMessagesClientConverter.writeStream(failing(), STREAMING_REQUEST, CONTEXT),
+      writeClientStream(anthropicMessagesClientConverter, failing(), STREAMING_REQUEST, CONTEXT),
     );
 
     expect(written).toContain('"text":"Hel"');
