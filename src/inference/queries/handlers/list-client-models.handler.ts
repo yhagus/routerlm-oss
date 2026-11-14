@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { mayUseModel } from "../../../api-keys/models/api-key.js";
-import { CAPABILITIES, type Capability } from "../../../db/schemas/index.js";
-import type { SnapshotModel } from "../../../snapshot/models/snapshot.js";
-import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
+import { mayUseModel } from "@/api-keys/models/api-key.js";
+import { CAPABILITIES, type Capability } from "@/db/schemas/index.js";
+import type { SnapshotModel } from "@/snapshot/models/snapshot.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ClientModel, ClientModelList } from "../../models/client-model.js";
 import { ListClientModelsQuery } from "../impl/list-client-models.query.js";
 

@@ -1,5 +1,5 @@
 import { and, eq, gte, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
-import { usageLogs } from "../../db/schemas/index.js";
+import { usageLogs } from "@/db/schemas/index.js";
 import type { UsageFilter, UsageStatus } from "../schemas/usage.schema.js";
 
 const FIRST_ERROR_STATUS = 400;

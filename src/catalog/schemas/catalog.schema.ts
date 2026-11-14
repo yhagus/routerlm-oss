@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AUTH_STYLES, CAPABILITIES, UPSTREAM_PROTOCOLS } from "../../db/schemas/index.js";
+import { AUTH_STYLES, CAPABILITIES, UPSTREAM_PROTOCOLS } from "@/db/schemas/index.js";
 
 // The shape of one Catalog file: a Provider and the Upstream Models it sells.
 // Field names match the `providers` and `upstream_models` columns.

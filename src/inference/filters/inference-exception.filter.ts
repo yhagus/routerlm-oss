@@ -7,10 +7,10 @@ import {
   Inject,
 } from "@nestjs/common";
 import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
-import type { ClientProtocol } from "../../db/schemas/index.js";
-import { UsageProducer } from "../../usage/jobs/usage.producer.js";
+import type { ClientProtocol } from "@/db/schemas/index.js";
+import { UsageProducer } from "@/usage/jobs/usage.producer.js";
 import { ClientCancelledError } from "../models/attempt-failure.js";
-import { requestBytesOf } from "../models/client-connection.js";
+import { requestBytesOf } from "@/libs/models/client-connection.js";
 import { GatewayError } from "../models/gateway-error.js";
 import { CLIENT_PROTOCOL_CONVERTERS } from "../protocols/converters.js";
 import { openAiChatClientConverter } from "../protocols/openai-chat/openai-chat-client-converter.js";

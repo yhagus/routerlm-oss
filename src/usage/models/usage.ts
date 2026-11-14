@@ -1,4 +1,4 @@
-import type { ClientProtocol, GatewayErrorCode } from "../../db/schemas/index.js";
+import type { ClientProtocol, GatewayErrorCode } from "@/db/schemas/index.js";
 
 /** A Usage Log as the Usage page lists it. Names are null once the Model or API Key is deleted. */
 export interface UsageLogSummary {

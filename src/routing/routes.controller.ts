@@ -10,7 +10,7 @@ import {
   Put,
 } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
-import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import { AddRouteCommand } from "./commands/impl/add-route.command.js";
 import { RemoveRouteCommand } from "./commands/impl/remove-route.command.js";
 import { ReorderRoutesCommand } from "./commands/impl/reorder-routes.command.js";

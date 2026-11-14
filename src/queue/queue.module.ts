@@ -1,7 +1,7 @@
 import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import type { Env } from "../config/schemas/env.schema.js";
+import type { Env } from "@/config/schemas/env.schema.js";
 import { PingProducer } from "./jobs/ping.producer.js";
 import { QUEUE_NAMES } from "./models/queue-names.js";
 

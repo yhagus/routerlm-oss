@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
-import type { Database } from "../../src/db/schemas/relations.js";
-import { models, routes } from "../../src/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { models, routes } from "@/db/schemas/index.js";
 
 /** Deletes every User, Model, Route and Provider, and with them their Accounts and Upstream Models. */
 export async function deleteAllUpstreamData(db: Database): Promise<void> {

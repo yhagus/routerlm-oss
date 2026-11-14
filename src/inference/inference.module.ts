@@ -1,9 +1,9 @@
 import { type MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { HttpClientModule } from "@nestjs/http-client";
-import { SnapshotModule } from "../snapshot/snapshot.module.js";
-import { UpstreamModule } from "../upstream/upstream.module.js";
-import { UsageModule } from "../usage/usage.module.js";
+import { SnapshotModule } from "@/snapshot/snapshot.module.js";
+import { UpstreamModule } from "@/upstream/upstream.module.js";
+import { UsageModule } from "@/usage/usage.module.js";
 import { ApiKeyHeaderMiddleware } from "./middleware/api-key-header.middleware.js";
 import { CommandHandlers } from "./commands/handlers/index.js";
 import { InferenceExceptionFilter } from "./filters/inference-exception.filter.js";

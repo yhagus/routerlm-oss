@@ -1,7 +1,7 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import pg from "pg";
 import request from "supertest";
-import type { Database } from "../src/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations.js";
 import { FakeUpstream, openAiChatFixture, UPSTREAM_ONLY_HEADER } from "./support/fake-upstream.js";
 import {
   insertApiKey,

@@ -1,4 +1,4 @@
-import { providerAccounts } from "../../db/schemas/index.js";
+import { providerAccounts } from "@/db/schemas/index.js";
 import type { ProviderKeyCipher } from "../providers/provider-key-cipher.js";
 
 const KEY_HINT_LENGTH = 4;

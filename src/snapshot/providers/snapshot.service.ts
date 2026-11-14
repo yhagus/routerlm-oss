@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { Injectable, Logger, type OnApplicationBootstrap } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Redis } from "ioredis";
-import type { Database } from "../../db/schemas/relations.js";
-import { RedisConnection } from "../../redis/providers/redis-connection.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { loadSnapshot } from "../models/load-snapshot.js";
 import { EMPTY_SNAPSHOT, type Snapshot } from "../models/snapshot.js";
 

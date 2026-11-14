@@ -1,4 +1,4 @@
-import type { ProviderQuirks, UpstreamProtocol } from "../../db/schemas/index.js";
+import type { ProviderQuirks, UpstreamProtocol } from "@/db/schemas/index.js";
 import type {
   InferenceRequest,
   InferenceResponse,

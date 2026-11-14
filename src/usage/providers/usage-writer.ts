@@ -3,7 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { type SQL, sql } from "drizzle-orm";
 import type { AnyPgColumn, PgTable } from "drizzle-orm/pg-core";
-import type { Database } from "../../db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations.js";
 import {
   apiKeys,
   attempts,
@@ -13,7 +13,7 @@ import {
   routes,
   usageLogs,
   users,
-} from "../../db/schemas/index.js";
+} from "@/db/schemas/index.js";
 import type { ErrorCaptureRecord, UsageCaller, UsageJob } from "../models/usage-job.js";
 import { usageMeasurementsOf } from "../models/usage-measurements.js";
 

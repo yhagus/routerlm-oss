@@ -2,8 +2,8 @@ import { PasswordHasher } from "@nestjs/authentication";
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "../../../db/schemas/relations.js";
-import { users } from "../../../db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { users } from "@/db/schemas/index.js";
 import { normalizeEmail, type User, userColumns } from "../../models/user.js";
 import { FindUserByCredentialsQuery } from "../impl/find-user-by-credentials.query.js";
 

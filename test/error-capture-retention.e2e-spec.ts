@@ -3,18 +3,18 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { sql } from "drizzle-orm";
 import { getDrizzleToken } from "@nestjs/drizzle";
-import type { Database } from "../src/db/schemas/relations.js";
-import { errorCaptures, usageLogs } from "../src/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { errorCaptures, usageLogs } from "@/db/schemas/index.js";
 
 // Needs Redis at REDIS_URL, in its own database (see usage-records.e2e-spec.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
 process.env.ERROR_CAPTURE_RETENTION_DAYS = "7";
-const { WorkerModule } = await import("../src/worker.module.js");
-const { ERROR_CAPTURES_QUEUE } = await import("../src/queue/models/queue-names.js");
+const { WorkerModule } = await import("@/worker.module.js");
+const { ERROR_CAPTURES_QUEUE } = await import("@/queue/models/queue-names.js");
 const { ErrorCaptureRetention, ERROR_CAPTURE_RETENTION_SCHEDULER } =
-  await import("../src/error-captures/jobs/error-capture-retention.js");
+  await import("@/error-captures/jobs/error-capture-retention.js");
 
 const NOW = new Date("2026-11-15T12:00:00Z");
 const DAY_MS = 24 * 60 * 60 * 1000;

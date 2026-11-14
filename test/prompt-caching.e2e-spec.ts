@@ -1,9 +1,9 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "../src/db/schemas/relations.js";
-import { providers } from "../src/db/schemas/index.js";
-import { SnapshotService } from "../src/snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { providers } from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
   anthropicMessagesFixture,
   FakeUpstream,

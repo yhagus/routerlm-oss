@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
-import type { Database } from "../../db/schemas/relations.js";
-import { users } from "../../db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { users } from "@/db/schemas/index.js";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 

@@ -3,8 +3,8 @@ import {
   FOREIGN_KEY_VIOLATION,
   hasPostgresErrorCode,
   UNIQUE_VIOLATION,
-} from "../../db/models/postgres-errors.js";
-import type { upstreamModels } from "../../db/schemas/index.js";
+} from "@/libs/models/postgres-errors.js";
+import type { upstreamModels } from "@/db/schemas/index.js";
 
 /** An Upstream Model as the dashboard API returns it. */
 export type UpstreamModel = typeof upstreamModels.$inferSelect;

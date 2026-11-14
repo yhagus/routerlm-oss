@@ -1,5 +1,5 @@
 import { NestFactory } from "@nestjs/core";
-import { WorkerModule } from "./worker.module.js";
+import { WorkerModule } from "@/worker.module.js";
 
 // A standalone application context: no HTTP listener, only queue processors.
 // The BullMQ workers keep the process alive.

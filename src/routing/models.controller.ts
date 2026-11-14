@@ -10,7 +10,7 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import { CreateModelCommand } from "./commands/impl/create-model.command.js";
 import { DeleteModelCommand } from "./commands/impl/delete-model.command.js";
 import { UpdateModelCommand } from "./commands/impl/update-model.command.js";

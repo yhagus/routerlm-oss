@@ -1,10 +1,10 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { NestNodeApplication } from "@nestjs/platform-node";
-import { CATALOG_DIRECTORY, loadCatalog } from "../src/catalog/models/load-catalog.js";
-import type { Database } from "../src/db/schemas/relations.js";
-import { GATEWAY_ERROR_CODES } from "../src/db/schemas/index.js";
-import { GATEWAY_ERROR_STATUS } from "../src/inference/models/gateway-error.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { GATEWAY_ERROR_CODES } from "@/db/schemas/index.js";
+import { GATEWAY_ERROR_STATUS } from "@/inference/models/gateway-error.js";
 import {
   type CodeBlock,
   codeBlocksOf,

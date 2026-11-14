@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc } from "drizzle-orm";
-import type { Database } from "../../../db/schemas/relations.js";
-import { providerAccounts } from "../../../db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { providerAccounts } from "@/db/schemas/index.js";
 import { CooldownStore } from "../../providers/cooldown-store.js";
 import {
   type ListedProviderAccount,

@@ -4,19 +4,20 @@ import { CqrsModule } from "@nestjs/cqrs";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { APP_PIPE } from "@nestjs/core";
-import { ApiKeysModule } from "./api-keys/api-keys.module.js";
-import { AppController } from "./app.controller.js";
-import { AuthModule } from "./auth/auth.module.js";
-import { type Env, envSchema } from "./config/schemas/env.schema.js";
-import { relations } from "./db/schemas/relations.js";
-import { ErrorCapturesModule } from "./error-captures/error-captures.module.js";
-import { InferenceModule } from "./inference/inference.module.js";
-import { OverviewModule } from "./overview/overview.module.js";
-import { PlaygroundModule } from "./playground/playground.module.js";
-import { QueueModule } from "./queue/queue.module.js";
-import { RoutingModule } from "./routing/routing.module.js";
-import { UpstreamModule } from "./upstream/upstream.module.js";
-import { UsageModule } from "./usage/usage.module.js";
+import { ApiKeysModule } from "@/api-keys/api-keys.module.js";
+import { AppController } from "@/app.controller.js";
+import { AuthModule } from "@/auth/auth.module.js";
+import { type Env, envSchema } from "@/config/schemas/env.schema.js";
+import { relations } from "@/db/schemas/relations.js";
+import { ErrorCapturesModule } from "@/error-captures/error-captures.module.js";
+import { LibsModule } from "@/libs/libs.module.js";
+import { InferenceModule } from "@/inference/inference.module.js";
+import { OverviewModule } from "@/overview/overview.module.js";
+import { PlaygroundModule } from "@/playground/playground.module.js";
+import { QueueModule } from "@/queue/queue.module.js";
+import { RoutingModule } from "@/routing/routing.module.js";
+import { UpstreamModule } from "@/upstream/upstream.module.js";
+import { UsageModule } from "@/usage/usage.module.js";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsageModule } from "./usage/usage.module.js";
       }),
     }),
     CqrsModule.forRoot(),
+    LibsModule,
     AuthModule,
     QueueModule,
     ApiKeysModule,

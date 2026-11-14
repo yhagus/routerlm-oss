@@ -1,11 +1,9 @@
 import { z } from "zod";
-import type { ParameterPolicy } from "../../db/schemas/index.js";
-import { REASONING_EFFORTS, type ReasoningEffort } from "../../inference/models/internal-format.js";
+import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
+import type { ParameterPolicy } from "@/db/schemas/index.js";
+import { REASONING_EFFORTS, type ReasoningEffort } from "@/inference/models/internal-format.js";
 
 // What the dashboard sends to create or change Models and their Routes.
-
-const nothingToChange = { error: "Send at least one field to change" };
-const hasAnyField = (changes: object): boolean => Object.keys(changes).length > 0;
 
 // The widest ranges any upstream Protocol accepts; the upstream refuses what its model doesn't.
 const capSchemas = {

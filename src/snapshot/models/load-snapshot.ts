@@ -1,5 +1,5 @@
 import { asc, isNull } from "drizzle-orm";
-import type { Database } from "../../db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations.js";
 import {
   apiKeys,
   models,
@@ -7,7 +7,7 @@ import {
   providers,
   routes,
   upstreamModels,
-} from "../../db/schemas/index.js";
+} from "@/db/schemas/index.js";
 import type {
   Snapshot,
   SnapshotApiKey,

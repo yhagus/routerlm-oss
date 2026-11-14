@@ -1,4 +1,4 @@
-import type { AuthStyle, ClientProtocol, UpstreamProtocol } from "../../db/schemas/index.js";
+import type { AuthStyle, ClientProtocol, UpstreamProtocol } from "@/db/schemas/index.js";
 import { anthropicMessagesClientConverter } from "./anthropic-messages/anthropic-messages-client-converter.js";
 import { anthropicMessagesUpstreamConverter } from "./anthropic-messages/anthropic-messages-upstream-converter.js";
 import type { ClientProtocolConverter } from "./client-protocol-converter.js";

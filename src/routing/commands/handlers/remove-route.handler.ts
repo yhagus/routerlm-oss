@@ -2,9 +2,9 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
-import type { Database } from "../../../db/schemas/relations.js";
-import { routes } from "../../../db/schemas/index.js";
-import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { routes } from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { RemoveRouteCommand } from "../impl/remove-route.command.js";
 
 @CommandHandler(RemoveRouteCommand)

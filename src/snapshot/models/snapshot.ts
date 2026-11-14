@@ -4,7 +4,7 @@ import type {
   ParameterPolicy,
   ProviderQuirks,
   UpstreamProtocol,
-} from "../../db/schemas/index.js";
+} from "@/db/schemas/index.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
 // PostgreSQL query. Disabled rows are kept, with their flags: the inference

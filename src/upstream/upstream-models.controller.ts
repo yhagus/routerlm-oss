@@ -10,7 +10,7 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import { CreateUpstreamModelCommand } from "./commands/impl/create-upstream-model.command.js";
 import { DeleteUpstreamModelCommand } from "./commands/impl/delete-upstream-model.command.js";
 import { UpdateUpstreamModelCommand } from "./commands/impl/update-upstream-model.command.js";

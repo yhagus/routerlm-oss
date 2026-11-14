@@ -1,4 +1,4 @@
-import type { Capability } from "../../db/schemas/index.js";
+import type { Capability } from "@/db/schemas/index.js";
 
 /** A Model as `GET /v1/models` shows it: our name only, nothing about Routes or Providers. */
 export interface ClientModel {

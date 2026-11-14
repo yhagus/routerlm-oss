@@ -1,6 +1,6 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
-import { ApiKeyAuth } from "../../src/api-keys/providers/api-key-auth.js";
-import type { Database } from "../../src/db/schemas/relations.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
+import type { Database } from "@/db/schemas/relations.js";
 import {
   apiKeys,
   type AuthStyle,
@@ -11,9 +11,9 @@ import {
   routes,
   type UpstreamProtocol,
   upstreamModels,
-} from "../../src/db/schemas/index.js";
-import { SnapshotService } from "../../src/snapshot/providers/snapshot.service.js";
-import { ProviderKeyCipher } from "../../src/upstream/providers/provider-key-cipher.js";
+} from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 
 /** The Provider Account key the fake upstream expects; it must never reach a client or a log. */
 export const UPSTREAM_KEY = "sk-upstream-secret-0123456789";

@@ -1,5 +1,5 @@
-import { GatewayError } from "../../src/inference/models/gateway-error.js";
-import type { ClientProtocolConverter } from "../../src/inference/protocols/client-protocol-converter.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { ClientProtocolConverter } from "@/inference/protocols/client-protocol-converter.js";
 
 /** The error a client converter refuses `body` with; fails the test if it accepts it. */
 export function parseFailureOf(converter: ClientProtocolConverter, body: unknown): GatewayError {

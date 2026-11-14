@@ -1,10 +1,10 @@
 import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "../../../db/models/postgres-errors.js";
-import type { Database } from "../../../db/schemas/relations.js";
-import { providerAccounts } from "../../../db/schemas/index.js";
-import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
+import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { providerAccounts } from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
   type ProviderAccount,
   providerAccountColumns,

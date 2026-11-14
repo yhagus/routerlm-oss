@@ -4,10 +4,10 @@ import { ConfigService } from "@nestjs/config";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Job, Queue } from "bullmq";
 import { lt } from "drizzle-orm";
-import type { Env } from "../../config/schemas/env.schema.js";
-import type { Database } from "../../db/schemas/relations.js";
-import { errorCaptures } from "../../db/schemas/index.js";
-import { ERROR_CAPTURES_QUEUE } from "../../queue/models/queue-names.js";
+import type { Env } from "@/config/schemas/env.schema.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { errorCaptures } from "@/db/schemas/index.js";
+import { ERROR_CAPTURES_QUEUE } from "@/queue/models/queue-names.js";
 
 /** Scheduler id: upserting it again on every boot keeps a single schedule. */
 export const ERROR_CAPTURE_RETENTION_SCHEDULER = "error-capture-retention";

@@ -11,7 +11,7 @@ import {
   Put,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import { CreateUserCommand } from "./commands/impl/create-user.command.js";
 import { DeleteUserCommand } from "./commands/impl/delete-user.command.js";
 import { ResetPasswordCommand } from "./commands/impl/reset-password.command.js";

@@ -3,7 +3,7 @@ import {
   FOREIGN_KEY_VIOLATION,
   hasPostgresErrorCode,
   UNIQUE_VIOLATION,
-} from "../../db/models/postgres-errors.js";
+} from "@/libs/models/postgres-errors.js";
 
 /** Turns a duplicate Model name into a 409; any other error passes through unchanged. */
 export function toModelWriteError(error: unknown, modelName: string | undefined): unknown {

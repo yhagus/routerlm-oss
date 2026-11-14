@@ -1,8 +1,8 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { RunInferenceCommand } from "../../../inference/commands/impl/run-inference.command.js";
-import { openAiChatClientConverter } from "../../../inference/protocols/openai-chat/openai-chat-client-converter.js";
-import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
-import type { UsageJob } from "../../../usage/models/usage-job.js";
+import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.command.js";
+import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import type { UsageJob } from "@/usage/models/usage-job.js";
 import { playgroundSummaryOf } from "../../models/playground-summary.js";
 import { SendPlaygroundChatCompletionCommand } from "../impl/send-playground-chat-completion.command.js";
 

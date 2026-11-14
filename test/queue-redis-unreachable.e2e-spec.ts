@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "../src/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations.js";
 import { FakeUpstream, openAiChatFixture } from "./support/fake-upstream.js";
 import { insertApiKey, insertOpenAiChatModel } from "./support/inference.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
@@ -10,7 +10,7 @@ import { deleteAllUpstreamData } from "./support/upstream.js";
 // AppModule loads, because ConfigModule reads the environment at import time.
 process.env.REDIS_URL = "redis://localhost:1";
 const { createTestApp } = await import("./support/test-app.js");
-const { PingProducer } = await import("../src/queue/jobs/ping.producer.js");
+const { PingProducer } = await import("@/queue/jobs/ping.producer.js");
 
 describe("Queue with Redis unreachable (e2e)", () => {
   let app: NestNodeApplication;

@@ -1,15 +1,10 @@
 import { z } from "zod";
-import {
-  catalogProviderSchema,
-  providerQuirksSchema,
-} from "../../catalog/schemas/catalog.schema.js";
+import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
+import { catalogProviderSchema, providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 
 // What the dashboard sends to create or change Providers, Upstream Models and
 // Provider Accounts. The fields Catalog files share with the API reuse the
 // Catalog's rules, so the dashboard can't store what a Catalog file couldn't.
-
-const nothingToChange = { error: "Send at least one field to change" };
-const hasAnyField = (changes: object): boolean => Object.keys(changes).length > 0;
 
 const providerFieldsSchema = catalogProviderSchema
   .pick({ slug: true, name: true, protocol: true, baseUrl: true, authStyle: true, quirks: true })

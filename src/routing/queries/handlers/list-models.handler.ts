@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc, count, eq } from "drizzle-orm";
-import type { Database } from "../../../db/schemas/relations.js";
-import { models, routes } from "../../../db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { models, routes } from "@/db/schemas/index.js";
 import type { ModelSummary } from "../../models/model.js";
 import { ListModelsQuery } from "../impl/list-models.query.js";
 

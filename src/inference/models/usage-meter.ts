@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { ClientProtocol, GatewayErrorCode } from "../../db/schemas/index.js";
+import type { ClientProtocol, GatewayErrorCode } from "@/db/schemas/index.js";
 import {
   capturedBody,
   capturedHeaders,
   type RawHeaders,
-} from "../../error-captures/models/captured-content.js";
+} from "@/error-captures/models/captured-content.js";
 import type {
   AttemptRecord,
   CapturedMessage,
@@ -12,7 +12,7 @@ import type {
   ServedBy,
   UsageCaller,
   UsageJob,
-} from "../../usage/models/usage-job.js";
+} from "@/usage/models/usage-job.js";
 import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-failure.js";
 import type { GatewayError } from "./gateway-error.js";
 import type { TokenUsage } from "./internal-format.js";

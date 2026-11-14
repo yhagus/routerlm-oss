@@ -1,6 +1,6 @@
 import { ApiKeyProvider, type ApiKeyRecord, AuthenticationRegistry } from "@nestjs/authentication";
 import { Injectable } from "@nestjs/common";
-import { SnapshotService } from "../../snapshot/providers/snapshot.service.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ApiKeyPrincipal } from "../models/api-key.js";
 
 /** Starts every key (`rlm_<keyId>_<secret>`), so secret scanners can spot leaked ones. */

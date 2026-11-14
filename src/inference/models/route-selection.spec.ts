@@ -1,9 +1,9 @@
-import type { Capability } from "../../db/schemas/index.js";
+import type { Capability } from "@/db/schemas/index.js";
 import type {
   SnapshotModel,
   SnapshotProviderAccount,
   SnapshotRoute,
-} from "../../snapshot/models/snapshot.js";
+} from "@/snapshot/models/snapshot.js";
 import type { InferenceRequest } from "./internal-format.js";
 import { attemptTargets, capableRoutes } from "./route-selection.js";
 

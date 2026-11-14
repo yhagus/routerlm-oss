@@ -1,5 +1,5 @@
-import type { ApiKeyPrincipal } from "../../api-keys/models/api-key.js";
-import type { UsageJob } from "../../usage/models/usage-job.js";
+import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
+import type { UsageJob } from "@/usage/models/usage-job.js";
 
 /** What the client gets back: a JSON body, or the text of an event stream. */
 export type InferenceResult =

@@ -5,10 +5,10 @@ import { count, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client, Pool } from "pg";
-import { SeedCatalogCommand } from "../src/catalog/commands/impl/seed-catalog.command.js";
-import type { CatalogProvider } from "../src/catalog/schemas/catalog.schema.js";
-import { type Database, relations } from "../src/db/schemas/relations.js";
-import * as schema from "../src/db/schemas/index.js";
+import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command.js";
+import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
+import { type Database, relations } from "@/db/schemas/relations.js";
+import * as schema from "@/db/schemas/index.js";
 
 const source = { urls: ["https://example.com/pricing"], retrievedOn: "2026-11-15" };
 
@@ -90,7 +90,7 @@ describe("Seed Catalog command (e2e)", () => {
     // ConfigModule.forRoot reads the environment when the module file is
     // evaluated, so the module is imported only after DATABASE_URL is set.
     process.env.DATABASE_URL = databaseUrl;
-    const { CatalogSeedModule } = await import("../src/catalog/catalog-seed.module.js");
+    const { CatalogSeedModule } = await import("@/catalog/catalog-seed.module.js");
     moduleRef = await Test.createTestingModule({ imports: [CatalogSeedModule] }).compile();
     await moduleRef.init();
     commandBus = moduleRef.get(CommandBus);

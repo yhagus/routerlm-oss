@@ -10,7 +10,7 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import { CreateProviderAccountCommand } from "./commands/impl/create-provider-account.command.js";
 import { DeleteProviderAccountCommand } from "./commands/impl/delete-provider-account.command.js";
 import { UpdateProviderAccountCommand } from "./commands/impl/update-provider-account.command.js";

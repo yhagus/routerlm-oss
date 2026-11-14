@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import type { Env } from "../config/schemas/env.schema.js";
-import { RedisModule } from "../redis/redis.module.js";
-import { SnapshotModule } from "../snapshot/snapshot.module.js";
+import type { Env } from "@/config/schemas/env.schema.js";
+import { RedisModule } from "@/redis/redis.module.js";
+import { SnapshotModule } from "@/snapshot/snapshot.module.js";
 import { CommandHandlers } from "./commands/handlers/index.js";
 import { CooldownStore } from "./providers/cooldown-store.js";
 import { ProviderAccountHealth } from "./providers/provider-account-health.js";

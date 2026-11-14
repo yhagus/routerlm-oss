@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { RedisModule } from "../redis/redis.module.js";
+import { RedisModule } from "@/redis/redis.module.js";
 import { SnapshotService } from "./providers/snapshot.service.js";
 
 /**

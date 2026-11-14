@@ -6,9 +6,9 @@ import {
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, lt } from "drizzle-orm";
-import type { Database } from "../../db/schemas/relations.js";
-import { sessions, users } from "../../db/schemas/index.js";
-import { userColumns } from "../../users/models/user.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { sessions, users } from "@/db/schemas/index.js";
+import { userColumns } from "@/users/models/user.js";
 
 type SessionRow = typeof sessions.$inferSelect;
 

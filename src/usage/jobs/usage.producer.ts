@@ -1,8 +1,8 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable, Logger } from "@nestjs/common";
 import type { Queue } from "bullmq";
-import { addJobOrLog } from "../../queue/models/add-job-or-log.js";
-import { USAGE_QUEUE } from "../../queue/models/queue-names.js";
+import { addJobOrLog } from "@/queue/models/add-job-or-log.js";
+import { USAGE_QUEUE } from "@/queue/models/queue-names.js";
 import { RECORD_USAGE_JOB, type UsageJob } from "../models/usage-job.js";
 
 const WRITE_ATTEMPTS = 3;

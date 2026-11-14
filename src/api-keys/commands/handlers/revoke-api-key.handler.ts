@@ -2,9 +2,9 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, sql } from "drizzle-orm";
-import type { Database } from "../../../db/schemas/relations.js";
-import { apiKeys } from "../../../db/schemas/index.js";
-import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { apiKeys } from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { RevokeApiKeyCommand } from "../impl/revoke-api-key.command.js";
 
 @CommandHandler(RevokeApiKeyCommand)

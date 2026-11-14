@@ -1,9 +1,9 @@
 import { AuthenticationStorage, type SessionRecord } from "@nestjs/authentication";
 import { authenticationStoreContract } from "@nestjs/authentication/testing";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { DrizzleSessionStore } from "../src/auth/providers/drizzle-session.store.js";
-import { type Database, relations } from "../src/db/schemas/relations.js";
-import { users } from "../src/db/schemas/index.js";
+import { DrizzleSessionStore } from "@/auth/providers/drizzle-session.store.js";
+import { type Database, relations } from "@/db/schemas/relations.js";
+import { users } from "@/db/schemas/index.js";
 
 // The contract's user ids are `user-<uuid>`, while `sessions.user_id` is a
 // uuid referencing `users`. This store strips the prefix on the way in, adds

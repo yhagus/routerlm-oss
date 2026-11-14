@@ -1,5 +1,5 @@
 import { Command } from "@nestjs/cqrs";
-import type { ClientConnection } from "../../models/client-connection.js";
+import type { ClientConnection } from "@/libs/models/client-connection.js";
 import type { InferenceCaller, InferenceResult, UsageListener } from "../../models/inference.js";
 import type { ClientProtocolConverter } from "../../protocols/client-protocol-converter.js";
 

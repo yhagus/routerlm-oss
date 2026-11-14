@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import type { Job } from "bullmq";
-import { USAGE_QUEUE } from "../../queue/models/queue-names.js";
+import { USAGE_QUEUE } from "@/queue/models/queue-names.js";
 import type { UsageJob } from "../models/usage-job.js";
 import { UsageWriter } from "../providers/usage-writer.js";
 

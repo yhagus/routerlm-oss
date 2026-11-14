@@ -1,9 +1,9 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "../src/db/schemas/relations.js";
-import { providerAccounts } from "../src/db/schemas/index.js";
-import { ProviderKeyCipher } from "../src/upstream/providers/provider-key-cipher.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { providerAccounts } from "@/db/schemas/index.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { createTestApp, setUpFirstUser } from "./support/test-app.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
 

@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "../src/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations.js";
 import {
   anthropicMessagesFixture,
   FakeUpstream,

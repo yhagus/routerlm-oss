@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   type CatalogProviderQuirks,
   providerQuirksSchema,
-} from "../../../catalog/schemas/catalog.schema.js";
+} from "@/catalog/schemas/catalog.schema.js";
 import type {
   AssistantContentPart,
   CacheMarker,

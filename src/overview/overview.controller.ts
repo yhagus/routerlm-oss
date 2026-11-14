@@ -1,6 +1,6 @@
 import { Get, Query } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import type { Overview } from "./models/overview.js";
 import { ShowOverviewQuery } from "./queries/impl/show-overview.query.js";
 import { type OverviewQuery, overviewQuerySchema } from "./schemas/overview-query.schema.js";

@@ -1,4 +1,4 @@
-import type { ParameterPolicy, ParameterValues } from "../../db/schemas/index.js";
+import type { ParameterPolicy, ParameterValues } from "@/db/schemas/index.js";
 import {
   type InferenceRequest,
   REASONING_EFFORTS,

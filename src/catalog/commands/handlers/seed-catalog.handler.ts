@@ -1,8 +1,8 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "../../../db/schemas/relations.js";
-import { providers, upstreamModels } from "../../../db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations.js";
+import { providers, upstreamModels } from "@/db/schemas/index.js";
 import { SeedCatalogCommand, type SeedResult } from "../impl/seed-catalog.command.js";
 
 @CommandHandler(SeedCatalogCommand)

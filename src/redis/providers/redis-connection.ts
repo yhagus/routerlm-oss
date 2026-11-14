@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Redis, type RedisOptions } from "ioredis";
-import type { Env } from "../../config/schemas/env.schema.js";
+import type { Env } from "@/config/schemas/env.schema.js";
 
 // The inference path waits at most this long for Redis; past it, Redis state
 // is treated as unknown rather than holding the request.

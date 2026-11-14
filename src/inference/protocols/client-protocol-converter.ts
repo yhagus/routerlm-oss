@@ -1,4 +1,4 @@
-import type { ClientProtocol } from "../../db/schemas/index.js";
+import type { ClientProtocol } from "@/db/schemas/index.js";
 import { GatewayError } from "../models/gateway-error.js";
 import type {
   InferenceRequest,
