@@ -23,7 +23,7 @@ const COST_SCALE_FLOOR = 0.01;
 const ERROR_RATE_SCALE_FLOOR = 0.05;
 const FULL_RATE = 1;
 
-const range = ref<OverviewRange>("24h");
+const range = useQueryParam<OverviewRange>("range", { default: "24h", isValid: isOverviewRange });
 const rangeOptions = Object.entries(OVERVIEW_RANGES).map(([value, label]) => ({ value, label }));
 
 function pickRange(value: string): void {

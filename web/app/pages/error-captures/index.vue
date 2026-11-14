@@ -12,7 +12,7 @@ const route = useRoute();
 const usageLogId = computed(() =>
   typeof route.query.usageLogId === "string" ? route.query.usageLogId : undefined,
 );
-const page = ref(1);
+const page = useQueryPage();
 watch(usageLogId, () => {
   page.value = 1;
 });

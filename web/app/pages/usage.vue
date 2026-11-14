@@ -37,11 +37,15 @@ const STATUS_BADGES = {
 
 // Filters
 
-const timeRange = ref<TimeRange>("24h");
-const modelFilter = ref(ALL);
-const apiKeyFilter = ref(ALL);
-const statusFilter = ref(ALL);
-const page = ref(1);
+// Held in the URL (?range=7d&model=…&key=…&status=failed&page=2) so a refresh or a link keeps them.
+const timeRange = useQueryParam<TimeRange>("range", { default: "24h", isValid: isTimeRange });
+const modelFilter = useQueryParam("model", { default: ALL, isValid: anyText });
+const apiKeyFilter = useQueryParam("key", { default: ALL, isValid: anyText });
+const statusFilter = useQueryParam("status", {
+  default: ALL,
+  isValid: oneOf([ALL, "succeeded", "failed", "cancelled"]),
+});
+const page = useQueryPage();
 // Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
 const from = ref(timeRangeStart(timeRange.value, Date.now()));
 
