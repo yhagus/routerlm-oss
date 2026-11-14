@@ -1,8 +1,10 @@
-import { Module } from "@nestjs/common";
+import { Module, StandardSchemaValidationPipe } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { APP_PIPE } from "@nestjs/core";
 import { AppController } from "./app.controller.js";
+import { AuthModule } from "./auth/auth.module.js";
 import { type Env, envSchema } from "./config/env.schema.js";
 import { relations } from "./db/relations.js";
 
@@ -17,7 +19,10 @@ import { relations } from "./db/relations.js";
         relations,
       }),
     }),
+    AuthModule,
   ],
   controllers: [AppController],
+  // Validates every `@Body({ schema })`, `@Param({ schema })`… against its zod schema.
+  providers: [{ provide: APP_PIPE, useClass: StandardSchemaValidationPipe }],
 })
 export class AppModule {}
