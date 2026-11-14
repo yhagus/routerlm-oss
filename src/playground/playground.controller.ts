@@ -4,7 +4,7 @@ import { Body, HttpCode, Post, Req, Res, UseFilters } from "@nestjs/common";
 import { DashboardController } from "../auth/dashboard-controller.decorator.js";
 import { clientConnectionOf } from "../inference/client-connection.js";
 import { eventStreamResponse } from "../inference/event-stream-response.js";
-import type { User } from "../users/user.js";
+import type { User } from "../users/models/user.js";
 import { PlaygroundExceptionFilter } from "./playground-exception.filter.js";
 import { type PlaygroundRequest, playgroundRequestSchema } from "./playground.schemas.js";
 import { PlaygroundService } from "./playground.service.js";

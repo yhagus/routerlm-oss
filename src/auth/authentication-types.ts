@@ -1,4 +1,4 @@
-import type { User } from "../users/user.js";
+import type { User } from "../users/models/user.js";
 
 // Types `@CurrentUser()` as our User, and the User DrizzleSessionStore joins
 // onto each session it reads (`SessionRecord.extra`).

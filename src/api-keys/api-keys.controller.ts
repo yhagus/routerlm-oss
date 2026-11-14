@@ -2,7 +2,7 @@ import { CurrentUser } from "@nestjs/authentication";
 import { Body, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "../auth/dashboard-controller.decorator.js";
-import type { User } from "../users/user.js";
+import type { User } from "../users/models/user.js";
 import { CreateApiKeyCommand } from "./commands/impl/create-api-key.command.js";
 import { RevokeApiKeyCommand } from "./commands/impl/revoke-api-key.command.js";
 import type { ApiKeySummary, CreatedApiKey, ModelChoice } from "./models/api-key.js";

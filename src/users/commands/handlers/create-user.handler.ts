@@ -1,0 +1,48 @@
+import { PasswordHasher } from "@nestjs/authentication";
+import { ConflictException } from "@nestjs/common";
+import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
+import { InjectDrizzle } from "@nestjs/drizzle";
+import type { Database } from "../../../db/relations.js";
+import { users } from "../../../db/schema.js";
+import { normalizeEmail, type User, userColumns } from "../../models/user.js";
+import { CreateUserCommand } from "../impl/create-user.command.js";
+
+const UNIQUE_VIOLATION = "23505";
+
+@CommandHandler(CreateUserCommand)
+export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
+  constructor(
+    @InjectDrizzle() private readonly db: Database,
+    private readonly passwordHasher: PasswordHasher,
+  ) {}
+
+  async execute({ newUser, createdById }: CreateUserCommand): Promise<User> {
+    const passwordHash = await this.passwordHasher.hash(newUser.password);
+    try {
+      const [created] = await this.db
+        .insert(users)
+        .values({ email: normalizeEmail(newUser.email), passwordHash, createdById })
+        .returning(userColumns);
+      return created;
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException("A User with this email already exists");
+      }
+      throw error;
+    }
+  }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  // Drizzle wraps the driver error in `cause`.
+  const driverError = error.cause ?? error;
+  return (
+    typeof driverError === "object" &&
+    driverError !== null &&
+    "code" in driverError &&
+    driverError.code === UNIQUE_VIOLATION
+  );
+}

@@ -4,7 +4,7 @@ import {
   type SessionRecord,
 } from "@nestjs/authentication";
 import { Injectable } from "@nestjs/common";
-import type { User } from "../users/user.js";
+import type { User } from "../users/models/user.js";
 
 /** Signs dashboard Users in with the session cookie. */
 @Injectable()

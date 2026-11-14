@@ -8,7 +8,7 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, lt } from "drizzle-orm";
 import type { Database } from "../db/relations.js";
 import { sessions, users } from "../db/schema.js";
-import { userColumns } from "../users/user.js";
+import { userColumns } from "../users/models/user.js";
 
 type SessionRow = typeof sessions.$inferSelect;
 

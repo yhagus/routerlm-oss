@@ -1,4 +1,4 @@
-import { users } from "../db/schema.js";
+import { users } from "../../db/schema.js";
 
 /** A User as the app passes it around: the `users` row without its password hash. */
 export type User = Omit<typeof users.$inferSelect, "passwordHash">;

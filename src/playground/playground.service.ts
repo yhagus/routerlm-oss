@@ -4,7 +4,7 @@ import { InferenceService } from "../inference/inference.service.js";
 import { openAiChatClientConverter } from "../inference/protocols/openai-chat/openai-chat-client-converter.js";
 import { SnapshotService } from "../snapshot/snapshot.service.js";
 import type { UsageJob } from "../usage/usage-job.js";
-import type { User } from "../users/user.js";
+import type { User } from "../users/models/user.js";
 import { playgroundSummaryOf } from "./playground-summary.js";
 import type { PlaygroundRequest } from "./playground.schemas.js";
 
