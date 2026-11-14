@@ -114,6 +114,17 @@ describe("Playground (e2e)", () => {
     expect(JSON.stringify(job)).not.toContain("What is in this picture?");
   });
 
+  it("captures a failed request with the session cookie redacted", async () => {
+    const enqueued = vi.spyOn(app.get<Queue>(getQueueToken(USAGE_QUEUE)), "add");
+
+    await sendToPlayground({ ...PLAYGROUND_REQUEST, model: "unknown" }).expect(404);
+
+    const job = enqueued.mock.calls[0][1] as UsageJob;
+    expect(job.caller).toEqual({ kind: "playground", userId: adaId });
+    expect(job.errorCapture?.request.headers.cookie).toBe("[REDACTED]");
+    expect(JSON.stringify(job.errorCapture)).not.toContain(adaCookie);
+  });
+
   it("answers an error with our error code and message", async () => {
     const response = await sendToPlayground({ ...PLAYGROUND_REQUEST, model: "unknown" }).expect(
       404,

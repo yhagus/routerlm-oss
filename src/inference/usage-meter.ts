@@ -73,8 +73,9 @@ export class UsageMeter {
   ) {}
 
   /**
-   * Keeps the client request in case it fails. Only called once a valid API
-   * Key is known: requests without one get no Error Capture (spec "Records").
+   * Keeps the client request in case it fails. Only called once the caller
+   * is authenticated (a valid API Key, or a Playground session): requests
+   * without either get no Error Capture (spec "Records").
    */
   requestReceived(headers: RawHeaders, body: unknown): void {
     this.clientRequest = { headers, body };
