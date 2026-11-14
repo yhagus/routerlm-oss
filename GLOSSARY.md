@@ -72,6 +72,14 @@ _Avoid_: Parameter control, model config
 What the gateway's operators pay the Provider for one request, computed from the Upstream Model's prices at the time of the request.
 _Avoid_: Price, charge, bill
 
+**Cache read**:
+Input tokens a Provider serves from its prompt cache, at their own price. Grouped with Input.
+_Avoid_: Cache hit, cached input
+
+**Cache write**:
+Tokens a Provider stores in its prompt cache, at their own price. Grouped with Output: Output = Write.
+_Avoid_: Cache creation, cache miss
+
 **Usage Log**:
 The record of one inference request's measurements: tokens, cache counts, sizes, cost and timing. It never holds prompt or response content.
 _Avoid_: Request log, history
