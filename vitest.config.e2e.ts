@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
@@ -6,6 +6,8 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
+    // Agent worktrees under .claude/ hold their own copies of the specs.
+    exclude: [...configDefaults.exclude, '.claude/**'],
     // The pg pool connects lazily, so e2e tests that never query still boot
     // AppModule without a running database. A DATABASE_URL in the shell wins.
     env: {
