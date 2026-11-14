@@ -1,0 +1,36 @@
+# Throwaway services for e2e tests: `bun run test:e2e:docker`.
+#   db    -> postgres://routerlm:routerlm@localhost:55432/routerlm
+#   redis -> redis://localhost:56379
+#
+# Its own project name and host ports keep it apart from the dev stack in
+# docker-compose.yml, so both can run at once. Postgres keeps its data in
+# tmpfs and Redis persists nothing: every run starts empty.
+name: routerlm-oss-test
+
+services:
+  db:
+    image: postgres:18-alpine
+    ports:
+      - "55432:5432"
+    environment:
+      POSTGRES_USER: routerlm
+      POSTGRES_PASSWORD: routerlm
+      POSTGRES_DB: routerlm
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U routerlm -d routerlm"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 30

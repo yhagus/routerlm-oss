@@ -12,6 +12,10 @@ Default vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, 
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
+## Checks
+
+Before reporting work done, run `bun run check` (and `cd web && bun run check` for web changes), plus `bun run test:e2e:docker` for backend changes.
+
 ## Implementation policy
 
 ### Backend: NestJS first-party first

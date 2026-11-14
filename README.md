@@ -47,12 +47,21 @@ $ bun run start:prod
 ## Run tests
 
 ```bash
+# everything CI checks without services: lint, format, typecheck, unit tests
+# (in web/, `bun run check` runs lint, format and nuxi typecheck)
+$ bun run check
+
 # unit tests
 $ bun run test
 
 # e2e tests: they create, migrate and truncate their own database,
 # TEST_DATABASE_URL (default routerlm_test on the compose Postgres)
 $ bun run test:e2e
+
+# e2e tests against throwaway Postgres and Redis containers
+# (docker-compose.test.yml, host ports 55432 and 56379), removed afterwards;
+# the dev stack can keep running
+$ bun run test:e2e:docker
 
 # test coverage
 $ bun run test:cov
