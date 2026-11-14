@@ -5,10 +5,10 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "format": "oxfmt app nuxt.config.ts uno.config.ts",
-    "format:check": "oxfmt --check app nuxt.config.ts uno.config.ts",
+    "format": "oxfmt app server nuxt.config.ts uno.config.ts",
+    "format:check": "oxfmt --check app server nuxt.config.ts uno.config.ts",
     "generate": "nuxt generate",
-    "lint": "oxlint --type-aware app/ nuxt.config.ts uno.config.ts",
+    "lint": "oxlint --type-aware app/ server/ nuxt.config.ts uno.config.ts",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },

@@ -10,6 +10,10 @@ export default defineNuxtConfig({
   // Authenticated operations console: client-rendered, no SEO surface.
   ssr: false,
   modules: ["@unocss/nuxt"],
+  runtimeConfig: {
+    // Where server/api/[...path].ts forwards dashboard calls. NUXT_BACKEND_URL overrides it.
+    backendUrl: "http://localhost:3000",
+  },
   css: ["@fontsource-variable/plus-jakarta-sans", "~/assets/css/main.css"],
   app: {
     head: {

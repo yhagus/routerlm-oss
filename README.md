@@ -50,7 +50,8 @@ $ bun run start:prod
 # unit tests
 $ bun run test
 
-# e2e tests
+# e2e tests: they create, migrate and truncate their own database,
+# TEST_DATABASE_URL (default routerlm_test on the compose Postgres)
 $ bun run test:e2e
 
 # test coverage
