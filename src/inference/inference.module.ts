@@ -3,6 +3,7 @@ import { APP_FILTER } from "@nestjs/core";
 import { HttpClientModule } from "@nestjs/http-client";
 import { SnapshotModule } from "../snapshot/snapshot.module.js";
 import { UpstreamModule } from "../upstream/upstream.module.js";
+import { UsageModule } from "../usage/usage.module.js";
 import { ApiKeyHeaderMiddleware } from "./api-key-header.middleware.js";
 import { ClientModelsService } from "./client-models.service.js";
 import { InferenceExceptionFilter } from "./inference-exception.filter.js";
@@ -13,7 +14,12 @@ import { UpstreamClient } from "./upstream-client.js";
 /** The client-facing `/v1/*` API: inference and the Model list. */
 @Module({
   // Retries are off: Fallback across Provider Accounts and Routes is the gateway's job.
-  imports: [HttpClientModule.register({ retry: false }), SnapshotModule, UpstreamModule],
+  imports: [
+    HttpClientModule.register({ retry: false }),
+    SnapshotModule,
+    UpstreamModule,
+    UsageModule,
+  ],
   controllers: [InferenceController],
   providers: [
     InferenceService,

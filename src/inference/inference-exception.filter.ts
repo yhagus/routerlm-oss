@@ -8,10 +8,13 @@ import {
 } from "@nestjs/common";
 import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
 import type { ClientProtocol } from "../db/schema.js";
+import { UsageProducer } from "../usage/usage.producer.js";
 import { ClientCancelledError } from "./attempt-failure.js";
+import { requestBytesOf } from "./client-connection.js";
 import { GatewayError } from "./gateway-error.js";
 import { CLIENT_PROTOCOL_CONVERTERS } from "./protocols/converters.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
+import { UsageMeter } from "./usage-meter.js";
 
 const INFERENCE_PATH_PREFIX = "/v1/";
 
@@ -23,14 +26,18 @@ const INFERENCE_PATH_PREFIX = "/v1/";
  */
 @Catch()
 export class InferenceExceptionFilter implements ExceptionFilter {
-  constructor(@Inject(HttpAdapterHost) private readonly adapterHost: HttpAdapterHost) {}
+  constructor(
+    @Inject(HttpAdapterHost) private readonly adapterHost: HttpAdapterHost,
+    @Inject(UsageProducer) private readonly usage: UsageProducer,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     if (exception instanceof ClientCancelledError) {
       return; // Nobody is left to answer.
     }
     const http = host.switchToHttp();
-    const path = http.getRequest<IncomingMessage>().url ?? "";
+    const request = http.getRequest<IncomingMessage>();
+    const path = request.url ?? "";
     const error =
       host.getType() === "http" && path.startsWith(INFERENCE_PATH_PREFIX)
         ? gatewayErrorOf(exception)
@@ -41,9 +48,16 @@ export class InferenceExceptionFilter implements ExceptionFilter {
       new BaseExceptionFilter(httpAdapter).catch(exception, host);
       return;
     }
-    const converter =
-      CLIENT_PROTOCOL_CONVERTERS[clientProtocolOf(path)] ?? openAiChatClientConverter;
-    httpAdapter.reply(http.getResponse(), converter.writeError(error), error.status);
+    const protocol = clientProtocolOf(path);
+    const converter = CLIENT_PROTOCOL_CONVERTERS[protocol] ?? openAiChatClientConverter;
+    const envelope = converter.writeError(error);
+    // InferenceService records the requests it saw; these were refused before
+    // reaching it (bad API Key, unreadable or oversized body).
+    if (!(exception instanceof GatewayError) && request.method === "POST") {
+      const meter = new UsageMeter({ kind: "unidentified" }, protocol, requestBytesOf(request));
+      this.usage.enqueue(meter.finishWithError(error, envelope));
+    }
+    httpAdapter.reply(http.getResponse(), envelope, error.status);
   }
 }
 

@@ -1,0 +1,71 @@
+{
+  "model": "smart",
+  "instructions": "You are terse.",
+  "input": [
+    { "role": "developer", "content": "Answer in JSON." },
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        { "type": "input_text", "text": "Compare these two pictures." },
+        {
+          "type": "input_image",
+          "image_url": "data:image/png;base64,iVBORw0KGgo=",
+          "detail": "auto"
+        },
+        { "type": "input_image", "image_url": "https://images.example/cat.jpg", "detail": "high" }
+      ]
+    },
+    {
+      "type": "reasoning",
+      "id": "rs_earlier",
+      "summary": [],
+      "content": [{ "type": "reasoning_text", "text": "Look up the weather first." }],
+      "encrypted_content": "EqQBCgIYAhIM1gbcDa9GJwZA2b3h"
+    },
+    {
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [{ "type": "output_text", "text": "Checking.", "annotations": [] }]
+    },
+    {
+      "type": "function_call",
+      "id": "fc_earlier",
+      "call_id": "call_weather",
+      "name": "get_weather",
+      "arguments": "{\"city\":\"Paris\"}"
+    },
+    { "type": "function_call_output", "call_id": "call_weather", "output": "18°C, cloudy" },
+    { "role": "user", "content": "And tomorrow?" }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "name": "get_weather",
+      "description": "Current weather for a city",
+      "parameters": { "type": "object", "properties": { "city": { "type": "string" } } },
+      "strict": true
+    }
+  ],
+  "tool_choice": { "type": "function", "name": "get_weather" },
+  "parallel_tool_calls": false,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "name": "weather",
+      "schema": { "type": "object", "additionalProperties": false },
+      "strict": true
+    },
+    "verbosity": "low"
+  },
+  "reasoning": { "effort": "max", "summary": "auto" },
+  "max_output_tokens": 1024,
+  "temperature": 0.5,
+  "top_p": 0.9,
+  "store": false,
+  "stream": true,
+  "metadata": { "trace": "abc" },
+  "truncation": "disabled",
+  "include": ["reasoning.encrypted_content"]
+}

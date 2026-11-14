@@ -1,12 +1,11 @@
 import { createHash } from "node:crypto";
+import type { UsageCaller } from "../usage/usage-job.js";
 
 /**
  * Who a request is made for: a client's API Key, or a signed-in User in the
  * Playground, which has no API Key.
  */
-export type PromptCacheKeyOwner =
-  | { kind: "api-key"; apiKeyId: string }
-  | { kind: "user"; userId: string };
+export type PromptCacheKeyOwner = Exclude<UsageCaller, { kind: "unidentified" }>;
 
 /**
  * Spec "Cache behavior": a key that stays the same for every request of one

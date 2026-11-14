@@ -18,7 +18,9 @@ describe("promptCacheKey", () => {
     expect(promptCacheKey({ kind: "api-key", apiKeyId: API_KEY_ID }, OTHER_MODEL_ID)).not.toBe(
       apiKeyKey,
     );
-    expect(promptCacheKey({ kind: "user", userId: API_KEY_ID }, MODEL_ID)).not.toBe(apiKeyKey);
+    expect(promptCacheKey({ kind: "playground", userId: API_KEY_ID }, MODEL_ID)).not.toBe(
+      apiKeyKey,
+    );
   });
 
   it("doesn't reveal the ids it is derived from", () => {
