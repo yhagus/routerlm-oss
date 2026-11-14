@@ -3,11 +3,13 @@ import { ApiKeyAuth } from "../../src/api-keys/api-key-auth.js";
 import type { Database } from "../../src/db/relations.js";
 import {
   apiKeys,
+  type AuthStyle,
   type Capability,
   models,
   providerAccounts,
   providers,
   routes,
+  type UpstreamProtocol,
   upstreamModels,
 } from "../../src/db/schema.js";
 import { SnapshotService } from "../../src/snapshot/snapshot.service.js";
@@ -23,29 +25,49 @@ export interface InsertedModel {
   routeId: string;
 }
 
+export interface ModelOptions {
+  modelName: string;
+  baseUrl: string;
+  capabilities?: Capability[];
+  totalTimeoutMs?: number;
+}
+
 /**
  * Creates a Model served by one Route to an openai-chat Provider at
  * `baseUrl`, with one Provider Account, straight in the database, then
  * refreshes the snapshot as a dashboard write would.
  */
-export async function insertOpenAiChatModel(
+export function insertOpenAiChatModel(
   app: NestNodeApplication,
   db: Database,
-  options: {
-    modelName: string;
-    baseUrl: string;
-    capabilities?: Capability[];
-    totalTimeoutMs?: number;
-  },
+  options: ModelOptions,
+): Promise<InsertedModel> {
+  return insertModel(app, db, { protocol: "openai-chat", authStyle: "bearer" }, options);
+}
+
+/** As insertOpenAiChatModel, for an anthropic-messages Provider taking the key as x-api-key. */
+export function insertAnthropicMessagesModel(
+  app: NestNodeApplication,
+  db: Database,
+  options: ModelOptions,
+): Promise<InsertedModel> {
+  return insertModel(app, db, { protocol: "anthropic-messages", authStyle: "x-api-key" }, options);
+}
+
+async function insertModel(
+  app: NestNodeApplication,
+  db: Database,
+  speaks: { protocol: UpstreamProtocol; authStyle: AuthStyle },
+  options: ModelOptions,
 ): Promise<InsertedModel> {
   const [provider] = await db
     .insert(providers)
     .values({
       slug: `acme-${options.modelName}`,
       name: "Acme",
-      protocol: "openai-chat",
+      protocol: speaks.protocol,
       baseUrl: options.baseUrl,
-      authStyle: "bearer",
+      authStyle: speaks.authStyle,
     })
     .returning({ id: providers.id });
   await db.insert(providerAccounts).values({

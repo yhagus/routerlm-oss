@@ -17,7 +17,6 @@ function route(
   overrides: {
     isEnabled?: boolean;
     contextSize?: number;
-    protocol?: "openai-chat" | "anthropic-messages";
   } = {},
 ): SnapshotRoute {
   return {
@@ -42,7 +41,7 @@ function route(
       provider: {
         id: `${id}-provider`,
         slug: id,
-        protocol: overrides.protocol ?? "openai-chat",
+        protocol: "openai-chat",
         baseUrl: "https://api.example",
         authStyle: "bearer",
         quirks: {},
@@ -113,14 +112,5 @@ describe("capableRoutes", () => {
     const model = modelWith(route("small", [], { contextSize: 4_000 }), route("large", []));
 
     expect(capableRoutes(model, request).map((candidate) => candidate.id)).toEqual(["large"]);
-  });
-
-  it("skips Routes to a Provider whose Protocol the gateway can't translate to yet", () => {
-    const model = modelWith(
-      route("unsupported", [], { protocol: "anthropic-messages" }),
-      route("chat", []),
-    );
-
-    expect(capableRoutes(model, TEXT_REQUEST).map((candidate) => candidate.id)).toEqual(["chat"]);
   });
 });
