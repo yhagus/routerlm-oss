@@ -5,6 +5,7 @@ import {
 } from "../../../catalog/catalog.schema.js";
 import type {
   AssistantContentPart,
+  CacheMarker,
   FunctionTool,
   InferenceMessage,
   InferenceRequest,
@@ -42,7 +43,10 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   const body: Record<string, unknown> = {
     model: target.upstreamModelId,
     messages: [
-      ...request.system.map((part) => ({ role: "system", content: part.text })),
+      ...request.system.map((part) => ({
+        role: "system",
+        content: keepsCacheMarkers(quirks, [part]) ? [writeTextPart(part, quirks)] : part.text,
+      })),
       ...request.messages.map((message) => writeMessage(message, quirks)),
     ],
   };
@@ -95,29 +99,72 @@ function writeMessage(
 ): Record<string, unknown> {
   switch (message.role) {
     case "user":
-      return { role: "user", content: writeUserContent(message.content) };
+      return { role: "user", content: writeUserContent(message.content, quirks) };
     case "tool":
       return {
         role: "tool",
         tool_call_id: message.toolCallId,
-        content: writeUserContent(message.content),
+        content: writeUserContent(message.content, quirks),
       };
     case "assistant":
       return writeAssistantMessage(message.content, quirks);
   }
 }
 
-/** A lone text part goes as a plain string, which every openai-chat Provider accepts. */
-function writeUserContent(content: UserContentPart[]): string | Record<string, unknown>[] {
+/**
+ * A lone text part goes as a plain string, which every openai-chat Provider
+ * accepts, unless it carries a cache marker the Provider keeps: a marker
+ * needs a content part to sit on.
+ */
+function writeUserContent(
+  content: UserContentPart[],
+  quirks: CatalogProviderQuirks,
+): string | Record<string, unknown>[] {
   const [first] = content;
-  if (content.length === 1 && first.type === "text") {
+  if (content.length === 1 && first.type === "text" && !keepsCacheMarkers(quirks, content)) {
     return first.text;
   }
   return content.map((part) =>
     part.type === "text"
-      ? { type: "text", text: part.text }
-      : { type: "image_url", image_url: { url: imageUrlOf(part.source) } },
+      ? writeTextPart(part, quirks)
+      : withCacheControl(
+          { type: "image_url", image_url: { url: imageUrlOf(part.source) } },
+          part.cacheMarker,
+          quirks,
+        ),
   );
+}
+
+/** Whether the Provider keeps client cache markers and one of these parts carries one. */
+function keepsCacheMarkers(
+  quirks: CatalogProviderQuirks,
+  parts: { cacheMarker?: CacheMarker }[],
+): boolean {
+  return quirks.acceptsCacheControl === true && parts.some((part) => part.cacheMarker);
+}
+
+function writeTextPart(
+  part: { text: string; cacheMarker?: CacheMarker },
+  quirks: CatalogProviderQuirks,
+): Record<string, unknown> {
+  return withCacheControl({ type: "text", text: part.text }, part.cacheMarker, quirks);
+}
+
+/**
+ * Writes the client's cache marker as `cache_control` when the Provider keeps
+ * markers (spec "Cache behavior"); otherwise it is dropped. Alibaba Model
+ * Studio documents only the `ephemeral` type with a fixed lifetime, so a
+ * client's TTL is not sent.
+ */
+function withCacheControl(
+  part: Record<string, unknown>,
+  marker: CacheMarker | undefined,
+  quirks: CatalogProviderQuirks,
+): Record<string, unknown> {
+  if (!marker || !quirks.acceptsCacheControl) {
+    return part;
+  }
+  return { ...part, cache_control: { type: "ephemeral" } };
 }
 
 function imageUrlOf(source: Extract<UserContentPart, { type: "image" }>["source"]): string {
@@ -128,7 +175,6 @@ function writeAssistantMessage(
   content: AssistantContentPart[],
   quirks: CatalogProviderQuirks,
 ): Record<string, unknown> {
-  const text = content.flatMap((part) => (part.type === "text" ? [part.text] : [])).join("");
   const reasoning = content
     .flatMap((part) => (part.type === "reasoning" ? [part.text] : []))
     .join("");
@@ -136,7 +182,7 @@ function writeAssistantMessage(
 
   const message: Record<string, unknown> = {
     role: "assistant",
-    content: text === "" ? null : text,
+    content: writeAssistantText(content, quirks),
   };
   if (mustCarryReasoning(quirks, toolCalls.length > 0)) {
     message.reasoning_content = reasoning === "" ? REASONING_PLACEHOLDER : reasoning;
@@ -149,6 +195,19 @@ function writeAssistantMessage(
     }));
   }
   return message;
+}
+
+/** Text parts are joined into one string, unless a cache marker the Provider keeps needs them as parts. */
+function writeAssistantText(
+  content: AssistantContentPart[],
+  quirks: CatalogProviderQuirks,
+): string | Record<string, unknown>[] | null {
+  const textParts = content.flatMap((part) => (part.type === "text" ? [part] : []));
+  if (keepsCacheMarkers(quirks, textParts)) {
+    return textParts.map((part) => writeTextPart(part, quirks));
+  }
+  const text = textParts.map((part) => part.text).join("");
+  return text === "" ? null : text;
 }
 
 function mustCarryReasoning(quirks: CatalogProviderQuirks, hasToolCalls: boolean): boolean {

@@ -45,7 +45,7 @@ The Catalog seeder never updates existing rows, so an install seeded before this
 - Implicit caching is always on for supported models; explicit caching is opt-in and the two are mutually exclusive per request.
 - Explicit: `"cache_control": {"type": "ephemeral"}` on content parts of system, user, assistant and tool messages (content must be an array). "A single request supports up to four cache markers." Minimum 1,024 tokens, TTL 5 minutes reset on a hit, 20-block lookback.
 - No `prompt_cache_key` or session id documented.
-- The openai-chat converter does not write `cache_control` yet, so `acceptsCacheControl` currently has no effect (follow-up).
+- With `acceptsCacheControl`, the openai-chat converter writes the client's cache markers as `cache_control: {"type": "ephemeral"}` on the marked content parts (a client TTL is dropped: only the fixed 5-minute lifetime is documented). Markers on tools are dropped.
 - Source: [Context cache](https://www.alibabacloud.com/help/en/model-studio/context-cache).
 
 ## Moonshot (Kimi API)
