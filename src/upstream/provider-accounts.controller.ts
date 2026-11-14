@@ -9,33 +9,37 @@ import {
   Patch,
   Post,
 } from "@nestjs/common";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "../auth/dashboard-controller.decorator.js";
-import {
-  type ListedProviderAccount,
-  type ProviderAccount,
-  ProviderAccountsService,
-} from "./provider-accounts.service.js";
+import { CreateProviderAccountCommand } from "./commands/impl/create-provider-account.command.js";
+import { DeleteProviderAccountCommand } from "./commands/impl/delete-provider-account.command.js";
+import { UpdateProviderAccountCommand } from "./commands/impl/update-provider-account.command.js";
+import type { ListedProviderAccount, ProviderAccount } from "./models/provider-account.js";
+import { ListProviderAccountsQuery } from "./queries/impl/list-provider-accounts.query.js";
 import {
   type NewProviderAccount,
   newProviderAccountSchema,
   type ProviderAccountChanges,
   providerAccountChangesSchema,
-} from "./upstream.schemas.js";
+} from "./schemas/upstream.schema.js";
 
 @DashboardController("provider-accounts")
 export class ProviderAccountsController {
-  constructor(private readonly providerAccounts: ProviderAccountsService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @Get()
   listProviderAccounts(): Promise<ListedProviderAccount[]> {
-    return this.providerAccounts.listProviderAccounts();
+    return this.queryBus.execute(new ListProviderAccountsQuery());
   }
 
   @Post()
   createProviderAccount(
     @Body({ schema: newProviderAccountSchema }) newAccount: NewProviderAccount,
   ): Promise<ProviderAccount> {
-    return this.providerAccounts.createProviderAccount(newAccount);
+    return this.commandBus.execute(new CreateProviderAccountCommand(newAccount));
   }
 
   /** Renames, reprioritises, enables or disables a Provider Account, or replaces its key. */
@@ -44,12 +48,12 @@ export class ProviderAccountsController {
     @Param("id", ParseUUIDPipe) providerAccountId: string,
     @Body({ schema: providerAccountChangesSchema }) changes: ProviderAccountChanges,
   ): Promise<ProviderAccount> {
-    return this.providerAccounts.updateProviderAccount(providerAccountId, changes);
+    return this.commandBus.execute(new UpdateProviderAccountCommand(providerAccountId, changes));
   }
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteProviderAccount(@Param("id", ParseUUIDPipe) providerAccountId: string): Promise<void> {
-    return this.providerAccounts.deleteProviderAccount(providerAccountId);
+    return this.commandBus.execute(new DeleteProviderAccountCommand(providerAccountId));
   }
 }
