@@ -1,29 +1,31 @@
 import { Get, Query } from "@nestjs/common";
+import { QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "../auth/dashboard-controller.decorator.js";
-import type { UsageLogPage, UsageTotals } from "./usage.js";
+import type { UsageLogPage, UsageTotals } from "./models/usage.js";
+import { ListUsageLogsQuery } from "./queries/impl/list-usage-logs.query.js";
+import { TotalUsageQuery } from "./queries/impl/total-usage.query.js";
 import {
   type UsageFilter,
   usageFilterSchema,
   type UsagePageQuery,
   usagePageQuerySchema,
-} from "./usage.schemas.js";
-import { UsageService } from "./usage.service.js";
+} from "./schemas/usage.schema.js";
 
 /** The Usage page: Usage Logs and their totals, filtered. Only a User's session gets in. */
 @DashboardController("usage")
 export class UsageController {
-  constructor(private readonly usage: UsageService) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @Get()
   listUsageLogs(
     @Query({ schema: usagePageQuerySchema }) query: UsagePageQuery,
   ): Promise<UsageLogPage> {
-    return this.usage.listUsageLogs(query);
+    return this.queryBus.execute(new ListUsageLogsQuery(query));
   }
 
   /** Totals by Model and by API Key over the same filters as the list. */
   @Get("totals")
   totalUsage(@Query({ schema: usageFilterSchema }) filter: UsageFilter): Promise<UsageTotals> {
-    return this.usage.totalUsage(filter);
+    return this.queryBus.execute(new TotalUsageQuery(filter));
   }
 }

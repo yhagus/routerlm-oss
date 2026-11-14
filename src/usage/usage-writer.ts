@@ -14,8 +14,8 @@ import {
   usageLogs,
   users,
 } from "../db/schema.js";
-import type { ErrorCaptureRecord, UsageCaller, UsageJob } from "./usage-job.js";
-import { usageMeasurementsOf } from "./usage-measurements.js";
+import type { ErrorCaptureRecord, UsageCaller, UsageJob } from "./models/usage-job.js";
+import { usageMeasurementsOf } from "./models/usage-measurements.js";
 
 type TableWithId = PgTable & { id: AnyPgColumn };
 

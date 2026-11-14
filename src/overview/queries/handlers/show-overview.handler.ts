@@ -1,16 +1,16 @@
-import { Injectable } from "@nestjs/common";
+import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, count, gte, lt, type SQL, sql } from "drizzle-orm";
-import type { Database } from "../db/relations.js";
-import { usageLogs } from "../db/schema.js";
-import { statusCondition } from "../usage/usage.service.js";
+import type { Database } from "../../../db/relations.js";
+import { usageLogs } from "../../../db/schema.js";
+import { statusCondition } from "../../../usage/models/usage-filters.js";
 import {
   OVERVIEW_BUCKETS,
   type Overview,
   type OverviewBucket,
-  type OverviewRange,
   type OverviewStats,
-} from "./overview.js";
+} from "../../models/overview.js";
+import { ShowOverviewQuery } from "../impl/show-overview.query.js";
 
 const MS_PER_SECOND = 1000;
 
@@ -25,11 +25,11 @@ const EMPTY_STATS: OverviewStats = {
  * Aggregates Usage Logs over time for the Overview. Bucketing and every sum
  * and rate run in SQL; only the empty buckets are filled in here.
  */
-@Injectable()
-export class OverviewService {
+@QueryHandler(ShowOverviewQuery)
+export class ShowOverviewHandler implements IQueryHandler<ShowOverviewQuery> {
   constructor(@InjectDrizzle() private readonly db: Database) {}
 
-  async overviewOf(range: OverviewRange): Promise<Overview> {
+  async execute({ range }: ShowOverviewQuery): Promise<Overview> {
     const { bucketSeconds, bucketCount } = OVERVIEW_BUCKETS[range];
     const bucketMs = bucketSeconds * MS_PER_SECOND;
     const endMs = Math.floor(Date.now() / bucketMs) * bucketMs + bucketMs;

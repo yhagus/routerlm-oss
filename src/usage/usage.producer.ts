@@ -3,7 +3,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import type { Queue } from "bullmq";
 import { addJobOrLog } from "../queue/add-job-or-log.js";
 import { USAGE_QUEUE } from "../queue/queue-names.js";
-import { RECORD_USAGE_JOB, type UsageJob } from "./usage-job.js";
+import { RECORD_USAGE_JOB, type UsageJob } from "./models/usage-job.js";
 
 const WRITE_ATTEMPTS = 3;
 const FIRST_RETRY_DELAY_MS = 1_000;

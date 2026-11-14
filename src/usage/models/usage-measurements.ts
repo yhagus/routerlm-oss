@@ -1,4 +1,4 @@
-import type { TokenUsage } from "../inference/internal-format.js";
+import type { TokenUsage } from "../../inference/internal-format.js";
 import type { ServedBy, UpstreamModelPrices } from "./usage-job.js";
 
 /** The token counts, Cost and incomplete flag a Usage Log stores. */

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { UsageCaller } from "../usage/usage-job.js";
+import type { UsageCaller } from "../usage/models/usage-job.js";
 
 /**
  * Who a request is made for: a client's API Key, or a signed-in User in the

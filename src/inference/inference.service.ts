@@ -5,7 +5,7 @@ import { providerQuirksSchema } from "../catalog/catalog.schema.js";
 import type { SnapshotModel, SnapshotRoute } from "../snapshot/snapshot.js";
 import { SnapshotService } from "../snapshot/snapshot.service.js";
 import { CooldownStore } from "../upstream/cooldown-store.js";
-import type { UsageJob } from "../usage/usage-job.js";
+import type { UsageJob } from "../usage/models/usage-job.js";
 import { UsageProducer } from "../usage/usage.producer.js";
 import { ProviderAccountHealth } from "../upstream/provider-account-health.js";
 import { ProviderKeyCipher } from "../upstream/provider-key-cipher.js";

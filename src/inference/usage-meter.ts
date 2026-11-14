@@ -12,7 +12,7 @@ import type {
   ServedBy,
   UsageCaller,
   UsageJob,
-} from "../usage/usage-job.js";
+} from "../usage/models/usage-job.js";
 import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-failure.js";
 import type { GatewayError } from "./gateway-error.js";
 import type { TokenUsage } from "./internal-format.js";

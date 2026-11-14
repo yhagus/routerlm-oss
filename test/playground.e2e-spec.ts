@@ -6,7 +6,7 @@ import type { Database } from "../src/db/relations.js";
 import { upstreamModels } from "../src/db/schema.js";
 import { USAGE_QUEUE } from "../src/queue/queue-names.js";
 import { SnapshotService } from "../src/snapshot/snapshot.service.js";
-import type { UsageJob } from "../src/usage/usage-job.js";
+import type { UsageJob } from "../src/usage/models/usage-job.js";
 import { FakeUpstream, openAiChatFixture } from "./support/fake-upstream.js";
 import { insertOpenAiChatModel, UPSTREAM_MODEL_ID } from "./support/inference.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "./support/test-app.js";
