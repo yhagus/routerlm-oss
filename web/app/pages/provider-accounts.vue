@@ -34,6 +34,14 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
   timeStyle: "short",
 });
+const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "medium" });
+
+/** "until <time>" while the account is in Cooldown (as of the list's load), else null. */
+function cooldownNote(account: ProviderAccount): string | null {
+  if (!account.isEnabled || !account.cooldownEndsAt) return null;
+  const endsAt = new Date(account.cooldownEndsAt);
+  return endsAt.getTime() > Date.now() ? `until ${timeFormat.format(endsAt)}` : null;
+}
 
 const dialog = ref<ProviderAccountDialog | null>(null);
 const isDialogOpen = computed({
@@ -182,6 +190,10 @@ async function toggleAccount(account: ProviderAccount): Promise<void> {
               <span v-if="account.disabledReason" class="cell-note">{{
                 account.disabledReason
               }}</span>
+              <template v-if="cooldownNote(account)">
+                <span class="status-badge status-badge--warn">Cooldown</span>
+                <span class="cell-note tabular">{{ cooldownNote(account) }}</span>
+              </template>
             </td>
             <td>
               <template v-if="account.lastError">
