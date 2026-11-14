@@ -1,22 +1,26 @@
 import { randomUUID } from "node:crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/api-key.js";
-import type {
-  SnapshotModel,
-  SnapshotProviderAccount,
-  SnapshotRoute,
-} from "../snapshot/snapshot.js";
+import type { SnapshotModel, SnapshotRoute } from "../snapshot/snapshot.js";
 import { SnapshotService } from "../snapshot/snapshot.service.js";
+import { CooldownStore } from "../upstream/cooldown-store.js";
+import { ProviderAccountHealth } from "../upstream/provider-account-health.js";
 import { ProviderKeyCipher } from "../upstream/provider-key-cipher.js";
-import { AttemptFailedError, ClientCancelledError, gatewayErrorFor } from "./attempt-failure.js";
+import {
+  AttemptFailedError,
+  ClientCancelledError,
+  exhaustionError,
+  gatewayErrorFor,
+} from "./attempt-failure.js";
 import { GatewayError } from "./gateway-error.js";
 import type { InferenceRequest, InferenceStreamEvent } from "./internal-format.js";
-import type {
-  ClientProtocolConverter,
-  ResponseContext,
+import {
+  type ClientProtocolConverter,
+  type ResponseContext,
+  writeClientStream,
 } from "./protocols/client-protocol-converter.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "./protocols/converters.js";
-import { capableRoutes, firstUsableProviderAccount } from "./route-selection.js";
+import { type AttemptTarget, attemptTargets, capableRoutes } from "./route-selection.js";
 import { DEFAULT_TIMEOUTS, type UpstreamCall, UpstreamClient } from "./upstream-client.js";
 
 /** What the client gets back: a JSON body, or the text of an event stream. */
@@ -24,16 +28,14 @@ export type InferenceResult =
   | { kind: "response"; body: unknown }
   | { kind: "stream"; chunks: AsyncIterable<string> };
 
-/** The Route and Provider Account an Attempt goes to. */
-interface AttemptTarget {
-  route: SnapshotRoute;
-  providerAccount: SnapshotProviderAccount;
-}
+/** Spec "Fallback": at most this many upstream calls per client request. */
+export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
 /**
  * The inference path (spec "Inference path" steps 2 to 8) for any client
- * Protocol: parse, resolve the Model, select a Route and Provider Account,
- * call the upstream, translate back. Reads only the in-memory snapshot.
+ * Protocol: parse, resolve the Model, select the capable Routes, then make
+ * Attempts with Fallback until one answers, and translate back. Reads only
+ * the in-memory snapshot and the Cooldown state in Redis.
  */
 @Injectable()
 export class InferenceService {
@@ -43,6 +45,8 @@ export class InferenceService {
     private readonly snapshot: SnapshotService,
     private readonly cipher: ProviderKeyCipher,
     private readonly upstream: UpstreamClient,
+    private readonly cooldowns: CooldownStore,
+    private readonly providerAccountHealth: ProviderAccountHealth,
   ) {}
 
   async infer(
@@ -53,28 +57,46 @@ export class InferenceService {
   ): Promise<InferenceResult> {
     const request = converter.parseRequest(body);
     const model = this.resolveModel(request.model, principal);
-    const target = this.selectAttemptTarget(model, request);
-    // Parameter Policy (#17) applies here, once the Route (and its override) is known.
-    const call = this.upstreamCallFor(request, target, clientSignal);
+    const routes = capableRoutes(model, request);
+    if (routes.length === 0) {
+      throw new GatewayError(
+        "no_capable_route",
+        `No Route of the Model "${model.name}" supports what this request needs`,
+      );
+    }
     const context: ResponseContext = {
       requestId: randomUUID().replaceAll("-", ""),
       modelName: model.name,
       createdAt: new Date(),
     };
 
-    try {
-      if (!request.stream) {
-        const response = await this.upstream.complete(call);
-        return { kind: "response", body: converter.writeResponse(response, request, context) };
+    // Accounts in Cooldown when the request arrived, plus the ones that fail during it.
+    const skippedAccountIds = new Set(
+      (await this.cooldowns.cooldownEnds(providerAccountIdsOf(routes))).keys(),
+    );
+    const failures: AttemptFailedError[] = [];
+    const targets = attemptTargets(routes, (account) => skippedAccountIds.has(account.id));
+    for (const target of targets) {
+      if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
+        break;
       }
-      const events = await this.upstream.openStream(call);
-      return {
-        kind: "stream",
-        chunks: converter.writeStream(this.reportingFailures(events, target), request, context),
-      };
-    } catch (error) {
-      throw this.clientErrorFor(error, target);
+      // Parameter Policy (#17) applies here, per Route (the Route's override is known now).
+      try {
+        return await this.attempt(converter, request, context, target, clientSignal);
+      } catch (error) {
+        if (!(error instanceof AttemptFailedError)) {
+          throw error;
+        }
+        failures.push(error);
+        skippedAccountIds.add(target.providerAccount.id);
+        await this.afterFailedAttempt(error, target);
+        if (error.reason === "bad_request") {
+          // The request itself is bad: another Provider Account would refuse it too.
+          throw gatewayErrorFor(error);
+        }
+      }
     }
+    throw exhaustionError(failures);
   }
 
   /** The Model the request names, if this API Key may use it (spec step 3). */
@@ -89,22 +111,32 @@ export class InferenceService {
     return model;
   }
 
-  /** The first capable Route that has a usable Provider Account (no Fallback yet: #12). */
-  private selectAttemptTarget(model: SnapshotModel, request: InferenceRequest): AttemptTarget {
-    const routes = capableRoutes(model, request);
-    if (routes.length === 0) {
-      throw new GatewayError(
-        "no_capable_route",
-        `No Route of the Model "${model.name}" supports what this request needs`,
-      );
+  /**
+   * One Attempt. Throws AttemptFailedError while Fallback is still possible:
+   * for a stream, until its first event has arrived.
+   */
+  private async attempt(
+    converter: ClientProtocolConverter,
+    request: InferenceRequest,
+    context: ResponseContext,
+    target: AttemptTarget,
+    clientSignal: AbortSignal,
+  ): Promise<InferenceResult> {
+    const call = this.upstreamCallFor(request, target, clientSignal);
+    if (!request.stream) {
+      const response = await this.upstream.complete(call);
+      return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
-    for (const route of routes) {
-      const providerAccount = firstUsableProviderAccount(route);
-      if (providerAccount) {
-        return { route, providerAccount };
-      }
-    }
-    throw new GatewayError("upstream_error", "No upstream is available for this Model");
+    const events = await this.upstream.openStream(call);
+    return {
+      kind: "stream",
+      chunks: writeClientStream(
+        converter,
+        this.reportingFailures(events, target),
+        request,
+        context,
+      ),
+    };
   }
 
   private upstreamCallFor(
@@ -141,7 +173,11 @@ export class InferenceService {
     };
   }
 
-  /** Turns a failure after the first chunk into a GatewayError the client converter can write. */
+  /**
+   * A failure after the first chunk reached the client gets no Fallback
+   * (spec "Fallback"): it becomes a GatewayError, which `writeClientStream`
+   * writes as the client Protocol's error event.
+   */
   private async *reportingFailures(
     events: AsyncIterable<InferenceStreamEvent>,
     target: AttemptTarget,
@@ -152,19 +188,54 @@ export class InferenceService {
       if (error instanceof ClientCancelledError) {
         return;
       }
-      throw this.clientErrorFor(error, target);
+      if (!(error instanceof AttemptFailedError)) {
+        throw error;
+      }
+      await this.afterFailedAttempt(error, target);
+      throw gatewayErrorFor(error);
     }
   }
 
-  private clientErrorFor(error: unknown, { route, providerAccount }: AttemptTarget): unknown {
-    if (!(error instanceof AttemptFailedError)) {
-      return error;
-    }
-    // Upstream error text stays in this log line (and later Error Captures), never in the reply.
+  /**
+   * What a failed Attempt does to its Provider Account (spec "Fallback"):
+   * 401/403 disable it until an operator re-enables it; rate limits, 5xx,
+   * timeouts and connection errors put it in Cooldown; a bad request says
+   * nothing about the account. The database writes are not awaited.
+   */
+  private async afterFailedAttempt(
+    failure: AttemptFailedError,
+    { route, providerAccount }: AttemptTarget,
+  ): Promise<void> {
+    // Upstream error text stays in this log line and the dashboard, never in the reply.
     this.logger.warn(
-      `Attempt failed (${error.reason}, status ${error.upstreamStatus ?? "none"}) ` +
-        `on Route ${route.id}, Provider Account ${providerAccount.id}: ${error.message}`,
+      `Attempt failed (${failure.reason}, status ${failure.upstreamStatus ?? "none"}) ` +
+        `on Route ${route.id}, Provider Account ${providerAccount.id}: ${failure.message}`,
     );
-    return gatewayErrorFor(error);
+    const lastError = `${failure.reason}: ${failure.message}`;
+    switch (failure.reason) {
+      case "bad_request":
+        return;
+      case "unauthorized":
+        void this.providerAccountHealth.disable(
+          providerAccount.id,
+          `The upstream refused this key (HTTP ${failure.upstreamStatus ?? "unknown"})`,
+          lastError,
+        );
+        return;
+      case "rate_limited":
+      case "server_error":
+      case "timeout":
+      case "connection_error":
+      case "stream_interrupted":
+        void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
+        await this.cooldowns.startCooldown(providerAccount.id, failure.retryAfter);
+        return;
+    }
   }
+}
+
+function providerAccountIdsOf(routes: SnapshotRoute[]): string[] {
+  return routes.flatMap((route) =>
+    route.upstreamModel.provider.providerAccounts.map((account) => account.id),
+  );
 }

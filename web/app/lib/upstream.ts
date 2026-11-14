@@ -61,6 +61,8 @@ export interface ProviderAccount {
   isEnabled: boolean;
   /** Why the gateway disabled it, such as an upstream 401. */
   disabledReason: string | null;
+  /** When its Cooldown ends; null when it is not in one. Only the list carries it. */
+  cooldownEndsAt: string | null;
   lastError: string | null;
   lastErrorAt: string | null;
   createdAt: string;

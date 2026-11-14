@@ -5,6 +5,7 @@ import type {
   InferenceResponse,
   InferenceStreamEvent,
 } from "../../internal-format.js";
+import { writeClientStream } from "../client-protocol-converter.js";
 import { openAiChatClientConverter } from "./openai-chat-client-converter.js";
 
 function fixture(name: string): string {
@@ -205,7 +206,7 @@ describe("openAiChatClientConverter", () => {
     const request = { ...PARSED_MINIMAL_REQUEST, stream: { includeUsage: false } };
 
     const written = await textOf(
-      openAiChatClientConverter.writeStream(failing(), request, CONTEXT),
+      writeClientStream(openAiChatClientConverter, failing(), request, CONTEXT),
     );
 
     expect(written).toContain('"content":"Hel"');

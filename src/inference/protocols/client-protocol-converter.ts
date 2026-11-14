@@ -1,5 +1,5 @@
 import type { ClientProtocol } from "../../db/schema.js";
-import type { GatewayError } from "../gateway-error.js";
+import { GatewayError } from "../gateway-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
@@ -37,9 +37,9 @@ export interface ClientProtocolConverter {
   ): unknown;
 
   /**
-   * The bytes of a streaming response, as server-sent-event text. If `events`
-   * throws a GatewayError midway, the stream ends with the Protocol's error event
-   * instead of rethrowing (the HTTP status is already sent).
+   * The bytes of a streaming response, as server-sent-event text. Errors from
+   * `events` propagate: `writeClientStream` turns a GatewayError into the
+   * Protocol's error event with `writeStreamError`.
    */
   writeStream(
     events: AsyncIterable<InferenceStreamEvent>,
@@ -49,4 +49,31 @@ export interface ClientProtocolConverter {
 
   /** The JSON body of an error response, in the Protocol's envelope. */
   writeError(error: GatewayError): unknown;
+
+  /**
+   * The last server-sent-event text of a stream that failed after its first
+   * chunk reached the client (spec "Fallback": no Fallback then, the HTTP
+   * status is already sent). Nothing follows it, so no end marker either.
+   */
+  writeStreamError(error: GatewayError): string;
+}
+
+/**
+ * A streaming response in the client Protocol: `converter.writeStream`, ended
+ * by the Protocol's error event when `events` throws a GatewayError midway.
+ */
+export async function* writeClientStream(
+  converter: ClientProtocolConverter,
+  events: AsyncIterable<InferenceStreamEvent>,
+  request: InferenceRequest,
+  context: ResponseContext,
+): AsyncIterable<string> {
+  try {
+    yield* converter.writeStream(events, request, context);
+  } catch (error) {
+    if (!(error instanceof GatewayError)) {
+      throw error;
+    }
+    yield converter.writeStreamError(error);
+  }
 }

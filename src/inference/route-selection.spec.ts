@@ -1,7 +1,11 @@
 import type { Capability } from "../db/schema.js";
-import type { SnapshotModel, SnapshotRoute } from "../snapshot/snapshot.js";
+import type {
+  SnapshotModel,
+  SnapshotProviderAccount,
+  SnapshotRoute,
+} from "../snapshot/snapshot.js";
 import type { InferenceRequest } from "./internal-format.js";
-import { capableRoutes } from "./route-selection.js";
+import { attemptTargets, capableRoutes } from "./route-selection.js";
 
 const TEXT_REQUEST: InferenceRequest = {
   model: "smart",
@@ -17,6 +21,7 @@ function route(
   overrides: {
     isEnabled?: boolean;
     contextSize?: number;
+    providerAccounts?: SnapshotProviderAccount[];
   } = {},
 ): SnapshotRoute {
   return {
@@ -46,10 +51,14 @@ function route(
         authStyle: "bearer",
         quirks: {},
         isEnabled: true,
-        providerAccounts: [],
+        providerAccounts: overrides.providerAccounts ?? [],
       },
     },
   };
+}
+
+function account(id: string, isEnabled = true): SnapshotProviderAccount {
+  return { id, name: id, encryptedKey: "v1.x.y.z", priority: 0, isEnabled };
 }
 
 function modelWith(...routes: SnapshotRoute[]): SnapshotModel {
@@ -112,5 +121,34 @@ describe("capableRoutes", () => {
     const model = modelWith(route("small", [], { contextSize: 4_000 }), route("large", []));
 
     expect(capableRoutes(model, request).map((candidate) => candidate.id)).toEqual(["large"]);
+  });
+});
+
+describe("attemptTargets", () => {
+  const NOTHING_SKIPPED = (): boolean => false;
+
+  it("takes every healthy Provider Account of a Route, in priority order, before the next Route", () => {
+    const routes = [
+      route("first", [], { providerAccounts: [account("a"), account("b")] }),
+      route("second", [], { providerAccounts: [account("c")] }),
+    ];
+
+    const targets = [...attemptTargets(routes, NOTHING_SKIPPED)];
+
+    expect(
+      targets.map(({ route, providerAccount }) => `${route.id}/${providerAccount.id}`),
+    ).toEqual(["first/a", "first/b", "second/c"]);
+  });
+
+  it("skips disabled Provider Accounts and the ones the caller skips, such as those in Cooldown", () => {
+    const routes = [
+      route("only", [], {
+        providerAccounts: [account("off", false), account("cooling"), account("healthy")],
+      }),
+    ];
+
+    const targets = [...attemptTargets(routes, (candidate) => candidate.id === "cooling")];
+
+    expect(targets.map(({ providerAccount }) => providerAccount.id)).toEqual(["healthy"]);
   });
 });

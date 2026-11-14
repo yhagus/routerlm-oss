@@ -17,13 +17,24 @@ export type NewModel = z.infer<typeof newModelSchema>;
 export const modelChangesSchema = modelFieldsSchema.partial().refine(hasAnyField, nothingToChange);
 export type ModelChanges = z.infer<typeof modelChangesSchema>;
 
+// Null means the gateway default (spec "Fallback": 10 s, 60 s, 10 min).
+const routeTimeoutMsSchema = z.int().positive().nullable();
+
 const routeFieldsSchema = z.strictObject({
   upstreamModelId: z.uuid(),
   isEnabled: z.boolean(),
+  connectTimeoutMs: routeTimeoutMsSchema,
+  firstTokenTimeoutMs: routeTimeoutMsSchema,
+  totalTimeoutMs: routeTimeoutMsSchema,
 });
 
 /** A new Route goes last; reorder to move it. */
-export const newRouteSchema = routeFieldsSchema.extend({ isEnabled: z.boolean().optional() });
+export const newRouteSchema = routeFieldsSchema.extend({
+  isEnabled: z.boolean().optional(),
+  connectTimeoutMs: routeTimeoutMsSchema.optional(),
+  firstTokenTimeoutMs: routeTimeoutMsSchema.optional(),
+  totalTimeoutMs: routeTimeoutMsSchema.optional(),
+});
 export type NewRoute = z.infer<typeof newRouteSchema>;
 
 export const routeChangesSchema = routeFieldsSchema.partial().refine(hasAnyField, nothingToChange);

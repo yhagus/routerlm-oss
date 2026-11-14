@@ -23,13 +23,21 @@ export const ALL_CAPABILITIES: Capability[] = ["vision", "tools", "reasoning", "
 export interface InsertedModel {
   modelId: string;
   routeId: string;
+  providerId: string;
+  providerAccountId: string;
 }
 
-export interface ModelOptions {
+/** A Route's timeout overrides, so tests need not wait out the defaults. */
+export interface RouteTimeouts {
+  connectTimeoutMs?: number;
+  firstTokenTimeoutMs?: number;
+  totalTimeoutMs?: number;
+}
+
+export interface ModelOptions extends RouteTimeouts {
   modelName: string;
   baseUrl: string;
   capabilities?: Capability[];
-  totalTimeoutMs?: number;
 }
 
 /**
@@ -60,22 +68,74 @@ async function insertModel(
   speaks: { protocol: UpstreamProtocol; authStyle: AuthStyle },
   options: ModelOptions,
 ): Promise<InsertedModel> {
+  const [model] = await db
+    .insert(models)
+    .values({ name: options.modelName })
+    .returning({ id: models.id });
+  const route = await insertRoute(db, app.get(ProviderKeyCipher), model.id, speaks, {
+    ...options,
+    providerSlug: `acme-${options.modelName}`,
+    priority: 0,
+  });
+  await app.get(SnapshotService).changed();
+  return { modelId: model.id, ...route };
+}
+
+export interface RouteOptions extends RouteTimeouts {
+  baseUrl: string;
+  /** Unique per Provider. */
+  providerSlug: string;
+  priority: number;
+  capabilities?: Capability[];
+}
+
+/**
+ * Adds a Route to an openai-chat Provider of its own (one Provider Account
+ * with UPSTREAM_KEY) behind an existing Model, then refreshes the snapshot.
+ */
+export async function addOpenAiChatRoute(
+  app: NestNodeApplication,
+  db: Database,
+  modelId: string,
+  options: RouteOptions,
+): Promise<Omit<InsertedModel, "modelId">> {
+  const route = await insertRoute(
+    db,
+    app.get(ProviderKeyCipher),
+    modelId,
+    { protocol: "openai-chat", authStyle: "bearer" },
+    options,
+  );
+  await app.get(SnapshotService).changed();
+  return route;
+}
+
+async function insertRoute(
+  db: Database,
+  cipher: ProviderKeyCipher,
+  modelId: string,
+  speaks: { protocol: UpstreamProtocol; authStyle: AuthStyle },
+  options: RouteOptions,
+): Promise<Omit<InsertedModel, "modelId">> {
   const [provider] = await db
     .insert(providers)
     .values({
-      slug: `acme-${options.modelName}`,
+      slug: options.providerSlug,
       name: "Acme",
       protocol: speaks.protocol,
       baseUrl: options.baseUrl,
       authStyle: speaks.authStyle,
     })
     .returning({ id: providers.id });
-  await db.insert(providerAccounts).values({
-    providerId: provider.id,
-    name: "main",
-    encryptedKey: app.get(ProviderKeyCipher).encrypt(UPSTREAM_KEY),
-    keyLastFour: UPSTREAM_KEY.slice(-4),
-  });
+  const [providerAccount] = await db
+    .insert(providerAccounts)
+    .values({
+      providerId: provider.id,
+      name: "main",
+      encryptedKey: cipher.encrypt(UPSTREAM_KEY),
+      keyLastFour: UPSTREAM_KEY.slice(-4),
+    })
+    .returning({ id: providerAccounts.id });
   const [upstreamModel] = await db
     .insert(upstreamModels)
     .values({
@@ -85,20 +145,42 @@ async function insertModel(
       contextSize: 128_000,
     })
     .returning({ id: upstreamModels.id });
-  const [model] = await db
-    .insert(models)
-    .values({ name: options.modelName })
-    .returning({ id: models.id });
   const [route] = await db
     .insert(routes)
     .values({
-      modelId: model.id,
+      modelId,
       upstreamModelId: upstreamModel.id,
+      priority: options.priority,
+      connectTimeoutMs: options.connectTimeoutMs,
+      firstTokenTimeoutMs: options.firstTokenTimeoutMs,
       totalTimeoutMs: options.totalTimeoutMs,
     })
     .returning({ id: routes.id });
+  return { routeId: route.id, providerId: provider.id, providerAccountId: providerAccount.id };
+}
+
+/**
+ * Adds a Provider Account with its own `key` to a Provider, then refreshes
+ * the snapshot. Returns its id.
+ */
+export async function addProviderAccount(
+  app: NestNodeApplication,
+  db: Database,
+  providerId: string,
+  options: { key: string; priority: number },
+): Promise<string> {
+  const [providerAccount] = await db
+    .insert(providerAccounts)
+    .values({
+      providerId,
+      name: `account ${options.priority}`,
+      encryptedKey: app.get(ProviderKeyCipher).encrypt(options.key),
+      keyLastFour: options.key.slice(-4),
+      priority: options.priority,
+    })
+    .returning({ id: providerAccounts.id });
   await app.get(SnapshotService).changed();
-  return { modelId: model.id, routeId: route.id };
+  return providerAccount.id;
 }
 
 /** Issues an API Key (restricted to `allowedModelIds` when given) and returns it whole. */
