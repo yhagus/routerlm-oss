@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ErrorCapturesController } from "./error-captures.controller.js";
-import { ErrorCapturesService } from "./error-captures.service.js";
+import { QueryHandlers } from "./queries/handlers/index.js";
 
 /**
  * The backend's side of Error Captures: the dashboard's read API. The worker
@@ -8,6 +8,6 @@ import { ErrorCapturesService } from "./error-captures.service.js";
  */
 @Module({
   controllers: [ErrorCapturesController],
-  providers: [ErrorCapturesService],
+  providers: [...QueryHandlers],
 })
 export class ErrorCapturesModule {}
