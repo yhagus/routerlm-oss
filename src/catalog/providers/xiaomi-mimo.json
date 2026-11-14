@@ -1,0 +1,14 @@
+{
+  "slug": "xiaomi-mimo",
+  "name": "Xiaomi MiMo",
+  "protocol": "openai-chat",
+  "baseUrl": "https://api.xiaomimimo.com/v1",
+  "authStyle": "bearer",
+  "quirks": {},
+  "source": {
+    "urls": ["https://mimo.mi.com/models/en-US/mimo-v2.5"],
+    "retrievedOn": "2026-11-15"
+  },
+  "notes": "Xiaomi's docs and pricing pages (platform.xiaomimimo.com, mimo.mi.com/docs, mimo.mi.com/docs/pricing) are client-rendered and could not be read. The base URL comes from the search index of Xiaomi's own model page. Model ids, context sizes and prices could not be sourced, so no Upstream Models ship; operators add them from the dashboard.",
+  "upstreamModels": []
+}

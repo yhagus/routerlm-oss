@@ -1,0 +1,92 @@
+{
+  "slug": "alibaba-model-studio-intl",
+  "name": "Alibaba Model Studio (international)",
+  "protocol": "openai-chat",
+  "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  "authStyle": "bearer",
+  "quirks": {
+    "acceptsCacheControl": true
+  },
+  "source": {
+    "urls": [
+      "https://www.alibabacloud.com/help/en/model-studio/compatibility-of-openai-with-dashscope",
+      "https://www.alibabacloud.com/help/en/model-studio/context-cache"
+    ],
+    "retrievedOn": "2026-11-15"
+  },
+  "notes": "Singapore deployment. The compatibility page now recommends a per-workspace host (https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1) and lists dashscope-intl as the domain to migrate from; operators can change baseUrl to their workspace host. Explicit cache takes cache_control markers on OpenAI-compatible messages; its USD prices are published only as ratios of the input price, so cache prices are empty. Prices are the lowest input-length tier. Models without a published context window (qwen3.8-max, qwen3.7-plus, qwen3.5-plus, qwen3.8-flash) are left out.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "qwen-plus",
+      "capabilities": ["reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.4,
+      "outputPrice": 1.2,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/qwen-plus",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "outputPrice is non-thinking; thinking output is 4. Inputs over 256K: input 1.2, output 3.6 (thinking 12). The model page marks function calling unsupported in Singapore, although the compatibility page names qwen-plus for tools."
+    },
+    {
+      "upstreamModelId": "qwen-flash",
+      "capabilities": ["reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.05,
+      "outputPrice": 0.4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/qwen-flash",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Inputs over 256K: input 0.25, output 2. Function calling is supported in Beijing only."
+    },
+    {
+      "upstreamModelId": "qwen3-vl-plus",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.2,
+      "outputPrice": 1.6,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/qwen3-vl-plus",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Prices are the up-to-32K tier; 32K-128K: 0.3/2.4; 128K-256K: 0.6/4.8. Function calling unsupported in Singapore."
+    },
+    {
+      "upstreamModelId": "qwen3-coder-flash",
+      "capabilities": [],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.3,
+      "outputPrice": 1.5,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/qwen3-coder-flash",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Prices are the up-to-32K tier; 32K-128K: 0.5/2.5; 128K-256K: 0.8/4; 256K-1M: 1.6/9.6. The model page marks function calling unsupported in Singapore, although the qwen-coder guide shows a tool call example."
+    }
+  ]
+}

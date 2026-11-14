@@ -1,0 +1,54 @@
+{
+  "slug": "minimax",
+  "name": "MiniMax",
+  "protocol": "anthropic-messages",
+  "baseUrl": "https://api.minimax.io/anthropic",
+  "authStyle": "bearer",
+  "quirks": {},
+  "source": {
+    "urls": [
+      "https://platform.minimax.io/docs/guides/text-generation",
+      "https://platform.minimax.io/docs/api-reference/text-anthropic-api"
+    ],
+    "retrievedOn": "2026-11-15"
+  },
+  "notes": "The docs recommend the Anthropic-compatible API; the OpenAI-compatible one is at https://api.minimax.io/v1. Thinking blocks must be kept unchanged in later turns. Max output and cache write prices are not published; structured output is not mentioned.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "MiniMax-M3.1-Flash",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": null,
+      "inputPrice": 0.15,
+      "outputPrice": 0.6,
+      "cacheReadPrice": 0.015,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://platform.minimax.io/docs/guides/pricing",
+          "https://platform.minimax.io/docs/guides/text-generation"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Thinking cannot be disabled."
+    },
+    {
+      "upstreamModelId": "MiniMax-M3",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": null,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://platform.minimax.io/docs/guides/pricing",
+          "https://platform.minimax.io/docs/guides/text-generation"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Prices are the up-to-512K tier with the 'permanent 50% off' applied (list 0.60/2.40/0.12). Over 512K: 0.60/2.40/0.12."
+    }
+  ]
+}

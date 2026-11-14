@@ -75,6 +75,33 @@ $ docker compose exec backend bun run db:migrate
 `bun run db:push` syncs the schema without a migration (local prototyping only),
 and `bun run db:studio` opens Drizzle Studio.
 
+## Catalog
+
+The Catalog is the Providers and Upstream Models that ship with the gateway. It
+lives in `src/catalog/providers/`, one JSON file per Provider. After migrating,
+load it with:
+
+```bash
+$ docker compose exec backend bun run db:seed
+```
+
+The seeder only creates rows that are missing. It never changes a Provider or
+Upstream Model that already exists, so edits made in the dashboard survive, and
+it never creates Provider Accounts, Models or Routes. Running it again is safe.
+
+To update the Catalog, edit the Provider's file:
+
+- Take model ids, Capabilities, context sizes and prices (USD per million
+  tokens) from the Provider's own documentation and pricing pages.
+- Put those page URLs and the date you read them in the entry's `source`.
+- Use `null` for a value the Provider doesn't publish. Never estimate one.
+- The file shape and the allowed `quirks` keys are defined in
+  `src/catalog/catalog.schema.ts`. `bun run test` checks every file against it
+  and names the entry at fault.
+
+Because existing rows are never overwritten, a changed price reaches a database
+that was already seeded only when an operator edits it in the dashboard.
+
 ## Observability
 
 In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
