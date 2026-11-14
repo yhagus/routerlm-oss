@@ -366,24 +366,27 @@ function summaryFacts(summary: PlaygroundSummary): { label: string; value: strin
         <div class="form__grid">
           <label class="field">
             <span class="field__label">Temperature</span>
-            <input
+            <NumberInput
               v-model="temperature"
               class="text-input"
-              inputmode="decimal"
+              :min="0"
+              :max="2"
               placeholder="0 to 2"
             />
           </label>
           <label class="field">
             <span class="field__label">Top P</span>
-            <input v-model="topP" class="text-input" inputmode="decimal" placeholder="0 to 1" />
+            <NumberInput v-model="topP" class="text-input" :min="0" :max="1" placeholder="0 to 1" />
           </label>
           <label class="field">
             <span class="field__label">Max output tokens</span>
-            <input
+            <NumberInput
               v-model="maxOutputTokens"
               class="text-input"
-              inputmode="numeric"
-              placeholder="Whole number"
+              whole
+              tokens
+              :min="1"
+              placeholder="e.g. 4k"
             />
           </label>
           <div class="field">

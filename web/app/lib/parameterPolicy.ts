@@ -56,6 +56,20 @@ const NUMBER_RANGES = {
   maxOutputTokens: { min: 1, max: Number.MAX_SAFE_INTEGER, isWhole: true },
 } as const;
 
+/** The allowed range of a numeric parameter, or undefined for the others. */
+export function numberRange(
+  parameter: PolicyParameter,
+): { min: number; max: number; isWhole: boolean } | undefined {
+  switch (parameter) {
+    case "temperature":
+    case "topP":
+    case "maxOutputTokens":
+      return NUMBER_RANGES[parameter];
+    default:
+      return undefined;
+  }
+}
+
 export function formFromPolicy(policy: ParameterPolicy | null): PolicyForm {
   const rules = {
     defaults: rowFromValues(policy?.defaults),

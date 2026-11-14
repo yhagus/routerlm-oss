@@ -2,6 +2,7 @@
 import {
   formFromPolicy,
   isCappable,
+  numberRange,
   type ParameterPolicy,
   POLICY_PARAMETERS,
   policyFromForm,
@@ -77,12 +78,18 @@ function submit(): void {
                 rows="2"
                 :aria-label="`${label} ${parameter.label}`"
               />
-              <input
+              <NumberInput
                 v-else
                 v-model="form.rules[kind][parameter.name]"
                 class="text-input"
-                inputmode="decimal"
-                autocomplete="off"
+                :whole="numberRange(parameter.name)?.isWhole"
+                :tokens="parameter.name === 'maxOutputTokens'"
+                :min="numberRange(parameter.name)?.min"
+                :max="
+                  parameter.name === 'maxOutputTokens'
+                    ? undefined
+                    : numberRange(parameter.name)?.max
+                "
                 :aria-label="`${label} ${parameter.label}`"
               />
             </td>
