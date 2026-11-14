@@ -6,7 +6,6 @@ import type {
   InferenceResponse,
   InferenceStreamEvent,
 } from "../../internal-format.js";
-import { writeClientStream } from "../client-protocol-converter.js";
 import { anthropicMessagesClientConverter } from "./anthropic-messages-client-converter.js";
 
 function fixture(name: string): string {
