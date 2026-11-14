@@ -10,6 +10,7 @@ import { type Env, envSchema } from "./config/env.schema.js";
 import { relations } from "./db/relations.js";
 import { InferenceModule } from "./inference/inference.module.js";
 import { OverviewModule } from "./overview/overview.module.js";
+import { PlaygroundModule } from "./playground/playground.module.js";
 import { QueueModule } from "./queue/queue.module.js";
 import { RoutingModule } from "./routing/routing.module.js";
 import { UpstreamModule } from "./upstream/upstream.module.js";
@@ -34,6 +35,7 @@ import { UsageModule } from "./usage/usage.module.js";
     InferenceModule,
     UsageModule,
     OverviewModule,
+    PlaygroundModule,
   ],
   controllers: [AppController],
   // Validates every `@Body({ schema })`, `@Param({ schema })`… against its zod schema.

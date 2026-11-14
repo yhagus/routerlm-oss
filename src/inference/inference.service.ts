@@ -22,7 +22,7 @@ import {
 import { GatewayError } from "./gateway-error.js";
 import type { InferenceRequest, InferenceStreamEvent } from "./internal-format.js";
 import { applyParameterPolicy, effectiveParameterPolicy } from "./parameter-policy.js";
-import { promptCacheKey } from "./prompt-cache-key.js";
+import { type PromptCacheKeyOwner, promptCacheKey } from "./prompt-cache-key.js";
 import {
   type ClientProtocolConverter,
   type ResponseContext,
@@ -38,6 +38,17 @@ import type { ClientConnection } from "./client-connection.js";
 export type InferenceResult =
   | { kind: "response"; body: unknown }
   | { kind: "stream"; chunks: AsyncIterable<string> };
+
+/**
+ * Who sends an inference request: a client application with its API Key, or
+ * a signed-in User from the Playground, who may use every enabled Model.
+ */
+export type InferenceCaller =
+  | { kind: "api-key"; principal: ApiKeyPrincipal }
+  | { kind: "playground"; userId: string };
+
+/** Called with the usage job once the request has ended, however it ended. */
+export type UsageListener = (job: UsageJob) => void;
 
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
@@ -66,28 +77,35 @@ export class InferenceService {
     private readonly usage: UsageProducer,
   ) {}
 
-  /** Serves the request and enqueues its usage job once it is answered (spec step 9). */
+  /**
+   * Serves the request and enqueues its usage job once it is answered (spec
+   * step 9). `onUsage` sees the same job, for a caller that reports it back.
+   */
   async infer(
     converter: ClientProtocolConverter,
     body: unknown,
-    principal: ApiKeyPrincipal,
+    caller: InferenceCaller,
     client: ClientConnection,
+    onUsage: UsageListener = () => {},
   ): Promise<InferenceResult> {
-    const meter = new UsageMeter(
-      { kind: "api-key", apiKeyId: principal.apiKeyId },
-      converter.protocol,
-      client.requestBytes,
-    );
+    const meter = new UsageMeter(requestOwnerOf(caller), converter.protocol, client.requestBytes);
+    const record = (job: UsageJob): void => {
+      this.usage.enqueue(job);
+      onUsage(job);
+    };
     try {
-      const result = await this.serve(converter, body, principal, client.signal, meter);
+      const result = await this.serve(converter, body, caller, client.signal, meter);
       if (result.kind === "stream") {
-        return { kind: "stream", chunks: this.meteredStream(result.chunks, meter, client.signal) };
+        return {
+          kind: "stream",
+          chunks: meteredStream(result.chunks, meter, client.signal, record),
+        };
       }
       meter.responseWritten(JSON.stringify(result.body));
-      this.usage.enqueue(meter.finish(HTTP_OK, false));
+      record(meter.finish(HTTP_OK, false));
       return result;
     } catch (error) {
-      this.usage.enqueue(failedRequestUsage(meter, converter, error));
+      record(failedRequestUsage(meter, converter, error));
       throw error;
     }
   }
@@ -95,13 +113,13 @@ export class InferenceService {
   private async serve(
     converter: ClientProtocolConverter,
     body: unknown,
-    principal: ApiKeyPrincipal,
+    caller: InferenceCaller,
     clientSignal: AbortSignal,
     meter: UsageMeter,
   ): Promise<InferenceResult> {
     const clientRequest = converter.parseRequest(body);
     meter.requestParsed(clientRequest.stream !== null);
-    const model = this.resolveModel(clientRequest.model, principal);
+    const model = this.resolveModel(clientRequest.model, caller);
     meter.modelResolved(model.id);
     // Routes are selected under the Model's policy (spec step 4 before 5); a
     // Route override applies only to the Attempts on its own Route.
@@ -117,7 +135,7 @@ export class InferenceService {
       modelName: model.name,
       createdAt: new Date(),
     };
-    const cacheKey = promptCacheKey({ kind: "api-key", apiKeyId: principal.apiKeyId }, model.id);
+    const cacheKey = promptCacheKey(requestOwnerOf(caller), model.id);
 
     // Accounts in Cooldown when the request arrived, plus the ones that fail during it.
     const skippedAccountIds = new Set(
@@ -164,13 +182,13 @@ export class InferenceService {
     throw exhaustionError(failures);
   }
 
-  /** The Model the request names, if this API Key may use it (spec step 3). */
-  private resolveModel(name: string, principal: ApiKeyPrincipal): SnapshotModel {
+  /** The Model the request names, if the caller may use it (spec step 3). */
+  private resolveModel(name: string, caller: InferenceCaller): SnapshotModel {
     const model = this.snapshot.current.modelsByName.get(name);
     if (!model?.isEnabled) {
       throw new GatewayError("model_not_found", `The Model "${name}" does not exist`);
     }
-    if (!mayUseModel(principal, model.id)) {
+    if (caller.kind === "api-key" && !mayUseModel(caller.principal, model.id)) {
       throw new GatewayError("model_not_allowed", `This API Key may not use the Model "${name}"`);
     }
     return model;
@@ -279,23 +297,6 @@ export class InferenceService {
     }
   }
 
-  /** Counts the bytes sent and enqueues the usage job when the stream ends, however it ends. */
-  private async *meteredStream(
-    chunks: AsyncIterable<string>,
-    meter: UsageMeter,
-    clientSignal: AbortSignal,
-  ): AsyncIterable<string> {
-    try {
-      for await (const chunk of chunks) {
-        meter.responseWritten(chunk);
-        yield chunk;
-      }
-    } finally {
-      // The status went out with the first chunk; a later failure is an error event.
-      this.usage.enqueue(meter.finish(HTTP_OK, clientSignal.aborted));
-    }
-  }
-
   /**
    * What a failed Attempt does to its Provider Account (spec "Fallback"):
    * 401/403 disable it until an operator re-enables it; rate limits, 5xx,
@@ -331,6 +332,31 @@ export class InferenceService {
         await this.cooldowns.startCooldown(providerAccount.id, failure.retryAfter);
         return;
     }
+  }
+}
+
+/** The API Key or User a request is made for, as its Usage Log and prompt cache key name it. */
+function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
+  return caller.kind === "api-key"
+    ? { kind: "api-key", apiKeyId: caller.principal.apiKeyId }
+    : { kind: "playground", userId: caller.userId };
+}
+
+/** Counts the bytes sent and records the usage job when the stream ends, however it ends. */
+async function* meteredStream(
+  chunks: AsyncIterable<string>,
+  meter: UsageMeter,
+  clientSignal: AbortSignal,
+  record: (job: UsageJob) => void,
+): AsyncIterable<string> {
+  try {
+    for await (const chunk of chunks) {
+      meter.responseWritten(chunk);
+      yield chunk;
+    }
+  } finally {
+    // The status went out with the first chunk; a later failure is an error event.
+    record(meter.finish(HTTP_OK, clientSignal.aborted));
   }
 }
 

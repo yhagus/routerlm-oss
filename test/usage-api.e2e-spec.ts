@@ -2,7 +2,7 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "../src/db/relations.js";
-import { apiKeys, models, usageLogs } from "../src/db/schema.js";
+import { apiKeys, models, usageLogs, users } from "../src/db/schema.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "./support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
@@ -170,6 +170,21 @@ describe("Usage API (e2e)", () => {
     expect(response.body.byApiKey).toEqual([
       expect.objectContaining({ id: ciKeyId, name: "CI", requestCount: 2, cost: 0.25 }),
       expect.objectContaining({ id: laptopKeyId, name: "Laptop", requestCount: 1, cost: 0.25 }),
+    ]);
+  });
+
+  it("filters on Playground requests", async () => {
+    const [{ id: adaId }] = await db.select({ id: users.id }).from(users);
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, userId: adaId, isPlayground: true },
+    ]);
+
+    const response = await getUsage("?isPlayground=true").expect(200);
+
+    expect(response.body.items).toEqual([
+      expect.objectContaining({ isPlayground: true, apiKeyId: null }),
     ]);
   });
 

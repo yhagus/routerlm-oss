@@ -92,6 +92,7 @@ function whereFilter(filter: UsageFilter): SQL | undefined {
     filter.modelId === undefined ? undefined : eq(usageLogs.modelId, filter.modelId),
     filter.apiKeyId === undefined ? undefined : eq(usageLogs.apiKeyId, filter.apiKeyId),
     filter.status === undefined ? undefined : statusCondition(filter.status),
+    filter.isPlayground === undefined ? undefined : eq(usageLogs.isPlayground, filter.isPlayground),
   );
 }
 

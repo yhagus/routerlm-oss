@@ -18,6 +18,8 @@ export const usageFilterSchema = z.object({
   modelId: z.uuid().optional(),
   apiKeyId: z.uuid().optional(),
   status: z.enum(USAGE_STATUSES).optional(),
+  /** true: only the Playground's requests; false: only client applications'. */
+  isPlayground: z.stringbool().optional(),
 });
 export type UsageFilter = z.infer<typeof usageFilterSchema>;
 

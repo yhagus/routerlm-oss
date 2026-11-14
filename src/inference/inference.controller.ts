@@ -37,7 +37,7 @@ export class InferenceController {
     const result = await this.inference.infer(
       openAiChatClientConverter,
       body,
-      principal,
+      { kind: "api-key", principal },
       clientConnectionOf(request, response),
     );
     return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
@@ -54,7 +54,7 @@ export class InferenceController {
     const result = await this.inference.infer(
       anthropicMessagesClientConverter,
       body,
-      principal,
+      { kind: "api-key", principal },
       clientConnectionOf(request, response),
     );
     return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
@@ -71,7 +71,7 @@ export class InferenceController {
     const result = await this.inference.infer(
       openAiResponsesClientConverter,
       body,
-      principal,
+      { kind: "api-key", principal },
       clientConnectionOf(request, response),
     );
     return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
