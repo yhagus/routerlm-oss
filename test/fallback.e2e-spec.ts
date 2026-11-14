@@ -200,6 +200,23 @@ describe("Fallback (e2e)", () => {
     },
   );
 
+  it.each<[string, FakeReply, number, string]>([
+    ["rate limits", RATE_LIMITED, 429, "upstream_rate_limited"],
+    ["server errors", SERVER_ERROR, 502, "upstream_error"],
+  ])(
+    "answers without an Attempt when every Provider Account is in Cooldown after %s",
+    async (_cause, failure, status, code) => {
+      upstream.reply(failure);
+      upstream.reply(failure);
+      await chat().expect(status);
+
+      const response = await chat().expect(status);
+
+      expect(response.body.error.code).toBe(code);
+      expect(upstream.requests).toHaveLength(2);
+    },
+  );
+
   it("makes at most 5 Attempts per request", async () => {
     for (const priority of [2, 3, 4, 5]) {
       await addProviderAccount(app, db, providerId, { key: `${BACKUP_KEY}-${priority}`, priority });

@@ -63,12 +63,21 @@ export function gatewayErrorFor(failure: AttemptFailedError): GatewayError {
 /**
  * What the client is told when Fallback ran out of Attempts (spec "Error
  * contract"): 429 if every Attempt was rate limited, 504 if every one timed
- * out, otherwise 502. With no Attempt at all, nothing could be tried: 502.
+ * out, otherwise 502. With no Attempt at all, `cooldownCauses` decides: what
+ * put each enabled Provider Account of the capable Routes in Cooldown (null
+ * when one is not in Cooldown). 429 when they are all rate limited, else 502.
  */
-export function exhaustionError(failures: AttemptFailedError[]): GatewayError {
+export function exhaustionError(
+  failures: AttemptFailedError[],
+  cooldownCauses: (AttemptFailureReason | null)[],
+): GatewayError {
   const [firstFailure] = failures;
   if (!firstFailure) {
-    return new GatewayError("upstream_error", "No upstream is available for this Model");
+    const isEveryAccountRateLimited =
+      cooldownCauses.length > 0 && cooldownCauses.every((cause) => cause === "rate_limited");
+    return isEveryAccountRateLimited
+      ? new GatewayError(...FAILURE_MESSAGES.rate_limited)
+      : new GatewayError("upstream_error", "No upstream is available for this Model");
   }
   const failedTheSameWay = failures.every((failure) => failure.reason === firstFailure.reason);
   if (failedTheSameWay) {

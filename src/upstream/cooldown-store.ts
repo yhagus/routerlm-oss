@@ -7,6 +7,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { Redis } from "ioredis";
 import type { Env } from "../config/env.schema.js";
+import { ATTEMPT_FAILURE_REASONS, type AttemptFailureReason } from "../db/schema.js";
 import { cooldownDurationMs } from "./cooldown.js";
 
 const COOLDOWN_KEY_PREFIX = "routerlm:cooldown:";
@@ -17,6 +18,14 @@ const FAILURE_STREAK_MEMORY_MS = 10 * 60_000;
 // The inference path waits at most this long for Redis; past it, the
 // Cooldown state is treated as unknown rather than holding the request.
 const REDIS_COMMAND_TIMEOUT_MS = 250;
+const COOLDOWN_VALUE_SEPARATOR = ":";
+
+/** A Provider Account's Cooldown, and the Attempt failure that started it. */
+export interface Cooldown {
+  endsAt: Date;
+  /** Null when the stored value names no cause it knows. */
+  cause: AttemptFailureReason | null;
+}
 
 /**
  * Cooldown state, in Redis so every backend instance agrees on it (spec
@@ -57,7 +66,11 @@ export class CooldownStore implements OnApplicationBootstrap, OnApplicationShutd
    * Puts a Provider Account in Cooldown after a failed Attempt. Each failure
    * in a row lengthens it; the upstream's `Retry-After` can lengthen it more.
    */
-  async startCooldown(providerAccountId: string, retryAfter: string | null): Promise<void> {
+  async startCooldown(
+    providerAccountId: string,
+    cause: AttemptFailureReason,
+    retryAfter: string | null,
+  ): Promise<void> {
     try {
       const streakKey = FAILURE_STREAK_KEY_PREFIX + providerAccountId;
       const failureStreak = await this.redis.incr(streakKey);
@@ -66,7 +79,12 @@ export class CooldownStore implements OnApplicationBootstrap, OnApplicationShutd
       await this.redis
         .multi()
         .pexpire(streakKey, durationMs + FAILURE_STREAK_MEMORY_MS)
-        .set(COOLDOWN_KEY_PREFIX + providerAccountId, String(endsAt), "PX", durationMs)
+        .set(
+          COOLDOWN_KEY_PREFIX + providerAccountId,
+          `${endsAt}${COOLDOWN_VALUE_SEPARATOR}${cause}`,
+          "PX",
+          durationMs,
+        )
         .exec();
     } catch (error) {
       this.logger.warn(
@@ -75,25 +93,38 @@ export class CooldownStore implements OnApplicationBootstrap, OnApplicationShutd
     }
   }
 
-  /** When the Cooldown of each given Provider Account in Cooldown ends. Others are absent. */
-  async cooldownEnds(providerAccountIds: string[]): Promise<Map<string, Date>> {
-    const ends = new Map<string, Date>();
+  /** The Cooldown of each given Provider Account in Cooldown. Others are absent. */
+  async cooldowns(providerAccountIds: string[]): Promise<Map<string, Cooldown>> {
+    const cooldowns = new Map<string, Cooldown>();
     if (providerAccountIds.length === 0) {
-      return ends;
+      return cooldowns;
     }
     try {
       const values = await this.redis.mget(
         providerAccountIds.map((id) => COOLDOWN_KEY_PREFIX + id),
       );
       providerAccountIds.forEach((id, index) => {
-        const endsAt = values[index];
-        if (endsAt) {
-          ends.set(id, new Date(Number(endsAt)));
+        const value = values[index];
+        if (value) {
+          cooldowns.set(id, cooldownOf(value));
         }
       });
     } catch (error) {
       this.logger.warn(`Cooldown state unknown, treating none as cooling down: ${String(error)}`);
     }
-    return ends;
+    return cooldowns;
   }
+}
+
+/** Reads a stored `<end epoch ms>:<cause>` value. */
+function cooldownOf(value: string): Cooldown {
+  const [endsAt, cause] = value.split(COOLDOWN_VALUE_SEPARATOR);
+  return {
+    endsAt: new Date(Number(endsAt)),
+    cause: isAttemptFailureReason(cause) ? cause : null,
+  };
+}
+
+function isAttemptFailureReason(value: string | undefined): value is AttemptFailureReason {
+  return ATTEMPT_FAILURE_REASONS.some((reason) => reason === value);
 }

@@ -48,10 +48,10 @@ export class ProviderAccountsService {
       .select(providerAccountColumns)
       .from(providerAccounts)
       .orderBy(asc(providerAccounts.providerId), asc(providerAccounts.priority));
-    const cooldownEnds = await this.cooldowns.cooldownEnds(accounts.map((account) => account.id));
+    const cooldowns = await this.cooldowns.cooldowns(accounts.map((account) => account.id));
     return accounts.map((account) => ({
       ...account,
-      cooldownEndsAt: cooldownEnds.get(account.id) ?? null,
+      cooldownEndsAt: cooldowns.get(account.id)?.endsAt ?? null,
     }));
   }
 
