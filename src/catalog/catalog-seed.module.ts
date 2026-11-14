@@ -6,16 +6,17 @@ import { type Env, envSchema } from "../config/env.schema.js";
 import { relations } from "../db/relations.js";
 import { CatalogSeeder } from "./catalog-seeder.js";
 
-/**
- * What `db:seed` boots: config and the database, without the HTTP app, so
- * seeding needs nothing the API process needs (Redis, encryption keys...).
- */
+// Seeding needs only the database, so it doesn't demand REDIS_URL and the
+// other variables the API process validates.
+const seedEnvSchema = envSchema.pick({ DATABASE_URL: true });
+
+/** What `db:seed` boots: config and the database, without the HTTP app. */
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
+    ConfigModule.forRoot({ isGlobal: true, validationSchema: seedEnvSchema }),
     DrizzleModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => ({
+      useFactory: (config: ConfigService<Pick<Env, "DATABASE_URL">, true>) => ({
         drizzle,
         connection: config.get("DATABASE_URL", { infer: true }),
         relations,
