@@ -1,0 +1,281 @@
+<script setup lang="ts">
+import { Pencil, Plus, Power, Trash2 } from "@lucide/vue";
+import {
+  MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
+  optionalNumber,
+  type Provider,
+  type ProviderAccount,
+} from "~/lib/upstream";
+
+/** A Provider's accounts (API keys), with adding, editing, switching and deleting. */
+const props = defineProps<{
+  provider: Provider;
+  accounts: ProviderAccount[];
+  refresh: () => Promise<unknown>;
+}>();
+
+type ProviderAccountDialog =
+  | { kind: "create" }
+  | { kind: "edit"; account: ProviderAccount }
+  | { kind: "delete"; account: ProviderAccount };
+
+const { $dashboardApi } = useNuxtApp();
+
+const sortedAccounts = computed(() =>
+  [...props.accounts].sort(
+    (first, second) => first.priority - second.priority || first.name.localeCompare(second.name),
+  ),
+);
+
+const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "medium" });
+
+/** "until <time>" while the account is in Cooldown (as of the list's load), else null. */
+function cooldownNote(account: ProviderAccount): string | null {
+  if (!account.isEnabled || !account.cooldownEndsAt) return null;
+  const endsAt = new Date(account.cooldownEndsAt);
+  return endsAt.getTime() > Date.now() ? `until ${timeFormat.format(endsAt)}` : null;
+}
+
+const {
+  dialog,
+  isDialogOpen,
+  isSaving,
+  dialogError,
+  showDialog,
+  closeDialog,
+  submitDialog,
+  deleteRow,
+  toggleRow,
+} = useEditableList<ProviderAccountDialog>("/provider-accounts", props.refresh);
+
+interface ProviderAccountForm {
+  name: string;
+  key: string;
+  /** A number, or "" when the input is empty. */
+  priority: number | string;
+}
+
+const form = ref<ProviderAccountForm>({ name: "", key: "", priority: 0 });
+
+function openDialog(next: ProviderAccountDialog): void {
+  showDialog(next);
+  if (next.kind === "create") form.value = { name: "", key: "", priority: 0 };
+  if (next.kind === "edit") {
+    const { name, priority } = next.account;
+    form.value = { name, key: "", priority };
+  }
+}
+
+async function saveAccount(): Promise<void> {
+  const current = dialog.value;
+  if (!current || current.kind === "delete") return;
+  const fields = { name: form.value.name, priority: optionalNumber(form.value.priority) ?? 0 };
+  const failureMessage = "Couldn't save the Provider Account.";
+  if (current.kind === "create") {
+    await submitDialog(
+      async () => {
+        await $dashboardApi("/provider-accounts", {
+          method: "POST",
+          body: { providerId: props.provider.id, key: form.value.key, ...fields },
+        });
+        form.value.key = "";
+      },
+      `Added ${fields.name}`,
+      failureMessage,
+    );
+    return;
+  }
+  // An empty key field keeps the stored key.
+  const key = form.value.key === "" ? {} : { key: form.value.key };
+  await submitDialog(
+    async () => {
+      await $dashboardApi(`/provider-accounts/${current.account.id}`, {
+        method: "PATCH",
+        body: { ...fields, ...key },
+      });
+      form.value.key = "";
+    },
+    `Saved ${fields.name}`,
+    failureMessage,
+  );
+}
+
+function deleteAccount(account: ProviderAccount): Promise<void> {
+  return deleteRow(account, account.name, "Couldn't delete the Provider Account.");
+}
+
+function toggleAccount(account: ProviderAccount): Promise<void> {
+  return toggleRow(account, account.name);
+}
+</script>
+
+<template>
+  <section class="panel table-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Accounts</h2>
+        <p>The healthy account with the lowest priority number serves first.</p>
+      </div>
+      <div class="panel-heading__tools">
+        <button
+          class="button button--primary"
+          type="button"
+          @click="openDialog({ kind: 'create' })"
+        >
+          <Plus :size="14" /> Add Account
+        </button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table v-if="sortedAccounts.length" class="compact-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Key</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Last error</th>
+            <th><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="account in sortedAccounts" :key="account.id">
+            <td>
+              <strong>{{ account.name }}</strong>
+            </td>
+            <td class="tabular">…{{ account.keyLastFour }}</td>
+            <td class="tabular">{{ account.priority }}</td>
+            <td>
+              <span
+                v-if="cooldownNote(account)"
+                class="status-badge status-badge--warn"
+                :title="`Cooling down ${cooldownNote(account)}`"
+                >Cooling down</span
+              >
+              <span
+                v-else
+                class="status-badge"
+                :class="account.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+                >{{ account.isEnabled ? "Ready" : "Disabled" }}</span
+              >
+              <span v-if="cooldownNote(account)" class="cell-note tabular">{{
+                cooldownNote(account)
+              }}</span>
+              <span v-else-if="account.disabledReason" class="cell-note">{{
+                account.disabledReason
+              }}</span>
+            </td>
+            <td class="compact-table__wrap">
+              <template v-if="account.lastError">
+                {{ account.lastError }}
+                <span v-if="account.lastErrorAt" class="cell-note tabular">{{
+                  dateTimeFormat.format(new Date(account.lastErrorAt))
+                }}</span>
+              </template>
+              <template v-else>—</template>
+            </td>
+            <td>
+              <div class="row-actions provider-table__actions">
+                <button
+                  class="icon-action"
+                  type="button"
+                  :aria-label="`Edit ${account.name}`"
+                  title="Edit"
+                  @click="openDialog({ kind: 'edit', account })"
+                >
+                  <Pencil :size="14" />
+                </button>
+                <button
+                  class="icon-action"
+                  type="button"
+                  :aria-label="`${account.isEnabled ? 'Disable' : 'Enable'} ${account.name}`"
+                  :title="account.isEnabled ? 'Disable' : 'Enable'"
+                  @click="toggleAccount(account)"
+                >
+                  <Power :size="14" />
+                </button>
+                <button
+                  class="icon-action icon-action--danger"
+                  type="button"
+                  :aria-label="`Delete ${account.name}`"
+                  title="Delete"
+                  @click="openDialog({ kind: 'delete', account })"
+                >
+                  <Trash2 :size="14" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else class="empty-state">
+        <strong>No accounts yet.</strong
+        ><span>Add an API key for {{ provider.name }} so the gateway can call it.</span>
+      </div>
+    </div>
+  </section>
+
+  <AppDialog
+    v-if="dialog && dialog.kind !== 'delete'"
+    v-model:open="isDialogOpen"
+    :title="
+      dialog.kind === 'create' ? `Add ${provider.name} account` : `Edit ${dialog.account.name}`
+    "
+    description="The key is encrypted before it is stored. The dashboard only ever shows its last four characters."
+  >
+    <form class="form" autocomplete="off" @submit.prevent="saveAccount">
+      <label class="field"
+        ><span class="field__label">Name</span
+        ><input v-model="form.name" class="text-input" required
+      /></label>
+      <label class="field"
+        ><span class="field__label">{{
+          dialog.kind === "create" ? "API key" : "New API key (optional)"
+        }}</span
+        ><input
+          v-model="form.key"
+          class="text-input"
+          type="password"
+          autocomplete="off"
+          :minlength="MIN_PROVIDER_ACCOUNT_KEY_LENGTH"
+          :required="dialog.kind === 'create'"
+          :placeholder="dialog.kind === 'edit' ? `Keeps …${dialog.account.keyLastFour}` : ''"
+      /></label>
+      <label class="field"
+        ><span class="field__label">Priority (lower runs first)</span
+        ><NumberInput v-model="form.priority" class="text-input" whole :min="0"
+      /></label>
+      <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
+      <div class="dialog__actions">
+        <button class="button" type="button" @click="closeDialog">Cancel</button>
+        <button class="button button--primary" type="submit" :disabled="isSaving">
+          {{ dialog.kind === "create" ? "Add Account" : "Save" }}
+        </button>
+      </div>
+    </form>
+  </AppDialog>
+
+  <AppDialog
+    v-if="dialog?.kind === 'delete'"
+    v-model:open="isDialogOpen"
+    title="Delete Provider Account"
+    :description="`${dialog.account.name} and its stored key are deleted. Past Usage Logs keep their totals. This can't be undone.`"
+  >
+    <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
+    <div class="dialog__actions">
+      <button class="button" type="button" @click="closeDialog">Cancel</button>
+      <button
+        class="button button--danger"
+        type="button"
+        :disabled="isSaving"
+        @click="deleteAccount(dialog.account)"
+      >
+        Delete Account
+      </button>
+    </div>
+  </AppDialog>
+</template>

@@ -15,7 +15,9 @@ watch(
   () => (isMobileNavOpen.value = false),
 );
 
-const pageTitle = computed(() => findNavigationItem(route.path)?.label ?? "");
+/** The sidebar item the current page belongs to; detail pages like /providers/<id> count. */
+const activeItem = computed(() => findNavigationItem(route.path));
+const pageTitle = computed(() => activeItem.value?.label ?? "");
 const themeIcon = computed(() => {
   if (theme.preference.value === "dark") return Moon;
   if (theme.preference.value === "light") return Sun;
@@ -54,8 +56,10 @@ async function signOut(): Promise<void> {
             :key="item.path"
             :to="item.path"
             class="nav-item"
+            :class="{ 'nav-item--active': activeItem?.path === item.path }"
+            :aria-current="activeItem?.path === item.path ? 'page' : undefined"
             active-class=""
-            exact-active-class="nav-item--active"
+            exact-active-class=""
           >
             <component :is="item.icon" :size="17" :stroke-width="1.8" /><span>{{
               item.label

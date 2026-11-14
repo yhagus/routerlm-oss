@@ -8,7 +8,6 @@ import {
   Network,
   TriangleAlert,
   Users,
-  Wallet,
 } from "@lucide/vue";
 import type { Component } from "vue";
 
@@ -42,7 +41,6 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Upstream",
     items: [
       { label: "Providers", path: "/providers", icon: Network },
-      { label: "Provider Accounts", path: "/provider-accounts", icon: Wallet },
       { label: "Upstream Models", path: "/upstream-models", icon: Cpu },
     ],
   },

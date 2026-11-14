@@ -1,8 +1,8 @@
 ---
 version: 1
-slug: "app-pages-providers-vue"
-primary_target: "app/pages/providers.vue"
-related_targets: ["app/app.vue","app/pages/routing.vue","app/pages/usage.vue","app/pages/api-keys.vue"]
+slug: "app-pages-providers-index-vue"
+primary_target: "app/pages/providers/index.vue"
+related_targets: ["app/pages/providers/[id].vue","app/app.vue","app/pages/routing.vue","app/pages/usage.vue","app/pages/api-keys.vue"]
 ---
 
 # Provider Management

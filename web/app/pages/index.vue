@@ -134,16 +134,18 @@ const rangeLabel = computed(() => OVERVIEW_RANGES[range.value].toLowerCase());
     </header>
     <ol class="setup-steps">
       <li>
-        <NuxtLink to="/provider-accounts">Add a Provider Account</NuxtLink>
-        <span>with the upstream API key the gateway will call.</span>
+        <NuxtLink to="/providers">Add a Provider Account</NuxtLink>{{ " "
+        }}<span
+          >on a Provider's Accounts tab, with the upstream API key the gateway will call.</span
+        >
       </li>
       <li>
-        <NuxtLink to="/models">Create a Model</NuxtLink>
-        <span>that routes to one of that Provider's Upstream Models.</span>
+        <NuxtLink to="/models">Create a Model</NuxtLink>{{ " "
+        }}<span>that routes to one of that Provider's Upstream Models.</span>
       </li>
       <li>
-        <NuxtLink to="/api-keys">Create an API Key</NuxtLink>
-        <span>and send a request with it.</span>
+        <NuxtLink to="/api-keys">Create an API Key</NuxtLink>{{ " "
+        }}<span>and send a request with it.</span>
       </li>
     </ol>
   </section>
