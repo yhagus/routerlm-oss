@@ -4,6 +4,7 @@ import { anthropicMessagesUpstreamConverter } from "./anthropic-messages/anthrop
 import type { ClientProtocolConverter } from "./client-protocol-converter.js";
 import { openAiChatClientConverter } from "./openai-chat/openai-chat-client-converter.js";
 import { openAiChatUpstreamConverter } from "./openai-chat/openai-chat-upstream-converter.js";
+import { openAiResponsesClientConverter } from "./openai-responses/openai-responses-client-converter.js";
 import type { UpstreamProtocolConverter } from "./upstream-protocol-converter.js";
 
 // Adding a Protocol means writing its converter and adding it here (ADR 0002).
@@ -12,6 +13,7 @@ export const CLIENT_PROTOCOL_CONVERTERS: Partial<Record<ClientProtocol, ClientPr
   {
     "openai-chat": openAiChatClientConverter,
     "anthropic-messages": anthropicMessagesClientConverter,
+    "openai-responses": openAiResponsesClientConverter,
   };
 
 /** A Route whose Provider speaks a Protocol missing here can't be served and is skipped. */
