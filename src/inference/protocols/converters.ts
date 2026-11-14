@@ -1,4 +1,5 @@
 import type { AuthStyle, ClientProtocol, UpstreamProtocol } from "../../db/schema.js";
+import { anthropicMessagesClientConverter } from "./anthropic-messages/anthropic-messages-client-converter.js";
 import { anthropicMessagesUpstreamConverter } from "./anthropic-messages/anthropic-messages-upstream-converter.js";
 import type { ClientProtocolConverter } from "./client-protocol-converter.js";
 import { openAiChatClientConverter } from "./openai-chat/openai-chat-client-converter.js";
@@ -10,6 +11,7 @@ import type { UpstreamProtocolConverter } from "./upstream-protocol-converter.js
 export const CLIENT_PROTOCOL_CONVERTERS: Partial<Record<ClientProtocol, ClientProtocolConverter>> =
   {
     "openai-chat": openAiChatClientConverter,
+    "anthropic-messages": anthropicMessagesClientConverter,
   };
 
 /** A Route whose Provider speaks a Protocol missing here can't be served and is skipped. */

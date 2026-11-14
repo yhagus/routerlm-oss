@@ -1,0 +1,76 @@
+{
+  "model": "smart",
+  "max_tokens": 1024,
+  "system": [
+    { "type": "text", "text": "You are terse." },
+    { "type": "text", "text": "Answer in JSON.", "cache_control": { "type": "ephemeral" } }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        { "type": "text", "text": "Compare these two pictures." },
+        {
+          "type": "image",
+          "source": { "type": "base64", "media_type": "image/png", "data": "iVBORw0KGgo=" }
+        },
+        {
+          "type": "image",
+          "source": { "type": "url", "url": "https://images.example/cat.jpg" },
+          "cache_control": { "type": "ephemeral", "ttl": "1h" }
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "thinking",
+          "thinking": "Look up the weather first.",
+          "signature": "EqQBCgIYAhIM1gbcDa9GJwZA2b3h"
+        },
+        { "type": "redacted_thinking", "data": "EmwKAhgBEgy3va3pzix/LafPsn4a" },
+        { "type": "text", "text": "Checking." },
+        {
+          "type": "tool_use",
+          "id": "toolu_01weather",
+          "name": "get_weather",
+          "input": { "city": "Paris" }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "toolu_01weather",
+          "content": "18°C, cloudy",
+          "cache_control": { "type": "ephemeral" }
+        },
+        { "type": "text", "text": "And tomorrow?" }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Current weather for a city",
+      "input_schema": { "type": "object", "properties": { "city": { "type": "string" } } },
+      "strict": true,
+      "cache_control": { "type": "ephemeral" }
+    }
+  ],
+  "tool_choice": { "type": "tool", "name": "get_weather", "disable_parallel_tool_use": true },
+  "thinking": { "type": "adaptive", "display": "summarized" },
+  "output_config": {
+    "effort": "low",
+    "format": { "type": "json_schema", "schema": { "type": "object" } }
+  },
+  "temperature": 0.5,
+  "top_p": 0.9,
+  "top_k": 40,
+  "stop_sequences": ["END"],
+  "metadata": { "user_id": "someone" },
+  "stream": true
+}
