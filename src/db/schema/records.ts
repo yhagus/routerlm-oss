@@ -37,6 +37,10 @@ export const ATTEMPT_FAILURE_REASONS = [
 ] as const;
 export type AttemptFailureReason = (typeof ATTEMPT_FAILURE_REASONS)[number];
 
+/** How a recorded Attempt ended badly: a Fallback reason, or the client went away during it. */
+export const RECORDED_ATTEMPT_FAILURES = [...ATTEMPT_FAILURE_REASONS, "cancelled"] as const;
+export type RecordedAttemptFailure = (typeof RECORDED_ATTEMPT_FAILURES)[number];
+
 export const usageLogs = pgTable(
   "usage_logs",
   {
@@ -98,7 +102,7 @@ export const attempts = pgTable(
     // Null when no response arrived (timeout or connection error).
     upstreamStatus: integer("upstream_status"),
     // Null for the Attempt that succeeded.
-    failureReason: text("failure_reason", { enum: ATTEMPT_FAILURE_REASONS }),
+    failureReason: text("failure_reason", { enum: RECORDED_ATTEMPT_FAILURES }),
     durationMs: integer("duration_ms").notNull(),
   },
   (table) => [index("attempts_usage_log_id_idx").on(table.usageLogId)],
