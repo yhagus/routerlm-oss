@@ -1,54 +1,44 @@
 import { randomUUID } from "node:crypto";
-import { Injectable, Logger } from "@nestjs/common";
-import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/models/api-key.js";
-import { providerQuirksSchema } from "../catalog/schemas/catalog.schema.js";
-import type { SnapshotModel, SnapshotRoute } from "../snapshot/models/snapshot.js";
-import { SnapshotService } from "../snapshot/providers/snapshot.service.js";
-import { CooldownStore } from "../upstream/providers/cooldown-store.js";
-import type { UsageJob } from "../usage/models/usage-job.js";
-import { UsageProducer } from "../usage/jobs/usage.producer.js";
-import { ProviderAccountHealth } from "../upstream/providers/provider-account-health.js";
-import { ProviderKeyCipher } from "../upstream/providers/provider-key-cipher.js";
+import { Logger } from "@nestjs/common";
+import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
+import { mayUseModel } from "../../../api-keys/models/api-key.js";
+import { providerQuirksSchema } from "../../../catalog/schemas/catalog.schema.js";
+import type { SnapshotModel, SnapshotRoute } from "../../../snapshot/models/snapshot.js";
+import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
+import { CooldownStore } from "../../../upstream/providers/cooldown-store.js";
+import type { UsageJob } from "../../../usage/models/usage-job.js";
+import { UsageProducer } from "../../../usage/jobs/usage.producer.js";
+import { ProviderAccountHealth } from "../../../upstream/providers/provider-account-health.js";
+import { ProviderKeyCipher } from "../../../upstream/providers/provider-key-cipher.js";
 import {
   AttemptFailedError,
   ClientCancelledError,
   exhaustionError,
   gatewayErrorFor,
-} from "./attempt-failure.js";
+} from "../../models/attempt-failure.js";
 import {
   DEFAULT_CACHE_MARKER_LIMIT,
   withAutomaticCacheBreakpoints,
-} from "./automatic-cache-breakpoints.js";
-import { GatewayError } from "./gateway-error.js";
-import type { InferenceRequest, InferenceStreamEvent } from "./internal-format.js";
-import { applyParameterPolicy, effectiveParameterPolicy } from "./parameter-policy.js";
-import { type PromptCacheKeyOwner, promptCacheKey } from "./prompt-cache-key.js";
+} from "../../models/automatic-cache-breakpoints.js";
+import { GatewayError } from "../../models/gateway-error.js";
+import type { InferenceRequest, InferenceStreamEvent } from "../../models/internal-format.js";
+import { applyParameterPolicy, effectiveParameterPolicy } from "../../models/parameter-policy.js";
+import { type PromptCacheKeyOwner, promptCacheKey } from "../../models/prompt-cache-key.js";
 import {
   type ClientProtocolConverter,
   type ResponseContext,
   writeClientStream,
-} from "./protocols/client-protocol-converter.js";
-import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "./protocols/converters.js";
-import { type AttemptTarget, attemptTargets, capableRoutes } from "./route-selection.js";
-import { DEFAULT_TIMEOUTS, type UpstreamCall, UpstreamClient } from "./upstream-client.js";
-import { UsageMeter } from "./usage-meter.js";
-import type { ClientConnection } from "./client-connection.js";
-
-/** What the client gets back: a JSON body, or the text of an event stream. */
-export type InferenceResult =
-  | { kind: "response"; body: unknown }
-  | { kind: "stream"; chunks: AsyncIterable<string> };
-
-/**
- * Who sends an inference request: a client application with its API Key, or
- * a signed-in User from the Playground, who may use every enabled Model.
- */
-export type InferenceCaller =
-  | { kind: "api-key"; principal: ApiKeyPrincipal }
-  | { kind: "playground"; userId: string };
-
-/** Called with the usage job once the request has ended, however it ended. */
-export type UsageListener = (job: UsageJob) => void;
+} from "../../protocols/client-protocol-converter.js";
+import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "../../protocols/converters.js";
+import { type AttemptTarget, attemptTargets, capableRoutes } from "../../models/route-selection.js";
+import {
+  DEFAULT_TIMEOUTS,
+  type UpstreamCall,
+  UpstreamClient,
+} from "../../providers/upstream-client.js";
+import { UsageMeter } from "../../models/usage-meter.js";
+import type { InferenceCaller, InferenceResult } from "../../models/inference.js";
+import { RunInferenceCommand } from "../impl/run-inference.command.js";
 
 /** What one Attempt needs besides the request and its target. */
 interface AttemptOptions {
@@ -73,9 +63,9 @@ const CLIENT_CLOSED_REQUEST = 499;
  * Attempts with Fallback until one answers, and translate back. Reads only
  * the in-memory snapshot and the Cooldown state in Redis.
  */
-@Injectable()
-export class InferenceService {
-  private readonly logger = new Logger(InferenceService.name);
+@CommandHandler(RunInferenceCommand)
+export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand> {
+  private readonly logger = new Logger(RunInferenceHandler.name);
 
   constructor(
     private readonly snapshot: SnapshotService,
@@ -86,29 +76,29 @@ export class InferenceService {
     private readonly usage: UsageProducer,
   ) {}
 
-  /**
-   * Serves the request and enqueues its usage job once it is answered (spec
-   * step 9). `onUsage` sees the same job, for a caller that reports it back.
-   */
-  async infer(
-    converter: ClientProtocolConverter,
-    body: unknown,
-    caller: InferenceCaller,
-    client: ClientConnection,
-    onUsage: UsageListener = () => {},
-  ): Promise<InferenceResult> {
-    const meter = new UsageMeter(requestOwnerOf(caller), converter.protocol, client.requestBytes);
-    meter.requestReceived(client.requestHeaders, body);
+  async execute({
+    converter,
+    body,
+    caller,
+    connection,
+    onUsage,
+  }: RunInferenceCommand): Promise<InferenceResult> {
+    const meter = new UsageMeter(
+      requestOwnerOf(caller),
+      converter.protocol,
+      connection.requestBytes,
+    );
+    meter.requestReceived(connection.requestHeaders, body);
     const record = (job: UsageJob): void => {
       this.usage.enqueue(job);
       onUsage(job);
     };
     try {
-      const result = await this.serve(converter, body, caller, client.signal, meter);
+      const result = await this.serve(converter, body, caller, connection.signal, meter);
       if (result.kind === "stream") {
         return {
           kind: "stream",
-          chunks: meteredStream(result.chunks, meter, client.signal, record),
+          chunks: meteredStream(result.chunks, meter, connection.signal, record),
         };
       }
       meter.responseWritten(JSON.stringify(result.body));

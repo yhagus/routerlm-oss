@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { InferenceRequest, InferenceStreamEvent } from "../../internal-format.js";
+import type { InferenceRequest, InferenceStreamEvent } from "../../models/internal-format.js";
 import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
 import { openAiChatUpstreamConverter } from "./openai-chat-upstream-converter.js";
 

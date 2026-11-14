@@ -1,4 +1,4 @@
-import { GatewayError } from "../../gateway-error.js";
+import { GatewayError } from "../../models/gateway-error.js";
 import type {
   AssistantContentPart,
   CacheMarker,
@@ -12,7 +12,7 @@ import type {
   ToolCallPart,
   ToolChoice,
   UserContentPart,
-} from "../../internal-format.js";
+} from "../../models/internal-format.js";
 import type {
   UpstreamHttpRequest,
   UpstreamProtocolConverter,

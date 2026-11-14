@@ -1,6 +1,6 @@
 import { boolean, index, integer, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "./columns.js";
-import type { ReasoningEffort } from "../../inference/internal-format.js";
+import type { ReasoningEffort } from "../../inference/models/internal-format.js";
 import { upstreamModels } from "./upstream.js";
 
 // Routing: the Models the gateway exposes and the Routes that serve them.

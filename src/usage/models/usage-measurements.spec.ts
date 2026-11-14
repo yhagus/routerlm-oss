@@ -1,4 +1,4 @@
-import type { TokenUsage } from "../../inference/internal-format.js";
+import type { TokenUsage } from "../../inference/models/internal-format.js";
 import type { ServedBy, UpstreamModelPrices } from "./usage-job.js";
 import { usageMeasurementsOf } from "./usage-measurements.js";
 

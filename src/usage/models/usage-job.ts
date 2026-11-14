@@ -3,7 +3,7 @@ import type {
   GatewayErrorCode,
   RecordedAttemptFailure,
 } from "../../db/schemas/index.js";
-import type { TokenUsage } from "../../inference/internal-format.js";
+import type { TokenUsage } from "../../inference/models/internal-format.js";
 
 /** The job that turns one inference request into its Usage Log and Attempts. */
 export const RECORD_USAGE_JOB = "record";

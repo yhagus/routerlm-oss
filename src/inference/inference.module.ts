@@ -4,12 +4,12 @@ import { HttpClientModule } from "@nestjs/http-client";
 import { SnapshotModule } from "../snapshot/snapshot.module.js";
 import { UpstreamModule } from "../upstream/upstream.module.js";
 import { UsageModule } from "../usage/usage.module.js";
-import { ApiKeyHeaderMiddleware } from "./api-key-header.middleware.js";
-import { ClientModelsService } from "./client-models.service.js";
-import { InferenceExceptionFilter } from "./inference-exception.filter.js";
+import { ApiKeyHeaderMiddleware } from "./middleware/api-key-header.middleware.js";
+import { CommandHandlers } from "./commands/handlers/index.js";
+import { InferenceExceptionFilter } from "./filters/inference-exception.filter.js";
 import { INFERENCE_API_PREFIX, InferenceController } from "./inference.controller.js";
-import { InferenceService } from "./inference.service.js";
-import { UpstreamClient } from "./upstream-client.js";
+import { QueryHandlers } from "./queries/handlers/index.js";
+import { UpstreamClient } from "./providers/upstream-client.js";
 
 /** The client-facing `/v1/*` API: inference and the Model list. */
 @Module({
@@ -22,12 +22,11 @@ import { UpstreamClient } from "./upstream-client.js";
   ],
   controllers: [InferenceController],
   providers: [
-    InferenceService,
-    ClientModelsService,
+    ...CommandHandlers,
+    ...QueryHandlers,
     UpstreamClient,
     { provide: APP_FILTER, useClass: InferenceExceptionFilter },
   ],
-  exports: [InferenceService],
 })
 export class InferenceModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

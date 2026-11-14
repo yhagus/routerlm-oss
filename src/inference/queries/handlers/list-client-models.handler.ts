@@ -1,31 +1,16 @@
-import { Injectable } from "@nestjs/common";
-import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/models/api-key.js";
-import { CAPABILITIES, type Capability } from "../db/schemas/index.js";
-import type { SnapshotModel } from "../snapshot/models/snapshot.js";
-import { SnapshotService } from "../snapshot/providers/snapshot.service.js";
+import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
+import { mayUseModel } from "../../../api-keys/models/api-key.js";
+import { CAPABILITIES, type Capability } from "../../../db/schemas/index.js";
+import type { SnapshotModel } from "../../../snapshot/models/snapshot.js";
+import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
+import type { ClientModel, ClientModelList } from "../../models/client-model.js";
+import { ListClientModelsQuery } from "../impl/list-client-models.query.js";
 
-/** A Model as `GET /v1/models` shows it: our name only, nothing about Routes or Providers. */
-export interface ClientModel {
-  id: string;
-  object: "model";
-  /** Unix seconds. */
-  created: number;
-  owned_by: "routerlm";
-  /** What at least one of its enabled Routes can do. */
-  capabilities: Capability[];
-}
-
-export interface ClientModelList {
-  object: "list";
-  data: ClientModel[];
-}
-
-/** The Models an API Key may call, in OpenAI's model-list shape. */
-@Injectable()
-export class ClientModelsService {
+@QueryHandler(ListClientModelsQuery)
+export class ListClientModelsHandler implements IQueryHandler<ListClientModelsQuery> {
   constructor(private readonly snapshot: SnapshotService) {}
 
-  listModels(principal: ApiKeyPrincipal): ClientModelList {
+  execute({ principal }: ListClientModelsQuery): Promise<ClientModelList> {
     const data = [...this.snapshot.current.modelsByName.values()]
       .filter((model) => model.isEnabled && mayUseModel(principal, model.id))
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -36,7 +21,7 @@ export class ClientModelsService {
         owned_by: "routerlm",
         capabilities: combinedCapabilities(model),
       }));
-    return { object: "list", data };
+    return Promise.resolve({ object: "list", data });
   }
 }
 

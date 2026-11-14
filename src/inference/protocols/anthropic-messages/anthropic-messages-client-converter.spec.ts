@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { writeClientStream } from "../client-protocol-converter.js";
 import { parseFailureOf } from "../../../../test/support/parse-failure.js";
-import { GatewayError } from "../../gateway-error.js";
+import { GatewayError } from "../../models/gateway-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "../../internal-format.js";
+} from "../../models/internal-format.js";
 import { anthropicMessagesClientConverter } from "./anthropic-messages-client-converter.js";
 
 function fixture(name: string): string {

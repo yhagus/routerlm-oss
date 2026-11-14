@@ -1,13 +1,12 @@
 import { Module } from "@nestjs/common";
-import { InferenceModule } from "../inference/inference.module.js";
 import { SnapshotModule } from "../snapshot/snapshot.module.js";
 import { PlaygroundController } from "./playground.controller.js";
-import { PlaygroundService } from "./playground.service.js";
+import { CommandHandlers } from "./commands/handlers/index.js";
 
 /** The dashboard's Playground: Users try Models through the client inference path. */
 @Module({
-  imports: [InferenceModule, SnapshotModule],
+  imports: [SnapshotModule],
   controllers: [PlaygroundController],
-  providers: [PlaygroundService],
+  providers: [...CommandHandlers],
 })
 export class PlaygroundModule {}

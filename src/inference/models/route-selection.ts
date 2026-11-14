@@ -1,11 +1,11 @@
-import type { Capability } from "../db/schemas/index.js";
+import type { Capability } from "../../db/schemas/index.js";
 import type {
   SnapshotModel,
   SnapshotProviderAccount,
   SnapshotRoute,
-} from "../snapshot/models/snapshot.js";
+} from "../../snapshot/models/snapshot.js";
 import type { InferenceRequest } from "./internal-format.js";
-import { UPSTREAM_PROTOCOL_CONVERTERS } from "./protocols/converters.js";
+import { UPSTREAM_PROTOCOL_CONVERTERS } from "../protocols/converters.js";
 
 // A rough, deliberately low token estimate for the context-size check:
 // skipping a Route that could have served the request is worse than letting

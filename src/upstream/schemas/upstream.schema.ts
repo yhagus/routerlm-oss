@@ -21,7 +21,7 @@ export const newProviderSchema = providerFieldsSchema.extend({
 });
 export type NewProvider = z.infer<typeof newProviderSchema>;
 
-/** The slug is fixed once created: the Catalog seeder matches Providers by it. */
+/** The slug is fixed once created: SeedCatalogCommand matches Providers by it. */
 export const providerChangesSchema = providerFieldsSchema
   .omit({ slug: true })
   .partial()

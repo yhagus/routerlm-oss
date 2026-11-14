@@ -1,12 +1,14 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Authenticate, CurrentUser } from "@nestjs/authentication";
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import type { ApiKeyPrincipal } from "../api-keys/models/api-key.js";
 import { ApiKeyAuth } from "../api-keys/providers/api-key-auth.js";
-import { ClientModelsService, type ClientModelList } from "./client-models.service.js";
-import { clientConnectionOf } from "./client-connection.js";
-import { eventStreamResponse } from "./event-stream-response.js";
-import { InferenceService } from "./inference.service.js";
+import { clientConnectionOf } from "./models/client-connection.js";
+import { eventStreamResponse } from "./models/event-stream-response.js";
+import type { ClientModelList } from "./models/client-model.js";
+import { RunInferenceCommand } from "./commands/impl/run-inference.command.js";
+import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
@@ -22,8 +24,8 @@ export const INFERENCE_API_PREFIX = "v1";
 @Authenticate({ providers: [ApiKeyAuth] })
 export class InferenceController {
   constructor(
-    private readonly inference: InferenceService,
-    private readonly clientModels: ClientModelsService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   @Post("chat/completions")
@@ -34,11 +36,13 @@ export class InferenceController {
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
   ): Promise<unknown> {
-    const result = await this.inference.infer(
-      openAiChatClientConverter,
-      body,
-      { kind: "api-key", principal },
-      clientConnectionOf(request, response),
+    const result = await this.commandBus.execute(
+      new RunInferenceCommand(
+        openAiChatClientConverter,
+        body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
     );
     return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
   }
@@ -51,11 +55,13 @@ export class InferenceController {
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
   ): Promise<unknown> {
-    const result = await this.inference.infer(
-      anthropicMessagesClientConverter,
-      body,
-      { kind: "api-key", principal },
-      clientConnectionOf(request, response),
+    const result = await this.commandBus.execute(
+      new RunInferenceCommand(
+        anthropicMessagesClientConverter,
+        body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
     );
     return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
   }
@@ -68,17 +74,19 @@ export class InferenceController {
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
   ): Promise<unknown> {
-    const result = await this.inference.infer(
-      openAiResponsesClientConverter,
-      body,
-      { kind: "api-key", principal },
-      clientConnectionOf(request, response),
+    const result = await this.commandBus.execute(
+      new RunInferenceCommand(
+        openAiResponsesClientConverter,
+        body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
     );
     return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
   }
 
   @Get("models")
-  listModels(@CurrentUser() principal: ApiKeyPrincipal): ClientModelList {
-    return this.clientModels.listModels(principal);
+  listModels(@CurrentUser() principal: ApiKeyPrincipal): Promise<ClientModelList> {
+    return this.queryBus.execute(new ListClientModelsQuery(principal));
   }
 }

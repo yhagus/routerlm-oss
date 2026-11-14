@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GatewayError } from "../../gateway-error.js";
+import { GatewayError } from "../../models/gateway-error.js";
 import {
   type AssistantContentPart,
   type InferenceMessage,
@@ -12,7 +12,7 @@ import {
   type TokenUsage,
   type ToolChoice,
   type UserContentPart,
-} from "../../internal-format.js";
+} from "../../models/internal-format.js";
 import type { ClientProtocolConverter, ResponseContext } from "../client-protocol-converter.js";
 import { finishReasonOf, writeUsage } from "./openai-chat-usage.js";
 

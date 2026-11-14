@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { parseFailureOf } from "../../../../test/support/parse-failure.js";
-import { GatewayError } from "../../gateway-error.js";
+import { GatewayError } from "../../models/gateway-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "../../internal-format.js";
+} from "../../models/internal-format.js";
 import { writeClientStream } from "../client-protocol-converter.js";
 import { openAiChatClientConverter } from "./openai-chat-client-converter.js";
 

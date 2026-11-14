@@ -14,7 +14,7 @@ import type {
   ResponseFormat,
   ToolChoice,
   UserContentPart,
-} from "../../internal-format.js";
+} from "../../models/internal-format.js";
 import { readServerSentEvents } from "../server-sent-events.js";
 import {
   type UpstreamHttpRequest,

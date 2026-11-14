@@ -7,14 +7,14 @@ import {
   Inject,
 } from "@nestjs/common";
 import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
-import type { ClientProtocol } from "../db/schemas/index.js";
-import { UsageProducer } from "../usage/jobs/usage.producer.js";
-import { ClientCancelledError } from "./attempt-failure.js";
-import { requestBytesOf } from "./client-connection.js";
-import { GatewayError } from "./gateway-error.js";
-import { CLIENT_PROTOCOL_CONVERTERS } from "./protocols/converters.js";
-import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
-import { UsageMeter } from "./usage-meter.js";
+import type { ClientProtocol } from "../../db/schemas/index.js";
+import { UsageProducer } from "../../usage/jobs/usage.producer.js";
+import { ClientCancelledError } from "../models/attempt-failure.js";
+import { requestBytesOf } from "../models/client-connection.js";
+import { GatewayError } from "../models/gateway-error.js";
+import { CLIENT_PROTOCOL_CONVERTERS } from "../protocols/converters.js";
+import { openAiChatClientConverter } from "../protocols/openai-chat/openai-chat-client-converter.js";
+import { UsageMeter } from "../models/usage-meter.js";
 
 const INFERENCE_PATH_PREFIX = "/v1/";
 
@@ -51,7 +51,7 @@ export class InferenceExceptionFilter implements ExceptionFilter {
     const protocol = clientProtocolOf(path);
     const converter = CLIENT_PROTOCOL_CONVERTERS[protocol] ?? openAiChatClientConverter;
     const envelope = converter.writeError(error);
-    // InferenceService records the requests it saw; these were refused before
+    // RunInferenceHandler records the requests it saw; these were refused before
     // reaching it (bad API Key, unreadable or oversized body).
     if (!(exception instanceof GatewayError) && request.method === "POST") {
       const meter = new UsageMeter({ kind: "unidentified" }, protocol, requestBytesOf(request));

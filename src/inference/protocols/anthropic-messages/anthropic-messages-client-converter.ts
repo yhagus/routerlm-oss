@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { GatewayErrorCode } from "../../../db/schemas/index.js";
-import { GatewayError } from "../../gateway-error.js";
+import { GatewayError } from "../../models/gateway-error.js";
 import {
   type AssistantContentPart,
   type CacheMarker,
@@ -15,7 +15,7 @@ import {
   type ToolChoice,
   UNREPORTED_USAGE,
   type UserContentPart,
-} from "../../internal-format.js";
+} from "../../models/internal-format.js";
 import type { ClientProtocolConverter, ResponseContext } from "../client-protocol-converter.js";
 
 // The Anthropic Messages client Protocol (`POST /v1/messages`).

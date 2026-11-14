@@ -1,10 +1,10 @@
 import type { ClientProtocol } from "../../db/schemas/index.js";
-import { GatewayError } from "../gateway-error.js";
+import { GatewayError } from "../models/gateway-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "../internal-format.js";
+} from "../models/internal-format.js";
 
 /** What a response says about itself; every id and name in it is ours. */
 export interface ResponseContext {

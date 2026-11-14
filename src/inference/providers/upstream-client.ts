@@ -1,18 +1,18 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
-import type { AttemptFailureReason } from "../db/schemas/index.js";
-import { AttemptFailedError, ClientCancelledError } from "./attempt-failure.js";
+import type { AttemptFailureReason } from "../../db/schemas/index.js";
+import { AttemptFailedError, ClientCancelledError } from "../models/attempt-failure.js";
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "./internal-format.js";
+} from "../models/internal-format.js";
 import {
   type UpstreamHttpRequest,
   type UpstreamProtocolConverter,
   UpstreamProtocolError,
   type UpstreamTarget,
-} from "./protocols/upstream-protocol-converter.js";
+} from "../protocols/upstream-protocol-converter.js";
 
 /** Spec "Fallback" defaults; a Route may override each. */
 export const DEFAULT_TIMEOUTS: AttemptTimeouts = {

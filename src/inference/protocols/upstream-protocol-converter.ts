@@ -3,7 +3,7 @@ import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "../internal-format.js";
+} from "../models/internal-format.js";
 
 /**
  * An upstream answered in a shape its Protocol doesn't allow, or reported an

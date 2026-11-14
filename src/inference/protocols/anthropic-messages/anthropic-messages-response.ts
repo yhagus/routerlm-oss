@@ -5,7 +5,7 @@ import type {
   InferenceStreamEvent,
   StopReason,
   TokenUsage,
-} from "../../internal-format.js";
+} from "../../models/internal-format.js";
 import { readServerSentEvents } from "../server-sent-events.js";
 import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
 
