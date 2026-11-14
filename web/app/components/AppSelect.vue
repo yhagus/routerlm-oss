@@ -1,18 +1,19 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="Value extends string">
 import { Check, ChevronDown } from "@lucide/vue";
 
-type SelectOption = { label: string; value: string };
+type SelectOption = { label: string; value: Value };
 
 const props = withDefaults(
   defineProps<{
-    modelValue: string;
+    modelValue: Value;
     options: SelectOption[];
-    ariaLabel: string;
+    /** The control's accessible name (its aria-label). */
+    label: string;
     placeholder?: string;
   }>(),
   { placeholder: "Select an option" },
 );
-const emit = defineEmits<{ "update:modelValue": [value: string] }>();
+const emit = defineEmits<{ "update:modelValue": [value: Value] }>();
 const root = ref<HTMLElement>();
 const open = ref(false);
 const highlightedIndex = ref(0);
@@ -41,8 +42,9 @@ function onKeydown(event: KeyboardEvent) {
       (highlightedIndex.value + direction + props.options.length) % props.options.length;
   } else if (event.key === "Enter" || event.key === " ") {
     event.preventDefault();
-    if (!open.value) openMenu();
-    else selectOption(props.options[highlightedIndex.value]);
+    if (!open.value) return openMenu();
+    const highlighted = props.options[highlightedIndex.value];
+    if (highlighted) selectOption(highlighted);
   } else if (event.key === "Escape") open.value = false;
 }
 function onDocumentPointerdown(event: PointerEvent) {
@@ -58,7 +60,7 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocumentPoin
     <button
       type="button"
       class="select-control select-control--custom"
-      :aria-label="ariaLabel"
+      :aria-label="label"
       :aria-expanded="open"
       aria-haspopup="listbox"
       @click="open ? (open = false) : openMenu()"
@@ -68,7 +70,7 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocumentPoin
       <span class="select-control__value">{{ selectedLabel }}</span>
       <span class="select-control__chevron"><ChevronDown :size="14" /></span>
     </button>
-    <div v-if="open" class="app-select-content" role="listbox" :aria-label="ariaLabel">
+    <div v-if="open" class="app-select-content" role="listbox" :aria-label="label">
       <button
         v-for="(option, index) in options"
         :key="option.value"

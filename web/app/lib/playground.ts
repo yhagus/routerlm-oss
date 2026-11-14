@@ -109,12 +109,15 @@ const DONE_DATA = "[DONE]";
 export async function* streamEventsOf(
   body: ReadableStream<Uint8Array>,
 ): AsyncIterable<StreamEvent> {
-  const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+  // A TextDecoder rather than a TextDecoderStream: the stream's types only
+  // accept ArrayBuffer-backed chunks, and fetch bodies are typed more widely.
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
   let buffered = "";
   for (;;) {
     const { done, value } = await reader.read();
     if (done) return;
-    buffered += value.replaceAll("\r\n", "\n");
+    buffered += decoder.decode(value, { stream: true }).replaceAll("\r\n", "\n");
     let end = buffered.indexOf(EVENT_SEPARATOR);
     while (end !== -1) {
       const event = streamEventOf(buffered.slice(0, end));

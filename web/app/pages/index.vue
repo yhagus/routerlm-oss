@@ -110,7 +110,7 @@ const rangeLabel = computed(() => OVERVIEW_RANGES[range.value].toLowerCase());
     <AppSelect
       :model-value="range"
       :options="rangeOptions"
-      aria-label="Time range"
+      label="Time range"
       @update:model-value="pickRange"
     />
     <button class="button button--quiet" type="button" @click="refresh()">

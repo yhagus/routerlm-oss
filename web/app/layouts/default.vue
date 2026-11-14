@@ -89,7 +89,7 @@ async function signOut(): Promise<void> {
           <AppSelect
             class="topbar__theme-select"
             :model-value="theme.preference.value"
-            aria-label="Color theme"
+            label="Color theme"
             :options="[
               { label: 'System', value: 'system' },
               { label: 'Light', value: 'light' },

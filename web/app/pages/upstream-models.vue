@@ -177,7 +177,7 @@ function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
     <AppSelect
       v-model="providerFilter"
       :options="providerFilterOptions"
-      aria-label="Filter by Provider"
+      label="Filter by Provider"
     />
     <button
       class="button button--primary"
@@ -282,7 +282,7 @@ function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
             v-if="dialog.kind === 'create'"
             v-model="form.providerId"
             :options="providerOptions"
-            aria-label="Provider"
+            label="Provider"
           />
           <input
             v-else

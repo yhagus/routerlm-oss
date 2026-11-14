@@ -11,7 +11,7 @@ watch(
 
 // The page files are numbered (1.authentication.md, ...), so their stems sort in reading order.
 const { data: docsPages } = await useAsyncData("docs-navigation", () =>
-  queryCollection("docs").select("title", "path").order("stem", "ASC").all(),
+  queryCollection("docs").order("stem", "ASC").select("title", "path").all(),
 );
 </script>
 

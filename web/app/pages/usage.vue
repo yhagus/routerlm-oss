@@ -141,12 +141,12 @@ function totalName(total: UsageTotal, whenMissing: string): string {
     <AppSelect
       :model-value="timeRange"
       :options="timeRangeOptions"
-      aria-label="Time range"
+      label="Time range"
       @update:model-value="pickTimeRange"
     />
-    <AppSelect v-model="modelFilter" :options="modelOptions" aria-label="Filter by Model" />
-    <AppSelect v-model="apiKeyFilter" :options="apiKeyOptions" aria-label="Filter by API Key" />
-    <AppSelect v-model="statusFilter" :options="statusOptions" aria-label="Filter by status" />
+    <AppSelect v-model="modelFilter" :options="modelOptions" label="Filter by Model" />
+    <AppSelect v-model="apiKeyFilter" :options="apiKeyOptions" label="Filter by API Key" />
+    <AppSelect v-model="statusFilter" :options="statusOptions" label="Filter by status" />
   </div>
 
   <div class="usage-totals">

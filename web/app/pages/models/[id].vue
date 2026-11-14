@@ -204,7 +204,11 @@ async function toggleRoute(routeToToggle: RouteSummary): Promise<void> {
 async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
   const routeIds = (model.value?.routes ?? []).map((routeInOrder) => routeInOrder.id);
   const neighbourIndex = index + offset;
-  [routeIds[index], routeIds[neighbourIndex]] = [routeIds[neighbourIndex], routeIds[index]];
+  const movedId = routeIds[index];
+  const neighbourId = routeIds[neighbourIndex];
+  if (movedId === undefined || neighbourId === undefined) return;
+  routeIds[index] = neighbourId;
+  routeIds[neighbourIndex] = movedId;
   try {
     await $dashboardApi(`${modelPath}/route-order`, { method: "PUT", body: { routeIds } });
     await refresh();
@@ -433,7 +437,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
         <AppSelect
           v-model="newRouteUpstreamModelId"
           :options="upstreamModelOptions"
-          aria-label="Upstream Model"
+          label="Upstream Model"
         />
       </div>
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>

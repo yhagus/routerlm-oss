@@ -248,15 +248,11 @@ function quirkSummary(quirks: ProviderQuirks): string {
         /></label>
         <div class="field">
           <span class="field__label">Protocol</span>
-          <AppSelect v-model="form.protocol" :options="protocolOptions" aria-label="Protocol" />
+          <AppSelect v-model="form.protocol" :options="protocolOptions" label="Protocol" />
         </div>
         <div class="field">
           <span class="field__label">Authentication</span>
-          <AppSelect
-            v-model="form.authStyle"
-            :options="authStyleOptions"
-            aria-label="Authentication"
-          />
+          <AppSelect v-model="form.authStyle" :options="authStyleOptions" label="Authentication" />
         </div>
       </div>
       <label class="field"
@@ -269,7 +265,7 @@ function quirkSummary(quirks: ProviderQuirks): string {
           <AppSelect
             v-model="form.reasoningContentInHistory"
             :options="reasoningOptions"
-            aria-label="Reasoning content in history"
+            label="Reasoning content in history"
           />
         </div>
         <fieldset class="check-group">

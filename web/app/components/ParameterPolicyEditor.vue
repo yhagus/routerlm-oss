@@ -68,7 +68,7 @@ function submit(): void {
                 v-else-if="parameter.name === 'reasoningEffort'"
                 v-model="form.rules[kind].reasoningEffort"
                 :options="effortOptions"
-                :aria-label="`${label} ${parameter.label}`"
+                :label="`${label} ${parameter.label}`"
               />
               <textarea
                 v-else-if="parameter.name === 'stopSequences'"

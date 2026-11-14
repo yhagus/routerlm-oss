@@ -225,7 +225,7 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
           v-if="dialog.kind === 'create'"
           v-model="form.providerId"
           :options="providerOptions"
-          aria-label="Provider"
+          label="Provider"
         />
         <input v-else class="text-input" :value="providerNameById.get(form.providerId)" disabled />
       </div>

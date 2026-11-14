@@ -165,7 +165,7 @@ async function send(): Promise<void> {
   const request = new AbortController();
   runningRequest.value = request;
   try {
-    const stream = await $dashboardApi<ReadableStream<Uint8Array>>("/playground/chat/completions", {
+    const stream = await $dashboardApi("/playground/chat/completions", {
       method: "POST",
       body,
       responseType: "stream",
@@ -355,7 +355,7 @@ function summaryFacts(summary: PlaygroundSummary): { label: string; value: strin
           <AppSelect
             v-model="modelName"
             :options="modelOptions"
-            aria-label="Model"
+            label="Model"
             placeholder="No enabled Model"
           />
         </div>
@@ -391,7 +391,7 @@ function summaryFacts(summary: PlaygroundSummary): { label: string; value: strin
             <AppSelect
               v-model="reasoningEffort"
               :options="reasoningOptions"
-              aria-label="Reasoning effort"
+              label="Reasoning effort"
             />
           </div>
         </div>
