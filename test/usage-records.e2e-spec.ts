@@ -11,6 +11,7 @@ import { SnapshotService } from "../src/snapshot/snapshot.service.js";
 import { FakeUpstream, openAiChatFixture } from "./support/fake-upstream.js";
 import { addProviderAccount, insertApiKey, insertOpenAiChatModel } from "./support/inference.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
+import { untilUsageQueueIsDrained } from "./support/usage-queue.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
@@ -52,7 +53,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
   beforeEach(async () => {
     upstream.reset();
     // The previous test's job must not land after the tables are emptied.
-    await untilUsageQueueIsDrained();
+    await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     ({ modelId, routeId, providerId } = await insertOpenAiChatModel(app, db, {
       modelName: "smart",
@@ -78,18 +79,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
       .post("/v1/chat/completions")
       .set("Authorization", `Bearer ${key}`)
       .send(body);
-  }
-
-  async function untilUsageQueueIsDrained(): Promise<void> {
-    const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
-    while (Date.now() < deadline) {
-      const counts = await usageQueue.getJobCounts("waiting", "active", "delayed");
-      if (Object.values(counts).every((count) => count === 0)) {
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-    throw new Error("The worker did not finish the usage jobs");
   }
 
   async function writtenUsageLog() {

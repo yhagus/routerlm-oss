@@ -14,6 +14,7 @@ import {
   UPSTREAM_KEY,
 } from "./support/inference.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";
+import { untilUsageQueueIsDrained } from "./support/usage-queue.js";
 
 // Needs Redis at REDIS_URL, in its own database (see usage-records.e2e-spec.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
@@ -50,7 +51,7 @@ describe("Error Captures written for failed requests (e2e)", () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await untilUsageQueueIsDrained();
+    await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: "smart",
@@ -72,18 +73,6 @@ describe("Error Captures written for failed requests (e2e)", () => {
       .set("Authorization", `Bearer ${key}`)
       .set("Cookie", SESSION_COOKIE)
       .send(body);
-  }
-
-  async function untilUsageQueueIsDrained(): Promise<void> {
-    const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
-    while (Date.now() < deadline) {
-      const counts = await usageQueue.getJobCounts("waiting", "active", "delayed");
-      if (Object.values(counts).every((count) => count === 0)) {
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-    throw new Error("The worker did not finish the usage jobs");
   }
 
   /** The captures of the one request made, once the worker has written its Usage Log. */
