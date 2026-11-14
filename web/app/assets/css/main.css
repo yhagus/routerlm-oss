@@ -2082,6 +2082,64 @@ tbody tr:hover {
   }
 }
 
+/* Error Captures */
+.filter-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+.capture-panel {
+  margin-bottom: 16px;
+}
+.capture-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px 21px;
+  margin: 0;
+  padding: 0 21px 18px;
+}
+.capture-facts dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.capture-facts dd {
+  margin: 4px 0 0;
+}
+.capture-headers {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0 21px 12px;
+}
+.capture-headers > div {
+  display: contents;
+}
+.capture-headers dt {
+  color: var(--muted);
+}
+.capture-headers dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.capture-body {
+  max-height: 480px;
+  margin: 0 21px 18px;
+  padding: 12px 14px;
+  overflow: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--lead-surface);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* Parameter Policy editor: on the Model page panel and in the Route override dialog */
 .text-area {
   height: auto;
