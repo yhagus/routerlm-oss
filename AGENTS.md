@@ -36,6 +36,10 @@ If a first-party package lacks a feature or has a bug, do not switch to a standa
 
 Every module in `src/` uses `@nestjs/cqrs`. Only the `<module>.module.ts` and controllers sit at the module root. Everything else goes into role folders: `commands/{handlers,impl}`, `queries/{handlers,impl}`, `events/{handlers,impl}`, `models/`, `schemas/`, `providers/`, `jobs/`, `filters/`, `middleware/`, `decorators/` and `data/`. `src/api-keys/` is the reference. See `docs/adr/0007-cqrs-folder-layout-for-every-module.md`.
 
+### Backend: imports and shared code
+
+An import that leaves its own module uses the `@/` alias for `src/` (`@/db/schemas/index.js`). An import inside the same module stays relative. Tests import from `@/` too. Code that several modules share and that belongs to no module's domain goes into `src/libs/`, laid out like any other module. Shared injectables are registered in its global `LibsModule`. The build is `nest build`, which rewrites the alias; it needs TypeScript 6 until 7.1. See `docs/adr/0008-at-alias-imports-and-typescript-6-for-nest-build.md`.
+
 ### Web: Nuxt first-party first
 
 In `web/`, apply the same principle: prefer official `@nuxt/*` modules and patterns documented on https://nuxt.com/docs over hand-rolled ones.
