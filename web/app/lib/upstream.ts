@@ -11,12 +11,17 @@ export type Capability = (typeof CAPABILITIES)[number];
 
 export const REASONING_CONTENT_IN_HISTORY = ["all-assistant-turns", "tool-call-turns"] as const;
 
-/** The quirk keys the backend accepts; all of them apply to `openai-chat` Providers only. */
+/**
+ * The quirk keys the backend accepts: `cacheMarkerLimit` applies to
+ * `anthropic-messages` Providers, the others to `openai-chat` ones.
+ */
 export interface ProviderQuirks {
   reasoningContentInHistory?: (typeof REASONING_CONTENT_IN_HISTORY)[number];
   acceptsCacheControl?: boolean;
   acceptsPromptCacheKey?: boolean;
   usesMaxCompletionTokens?: boolean;
+  /** How many cache markers the gateway may add per request; absent means Anthropic's four. */
+  cacheMarkerLimit?: number;
 }
 
 export interface Provider {

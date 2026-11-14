@@ -4,12 +4,16 @@
   "protocol": "openai-chat",
   "baseUrl": "https://api.openai.com/v1",
   "authStyle": "bearer",
-  "quirks": { "usesMaxCompletionTokens": true },
+  "quirks": { "usesMaxCompletionTokens": true, "acceptsPromptCacheKey": true },
   "source": {
-    "urls": ["https://developers.openai.com/api/reference/overview"],
+    "urls": [
+      "https://developers.openai.com/api/reference/overview",
+      "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create"
+    ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. The prompt caching guide documents prompt_cache_key only for the Responses API, so acceptsPromptCacheKey is not set.",
+  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. Chat Completions accepts prompt_cache_key (cache routing before GPT-5.6, cache accounting from GPT-5.6); caching is automatic from 1,024 tokens.",
   "upstreamModels": [
     {
       "upstreamModelId": "gpt-6-astra",

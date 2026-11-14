@@ -109,6 +109,25 @@ describe("openAiChatUpstreamConverter", () => {
     expect(assistantTurn.reasoning_content).toBe("Need the weather.");
   });
 
+  it("sends the prompt cache key to a Provider that accepts one", () => {
+    const written = openAiChatUpstreamConverter.writeRequest(WEATHER_REQUEST, {
+      ...TARGET,
+      quirks: { acceptsPromptCacheKey: true },
+      promptCacheKey: "Zk3cQ9",
+    });
+
+    expect(JSON.parse(written.body).prompt_cache_key).toBe("Zk3cQ9");
+  });
+
+  it("keeps the prompt cache key from a Provider whose quirks don't accept it", () => {
+    const written = openAiChatUpstreamConverter.writeRequest(WEATHER_REQUEST, {
+      ...TARGET,
+      promptCacheKey: "Zk3cQ9",
+    });
+
+    expect(JSON.parse(written.body)).not.toHaveProperty("prompt_cache_key");
+  });
+
   it("parses a recorded response with reasoning, text, a tool call and cached tokens", () => {
     const parsed = openAiChatUpstreamConverter.parseResponse(
       JSON.parse(fixture("upstream-response-tool-call.json")),

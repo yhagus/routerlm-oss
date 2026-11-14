@@ -2,12 +2,18 @@ import type { User } from "~/lib/users";
 
 const LOGIN_PATH = "/login";
 const SETUP_PATH = "/setup";
+/** The client documentation is public: client developers have no dashboard login. */
+const DOCS_PATH = "/docs";
 
 /**
- * Every page needs a signed-in User, except login and setup. While no User
- * exists at all, every page leads to setup.
+ * Every page needs a signed-in User, except login, setup and the docs. While
+ * no User exists at all, every other page leads to setup.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  if (isDocsPath(to.path)) {
+    return undefined;
+  }
+
   const currentUser = useCurrentUser();
   if (currentUser.value === undefined) {
     currentUser.value = await fetchCurrentUser();
@@ -39,4 +45,8 @@ async function fetchCurrentUser(): Promise<User | null> {
   } catch {
     return null;
   }
+}
+
+function isDocsPath(path: string): boolean {
+  return path === DOCS_PATH || path.startsWith(`${DOCS_PATH}/`);
 }
