@@ -21,6 +21,8 @@ useHead({ title: "Usage" });
 
 const PAGE_SIZE = 50;
 const ALL = "all";
+/** The API Key filter's choice for the Playground's requests, which have no API Key. */
+const PLAYGROUND = "playground";
 const STATUS_LABELS = {
   succeeded: "Succeeded",
   failed: "Failed",
@@ -68,6 +70,7 @@ const modelOptions = computed(() => [
 ]);
 const apiKeyOptions = computed(() => [
   { value: ALL, label: "All API Keys" },
+  { value: PLAYGROUND, label: "Playground" },
   ...(apiKeys.value ?? []).map((apiKey) => ({ value: apiKey.id, label: apiKey.name })),
 ]);
 const statusOptions = [
@@ -82,7 +85,8 @@ function chosen(value: string): string | undefined {
 const filterQuery = computed(() => ({
   from: from.value,
   modelId: chosen(modelFilter.value),
-  apiKeyId: chosen(apiKeyFilter.value),
+  apiKeyId: apiKeyFilter.value === PLAYGROUND ? undefined : chosen(apiKeyFilter.value),
+  isPlayground: apiKeyFilter.value === PLAYGROUND ? true : undefined,
   status: chosen(statusFilter.value),
 }));
 
