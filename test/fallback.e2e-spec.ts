@@ -217,13 +217,22 @@ describe("Fallback (e2e)", () => {
     },
   );
 
-  it("makes at most 5 Attempts per request", async () => {
-    for (const priority of [2, 3, 4, 5]) {
+  /** Adds Provider Accounts after the primary and backup ones, up to `total` in all. */
+  async function addProviderAccountsUpTo(total: number): Promise<void> {
+    for (let priority = 2; priority < total; priority += 1) {
       await addProviderAccount(app, db, providerId, { key: `${BACKUP_KEY}-${priority}`, priority });
     }
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      upstream.reply(SERVER_ERROR);
+  }
+
+  function queueReplies(reply: FakeReply, count: number): void {
+    for (let attempt = 0; attempt < count; attempt += 1) {
+      upstream.reply(reply);
     }
+  }
+
+  it("makes at most 5 Attempts per request", async () => {
+    await addProviderAccountsUpTo(6);
+    queueReplies(SERVER_ERROR, 6);
 
     await chat().expect(502);
 
