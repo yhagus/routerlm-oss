@@ -108,37 +108,51 @@ function areaPath(run: PlottedValue[], base: (number | null)[] | undefined): str
 
 const shapes = computed(() =>
   props.series.map((series, seriesIndex) => {
-    const runs = runsOf(tops.value[seriesIndex]!);
+    const seriesTops = tops.value[seriesIndex] ?? [];
+    const runs = runsOf(seriesTops);
     const base = props.stacked && seriesIndex > 0 ? tops.value[seriesIndex - 1] : undefined;
     return {
       key: series.key,
       color: series.color,
+      tops: seriesTops,
       line: runs.map(linePath).join(""),
       area: runs.map((run) => areaPath(run, base)).join(""),
       // A value with no neighbour draws no line, so it gets a marker instead.
-      isolated: runs.filter((run) => run.length === 1).map(([plotted]) => plotted!),
+      isolated: runs.flatMap((run) => (run.length === 1 ? run : [])),
     };
   }),
 );
+
+/** The marker of each series that has a value at the hovered point. */
+const activeDots = computed(() => {
+  const index = active.value;
+  if (index === null) return [];
+  return shapes.value.flatMap((shape) => {
+    const value = shape.tops[index];
+    return value === null || value === undefined
+      ? []
+      : [{ key: shape.key, color: shape.color, value }];
+  });
+});
 
 function formatOrNoData(value: number | null | undefined): string {
   return value === null || value === undefined ? NO_DATA : props.formatValue(value);
 }
 
 const xTicks = computed(() =>
-  tickIndices(props.points.length, width.value < 480 ? 4 : 7).map((index) => ({
-    index,
-    x: x(index),
-    label: props.points[index]!.tick,
-  })),
+  tickIndices(props.points.length, width.value < 480 ? 4 : 7).flatMap((index) => {
+    const point = props.points[index];
+    return point ? [{ index, x: x(index), label: point.tick }] : [];
+  }),
 );
 
 const activePoint = computed(() => (active.value === null ? null : props.points[active.value]));
 const tooltipRows = computed(() => {
-  if (!activePoint.value) return [];
+  const point = activePoint.value;
+  if (!point) return [];
   const rows = props.series.map((series, index) => ({
     ...series,
-    value: activePoint.value!.values[index] ?? null,
+    value: point.values[index] ?? null,
   }));
   // Stacked bands read top-down, so list them in the same order.
   return props.stacked ? rows.reverse() : rows;
@@ -253,16 +267,15 @@ function onKey(event: KeyboardEvent) {
             :y1="PAD.top"
             :y2="PAD.top + innerHeight"
           />
-          <template v-for="(shape, index) in shapes" :key="shape.key">
-            <circle
-              v-if="tops[index]![active] !== null"
-              :cx="x(active)"
-              :cy="y(tops[index]![active] ?? 0)"
-              r="4"
-              :fill="shape.color"
-              class="chart-dot"
-            />
-          </template>
+          <circle
+            v-for="dot in activeDots"
+            :key="dot.key"
+            :cx="x(active)"
+            :cy="y(dot.value)"
+            r="4"
+            :fill="dot.color"
+            class="chart-dot"
+          />
         </g>
       </svg>
       <div v-if="activePoint" class="chart-tooltip" :style="tooltipStyle">
