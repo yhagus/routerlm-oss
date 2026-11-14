@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Injectable, Logger } from "@nestjs/common";
-import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/api-key.js";
+import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/models/api-key.js";
 import { providerQuirksSchema } from "../catalog/catalog.schema.js";
 import type { SnapshotModel, SnapshotRoute } from "../snapshot/snapshot.js";
 import { SnapshotService } from "../snapshot/snapshot.service.js";

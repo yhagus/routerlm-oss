@@ -32,6 +32,10 @@ Context7's index can lag behind the live docs. If a Context7 result conflicts wi
 
 If a first-party package lacks a feature or has a bug, do not switch to a standalone implementation silently. Ask the user first, then record the reason in an ADR. Background: `docs/adr/0001-prefer-nestjs-first-party-packages.md`.
 
+### Backend: CQRS layout for feature modules
+
+Feature modules use `@nestjs/cqrs` with `commands/{handlers,impl}`, `queries/{handlers,impl}`, `events/{handlers,impl}`, `models/` and a flat `schemas/` folder; infrastructure modules and the inference hot path don't. `src/api-keys/` is the reference. See `docs/adr/0007-cqrs-folder-layout-for-feature-modules.md`.
+
 ### Web: Nuxt first-party first
 
 In `web/`, apply the same principle: prefer official `@nuxt/*` modules and patterns documented on https://nuxt.com/docs over hand-rolled ones.

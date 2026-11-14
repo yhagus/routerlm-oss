@@ -1,25 +1,32 @@
 import { CurrentUser } from "@nestjs/authentication";
 import { Body, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from "@nestjs/common";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "../auth/dashboard-controller.decorator.js";
 import type { User } from "../users/user.js";
-import type { ApiKeySummary, CreatedApiKey, ModelChoice } from "./api-key.js";
-import { type NewApiKey, newApiKeySchema } from "./api-keys.schemas.js";
-import { ApiKeysService } from "./api-keys.service.js";
+import { CreateApiKeyCommand } from "./commands/impl/create-api-key.command.js";
+import { RevokeApiKeyCommand } from "./commands/impl/revoke-api-key.command.js";
+import type { ApiKeySummary, CreatedApiKey, ModelChoice } from "./models/api-key.js";
+import { ListApiKeysQuery } from "./queries/impl/list-api-keys.query.js";
+import { ListModelChoicesQuery } from "./queries/impl/list-model-choices.query.js";
+import { type NewApiKey, newApiKeySchema } from "./schemas/new-api-key.schema.js";
 
 // A dashboard controller: only a User's session gets in, so an API Key can't manage API Keys.
 @DashboardController("api-keys")
 export class ApiKeysController {
-  constructor(private readonly apiKeys: ApiKeysService) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @Get()
   listApiKeys(): Promise<ApiKeySummary[]> {
-    return this.apiKeys.listApiKeys();
+    return this.queryBus.execute(new ListApiKeysQuery());
   }
 
   /** The Models a new key can be restricted to. */
   @Get("model-choices")
   listModelChoices(): Promise<ModelChoice[]> {
-    return this.apiKeys.listModelChoices();
+    return this.queryBus.execute(new ListModelChoicesQuery());
   }
 
   @Post()
@@ -27,12 +34,12 @@ export class ApiKeysController {
     @Body({ schema: newApiKeySchema }) newKey: NewApiKey,
     @CurrentUser() creator: User,
   ): Promise<CreatedApiKey> {
-    return this.apiKeys.createApiKey(newKey, creator.id);
+    return this.commandBus.execute(new CreateApiKeyCommand(newKey, creator.id));
   }
 
   @Post(":id/revoke")
   @HttpCode(HttpStatus.NO_CONTENT)
   revokeApiKey(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
-    return this.apiKeys.revokeApiKey(id);
+    return this.commandBus.execute(new RevokeApiKeyCommand(id));
   }
 }

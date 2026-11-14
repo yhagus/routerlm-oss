@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/api-key.js";
+import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/models/api-key.js";
 import { CAPABILITIES, type Capability } from "../db/schema.js";
 import type { SnapshotModel } from "../snapshot/snapshot.js";
 import { SnapshotService } from "../snapshot/snapshot.service.js";

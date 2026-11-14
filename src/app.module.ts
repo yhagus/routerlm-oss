@@ -1,5 +1,6 @@
 import { Module, StandardSchemaValidationPipe } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { CqrsModule } from "@nestjs/cqrs";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { APP_PIPE } from "@nestjs/core";
@@ -28,6 +29,7 @@ import { UsageModule } from "./usage/usage.module.js";
         relations,
       }),
     }),
+    CqrsModule.forRoot(),
     AuthModule,
     QueueModule,
     ApiKeysModule,
