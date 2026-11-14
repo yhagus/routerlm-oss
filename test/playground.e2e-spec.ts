@@ -64,11 +64,11 @@ describe("Playground (e2e)", () => {
     await app.close();
   });
 
-  function sendToPlayground(body: unknown) {
+  function sendToPlayground(body: object) {
     return request(app.getHttpServer())
       .post("/api/playground/chat/completions")
       .set("Cookie", adaCookie)
-      .send(body as object);
+      .send(body);
   }
 
   it("streams the answer, then a summary of tokens, Cost, Route and Provider Account", async () => {
@@ -104,22 +104,22 @@ describe("Playground (e2e)", () => {
 
   it("records the request as the User's Playground usage", async () => {
     upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
-    const enqueued = vi.spyOn(app.get<Queue>(getQueueToken(USAGE_QUEUE)), "add");
+    const enqueued = vi.spyOn(app.get<Queue<UsageJob>>(getQueueToken(USAGE_QUEUE)), "add");
 
     await sendToPlayground(PLAYGROUND_REQUEST).expect(200);
 
     expect(enqueued).toHaveBeenCalledOnce();
-    const job = enqueued.mock.calls[0][1] as UsageJob;
+    const [[, job]] = enqueued.mock.calls;
     expect(job.caller).toEqual({ kind: "playground", userId: adaId });
     expect(JSON.stringify(job)).not.toContain("What is in this picture?");
   });
 
   it("captures a failed request with the session cookie redacted", async () => {
-    const enqueued = vi.spyOn(app.get<Queue>(getQueueToken(USAGE_QUEUE)), "add");
+    const enqueued = vi.spyOn(app.get<Queue<UsageJob>>(getQueueToken(USAGE_QUEUE)), "add");
 
     await sendToPlayground({ ...PLAYGROUND_REQUEST, model: "unknown" }).expect(404);
 
-    const job = enqueued.mock.calls[0][1] as UsageJob;
+    const [[, job]] = enqueued.mock.calls;
     expect(job.caller).toEqual({ kind: "playground", userId: adaId });
     expect(job.errorCapture?.request.headers.cookie).toBe("[REDACTED]");
     expect(JSON.stringify(job.errorCapture)).not.toContain(adaCookie);

@@ -66,12 +66,12 @@ describe("Error Captures written for failed requests (e2e)", () => {
     await app.close();
   });
 
-  function chat(body: unknown, key = apiKey) {
+  function chat(body: object, key = apiKey) {
     return request(app.getHttpServer())
       .post("/v1/chat/completions")
       .set("Authorization", `Bearer ${key}`)
       .set("Cookie", SESSION_COOKIE)
-      .send(body as object);
+      .send(body);
   }
 
   async function untilUsageQueueIsDrained(): Promise<void> {

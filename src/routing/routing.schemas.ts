@@ -18,7 +18,7 @@ const parameterValuesSchema = z.strictObject({
   ...capSchemas,
   stopSequences: z.array(z.string().min(1)).min(1),
 });
-type CappedParameter = keyof typeof capSchemas;
+const CAPPED_PARAMETERS = z.object(capSchemas).keyof().options;
 
 /** Kept unchanged: the system prompt is plain text, never a template. */
 export const parameterPolicySchema = z
@@ -34,7 +34,7 @@ export const parameterPolicySchema = z
       ["forced", policy.forced],
     ] as const;
     for (const [kind, values] of kinds) {
-      for (const parameter of Object.keys(capSchemas) as CappedParameter[]) {
+      for (const parameter of CAPPED_PARAMETERS) {
         const value = values?.[parameter];
         const cap = policy.caps?.[parameter];
         if (value !== undefined && cap !== undefined && rank(value) > rank(cap)) {

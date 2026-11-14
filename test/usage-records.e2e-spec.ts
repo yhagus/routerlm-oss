@@ -73,11 +73,11 @@ describe("Usage Logs and Attempts (e2e)", () => {
     await app.close();
   });
 
-  function chat(body: unknown, key = apiKey) {
+  function chat(body: object, key = apiKey) {
     return request(app.getHttpServer())
       .post("/v1/chat/completions")
       .set("Authorization", `Bearer ${key}`)
-      .send(body as object);
+      .send(body);
   }
 
   async function untilUsageQueueIsDrained(): Promise<void> {
