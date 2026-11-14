@@ -1,10 +1,28 @@
 <script setup lang="ts">
-import { Network, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
-import { ref } from "vue";
+import {
+  ArrowUpRight,
+  CircleAlert,
+  KeyRound,
+  Pencil,
+  Plus,
+  Power,
+  Search,
+  Trash2,
+} from "@lucide/vue";
+import { computed, ref } from "vue";
+import {
+  baseUrlHost,
+  formatContext,
+  formatPriceRange,
+  providerStats,
+  type ProviderStats,
+} from "~/lib/providerOverview";
 import {
   type AuthStyle,
   type Provider,
+  type ProviderAccount,
   type ProviderQuirks,
+  type UpstreamModel,
   REASONING_CONTENT_IN_HISTORY,
   UPSTREAM_PROTOCOLS,
 } from "~/lib/upstream";
@@ -17,11 +35,101 @@ type ProviderDialog =
   | { kind: "delete"; provider: Provider };
 
 const { $dashboardApi } = useNuxtApp();
-const {
-  data: providers,
-  error: loadError,
-  refresh,
-} = await useDashboardApi<Provider[]>("/providers");
+const [
+  { data: providers, error: loadError, refresh: refreshProviders },
+  { data: accounts, error: accountsError, refresh: refreshAccounts },
+  { data: models, error: modelsError, refresh: refreshModels },
+] = await Promise.all([
+  useDashboardApi<Provider[]>("/providers"),
+  useDashboardApi<ProviderAccount[]>("/provider-accounts"),
+  useDashboardApi<UpstreamModel[]>("/upstream-models"),
+]);
+
+/** Cooldowns are judged as of the last load, like the Provider Accounts page. */
+const loadedAt = ref(Date.now());
+
+/** Deleting a Provider deletes its accounts and models, so every list reloads. */
+async function refresh(): Promise<void> {
+  await Promise.all([refreshProviders(), refreshAccounts(), refreshModels()]);
+  loadedAt.value = Date.now();
+}
+
+/** Card stats need both lists; without them a card shows its configuration only. */
+const hasStats = computed(() => !accountsError.value && !modelsError.value);
+
+const cards = computed(() =>
+  (providers.value ?? []).map((provider) => ({
+    provider,
+    stats: providerStats(provider, accounts.value ?? [], models.value ?? [], loadedAt.value),
+  })),
+);
+
+const summary = computed(() => {
+  const all = cards.value;
+  const sum = (pick: (stats: ProviderStats) => number) =>
+    all.reduce((total, card) => total + pick(card.stats), 0);
+  return {
+    providers: all.length,
+    enabled: all.filter((card) => card.provider.isEnabled).length,
+    unroutable: all.filter((card) => card.stats.isUnroutable).length,
+    accounts: sum((stats) => stats.accounts.total),
+    readyAccounts: sum((stats) => stats.accounts.ready),
+    coolingAccounts: sum((stats) => stats.accounts.cooldown),
+    models: sum((stats) => stats.models.total),
+    enabledModels: sum((stats) => stats.models.enabled),
+  };
+});
+
+const searchText = ref("");
+const protocolFilter = ref("");
+const statusFilter = ref("");
+const protocolFilterOptions = [
+  { label: "All Protocols", value: "" },
+  ...UPSTREAM_PROTOCOLS.map((protocol) => ({ label: protocol, value: protocol })),
+];
+const statusFilterOptions = [
+  { label: "Any status", value: "" },
+  { label: "Enabled", value: "enabled" },
+  { label: "Disabled", value: "disabled" },
+  { label: "Needs attention", value: "attention" },
+];
+
+const visibleCards = computed(() => {
+  const query = searchText.value.trim().toLowerCase();
+  return cards.value.filter(({ provider, stats }) => {
+    if (protocolFilter.value && provider.protocol !== protocolFilter.value) return false;
+    if (statusFilter.value === "enabled" && !provider.isEnabled) return false;
+    if (statusFilter.value === "disabled" && provider.isEnabled) return false;
+    if (statusFilter.value === "attention" && !stats.isUnroutable) return false;
+    if (!query) return true;
+    return [provider.name, provider.slug, provider.baseUrl].some((field) =>
+      field.toLowerCase().includes(query),
+    );
+  });
+});
+
+function clearFilters(): void {
+  searchText.value = "";
+  protocolFilter.value = "";
+  statusFilter.value = "";
+}
+
+/** Why an enabled Provider can't take traffic, for its card. */
+function unroutableReason(stats: ProviderStats): string {
+  if (stats.accounts.total === 0) return "No Provider Account: add a key before routing here.";
+  if (stats.accounts.ready === 0) {
+    return "No ready Provider Account: every key is disabled or cooling down.";
+  }
+  return "No enabled Upstream Model: enable one before routing here.";
+}
+
+function accountSegments(stats: ProviderStats) {
+  return [
+    { key: "ready", name: "Ready", value: stats.accounts.ready },
+    { key: "cooldown", name: "Cooling down", value: stats.accounts.cooldown },
+    { key: "disabled", name: "Disabled", value: stats.accounts.disabled },
+  ].filter((segment) => segment.value > 0);
+}
 
 const protocolOptions = UPSTREAM_PROTOCOLS.map((protocol) => ({
   label: protocol,
@@ -147,8 +255,18 @@ function toggleProvider(provider: Provider): Promise<void> {
   return toggleRow(provider, provider.name);
 }
 
-function quirkSummary(quirks: ProviderQuirks): string {
-  return Object.keys(quirks).join(", ") || "—";
+const QUIRK_LABELS: Record<keyof ProviderQuirks, string> = {
+  reasoningContentInHistory: "reasoning in history",
+  acceptsCacheControl: "cache_control",
+  acceptsPromptCacheKey: "prompt_cache_key",
+  usesMaxCompletionTokens: "max_completion_tokens",
+  cacheMarkerLimit: "cache marker limit",
+};
+
+function quirkLabels(quirks: ProviderQuirks): string[] {
+  return Object.entries(QUIRK_LABELS)
+    .filter(([key]) => Object.hasOwn(quirks, key))
+    .map(([, label]) => label);
 }
 </script>
 
@@ -162,66 +280,205 @@ function quirkSummary(quirks: ProviderQuirks): string {
     </button>
   </PageHeading>
 
-  <section class="panel table-panel">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Provider</th>
-            <th>Protocol</th>
-            <th>Base URL</th>
-            <th>Auth</th>
-            <th>Quirks</th>
-            <th>Status</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="provider in providers" :key="provider.id">
-            <td>
-              <div class="table-entity">
-                <span class="key-icon"><Network :size="15" /></span
-                ><strong>{{ provider.name }}</strong
-                ><span class="cell-note">{{ provider.slug }}</span>
-              </div>
-            </td>
-            <td>{{ provider.protocol }}</td>
-            <td>{{ provider.baseUrl }}</td>
-            <td>{{ provider.authStyle }}</td>
-            <td>{{ quirkSummary(provider.quirks) }}</td>
-            <td>
-              <span
-                class="status-badge"
-                :class="provider.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-                >{{ provider.isEnabled ? "Enabled" : "Disabled" }}</span
-              >
-            </td>
-            <td>
-              <div class="row-actions">
-                <button class="row-action" @click="openDialog({ kind: 'edit', provider })">
-                  <Pencil :size="14" /> Edit
-                </button>
-                <button class="row-action" @click="toggleProvider(provider)">
-                  <Power :size="14" /> {{ provider.isEnabled ? "Disable" : "Enable" }}
-                </button>
-                <button class="row-action" @click="openDialog({ kind: 'delete', provider })">
-                  <Trash2 :size="14" /> Delete
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-if="loadError" class="empty-state">
-        <strong>Couldn't load Providers.</strong
-        ><span>Check that the backend is running, then reload the page.</span>
+  <div v-if="loadError" class="panel empty-state empty-state--standalone">
+    <strong>Couldn't load Providers.</strong
+    ><span>Check that the backend is running, then reload the page.</span>
+  </div>
+
+  <template v-else>
+    <section v-if="summary.providers > 0" class="executive-band executive-band--providers">
+      <div class="executive-band__lead">
+        <span class="metric-label">Enabled Providers</span>
+        <strong class="tabular">{{ summary.enabled }}</strong
+        ><span class="executive-band__of tabular">of {{ summary.providers }}</span>
+        <p v-if="hasStats && summary.unroutable > 0" class="executive-band__alert">
+          <CircleAlert :size="13" /> {{ summary.unroutable }} can't take traffic yet
+        </p>
+        <p v-else-if="hasStats">Every enabled Provider has a ready key and a model.</p>
       </div>
-      <div v-else-if="providers?.length === 0" class="empty-state">
-        <strong>No Providers yet.</strong
-        ><span>Run <code>bun run db:seed</code> to load the Catalog, or add one by hand.</span>
+      <div class="executive-band__stat">
+        <span>Ready accounts</span>
+        <strong class="tabular">{{ hasStats ? summary.readyAccounts : "—" }}</strong>
+        <small class="tabular">of {{ hasStats ? summary.accounts : "—" }} keys</small>
       </div>
+      <div class="executive-band__stat">
+        <span>Cooling down</span>
+        <strong class="tabular">{{ hasStats ? summary.coolingAccounts : "—" }}</strong>
+        <small>keys resting after errors</small>
+      </div>
+      <div class="executive-band__stat">
+        <span>Enabled models</span>
+        <strong class="tabular">{{ hasStats ? summary.enabledModels : "—" }}</strong>
+        <small class="tabular">of {{ hasStats ? summary.models : "—" }} Upstream Models</small>
+      </div>
+    </section>
+
+    <div
+      v-if="summary.providers > 0"
+      class="provider-filters"
+      role="group"
+      aria-label="Filter Providers"
+    >
+      <label class="search-control">
+        <Search :size="14" />
+        <input
+          v-model="searchText"
+          type="search"
+          placeholder="Search name, slug or URL"
+          aria-label="Search Providers"
+        />
+      </label>
+      <AppSelect
+        v-model="protocolFilter"
+        :options="protocolFilterOptions"
+        label="Filter by Protocol"
+      />
+      <AppSelect v-model="statusFilter" :options="statusFilterOptions" label="Filter by status" />
+      <span class="filter-note tabular">{{ visibleCards.length }} of {{ summary.providers }}</span>
     </div>
-  </section>
+
+    <p v-if="!hasStats" class="form__hint provider-stats-note">
+      Couldn't load Provider Accounts or Upstream Models, so cards show configuration only.
+    </p>
+
+    <div v-if="summary.providers === 0" class="panel empty-state empty-state--standalone">
+      <strong>No Providers yet.</strong
+      ><span>Run <code>bun run db:seed</code> to load the Catalog, or add one by hand.</span>
+    </div>
+    <div v-else-if="visibleCards.length === 0" class="panel empty-state empty-state--standalone">
+      <strong>No Provider matches these filters.</strong>
+      <button class="text-button" type="button" @click="clearFilters">Clear filters</button>
+    </div>
+
+    <ul v-else class="provider-grid">
+      <li
+        v-for="{ provider, stats } in visibleCards"
+        :key="provider.id"
+        class="provider-card panel"
+        :class="{ 'provider-card--off': !provider.isEnabled }"
+      >
+        <header class="provider-card__head">
+          <ProviderLogo :slug="provider.slug" :name="provider.name" :base-url="provider.baseUrl" />
+          <div class="provider-card__title">
+            <h2 :title="provider.name">{{ provider.name }}</h2>
+            <span class="cell-note">{{ provider.slug }}</span>
+          </div>
+          <span
+            class="status-badge"
+            :class="provider.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+            >{{ provider.isEnabled ? "Enabled" : "Disabled" }}</span
+          >
+        </header>
+
+        <div class="provider-card__meta">
+          <span class="tag">{{ provider.protocol }}</span>
+          <span class="tag"><KeyRound :size="11" />{{ provider.authStyle }}</span>
+          <span v-if="provider.isFromCatalog" class="tag">Catalog</span>
+          <span class="provider-card__host" :title="provider.baseUrl">{{
+            baseUrlHost(provider.baseUrl)
+          }}</span>
+        </div>
+
+        <template v-if="hasStats">
+          <dl class="provider-card__stats">
+            <div>
+              <dt>Accounts</dt>
+              <dd class="tabular">
+                {{ stats.accounts.ready }}<small>/{{ stats.accounts.total }} ready</small>
+              </dd>
+            </div>
+            <div>
+              <dt>Models</dt>
+              <dd class="tabular">
+                {{ stats.models.enabled }}<small>/{{ stats.models.total }} on</small>
+              </dd>
+            </div>
+            <div>
+              <dt>Max context</dt>
+              <dd class="tabular">{{ formatContext(stats.maxContext) }}</dd>
+            </div>
+            <div>
+              <dt>Input $/M</dt>
+              <dd class="tabular">{{ formatPriceRange(stats.inputPrice) }}</dd>
+            </div>
+          </dl>
+
+          <div
+            class="account-bar"
+            role="img"
+            :aria-label="`Provider Accounts: ${stats.accounts.ready} ready, ${stats.accounts.cooldown} cooling down, ${stats.accounts.disabled} disabled`"
+          >
+            <span
+              v-for="segment in accountSegments(stats)"
+              :key="segment.key"
+              class="account-bar__part"
+              :class="`account-bar__part--${segment.key}`"
+              :style="{ flexGrow: segment.value }"
+              :title="`${segment.value} ${segment.name.toLowerCase()}`"
+            />
+          </div>
+
+          <div
+            v-if="stats.capabilities.length || quirkLabels(provider.quirks).length"
+            class="provider-card__chips"
+          >
+            <span v-for="capability in stats.capabilities" :key="capability" class="chip">{{
+              capability
+            }}</span>
+            <span
+              v-for="quirk in quirkLabels(provider.quirks)"
+              :key="quirk"
+              class="chip chip--quiet"
+              title="Quirk"
+              >{{ quirk }}</span
+            >
+          </div>
+
+          <p v-if="stats.isUnroutable" class="provider-card__alert">
+            <CircleAlert :size="13" /> {{ unroutableReason(stats) }}
+          </p>
+        </template>
+
+        <footer class="provider-card__foot">
+          <NuxtLink class="row-action" to="/provider-accounts"
+            >Accounts <ArrowUpRight :size="13"
+          /></NuxtLink>
+          <NuxtLink class="row-action" to="/upstream-models"
+            >Models <ArrowUpRight :size="13"
+          /></NuxtLink>
+          <div class="row-actions">
+            <button
+              class="icon-action"
+              type="button"
+              :aria-label="`Edit ${provider.name}`"
+              title="Edit"
+              @click="openDialog({ kind: 'edit', provider })"
+            >
+              <Pencil :size="14" />
+            </button>
+            <button
+              class="icon-action"
+              type="button"
+              :aria-label="`${provider.isEnabled ? 'Disable' : 'Enable'} ${provider.name}`"
+              :title="provider.isEnabled ? 'Disable' : 'Enable'"
+              @click="toggleProvider(provider)"
+            >
+              <Power :size="14" />
+            </button>
+            <button
+              class="icon-action icon-action--danger"
+              type="button"
+              :aria-label="`Delete ${provider.name}`"
+              title="Delete"
+              @click="openDialog({ kind: 'delete', provider })"
+            >
+              <Trash2 :size="14" />
+            </button>
+          </div>
+        </footer>
+      </li>
+    </ul>
+  </template>
 
   <AppDialog
     v-if="dialog && dialog.kind !== 'delete'"
