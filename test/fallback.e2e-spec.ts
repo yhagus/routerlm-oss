@@ -81,7 +81,7 @@ describe("Fallback (e2e)", () => {
     ["429 without Retry-After", RATE_LIMITED],
     ["429 with Retry-After", { ...RATE_LIMITED, headers: { "retry-after": "120" } }],
     ["5xx", SERVER_ERROR],
-    ["connect timeout", { kind: "hang" }],
+    ["upstream that never answers", { kind: "hang" }],
     ["total timeout", { kind: "headers-only" }],
     ["connection reset", { kind: "reset" }],
   ])("falls back to the next Provider Account after a %s", async (_failure, failedReply) => {
@@ -91,6 +91,14 @@ describe("Fallback (e2e)", () => {
     await chat().expect(200);
 
     expect(attemptedKeys()).toEqual([UPSTREAM_KEY, BACKUP_KEY]);
+  });
+
+  it("waits past the connect timeout for a non-stream answer that arrives within the total timeout", async () => {
+    upstream.reply({ ...SUCCESS, delayMs: FAST_TIMEOUTS.connectTimeoutMs + 100 });
+
+    await chat().expect(200);
+
+    expect(attemptedKeys()).toEqual([UPSTREAM_KEY]);
   });
 
   it("falls back to the next Provider Account when a stream sends no first token in time", async () => {

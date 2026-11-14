@@ -21,10 +21,18 @@ export const DEFAULT_TIMEOUTS: AttemptTimeouts = {
   totalMs: 600_000,
 };
 
+/**
+ * fetch exposes neither the TCP/TLS connection nor the moment the request is
+ * sent, so the first thing an Attempt can observe is the response headers.
+ * A streaming upstream sends them as soon as it accepts the request, but a
+ * non-stream one sends them only with its finished answer, which can take
+ * minutes for a long or reasoning-heavy reply. So a non-stream Attempt is
+ * bound by `totalMs` alone; a stream gets all three.
+ */
 export interface AttemptTimeouts {
-  /** Until the upstream's response headers arrive. */
+  /** Streams only: until the upstream's response headers arrive. */
   connectMs: number;
-  /** From the headers until the first stream event (streams only). */
+  /** Streams only: from the headers until the first stream event. */
   firstTokenMs: number;
   /** The whole Attempt, body included. */
   totalMs: number;
@@ -131,7 +139,7 @@ export class UpstreamClient {
     const deadlines = new AttemptDeadlines(call.timeouts, call.clientSignal);
     deadlines.start("totalMs");
     try {
-      const response = await this.send(call, deadlines);
+      const response = await this.send(call, deadlines.signal);
       return call.converter.parseResponse(parseJsonBody(await response.data.text()));
     } catch (error) {
       throw deadlines.failureOf(error, false);
@@ -149,7 +157,9 @@ export class UpstreamClient {
     const deadlines = new AttemptDeadlines(call.timeouts, call.clientSignal);
     deadlines.start("totalMs");
     try {
-      const response = await this.send(call, deadlines);
+      deadlines.start("connectMs");
+      const response = await this.send(call, deadlines.signal);
+      deadlines.stop("connectMs");
       const body = response.data.body;
       if (!body) {
         throw new UpstreamProtocolError("The upstream stream has no body");
@@ -183,23 +193,19 @@ export class UpstreamClient {
     }
   }
 
-  private async send(
-    call: UpstreamCall,
-    deadlines: AttemptDeadlines,
-  ): Promise<HttpResponse<Response>> {
+  /** Resolves once the response headers have arrived. */
+  private async send(call: UpstreamCall, signal: AbortSignal): Promise<HttpResponse<Response>> {
     const written: UpstreamHttpRequest = call.converter.writeRequest(call.request, call.target);
-    deadlines.start("connectMs");
     const response = await this.http.post<Response>(written.url, {
       body: written.body,
       headers: { ...written.headers, ...call.authHeaders },
       responseType: "response",
-      signal: deadlines.signal,
+      signal,
       // Fallback across Provider Accounts and Routes is the gateway's job.
       retry: false,
       throwOnHttpError: false,
       redirect: "error",
     });
-    deadlines.stop("connectMs");
     if (!response.ok) {
       throw await failedResponse(response);
     }

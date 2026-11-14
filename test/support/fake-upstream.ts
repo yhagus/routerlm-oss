@@ -4,7 +4,14 @@ import type { AddressInfo } from "node:net";
 
 /** What the fake upstream answers to the next request. */
 export type FakeReply =
-  | { kind: "json"; status: number; body: unknown; headers?: Record<string, string> }
+  /** `delayMs` holds the whole answer back, as a slow but healthy non-stream upstream. */
+  | {
+      kind: "json";
+      status: number;
+      body: unknown;
+      headers?: Record<string, string>;
+      delayMs?: number;
+    }
   /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
   | { kind: "stream"; events: string; holdOpen?: boolean }
   /** Sends the stream's first events, then drops the connection. */
@@ -130,12 +137,14 @@ export class FakeUpstream {
     }
     switch (reply.kind) {
       case "json":
-        response.writeHead(reply.status, {
-          "content-type": "application/json",
-          [UPSTREAM_ONLY_HEADER]: "upstream-123",
-          ...reply.headers,
-        });
-        response.end(JSON.stringify(reply.body));
+        setTimeout(() => {
+          response.writeHead(reply.status, {
+            "content-type": "application/json",
+            [UPSTREAM_ONLY_HEADER]: "upstream-123",
+            ...reply.headers,
+          });
+          response.end(JSON.stringify(reply.body));
+        }, reply.delayMs ?? 0);
         return;
       case "stream":
         response.writeHead(200, {
