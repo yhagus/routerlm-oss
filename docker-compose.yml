@@ -4,21 +4,38 @@
 #   db      -> postgres://routerlm:routerlm@localhost:5432/routerlm
 #   redis   -> redis://localhost:6379
 #   worker  -> runs queue jobs, no port
+#   migrate -> one-shot: applies migrations and seeds the Catalog, then exits
+#
+# Every value below has a development default. Override any of them in `.env`
+# next to this file (see .env.example). Only ENCRYPTION_KEY has no default:
+# generate it once with `openssl rand -base64 32` and keep it, because losing
+# it makes stored Provider Account keys unreadable.
+
+x-postgres: &postgres
+  POSTGRES_USER: ${POSTGRES_USER:-routerlm}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-routerlm}
+  POSTGRES_DB: ${POSTGRES_DB:-routerlm}
+
+# Shared by backend, worker and migrate. Hostnames are compose service names.
+x-app-env: &app-env
+  DATABASE_URL: postgres://${POSTGRES_USER:-routerlm}:${POSTGRES_PASSWORD:-routerlm}@db:5432/${POSTGRES_DB:-routerlm}
+  REDIS_URL: redis://redis:6379
+  WEB_ORIGIN: http://localhost:${WEB_PORT:-3001}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env to the output of `openssl rand -base64 32` (see README)}
+  ERROR_CAPTURE_RETENTION_DAYS: ${ERROR_CAPTURE_RETENTION_DAYS:-30}
+
 services:
   db:
     image: postgres:18-alpine
     ports:
       - "${DB_PORT:-5432}:5432"
-    environment:
-      POSTGRES_USER: routerlm
-      POSTGRES_PASSWORD: routerlm
-      POSTGRES_DB: routerlm
+    environment: *postgres
     volumes:
       # Postgres 18+ images keep PGDATA in a versioned subdirectory
       # (/var/lib/postgresql/18/docker), so mount the parent directory.
       - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U routerlm -d routerlm"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -37,6 +54,23 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Applies pending migrations, then creates missing Catalog rows. Both are
+  # idempotent, so this runs on every `docker compose up`.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    environment: *app-env
+    command: ["sh", "-c", "bun install --frozen-lockfile && bun run db:migrate && bun run db:seed"]
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   backend:
     build:
       context: .
@@ -45,19 +79,15 @@ services:
     ports:
       - "${BACKEND_PORT:-3000}:3000"
     environment:
+      <<: *app-env
       PORT: 3000
-      DATABASE_URL: postgres://routerlm:routerlm@db:5432/routerlm
-      WEB_ORIGIN: http://localhost:${WEB_PORT:-3001}
-      REDIS_URL: redis://redis:6379
-      # From .env next to this file; see .env.example.
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     volumes:
       - .:/app
       # Keep the container's Linux node_modules instead of the host's.
       - backend_node_modules:/app/node_modules
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       # The backend survives Redis outages, so starting it is enough.
       redis:
         condition: service_started
@@ -68,17 +98,13 @@ services:
       context: .
       dockerfile: Dockerfile
       target: worker
-    environment:
-      DATABASE_URL: postgres://routerlm:routerlm@db:5432/routerlm
-      REDIS_URL: redis://redis:6379
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      ERROR_CAPTURE_RETENTION_DAYS: ${ERROR_CAPTURE_RETENTION_DAYS:-30}
+    environment: *app-env
     volumes:
       - .:/app
       - worker_node_modules:/app/node_modules
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     restart: unless-stopped

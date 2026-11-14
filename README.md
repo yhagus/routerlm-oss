@@ -58,17 +58,26 @@ $ bun run test:e2e
 $ bun run test:cov
 ```
 
+## Development setup
+
+Create `.env` with a fresh encryption key, then start the stack:
+
+```bash
+$ sed "s|^ENCRYPTION_KEY=$|ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env.example > .env
+$ docker compose up -d
+```
+
+Every other value has a development default in `docker-compose.yml`; override
+any of them in `.env` (ports, Postgres credentials, Error Capture retention; see
+`.env.example`). On each `up`, the one-shot `migrate` service applies pending
+migrations and seeds the Catalog before `backend` and `worker` start. Then open
+http://localhost:3001 to create the first User.
+
 ## Encryption key
 
 Provider Account keys are encrypted at rest with `ENCRYPTION_KEY` (32 random
-bytes in base64). The backend and worker refuse to start without it, also under
-docker compose, which reads it from `.env`:
-
-```bash
-$ cp .env.example .env
-$ echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
-```
-
+bytes in base64). The backend and worker refuse to start without it, and
+`docker compose` refuses to start with a message saying how to generate one.
 Back it up: stored Provider Account keys can't be decrypted without it.
 
 ## Database
@@ -92,8 +101,8 @@ and `bun run db:studio` opens Drizzle Studio.
 ## Catalog
 
 The Catalog is the Providers and Upstream Models that ship with the gateway. It
-lives in `src/catalog/providers/`, one JSON file per Provider. After migrating,
-load it with:
+lives in `src/catalog/providers/`, one JSON file per Provider. `docker compose
+up` seeds it automatically; to run the seeder by hand:
 
 ```bash
 $ docker compose exec backend bun run db:seed
