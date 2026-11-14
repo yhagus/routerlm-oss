@@ -1,11 +1,25 @@
 import { boolean, index, integer, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "./columns.js";
+import type { ReasoningEffort } from "../../inference/internal-format.js";
 import { upstreamModels } from "./upstream.js";
 
 // Routing: the Models the gateway exposes and the Routes that serve them.
 
-/** Request parameters keyed by their name in the internal request format (ADR 0002). */
-export type ParameterValues = Record<string, unknown>;
+/**
+ * The request parameters a Parameter Policy controls, named like the fields
+ * of the internal request format (ADR 0002). `reasoningEffort` is
+ * `reasoning.effort`.
+ */
+export type ParameterValues = {
+  temperature?: number;
+  topP?: number;
+  maxOutputTokens?: number;
+  reasoningEffort?: ReasoningEffort;
+  stopSequences?: string[];
+};
+
+/** The parameters with an order, which a cap can bound. */
+export type ParameterCaps = Omit<ParameterValues, "stopSequences">;
 
 /**
  * What an operator sets on a Model, or overrides on a Route. Every part is
@@ -16,8 +30,8 @@ export type ParameterPolicy = {
   defaults?: ParameterValues;
   /** Replace whatever the client sent. */
   forced?: ParameterValues;
-  /** Upper bounds for numeric parameters; larger client values are clamped. */
-  caps?: Record<string, number>;
+  /** Upper bounds; larger client values are clamped. */
+  caps?: ParameterCaps;
   /** Static text placed first in the system prompt. Never per-request values. */
   systemPrompt?: string;
 };

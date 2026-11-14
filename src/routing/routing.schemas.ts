@@ -1,17 +1,69 @@
 import { z } from "zod";
+import type { ParameterPolicy } from "../db/schema.js";
+import { REASONING_EFFORTS, type ReasoningEffort } from "../inference/internal-format.js";
 
 // What the dashboard sends to create or change Models and their Routes.
 
 const nothingToChange = { error: "Send at least one field to change" };
 const hasAnyField = (changes: object): boolean => Object.keys(changes).length > 0;
 
+// The widest ranges any upstream Protocol accepts; the upstream refuses what its model doesn't.
+const capSchemas = {
+  temperature: z.number().min(0).max(2),
+  topP: z.number().min(0).max(1),
+  maxOutputTokens: z.int().positive(),
+  reasoningEffort: z.enum(REASONING_EFFORTS),
+};
+const parameterValuesSchema = z.strictObject({
+  ...capSchemas,
+  stopSequences: z.array(z.string().min(1)).min(1),
+});
+type CappedParameter = keyof typeof capSchemas;
+
+/** Kept unchanged: the system prompt is plain text, never a template. */
+export const parameterPolicySchema = z
+  .strictObject({
+    defaults: parameterValuesSchema.partial().optional(),
+    forced: parameterValuesSchema.partial().optional(),
+    caps: z.strictObject(capSchemas).partial().optional(),
+    systemPrompt: z.string().optional(),
+  })
+  .superRefine((policy, context) => {
+    const kinds = [
+      ["default", policy.defaults],
+      ["forced", policy.forced],
+    ] as const;
+    for (const [kind, values] of kinds) {
+      for (const parameter of Object.keys(capSchemas) as CappedParameter[]) {
+        const value = values?.[parameter];
+        const cap = policy.caps?.[parameter];
+        if (value !== undefined && cap !== undefined && rank(value) > rank(cap)) {
+          context.addIssue({
+            code: "custom",
+            path: [kind === "default" ? "defaults" : "forced", parameter],
+            message: `The ${kind} ${parameter} (${value}) is above its cap (${cap})`,
+          });
+        }
+      }
+    }
+  }) satisfies z.ZodType<ParameterPolicy>;
+
+/** Where a capped value sits in its order: efforts by their place in REASONING_EFFORTS. */
+function rank(value: number | ReasoningEffort): number {
+  return typeof value === "number" ? value : REASONING_EFFORTS.indexOf(value);
+}
+
 const modelFieldsSchema = z.strictObject({
   // What clients send as `model`.
   name: z.string().trim().min(1),
   isEnabled: z.boolean(),
+  parameterPolicy: parameterPolicySchema,
 });
 
-export const newModelSchema = modelFieldsSchema.extend({ isEnabled: z.boolean().optional() });
+export const newModelSchema = modelFieldsSchema.extend({
+  isEnabled: z.boolean().optional(),
+  parameterPolicy: parameterPolicySchema.optional(),
+});
 export type NewModel = z.infer<typeof newModelSchema>;
 
 export const modelChangesSchema = modelFieldsSchema.partial().refine(hasAnyField, nothingToChange);
@@ -26,6 +78,8 @@ const routeFieldsSchema = z.strictObject({
   connectTimeoutMs: routeTimeoutMsSchema,
   firstTokenTimeoutMs: routeTimeoutMsSchema,
   totalTimeoutMs: routeTimeoutMsSchema,
+  // Null means the Model's Parameter Policy applies unchanged.
+  parameterPolicyOverride: parameterPolicySchema.nullable(),
 });
 
 /** A new Route goes last; reorder to move it. */
@@ -34,6 +88,7 @@ export const newRouteSchema = routeFieldsSchema.extend({
   connectTimeoutMs: routeTimeoutMsSchema.optional(),
   firstTokenTimeoutMs: routeTimeoutMsSchema.optional(),
   totalTimeoutMs: routeTimeoutMsSchema.optional(),
+  parameterPolicyOverride: parameterPolicySchema.nullable().optional(),
 });
 export type NewRoute = z.infer<typeof newRouteSchema>;
 

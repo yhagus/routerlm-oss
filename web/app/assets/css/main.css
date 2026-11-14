@@ -2081,3 +2081,27 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Parameter Policy editor: on the Model page panel and in the Route override dialog */
+.text-area {
+  height: auto;
+  min-height: 34px;
+  padding: 8px 10px;
+  font-family: inherit;
+  line-height: 1.4;
+  resize: vertical;
+}
+.panel-body {
+  padding: 0 21px 18px;
+}
+.policy-table {
+  min-width: 560px;
+}
+.policy-table td {
+  vertical-align: top;
+}
+.policy-table .text-input,
+.policy-table .app-select {
+  width: 100%;
+  min-width: 110px;
+}

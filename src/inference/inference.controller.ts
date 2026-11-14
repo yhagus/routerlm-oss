@@ -9,6 +9,7 @@ import { eventStreamResponse } from "./event-stream-response.js";
 import { InferenceService } from "./inference.service.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
+import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
 
 /** Where client applications call the gateway. */
 export const INFERENCE_API_PREFIX = "v1";
@@ -52,6 +53,23 @@ export class InferenceController {
   ): Promise<unknown> {
     const result = await this.inference.infer(
       anthropicMessagesClientConverter,
+      body,
+      principal,
+      clientConnectionOf(request, response),
+    );
+    return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
+  }
+
+  @Post("responses")
+  @HttpCode(200)
+  async createResponse(
+    @Body() body: unknown,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<unknown> {
+    const result = await this.inference.infer(
+      openAiResponsesClientConverter,
       body,
       principal,
       clientConnectionOf(request, response),
