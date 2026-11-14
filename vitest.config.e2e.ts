@@ -11,6 +11,9 @@ export default defineConfig({
     env: {
       DATABASE_URL:
         process.env.DATABASE_URL ?? 'postgres://routerlm:routerlm@localhost:5432/routerlm',
+      // Queues connect at boot but fail fast without Redis, so only the tests
+      // that run the worker need a reachable Redis here.
+      REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
     },
   },
 });

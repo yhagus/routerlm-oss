@@ -4,6 +4,7 @@ import { z } from "zod";
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   DATABASE_URL: z.url({ error: "DATABASE_URL is not set or not a URL; see .env.example" }),
+  REDIS_URL: z.url({ error: "REDIS_URL is not set or not a URL; see .env.example" }),
 });
 
 export type Env = z.infer<typeof envSchema>;
