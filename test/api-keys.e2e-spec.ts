@@ -6,6 +6,7 @@ import request from "supertest";
 import { ApiKeyAuth } from "../src/api-keys/api-key-auth.js";
 import type { Database } from "../src/db/relations.js";
 import { apiKeys, models } from "../src/db/schema.js";
+import { SnapshotService } from "../src/snapshot/snapshot.service.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "./support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
@@ -95,6 +96,8 @@ describe("API Keys (e2e)", () => {
       .update(apiKeys)
       .set({ expiresAt: new Date(Date.now() - 1000) })
       .where(eq(apiKeys.id, created.id));
+    // A direct database write, so refresh the in-memory snapshot as a dashboard write would.
+    await app.get(SnapshotService).changed();
 
     await expect(authenticateWith(created.key)).rejects.toThrow("api key expired");
   });

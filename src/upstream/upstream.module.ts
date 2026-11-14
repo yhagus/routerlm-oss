@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { SnapshotModule } from "../snapshot/snapshot.module.js";
 import { ConfigService } from "@nestjs/config";
 import type { Env } from "../config/env.schema.js";
 import { ProviderAccountsController } from "./provider-accounts.controller.js";
@@ -12,6 +13,7 @@ import { UpstreamModelsService } from "./upstream-models.service.js";
 
 /** Dashboard management of Providers, Upstream Models and Provider Accounts. */
 @Module({
+  imports: [SnapshotModule],
   controllers: [ProvidersController, UpstreamModelsController, ProviderAccountsController],
   providers: [
     ProvidersService,

@@ -16,6 +16,7 @@ export interface ProviderQuirks {
   reasoningContentInHistory?: (typeof REASONING_CONTENT_IN_HISTORY)[number];
   acceptsCacheControl?: boolean;
   acceptsPromptCacheKey?: boolean;
+  usesMaxCompletionTokens?: boolean;
 }
 
 export interface Provider {

@@ -1,0 +1,33 @@
+{
+  "id": "chatcmpl-upstream-9f8e7d",
+  "object": "chat.completion",
+  "created": 1794700000,
+  "model": "acme-large-2026",
+  "system_fingerprint": "fp_upstream",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Checking the weather.",
+        "reasoning_content": "The user wants the weather in Paris.",
+        "tool_calls": [
+          {
+            "id": "call_def456",
+            "type": "function",
+            "function": { "name": "get_weather", "arguments": "{\"city\":\"Paris\"}" }
+          }
+        ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 120,
+    "completion_tokens": 40,
+    "total_tokens": 160,
+    "prompt_tokens_details": { "cached_tokens": 100 },
+    "completion_tokens_details": { "reasoning_tokens": 12 }
+  }
+}
