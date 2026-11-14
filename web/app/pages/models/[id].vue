@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
+import { ArrowDown, ArrowUp, Pencil, Plus, Power, SlidersHorizontal, Trash2 } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
+import { isEmptyPolicy, type ParameterPolicy } from "~/lib/parameterPolicy";
 import type { ModelDetail, RouteSummary } from "~/lib/routing";
 import type { Provider, UpstreamModel } from "~/lib/upstream";
 
@@ -8,7 +9,8 @@ type ModelDialog =
   | { kind: "rename" }
   | { kind: "delete" }
   | { kind: "add-route" }
-  | { kind: "remove-route"; route: RouteSummary };
+  | { kind: "remove-route"; route: RouteSummary }
+  | { kind: "route-policy"; route: RouteSummary };
 
 const modelPath = `/models/${String(useRoute().params.id)}`;
 
@@ -114,6 +116,44 @@ async function removeRoute(routeToRemove: RouteSummary): Promise<void> {
     "Couldn't remove the Route.",
   );
   if (isRemoved) await refresh();
+}
+
+const isSavingPolicy = ref(false);
+const policyError = ref("");
+
+async function saveModelPolicy(parameterPolicy: ParameterPolicy): Promise<void> {
+  isSavingPolicy.value = true;
+  policyError.value = "";
+  try {
+    await $dashboardApi(modelPath, { method: "PATCH", body: { parameterPolicy } });
+    showToast("Saved the Parameter Policy");
+    await refresh();
+  } catch (error) {
+    policyError.value = apiErrorMessage(error, "Couldn't save the Parameter Policy.");
+  } finally {
+    isSavingPolicy.value = false;
+  }
+}
+
+/** An override that sets nothing is saved as no override. */
+async function saveRouteOverride(
+  routeToChange: RouteSummary,
+  override: ParameterPolicy | null,
+): Promise<void> {
+  const parameterPolicyOverride = override && !isEmptyPolicy(override) ? override : null;
+  const target = routeToChange.upstreamModel.upstreamModelId;
+  const isSaved = await saveFromDialog(
+    () =>
+      $dashboardApi(`${modelPath}/routes/${routeToChange.id}`, {
+        method: "PATCH",
+        body: { parameterPolicyOverride },
+      }),
+    parameterPolicyOverride
+      ? `Saved the override for ${target}`
+      : `Removed the override for ${target}`,
+    "Couldn't save the override.",
+  );
+  if (isSaved) await refresh();
 }
 
 async function toggleModel(): Promise<void> {
@@ -228,6 +268,9 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
                 <span v-if="!modelRoute.upstreamModel.isEnabled" class="cell-note"
                   >Upstream Model disabled</span
                 >
+                <span v-if="modelRoute.parameterPolicyOverride" class="cell-note"
+                  >Overrides the Parameter Policy</span
+                >
               </td>
               <td>{{ modelRoute.upstreamModel.capabilities.join(", ") || "—" }}</td>
               <td class="tabular">
@@ -264,6 +307,12 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
                   >
                     <ArrowDown :size="14" />
                   </button>
+                  <button
+                    class="row-action"
+                    @click="openDialog({ kind: 'route-policy', route: modelRoute })"
+                  >
+                    <SlidersHorizontal :size="14" /> Policy
+                  </button>
                   <button class="row-action" @click="toggleRoute(modelRoute)">
                     <Power :size="14" /> {{ modelRoute.isEnabled ? "Disable" : "Enable" }}
                   </button>
@@ -290,7 +339,26 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
       </div>
     </section>
 
-    <!-- Slot: the Parameter Policy editor (#17) goes here, below the Routes. -->
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Parameter Policy</h2>
+          <p>
+            Defaults fill what the client leaves out, forced values replace the client's, and caps
+            clamp what is left. A Route's override wins for the parameters it sets.
+          </p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <ParameterPolicyEditor
+          :policy="model.parameterPolicy"
+          :is-saving="isSavingPolicy"
+          :error="policyError"
+          submit-label="Save policy"
+          @save="saveModelPolicy"
+        />
+      </div>
+    </section>
 
     <!-- Slot: the automatic cache breakpoints switch (#18) goes here. -->
   </template>
@@ -355,6 +423,35 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
         Remove Route
       </button>
     </div>
+  </AppDialog>
+
+  <AppDialog
+    v-if="dialog?.kind === 'route-policy'"
+    v-model:open="isDialogOpen"
+    wide
+    title="Route override"
+    :description="`For requests sent to ${dialog.route.provider.name} · ${dialog.route.upstreamModel.upstreamModelId}, each parameter set here takes all its rules from this override instead of the Model's policy. A system prompt here replaces the Model's.`"
+  >
+    <ParameterPolicyEditor
+      :policy="dialog.route.parameterPolicyOverride"
+      :is-saving="isSaving"
+      :error="dialogError"
+      submit-label="Save override"
+      @save="saveRouteOverride(dialog.route, $event)"
+    >
+      <template #actions>
+        <button class="button" type="button" @click="dialog = null">Cancel</button>
+        <button
+          v-if="dialog.route.parameterPolicyOverride"
+          class="button button--danger"
+          type="button"
+          :disabled="isSaving"
+          @click="saveRouteOverride(dialog.route, null)"
+        >
+          Remove override
+        </button>
+      </template>
+    </ParameterPolicyEditor>
   </AppDialog>
 
   <AppDialog
