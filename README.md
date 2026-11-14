@@ -23,7 +23,7 @@
 
 ## Description
 
-NestJS application using Bun, the Node adapter, CQRS, MCP, and the Oxc toolchain.
+NestJS application using Bun, the Node adapter, Drizzle on PostgreSQL, and the Oxc toolchain.
 
 ## Project setup
 
@@ -74,18 +74,6 @@ $ docker compose exec backend bun run db:migrate
 
 `bun run db:push` syncs the schema without a migration (local prototyping only),
 and `bun run db:studio` opens Drizzle Studio.
-
-## CQRS and MCP
-
-CQRS handlers live under `src/cqrs` and use the official `@nestjs/cqrs` package.
-
-The MCP endpoint is available at `/mcp` when the application runs over HTTP.
-
-Run the stdio MCP server with:
-
-```bash
-$ bun run mcp
-```
 
 ## Observability
 
