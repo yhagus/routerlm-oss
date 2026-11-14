@@ -1,0 +1,69 @@
+{
+  "id": "resp_ours1",
+  "object": "response",
+  "created_at": 1794700000,
+  "status": "completed",
+  "error": null,
+  "incomplete_details": null,
+  "instructions": null,
+  "metadata": {},
+  "model": "smart",
+  "output": [
+    {
+      "id": "rs_ours1_0",
+      "type": "reasoning",
+      "status": "completed",
+      "summary": [],
+      "content": [{ "type": "reasoning_text", "text": "Paris weather." }],
+      "encrypted_content": "EqQBCgIYAhIM1gbcDa9GJwZA2b3h"
+    },
+    {
+      "id": "msg_ours1_1",
+      "type": "message",
+      "status": "completed",
+      "role": "assistant",
+      "content": [{ "type": "output_text", "text": "Checking.", "annotations": [], "logprobs": [] }]
+    },
+    {
+      "id": "fc_ours1_2",
+      "type": "function_call",
+      "status": "completed",
+      "call_id": "call_def456",
+      "name": "get_weather",
+      "arguments": "{\"city\":\"Paris\"}"
+    }
+  ],
+  "parallel_tool_calls": false,
+  "temperature": 0.5,
+  "tool_choice": { "type": "function", "name": "get_weather" },
+  "tools": [
+    {
+      "type": "function",
+      "name": "get_weather",
+      "description": null,
+      "parameters": { "type": "object", "properties": { "city": { "type": "string" } } },
+      "strict": null
+    }
+  ],
+  "top_p": null,
+  "max_output_tokens": 1024,
+  "previous_response_id": null,
+  "reasoning": { "effort": "low", "summary": null },
+  "store": false,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "name": "weather",
+      "schema": { "type": "object" },
+      "strict": null
+    }
+  },
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 150,
+    "input_tokens_details": { "cached_tokens": 100, "cache_write_tokens": 30 },
+    "output_tokens": 40,
+    "output_tokens_details": { "reasoning_tokens": 12 },
+    "total_tokens": 190
+  }
+}
