@@ -1,0 +1,60 @@
+{
+  "model": "smart",
+  "messages": [
+    { "role": "system", "content": "You are terse." },
+    { "role": "developer", "content": [{ "type": "text", "text": "Answer in JSON." }] },
+    {
+      "role": "user",
+      "content": [
+        { "type": "text", "text": "Compare these two pictures." },
+        {
+          "type": "image_url",
+          "image_url": { "url": "data:image/png;base64,iVBORw0KGgo=", "detail": "high" }
+        },
+        { "type": "image_url", "image_url": { "url": "https://images.example/cat.jpg" } }
+      ],
+      "name": "alice"
+    },
+    {
+      "role": "assistant",
+      "content": null,
+      "reasoning_content": "Look up the weather first.",
+      "tool_calls": [
+        {
+          "id": "call_abc123",
+          "type": "function",
+          "function": { "name": "get_weather", "arguments": "{\"city\":\"Paris\"}" }
+        }
+      ]
+    },
+    { "role": "tool", "tool_call_id": "call_abc123", "content": "18°C, cloudy" }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Current weather for a city",
+        "parameters": { "type": "object", "properties": { "city": { "type": "string" } } },
+        "strict": true
+      }
+    }
+  ],
+  "tool_choice": { "type": "function", "function": { "name": "get_weather" } },
+  "parallel_tool_calls": false,
+  "response_format": {
+    "type": "json_schema",
+    "json_schema": { "name": "answer", "schema": { "type": "object" }, "strict": true }
+  },
+  "reasoning_effort": "high",
+  "max_completion_tokens": 1024,
+  "temperature": 0.5,
+  "top_p": 0.9,
+  "stop": "END",
+  "stream": true,
+  "stream_options": { "include_usage": true },
+  "user": "end-user-42",
+  "logit_bias": { "50256": -100 },
+  "metadata": { "trace": "abc" },
+  "seed": 7
+}

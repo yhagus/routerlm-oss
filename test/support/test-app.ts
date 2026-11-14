@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import type { Response } from "supertest";
 import request from "supertest";
 import { AppModule } from "../../src/app.module.js";
+import { configureApp } from "../../src/configure-app.js";
 import type { Database } from "../../src/db/relations.js";
 
 // The production cost (logN 17) takes ~128 MiB and a noticeable time per hash.
@@ -23,6 +24,7 @@ export async function createTestApp(): Promise<TestApp> {
     .useValue(CHEAP_PASSWORD_HASHER)
     .compile();
   const app = moduleFixture.createNestApplication<NestNodeApplication>(new NodeAdapter());
+  configureApp(app);
   await app.init();
   return { app, db: app.get<Database>(getDrizzleToken()) };
 }

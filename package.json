@@ -36,6 +36,7 @@
     "@nestjs/config": "^12.1.1",
     "@nestjs/core": "^12.5.0",
     "@nestjs/drizzle": "^0.0.2",
+    "@nestjs/http-client": "0.0.3",
     "@nestjs/platform-node": "^12.5.0",
     "bullmq": "6.7.6",
     "drizzle-orm": "^1.0.0-rc.5",

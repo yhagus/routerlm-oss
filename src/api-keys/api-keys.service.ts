@@ -4,6 +4,7 @@ import { asc, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import type { Database } from "../db/relations.js";
 import { apiKeys, models, users } from "../db/schema.js";
 import type { ApiKeySummary, CreatedApiKey, ModelChoice } from "./api-key.js";
+import { SnapshotService } from "../snapshot/snapshot.service.js";
 import { ApiKeyAuth } from "./api-key-auth.js";
 import type { NewApiKey } from "./api-keys.schemas.js";
 
@@ -16,6 +17,7 @@ export class ApiKeysService {
   constructor(
     @InjectDrizzle() private readonly db: Database,
     private readonly apiKeyAuth: ApiKeyAuth,
+    private readonly snapshot: SnapshotService,
   ) {}
 
   listModelChoices(): Promise<ModelChoice[]> {
@@ -40,6 +42,7 @@ export class ApiKeysService {
         allowedModelIds: newKey.allowedModelIds,
       })
       .returning({ id: apiKeys.id });
+    await this.snapshot.changed();
     const [summary] = await this.selectSummaries(eq(apiKeys.id, created.id));
     return { ...summary, key };
   }
@@ -59,6 +62,7 @@ export class ApiKeysService {
     if (revoked.length === 0) {
       throw new NotFoundException("API Key not found");
     }
+    await this.snapshot.changed();
   }
 
   private async assertModelsExist(modelIds: string[]): Promise<void> {

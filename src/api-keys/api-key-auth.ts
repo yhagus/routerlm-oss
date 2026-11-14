@@ -1,9 +1,6 @@
 import { ApiKeyProvider, type ApiKeyRecord, AuthenticationRegistry } from "@nestjs/authentication";
 import { Injectable } from "@nestjs/common";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, isNull } from "drizzle-orm";
-import type { Database } from "../db/relations.js";
-import { apiKeys } from "../db/schema.js";
+import { SnapshotService } from "../snapshot/snapshot.service.js";
 import type { ApiKeyPrincipal } from "./api-key.js";
 
 /** Starts every key (`rlm_<keyId>_<secret>`), so secret scanners can spot leaked ones. */
@@ -20,24 +17,18 @@ const API_KEY_AUTH_ORDER = 1;
 @Injectable()
 export class ApiKeyAuth extends ApiKeyProvider<ApiKeyPrincipal> {
   constructor(
-    @InjectDrizzle() private readonly db: Database,
+    private readonly snapshot: SnapshotService,
     registry: AuthenticationRegistry,
   ) {
     super({ prefix: API_KEY_PREFIX });
     registry.registerProvider(this, { order: API_KEY_AUTH_ORDER });
   }
 
-  // A revoked key reads as unknown. The provider checks the hash and the expiry itself.
-  protected async findKey(keyId: string): Promise<ApiKeyRecord<ApiKeyPrincipal> | null> {
-    const [found] = await this.db
-      .select({
-        id: apiKeys.id,
-        hash: apiKeys.hash,
-        expiresAt: apiKeys.expiresAt,
-        allowedModelIds: apiKeys.allowedModelIds,
-      })
-      .from(apiKeys)
-      .where(and(eq(apiKeys.keyId, keyId), isNull(apiKeys.revokedAt)));
+  // Answered from the in-memory snapshot: the inference path reads no
+  // PostgreSQL. A revoked key is not in it, so it reads as unknown. The
+  // provider checks the hash and the expiry itself.
+  protected findKey(keyId: string): ApiKeyRecord<ApiKeyPrincipal> | null {
+    const found = this.snapshot.current.apiKeysByKeyId.get(keyId);
     if (!found) {
       return null;
     }

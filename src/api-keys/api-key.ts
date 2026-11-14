@@ -41,3 +41,8 @@ export interface ApiKeyPrincipal {
   /** Empty means every Model. */
   allowedModelIds: string[];
 }
+
+/** Whether a client signed in with this API Key may call the Model. */
+export function mayUseModel(principal: ApiKeyPrincipal, modelId: string): boolean {
+  return principal.allowedModelIds.length === 0 || principal.allowedModelIds.includes(modelId);
+}
