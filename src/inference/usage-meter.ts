@@ -1,7 +1,19 @@
 import { randomUUID } from "node:crypto";
 import type { ClientProtocol, GatewayErrorCode } from "../db/schema.js";
-import type { AttemptRecord, ServedBy, UsageCaller, UsageJob } from "../usage/usage-job.js";
-import type { AttemptFailedError } from "./attempt-failure.js";
+import {
+  capturedBody,
+  capturedHeaders,
+  type RawHeaders,
+} from "../error-captures/captured-content.js";
+import type {
+  AttemptRecord,
+  CapturedMessage,
+  ErrorCaptureRecord,
+  ServedBy,
+  UsageCaller,
+  UsageJob,
+} from "../usage/usage-job.js";
+import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-failure.js";
 import type { GatewayError } from "./gateway-error.js";
 import type { TokenUsage } from "./internal-format.js";
 import type { AttemptTarget } from "./route-selection.js";
@@ -11,6 +23,7 @@ import type { AttemptTarget } from "./route-selection.js";
  * only tells that the status was 2xx, and the Providers we speak to answer 200.
  */
 const ANSWERED_UPSTREAM_STATUS = 200;
+const FIRST_ERROR_STATUS = 400;
 
 interface OpenAttempt {
   target: AttemptTarget;
@@ -19,10 +32,21 @@ interface OpenAttempt {
   hasAnswered: boolean;
 }
 
+interface ClientRequest {
+  headers: RawHeaders;
+  body: unknown;
+}
+
+interface FailedAttempt {
+  attemptIndex: number;
+  upstreamResponse: UpstreamFailureResponse | null;
+}
+
 /**
  * Measures one inference request as it goes, for its Usage Log and Attempts
- * (spec "Records"). It only ever sees counts, sizes, ids and times, never
- * content (ADR 0004). `finish` turns it into the usage job.
+ * (spec "Records"). Its measurements are counts, sizes, ids and times. The
+ * only content it holds is for an Error Capture, and the job carries it only
+ * when the request failed (ADR 0004). `finish` turns it into the usage job.
  */
 export class UsageMeter {
   private readonly usageLogId = randomUUID();
@@ -37,12 +61,24 @@ export class UsageMeter {
   private usage: TokenUsage | null = null;
   private timeToFirstTokenMs: number | null = null;
   private responseBytes = 0;
+  private clientRequest: ClientRequest | null = null;
+  private readonly failedAttempts: FailedAttempt[] = [];
+  /** Redacted from every Error Capture of this request. */
+  private readonly providerAccountKeys: string[] = [];
 
   constructor(
     private readonly caller: UsageCaller,
     private readonly clientProtocol: ClientProtocol,
     private readonly requestBytes: number,
   ) {}
+
+  /**
+   * Keeps the client request in case it fails. Only called once a valid API
+   * Key is known: requests without one get no Error Capture (spec "Records").
+   */
+  requestReceived(headers: RawHeaders, body: unknown): void {
+    this.clientRequest = { headers, body };
+  }
 
   requestParsed(isStreamed: boolean): void {
     this.isStreamed = isStreamed;
@@ -52,7 +88,8 @@ export class UsageMeter {
     this.modelId = modelId;
   }
 
-  attemptStarted(target: AttemptTarget): void {
+  attemptStarted(target: AttemptTarget, providerAccountKey: string): void {
+    this.providerAccountKeys.push(providerAccountKey);
     this.openAttempt = {
       target,
       startedAt: new Date(),
@@ -85,7 +122,14 @@ export class UsageMeter {
   }
 
   attemptFailed(failure: AttemptFailedError): void {
-    const hasAnswered = this.openAttempt?.hasAnswered ?? false;
+    if (!this.openAttempt) {
+      return;
+    }
+    this.failedAttempts.push({
+      attemptIndex: this.attempts.length,
+      upstreamResponse: failure.upstreamResponse,
+    });
+    const hasAnswered = this.openAttempt.hasAnswered;
     this.closeAttempt(
       failure.reason,
       failure.upstreamStatus ?? (hasAnswered ? ANSWERED_UPSTREAM_STATUS : null),
@@ -138,6 +182,33 @@ export class UsageMeter {
       durationMs: elapsedSince(this.receivedMs),
       isCancelled,
       attempts: this.attempts,
+      errorCapture: this.errorCaptureOf(httpStatus, isCancelled),
+    };
+  }
+
+  /** Spec "Records": only failed requests are captured; a client leaving is not a failure. */
+  private errorCaptureOf(httpStatus: number, isCancelled: boolean): ErrorCaptureRecord | null {
+    const hasFailed = httpStatus >= FIRST_ERROR_STATUS || this.errorCode !== null;
+    if (!this.clientRequest || !hasFailed || isCancelled) {
+      return null;
+    }
+    return {
+      request: this.captured({
+        headers: this.clientRequest.headers,
+        // Parsed by Nest already; undefined when the request had no body.
+        body: JSON.stringify(this.clientRequest.body) ?? "",
+      }),
+      failedAttempts: this.failedAttempts.map(({ attemptIndex, upstreamResponse }) => ({
+        attemptIndex,
+        upstreamResponse: upstreamResponse && this.captured(upstreamResponse),
+      })),
+    };
+  }
+
+  private captured(message: { headers: RawHeaders; body: string }): CapturedMessage {
+    return {
+      headers: capturedHeaders(message.headers, this.providerAccountKeys),
+      body: capturedBody(message.body, this.providerAccountKeys),
     };
   }
 

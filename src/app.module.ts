@@ -8,6 +8,7 @@ import { AppController } from "./app.controller.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { type Env, envSchema } from "./config/env.schema.js";
 import { relations } from "./db/relations.js";
+import { ErrorCapturesModule } from "./error-captures/error-captures.module.js";
 import { InferenceModule } from "./inference/inference.module.js";
 import { OverviewModule } from "./overview/overview.module.js";
 import { PlaygroundModule } from "./playground/playground.module.js";
@@ -34,6 +35,7 @@ import { UsageModule } from "./usage/usage.module.js";
     RoutingModule,
     InferenceModule,
     UsageModule,
+    ErrorCapturesModule,
     OverviewModule,
     PlaygroundModule,
   ],

@@ -50,6 +50,15 @@ export type InferenceCaller =
 /** Called with the usage job once the request has ended, however it ended. */
 export type UsageListener = (job: UsageJob) => void;
 
+/** What one Attempt needs besides the request and its target. */
+interface AttemptOptions {
+  /** Decrypted for this Attempt; also redacted from the request's Error Captures. */
+  providerAccountKey: string;
+  cacheKey: string;
+  clientSignal: AbortSignal;
+  meter: UsageMeter;
+}
+
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
@@ -89,6 +98,7 @@ export class InferenceService {
     onUsage: UsageListener = () => {},
   ): Promise<InferenceResult> {
     const meter = new UsageMeter(requestOwnerOf(caller), converter.protocol, client.requestBytes);
+    meter.requestReceived(client.requestHeaders, body);
     const record = (job: UsageJob): void => {
       this.usage.enqueue(job);
       onUsage(job);
@@ -154,17 +164,15 @@ export class InferenceService {
         effectiveParameterPolicy(model.parameterPolicy, target.route.parameterPolicyOverride),
       );
       const request = withCacheBreakpointsFor(model, target.route, policed);
-      meter.attemptStarted(target);
+      const providerAccountKey = this.cipher.decrypt(target.providerAccount.encryptedKey);
+      meter.attemptStarted(target, providerAccountKey);
       try {
-        return await this.attempt(
-          converter,
-          request,
-          context,
-          target,
+        return await this.attempt(converter, request, context, target, {
+          providerAccountKey,
           cacheKey,
           clientSignal,
           meter,
-        );
+        });
       } catch (error) {
         if (!(error instanceof AttemptFailedError)) {
           throw error;
@@ -203,11 +211,13 @@ export class InferenceService {
     request: InferenceRequest,
     context: ResponseContext,
     target: AttemptTarget,
-    cacheKey: string,
-    clientSignal: AbortSignal,
-    meter: UsageMeter,
+    { providerAccountKey, cacheKey, clientSignal, meter }: AttemptOptions,
   ): Promise<InferenceResult> {
-    const call = this.upstreamCallFor(request, target, cacheKey, clientSignal);
+    const call = this.upstreamCallFor(request, target, {
+      providerAccountKey,
+      cacheKey,
+      clientSignal,
+    });
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
@@ -230,9 +240,12 @@ export class InferenceService {
 
   private upstreamCallFor(
     request: InferenceRequest,
-    { route, providerAccount }: AttemptTarget,
-    cacheKey: string,
-    clientSignal: AbortSignal,
+    { route }: AttemptTarget,
+    {
+      providerAccountKey,
+      cacheKey,
+      clientSignal,
+    }: Pick<AttemptOptions, "providerAccountKey" | "cacheKey" | "clientSignal">,
   ): UpstreamCall {
     const { upstreamModel } = route;
     const { provider } = upstreamModel;
@@ -251,10 +264,7 @@ export class InferenceService {
         maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
         promptCacheKey: cacheKey,
       },
-      authHeaders: upstreamAuthHeaders(
-        provider.authStyle,
-        this.cipher.decrypt(providerAccount.encryptedKey),
-      ),
+      authHeaders: upstreamAuthHeaders(provider.authStyle, providerAccountKey),
       timeouts: {
         connectMs: route.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
         firstTokenMs: route.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,

@@ -17,6 +17,8 @@ export const envSchema = z.object({
     .refine((value) => Buffer.from(value, "base64").length === ENCRYPTION_KEY_BYTES, {
       error: ENCRYPTION_KEY_HELP,
     }),
+  // Spec "Records": the worker deletes Error Captures older than this.
+  ERROR_CAPTURE_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
 });
 
 export type Env = z.infer<typeof envSchema>;

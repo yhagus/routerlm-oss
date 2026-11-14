@@ -72,6 +72,7 @@ services:
       DATABASE_URL: postgres://routerlm:routerlm@db:5432/routerlm
       REDIS_URL: redis://redis:6379
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ERROR_CAPTURE_RETENTION_DAYS: ${ERROR_CAPTURE_RETENTION_DAYS:-30}
     volumes:
       - .:/app
       - worker_node_modules:/app/node_modules

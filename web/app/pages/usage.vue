@@ -11,6 +11,7 @@ import {
   type TimeRange,
   timeRangeStart,
   type UsageLogPage,
+  type UsageLogSummary,
   type UsageStatus,
   usageStatusOf,
   type UsageTotal,
@@ -111,6 +112,14 @@ const totalGroups = computed(() => [
   { title: "By Model", rows: totals.value?.byModel ?? [], missing: "No Model" },
   { title: "By API Key", rows: totals.value?.byApiKey ?? [], missing: "No API Key" },
 ]);
+
+/**
+ * Failed requests from a known caller have Error Captures; a request refused
+ * for its API Key never does. Captures expire, so the list may be empty.
+ */
+function hasErrorCaptures(log: UsageLogSummary): boolean {
+  return usageStatusOf(log) === "failed" && (log.apiKeyId !== null || log.isPlayground);
+}
 
 /** A totals row's name; logs whose Model or API Key is gone (or never known) group under `whenMissing`. */
 function totalName(total: UsageTotal, whenMissing: string): string {
@@ -217,6 +226,12 @@ function totalName(total: UsageTotal, whenMissing: string): string {
                 {{ STATUS_LABELS[usageStatusOf(log)] }} · {{ log.errorCode ?? log.httpStatus }}
               </span>
               <span v-if="log.isIncomplete" class="cell-note">Incomplete usage</span>
+              <NuxtLink
+                v-if="hasErrorCaptures(log)"
+                class="cell-note"
+                :to="`/error-captures?usageLogId=${log.id}`"
+                >Error Captures</NuxtLink
+              >
             </td>
             <td class="tabular">{{ formatCount(log.inputTokens) }}</td>
             <td class="tabular">{{ formatCount(log.outputTokens) }}</td>
