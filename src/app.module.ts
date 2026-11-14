@@ -8,6 +8,7 @@ import { AuthModule } from "./auth/auth.module.js";
 import { type Env, envSchema } from "./config/env.schema.js";
 import { relations } from "./db/relations.js";
 import { QueueModule } from "./queue/queue.module.js";
+import { UpstreamModule } from "./upstream/upstream.module.js";
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { QueueModule } from "./queue/queue.module.js";
     }),
     AuthModule,
     QueueModule,
+    UpstreamModule,
   ],
   controllers: [AppController],
   // Validates every `@Body({ schema })`, `@Param({ schema })`… against its zod schema.
