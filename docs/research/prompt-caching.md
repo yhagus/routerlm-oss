@@ -1,6 +1,6 @@
 # Prompt caching per Provider
 
-Research date: 2026-11-15, for ticket #18 (spec #2, "Cache behavior"). Sources are each Provider's own documentation. It decides the caching quirks in `src/catalog/providers/*.json`: `acceptsPromptCacheKey` and `acceptsCacheControl` (openai-chat) and `cacheMarkerLimit` (anthropic-messages).
+Research date: 2026-11-15, for ticket #18 (spec #2, "Cache behavior"). Sources are each Provider's own documentation. It decides the caching quirks in `src/catalog/data/*.json`: `acceptsPromptCacheKey` and `acceptsCacheControl` (openai-chat) and `cacheMarkerLimit` (anthropic-messages).
 
 The Catalog seeder never updates existing rows, so an install seeded before this change gets these quirks only through an edit on the Providers page.
 

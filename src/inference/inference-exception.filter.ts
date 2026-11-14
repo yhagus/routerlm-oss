@@ -7,8 +7,8 @@ import {
   Inject,
 } from "@nestjs/common";
 import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
-import type { ClientProtocol } from "../db/schema.js";
-import { UsageProducer } from "../usage/usage.producer.js";
+import type { ClientProtocol } from "../db/schemas/index.js";
+import { UsageProducer } from "../usage/jobs/usage.producer.js";
 import { ClientCancelledError } from "./attempt-failure.js";
 import { requestBytesOf } from "./client-connection.js";
 import { GatewayError } from "./gateway-error.js";

@@ -9,8 +9,8 @@ const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
 const { AppModule } = await import("../src/app.module.js");
-const { PingProducer } = await import("../src/queue/ping.producer.js");
-const { PING_QUEUE } = await import("../src/queue/queue-names.js");
+const { PingProducer } = await import("../src/queue/jobs/ping.producer.js");
+const { PING_QUEUE } = await import("../src/queue/models/queue-names.js");
 
 const WORKER_STARTUP_AND_JOB_TIMEOUT_MS = 20_000;
 

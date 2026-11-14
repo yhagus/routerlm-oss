@@ -1,4 +1,4 @@
-import type { GatewayErrorCode } from "../db/schema.js";
+import type { GatewayErrorCode } from "../db/schemas/index.js";
 
 /** The HTTP status of each error contract code (spec "Error contract"). */
 export const GATEWAY_ERROR_STATUS = {

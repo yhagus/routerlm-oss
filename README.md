@@ -96,7 +96,7 @@ The backend uses PostgreSQL through [Drizzle ORM](https://orm.drizzle.team).
 backend at it. To run the backend on the host instead, copy `.env.example` to
 `.env`; it targets the compose database on `localhost:5432`.
 
-The schema lives in `src/db/schema.ts`. After changing it, generate a migration
+The schema lives in `src/db/schemas/`. After changing it, generate a migration
 into `drizzle/` and apply it:
 
 ```bash
@@ -110,7 +110,7 @@ and `bun run db:studio` opens Drizzle Studio.
 ## Catalog
 
 The Catalog is the Providers and Upstream Models that ship with the gateway. It
-lives in `src/catalog/providers/`, one JSON file per Provider. `docker compose
+lives in `src/catalog/data/`, one JSON file per Provider. `docker compose
 up` seeds it automatically; to run the seeder by hand:
 
 ```bash
@@ -128,7 +128,7 @@ To update the Catalog, edit the Provider's file:
 - Put those page URLs and the date you read them in the entry's `source`.
 - Use `null` for a value the Provider doesn't publish. Never estimate one.
 - The file shape and the allowed `quirks` keys are defined in
-  `src/catalog/catalog.schema.ts`. `bun run test` checks every file against it
+  `src/catalog/schemas/catalog.schema.ts`. `bun run test` checks every file against it
   and names the entry at fault.
 
 Because existing rows are never overwritten, a changed price reaches a database

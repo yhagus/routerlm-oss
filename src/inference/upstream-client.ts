@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
-import type { AttemptFailureReason } from "../db/schema.js";
+import type { AttemptFailureReason } from "../db/schemas/index.js";
 import { AttemptFailedError, ClientCancelledError } from "./attempt-failure.js";
 import type {
   InferenceRequest,

@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, count, gte, lt, type SQL, sql } from "drizzle-orm";
-import type { Database } from "../../../db/relations.js";
-import { usageLogs } from "../../../db/schema.js";
+import type { Database } from "../../../db/schemas/relations.js";
+import { usageLogs } from "../../../db/schemas/index.js";
 import { statusCondition } from "../../../usage/models/usage-filters.js";
 import {
   OVERVIEW_BUCKETS,

@@ -1,7 +1,7 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import OpenAI from "openai";
 import request from "supertest";
-import type { Database } from "../src/db/relations.js";
+import type { Database } from "../src/db/schemas/relations.js";
 import {
   anthropicMessagesFixture,
   FakeUpstream,

@@ -1,6 +1,6 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "../src/db/relations.js";
+import type { Database } from "../src/db/schemas/relations.js";
 import { insertApiKey, insertOpenAiChatModel } from "./support/inference.js";
 import { createTestApp, setUpFirstUser } from "./support/test-app.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";

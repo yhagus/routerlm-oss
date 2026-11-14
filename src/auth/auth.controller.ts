@@ -7,7 +7,7 @@ import type { User } from "../users/models/user.js";
 import { FindUserByCredentialsQuery } from "../users/queries/impl/find-user-by-credentials.query.js";
 import { IsSetupRequiredQuery } from "../users/queries/impl/is-setup-required.query.js";
 import { type NewUser, newUserSchema } from "../users/schemas/new-user.schema.js";
-import { DashboardController } from "./dashboard-controller.decorator.js";
+import { DashboardController } from "./decorators/dashboard-controller.decorator.js";
 
 const loginSchema = z.object({ email: z.string(), password: z.string() });
 type Login = z.infer<typeof loginSchema>;

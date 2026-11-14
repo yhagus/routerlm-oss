@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc } from "drizzle-orm";
-import type { Database } from "../../../db/relations.js";
-import { models } from "../../../db/schema.js";
+import type { Database } from "../../../db/schemas/relations.js";
+import { models } from "../../../db/schemas/index.js";
 import type { ModelChoice } from "../../models/api-key.js";
 import { ListModelChoicesQuery } from "../impl/list-model-choices.query.js";
 

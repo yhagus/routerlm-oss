@@ -1,6 +1,6 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "../src/db/relations.js";
+import type { Database } from "../src/db/schemas/relations.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "./support/test-app.js";
 
 const FIRST_USER = { email: "ada@example.com", password: "correct horse battery" };

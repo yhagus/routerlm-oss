@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import type { ClientConnection } from "../inference/client-connection.js";
 import { InferenceService } from "../inference/inference.service.js";
 import { openAiChatClientConverter } from "../inference/protocols/openai-chat/openai-chat-client-converter.js";
-import { SnapshotService } from "../snapshot/snapshot.service.js";
+import { SnapshotService } from "../snapshot/providers/snapshot.service.js";
 import type { UsageJob } from "../usage/models/usage-job.js";
 import type { User } from "../users/models/user.js";
 import { playgroundSummaryOf } from "./playground-summary.js";

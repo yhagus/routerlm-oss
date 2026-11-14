@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { GatewayErrorCode } from "../../../db/schema.js";
+import type { GatewayErrorCode } from "../../../db/schemas/index.js";
 import { GatewayError } from "../../gateway-error.js";
 import {
   type AssistantContentPart,

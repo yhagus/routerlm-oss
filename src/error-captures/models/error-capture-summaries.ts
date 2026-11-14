@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { Database } from "../../db/relations.js";
+import type { Database } from "../../db/schemas/relations.js";
 import {
   type RecordedAttemptFailure,
   apiKeys,
@@ -9,7 +9,7 @@ import {
   providerAccounts,
   providers,
   usageLogs,
-} from "../../db/schema.js";
+} from "../../db/schemas/index.js";
 import type { ErrorCaptureSummary, FailedHop } from "./error-capture.js";
 
 /** The columns a summary is made of: no headers or bodies, so the list stays light. */

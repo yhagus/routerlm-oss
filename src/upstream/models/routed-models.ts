@@ -1,8 +1,8 @@
 import { ConflictException } from "@nestjs/common";
 import { asc, eq, type SQL } from "drizzle-orm";
-import type { Database } from "../../db/relations.js";
-import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "../../db/postgres-errors.js";
-import { models, routes, upstreamModels } from "../../db/schema.js";
+import type { Database } from "../../db/schemas/relations.js";
+import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "../../db/models/postgres-errors.js";
+import { models, routes, upstreamModels } from "../../db/schemas/index.js";
 
 /** Names of the Models that have a Route to an Upstream Model matching `upstreamModelFilter`. */
 async function findModelsRoutingTo(

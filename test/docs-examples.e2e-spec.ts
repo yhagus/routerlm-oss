@@ -1,9 +1,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { NestNodeApplication } from "@nestjs/platform-node";
-import { CATALOG_DIRECTORY, loadCatalog } from "../src/catalog/load-catalog.js";
-import type { Database } from "../src/db/relations.js";
-import { GATEWAY_ERROR_CODES } from "../src/db/schema.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "../src/catalog/models/load-catalog.js";
+import type { Database } from "../src/db/schemas/relations.js";
+import { GATEWAY_ERROR_CODES } from "../src/db/schemas/index.js";
 import { GATEWAY_ERROR_STATUS } from "../src/inference/gateway-error.js";
 import {
   type CodeBlock,

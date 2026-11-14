@@ -1,9 +1,9 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "../src/db/relations.js";
-import { models } from "../src/db/schema.js";
-import { SnapshotService } from "../src/snapshot/snapshot.service.js";
+import type { Database } from "../src/db/schemas/relations.js";
+import { models } from "../src/db/schemas/index.js";
+import { SnapshotService } from "../src/snapshot/providers/snapshot.service.js";
 import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from "./support/inference.js";
 import { createTestApp } from "./support/test-app.js";
 import { deleteAllUpstreamData } from "./support/upstream.js";

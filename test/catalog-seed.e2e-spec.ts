@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
+import { CommandBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
 import { count, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client, Pool } from "pg";
-import { CatalogSeeder } from "../src/catalog/catalog-seeder.js";
-import type { CatalogProvider } from "../src/catalog/catalog.schema.js";
-import { type Database, relations } from "../src/db/relations.js";
-import * as schema from "../src/db/schema.js";
+import { SeedCatalogCommand } from "../src/catalog/commands/impl/seed-catalog.command.js";
+import type { CatalogProvider } from "../src/catalog/schemas/catalog.schema.js";
+import { type Database, relations } from "../src/db/schemas/relations.js";
+import * as schema from "../src/db/schemas/index.js";
 
 const source = { urls: ["https://example.com/pricing"], retrievedOn: "2026-11-15" };
 
@@ -71,12 +72,12 @@ async function dropDatabase(serverUrl: string, databaseUrl: string): Promise<voi
   await admin.end();
 }
 
-describe("Catalog seeder (e2e)", () => {
+describe("Seed Catalog command (e2e)", () => {
   const serverUrl = process.env.DATABASE_URL ?? "";
   const originalDatabaseUrl = process.env.DATABASE_URL;
   let databaseUrl: string;
   let moduleRef: TestingModule;
-  let seeder: CatalogSeeder;
+  let commandBus: CommandBus;
   let pool: Pool;
   let db: Database;
 
@@ -92,7 +93,7 @@ describe("Catalog seeder (e2e)", () => {
     const { CatalogSeedModule } = await import("../src/catalog/catalog-seed.module.js");
     moduleRef = await Test.createTestingModule({ imports: [CatalogSeedModule] }).compile();
     await moduleRef.init();
-    seeder = moduleRef.get(CatalogSeeder);
+    commandBus = moduleRef.get(CommandBus);
   });
 
   afterAll(async () => {
@@ -103,7 +104,7 @@ describe("Catalog seeder (e2e)", () => {
   });
 
   it("creates the Providers and Upstream Models on an empty database", async () => {
-    await seeder.seed(catalog);
+    await commandBus.execute(new SeedCatalogCommand(catalog));
 
     const provider = await db.query.providers.findFirst({
       where: { slug: "example" },
@@ -143,7 +144,7 @@ describe("Catalog seeder (e2e)", () => {
       .set({ inputPrice: 2.5 })
       .where(eq(schema.upstreamModels.upstreamModelId, "example-large"));
 
-    await seeder.seed(catalog);
+    await commandBus.execute(new SeedCatalogCommand(catalog));
 
     const provider = await db.query.providers.findFirst({
       where: { slug: "example" },

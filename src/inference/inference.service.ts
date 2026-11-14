@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/models/api-key.js";
-import { providerQuirksSchema } from "../catalog/catalog.schema.js";
-import type { SnapshotModel, SnapshotRoute } from "../snapshot/snapshot.js";
-import { SnapshotService } from "../snapshot/snapshot.service.js";
-import { CooldownStore } from "../upstream/cooldown-store.js";
+import { providerQuirksSchema } from "../catalog/schemas/catalog.schema.js";
+import type { SnapshotModel, SnapshotRoute } from "../snapshot/models/snapshot.js";
+import { SnapshotService } from "../snapshot/providers/snapshot.service.js";
+import { CooldownStore } from "../upstream/providers/cooldown-store.js";
 import type { UsageJob } from "../usage/models/usage-job.js";
-import { UsageProducer } from "../usage/usage.producer.js";
-import { ProviderAccountHealth } from "../upstream/provider-account-health.js";
-import { ProviderKeyCipher } from "../upstream/provider-key-cipher.js";
+import { UsageProducer } from "../usage/jobs/usage.producer.js";
+import { ProviderAccountHealth } from "../upstream/providers/provider-account-health.js";
+import { ProviderKeyCipher } from "../upstream/providers/provider-key-cipher.js";
 import {
   AttemptFailedError,
   ClientCancelledError,

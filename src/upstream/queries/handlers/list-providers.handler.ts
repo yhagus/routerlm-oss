@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc } from "drizzle-orm";
-import type { Database } from "../../../db/relations.js";
-import { providers } from "../../../db/schema.js";
+import type { Database } from "../../../db/schemas/relations.js";
+import { providers } from "../../../db/schemas/index.js";
 import type { Provider } from "../../models/provider.js";
 import { ListProvidersQuery } from "../impl/list-providers.query.js";
 

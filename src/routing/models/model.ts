@@ -1,4 +1,4 @@
-import type { models, providers, routes, upstreamModels } from "../../db/schema.js";
+import type { models, providers, routes, upstreamModels } from "../../db/schemas/index.js";
 
 /** A Model as the dashboard API returns it. */
 export type Model = typeof models.$inferSelect;

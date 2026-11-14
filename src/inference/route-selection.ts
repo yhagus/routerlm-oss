@@ -1,9 +1,9 @@
-import type { Capability } from "../db/schema.js";
+import type { Capability } from "../db/schemas/index.js";
 import type {
   SnapshotModel,
   SnapshotProviderAccount,
   SnapshotRoute,
-} from "../snapshot/snapshot.js";
+} from "../snapshot/models/snapshot.js";
 import type { InferenceRequest } from "./internal-format.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS } from "./protocols/converters.js";
 

@@ -1,5 +1,5 @@
 import type { TokenUsage } from "../inference/internal-format.js";
-import type { Snapshot, SnapshotRoute } from "../snapshot/snapshot.js";
+import type { Snapshot, SnapshotRoute } from "../snapshot/models/snapshot.js";
 import type { UsageJob } from "../usage/models/usage-job.js";
 import { usageMeasurementsOf } from "../usage/models/usage-measurements.js";
 

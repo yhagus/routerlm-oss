@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { RedisConnection } from "./redis-connection.js";
+import { RedisConnection } from "./providers/redis-connection.js";
 
 /**
  * The shared Redis connection for Cooldown state and snapshot change notices.

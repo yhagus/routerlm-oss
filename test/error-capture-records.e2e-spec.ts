@@ -4,8 +4,8 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { asc } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "../src/db/relations.js";
-import { attempts, errorCaptures, usageLogs } from "../src/db/schema.js";
+import type { Database } from "../src/db/schemas/relations.js";
+import { attempts, errorCaptures, usageLogs } from "../src/db/schemas/index.js";
 import { FakeUpstream, openAiChatFixture } from "./support/fake-upstream.js";
 import {
   addProviderAccount,
@@ -22,7 +22,7 @@ redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
 const { createTestApp } = await import("./support/test-app.js");
 const { WorkerModule } = await import("../src/worker.module.js");
-const { USAGE_QUEUE } = await import("../src/queue/queue-names.js");
+const { USAGE_QUEUE } = await import("../src/queue/models/queue-names.js");
 
 const PROMPT_TEXT = "Which umbrella should I pack for Lisbon?";
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: PROMPT_TEXT }] };

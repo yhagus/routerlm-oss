@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { Authenticate, CurrentUser } from "@nestjs/authentication";
 import { Body, Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
 import type { ApiKeyPrincipal } from "../api-keys/models/api-key.js";
-import { ApiKeyAuth } from "../api-keys/api-key-auth.js";
+import { ApiKeyAuth } from "../api-keys/providers/api-key-auth.js";
 import { ClientModelsService, type ClientModelList } from "./client-models.service.js";
 import { clientConnectionOf } from "./client-connection.js";
 import { eventStreamResponse } from "./event-stream-response.js";

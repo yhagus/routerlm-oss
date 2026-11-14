@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { CurrentUser } from "@nestjs/authentication";
 import { Body, HttpCode, Post, Req, Res, UseFilters } from "@nestjs/common";
-import { DashboardController } from "../auth/dashboard-controller.decorator.js";
+import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
 import { clientConnectionOf } from "../inference/client-connection.js";
 import { eventStreamResponse } from "../inference/event-stream-response.js";
 import type { User } from "../users/models/user.js";

@@ -1,6 +1,6 @@
 import { Get, Query } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "../auth/dashboard-controller.decorator.js";
+import { DashboardController } from "../auth/decorators/dashboard-controller.decorator.js";
 import type { UsageLogPage, UsageTotals } from "./models/usage.js";
 import { ListUsageLogsQuery } from "./queries/impl/list-usage-logs.query.js";
 import { TotalUsageQuery } from "./queries/impl/total-usage.query.js";

@@ -1,7 +1,13 @@
 import { NotFoundException } from "@nestjs/common";
 import { and, asc, eq } from "drizzle-orm";
-import type { Database } from "../../db/relations.js";
-import { models, providerAccounts, providers, routes, upstreamModels } from "../../db/schema.js";
+import type { Database } from "../../db/schemas/relations.js";
+import {
+  models,
+  providerAccounts,
+  providers,
+  routes,
+  upstreamModels,
+} from "../../db/schemas/index.js";
 import type { ModelDetail, RouteSummary } from "./model.js";
 
 /** The Model with its Routes in the order the gateway tries them. */

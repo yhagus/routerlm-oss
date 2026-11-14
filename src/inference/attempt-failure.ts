@@ -1,4 +1,4 @@
-import type { AttemptFailureReason } from "../db/schema.js";
+import type { AttemptFailureReason } from "../db/schemas/index.js";
 import { GatewayError } from "./gateway-error.js";
 
 /** What the upstream sent back on a failed Attempt, for Error Captures. Never sent to the client. */

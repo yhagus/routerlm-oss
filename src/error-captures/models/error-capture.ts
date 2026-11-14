@@ -1,4 +1,8 @@
-import type { ClientProtocol, GatewayErrorCode, RecordedAttemptFailure } from "../../db/schema.js";
+import type {
+  ClientProtocol,
+  GatewayErrorCode,
+  RecordedAttemptFailure,
+} from "../../db/schemas/index.js";
 
 /**
  * What failed: the client's request to the gateway, or

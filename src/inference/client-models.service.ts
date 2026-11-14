@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/models/api-key.js";
-import { CAPABILITIES, type Capability } from "../db/schema.js";
-import type { SnapshotModel } from "../snapshot/snapshot.js";
-import { SnapshotService } from "../snapshot/snapshot.service.js";
+import { CAPABILITIES, type Capability } from "../db/schemas/index.js";
+import type { SnapshotModel } from "../snapshot/models/snapshot.js";
+import { SnapshotService } from "../snapshot/providers/snapshot.service.js";
 
 /** A Model as `GET /v1/models` shows it: our name only, nothing about Routes or Providers. */
 export interface ClientModel {

@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { count, desc, eq } from "drizzle-orm";
-import type { Database } from "../../../db/relations.js";
-import { errorCaptures } from "../../../db/schema.js";
+import type { Database } from "../../../db/schemas/relations.js";
+import { errorCaptures } from "../../../db/schemas/index.js";
 import type { ErrorCapturePage } from "../../models/error-capture.js";
 import { selectSummaryRows, summaryOf } from "../../models/error-capture-summaries.js";
 import { ListErrorCapturesQuery } from "../impl/list-error-captures.query.js";

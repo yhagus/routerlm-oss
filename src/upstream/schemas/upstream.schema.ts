@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { catalogProviderSchema, providerQuirksSchema } from "../../catalog/catalog.schema.js";
+import {
+  catalogProviderSchema,
+  providerQuirksSchema,
+} from "../../catalog/schemas/catalog.schema.js";
 
 // What the dashboard sends to create or change Providers, Upstream Models and
 // Provider Accounts. The fields Catalog files share with the API reuse the

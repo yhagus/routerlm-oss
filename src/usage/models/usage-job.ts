@@ -1,4 +1,8 @@
-import type { ClientProtocol, GatewayErrorCode, RecordedAttemptFailure } from "../../db/schema.js";
+import type {
+  ClientProtocol,
+  GatewayErrorCode,
+  RecordedAttemptFailure,
+} from "../../db/schemas/index.js";
 import type { TokenUsage } from "../../inference/internal-format.js";
 
 /** The job that turns one inference request into its Usage Log and Attempts. */

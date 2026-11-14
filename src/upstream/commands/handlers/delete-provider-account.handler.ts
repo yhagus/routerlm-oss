@@ -2,9 +2,9 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "../../../db/relations.js";
-import { providerAccounts } from "../../../db/schema.js";
-import { SnapshotService } from "../../../snapshot/snapshot.service.js";
+import type { Database } from "../../../db/schemas/relations.js";
+import { providerAccounts } from "../../../db/schemas/index.js";
+import { SnapshotService } from "../../../snapshot/providers/snapshot.service.js";
 import { DeleteProviderAccountCommand } from "../impl/delete-provider-account.command.js";
 
 @CommandHandler(DeleteProviderAccountCommand)

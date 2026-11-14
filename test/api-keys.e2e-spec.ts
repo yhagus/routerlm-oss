@@ -3,10 +3,10 @@ import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-hos
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq, sql } from "drizzle-orm";
 import request from "supertest";
-import { ApiKeyAuth } from "../src/api-keys/api-key-auth.js";
-import type { Database } from "../src/db/relations.js";
-import { apiKeys, models } from "../src/db/schema.js";
-import { SnapshotService } from "../src/snapshot/snapshot.service.js";
+import { ApiKeyAuth } from "../src/api-keys/providers/api-key-auth.js";
+import type { Database } from "../src/db/schemas/relations.js";
+import { apiKeys, models } from "../src/db/schemas/index.js";
+import { SnapshotService } from "../src/snapshot/providers/snapshot.service.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "./support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };

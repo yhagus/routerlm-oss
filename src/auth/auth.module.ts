@@ -1,12 +1,12 @@
 import { AuthenticationModule } from "@nestjs/authentication";
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import type { Env } from "../config/env.schema.js";
+import type { Env } from "../config/schemas/env.schema.js";
 import { UsersModule } from "../users/users.module.js";
 import { AuthController } from "./auth.controller.js";
-import "./authentication-types.js";
-import { DrizzleSessionStore } from "./drizzle-session.store.js";
-import { SessionAuth } from "./session-auth.js";
+import "./models/authentication-types.js";
+import { DrizzleSessionStore } from "./providers/drizzle-session.store.js";
+import { SessionAuth } from "./providers/session-auth.js";
 
 /**
  * Dashboard sign-in. AuthenticationModule is global and installs a global

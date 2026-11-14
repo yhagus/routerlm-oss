@@ -2,8 +2,8 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { count, eq } from "drizzle-orm";
-import type { Database } from "../../../db/relations.js";
-import { users } from "../../../db/schema.js";
+import type { Database } from "../../../db/schemas/relations.js";
+import { users } from "../../../db/schemas/index.js";
 import { lockUsers } from "../../models/lock-users.js";
 import { DeleteUserCommand } from "../impl/delete-user.command.js";
 

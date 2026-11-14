@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { ClientProtocol, GatewayErrorCode } from "../db/schema.js";
+import type { ClientProtocol, GatewayErrorCode } from "../db/schemas/index.js";
 import {
   capturedBody,
   capturedHeaders,
   type RawHeaders,
-} from "../error-captures/captured-content.js";
+} from "../error-captures/models/captured-content.js";
 import type {
   AttemptRecord,
   CapturedMessage,

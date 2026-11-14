@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ParameterPolicy } from "../../db/schema.js";
+import type { ParameterPolicy } from "../../db/schemas/index.js";
 import { REASONING_EFFORTS, type ReasoningEffort } from "../../inference/internal-format.js";
 
 // What the dashboard sends to create or change Models and their Routes.

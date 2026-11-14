@@ -1,6 +1,6 @@
 import { desc, eq, inArray, type SQL } from "drizzle-orm";
-import type { Database } from "../../db/relations.js";
-import { apiKeys, models, users } from "../../db/schema.js";
+import type { Database } from "../../db/schemas/relations.js";
+import { apiKeys, models, users } from "../../db/schemas/index.js";
 import type { ApiKeySummary } from "./api-key.js";
 
 /** API Key summaries, newest first, optionally narrowed by `where`. */

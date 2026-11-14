@@ -1,6 +1,6 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "../src/db/relations.js";
+import type { Database } from "../src/db/schemas/relations.js";
 import { anthropicMessagesFixture, FakeUpstream } from "./support/fake-upstream.js";
 import {
   insertAnthropicMessagesModel,
