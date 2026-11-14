@@ -75,6 +75,9 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (request.stopSequences) {
     body.stop = request.stopSequences;
   }
+  if (quirks.acceptsPromptCacheKey && target.promptCacheKey !== undefined) {
+    body.prompt_cache_key = target.promptCacheKey;
+  }
   if (request.stream) {
     body.stream = true;
     body.stream_options = { include_usage: true };

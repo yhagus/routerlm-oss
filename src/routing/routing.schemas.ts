@@ -58,11 +58,13 @@ const modelFieldsSchema = z.strictObject({
   name: z.string().trim().min(1),
   isEnabled: z.boolean(),
   parameterPolicy: parameterPolicySchema,
+  hasAutomaticCacheBreakpoints: z.boolean(),
 });
 
 export const newModelSchema = modelFieldsSchema.extend({
   isEnabled: z.boolean().optional(),
   parameterPolicy: parameterPolicySchema.optional(),
+  hasAutomaticCacheBreakpoints: z.boolean().optional(),
 });
 export type NewModel = z.infer<typeof newModelSchema>;
 

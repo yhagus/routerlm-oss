@@ -59,6 +59,8 @@ interface ProviderForm {
   acceptsCacheControl: boolean;
   acceptsPromptCacheKey: boolean;
   usesMaxCompletionTokens: boolean;
+  /** Blank means the default (four); the number input gives a number otherwise. */
+  cacheMarkerLimit: number | "";
 }
 
 const form = ref<ProviderForm>({
@@ -71,6 +73,7 @@ const form = ref<ProviderForm>({
   acceptsCacheControl: false,
   acceptsPromptCacheKey: false,
   usesMaxCompletionTokens: false,
+  cacheMarkerLimit: "",
 });
 
 function openDialog(next: ProviderDialog): void {
@@ -88,12 +91,16 @@ function openDialog(next: ProviderDialog): void {
     acceptsCacheControl: provider?.quirks.acceptsCacheControl ?? false,
     acceptsPromptCacheKey: provider?.quirks.acceptsPromptCacheKey ?? false,
     usesMaxCompletionTokens: provider?.quirks.usesMaxCompletionTokens ?? false,
+    cacheMarkerLimit: provider?.quirks.cacheMarkerLimit ?? "",
   };
 }
 
 /** Only the quirks that are set; the backend rejects unknown keys. */
 function quirksFromForm(): ProviderQuirks {
-  // Every quirk key belongs to the openai-chat adapter.
+  if (form.value.protocol === "anthropic-messages") {
+    const limit = form.value.cacheMarkerLimit;
+    return limit === "" ? {} : { cacheMarkerLimit: limit };
+  }
   if (form.value.protocol !== "openai-chat") return {};
   const quirks: ProviderQuirks = {};
   const reasoning = REASONING_CONTENT_IN_HISTORY.find(
@@ -306,6 +313,19 @@ function quirkSummary(quirks: ProviderQuirks): string {
           >
         </fieldset>
       </template>
+      <label v-if="form.protocol === 'anthropic-messages'" class="field"
+        ><span class="field__label">Cache marker limit</span
+        ><input
+          v-model.number="form.cacheMarkerLimit"
+          class="text-input"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="4"
+      /></label>
+      <p v-if="form.protocol === 'anthropic-messages'" class="form__hint">
+        How many cache markers the gateway may add to a request. 0 adds none; blank means 4.
+      </p>
       <p v-if="dialog.kind === 'edit' && dialog.provider.isFromCatalog" class="form__hint">
         From the Catalog. Your edits are kept: seeding never overwrites an existing Provider.
       </p>

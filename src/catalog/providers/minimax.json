@@ -4,15 +4,16 @@
   "protocol": "anthropic-messages",
   "baseUrl": "https://api.minimax.io/anthropic",
   "authStyle": "bearer",
-  "quirks": {},
+  "quirks": { "cacheMarkerLimit": 0 },
   "source": {
     "urls": [
       "https://platform.minimax.io/docs/guides/text-generation",
-      "https://platform.minimax.io/docs/api-reference/text-anthropic-api"
+      "https://platform.minimax.io/docs/api-reference/text-anthropic-api",
+      "https://platform.minimax.io/docs/api-reference/anthropic-api-compatible-cache"
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "The docs recommend the Anthropic-compatible API; the OpenAI-compatible one is at https://api.minimax.io/v1. Thinking blocks must be kept unchanged in later turns. Max output and cache write prices are not published; structured output is not mentioned.",
+  "notes": "The docs recommend the Anthropic-compatible API; the OpenAI-compatible one is at https://api.minimax.io/v1. Thinking blocks must be kept unchanged in later turns. Max output and cache write prices are not published; structured output is not mentioned. Caching is automatic prefix matching (512+ tokens); cache_control is not documented on the Anthropic-compatible API, so cacheMarkerLimit 0 keeps the gateway from adding markers.",
   "upstreamModels": [
     {
       "upstreamModelId": "MiniMax-M3.1-Flash",

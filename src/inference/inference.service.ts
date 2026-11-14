@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { type ApiKeyPrincipal, mayUseModel } from "../api-keys/api-key.js";
+import { providerQuirksSchema } from "../catalog/catalog.schema.js";
 import type { SnapshotModel, SnapshotRoute } from "../snapshot/snapshot.js";
 import { SnapshotService } from "../snapshot/snapshot.service.js";
 import { CooldownStore } from "../upstream/cooldown-store.js";
@@ -14,9 +15,14 @@ import {
   exhaustionError,
   gatewayErrorFor,
 } from "./attempt-failure.js";
+import {
+  DEFAULT_CACHE_MARKER_LIMIT,
+  withAutomaticCacheBreakpoints,
+} from "./automatic-cache-breakpoints.js";
 import { GatewayError } from "./gateway-error.js";
 import type { InferenceRequest, InferenceStreamEvent } from "./internal-format.js";
 import { applyParameterPolicy, effectiveParameterPolicy } from "./parameter-policy.js";
+import { promptCacheKey } from "./prompt-cache-key.js";
 import {
   type ClientProtocolConverter,
   type ResponseContext,
@@ -111,6 +117,7 @@ export class InferenceService {
       modelName: model.name,
       createdAt: new Date(),
     };
+    const cacheKey = promptCacheKey({ kind: "api-key", apiKeyId: principal.apiKeyId }, model.id);
 
     // Accounts in Cooldown when the request arrived, plus the ones that fail during it.
     const skippedAccountIds = new Set(
@@ -124,13 +131,22 @@ export class InferenceService {
       }
       // Applied on the internal format, before any upstream translation, so it
       // works the same for every client and upstream Protocol.
-      const request = applyParameterPolicy(
+      const policed = applyParameterPolicy(
         clientRequest,
         effectiveParameterPolicy(model.parameterPolicy, target.route.parameterPolicyOverride),
       );
+      const request = withCacheBreakpointsFor(model, target.route, policed);
       meter.attemptStarted(target);
       try {
-        return await this.attempt(converter, request, context, target, clientSignal, meter);
+        return await this.attempt(
+          converter,
+          request,
+          context,
+          target,
+          cacheKey,
+          clientSignal,
+          meter,
+        );
       } catch (error) {
         if (!(error instanceof AttemptFailedError)) {
           throw error;
@@ -169,10 +185,11 @@ export class InferenceService {
     request: InferenceRequest,
     context: ResponseContext,
     target: AttemptTarget,
+    cacheKey: string,
     clientSignal: AbortSignal,
     meter: UsageMeter,
   ): Promise<InferenceResult> {
-    const call = this.upstreamCallFor(request, target, clientSignal);
+    const call = this.upstreamCallFor(request, target, cacheKey, clientSignal);
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
@@ -196,6 +213,7 @@ export class InferenceService {
   private upstreamCallFor(
     request: InferenceRequest,
     { route, providerAccount }: AttemptTarget,
+    cacheKey: string,
     clientSignal: AbortSignal,
   ): UpstreamCall {
     const { upstreamModel } = route;
@@ -213,6 +231,7 @@ export class InferenceService {
         upstreamModelId: upstreamModel.upstreamModelId,
         quirks: provider.quirks,
         maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
+        promptCacheKey: cacheKey,
       },
       authHeaders: upstreamAuthHeaders(
         provider.authStyle,
@@ -329,6 +348,24 @@ function failedRequestUsage(
   }
   // A bug: Nest answers 500.
   return meter.finish(HTTP_INTERNAL_SERVER_ERROR, false);
+}
+
+/**
+ * Spec "Cache behavior": automatic breakpoints are for anthropic-messages
+ * upstreams, when the Model has them on. Added after the Parameter Policy, so
+ * its system prompt counts as part of the system prompt.
+ */
+function withCacheBreakpointsFor(
+  model: SnapshotModel,
+  route: SnapshotRoute,
+  request: InferenceRequest,
+): InferenceRequest {
+  const { provider } = route.upstreamModel;
+  if (!model.hasAutomaticCacheBreakpoints || provider.protocol !== "anthropic-messages") {
+    return request;
+  }
+  const { cacheMarkerLimit } = providerQuirksSchema.parse(provider.quirks);
+  return withAutomaticCacheBreakpoints(request, cacheMarkerLimit ?? DEFAULT_CACHE_MARKER_LIMIT);
 }
 
 function providerAccountIdsOf(routes: SnapshotRoute[]): string[] {
