@@ -1,5 +1,6 @@
 // Models and their Routes as the dashboard API returns them.
 
+import type { ParameterPolicy } from "~/lib/parameterPolicy";
 import type { Capability } from "~/lib/upstream";
 
 /** A Model in the Models list. */
@@ -18,6 +19,8 @@ export interface RouteSummary {
   /** Lower runs first. */
   priority: number;
   isEnabled: boolean;
+  /** Null means the Model's Parameter Policy applies unchanged. */
+  parameterPolicyOverride: ParameterPolicy | null;
   provider: { id: string; slug: string; name: string; isEnabled: boolean };
   upstreamModel: {
     id: string;
@@ -34,6 +37,7 @@ export interface ModelDetail {
   id: string;
   name: string;
   isEnabled: boolean;
+  parameterPolicy: ParameterPolicy;
   hasAutomaticCacheBreakpoints: boolean;
   createdAt: string;
   updatedAt: string;

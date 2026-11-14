@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { writeClientStream } from "../client-protocol-converter.js";
 import { GatewayError } from "../../gateway-error.js";
 import type {
   InferenceRequest,

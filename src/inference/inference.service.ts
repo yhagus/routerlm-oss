@@ -14,6 +14,7 @@ import {
 } from "./attempt-failure.js";
 import { GatewayError } from "./gateway-error.js";
 import type { InferenceRequest, InferenceStreamEvent } from "./internal-format.js";
+import { applyParameterPolicy, effectiveParameterPolicy } from "./parameter-policy.js";
 import {
   type ClientProtocolConverter,
   type ResponseContext,
@@ -55,9 +56,11 @@ export class InferenceService {
     principal: ApiKeyPrincipal,
     clientSignal: AbortSignal,
   ): Promise<InferenceResult> {
-    const request = converter.parseRequest(body);
-    const model = this.resolveModel(request.model, principal);
-    const routes = capableRoutes(model, request);
+    const clientRequest = converter.parseRequest(body);
+    const model = this.resolveModel(clientRequest.model, principal);
+    // Routes are selected under the Model's policy (spec step 4 before 5); a
+    // Route override applies only to the Attempts on its own Route.
+    const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));
     if (routes.length === 0) {
       throw new GatewayError(
         "no_capable_route",
@@ -80,7 +83,12 @@ export class InferenceService {
       if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
         break;
       }
-      // Parameter Policy (#17) applies here, per Route (the Route's override is known now).
+      // Applied on the internal format, before any upstream translation, so it
+      // works the same for every client and upstream Protocol.
+      const request = applyParameterPolicy(
+        clientRequest,
+        effectiveParameterPolicy(model.parameterPolicy, target.route.parameterPolicyOverride),
+      );
       try {
         return await this.attempt(converter, request, context, target, clientSignal);
       } catch (error) {
