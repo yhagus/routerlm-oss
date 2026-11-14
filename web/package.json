@@ -1,0 +1,33 @@
+{
+  "name": "web",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "format": "oxfmt app nuxt.config.ts uno.config.ts",
+    "format:check": "oxfmt --check app nuxt.config.ts uno.config.ts",
+    "generate": "nuxt generate",
+    "lint": "oxlint --type-aware app/ nuxt.config.ts uno.config.ts",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+    "@lucide/vue": "^1.72.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "nuxt": "^4.6.4",
+    "reka-ui": "^2.11.0",
+    "tailwind-merge": "^3.7.0",
+    "vue": "^3.5.45",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@unocss/nuxt": "^66.13.0",
+    "@unocss/preset-wind3": "^66.13.0",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "unocss": "^66.13.0"
+  }
+}
