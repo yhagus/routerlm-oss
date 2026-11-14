@@ -1,0 +1,102 @@
+{
+  "slug": "kimi-code",
+  "name": "Kimi Code",
+  "protocol": "openai-chat",
+  "baseUrl": "https://api.kimi.ai/coding/v1",
+  "authStyle": "bearer",
+  "quirks": {},
+  "source": {
+    "urls": ["https://www.kimi.com/coding/docs/en/"],
+    "retrievedOn": "2026-11-15"
+  },
+  "notes": "Membership subscription, so no per-token prices are published. The docs give overseas (api.kimi.ai) and China (api.kimi.com) hosts, and an Anthropic-compatible endpoint at https://api.kimi.ai/coding/. The auth header is not stated; bearer is what the OpenAI-compatible endpoint implies. Tools and structured output are not stated per model. The docs require third-party tools to send their real User-Agent.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "k3.1-pro",
+      "capabilities": ["vision", "reasoning"],
+      "contextSize": 1048576,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "1M context on the Pro plan and above. Thinking required."
+    },
+    {
+      "upstreamModelId": "k3.1-pro-highspeed",
+      "capabilities": ["vision", "reasoning"],
+      "contextSize": 1048576,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "k3",
+      "capabilities": ["vision", "reasoning"],
+      "contextSize": 1048576,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "k3-256k",
+      "capabilities": ["vision", "reasoning"],
+      "contextSize": 262144,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "kimi-for-coding",
+      "capabilities": ["vision", "reasoning"],
+      "contextSize": 1048576,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Docs call it K2.8 Preview."
+    },
+    {
+      "upstreamModelId": "kimi-for-coding-highspeed",
+      "capabilities": ["vision", "reasoning"],
+      "contextSize": 262144,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Docs call it K2.7 Code HighSpeed."
+    }
+  ]
+}

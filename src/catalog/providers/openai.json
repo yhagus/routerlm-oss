@@ -1,0 +1,139 @@
+{
+  "slug": "openai",
+  "name": "OpenAI",
+  "protocol": "openai-chat",
+  "baseUrl": "https://api.openai.com/v1",
+  "authStyle": "bearer",
+  "quirks": {},
+  "source": {
+    "urls": ["https://developers.openai.com/api/reference/overview"],
+    "retrievedOn": "2026-11-15"
+  },
+  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. The prompt caching guide documents prompt_cache_key only for the Responses API, so acceptsPromptCacheKey is not set.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "gpt-6-astra",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 1,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No tools: the model page says Chat Completions does not support function calling with this model. reasoning effort 'none' returns 400."
+    },
+    {
+      "upstreamModelId": "gpt-6.1-sol",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No tools: tool calling requires the Responses API for this model. Reasoning effort none and minimal are not supported."
+    },
+    {
+      "upstreamModelId": "gpt-6.1-terra",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1,
+      "outputPrice": 5,
+      "cacheReadPrice": 0.05,
+      "cacheWritePrice": 1.25,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No tools: tool calling requires the Responses API for this model."
+    },
+    {
+      "upstreamModelId": "gpt-6-luna",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.1,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": 0.125,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-6-luna",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Tools left out: Chat Completions supports function calling only with reasoning_effort none."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-sol",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Promotional pricing until 2026-11-30; the price after that is not published."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-terra",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 12,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-5.6-luna",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.2,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.02,
+      "cacheWritePrice": 0.25,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      }
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "slug": "anthropic",
+  "name": "Anthropic",
+  "protocol": "anthropic-messages",
+  "baseUrl": "https://api.anthropic.com",
+  "authStyle": "x-api-key",
+  "quirks": {},
+  "source": {
+    "urls": ["https://platform.claude.com/docs/en/get-started"],
+    "retrievedOn": "2026-11-15"
+  },
+  "notes": "cacheWritePrice is the 5-minute cache write price. Structured output is not stated on the pages read, so no model lists it. The Get Started examples send anthropic-version 2026-10-21.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "claude-fable-5-2",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 10,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/fable-5-2/overview"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Adaptive thinking always on. Forced tool_choice (any or tool) returns 400; temperature, top_p and top_k must be omitted."
+    },
+    {
+      "upstreamModelId": "claude-opus-5-5",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/opus-5-5/overview"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Adaptive thinking always on."
+    },
+    {
+      "upstreamModelId": "claude-sonnet-5-5",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/sonnet-5-5/overview"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "temperature, top_p and top_k return 400."
+    },
+    {
+      "upstreamModelId": "claude-haiku-5-5",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.1,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": 0.125,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/haiku-5-5/overview"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Prices are for prompts up to 100,000 tokens. Longer prompts: input 0.50, output 2.50, cache read 0.05, cache write 0.625."
+    },
+    {
+      "upstreamModelId": "claude-fable-5-1",
+      "capabilities": ["vision", "tools"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Reasoning not stated on the pages read."
+    },
+    {
+      "upstreamModelId": "claude-opus-5",
+      "capabilities": ["vision", "tools"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Reasoning not stated on the pages read."
+    },
+    {
+      "upstreamModelId": "claude-sonnet-5",
+      "capabilities": ["vision", "tools"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Reasoning not stated on the pages read."
+    },
+    {
+      "upstreamModelId": "claude-opus-4-8",
+      "capabilities": ["vision", "tools"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": [
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Reasoning not stated on the pages read."
+    }
+  ]
+}
