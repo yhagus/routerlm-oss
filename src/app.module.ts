@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { APP_PIPE } from "@nestjs/core";
+import { ApiKeysModule } from "./api-keys/api-keys.module.js";
 import { AppController } from "./app.controller.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { type Env, envSchema } from "./config/env.schema.js";
@@ -22,6 +23,7 @@ import { QueueModule } from "./queue/queue.module.js";
     }),
     AuthModule,
     QueueModule,
+    ApiKeysModule,
   ],
   controllers: [AppController],
   // Validates every `@Body({ schema })`, `@Param({ schema })`… against its zod schema.
