@@ -4,7 +4,7 @@
   "protocol": "openai-chat",
   "baseUrl": "https://api.openai.com/v1",
   "authStyle": "bearer",
-  "quirks": {},
+  "quirks": { "usesMaxCompletionTokens": true },
   "source": {
     "urls": ["https://developers.openai.com/api/reference/overview"],
     "retrievedOn": "2026-11-15"

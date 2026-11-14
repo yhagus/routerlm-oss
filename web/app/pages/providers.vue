@@ -58,6 +58,7 @@ interface ProviderForm {
   reasoningContentInHistory: string;
   acceptsCacheControl: boolean;
   acceptsPromptCacheKey: boolean;
+  usesMaxCompletionTokens: boolean;
 }
 
 const form = ref<ProviderForm>({
@@ -69,6 +70,7 @@ const form = ref<ProviderForm>({
   reasoningContentInHistory: "",
   acceptsCacheControl: false,
   acceptsPromptCacheKey: false,
+  usesMaxCompletionTokens: false,
 });
 
 function openDialog(next: ProviderDialog): void {
@@ -85,6 +87,7 @@ function openDialog(next: ProviderDialog): void {
     reasoningContentInHistory: provider?.quirks.reasoningContentInHistory ?? "",
     acceptsCacheControl: provider?.quirks.acceptsCacheControl ?? false,
     acceptsPromptCacheKey: provider?.quirks.acceptsPromptCacheKey ?? false,
+    usesMaxCompletionTokens: provider?.quirks.usesMaxCompletionTokens ?? false,
   };
 }
 
@@ -99,6 +102,7 @@ function quirksFromForm(): ProviderQuirks {
   if (reasoning) quirks.reasoningContentInHistory = reasoning;
   if (form.value.acceptsCacheControl) quirks.acceptsCacheControl = true;
   if (form.value.acceptsPromptCacheKey) quirks.acceptsPromptCacheKey = true;
+  if (form.value.usesMaxCompletionTokens) quirks.usesMaxCompletionTokens = true;
   return quirks;
 }
 
@@ -295,6 +299,10 @@ function quirkSummary(quirks: ProviderQuirks): string {
           <label class="check-field"
             ><input v-model="form.acceptsPromptCacheKey" type="checkbox" /> Accepts
             prompt_cache_key</label
+          >
+          <label class="check-field"
+            ><input v-model="form.usesMaxCompletionTokens" type="checkbox" /> Wants
+            max_completion_tokens</label
           >
         </fieldset>
       </template>

@@ -22,6 +22,11 @@ export const providerQuirksSchema = z.strictObject({
   acceptsCacheControl: z.boolean().optional(),
   /** openai-chat only. The Provider accepts `prompt_cache_key`. */
   acceptsPromptCacheKey: z.boolean().optional(),
+  /**
+   * openai-chat only. The Provider wants the output limit as
+   * `max_completion_tokens` (OpenAI's reasoning models refuse `max_tokens`).
+   */
+  usesMaxCompletionTokens: z.boolean().optional(),
 });
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 
