@@ -1,13 +1,7 @@
-import {
-  Injectable,
-  Logger,
-  type OnApplicationBootstrap,
-  type OnApplicationShutdown,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Redis } from "ioredis";
-import type { Env } from "../config/env.schema.js";
+import { Injectable, Logger } from "@nestjs/common";
+import type { Redis } from "ioredis";
 import { ATTEMPT_FAILURE_REASONS, type AttemptFailureReason } from "../db/schema.js";
+import { RedisConnection } from "../redis/redis-connection.js";
 import { cooldownDurationMs } from "./cooldown.js";
 
 const COOLDOWN_KEY_PREFIX = "routerlm:cooldown:";
@@ -15,9 +9,6 @@ const FAILURE_STREAK_KEY_PREFIX = "routerlm:cooldown-streak:";
 // A Provider Account that has not failed for this long after its Cooldown
 // ended starts again from the shortest Cooldown.
 const FAILURE_STREAK_MEMORY_MS = 10 * 60_000;
-// The inference path waits at most this long for Redis; past it, the
-// Cooldown state is treated as unknown rather than holding the request.
-const REDIS_COMMAND_TIMEOUT_MS = 250;
 const COOLDOWN_VALUE_SEPARATOR = ":";
 
 /** A Provider Account's Cooldown, and the Attempt failure that started it. */
@@ -33,33 +24,12 @@ export interface Cooldown {
  * Cooldown, which costs a failed Attempt rather than the request.
  */
 @Injectable()
-export class CooldownStore implements OnApplicationBootstrap, OnApplicationShutdown {
+export class CooldownStore {
   private readonly logger = new Logger(CooldownStore.name);
   private readonly redis: Redis;
 
-  constructor(config: ConfigService<Env, true>) {
-    this.redis = new Redis(config.get("REDIS_URL", { infer: true }), {
-      lazyConnect: true,
-      // Fail a command at once while disconnected instead of queueing it.
-      enableOfflineQueue: false,
-      maxRetriesPerRequest: 0,
-      commandTimeout: REDIS_COMMAND_TIMEOUT_MS,
-    });
-    // Without a listener, ioredis reports every failed reconnect as an unhandled error.
-    this.redis.on("error", (error: Error) => this.logger.warn(`Redis: ${error.message}`));
-  }
-
-  async onApplicationBootstrap(): Promise<void> {
-    try {
-      await this.redis.connect();
-    } catch (error) {
-      // ioredis keeps reconnecting in the background.
-      this.logger.warn(`Redis is not reachable yet: ${String(error)}`);
-    }
-  }
-
-  onApplicationShutdown(): void {
-    this.redis.disconnect();
+  constructor(connection: RedisConnection) {
+    this.redis = connection.client;
   }
 
   /**

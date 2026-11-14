@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { RedisModule } from "../redis/redis.module.js";
 import { SnapshotService } from "./snapshot.service.js";
 
 /**
@@ -6,6 +7,7 @@ import { SnapshotService } from "./snapshot.service.js";
  * call `SnapshotService.changed()` after their writes.
  */
 @Module({
+  imports: [RedisModule],
   providers: [SnapshotService],
   exports: [SnapshotService],
 })

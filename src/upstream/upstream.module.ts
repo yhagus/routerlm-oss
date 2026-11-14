@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { RedisModule } from "../redis/redis.module.js";
 import { SnapshotModule } from "../snapshot/snapshot.module.js";
 import { ConfigService } from "@nestjs/config";
 import type { Env } from "../config/env.schema.js";
@@ -14,7 +15,7 @@ import { UpstreamModelsService } from "./upstream-models.service.js";
 
 /** Dashboard management of Providers, Upstream Models and Provider Accounts. */
 @Module({
-  imports: [SnapshotModule],
+  imports: [SnapshotModule, RedisModule],
   controllers: [ProvidersController, UpstreamModelsController, ProviderAccountsController],
   providers: [
     ProvidersService,

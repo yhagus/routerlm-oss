@@ -1,24 +1,14 @@
 import { randomUUID } from "node:crypto";
-import {
-  Injectable,
-  Logger,
-  type OnApplicationBootstrap,
-  type OnApplicationShutdown,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Injectable, Logger, type OnApplicationBootstrap } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { Redis } from "ioredis";
-import type { Env } from "../config/env.schema.js";
+import type { Redis } from "ioredis";
 import type { Database } from "../db/relations.js";
+import { RedisConnection } from "../redis/redis-connection.js";
 import { loadSnapshot } from "./load-snapshot.js";
 import { EMPTY_SNAPSHOT, type Snapshot } from "./snapshot.js";
 
 /** Every backend instance listens here and reloads its snapshot on another instance's message. */
 export const SNAPSHOT_CHANGED_CHANNEL = "routerlm:snapshot-changed";
-
-// As in QueueModule: a publish gives up after about a second while Redis is
-// down, instead of holding the dashboard write that triggered it.
-const PUBLISH_RECONNECT_DELAY_MS = 1000;
 
 /**
  * Holds the in-memory snapshot the inference path reads (API Keys, Models,
@@ -27,7 +17,7 @@ const PUBLISH_RECONNECT_DELAY_MS = 1000;
  * the others through Redis pub/sub.
  */
 @Injectable()
-export class SnapshotService implements OnApplicationBootstrap, OnApplicationShutdown {
+export class SnapshotService implements OnApplicationBootstrap {
   private readonly logger = new Logger(SnapshotService.name);
   private readonly publisher: Redis;
   private readonly subscriber: Redis;
@@ -39,18 +29,12 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
 
   constructor(
     @InjectDrizzle() private readonly db: Database,
-    config: ConfigService<Env, true>,
+    redis: RedisConnection,
   ) {
-    const redisUrl = config.get("REDIS_URL", { infer: true });
-    this.publisher = new Redis(redisUrl, {
-      maxRetriesPerRequest: 1,
-      retryStrategy: () => PUBLISH_RECONNECT_DELAY_MS,
-      lazyConnect: true,
-    });
-    this.subscriber = new Redis(redisUrl, { lazyConnect: true });
-    // Without listeners, ioredis reports every failed reconnect as an unhandled error.
-    this.publisher.on("error", (error: Error) => this.logRedisError("publish", error));
-    this.subscriber.on("error", (error: Error) => this.logRedisError("subscribe", error));
+    // A publish fails at once while Redis is down instead of holding the
+    // dashboard write that triggered it.
+    this.publisher = redis.client;
+    this.subscriber = redis.createSubscriber();
   }
 
   get current(): Snapshot {
@@ -69,11 +53,6 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     this.subscriber.subscribe(SNAPSHOT_CHANGED_CHANNEL).catch((error: unknown) => {
       this.logger.warn(`Not subscribed to snapshot changes: ${String(error)}`);
     });
-  }
-
-  onApplicationShutdown(): void {
-    this.publisher.disconnect();
-    this.subscriber.disconnect();
   }
 
   /** Call after a dashboard write commits. Never throws: the write already happened. */
@@ -95,9 +74,5 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
       }
     });
     return this.lastReload;
-  }
-
-  private logRedisError(role: string, error: Error): void {
-    this.logger.warn(`Redis (snapshot ${role}): ${error.message}`);
   }
 }
