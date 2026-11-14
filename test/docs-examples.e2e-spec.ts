@@ -27,7 +27,11 @@ const codeBlocks = pages.flatMap(codeBlocksOf);
 const curlExamples = codeBlocks.filter((block) => block.language === "bash");
 const sdkExamples = codeBlocks.filter((block) => block.language === "ts");
 
-/** The SDKs are named by their package; no other Provider name may appear in code. */
+/**
+ * The one exception to "the docs name no Provider" (ADR 0006): the client
+ * examples import these Providers' SDKs, so their names may appear in code.
+ * Prose stays Provider-free, and no other Provider name may appear in code.
+ */
 const SDK_OWNERS = ["OpenAI", "Anthropic"];
 /** The Model name the errors page uses to show a `model_not_found` envelope. */
 const UNKNOWN_MODEL_NAME = "unknown-model";
