@@ -27,6 +27,7 @@ import { UpstreamClient } from "./upstream-client.js";
     UpstreamClient,
     { provide: APP_FILTER, useClass: InferenceExceptionFilter },
   ],
+  exports: [InferenceService],
 })
 export class InferenceModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
