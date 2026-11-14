@@ -72,6 +72,7 @@ export class InferenceService {
       converter.protocol,
       client.requestBytes,
     );
+    meter.requestReceived(client.requestHeaders, body);
     try {
       const result = await this.serve(converter, body, principal, client.signal, meter);
       if (result.kind === "stream") {
@@ -128,9 +129,13 @@ export class InferenceService {
         clientRequest,
         effectiveParameterPolicy(model.parameterPolicy, target.route.parameterPolicyOverride),
       );
-      meter.attemptStarted(target);
+      const providerAccountKey = this.cipher.decrypt(target.providerAccount.encryptedKey);
+      meter.attemptStarted(target, providerAccountKey);
       try {
-        return await this.attempt(converter, request, context, target, clientSignal, meter);
+        return await this.attempt(converter, request, context, target, providerAccountKey, {
+          clientSignal,
+          meter,
+        });
       } catch (error) {
         if (!(error instanceof AttemptFailedError)) {
           throw error;
@@ -169,10 +174,10 @@ export class InferenceService {
     request: InferenceRequest,
     context: ResponseContext,
     target: AttemptTarget,
-    clientSignal: AbortSignal,
-    meter: UsageMeter,
+    providerAccountKey: string,
+    { clientSignal, meter }: { clientSignal: AbortSignal; meter: UsageMeter },
   ): Promise<InferenceResult> {
-    const call = this.upstreamCallFor(request, target, clientSignal);
+    const call = this.upstreamCallFor(request, target, providerAccountKey, clientSignal);
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
@@ -195,7 +200,8 @@ export class InferenceService {
 
   private upstreamCallFor(
     request: InferenceRequest,
-    { route, providerAccount }: AttemptTarget,
+    { route }: AttemptTarget,
+    providerAccountKey: string,
     clientSignal: AbortSignal,
   ): UpstreamCall {
     const { upstreamModel } = route;
@@ -214,10 +220,7 @@ export class InferenceService {
         quirks: provider.quirks,
         maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
       },
-      authHeaders: upstreamAuthHeaders(
-        provider.authStyle,
-        this.cipher.decrypt(providerAccount.encryptedKey),
-      ),
+      authHeaders: upstreamAuthHeaders(provider.authStyle, providerAccountKey),
       timeouts: {
         connectMs: route.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
         firstTokenMs: route.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,

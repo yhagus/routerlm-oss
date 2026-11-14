@@ -40,9 +40,34 @@ export interface AttemptRecord {
   durationMs: number;
 }
 
+/** Headers and body as an Error Capture stores them: credentials redacted, body truncated. */
+export interface CapturedMessage {
+  headers: Record<string, string>;
+  body: string;
+}
+
+/** One failed Attempt's part of an Error Capture. */
+export interface FailedAttemptCapture {
+  /** Its index in `UsageJob.attempts`. */
+  attemptIndex: number;
+  /** Null when no response arrived (a timeout, a dropped connection, a stream cut short). */
+  upstreamResponse: CapturedMessage | null;
+}
+
+/**
+ * The content of a failed request, for its Error Captures: the one place
+ * content is kept (ADR 0004). The worker writes one capture per failed
+ * Attempt or, when none failed, one for the client request itself.
+ */
+export interface ErrorCaptureRecord {
+  request: CapturedMessage;
+  failedAttempts: FailedAttemptCapture[];
+}
+
 /**
  * Measurements of one inference request, enqueued by the backend and written
- * by the worker. Never holds prompt or response content (ADR 0004).
+ * by the worker. Only `errorCapture` holds content, and only for a failed
+ * request with a valid API Key (ADR 0004).
  */
 export interface UsageJob {
   /** Chosen by the backend, so a retried job never writes the Usage Log twice. */
@@ -68,4 +93,6 @@ export interface UsageJob {
   isCancelled: boolean;
   /** In the order they were made. */
   attempts: AttemptRecord[];
+  /** Null for a request that succeeded, was cancelled, or had no valid API Key. */
+  errorCapture: ErrorCaptureRecord | null;
 }

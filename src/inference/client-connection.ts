@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "node:http";
 import { clientDisconnectSignal } from "./event-stream-response.js";
 
 /** What the inference path needs to know about the client's HTTP exchange. */
@@ -7,13 +7,19 @@ export interface ClientConnection {
   signal: AbortSignal;
   /** The request body's size on the wire, for the Usage Log. */
   requestBytes: number;
+  /** For an Error Capture, should the request fail. */
+  requestHeaders: IncomingHttpHeaders;
 }
 
 export function clientConnectionOf(
   request: IncomingMessage,
   response: ServerResponse,
 ): ClientConnection {
-  return { signal: clientDisconnectSignal(response), requestBytes: requestBytesOf(request) };
+  return {
+    signal: clientDisconnectSignal(response),
+    requestBytes: requestBytesOf(request),
+    requestHeaders: request.headers,
+  };
 }
 
 /** The declared body size; 0 for a chunked body, which declares none. */

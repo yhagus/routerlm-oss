@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { type SQL, sql } from "drizzle-orm";
@@ -6,18 +7,21 @@ import type { Database } from "../db/relations.js";
 import {
   apiKeys,
   attempts,
+  errorCaptures,
   models,
   providerAccounts,
   routes,
   usageLogs,
   users,
 } from "../db/schema.js";
-import type { UsageCaller, UsageJob } from "./usage-job.js";
+import type { ErrorCaptureRecord, UsageCaller, UsageJob } from "./usage-job.js";
 import { usageMeasurementsOf } from "./usage-measurements.js";
 
 type TableWithId = PgTable & { id: AnyPgColumn };
 
-/** Writes a request's Usage Log and its Attempts, in the worker. */
+type NewErrorCapture = typeof errorCaptures.$inferInsert;
+
+/** Writes a request's Usage Log, its Attempts and its Error Captures, in the worker. */
 @Injectable()
 export class UsageWriter {
   constructor(@InjectDrizzle() private readonly db: Database) {}
@@ -48,22 +52,56 @@ export class UsageWriter {
         })
         .onConflictDoNothing({ target: usageLogs.id })
         .returning({ id: usageLogs.id });
-      if (written.length === 0 || job.attempts.length === 0) {
+      if (written.length === 0) {
         return;
       }
-      await transaction.insert(attempts).values(
-        job.attempts.map((attempt) => ({
-          usageLogId: job.usageLogId,
-          startedAt: new Date(attempt.startedAt),
-          routeId: existingId(routes, attempt.routeId),
-          providerAccountId: existingId(providerAccounts, attempt.providerAccountId),
-          upstreamStatus: attempt.upstreamStatus,
-          failureReason: attempt.failureReason,
-          durationMs: attempt.durationMs,
-        })),
-      );
+      // Chosen here so the Error Captures can point at their Attempts.
+      const attemptIds = job.attempts.map(() => randomUUID());
+      if (job.attempts.length > 0) {
+        await transaction.insert(attempts).values(
+          job.attempts.map((attempt, index) => ({
+            id: attemptIds[index],
+            usageLogId: job.usageLogId,
+            startedAt: new Date(attempt.startedAt),
+            routeId: existingId(routes, attempt.routeId),
+            providerAccountId: existingId(providerAccounts, attempt.providerAccountId),
+            upstreamStatus: attempt.upstreamStatus,
+            failureReason: attempt.failureReason,
+            durationMs: attempt.durationMs,
+          })),
+        );
+      }
+      if (job.errorCapture) {
+        await transaction
+          .insert(errorCaptures)
+          .values(errorCaptureRowsOf(job.usageLogId, job.errorCapture, attemptIds));
+      }
     });
   }
+}
+
+/**
+ * One capture per failed Attempt, which names the hop that failed (gateway to
+ * that Provider Account). A request that failed before any Attempt failed
+ * gets one capture with no Attempt: the hop from client to gateway.
+ */
+function errorCaptureRowsOf(
+  usageLogId: string,
+  capture: ErrorCaptureRecord,
+  attemptIds: string[],
+): NewErrorCapture[] {
+  const { request } = capture;
+  if (capture.failedAttempts.length === 0) {
+    return [{ usageLogId, requestHeaders: request.headers, requestBody: request.body }];
+  }
+  return capture.failedAttempts.map(({ attemptIndex, upstreamResponse }) => ({
+    usageLogId,
+    attemptId: attemptIds[attemptIndex],
+    requestHeaders: request.headers,
+    requestBody: request.body,
+    responseHeaders: upstreamResponse?.headers ?? null,
+    responseBody: upstreamResponse?.body ?? null,
+  }));
 }
 
 function callerColumnsOf(caller: UsageCaller) {
