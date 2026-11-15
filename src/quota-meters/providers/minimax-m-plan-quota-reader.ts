@@ -1,14 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import {
-  HttpClient,
-  HttpClientError,
-  HttpResponseError,
-  HttpTimeoutError,
-  InjectHttpClient,
-} from "@nestjs/http-client";
+import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
+import { withoutTrailingSlash } from "@/libs/models/url.js";
 import type { QuotaMeterReading } from "../models/quota-meter.js";
 import {
+  asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
   QuotaReadError,
@@ -16,7 +12,6 @@ import {
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
 const REMAINS_PATH = "token_plan/remains";
-const TRAILING_SLASH = /\/$/;
 
 /** The entry that counts every model; any other entry counts one model group. */
 const GENERAL_MODEL_GROUP = "general";
@@ -94,13 +89,13 @@ export class MiniMaxMPlanQuotaReader implements QuotaReader {
   constructor(@InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient) {}
 
   async read(
-    providerAccountKey: string,
+    bearerCredential: string,
     { quotaBaseUrl }: QuotaReaderProvider,
   ): Promise<QuotaMeterReading[]> {
     if (quotaBaseUrl === undefined) {
       throw new QuotaReadError("The Provider names no quota endpoint in its quotaBaseUrl quirk");
     }
-    const body = await this.fetchRemains(providerAccountKey, quotaBaseUrl);
+    const body = await this.fetchRemains(bearerCredential, quotaBaseUrl);
     const parsed = remainsResponseSchema.safeParse(body);
     if (!parsed.success) {
       throw new QuotaReadError("MiniMax answered the quota reading in an unknown shape", {
@@ -116,37 +111,17 @@ export class MiniMaxMPlanQuotaReader implements QuotaReader {
     return (entries ?? []).flatMap((entry) => PLAN_WINDOWS.map((window) => meterOf(entry, window)));
   }
 
-  private async fetchRemains(providerAccountKey: string, quotaBaseUrl: string): Promise<unknown> {
-    const url = `${quotaBaseUrl.replace(TRAILING_SLASH, "")}/${REMAINS_PATH}`;
+  private async fetchRemains(bearerCredential: string, quotaBaseUrl: string): Promise<unknown> {
+    const url = `${withoutTrailingSlash(quotaBaseUrl)}/${REMAINS_PATH}`;
     try {
       const response = await this.http.get(url, {
-        headers: { authorization: `Bearer ${providerAccountKey}` },
+        headers: { authorization: `Bearer ${bearerCredential}` },
       });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error);
+      throw asQuotaReadError(error, "MiniMax");
     }
   }
-}
-
-/** The QuotaReadError for an HTTP failure; any other error is a bug and is thrown as it is. */
-function asQuotaReadError(error: unknown): QuotaReadError {
-  if (error instanceof HttpTimeoutError) {
-    return new QuotaReadError(`The MiniMax quota endpoint timed out after ${error.timeoutMs} ms`, {
-      cause: error,
-    });
-  }
-  if (error instanceof HttpResponseError) {
-    return new QuotaReadError(`The MiniMax quota endpoint answered HTTP ${error.status}`, {
-      cause: error,
-    });
-  }
-  if (error instanceof HttpClientError) {
-    return new QuotaReadError(`The MiniMax quota endpoint could not be reached: ${error.message}`, {
-      cause: error,
-    });
-  }
-  throw error;
 }
 
 function meterOf(entry: RemainsEntry, window: PlanWindow): QuotaMeterReading {

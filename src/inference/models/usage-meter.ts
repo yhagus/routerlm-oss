@@ -65,7 +65,7 @@ export class UsageMeter {
   private clientRequest: ClientRequest | null = null;
   private readonly failedAttempts: FailedAttempt[] = [];
   /** Redacted from every Error Capture of this request. */
-  private readonly providerAccountKeys: string[] = [];
+  private readonly credentialSecrets: string[] = [];
 
   constructor(
     private readonly caller: UsageCaller,
@@ -101,7 +101,7 @@ export class UsageMeter {
 
   /** The Provider Account key or access token an Attempt sends, to redact from Error Captures. */
   credentialUsed(secret: string): void {
-    this.providerAccountKeys.push(secret);
+    this.credentialSecrets.push(secret);
   }
 
   /**
@@ -238,8 +238,8 @@ export class UsageMeter {
 
   private captured(message: { headers: RawHeaders; body: string }): CapturedMessage {
     return {
-      headers: capturedHeaders(message.headers, this.providerAccountKeys),
-      body: capturedBody(message.body, this.providerAccountKeys),
+      headers: capturedHeaders(message.headers, this.credentialSecrets),
+      body: capturedBody(message.body, this.credentialSecrets),
     };
   }
 

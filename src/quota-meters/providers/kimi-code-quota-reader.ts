@@ -1,14 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import {
-  HttpClient,
-  HttpClientError,
-  HttpResponseError,
-  HttpTimeoutError,
-  InjectHttpClient,
-} from "@nestjs/http-client";
+import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
+import { withoutTrailingSlash } from "@/libs/models/url.js";
 import type { QuotaMeterReading } from "../models/quota-meter.js";
 import {
+  asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
   QuotaReadError,
@@ -16,7 +12,6 @@ import {
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
 const USAGES_PATH = "usages";
-const TRAILING_SLASH = /\/$/;
 
 const FULL_PERCENT = 100;
 /** Keeps a ratio such as 0.07 from becoming 7.000000000000001 percent. */
@@ -98,36 +93,16 @@ export class KimiCodeQuotaReader implements QuotaReader {
   }
 
   private async fetchUsages(bearerCredential: string, baseUrl: string): Promise<unknown> {
-    const url = `${baseUrl.replace(TRAILING_SLASH, "")}/${USAGES_PATH}`;
+    const url = `${withoutTrailingSlash(baseUrl)}/${USAGES_PATH}`;
     try {
       const response = await this.http.get(url, {
         headers: { authorization: `Bearer ${bearerCredential}`, accept: "application/json" },
       });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error);
+      throw asQuotaReadError(error, "Kimi");
     }
   }
-}
-
-/** The QuotaReadError for an HTTP failure; any other error is a bug and is thrown as it is. */
-function asQuotaReadError(error: unknown): QuotaReadError {
-  if (error instanceof HttpTimeoutError) {
-    return new QuotaReadError(`The Kimi quota endpoint timed out after ${error.timeoutMs} ms`, {
-      cause: error,
-    });
-  }
-  if (error instanceof HttpResponseError) {
-    return new QuotaReadError(`The Kimi quota endpoint answered HTTP ${error.status}`, {
-      cause: error,
-    });
-  }
-  if (error instanceof HttpClientError) {
-    return new QuotaReadError(`The Kimi quota endpoint could not be reached: ${error.message}`, {
-      cause: error,
-    });
-  }
-  throw error;
 }
 
 function meterOf(planLimit: PlanLimit, limit: UsagesLimit): QuotaMeterReading {
