@@ -1,20 +1,32 @@
 <script setup lang="ts">
-import { Ban, CloudOff, Copy, KeyRound, Plus } from "@lucide/vue";
-import { computed, ref } from "vue";
+import { Ban, Copy, KeyRound, Plus } from "@lucide/vue";
+import { computed, h, ref } from "vue";
+import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { apiErrorMessage } from "~/lib/api";
 import {
+  type ApiKeyStatus,
   type ApiKeySummary,
   apiKeyStatus,
   type CreatedApiKey,
   endOfLocalDay,
   type ModelChoice,
 } from "~/lib/api-keys";
+import type { DataTableColumn } from "~/lib/dataTable";
 
 useHead({ title: "API Keys" });
 
 type CreateDialog = { step: "form" } | { step: "created"; apiKey: CreatedApiKey };
 
-const STATUS_LABELS = { active: "Active", expired: "Expired", revoked: "Revoked" } as const;
+const STATUS_LABELS = {
+  active: "Active",
+  expired: "Expired",
+  revoked: "Revoked",
+} as const satisfies Record<ApiKeyStatus, string>;
+const API_KEY_STATUSES = ["active", "expired", "revoked"] as const satisfies ApiKeyStatus[];
+const statusFilterOptions = API_KEY_STATUSES.map((status) => ({
+  label: STATUS_LABELS[status],
+  value: status,
+}));
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
@@ -41,10 +53,47 @@ function formatDate(value: string | null, whenNull: string): string {
   return value ? dateFormat.format(new Date(value)) : whenNull;
 }
 
+interface ApiKeyRow extends ApiKeySummary {
+  status: ApiKeyStatus;
+}
+
 // Status is worked out once per load: a key that expires while the page is open shows it on the next refresh.
-const rows = computed(() =>
+const rows = computed<ApiKeyRow[]>(() =>
   (apiKeys.value ?? []).map((apiKey) => ({ ...apiKey, status: apiKeyStatus(apiKey, Date.now()) })),
 );
+
+// Held in the URL (?status=…) so a refresh or a link keeps it. The DataTable
+// holds the search and page the same way.
+const statusFilter = useQueryList("status", {
+  isValid: oneOf(API_KEY_STATUSES),
+  order: API_KEY_STATUSES,
+});
+
+const activeFilters = computed<ActiveFilter[]>(() =>
+  listFilterTokens("Status", statusFilter, statusFilterOptions),
+);
+
+/** Rows the status filter keeps; the DataTable applies the search. */
+const filteredRows = computed(() =>
+  statusFilter.value.length === 0
+    ? rows.value
+    : rows.value.filter((row) => statusFilter.value.includes(row.status)),
+);
+
+function clearFilters(): void {
+  statusFilter.value = [];
+}
+
+const columns: DataTableColumn<ApiKeyRow>[] = [
+  { id: "name", header: "Name", enableHiding: false, accessorFn: (row) => row.name },
+  { id: "keyId", header: "Key id", accessorFn: (row) => `rlm_${row.keyId}` },
+  { id: "allowedModels", header: "Allowed Models", accessorFn: allowedModelsLabel },
+  { id: "created", header: "Created" },
+  { id: "createdBy", header: "Created by", accessorFn: (row) => row.createdBy?.email ?? "" },
+  { id: "expires", header: "Expires" },
+  { id: "status", header: "Status" },
+  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+];
 
 function allowedModelsLabel(apiKey: ApiKeySummary): string {
   if (apiKey.allowedModels.length === 0) return "All Models";
@@ -158,62 +207,68 @@ async function revokeApiKey(): Promise<void> {
       </button>
     </PageHeading>
 
-    <section class="panel table-panel">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Key id</th>
-              <th>Allowed Models</th>
-              <th>Created</th>
-              <th>Created by</th>
-              <th>Expires</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="apiKey in rows" :key="apiKey.id">
-              <td>
-                <div class="table-entity">
-                  <span class="key-icon"><KeyRound :size="15" /></span
-                  ><strong>{{ apiKey.name }}</strong>
-                </div>
-              </td>
-              <td class="tabular">rlm_{{ apiKey.keyId }}_…</td>
-              <td>{{ allowedModelsLabel(apiKey) }}</td>
-              <td class="tabular">{{ formatDate(apiKey.createdAt, "—") }}</td>
-              <td>{{ apiKey.createdBy?.email ?? "—" }}</td>
-              <td class="tabular">{{ formatDate(apiKey.expiresAt, "Never") }}</td>
-              <td>
-                <span
-                  class="status-badge"
-                  :class="apiKey.status === 'active' ? 'status-badge--good' : 'status-badge--bad'"
-                  >{{ STATUS_LABELS[apiKey.status] }}</span
-                >
-              </td>
-              <td>
-                <div class="row-actions">
-                  <button v-if="!apiKey.revokedAt" class="row-action" @click="startRevoke(apiKey)">
-                    <Ban :size="14" /> Revoke
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <LoadingRow v-if="isLoadingApiKeys" :columns="8" />
-          </tbody>
-        </table>
-        <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
-          <strong>Couldn't load API Keys.</strong
-          ><span>Check that the backend is running, then reload the page.</span>
-        </EmptyState>
-        <EmptyState v-else-if="!isLoadingApiKeys && rows.length === 0" :icon="KeyRound">
+    <DataTable
+      table-id="api-keys"
+      label="API Keys"
+      search-placeholder="Search name, key id, Model or creator"
+      :columns="columns"
+      :rows="filteredRows"
+      :get-row-id="(row) => row.id"
+      :is-loading="isLoadingApiKeys"
+      :error="loadError"
+      :refresh="refresh"
+      :filters="activeFilters"
+      @clear-filters="clearFilters"
+    >
+      <template #filters>
+        <div class="data-table-filter">
+          <span class="data-table-filter__label" aria-hidden="true">Status</span>
+          <AppMultiSelect
+            v-model="statusFilter"
+            :options="statusFilterOptions"
+            label="Filter by status"
+            placeholder="Any status"
+            noun="statuses"
+          />
+        </div>
+      </template>
+      <template #cell-name="{ row: apiKey }">
+        <div class="table-entity">
+          <span class="key-icon"><KeyRound :size="15" /></span><strong>{{ apiKey.name }}</strong>
+        </div>
+      </template>
+      <template #cell-keyId="{ row: apiKey }">
+        <span class="tabular">rlm_{{ apiKey.keyId }}_…</span>
+      </template>
+      <template #cell-allowedModels="{ row: apiKey }">{{ allowedModelsLabel(apiKey) }}</template>
+      <template #cell-created="{ row: apiKey }">
+        <span class="tabular">{{ formatDate(apiKey.createdAt, "—") }}</span>
+      </template>
+      <template #cell-createdBy="{ row: apiKey }">{{ apiKey.createdBy?.email ?? "—" }}</template>
+      <template #cell-expires="{ row: apiKey }">
+        <span class="tabular">{{ formatDate(apiKey.expiresAt, "Never") }}</span>
+      </template>
+      <template #cell-status="{ row: apiKey }">
+        <span
+          class="status-badge"
+          :class="apiKey.status === 'active' ? 'status-badge--good' : 'status-badge--bad'"
+          >{{ STATUS_LABELS[apiKey.status] }}</span
+        >
+      </template>
+      <template #cell-actions="{ row: apiKey }">
+        <div class="row-actions">
+          <button v-if="!apiKey.revokedAt" class="row-action" @click="startRevoke(apiKey)">
+            <Ban :size="14" /> Revoke
+          </button>
+        </div>
+      </template>
+      <template #empty>
+        <EmptyState :icon="KeyRound">
           <strong>No API Keys yet.</strong
           ><span>Create one for each client application that calls the gateway.</span>
         </EmptyState>
-      </div>
-    </section>
+      </template>
+    </DataTable>
 
     <AppDialog
       v-if="createDialog?.step === 'form'"

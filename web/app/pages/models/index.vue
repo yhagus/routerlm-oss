@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Boxes, CloudOff, Plus, Power } from "@lucide/vue";
+import { Boxes, Plus, Power } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
+import type { DataTableColumn } from "~/lib/dataTable";
 import type { ModelDetail, ModelSummary } from "~/lib/routing";
 
 useHead({ title: "Models" });
@@ -14,6 +15,13 @@ const {
   refresh,
 } = useDashboardApi<ModelSummary[]>("/models");
 const isLoading = computed(() => modelsStatus.value === "pending" && !models.value);
+
+const columns: DataTableColumn<ModelSummary>[] = [
+  { id: "model", header: "Model", enableHiding: false, accessorFn: (model) => model.name },
+  { id: "routes", header: "Routes" },
+  { id: "status", header: "Status" },
+  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+];
 
 const isCreateDialogOpen = ref(false);
 const newModelName = ref("");
@@ -68,59 +76,47 @@ async function toggleModel(model: ModelSummary): Promise<void> {
       </button>
     </PageHeading>
 
-    <section class="panel table-panel">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th>Routes</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            <LoadingRow v-if="isLoading" :columns="4" />
-            <tr v-for="model in models" :key="model.id">
-              <td>
-                <NuxtLink class="table-entity" :to="`/models/${model.id}`">
-                  <span class="key-icon"><Boxes :size="15" /></span
-                  ><strong>{{ model.name }}</strong>
-                </NuxtLink>
-              </td>
-              <td class="tabular">
-                {{ model.routeCount }}
-                <span v-if="model.routeCount === 0" class="status-badge status-badge--warn"
-                  >No Routes</span
-                >
-              </td>
-              <td>
-                <span
-                  class="status-badge"
-                  :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-                  >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
-                >
-              </td>
-              <td>
-                <div class="row-actions">
-                  <button class="row-action" @click="toggleModel(model)">
-                    <Power :size="14" /> {{ model.isEnabled ? "Disable" : "Enable" }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
-          <strong>Couldn't load Models.</strong
-          ><span>Check that the backend is running, then reload the page.</span>
-        </EmptyState>
-        <EmptyState v-else-if="models?.length === 0" :icon="Boxes">
+    <DataTable
+      table-id="models"
+      label="Models"
+      search-placeholder="Search name"
+      :columns="columns"
+      :rows="models ?? []"
+      :get-row-id="(model) => model.id"
+      :is-loading="isLoading"
+      :error="loadError"
+      :refresh="refresh"
+    >
+      <template #cell-model="{ row: model }">
+        <NuxtLink class="table-entity" :to="`/models/${model.id}`">
+          <span class="key-icon"><Boxes :size="15" /></span><strong>{{ model.name }}</strong>
+        </NuxtLink>
+      </template>
+      <template #cell-routes="{ row: model }">
+        <span class="tabular">{{ model.routeCount }}</span>
+        <span v-if="model.routeCount === 0" class="status-badge status-badge--warn">No Routes</span>
+      </template>
+      <template #cell-status="{ row: model }">
+        <span
+          class="status-badge"
+          :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+          >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
+        >
+      </template>
+      <template #cell-actions="{ row: model }">
+        <div class="row-actions">
+          <button class="row-action" @click="toggleModel(model)">
+            <Power :size="14" /> {{ model.isEnabled ? "Disable" : "Enable" }}
+          </button>
+        </div>
+      </template>
+      <template #empty>
+        <EmptyState :icon="Boxes">
           <strong>No Models yet.</strong
           ><span>Create one with the name clients will send, then add its Routes.</span>
         </EmptyState>
-      </div>
-    </section>
+      </template>
+    </DataTable>
 
     <AppDialog
       v-model:open="isCreateDialogOpen"

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { CloudOff, KeyRound, Trash2, UserRound } from "@lucide/vue";
-import { computed, ref } from "vue";
+import { KeyRound, Trash2, UserRound } from "@lucide/vue";
+import { computed, h, ref } from "vue";
 import { apiErrorMessage } from "~/lib/api";
+import type { DataTableColumn } from "~/lib/dataTable";
 import { MIN_PASSWORD_LENGTH, type User } from "~/lib/users";
 
 useHead({ title: "Users" });
@@ -23,6 +24,17 @@ const isLoadingUsers = computed(() => usersStatus.value === "pending" && !users.
 
 const emailById = computed(() => new Map((users.value ?? []).map((user) => [user.id, user.email])));
 const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
+function addedByLabel(user: User): string {
+  return (user.createdById && emailById.value.get(user.createdById)) || "—";
+}
+
+const columns: DataTableColumn<User>[] = [
+  { id: "user", header: "User", enableHiding: false, accessorFn: (user) => user.email },
+  { id: "added", header: "Added" },
+  { id: "addedBy", header: "Added by", accessorFn: addedByLabel },
+  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+];
 
 const newEmail = ref("");
 const newPassword = ref("");
@@ -137,50 +149,40 @@ async function afterAction(done: UserAction): Promise<void> {
       </form>
     </section>
 
-    <section class="panel table-panel">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Added</th>
-              <th>Added by</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in users" :key="user.id">
-              <td>
-                <div class="table-entity">
-                  <span class="key-icon"><UserRound :size="15" /></span
-                  ><strong>{{ user.email }}</strong
-                  ><span v-if="user.id === currentUser?.id" class="status-badge status-badge--small"
-                    >You</span
-                  >
-                </div>
-              </td>
-              <td class="tabular">{{ dateFormat.format(new Date(user.createdAt)) }}</td>
-              <td>{{ (user.createdById && emailById.get(user.createdById)) || "—" }}</td>
-              <td>
-                <div class="row-actions">
-                  <button class="row-action" @click="startAction({ kind: 'reset-password', user })">
-                    <KeyRound :size="14" /> Reset password
-                  </button>
-                  <button class="row-action" @click="startAction({ kind: 'delete', user })">
-                    <Trash2 :size="14" /> Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <LoadingRow v-if="isLoadingUsers" :columns="4" />
-          </tbody>
-        </table>
-        <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
-          <strong>Couldn't load Users.</strong
-          ><span>Check that the backend is running, then reload the page.</span>
-        </EmptyState>
-      </div>
-    </section>
+    <DataTable
+      table-id="users"
+      label="Users"
+      search-placeholder="Search email"
+      :columns="columns"
+      :rows="users ?? []"
+      :get-row-id="(user) => user.id"
+      :is-loading="isLoadingUsers"
+      :error="loadError"
+      :refresh="refresh"
+    >
+      <template #cell-user="{ row: user }">
+        <div class="table-entity">
+          <span class="key-icon"><UserRound :size="15" /></span><strong>{{ user.email }}</strong
+          ><span v-if="user.id === currentUser?.id" class="status-badge status-badge--small"
+            >You</span
+          >
+        </div>
+      </template>
+      <template #cell-added="{ row: user }">
+        <span class="tabular">{{ dateFormat.format(new Date(user.createdAt)) }}</span>
+      </template>
+      <template #cell-addedBy="{ row: user }">{{ addedByLabel(user) }}</template>
+      <template #cell-actions="{ row: user }">
+        <div class="row-actions">
+          <button class="row-action" @click="startAction({ kind: 'reset-password', user })">
+            <KeyRound :size="14" /> Reset password
+          </button>
+          <button class="row-action" @click="startAction({ kind: 'delete', user })">
+            <Trash2 :size="14" /> Delete
+          </button>
+        </div>
+      </template>
+    </DataTable>
 
     <AppDialog
       v-if="action?.kind === 'reset-password'"
