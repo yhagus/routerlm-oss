@@ -21,8 +21,20 @@ A company or service whose inference API the gateway calls, such as DeepSeek or 
 _Avoid_: Upstream, vendor, channel
 
 **Provider Account**:
-One API key the gateway holds at one Provider.
+One API key the gateway holds at one Provider, with its own Quota Meters when it is a Subscription Provider.
 _Avoid_: Account, credential, upstream key
+
+**Subscription Provider**:
+A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code or MiniMax M Plan. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot or MiniMax API.
+_Avoid_: Coding plan, token plan, membership
+
+**Quota Meter**:
+One usage limit of a Provider Account at a Subscription Provider, such as a 5-hour or weekly window, with how much is used and when it resets.
+_Avoid_: Quota, rate limit, usage limit
+
+**Exhausted**:
+The state of a Provider Account whose Quota Meter has run out. Like a Cooldown, it is skipped, but until the meter resets. An operator can let a Provider Account keep serving while Exhausted when the Provider bills the excess some other way, such as MiniMax Credits.
+_Avoid_: Over quota, capped, rate-limited
 
 **Upstream Model**:
 A model as one Provider names and sells it.
