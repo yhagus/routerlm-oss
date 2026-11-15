@@ -183,8 +183,11 @@ export class UpstreamClient {
       deadlines.stop("firstTokenMs");
       return this.restOfStream(first, events, deadlines);
     } catch (error) {
+      // Read the failure before finish(): finish() aborts with ClientCancelledError,
+      // which would hide an upstream error status and stop the Fallback.
+      const failure = deadlines.failureOf(error, false);
       deadlines.finish();
-      throw deadlines.failureOf(error, false);
+      throw failure;
     }
   }
 

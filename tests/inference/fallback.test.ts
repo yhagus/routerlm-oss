@@ -106,6 +106,22 @@ describe("Fallback (e2e)", () => {
     expect(attemptedKeys()).toEqual([UPSTREAM_KEY]);
   });
 
+  it.each<[string, FakeReply]>([
+    ["5xx", SERVER_ERROR],
+    ["429", RATE_LIMITED],
+  ])(
+    "falls back to the next Provider Account when a stream request gets a %s",
+    async (_failure, failedReply) => {
+      upstream.reply(failedReply);
+      upstream.reply(STREAM_SUCCESS);
+
+      const response = await chat({ ...TEXT_REQUEST, stream: true }).expect(200);
+
+      expect(response.text).toContain("data: [DONE]");
+      expect(attemptedKeys()).toEqual([UPSTREAM_KEY, BACKUP_KEY]);
+    },
+  );
+
   it("falls back to the next Provider Account when a stream sends no first token in time", async () => {
     upstream.reply({ kind: "headers-only" });
     upstream.reply(STREAM_SUCCESS);
