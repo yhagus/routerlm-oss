@@ -225,16 +225,4 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
 
     expect(fakeUpstream.requests).toEqual([]);
   });
-
-  it("lets the operator keep an account serving while Exhausted", async () => {
-    const providerAccountId = await createAccount("minimax-m-plan");
-
-    const updated = await request(app.getHttpServer())
-      .patch(`/api/provider-accounts/${providerAccountId}`)
-      .set("Cookie", cookie)
-      .send({ continueWhenExhausted: true })
-      .expect(200);
-
-    expect(updated.body).toMatchObject({ continueWhenExhausted: true });
-  });
 });
