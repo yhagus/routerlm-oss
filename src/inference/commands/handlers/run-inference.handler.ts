@@ -6,6 +6,7 @@ import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import type { SnapshotModel, SnapshotRoute } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 import { UsageProducer } from "@/usage/jobs/usage.producer.js";
@@ -49,12 +50,6 @@ interface AttemptOptions {
   clientSignal: AbortSignal;
   meter: UsageMeter;
 }
-
-/**
- * How long a Provider Account the upstream called Exhausted is skipped until
- * the quota reading it triggers sets the precise end.
- */
-const EXHAUSTED_UNTIL_READ_MS = 60_000;
 
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
@@ -149,8 +144,23 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     const enabledAccountIds = enabledProviderAccountIdsOf(routes);
     const cooldowns = await this.cooldowns.cooldowns(enabledAccountIds);
     const skippedAccountIds = new Set(cooldowns.keys());
+    const recordedExhaustedAccountIds = new Set<string>();
     const failures: AttemptFailedError[] = [];
-    const targets = attemptTargets(routes, (account) => skippedAccountIds.has(account.id));
+    const targets = attemptTargets(routes, (target) => {
+      const accountId = target.providerAccount.id;
+      if (!skippedAccountIds.has(accountId)) {
+        return false;
+      }
+      // Recorded once, even when the account comes up again on a later Route.
+      if (
+        cooldowns.get(accountId)?.cause === "exhausted" &&
+        !recordedExhaustedAccountIds.has(accountId)
+      ) {
+        recordedExhaustedAccountIds.add(accountId);
+        meter.attemptSkippedAsExhausted(target);
+      }
+      return true;
+    });
     for (const target of targets) {
       if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
         break;
@@ -345,9 +355,9 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         return;
       case "exhausted":
         void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
-        await this.cooldowns.markExhausted(
-          providerAccount.id,
-          new Date(Date.now() + EXHAUSTED_UNTIL_READ_MS),
+        // Skipped for a short while: the upstream's refusal doesn't say until when.
+        await this.commandBus.execute(
+          new MarkProviderAccountExhaustedCommand(providerAccount.id, null),
         );
         // Started only now, so the precise end it sets replaces the short one.
         void this.readQuota(providerAccount.id);

@@ -1,5 +1,4 @@
-import { type AttemptFailureReason, providerAccounts } from "@/db/schemas/index.js";
-import type { QuotaMeter } from "@/quota-meters/models/quota-meter.js";
+import { providerAccounts } from "@/db/schemas/index.js";
 import type { ProviderKeyCipher } from "../providers/provider-key-cipher.js";
 
 const KEY_HINT_LENGTH = 4;
@@ -24,17 +23,6 @@ export const providerAccountColumns = {
 
 /** A Provider Account as the dashboard API returns it: never the key, only its last four characters. */
 export type ProviderAccount = Omit<typeof providerAccounts.$inferSelect, "encryptedKey">;
-
-/**
- * A Provider Account in the dashboard's list, with when its Cooldown ends and
- * what caused it (both null when not in one; cause `exhausted` while
- * Exhausted, until its Quota Meter resets), and its latest Quota Meters.
- */
-export type ListedProviderAccount = ProviderAccount & {
-  cooldownEndsAt: Date | null;
-  cooldownCause: AttemptFailureReason | null;
-  quotaMeters: QuotaMeter[];
-};
 
 type StoredKey = Pick<ProviderAccount, "keyLastFour"> & { encryptedKey: string };
 

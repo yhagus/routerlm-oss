@@ -117,6 +117,18 @@ describe("Provider Accounts (e2e)", () => {
     expect(updated.body).toMatchObject({ isEnabled: true, disabledReason: null });
   });
 
+  it("lets the operator keep a Provider Account serving while Exhausted", async () => {
+    const id = await createAccount();
+
+    const updated = await request(app.getHttpServer())
+      .patch(`/api/provider-accounts/${id}`)
+      .set("Cookie", cookie)
+      .send({ continueWhenExhausted: true })
+      .expect(200);
+
+    expect(updated.body).toMatchObject({ continueWhenExhausted: true });
+  });
+
   it("names a Provider Account after two constellations when no name is given", async () => {
     const server = app.getHttpServer();
     const createWithName = (name?: string) =>

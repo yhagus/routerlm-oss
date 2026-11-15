@@ -1,23 +1,28 @@
 import type { QuotaMeterReading } from "./quota-meter.js";
 
-// A meter that ran out without saying when it resets is read again within
-// this long by the reading schedule, which then sets the precise end.
-const EXHAUSTED_WITHOUT_RESET_MS = 60_000;
+/**
+ * Whether a reading makes its Provider Account Exhausted (GLOSSARY), and
+ * until when: the reset of the last of its run-out meters, or null when none
+ * of them says when it resets.
+ */
+export type ExhaustedState = { isExhausted: false } | { isExhausted: true; until: Date | null };
 
 /**
- * Until when a reading makes its Provider Account Exhausted (GLOSSARY), or
- * null when it still has quota. Only unscoped meters count: a scoped one such
- * as `weekly:video` covers what the gateway doesn't serve. The account stays
- * Exhausted until the last of its run-out meters resets.
+ * Only unscoped meters count: a scoped one such as `weekly:video` covers what
+ * the gateway doesn't serve.
  */
-export function exhaustedUntil(meters: QuotaMeterReading[], now: Date): Date | null {
-  const resets = meters
-    .filter((meter) => isRunOut(meter, now))
-    .map((meter) => meter.resetsAt ?? new Date(now.getTime() + EXHAUSTED_WITHOUT_RESET_MS));
-  if (resets.length === 0) {
-    return null;
+export function exhaustedStateOf(meters: QuotaMeterReading[], now: Date): ExhaustedState {
+  const runOut = meters.filter((meter) => isRunOut(meter, now));
+  if (runOut.length === 0) {
+    return { isExhausted: false };
   }
-  return new Date(Math.max(...resets.map((resetsAt) => resetsAt.getTime())));
+  const resets = runOut.flatMap((meter) =>
+    meter.resetsAt === null ? [] : [meter.resetsAt.getTime()],
+  );
+  return {
+    isExhausted: true,
+    until: resets.length === 0 ? null : new Date(Math.max(...resets)),
+  };
 }
 
 function isRunOut(meter: QuotaMeterReading, now: Date): boolean {

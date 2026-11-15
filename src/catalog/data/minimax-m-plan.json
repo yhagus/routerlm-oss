@@ -5,7 +5,9 @@
   "baseUrl": "https://api.minimax.io/anthropic",
   "authStyle": "bearer",
   "quirks": {
-    "cacheMarkerLimit": 0
+    "cacheMarkerLimit": 0,
+    "exhaustedErrorCodes": [2056, 2067],
+    "quotaBaseUrl": "https://www.minimax.io/v1"
   },
   "quotaReader": "minimax-m-plan",
   "source": {

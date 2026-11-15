@@ -12,16 +12,13 @@ import {
   addProviderAccount,
   insertAnthropicMessagesModel,
   insertApiKey,
+  setProviderQuirks,
   UPSTREAM_KEY,
 } from "../support/inference.js";
 import { GENERAL_REMAINS, REMAINS_PATH, remainsReply } from "../support/minimax-m-plan-remains.js";
 
-// The quota reader asks its own fake upstream, so its replies never take the
-// place of an inference reply queued on the other one.
-const quotaUpstream = await FakeUpstream.start();
-process.env.MINIMAX_M_PLAN_QUOTA_BASE_URL = quotaUpstream.baseUrl;
-const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
-const { deleteAllUpstreamData } = await import("../support/upstream.js");
+import { createTestApp, setUpFirstUser } from "../support/test-app.js";
+import { deleteAllUpstreamData } from "../support/upstream.js";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
@@ -57,6 +54,13 @@ const PLAN_LIMIT_REACHED: FakeReply = {
   body: { base_resp: { status_code: 2067, status_msg: "plan limit reached" } },
 };
 
+/** MiniMax's native error shape, sent with HTTP 200 instead of an error status. */
+const USAGE_LIMIT_EXCEEDED_WITH_200: FakeReply = {
+  kind: "json",
+  status: 200,
+  body: { base_resp: { status_code: 2056, status_msg: "usage limit exceeded" } },
+};
+
 /** An M Plan remains answer with both unscoped windows at `percent`, resetting at the given times. */
 function remainsAt(percent: number, fiveHourResetsAt: Date, weeklyResetsAt: Date): FakeReply {
   return remainsReply([
@@ -74,13 +78,19 @@ describe("Exhausted Provider Accounts (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
   let inferenceUpstream: FakeUpstream;
+  // The quota reader asks its own fake upstream, so its replies never take the
+  // place of an inference reply queued on the other one.
+  let quotaUpstream: FakeUpstream;
+  let providerId: string;
   let apiKey: string;
   let cookie: string;
   let primaryAccountId: string;
+  let backupAccountId: string;
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
     inferenceUpstream = await FakeUpstream.start();
+    quotaUpstream = await FakeUpstream.start();
   });
 
   beforeEach(async () => {
@@ -92,12 +102,19 @@ describe("Exhausted Provider Accounts (e2e)", () => {
       modelName: "smart",
       baseUrl: inferenceUpstream.baseUrl,
     });
-    primaryAccountId = inserted.providerAccountId;
+    ({ providerAccountId: primaryAccountId, providerId } = inserted);
     await db
       .update(providers)
       .set({ quotaReader: "minimax-m-plan" })
-      .where(eq(providers.id, inserted.providerId));
-    await addProviderAccount(app, db, inserted.providerId, { key: BACKUP_KEY, priority: 1 });
+      .where(eq(providers.id, providerId));
+    await setProviderQuirks(app, db, providerId, {
+      quotaBaseUrl: quotaUpstream.baseUrl,
+      exhaustedErrorCodes: [2056, 2067],
+    });
+    backupAccountId = await addProviderAccount(app, db, providerId, {
+      key: BACKUP_KEY,
+      priority: 1,
+    });
     ({ key: apiKey } = await insertApiKey(app, db));
   });
 
@@ -114,10 +131,13 @@ describe("Exhausted Provider Accounts (e2e)", () => {
       .send(TEXT_REQUEST);
   }
 
-  async function readQuotaNow(reply: FakeReply): Promise<void> {
+  async function readQuotaNow(
+    reply: FakeReply,
+    providerAccountId = primaryAccountId,
+  ): Promise<void> {
     quotaUpstream.reply(reply);
     await request(app.getHttpServer())
-      .post(`/api/provider-accounts/${primaryAccountId}/quota-reading`)
+      .post(`/api/provider-accounts/${providerAccountId}/quota-reading`)
       .set("Cookie", cookie)
       .expect(200);
   }
@@ -153,6 +173,7 @@ describe("Exhausted Provider Accounts (e2e)", () => {
   it.each<[string, FakeReply]>([
     ["usage limit exceeded (2056)", USAGE_LIMIT_EXCEEDED],
     ["plan limit reached (2067)", PLAN_LIMIT_REACHED],
+    ["HTTP 200 usage limit exceeded (2056)", USAGE_LIMIT_EXCEEDED_WITH_200],
   ])(
     "falls back after a %s Attempt, and a reading triggered by it sets when the account is routable again",
     async (_error, exhaustedReply) => {
@@ -174,6 +195,41 @@ describe("Exhausted Provider Accounts (e2e)", () => {
       });
     },
   );
+
+  it("treats a 2056 refusal as a rate limit at a Provider whose data names no exhausted error codes", async () => {
+    await setProviderQuirks(app, db, providerId, { quotaBaseUrl: quotaUpstream.baseUrl });
+    inferenceUpstream.reply(USAGE_LIMIT_EXCEEDED);
+    inferenceUpstream.reply(SUCCESS);
+
+    await chat().expect(200);
+
+    expect(await listedPrimaryAccount()).toMatchObject({ cooldownCause: "rate_limited" });
+    expect(quotaUpstream.requests).toEqual([]);
+  });
+
+  it("answers 429 when every Provider Account is Exhausted", async () => {
+    const inAnHour = new Date(Date.now() + HOUR_MS);
+    await readQuotaNow(remainsAt(0, inAnHour, inAnHour));
+    await readQuotaNow(remainsAt(0, inAnHour, inAnHour), backupAccountId);
+
+    const response = await chat().expect(429);
+
+    expect(response.body.error).toMatchObject({
+      code: "upstream_rate_limited",
+      message: expect.stringContaining("Exhausted"),
+    });
+    expect(inferenceUpstream.requests).toEqual([]);
+  });
+
+  it("answers 429 when the last Provider Account left is refused as Exhausted", async () => {
+    const inAnHour = new Date(Date.now() + HOUR_MS);
+    await readQuotaNow(remainsAt(0, inAnHour, inAnHour), backupAccountId);
+    inferenceUpstream.reply(USAGE_LIMIT_EXCEEDED);
+
+    const response = await chat().expect(429);
+
+    expect(response.body.error.message).toContain("Exhausted");
+  });
 
   it("keeps routing to an account at 0% that may continue when Exhausted", async () => {
     await db

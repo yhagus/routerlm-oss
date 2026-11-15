@@ -73,12 +73,13 @@ export interface AttemptTarget {
  */
 export function* attemptTargets(
   routes: SnapshotRoute[],
-  isSkipped: (providerAccount: SnapshotProviderAccount) => boolean,
+  isSkipped: (target: AttemptTarget) => boolean,
 ): Generator<AttemptTarget> {
   for (const route of routes) {
     for (const providerAccount of route.upstreamModel.provider.providerAccounts) {
-      if (providerAccount.isEnabled && !isSkipped(providerAccount)) {
-        yield { route, providerAccount };
+      const target = { route, providerAccount };
+      if (providerAccount.isEnabled && !isSkipped(target)) {
+        yield target;
       }
     }
   }

@@ -4,6 +4,8 @@ import { CreateUpstreamModelHandler } from "./create-upstream-model.handler.js";
 import { DeleteProviderAccountHandler } from "./delete-provider-account.handler.js";
 import { DeleteProviderHandler } from "./delete-provider.handler.js";
 import { DeleteUpstreamModelHandler } from "./delete-upstream-model.handler.js";
+import { EndProviderAccountExhaustedHandler } from "./end-provider-account-exhausted.handler.js";
+import { MarkProviderAccountExhaustedHandler } from "./mark-provider-account-exhausted.handler.js";
 import { UpdateProviderAccountHandler } from "./update-provider-account.handler.js";
 import { UpdateProviderHandler } from "./update-provider.handler.js";
 import { UpdateUpstreamModelHandler } from "./update-upstream-model.handler.js";
@@ -18,4 +20,6 @@ export const CommandHandlers = [
   CreateProviderAccountHandler,
   UpdateProviderAccountHandler,
   DeleteProviderAccountHandler,
+  MarkProviderAccountExhaustedHandler,
+  EndProviderAccountExhaustedHandler,
 ];

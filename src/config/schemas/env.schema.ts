@@ -19,8 +19,6 @@ export const envSchema = z.object({
     }),
   // Spec "Records": the worker deletes Error Captures older than this.
   ERROR_CAPTURE_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
-  // Where the MiniMax M Plan quota reader asks for `/token_plan/remains`.
-  MINIMAX_M_PLAN_QUOTA_BASE_URL: z.url().default("https://www.minimax.io/v1"),
   // How long one Quota Meter reading may take before it counts as failed.
   QUOTA_READER_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 });
