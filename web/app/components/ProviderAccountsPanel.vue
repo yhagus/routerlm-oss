@@ -50,20 +50,14 @@ interface AccountStatus {
   note: string | null;
 }
 
-const STATUS_LABELS: Record<AccountStatusKind, string> = {
-  exhausted: "Exhausted",
-  cooldown: "Cooling down",
-  ready: "Ready",
-  disabled: "Disabled",
-};
-const STATUS_BADGE_CLASSES: Record<AccountStatusKind, string> = {
-  exhausted: "status-badge--bad",
-  cooldown: "status-badge--warn",
-  ready: "status-badge--good",
-  disabled: "status-badge--warn",
+const STATUS_BADGES: Record<AccountStatusKind, { label: string; badgeClass: string }> = {
+  exhausted: { label: "Exhausted", badgeClass: "status-badge--bad" },
+  cooldown: { label: "Cooling down", badgeClass: "status-badge--warn" },
+  ready: { label: "Ready", badgeClass: "status-badge--good" },
+  disabled: { label: "Disabled", badgeClass: "status-badge--warn" },
 };
 
-/** Exhausted is a Cooldown caused by a run-out Quota Meter: it ends when the meter resets. */
+/** An Exhausted account is skipped like one in Cooldown, but until its Quota Meter resets. */
 function accountStatus(account: ProviderAccount): AccountStatus {
   if (!account.isEnabled) return { kind: "disabled", note: account.disabledReason };
   const endsAt = account.cooldownEndsAt ? new Date(account.cooldownEndsAt) : null;
@@ -220,8 +214,8 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
             <td class="tabular">…{{ account.keyLastFour }}</td>
             <td class="tabular">{{ account.priority }}</td>
             <td>
-              <span class="status-badge" :class="STATUS_BADGE_CLASSES[status.kind]">{{
-                STATUS_LABELS[status.kind]
+              <span class="status-badge" :class="STATUS_BADGES[status.kind].badgeClass">{{
+                STATUS_BADGES[status.kind].label
               }}</span>
               <span v-if="status.note" class="cell-note tabular">{{ status.note }}</span>
               <span v-if="hasQuota && account.continueWhenExhausted" class="cell-note"
