@@ -1,6 +1,6 @@
 {
-  "slug": "minimax",
-  "name": "MiniMax",
+  "slug": "minimax-api",
+  "name": "MiniMax API",
   "protocol": "anthropic-messages",
   "baseUrl": "https://api.minimax.io/anthropic",
   "authStyle": "bearer",
@@ -15,7 +15,7 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "The docs recommend the Anthropic-compatible API; the OpenAI-compatible one is at https://api.minimax.io/v1. Thinking blocks must be kept unchanged in later turns. Max output and cache write prices are not published; max output comes from models.dev and cache write is set to the input price; structured output is not mentioned. Caching is automatic prefix matching (512+ tokens); cache_control is not documented on the Anthropic-compatible API, so cacheMarkerLimit 0 keeps the gateway from adding markers. Release dates come from models.dev (https://models.dev/).",
+  "notes": "Pay-as-you-go; the M Plan subscription is the separate MiniMax M Plan Provider and takes a different key type on the same base URL. The docs recommend the Anthropic-compatible API; the OpenAI-compatible one is at https://api.minimax.io/v1. Thinking blocks must be kept unchanged in later turns. Max output and cache write prices are not published; max output comes from models.dev and cache write is set to the input price; structured output is not mentioned. Caching is automatic prefix matching (512+ tokens); cache_control is not documented on the Anthropic-compatible API, so cacheMarkerLimit 0 keeps the gateway from adding markers. Release dates come from models.dev (https://models.dev/).",
   "upstreamModels": [
     {
       "upstreamModelId": "MiniMax-M3.1-Flash",
