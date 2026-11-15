@@ -29,6 +29,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             authStyle: entry.authStyle,
             quirks: entry.quirks,
             quotaReader: entry.quotaReader ?? null,
+            oauthLogin: entry.oauthLogin ?? null,
             isFromCatalog: true,
           })
           .onConflictDoNothing({ target: providers.slug })

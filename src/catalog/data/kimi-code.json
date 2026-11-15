@@ -22,11 +22,23 @@
     "exhaustedErrorCodes": ["exceeded_current_quota_error"]
   },
   "quotaReader": "kimi-code",
+  "oauthLogin": {
+    "authHosts": {
+      "global": "https://auth.kimi.ai",
+      "china": "https://auth.kimi.com"
+    },
+    "clientId": "17e5f671-d194-4dfb-9706-5516cb48c098",
+    "cliVersion": "2.6.2"
+  },
   "source": {
-    "urls": ["https://www.kimi.com/coding/docs/en/", "https://api.kimi.com/coding/v1/models"],
+    "urls": [
+      "https://www.kimi.com/coding/docs/en/",
+      "https://api.kimi.com/coding/v1/models",
+      "https://github.com/MoonshotAI/kimi-code"
+    ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Membership subscription with no per-token prices; each model carries the list prices of its Moonshot pay-as-you-go API equivalent (from models.dev), so Cost is what a request would cost there. The base URL is the api.kimi.com host. The docs also list an api.kimi.ai host and an Anthropic-compatible endpoint; this Provider uses neither. Context sizes are what a live GET /models on api.kimi.com reports. The auth header is not stated; bearer is what the OpenAI-compatible endpoint implies. Tools and structured output are not stated per model, so they come from models.dev. The docs require third-party tools to send their real User-Agent. Release dates come from models.dev (https://models.dev/).",
+  "notes": "Membership subscription with no per-token prices; each model carries the list prices of its Moonshot pay-as-you-go API equivalent (from models.dev), so Cost is what a request would cost there. The base URL is the api.kimi.com host. The docs also list an api.kimi.ai host and an Anthropic-compatible endpoint; this Provider uses neither. Context sizes are what a live GET /models on api.kimi.com reports. The auth header is not stated; bearer is what the OpenAI-compatible endpoint implies. Tools and structured output are not stated per model, so they come from models.dev. The docs require third-party tools to send their real User-Agent. The OAuth Login data (auth hosts, client id, CLI version) is that of the official Kimi Code CLI, from its MIT-licensed source; see ADR 0012. Release dates come from models.dev (https://models.dev/).",
   "upstreamModels": [
     {
       "upstreamModelId": "k3.1-pro",

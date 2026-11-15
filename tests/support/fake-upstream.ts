@@ -42,6 +42,8 @@ export interface ReceivedRequest {
 /** Long enough for the gateway to read one piece of a stream before the next is sent. */
 const PAUSE_BETWEEN_PIECES_MS = 20;
 
+const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
+
 /** Sent with every reply, to prove upstream headers never reach the client. */
 export const UPSTREAM_ONLY_HEADER = "x-upstream-request-id";
 
@@ -117,6 +119,11 @@ export class FakeUpstream {
     return upstream;
   }
 
+  /** Scheme, host and port, without a path: what plays a Provider's auth host. */
+  get origin(): string {
+    return `http://127.0.0.1:${portOf(this.server.address())}`;
+  }
+
   /** What a Provider row's base URL should be. */
   get baseUrl(): string {
     return `http://127.0.0.1:${portOf(this.server.address())}/v1`;
@@ -168,7 +175,7 @@ export class FakeUpstream {
       method: request.method ?? "",
       path: request.url ?? "",
       headers: request.headers,
-      body: text === "" ? undefined : JSON.parse(text),
+      body: parsedBody(text, request.headers["content-type"]),
       rawBody: text,
     });
 
@@ -233,6 +240,17 @@ export class FakeUpstream {
       response.destroy();
     }
   }
+}
+
+/** A JSON body parsed, or a form's fields by name, as an auth host receives them. */
+function parsedBody(text: string, contentType: string | undefined): unknown {
+  if (text === "") {
+    return undefined;
+  }
+  if (contentType?.startsWith(FORM_CONTENT_TYPE)) {
+    return Object.fromEntries(new URLSearchParams(text));
+  }
+  return JSON.parse(text);
 }
 
 async function writeInPieces(

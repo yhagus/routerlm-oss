@@ -75,6 +75,18 @@ export const providerQuirksSchema = z.strictObject({
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 
 /**
+ * What signing in to the Provider needs, for a Provider that offers OAuth
+ * Login (ADR 0012). The device-code flow itself is code.
+ */
+export const providerOauthLoginSchema = z.strictObject({
+  /** The auth host of each region, without a path: a User's account lives in one of them. */
+  authHosts: z.strictObject({ global: z.url(), china: z.url() }),
+  clientId: z.string().min(1),
+  /** The version of the Provider's own CLI the gateway presents itself as. */
+  cliVersion: z.string().min(1),
+});
+
+/**
  * Where a value came from: the Provider's own pages, or models.dev when they
  * can't be read, and the day they were read.
  */
@@ -114,6 +126,8 @@ export const catalogProviderSchema = z.strictObject({
   quirks: providerQuirksSchema,
   /** Subscription Providers only: the code that reads its Quota Meters (ADR 0010). */
   quotaReader: z.enum(QUOTA_READERS).optional(),
+  /** Only a Provider a User can sign in to; its Provider Accounts may then hold an OAuth Login. */
+  oauthLogin: providerOauthLoginSchema.optional(),
   source: sourceSchema,
   notes: z.string().optional(),
   upstreamModels: z.array(upstreamModelSchema),

@@ -18,6 +18,7 @@ import {
   QuotaReadingScheduleProcessor,
 } from "@/quota-meters/jobs/quota-reading-schedule.js";
 import { QuotaMetersModule } from "@/quota-meters/quota-meters.module.js";
+import { OauthSignInPollingProcessor } from "@/upstream/jobs/oauth-sign-in-polling.js";
 import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageWriter } from "@/usage/providers/usage-writer.js";
 import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
@@ -48,7 +49,8 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     BullModule.registerQueue(...QUEUE_NAMES.map((name) => ({ name }))),
     CqrsModule.forRoot(),
     LibsModule,
-    // Quota readings mark Provider Accounts Exhausted through UpstreamModule.
+    // Quota readings mark Provider Accounts Exhausted through UpstreamModule,
+    // which also holds what polling for a sign-in needs.
     QuotaMetersModule,
     UpstreamModule,
   ],
@@ -60,6 +62,7 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     ErrorCaptureRetentionProcessor,
     QuotaReadingSchedule,
     QuotaReadingScheduleProcessor,
+    OauthSignInPollingProcessor,
   ],
 })
 export class WorkerModule {}

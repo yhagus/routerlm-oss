@@ -57,14 +57,21 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         authStyle: provider.authStyle,
         quirks: provider.quirks,
         isEnabled: provider.isEnabled,
-        providerAccounts: (accountsByProviderId.get(provider.id) ?? []).map(
-          (account): SnapshotProviderAccount => ({
-            id: account.id,
-            name: account.name,
-            encryptedKey: account.encryptedKey,
-            priority: account.priority,
-            isEnabled: account.isEnabled,
-          }),
+        providerAccounts: (accountsByProviderId.get(provider.id) ?? []).flatMap(
+          (account): SnapshotProviderAccount[] => {
+            // An account holding an OAuth Login has no key, and the gateway
+            // can't serve from a login yet: no Route reaches it.
+            if (account.encryptedKey === null) return [];
+            return [
+              {
+                id: account.id,
+                name: account.name,
+                encryptedKey: account.encryptedKey,
+                priority: account.priority,
+                isEnabled: account.isEnabled,
+              },
+            ];
+          },
         ),
       },
     ]),

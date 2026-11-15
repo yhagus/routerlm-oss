@@ -10,7 +10,13 @@ export const ERROR_CAPTURES_QUEUE = "error-captures";
 /** Repeating Quota Meter readings of the Provider Accounts that are due one. */
 export const QUOTA_METERS_QUEUE = "quota-meters";
 
-/** Every queue the backend enqueues to and the worker consumes. */
+/**
+ * One delayed job per poll of a pending OAuth Login sign-in. UpstreamModule
+ * registers it itself, as both the backend and the worker enqueue to it.
+ */
+export const OAUTH_SIGN_INS_QUEUE = "oauth-sign-ins";
+
+/** Every queue the backend enqueues to and the worker consumes, but for OAUTH_SIGN_INS_QUEUE. */
 export const QUEUE_NAMES = [
   PING_QUEUE,
   USAGE_QUEUE,

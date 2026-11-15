@@ -64,7 +64,7 @@ describe("Provider Account keys at rest (e2e)", () => {
       .select({ encryptedKey: providerAccounts.encryptedKey })
       .from(providerAccounts)
       .where(eq(providerAccounts.id, providerAccountId));
-    return stored.encryptedKey;
+    return stored.encryptedKey ?? "";
   }
 
   /** A Model "smart" with one Route to the Provider, and an API Key for it, all made from the dashboard. */

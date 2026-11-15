@@ -77,6 +77,7 @@ describe("Provider Accounts (e2e)", () => {
       expect.objectContaining({
         providerId,
         name: "Production",
+        credentialKind: "api-key",
         keyLastFour: "WXYZ",
         priority: 1,
         isEnabled: true,
@@ -98,7 +99,7 @@ describe("Provider Accounts (e2e)", () => {
       .from(providerAccounts)
       .where(eq(providerAccounts.id, created.body.id));
     expect(stored.encryptedKey).not.toContain(ROTATED_KEY);
-    expect(app.get(ProviderKeyCipher).decrypt(stored.encryptedKey)).toBe(ROTATED_KEY);
+    expect(app.get(ProviderKeyCipher).decrypt(stored.encryptedKey ?? "")).toBe(ROTATED_KEY);
   });
 
   it("re-enabling a Provider Account the gateway disabled clears the disabled reason", async () => {

@@ -1,0 +1,301 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "c07cf4bf-c029-4127-9d75-a7a30521f0b9",
+  "prevIds": [
+    "05092635-a3fb-4c2a-8b23-d174e4f2e0e0"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "credential_kind"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.credential_kind",
+        "n|col|public.provider_accounts.credential_kind",
+        "e|col|public.provider_accounts.credential_kind"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_encrypted_access_token"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_encrypted_access_token",
+        "n|col|public.provider_accounts.oauth_encrypted_access_token",
+        "e|col|public.provider_accounts.oauth_encrypted_access_token"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_encrypted_refresh_token"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_encrypted_refresh_token",
+        "n|col|public.provider_accounts.oauth_encrypted_refresh_token",
+        "e|col|public.provider_accounts.oauth_encrypted_refresh_token"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_expires_at"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_expires_at",
+        "n|col|public.provider_accounts.oauth_expires_at",
+        "e|col|public.provider_accounts.oauth_expires_at"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_region"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_region",
+        "n|col|public.provider_accounts.oauth_region",
+        "e|col|public.provider_accounts.oauth_region"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_device_id"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_device_id",
+        "n|col|public.provider_accounts.oauth_device_id",
+        "e|col|public.provider_accounts.oauth_device_id"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "oauth_login"
+      ],
+      "writes": [
+        "s|col|public.providers.oauth_login",
+        "n|col|public.providers.oauth_login",
+        "e|col|public.providers.oauth_login"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "encrypted_key"
+      ],
+      "writes": [
+        "s|colprop|public.provider_accounts.encrypted_key.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public",
+        "n|col|public.provider_accounts.encrypted_key"
+      ],
+      "sqlHash": "b2b5d9d358d3a802"
+    },
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "key_last_four"
+      ],
+      "writes": [
+        "s|colprop|public.provider_accounts.key_last_four.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public",
+        "n|col|public.provider_accounts.key_last_four"
+      ],
+      "sqlHash": "dfa406b0e14ec8ab"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "credential_kind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'api-key'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_encrypted_access_token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_encrypted_refresh_token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_expires_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_region",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_device_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "oauth_login",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"provider_accounts\",\"encrypted_key\"]",
+      "set": {
+        "notNull": false
+      }
+    },
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"provider_accounts\",\"key_last_four\"]",
+      "set": {
+        "notNull": false
+      }
+    }
+  ]
+}
