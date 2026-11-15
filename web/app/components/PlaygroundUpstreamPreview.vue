@@ -45,7 +45,9 @@ function accountState(account: ProviderAccount): { label: string; tone: "good" |
 
 /** Which credential the account holds: an API key by its ending, or an OAuth Login. */
 function credentialNote(account: ProviderAccount): string {
-  return account.keyLastFour === null ? "OAuth Login" : `Key ending ${account.keyLastFour}`;
+  return account.credentialKind === "oauth-login"
+    ? "OAuth Login"
+    : `Key ending ${account.keyLastFour}`;
 }
 </script>
 

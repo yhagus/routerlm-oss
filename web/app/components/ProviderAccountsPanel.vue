@@ -148,7 +148,7 @@ const editsOauthLogin = computed(() => {
 
 const accountDialogDescription = computed(() => {
   if (editsOauthLogin.value) {
-    return "This account holds an OAuth Login, which the gateway keeps valid. Its tokens are never shown.";
+    return "This Provider Account holds an OAuth Login, which the gateway keeps valid. The login itself is never shown.";
   }
   return "The key is encrypted before it is stored. The dashboard only ever shows its last four characters.";
 });
