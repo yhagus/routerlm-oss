@@ -31,7 +31,9 @@ export const REASONING_CONTENT_IN_HISTORY = ["all-assistant-turns", "tool-call-t
 
 /**
  * The quirk keys the backend accepts: `cacheMarkerLimit` applies to
- * `anthropic-messages` Providers, the others to `openai-chat` ones.
+ * `anthropic-messages` Providers, the reasoning, cache and token ones to
+ * `openai-chat` ones. The dashboard edits the first five; the rest come from
+ * the Catalog and are sent back as they are.
  */
 export interface ProviderQuirks {
   reasoningContentInHistory?: (typeof REASONING_CONTENT_IN_HISTORY)[number];
@@ -40,6 +42,33 @@ export interface ProviderQuirks {
   usesMaxCompletionTokens?: boolean;
   /** How many cache markers the gateway may add per request; absent means Anthropic's four. */
   cacheMarkerLimit?: number;
+  /** Reasoning goes out as a `thinking` object, with the Provider's own effort names. */
+  reasoningAsThinking?: {
+    efforts: Record<string, string>;
+    upstreamModelsWithoutEffort?: string[];
+  };
+  /** A `prompt_cache_key` the client sent is passed on as it is. */
+  forwardsClientPromptCacheKey?: boolean;
+  /** The error codes that make a Provider Account Exhausted: numbers or names. */
+  exhaustedErrorCodes?: (string | number)[];
+  /** Where the quota reader asks, when that is another host than the base URL. */
+  quotaBaseUrl?: string;
+}
+
+/** Where an OAuth Login's account is registered: each region signs in at its own host. */
+export const OAUTH_REGIONS = ["global", "china"] as const;
+export type OauthRegion = (typeof OAUTH_REGIONS)[number];
+
+export const OAUTH_REGION_LABELS: Record<OauthRegion, string> = {
+  global: "Global account",
+  china: "Chinese account",
+};
+
+/** What signing in to a Provider needs; the gateway runs the flow. */
+export interface ProviderOauthLogin {
+  authHosts: Record<OauthRegion, string>;
+  clientId: string;
+  cliVersion: string;
 }
 
 export interface Provider {
@@ -50,6 +79,8 @@ export interface Provider {
   baseUrl: string;
   authStyle: AuthStyle;
   quirks: ProviderQuirks;
+  /** Null when the Provider offers no OAuth Login: its accounts hold API keys only. */
+  oauthLogin: ProviderOauthLogin | null;
   isEnabled: boolean;
   isFromCatalog: boolean;
   /** The quota endpoint the gateway reads for its accounts; null when it has none. */
@@ -104,12 +135,19 @@ export type ProviderAccountQuota = Pick<
   "quotaCheckedAt" | "quotaError" | "quotaMeters"
 >;
 
-/** Never the key itself: only its last four characters. */
+/** The one credential a Provider Account holds. */
+export type CredentialKind = "api-key" | "oauth-login";
+
+/** Never the credential itself: an API key's last four characters, nothing of an OAuth Login. */
 export interface ProviderAccount {
   id: string;
   providerId: string;
   name: string;
-  keyLastFour: string;
+  credentialKind: CredentialKind;
+  /** Null for an OAuth Login. */
+  keyLastFour: string | null;
+  /** The region chosen at sign-in; null for an API key. */
+  oauthRegion: OauthRegion | null;
   /** Lower runs first. */
   priority: number;
   isEnabled: boolean;
@@ -131,6 +169,37 @@ export interface ProviderAccount {
   lastErrorAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A sign-in the operator still has to approve on the Provider's verification page. */
+export interface PendingOauthSignIn {
+  id: string;
+  status: "pending";
+  userCode: string;
+  verificationUri: string;
+  /** The verification page with the code filled in; null when the Provider gives none. */
+  verificationUriComplete: string | null;
+  expiresAt: string;
+}
+
+/** What `GET /provider-accounts/sign-ins/:id` answers; the gateway moves it on. */
+export type OauthSignIn =
+  | PendingOauthSignIn
+  | { id: string; status: "completed"; providerAccount: ProviderAccount }
+  | { id: string; status: "denied" }
+  | { id: string; status: "expired" };
+
+/**
+ * True for an OAuth Login the Provider no longer accepts: the gateway disabled
+ * the account and only a new sign-in brings it back. A manual disable leaves
+ * no reason.
+ */
+export function needsNewSignIn(account: ProviderAccount): boolean {
+  return (
+    account.credentialKind === "oauth-login" &&
+    !account.isEnabled &&
+    account.disabledReason !== null
+  );
 }
 
 /** Shortest Provider Account key the backend accepts. */

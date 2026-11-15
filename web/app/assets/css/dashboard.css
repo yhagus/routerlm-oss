@@ -2513,6 +2513,16 @@ tbody tr:hover {
   flex: 1;
   min-width: 0;
 }
+/* Signing in to a Provider: the region choice, then the link to its verification page */
+.sign-in__regions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.sign-in__regions .button,
+.sign-in__link {
+  justify-content: center;
+}
 
 /* Longer forms: Providers, Upstream Models, Provider Accounts */
 .dialog--wide {

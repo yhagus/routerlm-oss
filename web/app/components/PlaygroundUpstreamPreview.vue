@@ -42,6 +42,11 @@ function accountState(account: ProviderAccount): { label: string; tone: "good" |
   }
   return { label: "Ready", tone: "good" };
 }
+
+/** Which credential the account holds: an API key by its ending, or an OAuth Login. */
+function credentialNote(account: ProviderAccount): string {
+  return account.keyLastFour === null ? "OAuth Login" : `Key ending ${account.keyLastFour}`;
+}
 </script>
 
 <template>
@@ -107,7 +112,7 @@ function accountState(account: ProviderAccount): { label: string; tone: "good" |
           <span class="route-list__order tabular" aria-hidden="true">{{ index + 1 }}</span>
           <span class="route-list__body">
             <strong>{{ account.name }}</strong>
-            <span class="route-list__meta tabular">Key ending {{ account.keyLastFour }}</span>
+            <span class="route-list__meta tabular">{{ credentialNote(account) }}</span>
           </span>
           <span class="route-list__tags">
             <span
