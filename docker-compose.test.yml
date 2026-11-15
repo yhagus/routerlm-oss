@@ -1,4 +1,4 @@
-# Throwaway services for e2e tests: `bun run test:e2e:docker`.
+# Throwaway services for the feature tests: `bun run test:docker`.
 #   db    -> postgres://routerlm:routerlm@localhost:55432/routerlm
 #   redis -> redis://localhost:56379
 #

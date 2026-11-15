@@ -14,7 +14,11 @@ Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/ag
 
 ## Checks
 
-Before reporting work done, run `bun run check` (and `cd web && bun run check` for web changes), plus `bun run test:e2e:docker` for backend changes.
+Before reporting work done, run `bun run check` (lint, format, types; and `cd web && bun run check` for web changes), plus `bun run test:docker` for backend changes.
+
+### Tests
+
+There are no unit tests. Every test is a feature test in `tests/<feature>/<scenario>.test.ts` that drives the app from outside (HTTP API, CLI command or app boot) against real Postgres and Redis, with the fake upstream in `tests/support/`. Never add `*.spec.ts` files under `src/`. See `docs/adr/0009-feature-tests-only.md`.
 
 ## Implementation policy
 

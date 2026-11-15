@@ -1,0 +1,69 @@
+import { getQueueToken } from "@nestjs/bullmq";
+import { Test, type TestingModule } from "@nestjs/testing";
+import type { Queue } from "bullmq";
+import { sql } from "drizzle-orm";
+import { getDrizzleToken } from "@nestjs/drizzle";
+import type { Database } from "@/db/schemas/relations.js";
+import { errorCaptures, usageLogs } from "@/db/schemas/index.js";
+
+// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
+const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+redisUrl.pathname = `/${(process.pid % 15) + 1}`;
+process.env.REDIS_URL = redisUrl.toString();
+process.env.ERROR_CAPTURE_RETENTION_DAYS = "7";
+const { WorkerModule } = await import("@/worker.module.js");
+const { ERROR_CAPTURES_QUEUE } = await import("@/queue/models/queue-names.js");
+const { ErrorCaptureRetention, ERROR_CAPTURE_RETENTION_SCHEDULER } =
+  await import("@/error-captures/jobs/error-capture-retention.js");
+
+const NOW = new Date("2026-11-15T12:00:00Z");
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+describe("Error Capture retention (e2e)", () => {
+  let worker: TestingModule;
+  let db: Database;
+
+  beforeAll(async () => {
+    worker = await Test.createTestingModule({ imports: [WorkerModule] }).compile();
+    await worker.init();
+    db = worker.get<Database>(getDrizzleToken());
+  });
+
+  afterAll(async () => {
+    await worker.get<Queue>(getQueueToken(ERROR_CAPTURES_QUEUE)).obliterate({ force: true });
+    await worker.close();
+  });
+
+  it("schedules the repeating deletion job when the worker starts", async () => {
+    const queue = worker.get<Queue>(getQueueToken(ERROR_CAPTURES_QUEUE));
+
+    expect(await queue.getJobScheduler(ERROR_CAPTURE_RETENTION_SCHEDULER)).toBeTruthy();
+  });
+
+  it("deletes the captures older than the configured retention period and keeps the rest", async () => {
+    await db.execute(sql`truncate table usage_logs cascade`);
+    const [{ id: usageLogId }] = await db
+      .insert(usageLogs)
+      .values({
+        createdAt: NOW,
+        clientProtocol: "openai-chat",
+        isStreamed: false,
+        httpStatus: 502,
+        requestBytes: 0,
+        responseBytes: 0,
+        durationMs: 1,
+        attemptCount: 0,
+      })
+      .returning({ id: usageLogs.id });
+    const capture = { usageLogId, requestHeaders: {}, requestBody: "{}" };
+    await db.insert(errorCaptures).values([
+      { ...capture, requestBody: "expired", createdAt: new Date(NOW.getTime() - 8 * DAY_MS) },
+      { ...capture, requestBody: "kept", createdAt: new Date(NOW.getTime() - 6 * DAY_MS) },
+    ]);
+
+    await worker.get(ErrorCaptureRetention).deleteExpiredCaptures(NOW);
+
+    const left = await db.select({ requestBody: errorCaptures.requestBody }).from(errorCaptures);
+    expect(left).toEqual([{ requestBody: "kept" }]);
+  });
+});

@@ -21,6 +21,6 @@
     "types": ["vitest/globals", "node"],
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["legacy", "node_modules", "dist"]
 }

@@ -6,7 +6,7 @@ The code review of the gateway branch raised three questions the spec left open.
 
 **Playground failures.** The spec gives Error Captures only to requests with a valid API Key. The Playground signs in with a dashboard session instead. We decided that a valid session counts as a valid API Key for this rule, so failed Playground requests keep their Error Captures.
 
-**SDK names in /docs.** The /docs pages name no Provider (spec "Docs"), but the client examples import the OpenAI and Anthropic SDKs, whose package and class names are those Providers' names. We decided that SDK names may appear in code examples. The prose stays Provider-free. `test/docs-examples.e2e-spec.ts` lists the exception as `SDK_OWNERS`.
+**SDK names in /docs.** The /docs pages name no Provider (spec "Docs"), but the client examples import the OpenAI and Anthropic SDKs, whose package and class names are those Providers' names. We decided that SDK names may appear in code examples. The prose stays Provider-free. `tests/docs/client-examples.test.ts` lists the exception as `SDK_OWNERS`.
 
 ## Considered Options
 

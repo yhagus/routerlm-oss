@@ -47,21 +47,19 @@ $ bun run start:prod
 ## Run tests
 
 ```bash
-# everything CI checks without services: lint, format, typecheck, unit tests
+# everything CI checks without services: lint, format, typecheck
 # (in web/, `bun run check` runs lint, format and nuxi typecheck)
 $ bun run check
 
-# unit tests
+# feature tests (tests/<feature>/*.test.ts): they create, migrate and truncate
+# their own database, TEST_DATABASE_URL (default routerlm_test on the compose
+# Postgres), and need Redis at REDIS_URL
 $ bun run test
 
-# e2e tests: they create, migrate and truncate their own database,
-# TEST_DATABASE_URL (default routerlm_test on the compose Postgres)
-$ bun run test:e2e
-
-# e2e tests against throwaway Postgres and Redis containers
+# feature tests against throwaway Postgres and Redis containers
 # (docker-compose.test.yml, host ports 55432 and 56379), removed afterwards;
 # the dev stack can keep running
-$ bun run test:e2e:docker
+$ bun run test:docker
 
 # test coverage
 $ bun run test:cov
@@ -128,8 +126,8 @@ To update the Catalog, edit the Provider's file:
 - Put those page URLs and the date you read them in the entry's `source`.
 - Use `null` for a value the Provider doesn't publish. Never estimate one.
 - The file shape and the allowed `quirks` keys are defined in
-  `src/catalog/schemas/catalog.schema.ts`. `bun run test` checks every file against it
-  and names the entry at fault.
+  `src/catalog/schemas/catalog.schema.ts`. `bun run db:seed` checks every file against it
+  and names the entry at fault; `tests/catalog/` runs it on the shipped files.
 
 Because existing rows are never overwritten, a changed price reaches a database
 that was already seeded only when an operator edits it in the dashboard.
@@ -149,7 +147,7 @@ $ bun run worker:dev
 $ bun run worker:prod
 ```
 
-`bun run test:e2e` needs Redis at `REDIS_URL` (default `redis://localhost:6379`)
+`bun run test` needs Redis at `REDIS_URL` (default `redis://localhost:6379`)
 for the worker test.
 
 ## Observability
