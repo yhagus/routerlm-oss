@@ -3436,6 +3436,83 @@ svg.lucide {
   white-space: normal;
 }
 
+/* Quota Meters on the Provider Accounts panel */
+.account-quota {
+  display: grid;
+  gap: 8px;
+  min-width: 200px;
+  max-width: 280px;
+  white-space: normal;
+}
+.quota-meter {
+  display: grid;
+  gap: 4px;
+}
+.quota-meter__caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+}
+.quota-meter__label {
+  font-weight: 600;
+}
+.quota-meter__summary {
+  color: var(--muted);
+}
+.quota-meter__track {
+  height: 6px;
+  border-radius: 6px;
+  background: var(--track);
+  overflow: hidden;
+}
+.quota-meter__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+.quota-meter__fill--good {
+  background: var(--success);
+}
+.quota-meter__fill--warn {
+  background: var(--warning-ink);
+}
+.quota-meter__fill--bad {
+  background: var(--danger);
+}
+.quota-meter--compact .quota-meter__caption {
+  font-size: 10px;
+}
+.quota-meter--compact .quota-meter__track {
+  height: 4px;
+}
+.account-quota__scoped {
+  display: grid;
+  gap: 6px;
+}
+.account-quota__scoped > summary {
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.account-quota__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 11px;
+}
+.account-quota__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .quota-meter__fill {
+    transition: none;
+  }
+}
+
 /* Provider detail */
 .back-link {
   display: inline-flex;

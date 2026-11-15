@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { KeyRound, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
+import { resetCountdown } from "~/lib/quotaMeters";
 import {
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
   optionalNumber,
@@ -23,24 +24,63 @@ type ProviderAccountDialog =
 
 const { $dashboardApi } = useNuxtApp();
 
-const sortedAccounts = computed(() =>
-  [...props.accounts].sort(
-    (first, second) => first.priority - second.priority || first.name.localeCompare(second.name),
-  ),
-);
-
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
   timeStyle: "short",
 });
 const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "medium" });
 
-/** "until <time>" while the account is in Cooldown (as of the list's load), else null. */
-function cooldownNote(account: ProviderAccount): string | null {
-  if (!account.isEnabled || !account.cooldownEndsAt) return null;
-  const endsAt = new Date(account.cooldownEndsAt);
-  return endsAt.getTime() > Date.now() ? `until ${timeFormat.format(endsAt)}` : null;
+/** Only Providers with a quota reader have Quota Meters, Exhausted accounts and the Credits toggle. */
+const hasQuota = computed(() => props.provider.quotaReader !== null);
+
+const COUNTDOWN_TICK_MS = 30_000;
+/** What countdowns and "Checked … ago" count from; ticks while the panel is shown. */
+const now = ref(Date.now());
+let countdownTimer: ReturnType<typeof setInterval> | undefined;
+onMounted(() => {
+  countdownTimer = setInterval(() => (now.value = Date.now()), COUNTDOWN_TICK_MS);
+});
+onUnmounted(() => clearInterval(countdownTimer));
+
+type AccountStatusKind = "exhausted" | "cooldown" | "ready" | "disabled";
+
+/** Where the account stands for routing, with when that ends for a Cooldown. */
+interface AccountStatus {
+  kind: AccountStatusKind;
+  note: string | null;
 }
+
+const STATUS_LABELS: Record<AccountStatusKind, string> = {
+  exhausted: "Exhausted",
+  cooldown: "Cooling down",
+  ready: "Ready",
+  disabled: "Disabled",
+};
+const STATUS_BADGE_CLASSES: Record<AccountStatusKind, string> = {
+  exhausted: "status-badge--bad",
+  cooldown: "status-badge--warn",
+  ready: "status-badge--good",
+  disabled: "status-badge--warn",
+};
+
+/** Exhausted is a Cooldown caused by a run-out Quota Meter: it ends when the meter resets. */
+function accountStatus(account: ProviderAccount): AccountStatus {
+  if (!account.isEnabled) return { kind: "disabled", note: account.disabledReason };
+  const endsAt = account.cooldownEndsAt ? new Date(account.cooldownEndsAt) : null;
+  if (!endsAt || endsAt.getTime() <= now.value) return { kind: "ready", note: null };
+  if (account.cooldownCause === "exhausted") {
+    return { kind: "exhausted", note: resetCountdown(account.cooldownEndsAt, now.value) };
+  }
+  return { kind: "cooldown", note: `until ${timeFormat.format(endsAt)}` };
+}
+
+const accountRows = computed(() =>
+  [...props.accounts]
+    .sort(
+      (first, second) => first.priority - second.priority || first.name.localeCompare(second.name),
+    )
+    .map((account) => ({ account, status: accountStatus(account) })),
+);
 
 const {
   dialog,
@@ -59,23 +99,39 @@ interface ProviderAccountForm {
   key: string;
   /** A number, or "" when the input is empty. */
   priority: number | string;
+  continueWhenExhausted: boolean;
 }
 
-const form = ref<ProviderAccountForm>({ name: "", key: "", priority: 0 });
+const EMPTY_FORM: ProviderAccountForm = {
+  name: "",
+  key: "",
+  priority: 0,
+  continueWhenExhausted: false,
+};
+
+const form = ref<ProviderAccountForm>({ ...EMPTY_FORM });
 
 function openDialog(next: ProviderAccountDialog): void {
   showDialog(next);
-  if (next.kind === "create") form.value = { name: "", key: "", priority: 0 };
+  if (next.kind === "create") form.value = { ...EMPTY_FORM };
   if (next.kind === "edit") {
-    const { name, priority } = next.account;
-    form.value = { name, key: "", priority };
+    const { name, priority, continueWhenExhausted } = next.account;
+    form.value = { name, key: "", priority, continueWhenExhausted };
   }
 }
 
 async function saveAccount(): Promise<void> {
   const current = dialog.value;
   if (!current || current.kind === "delete") return;
-  const fields = { name: form.value.name, priority: optionalNumber(form.value.priority) ?? 0 };
+  // Only Providers with a quota reader show the toggle; the others keep the stored value.
+  const quotaFields = hasQuota.value
+    ? { continueWhenExhausted: form.value.continueWhenExhausted }
+    : {};
+  const fields = {
+    name: form.value.name,
+    priority: optionalNumber(form.value.priority) ?? 0,
+    ...quotaFields,
+  };
   const failureMessage = "Couldn't save the Provider Account.";
   if (current.kind === "create") {
     // An empty name leaves it out: the backend makes one up from two constellations.
@@ -89,6 +145,7 @@ async function saveAccount(): Promise<void> {
             providerId: props.provider.id,
             key: form.value.key,
             priority: fields.priority,
+            ...quotaFields,
             ...(name ? { name } : {}),
           },
         });
@@ -142,44 +199,37 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
       </div>
     </div>
     <div class="table-wrap">
-      <table v-if="sortedAccounts.length || isLoading" class="compact-table">
+      <table v-if="accountRows.length || isLoading" class="compact-table">
         <thead>
           <tr>
             <th>Account</th>
             <th>Key</th>
             <th>Priority</th>
             <th>Status</th>
+            <th v-if="hasQuota">Quota</th>
             <th>Last error</th>
             <th><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-          <LoadingRow v-if="isLoading" :columns="6" />
-          <tr v-for="account in sortedAccounts" :key="account.id">
+          <LoadingRow v-if="isLoading" :columns="hasQuota ? 7 : 6" />
+          <tr v-for="{ account, status } in accountRows" :key="account.id">
             <td>
               <strong>{{ account.name }}</strong>
             </td>
             <td class="tabular">…{{ account.keyLastFour }}</td>
             <td class="tabular">{{ account.priority }}</td>
             <td>
-              <span
-                v-if="cooldownNote(account)"
-                class="status-badge status-badge--warn"
-                :title="`Cooling down ${cooldownNote(account)}`"
-                >Cooling down</span
-              >
-              <span
-                v-else
-                class="status-badge"
-                :class="account.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-                >{{ account.isEnabled ? "Ready" : "Disabled" }}</span
-              >
-              <span v-if="cooldownNote(account)" class="cell-note tabular">{{
-                cooldownNote(account)
+              <span class="status-badge" :class="STATUS_BADGE_CLASSES[status.kind]">{{
+                STATUS_LABELS[status.kind]
               }}</span>
-              <span v-else-if="account.disabledReason" class="cell-note">{{
-                account.disabledReason
-              }}</span>
+              <span v-if="status.note" class="cell-note tabular">{{ status.note }}</span>
+              <span v-if="hasQuota && account.continueWhenExhausted" class="cell-note"
+                >Continues on Credits when exhausted</span
+              >
+            </td>
+            <td v-if="hasQuota">
+              <ProviderAccountQuota :account="account" :now="now" :refresh="refresh" />
             </td>
             <td class="compact-table__wrap">
               <template v-if="account.lastError">
@@ -288,6 +338,10 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
         ><span class="field__label">Priority (lower runs first)</span
         ><NumberInput v-model="form.priority" class="text-input" whole :min="0"
       /></label>
+      <label v-if="hasQuota" class="check-field"
+        ><input v-model="form.continueWhenExhausted" type="checkbox" /> Continue on Credits when
+        exhausted</label
+      >
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
       <div class="dialog__actions">
         <button class="button" type="button" @click="closeDialog">Cancel</button>

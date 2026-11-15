@@ -54,6 +54,7 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   unauthorized: "Key refused",
   bad_request: "Bad request",
   stream_interrupted: "Stream interrupted",
+  exhausted: "Exhausted",
 };
 
 /** What failed, in words: "Client → gateway", or "Gateway → <Provider> · <Provider Account>". */
