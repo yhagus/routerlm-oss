@@ -1,7 +1,7 @@
 import { getQueueToken } from "@nestjs/bullmq";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
+import { type Queue, QueueEvents } from "bullmq";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { type QuotaReaderName, providerAccounts, providers } from "@/db/schemas/index.js";
@@ -18,25 +18,28 @@ const fakeUpstream = await FakeUpstream.start();
 process.env.MINIMAX_M_PLAN_QUOTA_BASE_URL = fakeUpstream.baseUrl;
 const { WorkerModule } = await import("@/worker.module.js");
 const { QUOTA_METERS_QUEUE } = await import("@/queue/models/queue-names.js");
-const { QuotaReadingSchedule, QUOTA_READING_SCHEDULER } =
-  await import("@/quota-meters/jobs/quota-reading-schedule.js");
+const { QUOTA_READING_SCHEDULER } = await import("@/quota-meters/jobs/quota-reading-schedule.js");
 
-const NOW = new Date("2026-11-15T12:00:00Z");
 const MINUTE_MS = 60 * 1000;
 
-function minutesAfter(time: Date, minutes: number): Date {
-  return new Date(time.getTime() + minutes * MINUTE_MS);
+function minutesAgo(minutes: number): Date {
+  return new Date(Date.now() - minutes * MINUTE_MS);
 }
 
 describe("Scheduled Quota Meter readings (e2e)", () => {
   let worker: TestingModule;
   let db: Database;
+  let queue: Queue;
+  let queueEvents: QueueEvents;
   const keyCipher = new ProviderKeyCipher(process.env.ENCRYPTION_KEY ?? "");
 
   beforeAll(async () => {
     worker = await Test.createTestingModule({ imports: [WorkerModule] }).compile();
     await worker.init();
     db = worker.get<Database>(getDrizzleToken());
+    queue = worker.get<Queue>(getQueueToken(QUOTA_METERS_QUEUE));
+    queueEvents = new QueueEvents(QUOTA_METERS_QUEUE, { connection: { url: redisUrl.toString() } });
+    await queueEvents.waitUntilReady();
   });
 
   beforeEach(async () => {
@@ -45,7 +48,8 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
   });
 
   afterAll(async () => {
-    await worker.get<Queue>(getQueueToken(QUOTA_METERS_QUEUE)).obliterate({ force: true });
+    await queueEvents.close();
+    await queue.obliterate({ force: true });
     await worker.close();
     await fakeUpstream.close();
   });
@@ -79,13 +83,21 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
     return account.id;
   }
 
-  function readDueAccounts(now: Date): Promise<void> {
-    return worker.get(QuotaReadingSchedule).readDueProviderAccounts(now);
+  /** Runs one tick of the reading schedule in the worker, as its job scheduler would. */
+  async function runReadingTick(): Promise<void> {
+    const job = await queue.add("read-due-accounts", {});
+    await job.waitUntilFinished(queueEvents);
+  }
+
+  /** Moves the account's last reading into the past, as if that much time had gone by. */
+  async function lastReadMinutesAgo(providerAccountId: string, minutes: number): Promise<void> {
+    await db
+      .update(providerAccounts)
+      .set({ quotaCheckedAt: minutesAgo(minutes) })
+      .where(eq(providerAccounts.id, providerAccountId));
   }
 
   it("schedules the repeating reading job when the worker starts", async () => {
-    const queue = worker.get<Queue>(getQueueToken(QUOTA_METERS_QUEUE));
-
     expect(await queue.getJobScheduler(QUOTA_READING_SCHEDULER)).toBeTruthy();
   });
 
@@ -95,7 +107,7 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
     await insertAccount(null);
     fakeUpstream.reply(remainsAtPercentReply(50));
 
-    await readDueAccounts(NOW);
+    await runReadingTick();
 
     expect(fakeUpstream.requests).toHaveLength(1);
     const [account] = await db
@@ -108,28 +120,18 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
   it("reads every minute while a meter is below 10%, and every 5 minutes once it recovers", async () => {
     const accountId = await insertAccount("minimax-m-plan");
     fakeUpstream.reply(remainsAtPercentReply(8));
-    await readDueAccounts(NOW);
-    const lowReadingAt = await quotaCheckedAtOf(accountId);
+    await runReadingTick();
 
     fakeUpstream.reply(remainsAtPercentReply(50));
-    await readDueAccounts(minutesAfter(lowReadingAt, 1));
-    const recoveredAt = await quotaCheckedAtOf(accountId);
-    await readDueAccounts(minutesAfter(recoveredAt, 1));
+    await lastReadMinutesAgo(accountId, 1);
+    await runReadingTick();
+    await lastReadMinutesAgo(accountId, 1);
+    await runReadingTick();
     expect(fakeUpstream.requests).toHaveLength(2);
 
     fakeUpstream.reply(remainsAtPercentReply(50));
-    await readDueAccounts(minutesAfter(recoveredAt, 5));
+    await lastReadMinutesAgo(accountId, 5);
+    await runReadingTick();
     expect(fakeUpstream.requests).toHaveLength(3);
   });
-
-  async function quotaCheckedAtOf(providerAccountId: string): Promise<Date> {
-    const [account] = await db
-      .select({ quotaCheckedAt: providerAccounts.quotaCheckedAt })
-      .from(providerAccounts)
-      .where(eq(providerAccounts.id, providerAccountId));
-    if (!account.quotaCheckedAt) {
-      throw new Error("The account was never read");
-    }
-    return account.quotaCheckedAt;
-  }
 });

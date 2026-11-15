@@ -49,8 +49,8 @@ export class QuotaReadingSchedule implements OnApplicationBootstrap {
     );
   }
 
-  async readDueProviderAccounts(now: Date): Promise<void> {
-    const dueAccountIds = await this.dueProviderAccountIds(now);
+  async readDueProviderAccounts(): Promise<void> {
+    const dueAccountIds = await this.dueProviderAccountIds(new Date());
     const readings = await Promise.allSettled(
       dueAccountIds.map((id) => this.commandBus.execute(new ReadProviderAccountQuotaCommand(id))),
     );
@@ -103,6 +103,6 @@ export class QuotaReadingScheduleProcessor extends WorkerHost {
   }
 
   async process(_job: Job): Promise<void> {
-    await this.schedule.readDueProviderAccounts(new Date());
+    await this.schedule.readDueProviderAccounts();
   }
 }
