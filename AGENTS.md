@@ -14,7 +14,7 @@ Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/ag
 
 ## Checks
 
-Before reporting work done, run `bun run check` (lint, format, types; and `cd web && bun run check` for web changes), plus `bun run test:docker` for backend changes.
+Before reporting work done, run `bun run check` (lint, format, types; and `cd web && bun run check` for web changes, which needs the root `bun install` first for the type-aware linter), plus `bun run test:docker` for backend changes.
 
 ### Tests
 
