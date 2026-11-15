@@ -2596,12 +2596,6 @@ tbody tr:hover {
   white-space: normal;
 }
 /* Usage page */
-.usage-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-  margin-bottom: 16px;
-}
 /* One panel, hairline dividers drawn by the 1px gap over the line-coloured background. */
 .usage-summary {
   display: grid;

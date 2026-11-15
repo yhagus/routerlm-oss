@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight, CloudOff, RefreshCw, SearchX } from "@lucide/vue";
-import { computed, ref, watch } from "vue";
+import { SearchX } from "@lucide/vue";
+import { computed, nextTick, ref, watch } from "vue";
 import type { ApiKeySummary, ModelChoice } from "~/lib/api-keys";
 import {
   formatCost,
@@ -18,10 +18,10 @@ import {
   USAGE_STATUSES,
 } from "~/lib/usage";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
+import { DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
 
 useHead({ title: "Usage" });
 
-const PAGE_SIZE = 50;
 /** The API Key filter's choice for the Playground's requests, which have no API Key. */
 const PLAYGROUND = "playground";
 /** Characters of an id shown for a Model or API Key that a link names but no longer exists. */
@@ -49,8 +49,9 @@ function isApiKeyChoice(value: string): value is string {
 
 // Filters
 
-// Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled&page=2) so a refresh or a
-// link keeps them. Model, API Key and status are comma-separated lists; a log matches any pick.
+// Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled) so a refresh or a link keeps
+// them. Model, API Key and status are comma-separated lists; a log matches any pick. The DataTable
+// holds the search (?q=) and page (?page=) the same way; this page reads them for its requests.
 const timeRange = useQueryParam<TimeRange>("range", { default: "24h", isValid: isTimeRange });
 const modelFilter = useQueryList("model", { isValid: isUuid });
 const apiKeyFilter = useQueryList("key", { isValid: isApiKeyChoice, order: [PLAYGROUND] });
@@ -58,6 +59,7 @@ const statusFilter = useQueryList("status", {
   isValid: oneOf(USAGE_STATUSES),
   order: USAGE_STATUSES,
 });
+const search = useQueryParam("q", { default: "", isValid: anyText, debounce: 300 });
 const page = useQueryPage();
 // Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
 const from = ref(timeRangeStart(timeRange.value, Date.now()));
@@ -76,20 +78,12 @@ function clearFilters(): void {
   statusFilter.value = [];
 }
 
-watch(timeRange, refreshTimeRange);
-// The lists are compared as text: rewriting a link in canonical order gives new arrays with the
-// same picks, which must not reset the page.
-watch(
-  () => [
-    timeRange.value,
-    modelFilter.value.join(),
-    apiKeyFilter.value.join(),
-    statusFilter.value.join(),
-  ],
-  () => {
-    page.value = 1;
-  },
-);
+// The DataTable returns to page 1 when the search or a filter token changes; the time range has no
+// token, so it does that here.
+watch(timeRange, () => {
+  refreshTimeRange();
+  page.value = 1;
+});
 
 const { data: modelChoices } = useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
 const { data: apiKeys } = useDashboardApi<ApiKeySummary[]>("/api-keys");
@@ -141,28 +135,57 @@ const filterQuery = computed(() => ({
   apiKeyId: listParam(apiKeyFilter.value.filter((value) => value !== PLAYGROUND)),
   isPlayground: apiKeyFilter.value.includes(PLAYGROUND) ? true : undefined,
   status: listParam(statusFilter.value),
+  q: search.value.trim() || undefined,
 }));
 
-// Data: both requests re-run whenever a filter or the page changes.
+// Data: both requests re-run whenever the search, a filter or the page changes.
 
 const {
   data: usagePage,
   error: loadError,
   status: usagePageStatus,
+  refresh: refreshLogs,
 } = useDashboardApi<UsageLogPage>("/usage", {
-  query: computed(() => ({ ...filterQuery.value, page: page.value, pageSize: PAGE_SIZE })),
+  query: computed(() => ({
+    ...filterQuery.value,
+    page: page.value,
+    pageSize: DATA_TABLE_PAGE_SIZE,
+  })),
 });
-const { data: summary, status: summaryStatus } = useDashboardApi<UsageSummary>("/usage/totals", {
-  query: filterQuery,
-});
+const {
+  data: summary,
+  status: summaryStatus,
+  refresh: refreshSummary,
+} = useDashboardApi<UsageSummary>("/usage/totals", { query: filterQuery });
+
+/**
+ * Moves the window to end now, then reloads the logs and the totals. A moved
+ * window starts both requests on its own; `defer` joins those instead of
+ * repeating them, and still reloads when the window can't move ("All time").
+ */
+async function refresh(): Promise<void> {
+  refreshTimeRange();
+  await nextTick();
+  await Promise.all([refreshLogs({ dedupe: "defer" }), refreshSummary({ dedupe: "defer" })]);
+}
 
 /** Only the first load shows placeholders; a refetch keeps the current rows until it lands. */
 const isLoadingLogs = computed(() => usagePageStatus.value === "pending" && !usagePage.value);
-const logs = computed(() => usagePage.value?.items ?? []);
-const total = computed(() => usagePage.value?.total ?? 0);
-const firstShown = computed(() => (total.value === 0 ? 0 : (page.value - 1) * PAGE_SIZE + 1));
-const lastShown = computed(() => Math.min(page.value * PAGE_SIZE, total.value));
-const hasNextPage = computed(() => lastShown.value < total.value);
+
+const columns: DataTableColumn<UsageLogSummary>[] = [
+  { id: "time", header: "Time", enableHiding: false },
+  { id: "model", header: "Model" },
+  { id: "apiKey", header: "API Key" },
+  { id: "status", header: "Status" },
+  { id: "inputTokens", header: "Input" },
+  { id: "outputTokens", header: "Output" },
+  { id: "cacheReadTokens", header: "Cache read" },
+  { id: "cacheWriteTokens", header: "Cache write" },
+  { id: "cost", header: "Cost" },
+  { id: "timeToFirstToken", header: "First token" },
+  { id: "duration", header: "Duration" },
+  { id: "attempts", header: "Attempts" },
+];
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" });
 
@@ -180,123 +203,118 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
     <PageHeading
       title="Usage"
       description="One Usage Log per client request: tokens, Cost, latency and outcome."
-    >
-      <button class="button button--quiet" type="button" @click="refreshTimeRange">
-        <RefreshCw :size="14" /> Refresh
-      </button>
-    </PageHeading>
-
-    <div class="usage-filters" role="group" aria-label="Filter Usage Logs">
-      <AppSelect
-        :model-value="timeRange"
-        :options="timeRangeOptions"
-        label="Time range"
-        @update:model-value="pickTimeRange"
-      />
-      <AppMultiSelect
-        v-model="modelFilter"
-        :options="modelOptions"
-        label="Filter by Model"
-        placeholder="All Models"
-        noun="Models"
-      />
-      <AppMultiSelect
-        v-model="apiKeyFilter"
-        :options="apiKeyOptions"
-        label="Filter by API Key"
-        placeholder="All API Keys"
-        noun="API Keys"
-      />
-      <AppMultiSelect
-        v-model="statusFilter"
-        :options="statusOptions"
-        label="Filter by status"
-        placeholder="Any status"
-        noun="statuses"
-      />
-    </div>
-    <ActiveFilters :filters="activeFilters" @clear-all="clearFilters" />
+    />
 
     <UsageSummaryBand :summary="summary" :is-loading="summaryStatus === 'pending'" />
 
-    <section class="panel table-panel">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Model</th>
-              <th>API Key</th>
-              <th>Status</th>
-              <th>Input</th>
-              <th>Output</th>
-              <th>Cache read</th>
-              <th>Cache write</th>
-              <th>Cost</th>
-              <th>First token</th>
-              <th>Duration</th>
-              <th>Attempts</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in logs" :key="log.id">
-              <td class="tabular">{{ timeFormat.format(new Date(log.createdAt)) }}</td>
-              <td>{{ log.modelName ?? (log.modelId ? "Deleted Model" : "—") }}</td>
-              <td>
-                {{
-                  log.isPlayground
-                    ? "Playground"
-                    : (log.apiKeyName ?? (log.apiKeyId ? "Deleted API Key" : "—"))
-                }}
-              </td>
-              <td>
-                <span class="status-badge" :class="STATUS_BADGES[usageStatusOf(log)]">
-                  {{ STATUS_LABELS[usageStatusOf(log)] }} · {{ log.errorCode ?? log.httpStatus }}
-                </span>
-                <span v-if="log.isIncomplete" class="cell-note">Incomplete usage</span>
-                <NuxtLink
-                  v-if="hasErrorCaptures(log)"
-                  class="cell-note"
-                  :to="`/error-captures?usageLogId=${log.id}`"
-                  >Error Captures</NuxtLink
-                >
-              </td>
-              <td class="tabular">{{ formatCount(log.inputTokens) }}</td>
-              <td class="tabular">{{ formatCount(log.outputTokens) }}</td>
-              <td class="tabular">{{ formatCount(log.cacheReadTokens) }}</td>
-              <td class="tabular">{{ formatCount(log.cacheWriteTokens) }}</td>
-              <td class="tabular">{{ formatCost(log.cost) }}</td>
-              <td class="tabular">{{ formatDuration(log.timeToFirstTokenMs) }}</td>
-              <td class="tabular">{{ formatDuration(log.durationMs) }}</td>
-              <td class="tabular">{{ log.attemptCount }}</td>
-            </tr>
-            <LoadingRow v-if="isLoadingLogs" :columns="12" />
-          </tbody>
-        </table>
-        <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
-          <strong>Couldn't load Usage Logs.</strong
-          ><span>Check that the backend is running, then reload the page.</span>
-        </EmptyState>
-        <EmptyState v-else-if="!isLoadingLogs && logs.length === 0" :icon="SearchX">
-          <strong>No requests match these filters.</strong
-          ><span>Widen the time range or clear a filter.</span>
-        </EmptyState>
-      </div>
-      <footer class="panel-footer">
-        <AppSpinner v-if="isLoadingLogs" label="" />
-        <span v-else class="tabular"
-          >{{ formatCount(firstShown) }}–{{ formatCount(lastShown) }} of
-          {{ formatCount(total) }}</span
-        >
-        <div class="row-actions">
-          <button class="row-action" type="button" :disabled="page === 1" @click="page -= 1">
-            <ChevronLeft :size="14" /> Previous
-          </button>
-          <button class="row-action" type="button" :disabled="!hasNextPage" @click="page += 1">
-            Next <ChevronRight :size="14" />
-          </button>
+    <DataTable
+      table-id="usage"
+      label="Usage Logs"
+      search-placeholder="Search model, API key, error code or request id"
+      :columns="columns"
+      :rows="usagePage?.items ?? []"
+      :row-count="usagePage?.total ?? 0"
+      :get-row-id="(log) => log.id"
+      :is-loading="isLoadingLogs"
+      :error="loadError"
+      :refresh="refresh"
+      :filters="activeFilters"
+      @clear-filters="clearFilters"
+    >
+      <template #controls>
+        <AppSelect
+          :model-value="timeRange"
+          :options="timeRangeOptions"
+          label="Time range"
+          @update:model-value="pickTimeRange"
+        />
+      </template>
+      <template #filters>
+        <div class="data-table-filter">
+          <span class="data-table-filter__label" aria-hidden="true">Model</span>
+          <AppMultiSelect
+            v-model="modelFilter"
+            :options="modelOptions"
+            label="Filter by Model"
+            placeholder="All Models"
+            noun="Models"
+          />
         </div>
-      </footer>
-    </section>
+        <div class="data-table-filter">
+          <span class="data-table-filter__label" aria-hidden="true">API Key</span>
+          <AppMultiSelect
+            v-model="apiKeyFilter"
+            :options="apiKeyOptions"
+            label="Filter by API Key"
+            placeholder="All API Keys"
+            noun="API Keys"
+          />
+        </div>
+        <div class="data-table-filter">
+          <span class="data-table-filter__label" aria-hidden="true">Status</span>
+          <AppMultiSelect
+            v-model="statusFilter"
+            :options="statusOptions"
+            label="Filter by status"
+            placeholder="Any status"
+            noun="statuses"
+          />
+        </div>
+      </template>
+      <template #cell-time="{ row: log }">
+        <span class="tabular">{{ timeFormat.format(new Date(log.createdAt)) }}</span>
+      </template>
+      <template #cell-model="{ row: log }">
+        {{ log.modelName ?? (log.modelId ? "Deleted Model" : "—") }}
+      </template>
+      <template #cell-apiKey="{ row: log }">
+        {{
+          log.isPlayground
+            ? "Playground"
+            : (log.apiKeyName ?? (log.apiKeyId ? "Deleted API Key" : "—"))
+        }}
+      </template>
+      <template #cell-status="{ row: log }">
+        <span class="status-badge" :class="STATUS_BADGES[usageStatusOf(log)]">
+          {{ STATUS_LABELS[usageStatusOf(log)] }} · {{ log.errorCode ?? log.httpStatus }}
+        </span>
+        <span v-if="log.isIncomplete" class="cell-note">Incomplete usage</span>
+        <NuxtLink
+          v-if="hasErrorCaptures(log)"
+          class="cell-note"
+          :to="`/error-captures?usageLogId=${log.id}`"
+          >Error Captures</NuxtLink
+        >
+      </template>
+      <template #cell-inputTokens="{ row: log }">
+        <span class="tabular">{{ formatCount(log.inputTokens) }}</span>
+      </template>
+      <template #cell-outputTokens="{ row: log }">
+        <span class="tabular">{{ formatCount(log.outputTokens) }}</span>
+      </template>
+      <template #cell-cacheReadTokens="{ row: log }">
+        <span class="tabular">{{ formatCount(log.cacheReadTokens) }}</span>
+      </template>
+      <template #cell-cacheWriteTokens="{ row: log }">
+        <span class="tabular">{{ formatCount(log.cacheWriteTokens) }}</span>
+      </template>
+      <template #cell-cost="{ row: log }">
+        <span class="tabular">{{ formatCost(log.cost) }}</span>
+      </template>
+      <template #cell-timeToFirstToken="{ row: log }">
+        <span class="tabular">{{ formatDuration(log.timeToFirstTokenMs) }}</span>
+      </template>
+      <template #cell-duration="{ row: log }">
+        <span class="tabular">{{ formatDuration(log.durationMs) }}</span>
+      </template>
+      <template #cell-attempts="{ row: log }">
+        <span class="tabular">{{ log.attemptCount }}</span>
+      </template>
+      <template #empty>
+        <EmptyState :icon="SearchX">
+          <strong>No requests in this time range.</strong><span>Pick a wider time range.</span>
+        </EmptyState>
+      </template>
+    </DataTable>
   </div>
 </template>
