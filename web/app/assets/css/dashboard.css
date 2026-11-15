@@ -3770,7 +3770,8 @@ svg.lucide {
 }
 .provider-table__row--off .provider-mark,
 .provider-table__row--off .provider-table__name,
-.provider-table__row--off td:nth-child(n + 4):nth-child(-n + 5) {
+.provider-table__row--off .provider-table__count,
+.provider-table__row--off .account-bar {
   opacity: 0.55;
 }
 /* Upstream Models: model, Provider under it, capability icons, prices with cache notes. */
@@ -4430,6 +4431,176 @@ svg.lucide {
   }
   .list-filters .filter-note {
     margin-left: 0;
+  }
+}
+
+/* ---- DataTable: toolbar as the panel's header row, rows, paginator ---- */
+.data-table__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 18px;
+}
+.data-table__search {
+  flex: 0 1 280px;
+  min-width: 0;
+}
+.data-table__search input {
+  width: 100%;
+  min-width: 0;
+}
+.data-table__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+.data-table__pagination {
+  margin-left: auto;
+}
+.data-table__active-filters {
+  margin: -4px 0 0;
+  padding: 0 18px 12px;
+}
+.data-table__footer {
+  display: none;
+}
+.data-table__retry {
+  margin-top: 8px;
+}
+.data-table-search__clear {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-right: -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.data-table-search__clear:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+/* The field draws the browser's own clear button too; one is enough. */
+.data-table-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.data-table-tool {
+  flex: none;
+  cursor: pointer;
+}
+.data-table-tool--active {
+  border-color: var(--focus-border);
+  color: var(--ink);
+}
+.data-table-tool--spinning svg {
+  animation: spinner-turn 0.8s linear infinite;
+}
+.data-table-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.data-table-pagination__summary {
+  margin-right: 6px;
+}
+.data-table-pagination__arrow {
+  cursor: pointer;
+}
+.data-table-pagination__arrow:disabled {
+  background: transparent;
+  color: var(--muted);
+  opacity: 0.4;
+  cursor: default;
+}
+.data-table-filters__fields {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+.data-table-filters__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.data-table-filters__footer .text-button {
+  font-size: 12px;
+  cursor: pointer;
+}
+.data-table-filters__footer .text-button:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+.data-table-filter {
+  display: grid;
+  gap: 6px;
+}
+.data-table-filter__label {
+  color: var(--faint);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.data-table-filter .app-select {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Like the spinner: keep turning, slowly, so a refresh in flight still reads as one. */
+  .data-table-tool--spinning svg {
+    animation-duration: 1.6s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+@media (max-width: 760px) {
+  .data-table__toolbar {
+    padding: 13px 17px;
+  }
+  .data-table__search {
+    flex-basis: 100%;
+  }
+  .data-table__tools {
+    flex: 1;
+  }
+  .data-table-tool {
+    justify-content: center;
+    width: 38px;
+    padding: 0;
+  }
+  /* Icon-only on phones; the label stays as the button's accessible name. */
+  .data-table-tool__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .data-table__toolbar .data-table__pagination {
+    display: none;
+  }
+  .data-table__active-filters {
+    padding-inline: 17px;
+  }
+  .data-table__footer {
+    display: flex;
+    justify-content: flex-end;
   }
 }
 
