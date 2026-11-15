@@ -142,7 +142,18 @@ export class UpstreamClient {
     deadlines.start("totalMs");
     try {
       const response = await this.send(call, deadlines.signal);
-      return call.converter.parseResponse(parseJsonBody(await response.data.text()));
+      const body = await response.data.text();
+      // MiniMax may refuse an Exhausted Provider Account with HTTP 200 and an
+      // error code in the body.
+      if (isQuotaExhaustedError(body, exhaustedErrorCodesOf(call.target))) {
+        throw new AttemptFailedError(
+          "exhausted",
+          response.status,
+          `The upstream answered ${response.status} with an Exhausted error code`,
+          { headers: Object.fromEntries(response.headers.entries()), body },
+        );
+      }
+      return call.converter.parseResponse(parseJsonBody(body));
     } catch (error) {
       throw deadlines.failureOf(error, false);
     } finally {

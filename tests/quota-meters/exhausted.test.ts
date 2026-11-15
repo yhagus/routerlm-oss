@@ -54,6 +54,13 @@ const PLAN_LIMIT_REACHED: FakeReply = {
   body: { base_resp: { status_code: 2067, status_msg: "plan limit reached" } },
 };
 
+/** MiniMax's native error shape, sent with HTTP 200 instead of an error status. */
+const USAGE_LIMIT_EXCEEDED_WITH_200: FakeReply = {
+  kind: "json",
+  status: 200,
+  body: { base_resp: { status_code: 2056, status_msg: "usage limit exceeded" } },
+};
+
 /** An M Plan remains answer with both unscoped windows at `percent`, resetting at the given times. */
 function remainsAt(percent: number, fiveHourResetsAt: Date, weeklyResetsAt: Date): FakeReply {
   return remainsReply([
@@ -166,6 +173,7 @@ describe("Exhausted Provider Accounts (e2e)", () => {
   it.each<[string, FakeReply]>([
     ["usage limit exceeded (2056)", USAGE_LIMIT_EXCEEDED],
     ["plan limit reached (2067)", PLAN_LIMIT_REACHED],
+    ["HTTP 200 usage limit exceeded (2056)", USAGE_LIMIT_EXCEEDED_WITH_200],
   ])(
     "falls back after a %s Attempt, and a reading triggered by it sets when the account is routable again",
     async (_error, exhaustedReply) => {
