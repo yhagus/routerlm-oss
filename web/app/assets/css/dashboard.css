@@ -55,6 +55,17 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 6px 20px rgba(0, 0, 0, 0.04);
   --shadow-float: 0 1px 1px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08);
   --shadow-pop-color: rgba(0, 0, 0, 0.14);
+  /* Stacking order, bottom to top. Popovers sit above dialogs because selects,
+     menus and date pickers open from fields inside dialogs and sheets. */
+  --z-raised: 3;
+  --z-sticky: 10;
+  --z-nav-scrim: 14;
+  --z-nav: 15;
+  --z-dialog-overlay: 60;
+  --z-dialog: 61;
+  --z-popover: 70;
+  --z-toast: 80;
+  --z-tooltip: 90;
 }
 /* Apple-style neutrals: grouped gray canvas, white cards, one blue accent,
    system green/orange/red for state. Glass only where content passes behind. */
@@ -249,7 +260,7 @@ select:focus-visible {
     var(--shadow-float);
   position: fixed;
   inset: 10px auto 10px 10px;
-  z-index: 15;
+  z-index: var(--z-nav);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar) transparent;
@@ -402,7 +413,7 @@ select:focus-visible {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: var(--z-sticky);
   height: 64px;
   display: flex;
   align-items: center;
@@ -556,12 +567,12 @@ select:focus-visible {
   color: var(--muted);
 }
 .app-select-content {
-  position: absolute;
-  top: calc(100% + 5px);
-  left: 0;
-  z-index: 50;
-  width: 100%;
-  overflow: hidden;
+  /* Portalled to <body> and placed by reka-ui's popper, so no ancestor clips it. */
+  z-index: var(--z-popover);
+  width: var(--reka-popover-trigger-width);
+  min-width: var(--reka-popover-trigger-width);
+  max-height: var(--reka-popover-content-available-height);
+  overflow-y: auto;
   padding: 5px;
   border: 1px solid var(--glass-line);
   border-radius: 14px;
@@ -586,7 +597,10 @@ select:focus-visible {
   outline: 0;
   user-select: none;
 }
-.app-select-item--highlighted {
+.app-select-options:focus {
+  outline: 0;
+}
+.app-select-item[data-highlighted] {
   background: var(--highlight);
   color: var(--ink);
 }
@@ -598,9 +612,15 @@ select:focus-visible {
   display: flex;
   flex-direction: column;
   width: max-content;
-  min-width: max(100%, 220px);
+  min-width: max(var(--reka-popover-trigger-width), 220px);
   max-width: min(340px, calc(100vw - 32px));
-  max-height: 340px;
+  max-height: min(340px, var(--reka-popover-content-available-height));
+  overflow: hidden;
+}
+.app-select-content--searchable .app-select-listbox {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .app-select-content--searchable .app-select-options {
   min-height: 0;
@@ -645,10 +665,8 @@ select:focus-visible {
 /* Multi-select: a checkbox per row, and the menu may grow wider than its trigger for long names. */
 .app-select-content--multi {
   width: max-content;
-  min-width: 100%;
   max-width: min(260px, calc(100vw - 32px));
-  max-height: 320px;
-  overflow-y: auto;
+  max-height: min(320px, var(--reka-popover-content-available-height));
 }
 .app-select-item--multi {
   justify-content: flex-start;
@@ -684,6 +702,11 @@ select:focus-visible {
   border-top: 1px solid var(--line-soft);
   border-radius: 0 0 8px 8px;
   color: var(--muted);
+}
+.app-select-clear:hover,
+.app-select-clear:focus-visible {
+  background: var(--highlight);
+  color: var(--ink);
 }
 .select-control--custom:focus-visible {
   outline: 2px solid var(--focus);
@@ -787,9 +810,7 @@ select:focus-visible {
 .topbar__theme-select .select-control__chevron {
   display: none;
 }
-.topbar__theme-select .app-select-content {
-  right: 0;
-  left: auto;
+.topbar__theme-menu {
   width: 142px;
   background: var(--panel);
 }
@@ -1387,7 +1408,7 @@ tbody tr:hover {
   position: fixed;
   right: 24px;
   bottom: 22px;
-  z-index: 30;
+  z-index: var(--z-toast);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1496,7 +1517,7 @@ tbody tr:hover {
   .nav-scrim {
     position: fixed;
     inset: 0;
-    z-index: 14;
+    z-index: var(--z-nav-scrim);
     background: rgba(0, 0, 0, 0.25);
     -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
@@ -1519,7 +1540,7 @@ tbody tr:hover {
   .topbar__theme-select {
     flex-basis: 32px;
   }
-  .topbar__theme-select .app-select-content {
+  .topbar__theme-menu {
     width: 132px;
   }
   .page-wrap {
@@ -1763,7 +1784,7 @@ tbody tr:hover {
 }
 .chart-tooltip {
   position: absolute;
-  z-index: 3;
+  z-index: var(--z-raised);
   display: grid;
   gap: 5px;
   min-width: 150px;
@@ -2250,9 +2271,8 @@ tbody tr:hover {
   background: var(--control-hover);
   color: var(--ink);
 }
-/* Above the dialog (61): the calendar opens from fields inside dialogs. */
 .date-popover {
-  z-index: 70;
+  z-index: var(--z-popover);
   width: 260px;
   padding: 10px;
   border: 1px solid var(--glass-line);
@@ -2450,14 +2470,14 @@ tbody tr:hover {
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--z-dialog-overlay);
   background: var(--scrim);
 }
 .dialog {
   position: fixed;
   top: 50%;
   left: 50%;
-  z-index: 61;
+  z-index: var(--z-dialog);
   display: grid;
   gap: 14px;
   width: min(420px, calc(100vw - 32px));
@@ -3139,7 +3159,7 @@ tbody tr:hover {
   top: 10px;
   right: 10px;
   bottom: 10px;
-  z-index: 61;
+  z-index: var(--z-dialog);
   display: flex;
   flex-direction: column;
   gap: 18px;

@@ -98,6 +98,8 @@ async function signOut(): Promise<void> {
         <div class="topbar__actions">
           <AppSelect
             class="topbar__theme-select"
+            menu-class="topbar__theme-menu"
+            menu-align="end"
             :model-value="theme.preference.value"
             label="Color theme"
             :options="[

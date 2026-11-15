@@ -1,10 +1,22 @@
 <script setup lang="ts" generic="Value extends string">
 import { Check, ChevronDown } from "@lucide/vue";
+import {
+  ListboxContent,
+  ListboxItem,
+  ListboxRoot,
+  PopoverContent,
+  PopoverPortal,
+  PopoverRoot,
+  PopoverTrigger,
+} from "reka-ui";
 
 type SelectOption = { label: string; value: Value };
 
 /** Picked options named in full on the trigger; more are counted instead. */
 const MAX_NAMED_PICKS = 2;
+/** Gap between the trigger and the menu, and the menu's margin from the viewport edge. */
+const MENU_OFFSET = 5;
+const VIEWPORT_MARGIN = 12;
 
 const props = withDefaults(
   defineProps<{
@@ -22,24 +34,17 @@ const props = withDefaults(
      * have every picked capability), a full pick still narrows the list.
      */
     match?: "any" | "all";
+    /** Menu text when there are no options at all; defaults to "No <noun> yet". */
+    emptyText?: string;
   }>(),
   { match: "any" },
 );
 const emit = defineEmits<{ "update:modelValue": [value: Value[]] }>();
 
-const root = ref<HTMLElement>();
-const trigger = ref<HTMLButtonElement>();
-const listboxId = useId();
 const open = ref(false);
-/** Index into the options; one past the last is the Clear row. */
-const highlightedIndex = ref(0);
+const listbox = useTemplateRef("listbox");
 
 const hasPicks = computed(() => props.modelValue.length > 0);
-const rowCount = computed(() => props.options.length + (hasPicks.value ? 1 : 0));
-const isClearHighlighted = computed(
-  () => hasPicks.value && highlightedIndex.value === props.options.length,
-);
-
 const pickedLabels = computed(() =>
   props.options.filter((option) => isPicked(option)).map((option) => option.label),
 );
@@ -54,116 +59,97 @@ function isPicked(option: SelectOption): boolean {
   return props.modelValue.includes(option.value);
 }
 
-function toggleOption(option: SelectOption): void {
+/** Emits the picks in option order; under "any", a full pick becomes no pick. */
+function handlePicksChange(picked: unknown): void {
+  const pickedValues: unknown[] = Array.isArray(picked) ? picked : [];
   const next = props.options
-    .filter((each) => (each === option ? !isPicked(each) : isPicked(each)))
-    .map((each) => each.value);
+    .filter((option) => pickedValues.includes(option.value))
+    .map((option) => option.value);
   const isEveryOptionPicked = props.options.length > 1 && next.length === props.options.length;
   emit("update:modelValue", props.match === "any" && isEveryOptionPicked ? [] : next);
 }
 
+/** Focus moves back to the list, since the Clear button disappears with the picks. */
 function clearPicks(): void {
   emit("update:modelValue", []);
-  highlightedIndex.value = Math.min(highlightedIndex.value, props.options.length - 1);
+  void listbox.value?.highlightSelected();
 }
 
-function openMenu(): void {
-  highlightedIndex.value = Math.max(0, props.options.findIndex(isPicked));
+/** The first picked option, or the first option, takes focus when the menu opens. */
+function handleOpenAutoFocus(event: Event): void {
+  event.preventDefault();
+  void listbox.value?.highlightSelected();
+}
+
+/** Arrow keys open the menu, as they do on a native select. */
+function handleTriggerArrowKey(event: KeyboardEvent): void {
+  event.preventDefault();
   open.value = true;
 }
-function closeMenu(): void {
-  open.value = false;
-  trigger.value?.focus();
-}
-
-function activateHighlighted(): void {
-  if (isClearHighlighted.value) return clearPicks();
-  const highlighted = props.options[highlightedIndex.value];
-  if (highlighted) toggleOption(highlighted);
-}
-
-function handleKeydown(event: KeyboardEvent): void {
-  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-    event.preventDefault();
-    if (!open.value) return openMenu();
-    const direction = event.key === "ArrowDown" ? 1 : -1;
-    highlightedIndex.value = (highlightedIndex.value + direction + rowCount.value) % rowCount.value;
-  } else if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    if (!open.value) return openMenu();
-    activateHighlighted();
-  } else if (event.key === "Escape" && open.value) {
-    event.preventDefault();
-    closeMenu();
-  } else if (event.key === "Tab") open.value = false;
-}
-
-function handleDocumentPointerdown(event: PointerEvent): void {
-  if (!(event.target instanceof Node)) return;
-  if (root.value && !root.value.contains(event.target)) open.value = false;
-}
-onMounted(() => document.addEventListener("pointerdown", handleDocumentPointerdown));
-onBeforeUnmount(() => document.removeEventListener("pointerdown", handleDocumentPointerdown));
-
-function optionId(index: number): string {
-  return `${listboxId}-option-${index}`;
-}
-const activeDescendant = computed(() =>
-  open.value && !isClearHighlighted.value ? optionId(highlightedIndex.value) : undefined,
-);
 </script>
 
 <template>
-  <div ref="root" class="app-select">
-    <button
-      ref="trigger"
-      type="button"
-      class="select-control select-control--custom"
-      :aria-label="`${label}: ${summary}`"
-      :aria-expanded="open"
-      :aria-controls="open ? listboxId : undefined"
-      :aria-activedescendant="activeDescendant"
-      :title="pickedLabels.length > MAX_NAMED_PICKS ? pickedLabels.join(', ') : undefined"
-      aria-haspopup="listbox"
-      @click="open ? (open = false) : openMenu()"
-      @keydown="handleKeydown"
-    >
-      <span class="select-control__value">{{ summary }}</span>
-      <span class="select-control__chevron"><ChevronDown :size="14" /></span>
-    </button>
-    <!-- Rows keep focus on the trigger (mousedown.prevent), so the keyboard keeps working after a click. -->
-    <div v-if="open" class="app-select-content app-select-content--multi">
-      <div :id="listboxId" role="listbox" :aria-label="label" aria-multiselectable="true">
-        <div
-          v-for="(option, index) in options"
-          :id="optionId(index)"
-          :key="option.value"
-          role="option"
-          class="app-select-item app-select-item--multi"
-          :class="{ 'app-select-item--highlighted': highlightedIndex === index }"
-          :aria-selected="isPicked(option)"
-          @mouseenter="highlightedIndex = index"
-          @mousedown.prevent
-          @click="toggleOption(option)"
+  <div class="app-select">
+    <PopoverRoot v-model:open="open">
+      <PopoverTrigger as-child>
+        <button
+          type="button"
+          class="select-control select-control--custom"
+          :aria-label="`${label}: ${summary}`"
+          :title="pickedLabels.length > MAX_NAMED_PICKS ? pickedLabels.join(', ') : undefined"
+          aria-haspopup="listbox"
+          @keydown.down.up="handleTriggerArrowKey"
         >
-          <span class="app-select-check" :class="{ 'app-select-check--on': isPicked(option) }">
-            <Check v-if="isPicked(option)" :size="11" :stroke-width="3" aria-hidden="true" />
-          </span>
-          <span class="app-select-item__label">{{ option.label }}</span>
-        </div>
-      </div>
-      <button
-        v-if="hasPicks"
-        type="button"
-        tabindex="-1"
-        class="app-select-item app-select-clear"
-        :class="{ 'app-select-item--highlighted': isClearHighlighted }"
-        @mouseenter="highlightedIndex = options.length"
-        @mousedown.prevent
-        @click="clearPicks"
-      >
-        Clear
-      </button>
-    </div>
+          <span class="select-control__value">{{ summary }}</span>
+          <span class="select-control__chevron"><ChevronDown :size="14" /></span>
+        </button>
+      </PopoverTrigger>
+      <PopoverPortal>
+        <PopoverContent
+          class="app-select-content app-select-content--multi"
+          side="bottom"
+          align="start"
+          :side-offset="MENU_OFFSET"
+          :collision-padding="VIEWPORT_MARGIN"
+          @open-auto-focus="handleOpenAutoFocus"
+        >
+          <ListboxRoot
+            ref="listbox"
+            :model-value="modelValue"
+            multiple
+            highlight-on-hover
+            @update:model-value="handlePicksChange"
+          >
+            <ListboxContent class="app-select-options" :aria-label="label">
+              <ListboxItem
+                v-for="option in options"
+                :key="option.value"
+                :value="option.value"
+                class="app-select-item app-select-item--multi"
+              >
+                <span
+                  class="app-select-check"
+                  :class="{ 'app-select-check--on': isPicked(option) }"
+                >
+                  <Check v-if="isPicked(option)" :size="11" :stroke-width="3" aria-hidden="true" />
+                </span>
+                <span class="app-select-item__label">{{ option.label }}</span>
+              </ListboxItem>
+              <p v-if="options.length === 0" class="app-select-empty">
+                {{ emptyText ?? `No ${noun} yet` }}
+              </p>
+            </ListboxContent>
+          </ListboxRoot>
+          <button
+            v-if="hasPicks"
+            type="button"
+            class="app-select-item app-select-clear"
+            @click="clearPicks"
+          >
+            Clear
+          </button>
+        </PopoverContent>
+      </PopoverPortal>
+    </PopoverRoot>
   </div>
 </template>
