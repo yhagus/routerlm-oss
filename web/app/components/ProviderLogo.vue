@@ -32,7 +32,8 @@ const MARKS_BY_SLUG: Record<string, string> = {
   deepseek,
   "kimi-code": kimi,
   moonshot,
-  minimax,
+  "minimax-api": minimax,
+  "minimax-m-plan": minimax,
   "xiaomi-mimo": xiaomimimo,
   "alibaba-model-studio-intl": alibabacloud,
 };

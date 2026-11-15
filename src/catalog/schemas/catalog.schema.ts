@@ -1,12 +1,18 @@
 import { z } from "zod";
-import { AUTH_STYLES, CAPABILITIES, UPSTREAM_PROTOCOLS } from "@/db/schemas/index.js";
+import {
+  AUTH_STYLES,
+  CAPABILITIES,
+  QUOTA_READERS,
+  UPSTREAM_PROTOCOLS,
+} from "@/db/schemas/index.js";
 
 // The shape of one Catalog file: a Provider and the Upstream Models it sells.
 // Field names match the `providers` and `upstream_models` columns.
 
 /**
- * The quirk keys the Protocol adapters understand (ADR 0003). Unknown keys are
- * rejected so a typo in a Catalog file fails loudly instead of doing nothing.
+ * The quirk keys the Protocol adapters, the Attempt classifier and the quota
+ * readers understand (ADR 0003, ADR 0010). Unknown keys are rejected so a typo
+ * in a Catalog file fails loudly instead of doing nothing.
  */
 export const providerQuirksSchema = z.strictObject({
   /**
@@ -33,6 +39,15 @@ export const providerQuirksSchema = z.strictObject({
    * `max_completion_tokens` (OpenAI's reasoning models refuse `max_tokens`).
    */
   usesMaxCompletionTokens: z.boolean().optional(),
+  /**
+   * The error codes with which the Provider refuses a Provider Account whose
+   * plan quota ran out, making it Exhausted instead of putting it in
+   * Cooldown. Read from `base_resp.status_code`, `status_code`, `code`, or a
+   * `(code)` at the end of `error.message`.
+   */
+  exhaustedErrorCodes: z.array(z.int()).optional(),
+  /** Providers with a quota reader: the base URL its quota endpoint path is appended to. */
+  quotaBaseUrl: z.url().optional(),
 });
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 
@@ -74,6 +89,8 @@ export const catalogProviderSchema = z.strictObject({
   baseUrl: z.url(),
   authStyle: z.enum(AUTH_STYLES),
   quirks: providerQuirksSchema,
+  /** Subscription Providers only: the code that reads its Quota Meters (ADR 0010). */
+  quotaReader: z.enum(QUOTA_READERS).optional(),
   source: sourceSchema,
   notes: z.string().optional(),
   upstreamModels: z.array(upstreamModelSchema),

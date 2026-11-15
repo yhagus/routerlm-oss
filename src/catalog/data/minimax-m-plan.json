@@ -1,0 +1,92 @@
+{
+  "slug": "minimax-m-plan",
+  "name": "MiniMax M Plan",
+  "protocol": "anthropic-messages",
+  "baseUrl": "https://api.minimax.io/anthropic",
+  "authStyle": "bearer",
+  "quirks": {
+    "cacheMarkerLimit": 0,
+    "exhaustedErrorCodes": [2056, 2067],
+    "quotaBaseUrl": "https://www.minimax.io/v1"
+  },
+  "quotaReader": "minimax-m-plan",
+  "source": {
+    "urls": [
+      "https://platform.minimax.io/docs/m-plan/intro.md",
+      "https://platform.minimax.io/docs/m-plan/quickstart.md",
+      "https://platform.minimax.io/docs/m-plan/faq.md"
+    ],
+    "retrievedOn": "2026-11-15"
+  },
+  "notes": "Subscription with 5-hour and weekly usage limits and no per-token prices; each model carries the list prices of its MiniMax API pay-as-you-go equivalent, so Cost is what a request would cost there. Takes an M Plan API key (sk-cp-...), which is not interchangeable with a MiniMax API key although the base URL is the same. Global region only. The M Plan docs name only M3.1 Flash as the text model; the model list comes from MiniMax Code's packages/config/src/minimax-model-catalog.ts, which offers M3.1 Flash and M3 at 512K context on the plan and M2.7 and M2.7 highspeed at 200K. Caching is automatic prefix matching, so cacheMarkerLimit 0 keeps the gateway from adding markers, as for MiniMax API. Release dates come from models.dev (https://models.dev/).",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "MiniMax-M3.1-Flash",
+      "releaseDate": "2026-10-19",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 524288,
+      "maxOutputTokens": 524288,
+      "inputPrice": 0.15,
+      "outputPrice": 0.6,
+      "cacheReadPrice": 0.015,
+      "cacheWritePrice": 0.15,
+      "source": {
+        "urls": [
+          "https://platform.minimax.io/docs/m-plan/intro.md",
+          "https://platform.minimax.io/docs/guides/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "512K context on the plan. Prices are MiniMax API list prices for MiniMax-M3.1-Flash; cache write is not published and is set to the input price, since caching is automatic. maxOutputTokens comes from models.dev."
+    },
+    {
+      "upstreamModelId": "MiniMax-M3",
+      "releaseDate": "2026-06-01",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 524288,
+      "maxOutputTokens": 524288,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": 0.3,
+      "source": {
+        "urls": ["https://platform.minimax.io/docs/guides/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "512K context on the plan. Not named in the M Plan docs; listed by MiniMax Code's model catalog. Prices are MiniMax API list prices for MiniMax-M3 at the up-to-512K tier with the 'permanent 50% off' applied; cache write is not published and is set to the input price, since caching is automatic. maxOutputTokens comes from models.dev."
+    },
+    {
+      "upstreamModelId": "MiniMax-M2.7",
+      "releaseDate": "2026-03-18",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": 0.375,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Not named in the M Plan docs; listed by MiniMax Code's model catalog. Prices are the MiniMax API list prices for MiniMax-M2.7 from models.dev. maxOutputTokens, tools and reasoning come from models.dev."
+    },
+    {
+      "upstreamModelId": "MiniMax-M2.7-highspeed",
+      "releaseDate": "2026-03-18",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.6,
+      "outputPrice": 2.4,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": 0.375,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Not named in the M Plan docs; listed by MiniMax Code's model catalog. Prices are the MiniMax API list prices for MiniMax-M2.7-highspeed from models.dev. maxOutputTokens, tools and reasoning come from models.dev."
+    }
+  ]
+}

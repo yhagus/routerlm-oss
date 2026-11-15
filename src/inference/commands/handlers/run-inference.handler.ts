@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { Logger } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
+import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
 import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import type { SnapshotModel, SnapshotRoute } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 import { UsageProducer } from "@/usage/jobs/usage.producer.js";
@@ -74,6 +76,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     private readonly cooldowns: CooldownStore,
     private readonly providerAccountHealth: ProviderAccountHealth,
     private readonly usage: UsageProducer,
+    private readonly commandBus: CommandBus,
   ) {}
 
   async execute({
@@ -141,8 +144,23 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     const enabledAccountIds = enabledProviderAccountIdsOf(routes);
     const cooldowns = await this.cooldowns.cooldowns(enabledAccountIds);
     const skippedAccountIds = new Set(cooldowns.keys());
+    const recordedExhaustedAccountIds = new Set<string>();
     const failures: AttemptFailedError[] = [];
-    const targets = attemptTargets(routes, (account) => skippedAccountIds.has(account.id));
+    const targets = attemptTargets(routes, (target) => {
+      const accountId = target.providerAccount.id;
+      if (!skippedAccountIds.has(accountId)) {
+        return false;
+      }
+      // Recorded once, even when the account comes up again on a later Route.
+      if (
+        cooldowns.get(accountId)?.cause === "exhausted" &&
+        !recordedExhaustedAccountIds.has(accountId)
+      ) {
+        recordedExhaustedAccountIds.add(accountId);
+        meter.attemptSkippedAsExhausted(target);
+      }
+      return true;
+    });
     for (const target of targets) {
       if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
         break;
@@ -303,8 +321,9 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   /**
    * What a failed Attempt does to its Provider Account (spec "Fallback"):
    * 401/403 disable it until an operator re-enables it; rate limits, 5xx,
-   * timeouts and connection errors put it in Cooldown; a bad request says
-   * nothing about the account. The database writes are not awaited.
+   * timeouts and connection errors put it in Cooldown; running out of quota
+   * makes it Exhausted; a bad request says nothing about the account. The
+   * database writes and the quota reading are not awaited.
    */
   private async afterFailedAttempt(
     failure: AttemptFailedError,
@@ -334,6 +353,26 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
         await this.cooldowns.startCooldown(providerAccount.id, failure.reason, failure.retryAfter);
         return;
+      case "exhausted":
+        void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
+        // Skipped for a short while: the upstream's refusal doesn't say until when.
+        await this.commandBus.execute(
+          new MarkProviderAccountExhaustedCommand(providerAccount.id, null),
+        );
+        // Started only now, so the precise end it sets replaces the short one.
+        void this.readQuota(providerAccount.id);
+        return;
+    }
+  }
+
+  /** A failed reading, or a Provider with no quota reader, leaves the short Exhausted state. */
+  private async readQuota(providerAccountId: string): Promise<void> {
+    try {
+      await this.commandBus.execute(new ReadProviderAccountQuotaCommand(providerAccountId));
+    } catch (error) {
+      this.logger.warn(
+        `Quota of Exhausted Provider Account ${providerAccountId} not read: ${String(error)}`,
+      );
     }
   }
 }

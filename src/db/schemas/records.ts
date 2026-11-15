@@ -34,6 +34,8 @@ export const ATTEMPT_FAILURE_REASONS = [
   "unauthorized",
   "bad_request",
   "stream_interrupted",
+  // The Provider's Quota Meter ran out (GLOSSARY "Exhausted").
+  "exhausted",
 ] as const;
 export type AttemptFailureReason = (typeof ATTEMPT_FAILURE_REASONS)[number];
 

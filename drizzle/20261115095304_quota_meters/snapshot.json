@@ -1,0 +1,473 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4ffd09db-030e-4940-bdd8-23129507ed3e",
+  "prevIds": [
+    "9787512c-7490-4744-9cf9-52e3403356ac"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "quota_meters"
+      ],
+      "writes": [
+        "s|tbl|public.quota_meters",
+        "n|tbl|public.quota_meters",
+        "e|tbl|public.quota_meters",
+        "n|rel|public.quota_meters",
+        "n|type|public.quota_meters",
+        "n|rel|public.quota_meters_pkey",
+        "n|rel|public.quota_meters_provider_account_id_key_unique"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "continue_when_exhausted"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.continue_when_exhausted",
+        "n|col|public.provider_accounts.continue_when_exhausted",
+        "e|col|public.provider_accounts.continue_when_exhausted"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "quota_checked_at"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.quota_checked_at",
+        "n|col|public.provider_accounts.quota_checked_at",
+        "e|col|public.provider_accounts.quota_checked_at"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "quota_error"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.quota_error",
+        "n|col|public.provider_accounts.quota_error",
+        "e|col|public.provider_accounts.quota_error"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "quota_reader"
+      ],
+      "writes": [
+        "s|col|public.providers.quota_reader",
+        "n|col|public.providers.quota_reader",
+        "e|col|public.providers.quota_reader"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "quota_meters"
+      ],
+      "writes": [
+        "s|fk|public.quota_meters.quota_meters_provider_account_id_provider_accounts_id_fkey",
+        "n|fk|public.quota_meters.quota_meters_provider_account_id_provider_accounts_id_fkey",
+        "e|fk|public.quota_meters.quota_meters_provider_account_id_provider_accounts_id_fkey",
+        "n|con|public.quota_meters.quota_meters_provider_account_id_provider_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.quota_meters",
+        "n|sch|public",
+        "n|tbl|public.provider_accounts",
+        "n|sch|public",
+        "n|col|public.quota_meters.provider_account_id",
+        "n|col|public.provider_accounts.id",
+        "e|uniqueness|public.provider_accounts.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "quota_meters",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "continue_when_exhausted",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "quota_checked_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "quota_error",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "quota_reader",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "provider_account_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "key",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "label",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "unit",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "used",
+        "type": "numeric",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "limit",
+        "type": "numeric",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "remaining_percent",
+        "type": "numeric",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "is_unlimited",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "window_seconds",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "resets_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "scope",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "observed_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "raw",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "quota_meters_provider_account_id_provider_accounts_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "provider_account_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "provider_accounts",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "quota_meters_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "quota_meters",
+        "name": "quota_meters_provider_account_id_key_unique",
+        "nameExplicit": true,
+        "columns": [
+          "provider_account_id",
+          "key"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    }
+  ]
+}

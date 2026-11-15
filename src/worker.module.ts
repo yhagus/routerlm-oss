@@ -1,6 +1,7 @@
 import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { CqrsModule } from "@nestjs/cqrs";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { type Env, envSchema } from "@/config/schemas/env.schema.js";
@@ -12,6 +13,12 @@ import {
 import { LibsModule } from "@/libs/libs.module.js";
 import { PingProcessor } from "@/queue/jobs/ping.processor.js";
 import { QUEUE_NAMES } from "@/queue/models/queue-names.js";
+import {
+  QuotaReadingSchedule,
+  QuotaReadingScheduleProcessor,
+} from "@/quota-meters/jobs/quota-reading-schedule.js";
+import { QuotaMetersModule } from "@/quota-meters/quota-meters.module.js";
+import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageWriter } from "@/usage/providers/usage-writer.js";
 import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
 
@@ -39,7 +46,11 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
       }),
     }),
     BullModule.registerQueue(...QUEUE_NAMES.map((name) => ({ name }))),
+    CqrsModule.forRoot(),
     LibsModule,
+    // Quota readings mark Provider Accounts Exhausted through UpstreamModule.
+    QuotaMetersModule,
+    UpstreamModule,
   ],
   providers: [
     PingProcessor,
@@ -47,6 +58,8 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     UsageWriter,
     ErrorCaptureRetention,
     ErrorCaptureRetentionProcessor,
+    QuotaReadingSchedule,
+    QuotaReadingScheduleProcessor,
   ],
 })
 export class WorkerModule {}

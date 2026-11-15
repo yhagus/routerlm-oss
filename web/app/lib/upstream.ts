@@ -52,6 +52,8 @@ export interface Provider {
   quirks: ProviderQuirks;
   isEnabled: boolean;
   isFromCatalog: boolean;
+  /** The quota endpoint the gateway reads for its accounts; null when it has none. */
+  quotaReader: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -75,6 +77,33 @@ export interface UpstreamModel {
   updatedAt: string;
 }
 
+/** What a Quota Meter's `used` and `limit` count. */
+export type QuotaMeterUnit = "percent" | "count" | "tokens" | "usd";
+
+/** One quota window of a Provider Account, as its Provider last reported it. */
+export interface QuotaMeter {
+  /** Such as `5h`, `weekly` or `weekly:video`. */
+  key: string;
+  label: string;
+  unit: QuotaMeterUnit;
+  used: number | null;
+  limit: number | null;
+  /** Null when the Provider reports no percentage. */
+  remainingPercent: number | null;
+  isUnlimited: boolean;
+  windowSeconds: number | null;
+  resetsAt: string | null;
+  /** The model group it counts, such as `video`; null when it counts every model. */
+  scope: string | null;
+  observedAt: string;
+}
+
+/** What `POST /provider-accounts/:id/quota-reading` answers, also when the reading failed. */
+export type ProviderAccountQuota = Pick<
+  ProviderAccount,
+  "quotaCheckedAt" | "quotaError" | "quotaMeters"
+>;
+
 /** Never the key itself: only its last four characters. */
 export interface ProviderAccount {
   id: string;
@@ -88,6 +117,16 @@ export interface ProviderAccount {
   disabledReason: string | null;
   /** When its Cooldown ends; null when it is not in one. Only the list carries it. */
   cooldownEndsAt: string | null;
+  /** What put it in Cooldown; `exhausted` while Exhausted, until its Quota Meter resets. */
+  cooldownCause: string | null;
+  /** Keep serving while Exhausted, when the Provider bills the excess some other way. */
+  continueWhenExhausted: boolean;
+  /** When its Quota Meters were last read; null when never. */
+  quotaCheckedAt: string | null;
+  /** Why the last reading failed; null when it succeeded. */
+  quotaError: string | null;
+  /** Sorted by key. Only the list carries them. */
+  quotaMeters: QuotaMeter[];
   lastError: string | null;
   lastErrorAt: string | null;
   createdAt: string;

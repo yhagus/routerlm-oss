@@ -14,15 +14,15 @@ export const providerAccountColumns = {
   disabledReason: providerAccounts.disabledReason,
   lastError: providerAccounts.lastError,
   lastErrorAt: providerAccounts.lastErrorAt,
+  continueWhenExhausted: providerAccounts.continueWhenExhausted,
+  quotaCheckedAt: providerAccounts.quotaCheckedAt,
+  quotaError: providerAccounts.quotaError,
   createdAt: providerAccounts.createdAt,
   updatedAt: providerAccounts.updatedAt,
 };
 
 /** A Provider Account as the dashboard API returns it: never the key, only its last four characters. */
 export type ProviderAccount = Omit<typeof providerAccounts.$inferSelect, "encryptedKey">;
-
-/** A Provider Account in the dashboard's list, with when its Cooldown ends (null when not in one). */
-export type ListedProviderAccount = ProviderAccount & { cooldownEndsAt: Date | null };
 
 type StoredKey = Pick<ProviderAccount, "keyLastFour"> & { encryptedKey: string };
 
