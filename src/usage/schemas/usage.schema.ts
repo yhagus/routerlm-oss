@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
+const MAX_SEARCH_LENGTH = 200;
 
 /** How a request ended, as the Usage page filters it. */
 export const USAGE_STATUSES = ["succeeded", "failed", "cancelled"] as const;
@@ -16,6 +17,13 @@ function commaSeparated<Element extends z.ZodType<unknown, string>>(element: Ele
     .transform((list) => list.split(","))
     .pipe(z.array(element));
 }
+
+/** A free-text search box: trimmed, and blank means no search. */
+export const searchTextSchema = z
+  .string()
+  .trim()
+  .max(MAX_SEARCH_LENGTH)
+  .transform((text) => (text === "" ? undefined : text));
 
 /** Which Usage Logs to list or total. Every filter is optional. */
 export const usageFilterSchema = z.object({
@@ -34,6 +42,11 @@ export const usageFilterSchema = z.object({
    * Alongside `apiKeyId`, true widens the match to the Playground's requests too.
    */
   isPlayground: z.stringbool().optional(),
+  /**
+   * Text in the Model's name, the API Key's name or the error code (ignoring case),
+   * or the Usage Log's exact id.
+   */
+  q: searchTextSchema.optional(),
 });
 export type UsageFilter = z.infer<typeof usageFilterSchema>;
 

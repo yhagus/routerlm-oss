@@ -182,6 +182,86 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
     );
   });
 
+  it("searches Model names, API Key names and error codes, ignoring case", async () => {
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId },
+      { ...SERVED_REQUEST, createdAt, modelId: fastId, apiKeyId: laptopKeyId },
+      {
+        ...SERVED_REQUEST,
+        createdAt,
+        modelId: fastId,
+        apiKeyId: ciKeyId,
+        httpStatus: 504,
+        errorCode: "upstream_timeout",
+      },
+    ]);
+
+    const byModel = await getUsage("?q=SMA").expect(200);
+    const byApiKey = await getUsage("?q=lapTOP").expect(200);
+    const byErrorCode = await getUsage("?q=TIMEOUT").expect(200);
+
+    expect(byModel.body.items).toEqual([expect.objectContaining({ modelName: "smart" })]);
+    expect(byApiKey.body.items).toEqual([expect.objectContaining({ apiKeyName: "Laptop" })]);
+    expect(byErrorCode.body.items).toEqual([
+      expect.objectContaining({ errorCode: "upstream_timeout" }),
+    ]);
+  });
+
+  it("finds a Usage Log by its exact id", async () => {
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    const [{ id }] = await db
+      .insert(usageLogs)
+      .values([
+        { ...SERVED_REQUEST, createdAt, modelId: smartId },
+        { ...SERVED_REQUEST, createdAt, modelId: fastId },
+      ])
+      .returning({ id: usageLogs.id });
+
+    const response = await getUsage(`?q=${id}`).expect(200);
+
+    expect(response.body.items).toEqual([expect.objectContaining({ id })]);
+  });
+
+  it("matches %, _ and \\ in the search literally", async () => {
+    const [{ id: underscoredId }, { id: percentId }, { id: backslashId }] = await db
+      .insert(models)
+      .values([{ name: "gpt_4" }, { name: "50%off" }, { name: "a\\b" }])
+      .returning({ id: models.id });
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, modelId: underscoredId },
+      { ...SERVED_REQUEST, createdAt, modelId: percentId },
+      { ...SERVED_REQUEST, createdAt, modelId: backslashId },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId },
+    ]);
+
+    const underscore = await getUsage("?q=_").expect(200);
+    const percent = await getUsage(`?q=${encodeURIComponent("%")}`).expect(200);
+    const backslash = await getUsage(`?q=${encodeURIComponent("\\")}`).expect(200);
+
+    expect(underscore.body.items).toEqual([expect.objectContaining({ modelName: "gpt_4" })]);
+    expect(percent.body.items).toEqual([expect.objectContaining({ modelName: "50%off" })]);
+    expect(backslash.body.items).toEqual([expect.objectContaining({ modelName: "a\\b" })]);
+  });
+
+  it("combines the search with the other filters, in the list and its totals", async () => {
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId, httpStatus: 502 },
+      { ...SERVED_REQUEST, createdAt, modelId: fastId, apiKeyId: ciKeyId, httpStatus: 502 },
+    ]);
+
+    const response = await getUsage("?q=smart&status=failed").expect(200);
+    const summary = await getUsage("/totals?q=smart&status=failed").expect(200);
+
+    expect(response.body.items).toEqual([
+      expect.objectContaining({ modelName: "smart", httpStatus: 502 }),
+    ]);
+    expect(summary.body).toEqual(expect.objectContaining({ requestCount: 1, failedCount: 1 }));
+  });
+
   it("refuses a list with an element that is not a valid value", async () => {
     await getUsage(`?modelId=${smartId},not-a-uuid`).expect(400);
     await getUsage("/totals?status=failed,,cancelled").expect(400);

@@ -1,5 +1,7 @@
-import { and, eq, gte, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
-import { usageLogs } from "@/db/schemas/index.js";
+import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
+import { QueryBuilder } from "drizzle-orm/pg-core";
+import { z } from "zod";
+import { apiKeys, models, usageLogs } from "@/db/schemas/index.js";
 import type { UsageFilter, UsageStatus } from "../schemas/usage.schema.js";
 
 const FIRST_ERROR_STATUS = 400;
@@ -12,7 +14,39 @@ export function whereFilter(filter: UsageFilter): SQL | undefined {
     filter.modelId === undefined ? undefined : inArray(usageLogs.modelId, filter.modelId),
     callerCondition(filter),
     filter.status === undefined ? undefined : or(...filter.status.map(statusCondition)),
+    filter.q === undefined ? undefined : searchCondition(filter.q),
   );
+}
+
+/** The Usage Logs whose Model name, API Key name or error code contains `text`, or whose id is `text`. */
+function searchCondition(text: string): SQL | undefined {
+  const isUsageLogId = z.uuid().safeParse(text).success;
+  return or(namesOrErrorCodeContain(text), isUsageLogId ? eq(usageLogs.id, text) : undefined);
+}
+
+/**
+ * The Usage Logs whose Model name, API Key name or error code contains `text`, ignoring
+ * case. Subselects rather than joins, so it works in queries that don't join those tables.
+ */
+export function namesOrErrorCodeContain(text: string): SQL | undefined {
+  const pattern = `%${escapeLikeWildcards(text)}%`;
+  const queryBuilder = new QueryBuilder();
+  return or(
+    inArray(
+      usageLogs.modelId,
+      queryBuilder.select({ id: models.id }).from(models).where(ilike(models.name, pattern)),
+    ),
+    inArray(
+      usageLogs.apiKeyId,
+      queryBuilder.select({ id: apiKeys.id }).from(apiKeys).where(ilike(apiKeys.name, pattern)),
+    ),
+    ilike(usageLogs.errorCode, pattern),
+  );
+}
+
+/** Makes `%`, `_` and `\` match themselves: `\` is Postgres's default LIKE escape. */
+function escapeLikeWildcards(text: string): string {
+  return text.replace(/[\\%_]/g, (wildcard) => `\\${wildcard}`);
 }
 
 /**

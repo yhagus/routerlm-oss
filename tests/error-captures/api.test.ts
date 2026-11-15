@@ -161,6 +161,52 @@ describe("Error Captures API (e2e)", () => {
     });
   });
 
+  it("searches Model names, API Key names and error codes, alongside the Usage Log filter", async () => {
+    const [{ id: fastId }] = await db
+      .insert(models)
+      .values({ name: "fast" })
+      .returning({ id: models.id });
+    const [{ id: laptopKeyId }] = await db
+      .insert(apiKeys)
+      .values({ name: "Laptop", keyId: "laptop", hash: "hash-laptop" })
+      .returning({ id: apiKeys.id });
+    const [{ id: timedOutLogId }] = await db
+      .insert(usageLogs)
+      .values({
+        createdAt: RECEIVED_AT,
+        apiKeyId: laptopKeyId,
+        modelId: fastId,
+        clientProtocol: "openai-chat",
+        isStreamed: false,
+        httpStatus: 504,
+        errorCode: "upstream_timeout",
+        requestBytes: 20,
+        responseBytes: 0,
+        durationMs: 30000,
+        attemptCount: 1,
+      })
+      .returning({ id: usageLogs.id });
+    await db.insert(errorCaptures).values([
+      { usageLogId, requestHeaders: {}, requestBody: "{}" },
+      { usageLogId: timedOutLogId, requestHeaders: {}, requestBody: "{}" },
+    ]);
+
+    const byModel = await getCaptures("?q=SMART").expect(200);
+    const byApiKey = await getCaptures("?q=laptop").expect(200);
+    const byErrorCode = await getCaptures("?q=Timeout").expect(200);
+    const withOtherLog = await getCaptures(`?q=smart&usageLogId=${timedOutLogId}`).expect(200);
+
+    expect(byModel.body.items).toEqual([expect.objectContaining({ usageLogId })]);
+    expect(byApiKey.body.items).toEqual([
+      expect.objectContaining({ usageLogId: timedOutLogId, apiKeyName: "Laptop" }),
+    ]);
+    expect(byErrorCode.body.total).toBe(1);
+    expect(byErrorCode.body.items).toEqual([
+      expect.objectContaining({ errorCode: "upstream_timeout" }),
+    ]);
+    expect(withOtherLog.body.total).toBe(0);
+  });
+
   it("refuses requests without a signed-in User", async () => {
     await getCaptures("", "").expect(401);
   });
