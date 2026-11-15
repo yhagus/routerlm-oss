@@ -90,6 +90,8 @@ export interface InferenceRequest {
   temperature?: number;
   topP?: number;
   stopSequences?: string[];
+  /** The client's own `prompt_cache_key`, for Providers whose quirks pass it on. */
+  promptCacheKey?: string;
   /** Null for a non-streaming request. */
   stream: { includeUsage: boolean } | null;
 }

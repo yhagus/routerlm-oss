@@ -2,8 +2,9 @@ import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
 import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
+import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version.js";
 import { AttemptFailedError, ClientCancelledError } from "../models/attempt-failure.js";
-import { isQuotaExhaustedError } from "../models/quota-exhausted-error.js";
+import { type ExhaustedErrorCode, isQuotaExhaustedError } from "../models/quota-exhausted-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
@@ -214,7 +215,7 @@ export class UpstreamClient {
     const written: UpstreamHttpRequest = call.converter.writeRequest(call.request, call.target);
     const response = await this.http.post<Response>(written.url, {
       body: written.body,
-      headers: { ...written.headers, ...call.authHeaders },
+      headers: { "user-agent": GATEWAY_USER_AGENT, ...written.headers, ...call.authHeaders },
       responseType: "response",
       signal,
       // Fallback across Provider Accounts and Routes is the gateway's job.
@@ -239,13 +240,13 @@ function parseJsonBody(text: string): unknown {
   }
 }
 
-function exhaustedErrorCodesOf(target: UpstreamTarget): number[] {
+function exhaustedErrorCodesOf(target: UpstreamTarget): ExhaustedErrorCode[] {
   return providerQuirksSchema.parse(target.quirks).exhaustedErrorCodes ?? [];
 }
 
 async function failedResponse(
   response: HttpResponse<Response>,
-  exhaustedErrorCodes: number[],
+  exhaustedErrorCodes: ExhaustedErrorCode[],
 ): Promise<AttemptFailedError> {
   const upstreamResponse = {
     headers: Object.fromEntries(response.headers.entries()),
@@ -262,7 +263,7 @@ async function failedResponse(
 function failureReasonOf(
   status: number,
   body: string,
-  exhaustedErrorCodes: number[],
+  exhaustedErrorCodes: ExhaustedErrorCode[],
 ): AttemptFailureReason {
   if (isQuotaExhaustedError(body, exhaustedErrorCodes)) {
     return "exhausted";

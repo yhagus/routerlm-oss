@@ -17,6 +17,8 @@ export const usageSchema = z.object({
   completion_tokens_details: z.object({ reasoning_tokens: z.number().nullish() }).nullish(),
   // DeepSeek reports cache hits under its own name.
   prompt_cache_hit_tokens: z.number().nullish(),
+  // Kimi Code may report them beside the other counts.
+  cached_tokens: z.number().nullish(),
 });
 export type OpenAiUsage = z.infer<typeof usageSchema>;
 
@@ -30,7 +32,10 @@ export type OpenAiUsage = z.infer<typeof usageSchema>;
 export function tokenUsageOf(usage: OpenAiUsage | undefined): TokenUsage {
   const promptTokens = usage?.prompt_tokens ?? null;
   const cacheReadTokens =
-    usage?.prompt_tokens_details?.cached_tokens ?? usage?.prompt_cache_hit_tokens ?? null;
+    usage?.prompt_tokens_details?.cached_tokens ??
+    usage?.cached_tokens ??
+    usage?.prompt_cache_hit_tokens ??
+    null;
   const cacheWriteTokens =
     usage === undefined ? null : (usage.prompt_tokens_details?.cache_creation_input_tokens ?? 0);
   return {

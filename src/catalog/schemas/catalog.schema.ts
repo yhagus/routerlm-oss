@@ -5,6 +5,7 @@ import {
   QUOTA_READERS,
   UPSTREAM_PROTOCOLS,
 } from "@/db/schemas/index.js";
+import { REASONING_EFFORTS } from "@/inference/models/internal-format.js";
 
 // The shape of one Catalog file: a Provider and the Upstream Models it sells.
 // Field names match the `providers` and `upstream_models` columns.
@@ -26,7 +27,25 @@ export const providerQuirksSchema = z.strictObject({
    * markers on message content parts, so the adapter keeps them.
    */
   acceptsCacheControl: z.boolean().optional(),
-  /** openai-chat only. The Provider accepts `prompt_cache_key`. */
+  /**
+   * openai-chat only. The Provider takes reasoning as a `thinking` object,
+   * `{type: "enabled", effort?}`, and refuses `reasoning_effort`. Thinking is
+   * always enabled: these Providers' models cannot turn it off.
+   */
+  reasoningAsThinking: z
+    .strictObject({
+      /** What each reasoning effort of the internal format is called at the Provider. */
+      efforts: z.record(z.enum(REASONING_EFFORTS), z.string().min(1)),
+      /** The Upstream Models that accept no effort, by their id at the Provider. */
+      upstreamModelsWithoutEffort: z.array(z.string().min(1)).optional(),
+    })
+    .optional(),
+  /**
+   * openai-chat only. A `prompt_cache_key` the client sent is passed on as
+   * it is; the gateway adds none of its own (that is `acceptsPromptCacheKey`).
+   */
+  forwardsClientPromptCacheKey: z.boolean().optional(),
+  /** openai-chat only. The Provider accepts `prompt_cache_key`, and gets the gateway's. */
   acceptsPromptCacheKey: z.boolean().optional(),
   /**
    * anthropic-messages only. How many cache markers the gateway may add per
@@ -42,10 +61,11 @@ export const providerQuirksSchema = z.strictObject({
   /**
    * The error codes with which the Provider refuses a Provider Account whose
    * plan quota ran out, making it Exhausted instead of putting it in
-   * Cooldown. Read from `base_resp.status_code`, `status_code`, `code`, or a
-   * `(code)` at the end of `error.message`.
+   * Cooldown. A number is read from `base_resp.status_code`, `status_code`,
+   * `code`, or a `(code)` at the end of `error.message`; a string from a
+   * `code` or `type` anywhere in the error body's nested objects.
    */
-  exhaustedErrorCodes: z.array(z.int()).optional(),
+  exhaustedErrorCodes: z.array(z.union([z.int(), z.string().min(1)])).optional(),
   /** Providers with a quota reader: the base URL its quota endpoint path is appended to. */
   quotaBaseUrl: z.url().optional(),
 });
