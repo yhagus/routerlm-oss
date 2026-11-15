@@ -21,6 +21,7 @@
     "usesMaxCompletionTokens": true,
     "exhaustedErrorCodes": ["exceeded_current_quota_error"]
   },
+  "quotaReader": "kimi-code",
   "source": {
     "urls": ["https://www.kimi.com/coding/docs/en/", "https://api.kimi.com/coding/v1/models"],
     "retrievedOn": "2026-11-15"

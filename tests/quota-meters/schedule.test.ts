@@ -4,9 +4,15 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import { type Queue, QueueEvents } from "bullmq";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { type QuotaReaderName, providerAccounts, providers } from "@/db/schemas/index.js";
+import {
+  type QuotaReaderName,
+  providerAccounts,
+  providers,
+  quotaMeters,
+} from "@/db/schemas/index.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { FakeUpstream } from "../support/fake-upstream.js";
+import { USAGES_PATH, usagesReply } from "../support/kimi-code-usages.js";
 import { remainsAtPercentReply } from "../support/minimax-m-plan-remains.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
@@ -63,7 +69,8 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
         slug: `plan-${quotaReader ?? "none"}`,
         name: "Plan",
         protocol: "anthropic-messages",
-        baseUrl: "https://api.plan.example/anthropic",
+        // Where the Kimi Code reader asks; the MiniMax M Plan one asks the quirk's URL.
+        baseUrl: fakeUpstream.baseUrl,
         authStyle: "bearer",
         quirks: { quotaBaseUrl: fakeUpstream.baseUrl },
         quotaReader,
@@ -115,6 +122,25 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
       .from(providerAccounts)
       .where(eq(providerAccounts.id, readAccountId));
     expect(account.quotaCheckedAt).not.toBeNull();
+  });
+
+  it("reads a Kimi Code account's meters from its Provider's base URL", async () => {
+    const accountId = await insertAccount("kimi-code");
+    fakeUpstream.reply(usagesReply());
+
+    await runReadingTick();
+
+    expect(fakeUpstream.lastRequest.path).toBe(USAGES_PATH);
+    const meters = await db
+      .select({ key: quotaMeters.key })
+      .from(quotaMeters)
+      .where(eq(quotaMeters.providerAccountId, accountId));
+    expect(meters.map((meter) => meter.key).sort()).toEqual([
+      "5h",
+      "7d",
+      "month-code",
+      "month-total",
+    ]);
   });
 
   it("reads every minute while a meter is below 10%, and every 5 minutes once it recovers", async () => {

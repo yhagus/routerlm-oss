@@ -66,7 +66,10 @@ export const providerQuirksSchema = z.strictObject({
    * `code` or `type` anywhere in the error body's nested objects.
    */
   exhaustedErrorCodes: z.array(z.union([z.int(), z.string().min(1)])).optional(),
-  /** Providers with a quota reader: the base URL its quota endpoint path is appended to. */
+  /**
+   * Providers whose quota reader asks another host than `baseUrl`: the base
+   * URL its quota endpoint path is appended to.
+   */
   quotaBaseUrl: z.url().optional(),
 });
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
