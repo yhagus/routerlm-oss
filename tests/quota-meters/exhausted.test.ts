@@ -78,6 +78,7 @@ describe("Exhausted Provider Accounts (e2e)", () => {
   let apiKey: string;
   let cookie: string;
   let primaryAccountId: string;
+  let backupAccountId: string;
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -103,7 +104,10 @@ describe("Exhausted Provider Accounts (e2e)", () => {
       quotaBaseUrl: quotaUpstream.baseUrl,
       exhaustedErrorCodes: [2056, 2067],
     });
-    await addProviderAccount(app, db, providerId, { key: BACKUP_KEY, priority: 1 });
+    backupAccountId = await addProviderAccount(app, db, providerId, {
+      key: BACKUP_KEY,
+      priority: 1,
+    });
     ({ key: apiKey } = await insertApiKey(app, db));
   });
 
@@ -120,10 +124,13 @@ describe("Exhausted Provider Accounts (e2e)", () => {
       .send(TEXT_REQUEST);
   }
 
-  async function readQuotaNow(reply: FakeReply): Promise<void> {
+  async function readQuotaNow(
+    reply: FakeReply,
+    providerAccountId = primaryAccountId,
+  ): Promise<void> {
     quotaUpstream.reply(reply);
     await request(app.getHttpServer())
-      .post(`/api/provider-accounts/${primaryAccountId}/quota-reading`)
+      .post(`/api/provider-accounts/${providerAccountId}/quota-reading`)
       .set("Cookie", cookie)
       .expect(200);
   }
@@ -190,6 +197,30 @@ describe("Exhausted Provider Accounts (e2e)", () => {
 
     expect(await listedPrimaryAccount()).toMatchObject({ cooldownCause: "rate_limited" });
     expect(quotaUpstream.requests).toEqual([]);
+  });
+
+  it("answers 429 when every Provider Account is Exhausted", async () => {
+    const inAnHour = new Date(Date.now() + HOUR_MS);
+    await readQuotaNow(remainsAt(0, inAnHour, inAnHour));
+    await readQuotaNow(remainsAt(0, inAnHour, inAnHour), backupAccountId);
+
+    const response = await chat().expect(429);
+
+    expect(response.body.error).toMatchObject({
+      code: "upstream_rate_limited",
+      message: expect.stringContaining("Exhausted"),
+    });
+    expect(inferenceUpstream.requests).toEqual([]);
+  });
+
+  it("answers 429 when the last Provider Account left is refused as Exhausted", async () => {
+    const inAnHour = new Date(Date.now() + HOUR_MS);
+    await readQuotaNow(remainsAt(0, inAnHour, inAnHour), backupAccountId);
+    inferenceUpstream.reply(USAGE_LIMIT_EXCEEDED);
+
+    const response = await chat().expect(429);
+
+    expect(response.body.error.message).toContain("Exhausted");
   });
 
   it("keeps routing to an account at 0% that may continue when Exhausted", async () => {
