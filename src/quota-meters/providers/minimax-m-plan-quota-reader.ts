@@ -114,20 +114,27 @@ export class MiniMaxMPlanQuotaReader implements QuotaReader {
       });
       return response.data;
     } catch (error) {
-      throw new QuotaReadError(failureMessageOf(error), { cause: error });
+      throw asQuotaReadError(error);
     }
   }
 }
 
-function failureMessageOf(error: unknown): string {
+/** The QuotaReadError for an HTTP failure; any other error is a bug and is thrown as it is. */
+function asQuotaReadError(error: unknown): QuotaReadError {
   if (error instanceof HttpTimeoutError) {
-    return `The MiniMax quota endpoint timed out after ${error.timeoutMs} ms`;
+    return new QuotaReadError(`The MiniMax quota endpoint timed out after ${error.timeoutMs} ms`, {
+      cause: error,
+    });
   }
   if (error instanceof HttpResponseError) {
-    return `The MiniMax quota endpoint answered HTTP ${error.status}`;
+    return new QuotaReadError(`The MiniMax quota endpoint answered HTTP ${error.status}`, {
+      cause: error,
+    });
   }
   if (error instanceof HttpClientError) {
-    return `The MiniMax quota endpoint could not be reached: ${error.message}`;
+    return new QuotaReadError(`The MiniMax quota endpoint could not be reached: ${error.message}`, {
+      cause: error,
+    });
   }
   throw error;
 }
