@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { AUTH_STYLES, CAPABILITIES, UPSTREAM_PROTOCOLS } from "@/db/schemas/index.js";
+import {
+  AUTH_STYLES,
+  CAPABILITIES,
+  QUOTA_READERS,
+  UPSTREAM_PROTOCOLS,
+} from "@/db/schemas/index.js";
 
 // The shape of one Catalog file: a Provider and the Upstream Models it sells.
 // Field names match the `providers` and `upstream_models` columns.
@@ -74,6 +79,8 @@ export const catalogProviderSchema = z.strictObject({
   baseUrl: z.url(),
   authStyle: z.enum(AUTH_STYLES),
   quirks: providerQuirksSchema,
+  /** Subscription Providers only: the code that reads its Quota Meters (ADR 0010). */
+  quotaReader: z.enum(QUOTA_READERS).optional(),
   source: sourceSchema,
   notes: z.string().optional(),
   upstreamModels: z.array(upstreamModelSchema),

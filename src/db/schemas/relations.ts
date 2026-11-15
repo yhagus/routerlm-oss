@@ -26,6 +26,14 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.providers.id,
       optional: false,
     }),
+    quotaMeters: r.many.quotaMeters(),
+  },
+  quotaMeters: {
+    providerAccount: r.one.providerAccounts({
+      from: r.quotaMeters.providerAccountId,
+      to: r.providerAccounts.id,
+      optional: false,
+    }),
   },
   upstreamModels: {
     provider: r.one.providers({

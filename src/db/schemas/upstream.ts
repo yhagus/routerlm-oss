@@ -25,6 +25,14 @@ export type AuthStyle = (typeof AUTH_STYLES)[number];
 export const CAPABILITIES = ["vision", "tools", "reasoning", "structured-output"] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
+/** The quota endpoint shapes the gateway can read (ADR 0010); a Provider names one, or none. */
+export const QUOTA_READERS = ["minimax-m-plan"] as const;
+export type QuotaReaderName = (typeof QUOTA_READERS)[number];
+
+/** What a Quota Meter's `used` and `limit` count. */
+export const QUOTA_METER_UNITS = ["percent", "count", "tokens", "usd"] as const;
+export type QuotaMeterUnit = (typeof QUOTA_METER_UNITS)[number];
+
 /**
  * Per-Provider configuration for small deviations from its Protocol (ADR 0003).
  * The Protocol adapters own its keys; the database only stores the object.
@@ -43,6 +51,8 @@ export const providers = pgTable("providers", {
   baseUrl: text("base_url").notNull(),
   authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),
   quirks: jsonb("quirks").$type<ProviderQuirks>().notNull().default({}),
+  // Null for a Provider that reports no quota, such as a pay-as-you-go API.
+  quotaReader: text("quota_reader", { enum: QUOTA_READERS }),
   isEnabled: boolean("is_enabled").notNull().default(true),
   isFromCatalog: boolean("is_from_catalog").notNull().default(false),
   createdAt: createdAt(),
@@ -67,11 +77,50 @@ export const providerAccounts = pgTable(
     disabledReason: text("disabled_reason"),
     lastError: text("last_error"),
     lastErrorAt: at("last_error_at"),
+    // Keep serving while Exhausted, when the Provider bills the excess some other way.
+    continueWhenExhausted: boolean("continue_when_exhausted").notNull().default(false),
+    // When its Quota Meters were last read, successfully or not.
+    quotaCheckedAt: at("quota_checked_at"),
+    // Why the last reading failed; null after a successful one.
+    quotaError: text("quota_error"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
     index("provider_accounts_provider_id_priority_idx").on(table.providerId, table.priority),
+  ],
+);
+
+/**
+ * The latest reading of one Quota Meter of a Provider Account (ADR 0010),
+ * replaced on every reading. There is no history.
+ */
+export const quotaMeters = pgTable(
+  "quota_meters",
+  {
+    id: id(),
+    providerAccountId: uuid("provider_account_id")
+      .notNull()
+      .references(() => providerAccounts.id, { onDelete: "cascade" }),
+    // Such as `5h`, `weekly` or `weekly:video`; unique per Provider Account.
+    key: text("key").notNull(),
+    label: text("label").notNull(),
+    unit: text("unit", { enum: QUOTA_METER_UNITS }).notNull(),
+    // Null when the Provider reports only a percentage.
+    used: numeric("used", { mode: "number" }),
+    limit: numeric("limit", { mode: "number" }),
+    remainingPercent: numeric("remaining_percent", { mode: "number" }),
+    isUnlimited: boolean("is_unlimited").notNull().default(false),
+    windowSeconds: integer("window_seconds"),
+    resetsAt: at("resets_at"),
+    // The model group the meter counts, such as `video`; null when it counts every model.
+    scope: text("scope"),
+    observedAt: at("observed_at").notNull(),
+    // The Provider's own entry the meter was read from, with what the row doesn't hold.
+    raw: jsonb("raw").$type<unknown>().notNull(),
+  },
+  (table) => [
+    unique("quota_meters_provider_account_id_key_unique").on(table.providerAccountId, table.key),
   ],
 );
 

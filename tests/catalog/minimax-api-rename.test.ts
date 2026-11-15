@@ -51,8 +51,9 @@ describe("MiniMax API rename migration (e2e)", () => {
   it(
     "renames the MiniMax Provider in place, keeping its Provider Accounts and Routes, and the seeder adds no duplicate",
     async () => {
-      const { databaseUrl, db } = await openPreRenameDatabase();
-      const minimax = await insertMiniMaxWithRoute(db, "MiniMax");
+      const database = await openPreRenameDatabase();
+      const { databaseUrl, db } = database;
+      const minimax = await insertMiniMaxWithRoute(database, "MiniMax");
 
       await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
       await runFile("bun", ["src/seed.ts"], {
@@ -86,8 +87,9 @@ describe("MiniMax API rename migration (e2e)", () => {
   );
 
   it("keeps the name an operator gave the Provider and changes only its slug", async () => {
-    const { db } = await openPreRenameDatabase();
-    const minimax = await insertMiniMaxWithRoute(db, "MiniMax (team)");
+    const database = await openPreRenameDatabase();
+    const { db } = database;
+    const minimax = await insertMiniMaxWithRoute(database, "MiniMax (team)");
 
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
 
@@ -112,39 +114,32 @@ async function copyMigrationsBeforeRename(): Promise<string> {
 
 /** The MiniMax Provider as the seeder created it before the rename, in use by one Route. */
 async function insertMiniMaxWithRoute(
-  db: Database,
+  { pool, db }: PreRenameDatabase,
   providerName: string,
 ): Promise<{ providerId: string; accountId: string; routeId: string }> {
-  const [provider] = await db
-    .insert(schema.providers)
-    .values({
-      slug: "minimax",
-      name: providerName,
-      protocol: "anthropic-messages",
-      baseUrl: "https://api.minimax.io/anthropic",
-      authStyle: "bearer",
-      quirks: { cacheMarkerLimit: 0 },
-      isFromCatalog: true,
-    })
-    .returning();
-  if (!provider) throw new Error("the MiniMax Provider was not inserted");
-
-  const [account] = await db
-    .insert(schema.providerAccounts)
-    .values({
-      providerId: provider.id,
-      name: "Team key",
-      encryptedKey: "not-a-real-ciphertext",
-      keyLastFour: "abcd",
-    })
-    .returning();
+  // Plain SQL: Drizzle names every column of today's schema in an insert,
+  // and later migrations add columns this database doesn't have yet.
+  const providerId = await insertReturningId(
+    pool,
+    `insert into providers (slug, name, protocol, base_url, auth_style, quirks, is_from_catalog)
+     values ('minimax', $1, 'anthropic-messages', 'https://api.minimax.io/anthropic', 'bearer',
+             '{"cacheMarkerLimit":0}', true)
+     returning id`,
+    [providerName],
+  );
+  const accountId = await insertReturningId(
+    pool,
+    `insert into provider_accounts (provider_id, name, encrypted_key, key_last_four)
+     values ($1, 'Team key', 'not-a-real-ciphertext', 'abcd')
+     returning id`,
+    [providerId],
+  );
   const [upstreamModel] = await db
     .insert(schema.upstreamModels)
-    .values({ providerId: provider.id, upstreamModelId: "MiniMax-M3", contextSize: 1000000 })
+    .values({ providerId, upstreamModelId: "MiniMax-M3", contextSize: 1000000 })
     .returning();
   const [model] = await db.insert(schema.models).values({ name: "minimax-m3" }).returning();
-  if (!account || !upstreamModel || !model)
-    throw new Error("the MiniMax fixtures were not inserted");
+  if (!upstreamModel || !model) throw new Error("the MiniMax fixtures were not inserted");
 
   const [route] = await db
     .insert(schema.routes)
@@ -152,5 +147,12 @@ async function insertMiniMaxWithRoute(
     .returning();
   if (!route) throw new Error("the MiniMax Route was not inserted");
 
-  return { providerId: provider.id, accountId: account.id, routeId: route.id };
+  return { providerId, accountId, routeId: route.id };
+}
+
+async function insertReturningId(pool: Pool, insert: string, values: string[]): Promise<string> {
+  const { rows } = await pool.query<{ id: string }>(insert, values);
+  const id = rows[0]?.id;
+  if (id === undefined) throw new Error("the row was not inserted");
+  return id;
 }

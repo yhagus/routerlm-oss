@@ -1,4 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import type { FactoryProvider } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import type { Env } from "@/config/schemas/env.schema.js";
 
 const ALGORITHM = "aes-256-gcm";
 // 96-bit IVs are what GCM is designed for.
@@ -49,3 +52,11 @@ export class ProviderKeyCipher {
     ]).toString("utf8");
   }
 }
+
+/** Registers ProviderKeyCipher with the `ENCRYPTION_KEY` from the environment. */
+export const providerKeyCipherProvider: FactoryProvider<ProviderKeyCipher> = {
+  provide: ProviderKeyCipher,
+  inject: [ConfigService],
+  useFactory: (config: ConfigService<Env, true>) =>
+    new ProviderKeyCipher(config.get("ENCRYPTION_KEY", { infer: true })),
+};

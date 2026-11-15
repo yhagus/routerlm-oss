@@ -50,6 +50,8 @@ const providerAccountFieldsSchema = z.strictObject({
   // Lower runs first.
   priority: z.int().nonnegative(),
   isEnabled: z.boolean(),
+  // Keep serving while Exhausted, when the Provider bills the excess some other way.
+  continueWhenExhausted: z.boolean(),
 });
 
 /** A missing or blank `name` leaves it to CreateProviderAccountCommand to generate one. */
@@ -62,6 +64,7 @@ export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
   providerId: z.uuid(),
   priority: z.int().nonnegative().optional(),
   isEnabled: z.boolean().optional(),
+  continueWhenExhausted: z.boolean().optional(),
 });
 export type NewProviderAccount = z.infer<typeof newProviderAccountSchema>;
 

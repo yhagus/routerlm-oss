@@ -7,6 +7,7 @@
   "quirks": {
     "cacheMarkerLimit": 0
   },
+  "quotaReader": "minimax-m-plan",
   "source": {
     "urls": [
       "https://platform.minimax.io/docs/m-plan/intro.md",
