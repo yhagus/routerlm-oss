@@ -29,5 +29,6 @@ Each folder exists only when it has something in it, and a spec file sits next t
 
 - More files per module: each operation has a command or query class, a handler and an entry in `handlers/index.ts`.
 - Inference requests go through `CommandBus` (`RunInferenceCommand`). Dispatching through the bus is one map lookup, which is negligible next to the upstream call.
-- A handler shares logic with another handler in the same module through plain functions in `models/`, not through the bus. Another module reaches a module's operation by dispatching its command or query.
+- A handler shares logic with another handler in the same module through plain functions in `models/`, not through the bus. Another module reaches a module's operation by dispatching its command or query, never by importing its handler; `.oxlintrc.json` (`no-restricted-imports`) enforces this.
+- Another module may inject a provider the owning module exports when it is infrastructure rather than an operation: the snapshot, the Redis connection, the usage producer, the API key guard, and the stores, ciphers and credentials the inference hot path uses on every Attempt (`CooldownStore`, `ProviderAccountHealth`, `ProviderKeyCipher`, `ProviderAccountCredentials`). Anything else, such as reading an account's credential from quota-meters, goes through a query.
 - `EventBus` runs in memory and loses events if the process dies. Work that must not be lost, such as Usage Log writes, stays on BullMQ (`jobs/`).
