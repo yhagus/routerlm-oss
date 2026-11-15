@@ -12,16 +12,13 @@ import {
   addProviderAccount,
   insertAnthropicMessagesModel,
   insertApiKey,
+  setProviderQuirks,
   UPSTREAM_KEY,
 } from "../support/inference.js";
 import { GENERAL_REMAINS, REMAINS_PATH, remainsReply } from "../support/minimax-m-plan-remains.js";
 
-// The quota reader asks its own fake upstream, so its replies never take the
-// place of an inference reply queued on the other one.
-const quotaUpstream = await FakeUpstream.start();
-process.env.MINIMAX_M_PLAN_QUOTA_BASE_URL = quotaUpstream.baseUrl;
-const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
-const { deleteAllUpstreamData } = await import("../support/upstream.js");
+import { createTestApp, setUpFirstUser } from "../support/test-app.js";
+import { deleteAllUpstreamData } from "../support/upstream.js";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
@@ -74,6 +71,10 @@ describe("Exhausted Provider Accounts (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
   let inferenceUpstream: FakeUpstream;
+  // The quota reader asks its own fake upstream, so its replies never take the
+  // place of an inference reply queued on the other one.
+  let quotaUpstream: FakeUpstream;
+  let providerId: string;
   let apiKey: string;
   let cookie: string;
   let primaryAccountId: string;
@@ -81,6 +82,7 @@ describe("Exhausted Provider Accounts (e2e)", () => {
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
     inferenceUpstream = await FakeUpstream.start();
+    quotaUpstream = await FakeUpstream.start();
   });
 
   beforeEach(async () => {
@@ -92,12 +94,16 @@ describe("Exhausted Provider Accounts (e2e)", () => {
       modelName: "smart",
       baseUrl: inferenceUpstream.baseUrl,
     });
-    primaryAccountId = inserted.providerAccountId;
+    ({ providerAccountId: primaryAccountId, providerId } = inserted);
     await db
       .update(providers)
       .set({ quotaReader: "minimax-m-plan" })
-      .where(eq(providers.id, inserted.providerId));
-    await addProviderAccount(app, db, inserted.providerId, { key: BACKUP_KEY, priority: 1 });
+      .where(eq(providers.id, providerId));
+    await setProviderQuirks(app, db, providerId, {
+      quotaBaseUrl: quotaUpstream.baseUrl,
+      exhaustedErrorCodes: [2056, 2067],
+    });
+    await addProviderAccount(app, db, providerId, { key: BACKUP_KEY, priority: 1 });
     ({ key: apiKey } = await insertApiKey(app, db));
   });
 
@@ -174,6 +180,17 @@ describe("Exhausted Provider Accounts (e2e)", () => {
       });
     },
   );
+
+  it("treats a 2056 refusal as a rate limit at a Provider whose data names no exhausted error codes", async () => {
+    await setProviderQuirks(app, db, providerId, { quotaBaseUrl: quotaUpstream.baseUrl });
+    inferenceUpstream.reply(USAGE_LIMIT_EXCEEDED);
+    inferenceUpstream.reply(SUCCESS);
+
+    await chat().expect(200);
+
+    expect(await listedPrimaryAccount()).toMatchObject({ cooldownCause: "rate_limited" });
+    expect(quotaUpstream.requests).toEqual([]);
+  });
 
   it("keeps routing to an account at 0% that may continue when Exhausted", async () => {
     await db

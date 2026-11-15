@@ -5,7 +5,8 @@ import type { QuotaMeterReading } from "./quota-meter.js";
  * shape (ADR 0010). Throws QuotaReadError when the reading fails.
  */
 export interface QuotaReader {
-  read(providerAccountKey: string): Promise<QuotaMeterReading[]>;
+  /** @param quotaBaseUrl The Provider's `quotaBaseUrl` quirk. */
+  read(providerAccountKey: string, quotaBaseUrl: string): Promise<QuotaMeterReading[]>;
 }
 
 /** A reading that failed: the Provider refused it, timed out or answered something unreadable. */

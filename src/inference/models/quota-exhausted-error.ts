@@ -1,21 +1,24 @@
-// MiniMax's error codes for a Provider Account that is out of plan quota:
-// 2056 (usage limit exceeded) and 2067 (plan limit reached with Credits off).
-const QUOTA_EXHAUSTED_CODES = new Set([2056, 2067]);
-
 // MiniMax's Anthropic-compatible endpoint puts the code at the end of the
 // message only, e.g. "usage limit exceeded, ... resets at <time> (2056)".
 const CODE_AT_END_OF_MESSAGE = /\((\d+)\)\s*$/;
 
 /**
- * Whether a failed upstream answer says its Provider Account ran out of plan
- * quota (GLOSSARY "Exhausted"), rather than failing in a way a Cooldown fits.
+ * Whether an upstream answer says its Provider Account is Exhausted
+ * (GLOSSARY), with one of the codes its Provider's `exhaustedErrorCodes`
+ * quirk names, rather than failing in a way a Cooldown fits.
  */
-export function isQuotaExhaustedError(responseBody: string): boolean {
+export function isQuotaExhaustedError(
+  responseBody: string,
+  exhaustedErrorCodes: readonly number[],
+): boolean {
+  if (exhaustedErrorCodes.length === 0) {
+    return false;
+  }
   const body = parsedObject(responseBody);
   if (body === null) {
     return false;
   }
-  return errorCodesOf(body).some((code) => QUOTA_EXHAUSTED_CODES.has(code));
+  return errorCodesOf(body).some((code) => exhaustedErrorCodes.includes(code));
 }
 
 /** The codes the error names: `base_resp.status_code`, `status_code`, `code`, and the one in `error.message`. */

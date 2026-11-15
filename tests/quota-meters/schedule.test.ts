@@ -15,7 +15,6 @@ const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
 const fakeUpstream = await FakeUpstream.start();
-process.env.MINIMAX_M_PLAN_QUOTA_BASE_URL = fakeUpstream.baseUrl;
 const { WorkerModule } = await import("@/worker.module.js");
 const { QUOTA_METERS_QUEUE } = await import("@/queue/models/queue-names.js");
 const { QUOTA_READING_SCHEDULER } = await import("@/quota-meters/jobs/quota-reading-schedule.js");
@@ -66,6 +65,7 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
         protocol: "anthropic-messages",
         baseUrl: "https://api.plan.example/anthropic",
         authStyle: "bearer",
+        quirks: { quotaBaseUrl: fakeUpstream.baseUrl },
         quotaReader,
       })
       .onConflictDoUpdate({ target: providers.slug, set: { name: "Plan" } })

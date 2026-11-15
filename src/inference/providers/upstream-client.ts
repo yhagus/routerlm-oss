@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
+import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import { AttemptFailedError, ClientCancelledError } from "../models/attempt-failure.js";
 import { isQuotaExhaustedError } from "../models/quota-exhausted-error.js";
@@ -208,7 +209,7 @@ export class UpstreamClient {
       redirect: "error",
     });
     if (!response.ok) {
-      throw await failedResponse(response);
+      throw await failedResponse(response, exhaustedErrorCodesOf(call.target));
     }
     return response;
   }
@@ -224,21 +225,32 @@ function parseJsonBody(text: string): unknown {
   }
 }
 
-async function failedResponse(response: HttpResponse<Response>): Promise<AttemptFailedError> {
+function exhaustedErrorCodesOf(target: UpstreamTarget): number[] {
+  return providerQuirksSchema.parse(target.quirks).exhaustedErrorCodes ?? [];
+}
+
+async function failedResponse(
+  response: HttpResponse<Response>,
+  exhaustedErrorCodes: number[],
+): Promise<AttemptFailedError> {
   const upstreamResponse = {
     headers: Object.fromEntries(response.headers.entries()),
     body: await response.data.text(),
   };
   return new AttemptFailedError(
-    failureReasonOf(response.status, upstreamResponse.body),
+    failureReasonOf(response.status, upstreamResponse.body, exhaustedErrorCodes),
     response.status,
     `The upstream answered ${response.status}`,
     upstreamResponse,
   );
 }
 
-function failureReasonOf(status: number, body: string): AttemptFailureReason {
-  if (isQuotaExhaustedError(body)) {
+function failureReasonOf(
+  status: number,
+  body: string,
+  exhaustedErrorCodes: number[],
+): AttemptFailureReason {
+  if (isQuotaExhaustedError(body, exhaustedErrorCodes)) {
     return "exhausted";
   }
   if (status === 429) {

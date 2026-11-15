@@ -9,10 +9,10 @@ import {
 import { z } from "zod";
 import type { QuotaMeterReading } from "../models/quota-meter.js";
 import { type QuotaReader, QuotaReadError } from "../models/quota-reader.js";
+import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
-/** The HTTP client of this reader, whose base URL is MINIMAX_M_PLAN_QUOTA_BASE_URL. */
-export const MINIMAX_M_PLAN_QUOTA_CLIENT = "minimax-m-plan-quota";
-const REMAINS_PATH = "/token_plan/remains";
+const REMAINS_PATH = "token_plan/remains";
+const TRAILING_SLASH = /\/$/;
 
 /** The entry that counts every model; any other entry counts one model group. */
 const GENERAL_MODEL_GROUP = "general";
@@ -83,14 +83,14 @@ const PLAN_WINDOWS = [
 
 /**
  * Reads MiniMax M Plan's 5-hour and weekly windows from `GET
- * /v1/token_plan/remains`, which takes the M Plan key as a Bearer token.
+ * <quotaBaseUrl>/token_plan/remains`, which takes the M Plan key as a Bearer token.
  */
 @Injectable()
 export class MiniMaxMPlanQuotaReader implements QuotaReader {
-  constructor(@InjectHttpClient(MINIMAX_M_PLAN_QUOTA_CLIENT) private readonly http: HttpClient) {}
+  constructor(@InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient) {}
 
-  async read(providerAccountKey: string): Promise<QuotaMeterReading[]> {
-    const body = await this.fetchRemains(providerAccountKey);
+  async read(providerAccountKey: string, quotaBaseUrl: string): Promise<QuotaMeterReading[]> {
+    const body = await this.fetchRemains(providerAccountKey, quotaBaseUrl);
     const parsed = remainsResponseSchema.safeParse(body);
     if (!parsed.success) {
       throw new QuotaReadError("MiniMax answered the quota reading in an unknown shape", {
@@ -106,9 +106,10 @@ export class MiniMaxMPlanQuotaReader implements QuotaReader {
     return (entries ?? []).flatMap((entry) => PLAN_WINDOWS.map((window) => meterOf(entry, window)));
   }
 
-  private async fetchRemains(providerAccountKey: string): Promise<unknown> {
+  private async fetchRemains(providerAccountKey: string, quotaBaseUrl: string): Promise<unknown> {
+    const url = `${quotaBaseUrl.replace(TRAILING_SLASH, "")}/${REMAINS_PATH}`;
     try {
-      const response = await this.http.get(REMAINS_PATH, {
+      const response = await this.http.get(url, {
         headers: { authorization: `Bearer ${providerAccountKey}` },
       });
       return response.data;

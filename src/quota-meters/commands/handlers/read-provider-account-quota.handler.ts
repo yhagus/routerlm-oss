@@ -2,6 +2,7 @@ import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, type AnyColumn, eq, notInArray, type SQL, sql } from "drizzle-orm";
+import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import {
   type QuotaReaderName,
@@ -13,6 +14,7 @@ import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { GetProviderAccountKeyQuery } from "@/upstream/queries/impl/get-provider-account-key.query.js";
 import { exhaustedStateOf } from "../../models/exhausted.js";
+import { QuotaReadError } from "../../models/quota-reader.js";
 import {
   overwrittenQuotaMeterColumns,
   type ProviderAccountQuota,
@@ -54,6 +56,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       .select({
         continueWhenExhausted: providerAccounts.continueWhenExhausted,
         quotaReader: providers.quotaReader,
+        providerQuirks: providers.quirks,
       })
       .from(providerAccounts)
       .innerJoin(providers, eq(providers.id, providerAccounts.providerId))
@@ -65,7 +68,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       throw new BadRequestException("The Provider of this Provider Account reports no quota");
     }
 
-    const outcome = await this.read(providerAccountId, account.quotaReader);
+    const outcome = await this.read(providerAccountId, account.quotaReader, account.providerQuirks);
     if (outcome.kind === "failed") {
       this.logger.warn(
         `Quota reading of Provider Account ${providerAccountId} failed: ${outcome.error}`,
@@ -108,10 +111,15 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
   private async read(
     providerAccountId: string,
     readerName: QuotaReaderName,
+    providerQuirks: unknown,
   ): Promise<ReadingOutcome> {
     try {
+      const { quotaBaseUrl } = providerQuirksSchema.parse(providerQuirks);
+      if (quotaBaseUrl === undefined) {
+        throw new QuotaReadError("The Provider names no quota endpoint in its quotaBaseUrl quirk");
+      }
       const key = await this.queryBus.execute(new GetProviderAccountKeyQuery(providerAccountId));
-      const meters = await this.readers.readerFor(readerName).read(key);
+      const meters = await this.readers.readerFor(readerName).read(key, quotaBaseUrl);
       return { kind: "read", meters };
     } catch (error) {
       return { kind: "failed", error: error instanceof Error ? error.message : String(error) };

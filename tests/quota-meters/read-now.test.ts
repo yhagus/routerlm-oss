@@ -11,11 +11,10 @@ import {
   remainsReply,
 } from "../support/minimax-m-plan-remains.js";
 
-// The reader's endpoint and timeout come from the environment, which
-// ConfigModule reads when the app module is first imported.
-const fakeUpstream = await FakeUpstream.start();
-process.env.MINIMAX_M_PLAN_QUOTA_BASE_URL = fakeUpstream.baseUrl;
+// The reader's timeout comes from the environment, which ConfigModule reads
+// when the app module is first imported.
 process.env.QUOTA_READER_TIMEOUT_MS = "300";
+const fakeUpstream = await FakeUpstream.start();
 const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
 const { deleteAllUpstreamData } = await import("../support/upstream.js");
 
@@ -51,6 +50,7 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
         protocol: "anthropic-messages",
         baseUrl: "https://api.plan.example/anthropic",
         authStyle: "bearer",
+        quirks: { quotaBaseUrl: fakeUpstream.baseUrl },
         quotaReader,
       })
       .returning({ id: providers.id });
