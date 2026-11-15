@@ -6,6 +6,8 @@ import { DeleteProviderHandler } from "./delete-provider.handler.js";
 import { DeleteUpstreamModelHandler } from "./delete-upstream-model.handler.js";
 import { EndProviderAccountExhaustedHandler } from "./end-provider-account-exhausted.handler.js";
 import { MarkProviderAccountExhaustedHandler } from "./mark-provider-account-exhausted.handler.js";
+import { PollOauthSignInHandler } from "./poll-oauth-sign-in.handler.js";
+import { StartOauthSignInHandler } from "./start-oauth-sign-in.handler.js";
 import { UpdateProviderAccountHandler } from "./update-provider-account.handler.js";
 import { UpdateProviderHandler } from "./update-provider.handler.js";
 import { UpdateUpstreamModelHandler } from "./update-upstream-model.handler.js";
@@ -22,4 +24,6 @@ export const CommandHandlers = [
   DeleteProviderAccountHandler,
   MarkProviderAccountExhaustedHandler,
   EndProviderAccountExhaustedHandler,
+  StartOauthSignInHandler,
+  PollOauthSignInHandler,
 ];

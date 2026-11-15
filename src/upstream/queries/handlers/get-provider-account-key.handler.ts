@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { ConflictException, NotFoundException } from "@nestjs/common";
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
@@ -21,6 +21,9 @@ export class GetProviderAccountKeyHandler implements IQueryHandler<GetProviderAc
       .where(eq(providerAccounts.id, providerAccountId));
     if (!account) {
       throw new NotFoundException("Provider Account not found");
+    }
+    if (account.encryptedKey === null) {
+      throw new ConflictException("Provider Account holds an OAuth Login, not an API key");
     }
     return this.keyCipher.decrypt(account.encryptedKey);
   }

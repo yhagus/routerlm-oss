@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
@@ -28,6 +28,7 @@ export class UpdateProviderAccountHandler implements ICommandHandler<UpdateProvi
     const { key, ...fields } = changes;
     const values: Partial<typeof providerAccounts.$inferInsert> = { ...fields };
     if (key !== undefined) {
+      await this.requireApiKeyAccount(providerAccountId);
       Object.assign(values, storedKey(this.keyCipher, key));
     }
     if (changes.isEnabled === true) {
@@ -43,5 +44,18 @@ export class UpdateProviderAccountHandler implements ICommandHandler<UpdateProvi
     }
     await this.snapshot.changed();
     return updated;
+  }
+
+  /** A key can't replace an OAuth Login: the account would hold two credentials. */
+  private async requireApiKeyAccount(providerAccountId: string): Promise<void> {
+    const [account] = await this.db
+      .select({ credentialKind: providerAccounts.credentialKind })
+      .from(providerAccounts)
+      .where(eq(providerAccounts.id, providerAccountId));
+    if (account?.credentialKind === "oauth-login") {
+      throw new ConflictException(
+        "Provider Account holds an OAuth Login, which a key can't replace",
+      );
+    }
   }
 }

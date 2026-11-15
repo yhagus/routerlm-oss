@@ -32,6 +32,7 @@ type KimiCodeFromApi = {
   contextSizes: Record<string, number>;
   quirks: Record<string, unknown>;
   quotaReader: string | null;
+  oauthLogin: Record<string, unknown> | null;
 };
 
 describe("Kimi Code correction migration (e2e)", () => {
@@ -142,7 +143,26 @@ describe("Kimi Code correction migration (e2e)", () => {
 
     expect(kimiCode.quotaReader).toBe("minimax-m-plan");
   });
+
+  it("lets an untouched Kimi Code Provider offer OAuth Login", async () => {
+    const { db } = await upgradeInstallHolding({ baseUrl: OLD_BASE_URL, contextSizes: {} });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode.oauthLogin).toEqual({
+      authHosts: { global: "https://auth.kimi.ai", china: "https://auth.kimi.com" },
+      clientId: "17e5f671-d194-4dfb-9706-5516cb48c098",
+      cliVersion: "2.6.2",
+    });
+    expect(kimiCode.oauthLogin).toEqual(await catalogKimiCodeOauthLogin());
+  });
 });
+
+/** The OAuth Login data today's Catalog ships for Kimi Code. */
+async function catalogKimiCodeOauthLogin(): Promise<unknown> {
+  const catalog = await loadCatalog(CATALOG_DIRECTORY);
+  return catalog.find((provider) => provider.slug === "kimi-code")?.oauthLogin;
+}
 
 /** The quirks today's Catalog ships for Kimi Code. */
 async function catalogKimiCodeQuirks(): Promise<Record<string, unknown>> {
@@ -215,6 +235,7 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
       baseUrl: string;
       quirks: Record<string, unknown>;
       quotaReader: string | null;
+      oauthLogin: Record<string, unknown> | null;
     }[] = providers.body;
     const upstreamModelRows: { upstreamModelId: string; contextSize: number }[] =
       upstreamModels.body;
@@ -226,6 +247,7 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
       baseUrl: kimiCode.baseUrl,
       quirks: kimiCode.quirks,
       quotaReader: kimiCode.quotaReader,
+      oauthLogin: kimiCode.oauthLogin,
       contextSizes: Object.fromEntries(
         upstreamModelRows.map((model) => [model.upstreamModelId, model.contextSize]),
       ),

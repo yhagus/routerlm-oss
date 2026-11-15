@@ -29,6 +29,26 @@ export type Capability = (typeof CAPABILITIES)[number];
 export const QUOTA_READERS = ["minimax-m-plan", "kimi-code"] as const;
 export type QuotaReaderName = (typeof QUOTA_READERS)[number];
 
+/** The credential a Provider Account holds (GLOSSARY: Provider Account, OAuth Login). */
+export const CREDENTIAL_KINDS = ["api-key", "oauth-login"] as const;
+export type CredentialKind = (typeof CREDENTIAL_KINDS)[number];
+
+/** Where the User's account at the Provider lives; each region signs in at its own auth host. */
+export const OAUTH_REGIONS = ["global", "china"] as const;
+export type OauthRegion = (typeof OAUTH_REGIONS)[number];
+
+/**
+ * What signing in to a Provider needs (ADR 0012): the device-code flow is
+ * code, and everything that names the Provider is this data.
+ */
+export interface ProviderOauthLogin {
+  /** The auth host of each region, without a path. */
+  authHosts: Record<OauthRegion, string>;
+  clientId: string;
+  /** The version of the Provider's own CLI the gateway presents itself as. */
+  cliVersion: string;
+}
+
 /** What a Quota Meter's `used` and `limit` count. */
 export const QUOTA_METER_UNITS = ["percent", "count", "tokens", "usd"] as const;
 export type QuotaMeterUnit = (typeof QUOTA_METER_UNITS)[number];
@@ -53,6 +73,8 @@ export const providers = pgTable("providers", {
   quirks: jsonb("quirks").$type<ProviderQuirks>().notNull().default({}),
   // Null for a Provider that reports no quota, such as a pay-as-you-go API.
   quotaReader: text("quota_reader", { enum: QUOTA_READERS }),
+  // Null for a Provider that offers no OAuth Login: its Provider Accounts hold API keys only.
+  oauthLogin: jsonb("oauth_login").$type<ProviderOauthLogin>(),
   isEnabled: boolean("is_enabled").notNull().default(true),
   isFromCatalog: boolean("is_from_catalog").notNull().default(false),
   createdAt: createdAt(),
@@ -67,9 +89,22 @@ export const providerAccounts = pgTable(
       .notNull()
       .references(() => providers.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    credentialKind: text("credential_kind", { enum: CREDENTIAL_KINDS })
+      .notNull()
+      .default("api-key"),
     // AES-256-GCM ciphertext; the dashboard only ever shows keyLastFour.
-    encryptedKey: text("encrypted_key").notNull(),
-    keyLastFour: text("key_last_four").notNull(),
+    // Both are null when the account holds an OAuth Login.
+    encryptedKey: text("encrypted_key"),
+    keyLastFour: text("key_last_four"),
+    // The OAuth Login, null when the account holds an API key. Both tokens
+    // are AES-256-GCM ciphertext and never leave the gateway.
+    oauthEncryptedAccessToken: text("oauth_encrypted_access_token"),
+    oauthEncryptedRefreshToken: text("oauth_encrypted_refresh_token"),
+    // When the access token stops working.
+    oauthExpiresAt: at("oauth_expires_at"),
+    oauthRegion: text("oauth_region", { enum: OAUTH_REGIONS }),
+    // Generated once for the account and sent with every call made as the Provider's CLI.
+    oauthDeviceId: text("oauth_device_id"),
     // Lower runs first.
     priority: integer("priority").notNull().default(0),
     isEnabled: boolean("is_enabled").notNull().default(true),

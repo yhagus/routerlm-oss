@@ -12,6 +12,12 @@ import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.
 
 const source = { urls: ["https://example.com/pricing"], retrievedOn: "2026-11-15" };
 
+const oauthLogin = {
+  authHosts: { global: "https://auth.example.com", china: "https://auth.example.cn" },
+  clientId: "example-cli",
+  cliVersion: "1.2.3",
+};
+
 const catalog: CatalogProvider[] = [
   {
     slug: "example",
@@ -20,6 +26,7 @@ const catalog: CatalogProvider[] = [
     baseUrl: "https://api.example.com/v1",
     authStyle: "bearer",
     quirks: { acceptsCacheControl: true },
+    oauthLogin,
     source,
     upstreamModels: [
       {
@@ -94,6 +101,7 @@ describe("Seed Catalog command (e2e)", () => {
       baseUrl: "https://api.example.com/v1",
       authStyle: "bearer",
       quirks: { acceptsCacheControl: true },
+      oauthLogin,
       isEnabled: true,
       isFromCatalog: true,
     });
