@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import { AttemptFailedError, ClientCancelledError } from "../models/attempt-failure.js";
+import { isQuotaExhaustedError } from "../models/quota-exhausted-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
@@ -229,14 +230,17 @@ async function failedResponse(response: HttpResponse<Response>): Promise<Attempt
     body: await response.data.text(),
   };
   return new AttemptFailedError(
-    failureReasonOf(response.status),
+    failureReasonOf(response.status, upstreamResponse.body),
     response.status,
     `The upstream answered ${response.status}`,
     upstreamResponse,
   );
 }
 
-function failureReasonOf(status: number): AttemptFailureReason {
+function failureReasonOf(status: number, body: string): AttemptFailureReason {
+  if (isQuotaExhaustedError(body)) {
+    return "exhausted";
+  }
   if (status === 429) {
     return "rate_limited";
   }

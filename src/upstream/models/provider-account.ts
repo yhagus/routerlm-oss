@@ -1,4 +1,4 @@
-import { providerAccounts } from "@/db/schemas/index.js";
+import { type AttemptFailureReason, providerAccounts } from "@/db/schemas/index.js";
 import type { QuotaMeter } from "@/quota-meters/models/quota-meter.js";
 import type { ProviderKeyCipher } from "../providers/provider-key-cipher.js";
 
@@ -26,11 +26,13 @@ export const providerAccountColumns = {
 export type ProviderAccount = Omit<typeof providerAccounts.$inferSelect, "encryptedKey">;
 
 /**
- * A Provider Account in the dashboard's list, with when its Cooldown ends
- * (null when not in one) and its latest Quota Meters.
+ * A Provider Account in the dashboard's list, with when its Cooldown ends and
+ * what caused it (both null when not in one; cause `exhausted` while
+ * Exhausted, until its Quota Meter resets), and its latest Quota Meters.
  */
 export type ListedProviderAccount = ProviderAccount & {
   cooldownEndsAt: Date | null;
+  cooldownCause: AttemptFailureReason | null;
   quotaMeters: QuotaMeter[];
 };
 

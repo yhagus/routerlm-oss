@@ -49,6 +49,7 @@ const FAILURE_MESSAGES = {
   connection_error: ["upstream_error", "The upstream could not be reached"],
   unauthorized: ["upstream_error", "The upstream failed to answer"],
   stream_interrupted: ["upstream_error", "The upstream stream broke off"],
+  exhausted: ["upstream_rate_limited", "The upstream's usage quota is used up; try again later"],
 } as const satisfies Record<AttemptFailureReason, readonly [GatewayError["code"], string]>;
 
 /**

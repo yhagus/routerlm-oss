@@ -29,6 +29,7 @@ export class ListProviderAccountsHandler implements IQueryHandler<ListProviderAc
     return accounts.map((account) => ({
       ...account,
       cooldownEndsAt: cooldowns.get(account.id)?.endsAt ?? null,
+      cooldownCause: cooldowns.get(account.id)?.cause ?? null,
       quotaMeters: quotaMeters.get(account.id) ?? [],
     }));
   }

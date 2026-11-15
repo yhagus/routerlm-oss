@@ -9,7 +9,9 @@ import {
   providers,
   quotaMeters,
 } from "@/db/schemas/index.js";
+import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+import { exhaustedUntil } from "../../models/exhausted.js";
 import {
   type ProviderAccountQuota,
   type QuotaMeterReading,
@@ -35,13 +37,18 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     @InjectDrizzle() private readonly db: Database,
     private readonly keyCipher: ProviderKeyCipher,
     private readonly readers: QuotaReaders,
+    private readonly cooldowns: CooldownStore,
   ) {}
 
   async execute({
     providerAccountId,
   }: ReadProviderAccountQuotaCommand): Promise<ProviderAccountQuota> {
     const [account] = await this.db
-      .select({ encryptedKey: providerAccounts.encryptedKey, quotaReader: providers.quotaReader })
+      .select({
+        encryptedKey: providerAccounts.encryptedKey,
+        continueWhenExhausted: providerAccounts.continueWhenExhausted,
+        quotaReader: providers.quotaReader,
+      })
       .from(providerAccounts)
       .innerJoin(providers, eq(providers.id, providerAccounts.providerId))
       .where(eq(providerAccounts.id, providerAccountId));
@@ -58,8 +65,36 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
         `Quota reading of Provider Account ${providerAccountId} failed: ${outcome.error}`,
       );
     }
-    await this.store(providerAccountId, outcome, new Date());
+    const checkedAt = new Date();
+    await this.store(providerAccountId, outcome, checkedAt);
+    if (outcome.kind === "read") {
+      await this.applyExhausted(providerAccountId, outcome.meters, {
+        checkedAt,
+        continueWhenExhausted: account.continueWhenExhausted,
+      });
+    }
     return this.quotaOf(providerAccountId);
+  }
+
+  /**
+   * Routing never reads Quota Meters, so a reading tells the CooldownStore
+   * whether the account is Exhausted. A failed reading changes nothing.
+   */
+  private async applyExhausted(
+    providerAccountId: string,
+    meters: QuotaMeterReading[],
+    { checkedAt, continueWhenExhausted }: { checkedAt: Date; continueWhenExhausted: boolean },
+  ): Promise<void> {
+    const until = exhaustedUntil(meters, checkedAt);
+    if (until === null) {
+      await this.cooldowns.endExhausted(providerAccountId);
+      return;
+    }
+    // The operator lets the Provider bill the excess; an Exhausted state set
+    // by a refused Attempt still runs its course.
+    if (!continueWhenExhausted) {
+      await this.cooldowns.markExhausted(providerAccountId, until);
+    }
   }
 
   private async read(readerName: QuotaReaderName, encryptedKey: string): Promise<ReadingOutcome> {

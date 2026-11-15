@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { Logger } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
+import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
 import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import type { SnapshotModel, SnapshotRoute } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
@@ -49,6 +50,12 @@ interface AttemptOptions {
   meter: UsageMeter;
 }
 
+/**
+ * How long a Provider Account the upstream called Exhausted is skipped until
+ * the quota reading it triggers sets the precise end.
+ */
+const EXHAUSTED_UNTIL_READ_MS = 60_000;
+
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
@@ -74,6 +81,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     private readonly cooldowns: CooldownStore,
     private readonly providerAccountHealth: ProviderAccountHealth,
     private readonly usage: UsageProducer,
+    private readonly commandBus: CommandBus,
   ) {}
 
   async execute({
@@ -303,8 +311,9 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   /**
    * What a failed Attempt does to its Provider Account (spec "Fallback"):
    * 401/403 disable it until an operator re-enables it; rate limits, 5xx,
-   * timeouts and connection errors put it in Cooldown; a bad request says
-   * nothing about the account. The database writes are not awaited.
+   * timeouts and connection errors put it in Cooldown; running out of quota
+   * makes it Exhausted; a bad request says nothing about the account. The
+   * database writes and the quota reading are not awaited.
    */
   private async afterFailedAttempt(
     failure: AttemptFailedError,
@@ -334,6 +343,26 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
         await this.cooldowns.startCooldown(providerAccount.id, failure.reason, failure.retryAfter);
         return;
+      case "exhausted":
+        void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
+        await this.cooldowns.markExhausted(
+          providerAccount.id,
+          new Date(Date.now() + EXHAUSTED_UNTIL_READ_MS),
+        );
+        // Started only now, so the precise end it sets replaces the short one.
+        void this.readQuota(providerAccount.id);
+        return;
+    }
+  }
+
+  /** A failed reading, or a Provider with no quota reader, leaves the short Exhausted state. */
+  private async readQuota(providerAccountId: string): Promise<void> {
+    try {
+      await this.commandBus.execute(new ReadProviderAccountQuotaCommand(providerAccountId));
+    } catch (error) {
+      this.logger.warn(
+        `Quota of Exhausted Provider Account ${providerAccountId} not read: ${String(error)}`,
+      );
     }
   }
 }
