@@ -14,7 +14,6 @@ import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { GetProviderAccountKeyQuery } from "@/upstream/queries/impl/get-provider-account-key.query.js";
 import { exhaustedStateOf } from "../../models/exhausted.js";
-import { QuotaReadError } from "../../models/quota-reader.js";
 import {
   overwrittenQuotaMeterColumns,
   type ProviderAccountQuota,
@@ -56,6 +55,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       .select({
         continueWhenExhausted: providerAccounts.continueWhenExhausted,
         quotaReader: providers.quotaReader,
+        providerBaseUrl: providers.baseUrl,
         providerQuirks: providers.quirks,
       })
       .from(providerAccounts)
@@ -68,7 +68,10 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       throw new BadRequestException("The Provider of this Provider Account reports no quota");
     }
 
-    const outcome = await this.read(providerAccountId, account.quotaReader, account.providerQuirks);
+    const outcome = await this.read(providerAccountId, account.quotaReader, {
+      baseUrl: account.providerBaseUrl,
+      quirks: account.providerQuirks,
+    });
     if (outcome.kind === "failed") {
       this.logger.warn(
         `Quota reading of Provider Account ${providerAccountId} failed: ${outcome.error}`,
@@ -111,15 +114,14 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
   private async read(
     providerAccountId: string,
     readerName: QuotaReaderName,
-    providerQuirks: unknown,
+    provider: { baseUrl: string; quirks: unknown },
   ): Promise<ReadingOutcome> {
     try {
-      const { quotaBaseUrl } = providerQuirksSchema.parse(providerQuirks);
-      if (quotaBaseUrl === undefined) {
-        throw new QuotaReadError("The Provider names no quota endpoint in its quotaBaseUrl quirk");
-      }
+      const { quotaBaseUrl } = providerQuirksSchema.parse(provider.quirks);
       const key = await this.queryBus.execute(new GetProviderAccountKeyQuery(providerAccountId));
-      const meters = await this.readers.readerFor(readerName).read(key, quotaBaseUrl);
+      const meters = await this.readers
+        .readerFor(readerName)
+        .read(key, { baseUrl: provider.baseUrl, quotaBaseUrl });
       return { kind: "read", meters };
     } catch (error) {
       return { kind: "failed", error: error instanceof Error ? error.message : String(error) };

@@ -8,7 +8,11 @@ import {
 } from "@nestjs/http-client";
 import { z } from "zod";
 import type { QuotaMeterReading } from "../models/quota-meter.js";
-import { type QuotaReader, QuotaReadError } from "../models/quota-reader.js";
+import {
+  type QuotaReader,
+  type QuotaReaderProvider,
+  QuotaReadError,
+} from "../models/quota-reader.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
 const REMAINS_PATH = "token_plan/remains";
@@ -89,7 +93,13 @@ const PLAN_WINDOWS = [
 export class MiniMaxMPlanQuotaReader implements QuotaReader {
   constructor(@InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient) {}
 
-  async read(providerAccountKey: string, quotaBaseUrl: string): Promise<QuotaMeterReading[]> {
+  async read(
+    providerAccountKey: string,
+    { quotaBaseUrl }: QuotaReaderProvider,
+  ): Promise<QuotaMeterReading[]> {
+    if (quotaBaseUrl === undefined) {
+      throw new QuotaReadError("The Provider names no quota endpoint in its quotaBaseUrl quirk");
+    }
     const body = await this.fetchRemains(providerAccountKey, quotaBaseUrl);
     const parsed = remainsResponseSchema.safeParse(body);
     if (!parsed.success) {

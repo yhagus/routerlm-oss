@@ -23,12 +23,15 @@ type OldKimiCode = {
   contextSizes: Record<string, number>;
   /** `{}`, as the Catalog shipped them, when not given. */
   quirks?: Record<string, unknown>;
+  /** None, as the Catalog shipped it, when not given. */
+  quotaReader?: string;
 };
 type KimiCodeFromApi = {
   id: string;
   baseUrl: string;
   contextSizes: Record<string, number>;
   quirks: Record<string, unknown>;
+  quotaReader: string | null;
 };
 
 describe("Kimi Code correction migration (e2e)", () => {
@@ -119,6 +122,26 @@ describe("Kimi Code correction migration (e2e)", () => {
 
     expect(kimiCode.quirks).toEqual({ usesMaxCompletionTokens: true });
   });
+
+  it("names the Kimi Code quota reader on an untouched Kimi Code Provider", async () => {
+    const { db } = await upgradeInstallHolding({ baseUrl: OLD_BASE_URL, contextSizes: {} });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode.quotaReader).toBe("kimi-code");
+  });
+
+  it("keeps a quota reader the operator set", async () => {
+    const { db } = await upgradeInstallHolding({
+      baseUrl: OLD_BASE_URL,
+      contextSizes: {},
+      quotaReader: "minimax-m-plan",
+    });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode.quotaReader).toBe("minimax-m-plan");
+  });
 });
 
 /** The quirks today's Catalog ships for Kimi Code. */
@@ -150,15 +173,16 @@ async function copyMigrationsBeforeCorrection(): Promise<string> {
 /** The Kimi Code Provider as the seeder created it before the correction. Returns its id. */
 async function insertKimiCode(
   pool: Pool,
-  { baseUrl, contextSizes, quirks = {} }: OldKimiCode,
+  { baseUrl, contextSizes, quirks = {}, quotaReader }: OldKimiCode,
 ): Promise<string> {
   // Plain SQL: Drizzle names every column of today's schema in an insert,
   // and later migrations may add columns this database doesn't have yet.
   const { rows } = await pool.query<{ id: string }>(
-    `insert into providers (slug, name, protocol, base_url, auth_style, quirks, is_from_catalog)
-     values ('kimi-code', 'Kimi Code', 'openai-chat', $1, 'bearer', $2, true)
+    `insert into providers
+       (slug, name, protocol, base_url, auth_style, quirks, quota_reader, is_from_catalog)
+     values ('kimi-code', 'Kimi Code', 'openai-chat', $1, 'bearer', $2, $3, true)
      returning id`,
-    [baseUrl, JSON.stringify(quirks)],
+    [baseUrl, JSON.stringify(quirks), quotaReader ?? null],
   );
   const providerId = rows[0]?.id;
   if (providerId === undefined) throw new Error("the Kimi Code Provider was not inserted");
@@ -190,6 +214,7 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
       slug: string;
       baseUrl: string;
       quirks: Record<string, unknown>;
+      quotaReader: string | null;
     }[] = providers.body;
     const upstreamModelRows: { upstreamModelId: string; contextSize: number }[] =
       upstreamModels.body;
@@ -200,6 +225,7 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
       id: kimiCode.id,
       baseUrl: kimiCode.baseUrl,
       quirks: kimiCode.quirks,
+      quotaReader: kimiCode.quotaReader,
       contextSizes: Object.fromEntries(
         upstreamModelRows.map((model) => [model.upstreamModelId, model.contextSize]),
       ),

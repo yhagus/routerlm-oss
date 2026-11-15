@@ -97,11 +97,13 @@ export function openAiResponsesFixture(name: string): string {
 
 /**
  * A local HTTP server standing in for a Provider, so no test calls a real
- * one. Queue replies with `reply()`; each request takes the next one.
+ * one. Queue replies with `reply()`; each request takes the next one. A reply
+ * queued with `replyTo()` goes only to a request for its path.
  */
 export class FakeUpstream {
   readonly requests: ReceivedRequest[] = [];
   private readonly replies: FakeReply[] = [];
+  private readonly repliesByPath = new Map<string, FakeReply[]>();
   private readonly openResponses = new Set<ServerResponse>();
   private disconnectWaiters: Array<() => void> = [];
 
@@ -132,6 +134,16 @@ export class FakeUpstream {
     this.replies.push(reply);
   }
 
+  /**
+   * Queues a reply for the next request to `path`, whichever other requests
+   * arrive first: for a request the gateway makes on the side, at no fixed moment.
+   */
+  replyTo(path: string, reply: FakeReply): void {
+    const replies = this.repliesByPath.get(path) ?? [];
+    replies.push(reply);
+    this.repliesByPath.set(path, replies);
+  }
+
   /** Resolves when the gateway closes a connection the fake upstream was still answering. */
   waitForDisconnect(): Promise<void> {
     return new Promise((resolve) => this.disconnectWaiters.push(resolve));
@@ -140,6 +152,7 @@ export class FakeUpstream {
   reset(): void {
     this.requests.length = 0;
     this.replies.length = 0;
+    this.repliesByPath.clear();
     this.closeOpenResponses();
   }
 
@@ -168,7 +181,7 @@ export class FakeUpstream {
       }
     });
 
-    const reply = this.replies.shift();
+    const reply = this.repliesByPath.get(request.url ?? "")?.shift() ?? this.replies.shift();
     if (!reply) {
       response.writeHead(500).end("The fake upstream has no reply queued");
       return;
