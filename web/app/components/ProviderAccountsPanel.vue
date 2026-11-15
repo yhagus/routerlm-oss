@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { KeyRound, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
+import { KeyRound, LogIn, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
 import { resetCountdown } from "~/lib/quotaMeters";
 import {
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
+  needsNewSignIn,
+  OAUTH_REGION_LABELS,
   optionalNumber,
   type Provider,
   type ProviderAccount,
 } from "~/lib/upstream";
 
-/** A Provider's accounts (API keys), with adding, editing, switching and deleting. */
+/**
+ * A Provider's accounts, each holding an API key or an OAuth Login, with
+ * adding, signing in, editing, switching and deleting.
+ */
 const props = defineProps<{
   provider: Provider;
   accounts: ProviderAccount[];
@@ -20,9 +25,12 @@ const props = defineProps<{
 type ProviderAccountDialog =
   | { kind: "create" }
   | { kind: "edit"; account: ProviderAccount }
-  | { kind: "delete"; account: ProviderAccount };
+  | { kind: "delete"; account: ProviderAccount }
+  /** With an account, signs in again on it; with none, adds one. */
+  | { kind: "sign-in"; account: ProviderAccount | null };
 
 const { $dashboardApi } = useNuxtApp();
+const { showToast } = useToast();
 
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -68,13 +76,31 @@ function accountStatus(account: ProviderAccount): AccountStatus {
   return { kind: "cooldown", note: `until ${timeFormat.format(endsAt)}` };
 }
 
+/** Which credential the account holds and what tells it apart, never the credential itself. */
+function accountCredential(account: ProviderAccount): { label: string; note: string | null } {
+  if (account.credentialKind === "oauth-login") {
+    const region = account.oauthRegion;
+    return { label: "OAuth Login", note: region ? OAUTH_REGION_LABELS[region] : null };
+  }
+  return { label: "API key", note: account.keyLastFour ? `…${account.keyLastFour}` : null };
+}
+
 const accountRows = computed(() =>
   [...props.accounts]
     .sort(
       (first, second) => first.priority - second.priority || first.name.localeCompare(second.name),
     )
-    .map((account) => ({ account, status: accountStatus(account) })),
+    .map((account) => ({
+      account,
+      status: accountStatus(account),
+      credential: accountCredential(account),
+    })),
 );
+
+const emptyStateHint = computed(() => {
+  const ways = props.provider.oauthLogin ? "Add an API key or sign in" : "Add an API key";
+  return `${ways} for ${props.provider.name} so the gateway can call it.`;
+});
 
 const {
   dialog,
@@ -114,9 +140,27 @@ function openDialog(next: ProviderAccountDialog): void {
   }
 }
 
+/** An edited account that holds an OAuth Login: it has no key to replace. */
+const editsOauthLogin = computed(() => {
+  const current = dialog.value;
+  return current?.kind === "edit" && current.account.credentialKind === "oauth-login";
+});
+
+const accountDialogDescription = computed(() => {
+  if (editsOauthLogin.value) {
+    return "This account holds an OAuth Login, which the gateway keeps valid. Its tokens are never shown.";
+  }
+  return "The key is encrypted before it is stored. The dashboard only ever shows its last four characters.";
+});
+
+function deleteDescription(account: ProviderAccount): string {
+  const credential = account.credentialKind === "oauth-login" ? "OAuth Login" : "key";
+  return `${account.name} and its stored ${credential} are deleted. Past Usage Logs keep their totals. This can't be undone.`;
+}
+
 async function saveAccount(): Promise<void> {
   const current = dialog.value;
-  if (!current || current.kind === "delete") return;
+  if (!current || current.kind === "delete" || current.kind === "sign-in") return;
   // Only Providers with a quota reader show the toggle; the others keep the stored value.
   const quotaFields = hasQuota.value
     ? { continueWhenExhausted: form.value.continueWhenExhausted }
@@ -173,6 +217,15 @@ function deleteAccount(account: ProviderAccount): Promise<void> {
 function toggleAccount(account: ProviderAccount): Promise<void> {
   return toggleRow(account, account.name);
 }
+
+/** A completed sign-in: the list reloads, so the account appears, or is Ready again, in place. */
+async function handleSignedIn(account: ProviderAccount): Promise<void> {
+  const current = dialog.value;
+  const isSignInAgain = current?.kind === "sign-in" && current.account !== null;
+  closeDialog();
+  showToast(isSignInAgain ? `Signed in again: ${account.name}` : `Added ${account.name}`);
+  await props.refresh();
+}
 </script>
 
 <template>
@@ -183,6 +236,14 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
         <p>The healthy account with the lowest priority number serves first.</p>
       </div>
       <div class="panel-heading__tools">
+        <button
+          v-if="provider.oauthLogin"
+          class="button"
+          type="button"
+          @click="openDialog({ kind: 'sign-in', account: null })"
+        >
+          <LogIn :size="14" /> Sign in with {{ provider.name }}
+        </button>
         <button
           class="button button--primary"
           type="button"
@@ -197,7 +258,7 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
         <thead>
           <tr>
             <th>Account</th>
-            <th>Key</th>
+            <th>Credential</th>
             <th>Priority</th>
             <th>Status</th>
             <th v-if="hasQuota">Quota</th>
@@ -207,11 +268,14 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
         </thead>
         <tbody>
           <LoadingRow v-if="isLoading" :columns="hasQuota ? 7 : 6" />
-          <tr v-for="{ account, status } in accountRows" :key="account.id">
+          <tr v-for="{ account, status, credential } in accountRows" :key="account.id">
             <td>
               <strong>{{ account.name }}</strong>
             </td>
-            <td class="tabular">…{{ account.keyLastFour }}</td>
+            <td>
+              {{ credential.label }}
+              <span v-if="credential.note" class="cell-note tabular">{{ credential.note }}</span>
+            </td>
             <td class="tabular">{{ account.priority }}</td>
             <td>
               <span class="status-badge" :class="STATUS_BADGES[status.kind].badgeClass">{{
@@ -221,6 +285,15 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
               <span v-if="hasQuota && account.continueWhenExhausted" class="cell-note"
                 >Continues on Credits when exhausted</span
               >
+              <button
+                v-if="needsNewSignIn(account)"
+                class="text-button"
+                type="button"
+                :aria-label="`Sign in again on ${account.name}`"
+                @click="openDialog({ kind: 'sign-in', account })"
+              >
+                <LogIn :size="12" /> Sign in again
+              </button>
             </td>
             <td v-if="hasQuota">
               <ProviderAccountQuota :account="account" :now="now" :refresh="refresh" />
@@ -269,19 +342,18 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
         </tbody>
       </table>
       <EmptyState v-else :icon="KeyRound">
-        <strong>No accounts yet.</strong
-        ><span>Add an API key for {{ provider.name }} so the gateway can call it.</span>
+        <strong>No accounts yet.</strong><span>{{ emptyStateHint }}</span>
       </EmptyState>
     </div>
   </section>
 
   <AppDialog
-    v-if="dialog && dialog.kind !== 'delete'"
+    v-if="dialog?.kind === 'create' || dialog?.kind === 'edit'"
     v-model:open="isDialogOpen"
     :title="
       dialog.kind === 'create' ? `Add ${provider.name} account` : `Edit ${dialog.account.name}`
     "
-    description="The key is encrypted before it is stored. The dashboard only ever shows its last four characters."
+    :description="accountDialogDescription"
   >
     <!--
       Not a sign-in form: browsers and password managers must not fill it. The key is a
@@ -312,7 +384,7 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
             dialog.kind === 'create' ? 'Left empty, one is made up, like Lyra Orion' : ''
           "
       /></label>
-      <label class="field"
+      <label v-if="!editsOauthLogin" class="field"
         ><span class="field__label">{{
           dialog.kind === "create" ? "API key" : "New API key (optional)"
         }}</span
@@ -350,7 +422,7 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
     v-if="dialog?.kind === 'delete'"
     v-model:open="isDialogOpen"
     title="Delete Provider Account"
-    :description="`${dialog.account.name} and its stored key are deleted. Past Usage Logs keep their totals. This can't be undone.`"
+    :description="deleteDescription(dialog.account)"
   >
     <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
     <div class="dialog__actions">
@@ -365,4 +437,12 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
       </button>
     </div>
   </AppDialog>
+
+  <ProviderAccountSignInDialog
+    v-if="dialog?.kind === 'sign-in'"
+    v-model:open="isDialogOpen"
+    :provider="provider"
+    :account="dialog.account"
+    @completed="handleSignedIn"
+  />
 </template>

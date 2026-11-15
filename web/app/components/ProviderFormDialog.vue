@@ -68,7 +68,27 @@ watch(isOpen, (open) => {
   error.value = "";
 });
 
-/** Only the quirks that are set; the backend rejects unknown keys. */
+/** The quirks this form has fields for. */
+const FORM_QUIRK_KEYS = [
+  "reasoningContentInHistory",
+  "acceptsCacheControl",
+  "acceptsPromptCacheKey",
+  "usesMaxCompletionTokens",
+  "cacheMarkerLimit",
+] as const satisfies readonly (keyof ProviderQuirks)[];
+
+/**
+ * The quirks to save: the form's, plus the ones an edited Provider carries
+ * that the form has no field for (how a Catalog Provider reasons, which error
+ * codes mean Exhausted, where its quota is read), which an edit must not drop.
+ */
+function quirksToSave(): ProviderQuirks {
+  const keptQuirks: ProviderQuirks = { ...props.provider?.quirks };
+  for (const key of FORM_QUIRK_KEYS) delete keptQuirks[key];
+  return { ...keptQuirks, ...quirksFromForm() };
+}
+
+/** Only the form's quirks that are set; the backend rejects unknown keys. */
 function quirksFromForm(): ProviderQuirks {
   if (form.value.protocol === "anthropic-messages") {
     const limit = form.value.cacheMarkerLimit;
@@ -87,12 +107,13 @@ function quirksFromForm(): ProviderQuirks {
 }
 
 async function save(): Promise<void> {
+  // No `oauthLogin`: the form doesn't edit it, and a PATCH keeps what it leaves out.
   const fields = {
     name: form.value.name,
     protocol: form.value.protocol,
     baseUrl: form.value.baseUrl,
     authStyle: form.value.authStyle,
-    quirks: quirksFromForm(),
+    quirks: quirksToSave(),
   };
   isSaving.value = true;
   error.value = "";
