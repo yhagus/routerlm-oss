@@ -37,7 +37,8 @@ const SDK_OWNERS = ["OpenAI", "Anthropic"];
 const UNKNOWN_MODEL_NAME = "unknown-model";
 
 /** SDK snippets are written here so they import the SDKs from this repo's node_modules. */
-const SNIPPET_DIRECTORY = new URL("./.docs-examples/", import.meta.url);
+// One folder per test process, so a run in the same checkout never deletes another run's snippets.
+const SNIPPET_DIRECTORY = new URL(`./.docs-examples/${process.pid}/`, import.meta.url);
 
 function errorsPage(): DocsPage {
   const page = pages.find(({ fileName }) => fileName.endsWith("errors.md"));

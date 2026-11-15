@@ -1,9 +1,8 @@
-# Throwaway services for the feature tests: `bun run test:docker`.
-#   db    -> postgres://routerlm:routerlm@localhost:55432/routerlm
-#   redis -> redis://localhost:56379
-#
-# Its own project name and host ports keep it apart from the dev stack in
-# docker-compose.yml, so both can run at once. Postgres keeps its data in
+# Throwaway services for the feature tests: `bun run test:docker`, which gives
+# each run its own project name (-p) and free host ports through TEST_DB_PORT
+# and TEST_REDIS_PORT, so it never collides with the dev stack in
+# docker-compose.yml or with a run in another worktree. Run by hand, it
+# defaults to 55432 (Postgres) and 56379 (Redis). Postgres keeps its data in
 # tmpfs and Redis persists nothing: every run starts empty.
 name: routerlm-oss-test
 
@@ -11,7 +10,7 @@ services:
   db:
     image: postgres:18-alpine
     ports:
-      - "55432:5432"
+      - "${TEST_DB_PORT:-55432}:5432"
     environment:
       POSTGRES_USER: routerlm
       POSTGRES_PASSWORD: routerlm
@@ -28,7 +27,7 @@ services:
     image: redis:8-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     ports:
-      - "56379:6379"
+      - "${TEST_REDIS_PORT:-56379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 2s

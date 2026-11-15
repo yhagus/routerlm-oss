@@ -57,8 +57,8 @@ $ bun run check
 $ bun run test
 
 # feature tests against throwaway Postgres and Redis containers
-# (docker-compose.test.yml, host ports 55432 and 56379), removed afterwards;
-# the dev stack can keep running
+# (docker-compose.test.yml, on free host ports), removed afterwards; the dev
+# stack and runs in other worktrees can keep running
 $ bun run test:docker
 
 # test coverage
