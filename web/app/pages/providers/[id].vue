@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import {
-  ArrowLeft,
-  CircleAlert,
-  CloudOff,
-  FileQuestionMark,
-  Pencil,
-  Plus,
-  Power,
-  Trash2,
-} from "@lucide/vue";
+import { ArrowLeft, CircleAlert, CloudOff, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "reka-ui";
 import { apiErrorMessage } from "~/lib/api";
 import {
@@ -51,7 +42,6 @@ const {
   refresh: refreshModels,
 } = useDashboardApi<UpstreamModel[]>("/upstream-models");
 
-const isLoadingProvider = computed(() => providersStatus.value === "pending" && !providers.value);
 const isLoadingAccounts = computed(() => accountsStatus.value === "pending" && !accounts.value);
 const isLoadingModels = computed(() => modelsStatus.value === "pending" && !models.value);
 
@@ -62,6 +52,8 @@ const ownAccounts = computed(() =>
 const ownModels = computed(() =>
   (models.value ?? []).filter((model) => model.providerId === providerId),
 );
+
+useMissingResource(() => Boolean(providers.value) && !provider.value, "Provider");
 
 useHead({ title: () => provider.value?.name ?? "Provider" });
 
@@ -160,14 +152,6 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
     >
       <strong>Couldn't load this Provider.</strong
       ><span>Check that the backend is running, then reload the page.</span>
-    </EmptyState>
-    <EmptyState
-      v-else-if="!provider && !isLoadingProvider"
-      class="panel empty-state--standalone"
-      :icon="FileQuestionMark"
-    >
-      <strong>This Provider doesn't exist.</strong
-      ><span>It may have been deleted. <NuxtLink to="/providers">Back to Providers</NuxtLink></span>
     </EmptyState>
 
     <template v-else-if="!provider">

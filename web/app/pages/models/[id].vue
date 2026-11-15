@@ -2,7 +2,7 @@
 import {
   ArrowDown,
   ArrowUp,
-  FileQuestionMark,
+  CloudOff,
   Pencil,
   Plus,
   Power,
@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
+import { isNotFound } from "~/lib/errors";
 import { isEmptyPolicy, type ParameterPolicy } from "~/lib/parameterPolicy";
 import type { ModelDetail, RouteSummary } from "~/lib/routing";
 import type { Provider, UpstreamModel } from "~/lib/upstream";
@@ -27,6 +28,7 @@ const modelPath = `/models/${String(useRoute().params.id)}`;
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 const { data: model, error: loadError, refresh } = useDashboardApi<ModelDetail>(modelPath);
+useMissingResource(() => isNotFound(loadError.value), "Model");
 const { data: upstreamModels, status: upstreamModelsStatus } =
   useDashboardApi<UpstreamModel[]>("/upstream-models");
 const { data: providers, status: providersStatus } = useDashboardApi<Provider[]>("/providers");
@@ -236,9 +238,9 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
 
 <template>
   <div class="page-view">
-    <EmptyState v-if="loadError" class="panel" :icon="FileQuestionMark" tone="error">
+    <EmptyState v-if="loadError" class="panel" :icon="CloudOff" tone="error">
       <strong>Couldn't load this Model.</strong
-      ><span>It may have been deleted. <NuxtLink to="/models">Back to Models</NuxtLink></span>
+      ><span>Check that the backend is running, then reload the page.</span>
     </EmptyState>
 
     <template v-else-if="!model">

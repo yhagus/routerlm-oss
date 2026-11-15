@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { FileQuestionMark, Unplug } from "@lucide/vue";
+import { CloudOff, Unplug } from "@lucide/vue";
+import { isNotFound } from "~/lib/errors";
 
 import {
   attemptOutcomeLabel,
@@ -11,6 +12,7 @@ import {
 const { data: capture, error: loadError } = useDashboardApi<ErrorCaptureDetail>(
   `/error-captures/${String(useRoute().params.id)}`,
 );
+useMissingResource(() => isNotFound(loadError.value), "Error Capture");
 
 useHead({ title: "Error Capture" });
 
@@ -29,12 +31,9 @@ const attemptHop = computed(() =>
 
 <template>
   <div class="page-view">
-    <EmptyState v-if="loadError" class="panel" :icon="FileQuestionMark" tone="error">
+    <EmptyState v-if="loadError" class="panel" :icon="CloudOff" tone="error">
       <strong>Couldn't load this Error Capture.</strong
-      ><span
-        >It may have passed the retention period.
-        <NuxtLink to="/error-captures">Back to Error Captures</NuxtLink></span
-      >
+      ><span>Check that the backend is running, then reload the page.</span>
     </EmptyState>
 
     <template v-else>

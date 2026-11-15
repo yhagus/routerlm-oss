@@ -17,7 +17,13 @@ watch(
 
 /** The sidebar item the current page belongs to; detail pages like /providers/<id> count. */
 const activeItem = computed(() => findNavigationItem(route.path));
-const pageTitle = computed(() => activeItem.value?.label ?? "");
+const pageError = useError();
+/** On the error page an address outside every section still needs a crumb. */
+const pageTitle = computed(() => {
+  if (activeItem.value) return activeItem.value.label;
+  if (!pageError.value) return "";
+  return pageError.value.statusCode === 404 ? "Not found" : "Error";
+});
 const themeIcon = computed(() => {
   if (theme.preference.value === "dark") return Moon;
   if (theme.preference.value === "light") return Sun;

@@ -3498,3 +3498,151 @@ svg.lucide {
     margin-left: 0;
   }
 }
+
+/* ---- Error page: an unknown address, a missing record, or a crash ---- */
+.error-view {
+  display: grid;
+  gap: 18px;
+  animation: error-view-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.error-view--panel {
+  max-width: 560px;
+  margin: 48px auto 0;
+  padding: 24px 24px 0;
+}
+@keyframes error-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.error-view__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.error-view__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--track);
+  color: var(--muted);
+}
+.error-view__icon--error {
+  color: var(--danger-ink);
+}
+.error-view__code {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.error-view__copy h1 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.error-view__copy h1:focus {
+  outline: 0;
+}
+.error-view__copy p {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--muted);
+  text-wrap: pretty;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.error-view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.error-details {
+  margin: 0 -24px;
+  border-top: 1px solid var(--line-soft);
+}
+.auth-card .error-details {
+  margin: 0 -28px -28px;
+  border-radius: 0 0 18px 18px;
+}
+.error-details summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 24px;
+  color: var(--ink-2);
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.auth-card .error-details summary {
+  padding-inline: 28px;
+}
+.error-details summary::-webkit-details-marker {
+  display: none;
+}
+.error-details summary svg {
+  color: var(--muted);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.error-details[open] summary svg {
+  transform: rotate(90deg);
+}
+.error-details summary:hover {
+  color: var(--ink);
+}
+.error-details summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+.error-details dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 2px 24px 14px;
+}
+.auth-card .error-details dl {
+  padding-inline: 28px;
+}
+.error-details dl > div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+}
+.error-details dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+.error-details dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.error-details__copy {
+  height: 32px;
+  margin: 0 24px 18px;
+}
+.auth-card .error-details__copy {
+  margin-inline: 28px;
+}
+@media (max-width: 760px) {
+  .error-view--panel {
+    margin-top: 16px;
+  }
+}

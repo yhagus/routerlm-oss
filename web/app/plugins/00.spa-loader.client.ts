@@ -3,11 +3,15 @@
 const FADE_MS = 220;
 
 export default defineNuxtPlugin((nuxtApp) => {
-  const loader = document.getElementById("__nuxt-loader");
-  if (!loader) return;
+  const found = document.getElementById("__nuxt-loader");
+  if (!found) return;
+  const loader = found;
   loader.id = "__nuxt-loader-fading";
 
-  nuxtApp.hook("app:suspense:resolve", () => {
+  let isFading = false;
+  function fadeOut(): void {
+    if (isFading) return;
+    isFading = true;
     const screen = loader.querySelector<HTMLElement>(".rlm-boot");
     if (!screen || matchMedia("(prefers-reduced-motion: reduce)").matches) {
       loader.remove();
@@ -18,5 +22,9 @@ export default defineNuxtPlugin((nuxtApp) => {
       screen.classList.add("is-done");
       setTimeout(() => loader.remove(), FADE_MS);
     });
-  });
+  }
+
+  nuxtApp.hook("app:suspense:resolve", fadeOut);
+  // The error page renders outside the suspense boundary, so a 404 on first load never resolves it.
+  nuxtApp.hook("app:error", fadeOut);
 });
