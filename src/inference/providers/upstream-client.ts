@@ -46,7 +46,11 @@ export interface UpstreamCall {
   converter: UpstreamProtocolConverter;
   request: InferenceRequest;
   target: UpstreamTarget;
-  /** The Provider Account's credentials, from `upstreamAuthHeaders`. */
+  /**
+   * The Provider Account's credential, from `upstreamAuthHeaders`, with the
+   * identity an OAuth Login presents. They override the converter's headers
+   * and the gateway's own User-Agent.
+   */
   authHeaders: Record<string, string>;
   timeouts: AttemptTimeouts;
   /** Aborts when the client disconnects. */

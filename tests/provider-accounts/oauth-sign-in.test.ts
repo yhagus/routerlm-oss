@@ -18,6 +18,7 @@ import {
   PROFILE_PATH,
   profileReply,
   REFRESH_TOKEN,
+  refreshedTokensReply,
   TOKEN_PATH,
   tokenErrorReply,
   USER_CODE,
@@ -434,6 +435,90 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_SECONDS * 10 * 1000));
 
     expect(pollsReceived()).toEqual([]);
+  });
+
+  it("signs in again on a disabled Provider Account, replacing its login and keeping the rest", async () => {
+    authHost.replyTo(PROFILE_PATH, profileReply({ nickname: "Ada" }));
+    const first = await completedSignIn();
+    const accountId = first.providerAccount?.id ?? "";
+    await request(app.getHttpServer())
+      .patch(`/api/provider-accounts/${accountId}`)
+      .set("Cookie", cookie)
+      .send({ name: "Team plan", priority: 7 })
+      .expect(200);
+    // As the gateway leaves an account whose login the Provider no longer renews.
+    const [disabled] = await db
+      .update(providerAccounts)
+      .set({ isEnabled: false, disabledReason: "Sign in again" })
+      .where(eq(providerAccounts.id, accountId))
+      .returning({ deviceId: providerAccounts.oauthDeviceId });
+    authHostAnswers(
+      { expiresIn: LONG_ENOUGH_SECONDS, interval: POLL_INTERVAL_SECONDS },
+      refreshedTokensReply({
+        accessToken: "access-token-2",
+        refreshToken: "refresh-token-2",
+        expiresIn: 900,
+      }),
+    );
+
+    const started = await startSignIn({
+      providerId,
+      region: "global",
+      providerAccountId: accountId,
+    }).expect(201);
+    const signIn = await endedSignIn(started.body.id);
+
+    expect(signIn).toEqual({
+      id: started.body.id,
+      status: "completed",
+      providerAccount: expect.objectContaining({
+        id: accountId,
+        name: "Team plan",
+        priority: 7,
+        isEnabled: true,
+        disabledReason: null,
+      }),
+    });
+    const stored = await db.select().from(providerAccounts);
+    expect(stored).toHaveLength(1);
+    const keyCipher = app.get(ProviderKeyCipher);
+    expect(keyCipher.decrypt(stored[0].oauthEncryptedAccessToken ?? "")).toBe("access-token-2");
+    expect(keyCipher.decrypt(stored[0].oauthEncryptedRefreshToken ?? "")).toBe("refresh-token-2");
+    // The account stays the same device to the Provider, and keeps the name the operator gave it.
+    expect(stored[0].oauthDeviceId).toBe(disabled.deviceId);
+    const signInAgainCalls = authHost.requests.slice(-2);
+    expect(signInAgainCalls.map((call) => call.headers["x-msh-device-id"])).toEqual([
+      disabled.deviceId,
+      disabled.deviceId,
+    ]);
+    expect(authHost.requests.filter((call) => call.path === PROFILE_PATH)).toHaveLength(1);
+  });
+
+  it("refuses to sign in again on a Provider Account that is unknown, of another Provider, or holds an API key", async () => {
+    authHost.replyTo(PROFILE_PATH, profileReply({ nickname: "Ada" }));
+    const signIn = await completedSignIn();
+    const otherProviderId = await createProvider({
+      slug: "other",
+      oauthLogin: {
+        authHosts: { global: globalAuthHost, china: chinaAuthHost },
+        clientId: CLIENT_ID,
+        cliVersion: CLI_VERSION,
+      },
+    });
+    const apiKeyAccount = await request(app.getHttpServer())
+      .post("/api/provider-accounts")
+      .set("Cookie", cookie)
+      .send({ providerId, name: "with a key", key: "sk-kimi-0123456789abcdef" })
+      .expect(201);
+    authHost.reset();
+
+    const signInAgain = (providerAccountId: string, ofProviderId = providerId) =>
+      startSignIn({ providerId: ofProviderId, region: "global", providerAccountId });
+    await signInAgain(UNKNOWN_ID).expect(404);
+    await signInAgain(signIn.providerAccount?.id ?? "", otherProviderId).expect(404);
+    await signInAgain(apiKeyAccount.body.id).expect(409);
+
+    expect(authHost.requests).toEqual([]);
   });
 
   it("refuses a sign-in to a Provider that offers no OAuth Login", async () => {

@@ -90,14 +90,18 @@ export class UsageMeter {
     this.modelId = modelId;
   }
 
-  attemptStarted(target: AttemptTarget, providerAccountKey: string): void {
-    this.providerAccountKeys.push(providerAccountKey);
+  attemptStarted(target: AttemptTarget): void {
     this.openAttempt = {
       target,
       startedAt: new Date(),
       startedMs: performance.now(),
       hasAnswered: false,
     };
+  }
+
+  /** The Provider Account key or access token an Attempt sends, to redact from Error Captures. */
+  credentialUsed(secret: string): void {
+    this.providerAccountKeys.push(secret);
   }
 
   /**

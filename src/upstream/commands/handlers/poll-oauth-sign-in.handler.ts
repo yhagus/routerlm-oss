@@ -13,6 +13,7 @@ import {
   type OauthProfile,
   oauthLoginEndpointOf,
 } from "../../providers/oauth-login-client.js";
+import { OauthRefreshLock } from "../../providers/oauth-refresh-lock.js";
 import { OauthSignInStore } from "../../providers/oauth-sign-in-store.js";
 import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
 import type { StoredOauthSignIn } from "../../schemas/oauth-sign-in.schema.js";
@@ -32,6 +33,7 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     private readonly signIns: OauthSignInStore,
     private readonly polling: OauthSignInPolling,
     private readonly keyCipher: ProviderKeyCipher,
+    private readonly refreshLock: OauthRefreshLock,
     private readonly snapshot: SnapshotService,
   ) {}
 
@@ -74,14 +76,7 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     );
     switch (poll.kind) {
       case "granted":
-        return {
-          status: "completed",
-          providerAccountId: await this.createProviderAccount(
-            signIn,
-            provider.baseUrl,
-            poll.tokens,
-          ),
-        };
+        return this.keepLogin(signIn, provider.baseUrl, poll.tokens);
       case "pending":
         return { status: "pending" };
       case "slow-down":
@@ -95,6 +90,59 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
         this.logger.warn(`A sign-in poll got no usable answer (${poll.reason}); polling again`);
         return { status: "pending" };
     }
+  }
+
+  /** Stores the granted OAuth Login on the Provider Account signed in again, or on a new one. */
+  private async keepLogin(
+    signIn: StoredOauthSignIn,
+    baseUrl: string,
+    tokens: OauthTokens,
+  ): Promise<StoredOauthSignIn["outcome"]> {
+    if (signIn.providerAccountId === undefined) {
+      return {
+        status: "completed",
+        providerAccountId: await this.createProviderAccount(signIn, baseUrl, tokens),
+      };
+    }
+    if (!(await this.replaceLogin(signIn.providerAccountId, signIn, tokens))) {
+      this.logger.warn(
+        `Provider Account ${signIn.providerAccountId} was deleted before its sign-in was approved`,
+      );
+      return { status: "denied" };
+    }
+    return { status: "completed", providerAccountId: signIn.providerAccountId };
+  }
+
+  /**
+   * Signing in again: the granted OAuth Login replaces the Provider
+   * Account's, which is enabled again. Its name, priority and device id
+   * stay, and so do its Usage Logs and Quota Meters. Under the refresh lock,
+   * so a refresh of the old login in progress can't overwrite the new one.
+   * False when the account no longer exists.
+   */
+  private async replaceLogin(
+    providerAccountId: string,
+    signIn: StoredOauthSignIn,
+    tokens: OauthTokens,
+  ): Promise<boolean> {
+    const grantedAt = new Date();
+    const replaced = await this.refreshLock.run(providerAccountId, () =>
+      this.db
+        .update(providerAccounts)
+        .set({
+          ...storedOauthTokens(this.keyCipher, tokens, grantedAt),
+          oauthRegion: signIn.region,
+          isEnabled: true,
+          disabledReason: null,
+        })
+        .where(eq(providerAccounts.id, providerAccountId))
+        .returning({ id: providerAccounts.id }),
+    );
+    if (replaced.length === 0) {
+      return false;
+    }
+    await this.snapshot.changed();
+    return true;
   }
 
   /** The Provider Account that holds the granted OAuth Login. Returns its id. */

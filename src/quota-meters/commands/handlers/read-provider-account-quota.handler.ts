@@ -1,5 +1,5 @@
 import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
-import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
+import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, type AnyColumn, eq, notInArray, type SQL, sql } from "drizzle-orm";
 import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
@@ -12,7 +12,7 @@ import {
 } from "@/db/schemas/index.js";
 import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end-provider-account-exhausted.command.js";
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
-import { GetProviderAccountKeyQuery } from "@/upstream/queries/impl/get-provider-account-key.query.js";
+import { ProviderAccountCredentials } from "@/upstream/providers/provider-account-credentials.js";
 import { exhaustedStateOf } from "../../models/exhausted.js";
 import {
   overwrittenQuotaMeterColumns,
@@ -45,7 +45,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     @InjectDrizzle() private readonly db: Database,
     private readonly readers: QuotaReaders,
     private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
+    private readonly credentials: ProviderAccountCredentials,
   ) {}
 
   async execute({
@@ -118,10 +118,11 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
   ): Promise<ReadingOutcome> {
     try {
       const { quotaBaseUrl } = providerQuirksSchema.parse(provider.quirks);
-      const key = await this.queryBus.execute(new GetProviderAccountKeyQuery(providerAccountId));
+      // An OAuth Login about to run out is refreshed first, as before an Attempt.
+      const credential = await this.credentials.credentialOf(providerAccountId);
       const meters = await this.readers
         .readerFor(readerName)
-        .read(key, { baseUrl: provider.baseUrl, quotaBaseUrl });
+        .read(credential.secret, { baseUrl: provider.baseUrl, quotaBaseUrl });
       return { kind: "read", meters };
     } catch (error) {
       return { kind: "failed", error: error instanceof Error ? error.message : String(error) };

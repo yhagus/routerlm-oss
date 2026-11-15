@@ -19,11 +19,17 @@ export interface SnapshotApiKey {
   allowedModelIds: string[];
 }
 
+/** Which credential a Provider Account holds, and what of it the inference path keeps in memory. */
+export type SnapshotCredential =
+  /** Still encrypted: decrypt with ProviderKeyCipher only for the Attempt that uses it. */
+  | { kind: "api-key"; encryptedKey: string }
+  /** An OAuth Login's tokens rotate, so each Attempt reads them where they are stored. */
+  | { kind: "oauth-login" };
+
 export interface SnapshotProviderAccount {
   id: string;
   name: string;
-  /** Still encrypted: decrypt with ProviderKeyCipher only for the Attempt that uses it. */
-  encryptedKey: string;
+  credential: SnapshotCredential;
   priority: number;
   isEnabled: boolean;
 }

@@ -1,10 +1,16 @@
 import { z } from "zod";
 import { OAUTH_REGIONS } from "@/db/schemas/index.js";
 
-/** What the dashboard sends to start a sign-in: the Provider, and where the User's account lives. */
+/**
+ * What the dashboard sends to start a sign-in: the Provider, and where the
+ * User's account lives. With `providerAccountId` it signs in again: the
+ * approved sign-in replaces that Provider Account's OAuth Login and creates
+ * no account.
+ */
 export const newOauthSignInSchema = z.strictObject({
   providerId: z.uuid(),
   region: z.enum(OAUTH_REGIONS),
+  providerAccountId: z.uuid().optional(),
 });
 export type NewOauthSignIn = z.infer<typeof newOauthSignInSchema>;
 
@@ -15,7 +21,9 @@ export type NewOauthSignIn = z.infer<typeof newOauthSignInSchema>;
 export const storedOauthSignInSchema = z.object({
   providerId: z.uuid(),
   region: z.enum(OAUTH_REGIONS),
-  /** Becomes the device id of the Provider Account the sign-in creates. */
+  /** The Provider Account whose OAuth Login the sign-in replaces; absent when it creates one. */
+  providerAccountId: z.uuid().optional(),
+  /** The device id of the Provider Account signed in again, or of the one the sign-in creates. */
   deviceId: z.string().min(1),
   /** Whoever holds the device code can collect the tokens, so it is stored as ciphertext. */
   encryptedDeviceCode: z.string().min(1),

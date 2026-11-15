@@ -4,12 +4,24 @@ import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
 import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
-import type { SnapshotModel, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
+import type {
+  SnapshotModel,
+  SnapshotProviderAccount,
+  SnapshotUpstreamModel,
+} from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
+import { SIGN_IN_AGAIN_REASON } from "@/upstream/models/oauth-login.js";
+import {
+  apiKeyCredential,
+  CredentialUnavailableError,
+  OauthLoginRefusedError,
+  type ProviderAccountCredential,
+} from "@/upstream/models/provider-account-credential.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 import { UsageProducer } from "@/usage/jobs/usage.producer.js";
+import { ProviderAccountCredentials } from "@/upstream/providers/provider-account-credentials.js";
 import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import {
@@ -63,8 +75,6 @@ interface Destination {
 
 /** What one Attempt needs besides the request and its target. */
 interface AttemptOptions {
-  /** Decrypted for this Attempt; also redacted from the request's Error Captures. */
-  providerAccountKey: string;
   cacheKey: string;
   clientSignal: AbortSignal;
   meter: UsageMeter;
@@ -74,6 +84,7 @@ interface AttemptOptions {
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
 const HTTP_OK = 200;
+const HTTP_UNAUTHORIZED = 401;
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 /** Recorded when the client left before any response; nginx's "client closed request". */
 const CLIENT_CLOSED_REQUEST = 499;
@@ -92,6 +103,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   constructor(
     private readonly snapshot: SnapshotService,
     private readonly cipher: ProviderKeyCipher,
+    private readonly credentials: ProviderAccountCredentials,
     private readonly upstream: UpstreamClient,
     private readonly cooldowns: CooldownStore,
     private readonly providerAccountHealth: ProviderAccountHealth,
@@ -181,11 +193,8 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         break;
       }
       const request = upstreamRequestFor(clientRequest, destination.model, target);
-      const providerAccountKey = this.cipher.decrypt(target.providerAccount.encryptedKey);
-      meter.attemptStarted(target, providerAccountKey);
       try {
-        return await this.attempt(converter, request, context, target, {
-          providerAccountKey,
+        return await this.attemptWithCredential(converter, request, context, target, {
           cacheKey,
           clientSignal,
           meter,
@@ -272,21 +281,68 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   }
 
   /**
-   * One Attempt. Throws AttemptFailedError while Fallback is still possible:
-   * for a stream, until its first event has arrived.
+   * One Attempt with the Provider Account's credential. An OAuth Login the
+   * upstream answers with 401 is refreshed once and tried once more (spec
+   * "OAuth Login"), as a second Attempt on the same Provider Account.
+   */
+  private async attemptWithCredential(
+    converter: ClientProtocolConverter,
+    request: InferenceRequest,
+    context: ResponseContext,
+    target: AttemptTarget,
+    options: AttemptOptions,
+  ): Promise<InferenceResult> {
+    const { meter } = options;
+    const account = target.providerAccount;
+    meter.attemptStarted(target);
+    const credential = await this.credentialOf(account);
+    meter.credentialUsed(credential.secret);
+    try {
+      return await this.attempt(converter, request, context, target, credential, options);
+    } catch (error) {
+      if (!isRejectedOauthLogin(error, account)) {
+        throw error;
+      }
+      this.logger.warn(
+        `The upstream answered 401 to the OAuth Login of Provider Account ${account.id}; ` +
+          "refreshing it and trying once more",
+      );
+      meter.attemptFailed(error);
+      meter.attemptStarted(target);
+      const renewed = await asAttemptFailure(() =>
+        this.credentials.credentialAfterRejection(account.id, credential),
+      );
+      meter.credentialUsed(renewed.secret);
+      return await this.attempt(converter, request, context, target, renewed, options);
+    }
+  }
+
+  /**
+   * An API key comes from the snapshot, as ever. An OAuth Login is read where
+   * it is stored, and refreshed first when it is about to run out.
+   */
+  private credentialOf(account: SnapshotProviderAccount): Promise<ProviderAccountCredential> {
+    if (account.credential.kind === "api-key") {
+      return Promise.resolve(
+        apiKeyCredential(this.cipher.decrypt(account.credential.encryptedKey)),
+      );
+    }
+    return asAttemptFailure(() => this.credentials.credentialOf(account.id));
+  }
+
+  /**
+   * One upstream call. Throws AttemptFailedError while Fallback is still
+   * possible: for a stream, until its first event has arrived.
    */
   private async attempt(
     converter: ClientProtocolConverter,
     request: InferenceRequest,
     context: ResponseContext,
     target: AttemptTarget,
-    { providerAccountKey, cacheKey, clientSignal, meter }: AttemptOptions,
+    credential: ProviderAccountCredential,
+    { cacheKey, clientSignal, meter }: AttemptOptions,
   ): Promise<InferenceResult> {
-    const call = this.upstreamCallFor(request, target, {
-      providerAccountKey,
-      cacheKey,
-      clientSignal,
-    });
+    const call = this.upstreamCallFor(request, target, credential, { cacheKey, clientSignal });
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
@@ -310,11 +366,8 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   private upstreamCallFor(
     request: InferenceRequest,
     { route, upstreamModel }: AttemptTarget,
-    {
-      providerAccountKey,
-      cacheKey,
-      clientSignal,
-    }: Pick<AttemptOptions, "providerAccountKey" | "cacheKey" | "clientSignal">,
+    credential: ProviderAccountCredential,
+    { cacheKey, clientSignal }: Pick<AttemptOptions, "cacheKey" | "clientSignal">,
   ): UpstreamCall {
     const { provider } = upstreamModel;
     const converter = UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol];
@@ -332,7 +385,10 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
         promptCacheKey: cacheKey,
       },
-      authHeaders: upstreamAuthHeaders(provider.authStyle, providerAccountKey),
+      authHeaders: {
+        ...credential.identityHeaders,
+        ...upstreamAuthHeaders(provider.authStyle, credential.secret),
+      },
       timeouts: {
         connectMs: route?.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
         firstTokenMs: route?.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,
@@ -377,7 +433,8 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
 
   /**
    * What a failed Attempt does to its Provider Account (spec "Fallback"):
-   * 401/403 disable it until an operator re-enables it; rate limits, 5xx,
+   * 401/403 disable it until an operator re-enables it or, for an OAuth
+   * Login, signs in again; rate limits, 5xx,
    * timeouts and connection errors put it in Cooldown; running out of quota
    * makes it Exhausted; a bad request says nothing about the account. The
    * database writes and the quota reading are not awaited.
@@ -399,7 +456,9 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       case "unauthorized":
         void this.providerAccountHealth.disable(
           providerAccount.id,
-          `The upstream refused this key (HTTP ${failure.upstreamStatus ?? "unknown"})`,
+          providerAccount.credential.kind === "oauth-login"
+            ? SIGN_IN_AGAIN_REASON
+            : `The upstream refused this key (HTTP ${failure.upstreamStatus ?? "unknown"})`,
           lastError,
         );
         return;
@@ -432,6 +491,40 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         `Quota of Exhausted Provider Account ${providerAccountId} not read: ${String(error)}`,
       );
     }
+  }
+}
+
+/** Whether the upstream answered 401 to an OAuth Login, which one refresh may cure. */
+function isRejectedOauthLogin(
+  error: unknown,
+  account: SnapshotProviderAccount,
+): error is AttemptFailedError {
+  return (
+    account.credential.kind === "oauth-login" &&
+    error instanceof AttemptFailedError &&
+    error.upstreamStatus === HTTP_UNAUTHORIZED
+  );
+}
+
+/**
+ * Reads an OAuth Login's credential, turning what keeps it from being read
+ * into a failed Attempt, so Fallback moves on: a login the Provider refuses
+ * counts as unauthorized, one that can't be refreshed for now as a
+ * connection error.
+ */
+async function asAttemptFailure(
+  readCredential: () => Promise<ProviderAccountCredential>,
+): Promise<ProviderAccountCredential> {
+  try {
+    return await readCredential();
+  } catch (error) {
+    if (error instanceof OauthLoginRefusedError) {
+      throw new AttemptFailedError("unauthorized", null, error.message, null, { cause: error });
+    }
+    if (error instanceof CredentialUnavailableError) {
+      throw new AttemptFailedError("connection_error", null, error.message, null, { cause: error });
+    }
+    throw error;
   }
 }
 

@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "58077315-50be-4cd0-af71-2020c25083ef",
+  "prevIds": [
+    "744abdcb-385a-4d7c-80dd-e6b0b6823475"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_granted_at"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_granted_at",
+        "n|col|public.provider_accounts.oauth_granted_at",
+        "e|col|public.provider_accounts.oauth_granted_at"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_granted_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
