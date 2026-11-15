@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Nuxt 4 with Vue 3 and UnoCSS
+Nuxt 4 with Vue 3, Tailwind CSS v4, shadcn-vue and AI Elements Vue (see docs/adr/0011)
 
 ## Users
 

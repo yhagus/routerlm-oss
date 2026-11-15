@@ -1,0 +1,293 @@
+/* Tailwind CSS 4.3.5 preflight, scoped. The dashboard's own styles were written
+   against browser defaults (UnoCSS ran without a preflight), so Tailwind's global
+   reset is left out. shadcn-vue and AI Elements components do expect it: they get
+   it inside any element with data-slot (every components/ui component) or the
+   .tw-scope class (put it on the root of AI Elements used in a page).
+   Generated from node_modules/tailwindcss/preflight.css by prefixing each selector
+   with :where(.tw-scope, [data-slot]) for descendants and the element itself, and
+   mapping html/:host to the scope. :where() keeps preflight's zero specificity.
+   Regenerate it when Tailwind's preflight changes. */
+@layer base {
+  :where(.tw-scope, [data-slot]) *,
+  :where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) ::after,
+  :where(.tw-scope, [data-slot])::after,
+  :where(.tw-scope, [data-slot]) ::before,
+  :where(.tw-scope, [data-slot])::before,
+  :where(.tw-scope, [data-slot]) ::backdrop,
+  :where(.tw-scope, [data-slot])::backdrop,
+  :where(.tw-scope, [data-slot]) ::file-selector-button,
+  :where(.tw-scope, [data-slot])::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  :where(.tw-scope, [data-slot]) {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: --theme(
+      --default-font-family,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      "Noto Sans",
+      Arial,
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji",
+      "Segoe UI Symbol",
+      "Noto Color Emoji"
+    );
+    font-feature-settings: --theme(--default-font-feature-settings, normal);
+    font-variation-settings: --theme(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  :where(.tw-scope, [data-slot]) hr,
+  hr:where(.tw-scope, [data-slot]) {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  :where(.tw-scope, [data-slot]) abbr:where([title]),
+  abbr:where([title]):where(.tw-scope, [data-slot]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  :where(.tw-scope, [data-slot]) h1,
+  h1:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) h2,
+  h2:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) h3,
+  h3:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) h4,
+  h4:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) h5,
+  h5:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) h6,
+  h6:where(.tw-scope, [data-slot]) {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  :where(.tw-scope, [data-slot]) a,
+  a:where(.tw-scope, [data-slot]) {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  :where(.tw-scope, [data-slot]) b,
+  b:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) strong,
+  strong:where(.tw-scope, [data-slot]) {
+    font-weight: bolder;
+  }
+  :where(.tw-scope, [data-slot]) code,
+  code:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) kbd,
+  kbd:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) samp,
+  samp:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) pre,
+  pre:where(.tw-scope, [data-slot]) {
+    font-family: --theme(
+      --default-mono-font-family,
+      ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      Monaco,
+      Consolas,
+      "Liberation Mono",
+      "Courier New",
+      monospace
+    );
+    font-feature-settings: --theme(--default-mono-font-feature-settings, normal);
+    font-variation-settings: --theme(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  :where(.tw-scope, [data-slot]) small,
+  small:where(.tw-scope, [data-slot]) {
+    font-size: 80%;
+  }
+  :where(.tw-scope, [data-slot]) sub,
+  sub:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) sup,
+  sup:where(.tw-scope, [data-slot]) {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  :where(.tw-scope, [data-slot]) sub,
+  sub:where(.tw-scope, [data-slot]) {
+    bottom: -0.25em;
+  }
+  :where(.tw-scope, [data-slot]) sup,
+  sup:where(.tw-scope, [data-slot]) {
+    top: -0.5em;
+  }
+  :where(.tw-scope, [data-slot]) table,
+  table:where(.tw-scope, [data-slot]) {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :where(.tw-scope, [data-slot]) :-moz-focusring:where(:not(iframe)),
+  :-moz-focusring:where(:not(iframe)):where(.tw-scope, [data-slot]) {
+    outline: auto;
+  }
+  :where(.tw-scope, [data-slot]) progress,
+  progress:where(.tw-scope, [data-slot]) {
+    vertical-align: baseline;
+  }
+  :where(.tw-scope, [data-slot]) summary,
+  summary:where(.tw-scope, [data-slot]) {
+    display: list-item;
+  }
+  :where(.tw-scope, [data-slot]) ol,
+  ol:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) ul,
+  ul:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) menu,
+  menu:where(.tw-scope, [data-slot]) {
+    list-style: none;
+  }
+  :where(.tw-scope, [data-slot]) img,
+  img:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) svg,
+  svg:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) video,
+  video:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) canvas,
+  canvas:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) audio,
+  audio:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) iframe,
+  iframe:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) embed,
+  embed:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) object,
+  object:where(.tw-scope, [data-slot]) {
+    display: block;
+    vertical-align: middle;
+  }
+  :where(.tw-scope, [data-slot]) img,
+  img:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) video,
+  video:where(.tw-scope, [data-slot]) {
+    max-width: 100%;
+    height: auto;
+  }
+  :where(.tw-scope, [data-slot]) button,
+  button:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) input,
+  input:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) select,
+  select:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) optgroup,
+  optgroup:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) textarea,
+  textarea:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) ::file-selector-button,
+  :where(.tw-scope, [data-slot])::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(.tw-scope, [data-slot]) :where(select:is([multiple], [size])) optgroup,
+  :where(select:is([multiple], [size])) optgroup:where(.tw-scope, [data-slot]) {
+    font-weight: bolder;
+  }
+  :where(.tw-scope, [data-slot]) :where(select:is([multiple], [size])) optgroup option,
+  :where(select:is([multiple], [size])) optgroup option:where(.tw-scope, [data-slot]) {
+    padding-inline-start: 20px;
+  }
+  :where(.tw-scope, [data-slot]) ::file-selector-button,
+  :where(.tw-scope, [data-slot])::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  :where(.tw-scope, [data-slot]) ::placeholder,
+  :where(.tw-scope, [data-slot])::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
+    :where(.tw-scope, [data-slot]) ::placeholder,
+    :where(.tw-scope, [data-slot])::placeholder {
+      color: color-mix(in oklab, currentcolor 50%, transparent);
+    }
+  }
+  :where(.tw-scope, [data-slot]) textarea,
+  textarea:where(.tw-scope, [data-slot]) {
+    resize: vertical;
+  }
+  :where(.tw-scope, [data-slot]) ::-webkit-search-decoration,
+  :where(.tw-scope, [data-slot])::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  :where(.tw-scope, [data-slot]) ::-webkit-date-and-time-value,
+  :where(.tw-scope, [data-slot])::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-fields-wrapper,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-year-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-year-field,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-month-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-month-field,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-day-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-day-field,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-hour-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-hour-field,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-minute-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-minute-field,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-second-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-second-field,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-millisecond-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-millisecond-field,
+  :where(.tw-scope, [data-slot]) ::-webkit-datetime-edit-meridiem-field,
+  :where(.tw-scope, [data-slot])::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  :where(.tw-scope, [data-slot]) ::-webkit-calendar-picker-indicator,
+  :where(.tw-scope, [data-slot])::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :where(.tw-scope, [data-slot]) :-moz-ui-invalid,
+  :-moz-ui-invalid:where(.tw-scope, [data-slot]) {
+    box-shadow: none;
+  }
+  :where(.tw-scope, [data-slot]) button,
+  button:where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) input:where([type="button"], [type="reset"], [type="submit"]),
+  input:where([type="button"], [type="reset"], [type="submit"]):where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) ::file-selector-button,
+  :where(.tw-scope, [data-slot])::file-selector-button {
+    appearance: button;
+  }
+  :where(.tw-scope, [data-slot]) ::-webkit-inner-spin-button,
+  :where(.tw-scope, [data-slot])::-webkit-inner-spin-button,
+  :where(.tw-scope, [data-slot]) ::-webkit-outer-spin-button,
+  :where(.tw-scope, [data-slot])::-webkit-outer-spin-button {
+    height: auto;
+  }
+  :where(.tw-scope, [data-slot]) [hidden]:where(:not([hidden="until-found"])),
+  [hidden]:where(:not([hidden="until-found"])):where(.tw-scope, [data-slot]) {
+    display: none !important;
+  }
+}

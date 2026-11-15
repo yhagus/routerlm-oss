@@ -1,4 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from "@tailwindcss/vite";
 
 // Runs before first paint so a stored theme never flashes the wrong palette.
 // With no stored choice, CSS follows prefers-color-scheme.
@@ -9,7 +10,10 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   // Authenticated operations console: client-rendered, no SEO surface.
   ssr: false,
-  modules: ["@unocss/nuxt", "@nuxt/content"],
+  modules: ["@nuxt/content"],
+  // Vendored shadcn-vue and AI Elements code is imported explicitly; its index.ts
+  // barrels would otherwise register as components.
+  components: [{ path: "~/components", ignore: ["ui/**", "ai-elements/**"] }],
   content: {
     // node:sqlite, so the build needs no native addon. Under Bun (the dev
     // image) @nuxt/content falls back to bun:sqlite.
@@ -23,6 +27,7 @@ export default defineNuxtConfig({
     backendUrl: "http://localhost:3000",
   },
   css: ["@fontsource-variable/plus-jakarta-sans", "~/assets/css/main.css"],
+  vite: { plugins: [tailwindcss()] },
   app: {
     // A short fade-and-rise between pages (CSS in main.css: .page-*). Each page has one root element.
     pageTransition: { name: "page", mode: "out-in" },
