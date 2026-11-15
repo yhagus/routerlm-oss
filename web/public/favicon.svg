@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The sidebar brand mark: an R in Plus Jakarta Sans 700 on the mark tile. Follows the browser's colour scheme. -->
+  <style>
+    .tile { fill: #e5e5ea; stroke: rgba(0, 0, 0, 0.12); }
+    .r { fill: #1d1d1f; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: url(#dark); stroke: rgba(255, 255, 255, 0.1); }
+      .r { fill: #ffffff; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="dark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a5a5e" />
+      <stop offset="1" stop-color="#3a3a3c" />
+    </linearGradient>
+  </defs>
+  <rect class="tile" x="0.5" y="0.5" width="31" height="31" rx="8.5" />
+  <path class="r" d="M8.86 25.3V6.7H15.79Q17.68 6.7 19.14 7.39Q20.6 8.07 21.43 9.38Q22.25 10.7 22.25 12.58Q22.25 14.5 21.34 15.85Q20.42 17.2 18.88 17.85L23.14 25.3H19.3L14.72 17.14L16.93 18.43H12.26V25.3ZM12.26 15.44H15.83Q16.75 15.44 17.42 15.08Q18.1 14.72 18.47 14.07Q18.85 13.43 18.85 12.57Q18.85 11.7 18.47 11.06Q18.1 10.42 17.42 10.06Q16.75 9.7 15.83 9.7H12.26Z" />
+</svg>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Construction } from "@lucide/vue";
+
 // A dashboard page whose screen hasn't been built yet.
 const props = defineProps<{ title: string; description: string }>();
 useHead({ title: props.title });
@@ -7,9 +9,9 @@ useHead({ title: props.title });
 <template>
   <PageHeading :title="title" :description="description" />
   <section class="panel">
-    <div class="empty-state">
+    <EmptyState :icon="Construction">
       <strong>{{ title }} isn't available yet.</strong
       ><span>This screen is still being built.</span>
-    </div>
+    </EmptyState>
   </section>
 </template>

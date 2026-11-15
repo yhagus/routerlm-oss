@@ -39,15 +39,17 @@ async function signIn(credentials: Credentials): Promise<void> {
 </script>
 
 <template>
-  <div class="auth-card__heading">
-    <h1>Sign in</h1>
-    <p>Use the email and password another User gave you.</p>
+  <div class="page-view">
+    <div class="auth-card__heading">
+      <h1>Sign in</h1>
+      <p>Use the email and password another User gave you.</p>
+    </div>
+    <CredentialsForm
+      submit-label="Sign in"
+      password-autocomplete="current-password"
+      :is-submitting="isSubmitting"
+      :error-message="errorMessage"
+      @submit="signIn"
+    />
   </div>
-  <CredentialsForm
-    submit-label="Sign in"
-    password-autocomplete="current-password"
-    :is-submitting="isSubmitting"
-    :error-message="errorMessage"
-    @submit="signIn"
-  />
 </template>

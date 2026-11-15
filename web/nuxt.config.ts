@@ -24,10 +24,19 @@ export default defineNuxtConfig({
   },
   css: ["@fontsource-variable/plus-jakarta-sans", "~/assets/css/main.css"],
   app: {
+    // A short fade-and-rise between pages (CSS in main.css: .page-*). Each page has one root element.
+    pageTransition: { name: "page", mode: "out-in" },
     head: {
       title: "RouterLM",
       htmlAttrs: { lang: "en" },
       meta: [{ name: "color-scheme", content: "light dark" }],
+      // The sidebar's brand mark. SVG follows the colour scheme; the .ico and the
+      // touch icon are the graphite tile, readable on any tab bar or home screen.
+      link: [
+        { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+        { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      ],
       script: [{ innerHTML: themeBootScript, tagPosition: "head" }],
     },
   },

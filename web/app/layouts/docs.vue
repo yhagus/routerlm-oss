@@ -10,8 +10,10 @@ watch(
 );
 
 // The page files are numbered (1.authentication.md, ...), so their stems sort in reading order.
-const { data: docsPages } = await useAsyncData("docs-navigation", () =>
-  queryCollection("docs").order("stem", "ASC").select("title", "path").all(),
+const { data: docsPages, status: docsPagesStatus } = useAsyncData(
+  "docs-navigation",
+  () => queryCollection("docs").order("stem", "ASC").select("title", "path").all(),
+  { lazy: true },
 );
 </script>
 
@@ -33,6 +35,9 @@ const { data: docsPages } = await useAsyncData("docs-navigation", () =>
       </div>
       <nav class="sidebar__nav docs-nav" aria-label="Documentation">
         <span class="nav-group-label">Client documentation</span>
+        <span v-if="docsPagesStatus === 'pending' && !docsPages" class="nav-item"
+          ><AppSpinner
+        /></span>
         <NuxtLink
           v-for="page in docsPages"
           :key="page.path"

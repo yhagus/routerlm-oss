@@ -45,14 +45,15 @@ export function useEditableList<Dialog extends object>(
    */
   async function submitDialog(
     write: () => Promise<unknown>,
-    doneMessage: string,
+    /** The toast on success; a function when it depends on the response (a generated name). */
+    doneMessage: string | (() => string),
     failureMessage: string,
   ): Promise<void> {
     isSaving.value = true;
     dialogError.value = "";
     try {
       await write();
-      showToast(doneMessage);
+      showToast(typeof doneMessage === "function" ? doneMessage() : doneMessage);
       dialog.value = null;
       await refresh();
     } catch (error) {

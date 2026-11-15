@@ -5,10 +5,12 @@ import {
   Braces,
   Brain,
   Eye,
+  Layers,
   Pencil,
   Plus,
   Power,
   Search,
+  SearchX,
   Trash2,
   Wrench,
 } from "@lucide/vue";
@@ -22,6 +24,7 @@ import {
   type Provider,
   type UpstreamModel,
 } from "~/lib/upstream";
+import { type ActiveFilter, listFilterTokens, searchFilterTokens } from "~/lib/activeFilters";
 import { formatNumberInput } from "~/lib/numberInput";
 
 /**
@@ -33,6 +36,8 @@ const props = defineProps<{
   upstreamModels: UpstreamModel[];
   refresh: () => Promise<unknown>;
   provider?: Provider;
+  /** The models haven't arrived yet: placeholder rows instead of the count and empty state. */
+  isLoading?: boolean;
 }>();
 
 type UpstreamModelDialog =
@@ -73,29 +78,31 @@ const SORT_ORDERS = [
   "context-desc",
 ] as const;
 
-// Held in the URL (?q=…&provider=anthropic&context=128000&capability=vision&status=…&sort=…)
-// so a refresh or a link keeps them. The Provider is its slug, readable and stable.
+const MODEL_STATUSES = ["enabled", "disabled"] as const;
+
+// Held in the URL (?q=…&provider=anthropic,openai&context=128000&capability=vision,tools&status=…&sort=…)
+// so a refresh or a link keeps them. A Provider is its slug, readable and stable.
 const searchText = useQueryParam("q", { default: "", isValid: anyText, debounce: 300 });
-const providerFilter = useQueryParam("provider", { default: "", isValid: anyText });
+const providerSlugs = computed(() => props.providers.map((each) => each.slug));
+const providerFilter = useQueryList("provider", { isValid: anyText, order: providerSlugs });
 const contextFilter = useQueryParam("context", { default: "", isValid: oneOf(CONTEXT_MINIMUMS) });
-const capabilityFilter = useQueryParam("capability", {
-  default: "",
-  isValid: oneOf(["", ...CAPABILITIES]),
+const capabilityFilter = useQueryList("capability", {
+  isValid: oneOf(CAPABILITIES),
+  order: CAPABILITIES,
 });
-const statusFilter = useQueryParam("status", {
-  default: "",
-  isValid: oneOf(["", "enabled", "disabled"]),
+const statusFilter = useQueryList("status", {
+  isValid: oneOf(MODEL_STATUSES),
+  order: MODEL_STATUSES,
 });
 const sortOrder = useQueryParam("sort", { default: "name", isValid: oneOf(SORT_ORDERS) });
 
 const providerBySlug = computed(() => new Map(props.providers.map((each) => [each.slug, each])));
 const providerFilterOptions = computed(() => [
-  { label: "All Providers", value: "" },
   ...props.providers.map((each) => ({ label: each.name, value: each.slug })),
-  // A link can name a Provider since deleted: show it rather than a blank select.
-  ...(providerFilter.value && !providerBySlug.value.has(providerFilter.value)
-    ? [{ label: `${providerFilter.value} (not found)`, value: providerFilter.value }]
-    : []),
+  // A link can name a Provider since deleted: show it so it can be unchecked.
+  ...providerFilter.value
+    .filter((slug) => !providerBySlug.value.has(slug))
+    .map((slug) => ({ label: `${slug} (not found)`, value: slug })),
 ]);
 /** Smallest context window a model must have. */
 const contextFilterOptions = [
@@ -106,18 +113,14 @@ const contextFilterOptions = [
   { label: "256K+ context", value: "256000" },
   { label: "1M+ context", value: "1000000" },
 ];
-const capabilityFilterOptions = [
-  { label: "Any capability", value: "" },
-  ...CAPABILITIES.map((capability) => ({
-    label: CAPABILITY_LABELS[capability],
-    value: capability,
-  })),
-];
+const capabilityFilterOptions = CAPABILITIES.map((capability) => ({
+  label: CAPABILITY_LABELS[capability],
+  value: capability,
+}));
 const statusFilterOptions = [
-  { label: "Any status", value: "" },
   { label: "Enabled", value: "enabled" },
   { label: "Disabled", value: "disabled" },
-];
+] satisfies { label: string; value: (typeof MODEL_STATUSES)[number] }[];
 const sortOptions = computed(() => [
   { label: "Name", value: "name" },
   ...(props.provider ? [] : [{ label: "Provider", value: "provider" }]),
@@ -161,21 +164,15 @@ const visibleModels = computed(() => {
   const minContext = Number(contextFilter.value || 0);
   return scopedModels.value
     .filter((model) => {
-      if (
-        providerFilter.value &&
-        providerById.value.get(model.providerId)?.slug !== providerFilter.value
-      ) {
-        return false;
-      }
+      const slug = providerById.value.get(model.providerId)?.slug ?? "";
+      if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
       if (model.contextSize < minContext) return false;
-      if (
-        capabilityFilter.value &&
-        !model.capabilities.some((capability) => capability === capabilityFilter.value)
-      ) {
+      // A model must have every picked capability.
+      if (!capabilityFilter.value.every((capability) => model.capabilities.includes(capability))) {
         return false;
       }
-      if (statusFilter.value === "enabled" && !model.isEnabled) return false;
-      if (statusFilter.value === "disabled" && model.isEnabled) return false;
+      const status = model.isEnabled ? "enabled" : "disabled";
+      if (statusFilter.value.length && !statusFilter.value.includes(status)) return false;
       if (!query) return true;
       return [model.upstreamModelId, providerName(model)].some((field) =>
         field.toLowerCase().includes(query),
@@ -184,24 +181,34 @@ const visibleModels = computed(() => {
     .toSorted(compareModels);
 });
 
+const activeFilters = computed<ActiveFilter[]>(() => [
+  ...searchFilterTokens(searchText),
+  ...listFilterTokens("Provider", providerFilter, providerFilterOptions.value),
+  ...listFilterTokens("Capability", capabilityFilter, capabilityFilterOptions),
+  ...listFilterTokens("Status", statusFilter, statusFilterOptions),
+]);
+
 const isFiltered = computed(
   () =>
     searchText.value !== "" ||
-    providerFilter.value !== "" ||
+    providerFilter.value.length > 0 ||
     contextFilter.value !== "" ||
-    capabilityFilter.value !== "" ||
-    statusFilter.value !== "",
+    capabilityFilter.value.length > 0 ||
+    statusFilter.value.length > 0,
 );
 
 function clearFilters(): void {
   searchText.value = "";
-  providerFilter.value = "";
+  providerFilter.value = [];
   contextFilter.value = "";
-  capabilityFilter.value = "";
-  statusFilter.value = "";
+  capabilityFilter.value = [];
+  statusFilter.value = [];
 }
 
-const tokenFormat = new Intl.NumberFormat("en-US", {
+/** Token counts in full with digit grouping, "1,048,576". */
+const tokenFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+/** The short form, "1M", beside the full count in the details dialog. */
+const compactTokenFormat = new Intl.NumberFormat("en-US", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
@@ -213,14 +220,6 @@ const priceFormat = new Intl.NumberFormat("en-US", {
 });
 function formatPrice(price: number | null): string {
   return price === null ? "—" : priceFormat.format(price);
-}
-
-/** Cache read sits with Input and cache write with Output (Output = Write; see GLOSSARY.md). */
-function cacheReadNote(model: UpstreamModel): string {
-  return model.cacheReadPrice === null ? "" : `cached ${formatPrice(model.cacheReadPrice)}`;
-}
-function cacheWriteNote(model: UpstreamModel): string {
-  return model.cacheWritePrice === null ? "" : `write ${formatPrice(model.cacheWritePrice)}`;
 }
 
 const shareFormat = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
@@ -273,7 +272,10 @@ function emptyForm(): UpstreamModelForm {
   return {
     providerId:
       props.provider?.id ||
-      providerBySlug.value.get(providerFilter.value)?.id ||
+      // With one Provider filtered, a new model most likely belongs to it.
+      (providerFilter.value.length === 1
+        ? providerBySlug.value.get(providerFilter.value[0] ?? "")?.id
+        : undefined) ||
       (providerOptions.value[0]?.value ?? ""),
     upstreamModelId: "",
     capabilities: [],
@@ -382,19 +384,30 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         aria-label="Search Upstream Models"
       />
     </label>
-    <AppSelect
+    <AppMultiSelect
       v-if="!provider"
       v-model="providerFilter"
       :options="providerFilterOptions"
       label="Filter by Provider"
+      placeholder="All Providers"
+      noun="Providers"
     />
     <AppSelect v-model="contextFilter" :options="contextFilterOptions" label="Minimum context" />
-    <AppSelect
+    <AppMultiSelect
       v-model="capabilityFilter"
       :options="capabilityFilterOptions"
       label="Filter by capability"
+      placeholder="Any capability"
+      noun="capabilities"
+      match="all"
     />
-    <AppSelect v-model="statusFilter" :options="statusFilterOptions" label="Filter by status" />
+    <AppMultiSelect
+      v-model="statusFilter"
+      :options="statusFilterOptions"
+      label="Filter by status"
+      placeholder="Any status"
+      noun="statuses"
+    />
     <AppSelect
       v-model="sortOrder"
       :options="sortOptions"
@@ -403,13 +416,16 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     >
       <template #leading><ArrowDownUp :size="13" class="list-filters__sort-icon" /></template>
     </AppSelect>
-    <span class="filter-note tabular">{{ visibleModels.length }} of {{ scopedModels.length }}</span>
+    <span v-if="!isLoading" class="filter-note tabular"
+      >{{ visibleModels.length }} of {{ scopedModels.length }}</span
+    >
     <slot name="actions" :open-create="() => openDialog({ kind: 'create' })" />
   </div>
+  <ActiveFilters :filters="activeFilters" @clear-all="clearFilters" />
 
   <section class="panel table-panel model-table">
     <div class="table-wrap">
-      <table v-if="visibleModels.length">
+      <table v-if="visibleModels.length || isLoading">
         <thead>
           <tr>
             <th>Upstream Model</th>
@@ -418,11 +434,12 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             <th class="model-table__num">Max output</th>
             <th class="model-table__num">Input $/M</th>
             <th class="model-table__num">Output $/M</th>
-            <th>Status</th>
+            <th class="model-table__center">Status</th>
             <th><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
+          <LoadingRow v-if="isLoading" :columns="8" />
           <tr
             v-for="model in visibleModels"
             :key="model.id"
@@ -470,33 +487,25 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
                 /></span>
               </span>
             </td>
-            <td
-              class="model-table__num tabular"
-              :title="formatNumberInput(String(model.contextSize))"
-            >
+            <td class="model-table__num tabular">
               {{ tokenFormat.format(model.contextSize) }}
             </td>
-            <td
-              class="model-table__num tabular"
-              :title="
-                model.maxOutputTokens === null
-                  ? undefined
-                  : formatNumberInput(String(model.maxOutputTokens))
-              "
-            >
+            <td class="model-table__num tabular">
               {{ model.maxOutputTokens === null ? "—" : tokenFormat.format(model.maxOutputTokens) }}
             </td>
             <td class="model-table__num tabular">
               <strong>{{ formatPrice(model.inputPrice) }}</strong>
-              <span v-if="cacheReadNote(model)" class="cell-note">{{ cacheReadNote(model) }}</span>
+              <span v-if="model.cacheReadPrice !== null" class="cell-note" title="Cache read">{{
+                formatPrice(model.cacheReadPrice)
+              }}</span>
             </td>
             <td class="model-table__num tabular">
               <strong>{{ formatPrice(model.outputPrice) }}</strong>
-              <span v-if="cacheWriteNote(model)" class="cell-note">{{
-                cacheWriteNote(model)
+              <span v-if="model.cacheWritePrice !== null" class="cell-note" title="Cache write">{{
+                formatPrice(model.cacheWritePrice)
               }}</span>
             </td>
-            <td>
+            <td class="model-table__center">
               <span
                 class="status-badge"
                 :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
@@ -537,11 +546,11 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           </tr>
         </tbody>
       </table>
-      <div v-else-if="isFiltered" class="empty-state">
+      <EmptyState v-else-if="isFiltered" :icon="SearchX">
         <strong>No Upstream Model matches these filters.</strong>
         <button class="text-button" type="button" @click="clearFilters">Clear filters</button>
-      </div>
-      <div v-else class="empty-state">
+      </EmptyState>
+      <EmptyState v-else :icon="Layers">
         <strong>No Upstream Models here yet.</strong>
         <span v-if="providers.length"
           >Add one, or run <code>bun run db:seed</code> to load the Catalog.</span
@@ -555,7 +564,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         >
           <Plus :size="13" /> Add Upstream Model
         </button>
-      </div>
+      </EmptyState>
     </div>
   </section>
 
@@ -607,7 +616,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
               <dt>Context window</dt>
               <dd class="tabular">
                 {{ formatNumberInput(String(detailsModel.contextSize)) }}
-                <span>{{ tokenFormat.format(detailsModel.contextSize) }} tokens</span>
+                <span>{{ compactTokenFormat.format(detailsModel.contextSize) }} tokens</span>
               </dd>
             </div>
             <div>
@@ -615,7 +624,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
               <dd class="tabular">
                 <template v-if="detailsModel.maxOutputTokens !== null">
                   {{ formatNumberInput(String(detailsModel.maxOutputTokens)) }}
-                  <span>{{ tokenFormat.format(detailsModel.maxOutputTokens) }} tokens</span>
+                  <span>{{ compactTokenFormat.format(detailsModel.maxOutputTokens) }} tokens</span>
                 </template>
                 <template v-else>Not published</template>
               </dd>

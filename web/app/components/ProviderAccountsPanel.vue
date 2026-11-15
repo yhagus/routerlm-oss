@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Pencil, Plus, Power, Trash2 } from "@lucide/vue";
+import { KeyRound, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
 import {
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
   optionalNumber,
@@ -12,6 +12,8 @@ const props = defineProps<{
   provider: Provider;
   accounts: ProviderAccount[];
   refresh: () => Promise<unknown>;
+  /** The accounts haven't arrived yet: placeholder rows instead of the empty state. */
+  isLoading?: boolean;
 }>();
 
 type ProviderAccountDialog =
@@ -76,15 +78,24 @@ async function saveAccount(): Promise<void> {
   const fields = { name: form.value.name, priority: optionalNumber(form.value.priority) ?? 0 };
   const failureMessage = "Couldn't save the Provider Account.";
   if (current.kind === "create") {
+    // An empty name leaves it out: the backend makes one up from two constellations.
+    const name = form.value.name.trim();
+    let addedName = name;
     await submitDialog(
       async () => {
-        await $dashboardApi("/provider-accounts", {
+        const created = await $dashboardApi<Pick<ProviderAccount, "name">>("/provider-accounts", {
           method: "POST",
-          body: { providerId: props.provider.id, key: form.value.key, ...fields },
+          body: {
+            providerId: props.provider.id,
+            key: form.value.key,
+            priority: fields.priority,
+            ...(name ? { name } : {}),
+          },
         });
+        addedName = created.name;
         form.value.key = "";
       },
-      `Added ${fields.name}`,
+      () => `Added ${addedName}`,
       failureMessage,
     );
     return;
@@ -131,7 +142,7 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
       </div>
     </div>
     <div class="table-wrap">
-      <table v-if="sortedAccounts.length" class="compact-table">
+      <table v-if="sortedAccounts.length || isLoading" class="compact-table">
         <thead>
           <tr>
             <th>Account</th>
@@ -143,6 +154,7 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
           </tr>
         </thead>
         <tbody>
+          <LoadingRow v-if="isLoading" :columns="6" />
           <tr v-for="account in sortedAccounts" :key="account.id">
             <td>
               <strong>{{ account.name }}</strong>
@@ -212,10 +224,10 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
           </tr>
         </tbody>
       </table>
-      <div v-else class="empty-state">
+      <EmptyState v-else :icon="KeyRound">
         <strong>No accounts yet.</strong
         ><span>Add an API key for {{ provider.name }} so the gateway can call it.</span>
-      </div>
+      </EmptyState>
     </div>
   </section>
 
@@ -227,10 +239,34 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
     "
     description="The key is encrypted before it is stored. The dashboard only ever shows its last four characters."
   >
-    <form class="form" autocomplete="off" @submit.prevent="saveAccount">
+    <!--
+      Not a sign-in form: browsers and password managers must not fill it. The key is a
+      masked text input, because a password input makes browsers offer saved logins
+      whatever `autocomplete` says.
+    -->
+    <form
+      class="form"
+      autocomplete="off"
+      data-1p-ignore
+      data-lpignore="true"
+      data-bwignore
+      data-form-type="other"
+      @submit.prevent="saveAccount"
+    >
       <label class="field"
-        ><span class="field__label">Name</span
-        ><input v-model="form.name" class="text-input" required
+        ><span class="field__label">{{
+          dialog.kind === "create" ? "Name (optional)" : "Name"
+        }}</span
+        ><input
+          v-model="form.name"
+          class="text-input"
+          name="provider-account-label"
+          autocomplete="off"
+          spellcheck="false"
+          :required="dialog.kind === 'edit'"
+          :placeholder="
+            dialog.kind === 'create' ? 'Left empty, one is made up, like Lyra Orion' : ''
+          "
       /></label>
       <label class="field"
         ><span class="field__label">{{
@@ -238,9 +274,12 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
         }}</span
         ><input
           v-model="form.key"
-          class="text-input"
-          type="password"
+          class="text-input text-input--masked"
+          type="text"
+          name="provider-account-secret"
           autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
           :minlength="MIN_PROVIDER_ACCOUNT_KEY_LENGTH"
           :required="dialog.kind === 'create'"
           :placeholder="dialog.kind === 'edit' ? `Keeps …${dialog.account.keyLastFour}` : ''"

@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Pencil, Plus, Power, SlidersHorizontal, Trash2 } from "@lucide/vue";
+import {
+  ArrowDown,
+  ArrowUp,
+  FileQuestionMark,
+  Pencil,
+  Plus,
+  Power,
+  Route,
+  SlidersHorizontal,
+  Trash2,
+} from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
 import { isEmptyPolicy, type ParameterPolicy } from "~/lib/parameterPolicy";
 import type { ModelDetail, RouteSummary } from "~/lib/routing";
@@ -16,12 +26,18 @@ const modelPath = `/models/${String(useRoute().params.id)}`;
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
-const [{ data: model, error: loadError, refresh }, { data: upstreamModels }, { data: providers }] =
-  await Promise.all([
-    useDashboardApi<ModelDetail>(modelPath),
-    useDashboardApi<UpstreamModel[]>("/upstream-models"),
-    useDashboardApi<Provider[]>("/providers"),
-  ]);
+const { data: model, error: loadError, refresh } = useDashboardApi<ModelDetail>(modelPath);
+const { data: upstreamModels, status: upstreamModelsStatus } =
+  useDashboardApi<UpstreamModel[]>("/upstream-models");
+const { data: providers, status: providersStatus } = useDashboardApi<Provider[]>("/providers");
+
+/** Add Route lists Upstream Models by Provider name, so it waits for both lists. */
+const isLoadingRouteOptions = computed(
+  () =>
+    (upstreamModelsStatus.value === "pending" && !upstreamModels.value) ||
+    (providersStatus.value === "pending" && !providers.value),
+);
+const routes = computed(() => model.value?.routes ?? []);
 
 useHead({ title: () => model.value?.name ?? "Model" });
 
@@ -219,296 +235,323 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
 </script>
 
 <template>
-  <div v-if="loadError" class="panel empty-state">
-    <strong>Couldn't load this Model.</strong
-    ><span>It may have been deleted. <NuxtLink to="/models">Back to Models</NuxtLink></span>
-  </div>
+  <div class="page-view">
+    <EmptyState v-if="loadError" class="panel" :icon="FileQuestionMark" tone="error">
+      <strong>Couldn't load this Model.</strong
+      ><span>It may have been deleted. <NuxtLink to="/models">Back to Models</NuxtLink></span>
+    </EmptyState>
 
-  <template v-else-if="model">
-    <PageHeading
-      :title="model.name"
-      description="Clients send this name as the model. The gateway tries its enabled Routes from the top."
-    >
-      <span
-        class="status-badge"
-        :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-        >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
-      >
-      <button class="button" type="button" @click="openDialog({ kind: 'rename' })">
-        <Pencil :size="14" /> Rename
-      </button>
-      <button class="button" type="button" @click="toggleModel">
-        <Power :size="14" /> {{ model.isEnabled ? "Disable" : "Enable" }}
-      </button>
-      <button class="button" type="button" @click="openDialog({ kind: 'delete' })">
-        <Trash2 :size="14" /> Delete
-      </button>
-    </PageHeading>
-
-    <section class="panel table-panel">
-      <div class="panel-heading">
+    <template v-else-if="!model">
+      <section class="page-heading" aria-busy="true">
         <div>
-          <h2>Routes</h2>
-          <p>Tried in this order. A failed Route falls back to the next one.</p>
+          <h1>Model</h1>
+          <p class="page-heading__sub">
+            Clients send this name as the model. The gateway tries its enabled Routes from the top.
+          </p>
         </div>
-        <div class="panel-heading__tools">
-          <button
-            class="button button--primary"
-            type="button"
-            :disabled="upstreamModelOptions.length === 0"
-            @click="openDialog({ kind: 'add-route' })"
+        <div class="page-heading__controls">
+          <button class="button" type="button" disabled><Pencil :size="14" /> Rename</button>
+          <button class="button" type="button" disabled><Trash2 :size="14" /> Delete</button>
+        </div>
+      </section>
+      <section class="panel loading-panel" aria-busy="true">
+        <AppSpinner />
+      </section>
+    </template>
+
+    <template v-else>
+      <PageHeading
+        :title="model.name"
+        description="Clients send this name as the model. The gateway tries its enabled Routes from the top."
+      >
+        <span
+          class="status-badge"
+          :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+          >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
+        >
+        <button class="button" type="button" @click="openDialog({ kind: 'rename' })">
+          <Pencil :size="14" /> Rename
+        </button>
+        <button class="button" type="button" @click="toggleModel">
+          <Power :size="14" /> {{ model.isEnabled ? "Disable" : "Enable" }}
+        </button>
+        <button class="button" type="button" @click="openDialog({ kind: 'delete' })">
+          <Trash2 :size="14" /> Delete
+        </button>
+      </PageHeading>
+
+      <section class="panel table-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Routes</h2>
+            <p>Tried in this order. A failed Route falls back to the next one.</p>
+          </div>
+          <div class="panel-heading__tools">
+            <button
+              class="button button--primary"
+              type="button"
+              :disabled="isLoadingRouteOptions || upstreamModelOptions.length === 0"
+              @click="openDialog({ kind: 'add-route' })"
+            >
+              <Plus :size="14" /> Add Route
+            </button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Provider</th>
+                <th>Upstream Model</th>
+                <th>Capabilities</th>
+                <th>Provider Accounts</th>
+                <th>Status</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(modelRoute, index) in routes" :key="modelRoute.id">
+                <td class="tabular">{{ index + 1 }}</td>
+                <td>
+                  {{ modelRoute.provider.name }}
+                  <span v-if="!modelRoute.provider.isEnabled" class="cell-note"
+                    >Provider disabled</span
+                  >
+                </td>
+                <td>
+                  <strong>{{ modelRoute.upstreamModel.upstreamModelId }}</strong>
+                  <span v-if="!modelRoute.upstreamModel.isEnabled" class="cell-note"
+                    >Upstream Model disabled</span
+                  >
+                  <span v-if="modelRoute.parameterPolicyOverride" class="cell-note"
+                    >Overrides the Parameter Policy</span
+                  >
+                </td>
+                <td>{{ modelRoute.upstreamModel.capabilities.join(", ") || "—" }}</td>
+                <td class="tabular">
+                  <span
+                    v-if="modelRoute.enabledProviderAccountCount === 0"
+                    class="status-badge status-badge--warn"
+                    :title="`${modelRoute.provider.name} has no enabled Provider Account, so this Route can't serve requests.`"
+                    >None enabled</span
+                  >
+                  <template v-else>{{ modelRoute.enabledProviderAccountCount }} enabled</template>
+                </td>
+                <td>
+                  <span
+                    class="status-badge"
+                    :class="modelRoute.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+                    >{{ modelRoute.isEnabled ? "Enabled" : "Disabled" }}</span
+                  >
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button
+                      class="row-action"
+                      :disabled="index === 0"
+                      aria-label="Move up"
+                      @click="moveRoute(index, -1)"
+                    >
+                      <ArrowUp :size="14" />
+                    </button>
+                    <button
+                      class="row-action"
+                      :disabled="index === routes.length - 1"
+                      aria-label="Move down"
+                      @click="moveRoute(index, 1)"
+                    >
+                      <ArrowDown :size="14" />
+                    </button>
+                    <button
+                      class="row-action"
+                      @click="openDialog({ kind: 'route-policy', route: modelRoute })"
+                    >
+                      <SlidersHorizontal :size="14" /> Policy
+                    </button>
+                    <button class="row-action" @click="toggleRoute(modelRoute)">
+                      <Power :size="14" /> {{ modelRoute.isEnabled ? "Disable" : "Enable" }}
+                    </button>
+                    <button
+                      class="row-action"
+                      @click="openDialog({ kind: 'remove-route', route: modelRoute })"
+                    >
+                      <Trash2 :size="14" /> Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <EmptyState v-if="routes.length === 0" :icon="Route">
+            <strong>No Routes yet.</strong
+            ><span v-if="isLoadingRouteOptions || upstreamModelOptions.length > 0"
+              >Requests for {{ model.name }} fail until you add one.</span
+            ><span v-else
+              >Add an Upstream Model first, on the
+              <NuxtLink to="/upstream-models">Upstream Models</NuxtLink> page.</span
+            >
+          </EmptyState>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Parameter Policy</h2>
+            <p>
+              Defaults fill what the client leaves out, forced values replace the client's, and caps
+              clamp what is left. A Route's override wins for the parameters it sets.
+            </p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <ParameterPolicyEditor
+            :policy="model.parameterPolicy"
+            :is-saving="isSavingPolicy"
+            :error="policyError"
+            submit-label="Save policy"
+            @save="saveModelPolicy"
+          />
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Prompt caching</h2>
+            <p>
+              On Routes to anthropic-messages Providers, the gateway marks the end of the tools, the
+              end of the system prompt and the latest turn for caching, unless the client marked the
+              request itself.
+            </p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <label class="check-field"
+            ><input
+              type="checkbox"
+              :checked="model.hasAutomaticCacheBreakpoints"
+              :disabled="isSavingCacheBreakpoints"
+              @change="toggleCacheBreakpoints"
+            />
+            Automatic cache breakpoints</label
           >
-            <Plus :size="14" /> Add Route
+        </div>
+      </section>
+    </template>
+
+    <AppDialog
+      v-if="dialog?.kind === 'rename'"
+      v-model:open="isDialogOpen"
+      title="Rename Model"
+      description="Clients that still send the old name get an unknown-model error."
+    >
+      <form class="form" @submit.prevent="renameModel">
+        <label class="field"
+          ><span class="field__label">Name</span
+          ><input v-model="newName" class="text-input" autocomplete="off" required
+        /></label>
+        <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
+        <div class="dialog__actions">
+          <button class="button" type="button" @click="dialog = null">Cancel</button>
+          <button class="button button--primary" type="submit" :disabled="isSaving">Save</button>
+        </div>
+      </form>
+    </AppDialog>
+
+    <AppDialog
+      v-if="dialog?.kind === 'add-route'"
+      v-model:open="isDialogOpen"
+      title="Add Route"
+      description="The new Route goes last. Move it up to try it sooner."
+    >
+      <form class="form" @submit.prevent="addRoute">
+        <div class="field">
+          <span class="field__label">Upstream Model</span>
+          <AppSelect
+            v-model="newRouteUpstreamModelId"
+            :options="upstreamModelOptions"
+            label="Upstream Model"
+          />
+        </div>
+        <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
+        <div class="dialog__actions">
+          <button class="button" type="button" @click="dialog = null">Cancel</button>
+          <button class="button button--primary" type="submit" :disabled="isSaving">
+            Add Route
           </button>
         </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Provider</th>
-              <th>Upstream Model</th>
-              <th>Capabilities</th>
-              <th>Provider Accounts</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(modelRoute, index) in model.routes" :key="modelRoute.id">
-              <td class="tabular">{{ index + 1 }}</td>
-              <td>
-                {{ modelRoute.provider.name }}
-                <span v-if="!modelRoute.provider.isEnabled" class="cell-note"
-                  >Provider disabled</span
-                >
-              </td>
-              <td>
-                <strong>{{ modelRoute.upstreamModel.upstreamModelId }}</strong>
-                <span v-if="!modelRoute.upstreamModel.isEnabled" class="cell-note"
-                  >Upstream Model disabled</span
-                >
-                <span v-if="modelRoute.parameterPolicyOverride" class="cell-note"
-                  >Overrides the Parameter Policy</span
-                >
-              </td>
-              <td>{{ modelRoute.upstreamModel.capabilities.join(", ") || "—" }}</td>
-              <td class="tabular">
-                <span
-                  v-if="modelRoute.enabledProviderAccountCount === 0"
-                  class="status-badge status-badge--warn"
-                  :title="`${modelRoute.provider.name} has no enabled Provider Account, so this Route can't serve requests.`"
-                  >None enabled</span
-                >
-                <template v-else>{{ modelRoute.enabledProviderAccountCount }} enabled</template>
-              </td>
-              <td>
-                <span
-                  class="status-badge"
-                  :class="modelRoute.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-                  >{{ modelRoute.isEnabled ? "Enabled" : "Disabled" }}</span
-                >
-              </td>
-              <td>
-                <div class="row-actions">
-                  <button
-                    class="row-action"
-                    :disabled="index === 0"
-                    aria-label="Move up"
-                    @click="moveRoute(index, -1)"
-                  >
-                    <ArrowUp :size="14" />
-                  </button>
-                  <button
-                    class="row-action"
-                    :disabled="index === model.routes.length - 1"
-                    aria-label="Move down"
-                    @click="moveRoute(index, 1)"
-                  >
-                    <ArrowDown :size="14" />
-                  </button>
-                  <button
-                    class="row-action"
-                    @click="openDialog({ kind: 'route-policy', route: modelRoute })"
-                  >
-                    <SlidersHorizontal :size="14" /> Policy
-                  </button>
-                  <button class="row-action" @click="toggleRoute(modelRoute)">
-                    <Power :size="14" /> {{ modelRoute.isEnabled ? "Disable" : "Enable" }}
-                  </button>
-                  <button
-                    class="row-action"
-                    @click="openDialog({ kind: 'remove-route', route: modelRoute })"
-                  >
-                    <Trash2 :size="14" /> Remove
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div v-if="model.routes.length === 0" class="empty-state">
-          <strong>No Routes yet.</strong
-          ><span v-if="upstreamModelOptions.length > 0"
-            >Requests for {{ model.name }} fail until you add one.</span
-          ><span v-else
-            >Add an Upstream Model first, on the
-            <NuxtLink to="/upstream-models">Upstream Models</NuxtLink> page.</span
-          >
-        </div>
-      </div>
-    </section>
+      </form>
+    </AppDialog>
 
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Parameter Policy</h2>
-          <p>
-            Defaults fill what the client leaves out, forced values replace the client's, and caps
-            clamp what is left. A Route's override wins for the parameters it sets.
-          </p>
-        </div>
-      </div>
-      <div class="panel-body">
-        <ParameterPolicyEditor
-          :policy="model.parameterPolicy"
-          :is-saving="isSavingPolicy"
-          :error="policyError"
-          submit-label="Save policy"
-          @save="saveModelPolicy"
-        />
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Prompt caching</h2>
-          <p>
-            On Routes to anthropic-messages Providers, the gateway marks the end of the tools, the
-            end of the system prompt and the latest turn for caching, unless the client marked the
-            request itself.
-          </p>
-        </div>
-      </div>
-      <div class="panel-body">
-        <label class="check-field"
-          ><input
-            type="checkbox"
-            :checked="model.hasAutomaticCacheBreakpoints"
-            :disabled="isSavingCacheBreakpoints"
-            @change="toggleCacheBreakpoints"
-          />
-          Automatic cache breakpoints</label
-        >
-      </div>
-    </section>
-  </template>
-
-  <AppDialog
-    v-if="dialog?.kind === 'rename'"
-    v-model:open="isDialogOpen"
-    title="Rename Model"
-    description="Clients that still send the old name get an unknown-model error."
-  >
-    <form class="form" @submit.prevent="renameModel">
-      <label class="field"
-        ><span class="field__label">Name</span
-        ><input v-model="newName" class="text-input" autocomplete="off" required
-      /></label>
-      <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
-      <div class="dialog__actions">
-        <button class="button" type="button" @click="dialog = null">Cancel</button>
-        <button class="button button--primary" type="submit" :disabled="isSaving">Save</button>
-      </div>
-    </form>
-  </AppDialog>
-
-  <AppDialog
-    v-if="dialog?.kind === 'add-route'"
-    v-model:open="isDialogOpen"
-    title="Add Route"
-    description="The new Route goes last. Move it up to try it sooner."
-  >
-    <form class="form" @submit.prevent="addRoute">
-      <div class="field">
-        <span class="field__label">Upstream Model</span>
-        <AppSelect
-          v-model="newRouteUpstreamModelId"
-          :options="upstreamModelOptions"
-          label="Upstream Model"
-        />
-      </div>
-      <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
-      <div class="dialog__actions">
-        <button class="button" type="button" @click="dialog = null">Cancel</button>
-        <button class="button button--primary" type="submit" :disabled="isSaving">Add Route</button>
-      </div>
-    </form>
-  </AppDialog>
-
-  <AppDialog
-    v-if="dialog?.kind === 'remove-route'"
-    v-model:open="isDialogOpen"
-    title="Remove Route"
-    :description="`${model?.name} stops sending requests to ${dialog.route.provider.name} · ${dialog.route.upstreamModel.upstreamModelId}.`"
-  >
-    <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
-    <div class="dialog__actions">
-      <button class="button" type="button" @click="dialog = null">Cancel</button>
-      <button
-        class="button button--danger"
-        type="button"
-        :disabled="isSaving"
-        @click="removeRoute(dialog.route)"
-      >
-        Remove Route
-      </button>
-    </div>
-  </AppDialog>
-
-  <AppDialog
-    v-if="dialog?.kind === 'route-policy'"
-    v-model:open="isDialogOpen"
-    wide
-    title="Route override"
-    :description="`For requests sent to ${dialog.route.provider.name} · ${dialog.route.upstreamModel.upstreamModelId}, each parameter set here takes all its rules from this override instead of the Model's policy. A system prompt here replaces the Model's.`"
-  >
-    <ParameterPolicyEditor
-      :policy="dialog.route.parameterPolicyOverride"
-      :is-saving="isSaving"
-      :error="dialogError"
-      submit-label="Save override"
-      @save="saveRouteOverride(dialog.route, $event)"
+    <AppDialog
+      v-if="dialog?.kind === 'remove-route'"
+      v-model:open="isDialogOpen"
+      title="Remove Route"
+      :description="`${model?.name} stops sending requests to ${dialog.route.provider.name} · ${dialog.route.upstreamModel.upstreamModelId}.`"
     >
-      <template #actions>
+      <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
+      <div class="dialog__actions">
         <button class="button" type="button" @click="dialog = null">Cancel</button>
         <button
-          v-if="dialog.route.parameterPolicyOverride"
           class="button button--danger"
           type="button"
           :disabled="isSaving"
-          @click="saveRouteOverride(dialog.route, null)"
+          @click="removeRoute(dialog.route)"
         >
-          Remove override
+          Remove Route
         </button>
-      </template>
-    </ParameterPolicyEditor>
-  </AppDialog>
+      </div>
+    </AppDialog>
 
-  <AppDialog
-    v-if="dialog?.kind === 'delete'"
-    v-model:open="isDialogOpen"
-    title="Delete Model"
-    :description="`${model?.name} and its Routes are deleted, and clients sending it get an unknown-model error. This can't be undone.`"
-  >
-    <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
-    <div class="dialog__actions">
-      <button class="button" type="button" @click="dialog = null">Cancel</button>
-      <button class="button button--danger" type="button" :disabled="isSaving" @click="deleteModel">
-        Delete Model
-      </button>
-    </div>
-  </AppDialog>
+    <AppDialog
+      v-if="dialog?.kind === 'route-policy'"
+      v-model:open="isDialogOpen"
+      wide
+      title="Route override"
+      :description="`For requests sent to ${dialog.route.provider.name} · ${dialog.route.upstreamModel.upstreamModelId}, each parameter set here takes all its rules from this override instead of the Model's policy. A system prompt here replaces the Model's.`"
+    >
+      <ParameterPolicyEditor
+        :policy="dialog.route.parameterPolicyOverride"
+        :is-saving="isSaving"
+        :error="dialogError"
+        submit-label="Save override"
+        @save="saveRouteOverride(dialog.route, $event)"
+      >
+        <template #actions>
+          <button class="button" type="button" @click="dialog = null">Cancel</button>
+          <button
+            v-if="dialog.route.parameterPolicyOverride"
+            class="button button--danger"
+            type="button"
+            :disabled="isSaving"
+            @click="saveRouteOverride(dialog.route, null)"
+          >
+            Remove override
+          </button>
+        </template>
+      </ParameterPolicyEditor>
+    </AppDialog>
+
+    <AppDialog
+      v-if="dialog?.kind === 'delete'"
+      v-model:open="isDialogOpen"
+      title="Delete Model"
+      :description="`${model?.name} and its Routes are deleted, and clients sending it get an unknown-model error. This can't be undone.`"
+    >
+      <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
+      <div class="dialog__actions">
+        <button class="button" type="button" @click="dialog = null">Cancel</button>
+        <button
+          class="button button--danger"
+          type="button"
+          :disabled="isSaving"
+          @click="deleteModel"
+        >
+          Delete Model
+        </button>
+      </div>
+    </AppDialog>
+  </div>
 </template>

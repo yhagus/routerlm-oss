@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { ArrowLeft, CircleAlert, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
+import {
+  ArrowLeft,
+  CircleAlert,
+  CloudOff,
+  FileQuestionMark,
+  Pencil,
+  Plus,
+  Power,
+  Trash2,
+} from "@lucide/vue";
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "reka-ui";
 import { apiErrorMessage } from "~/lib/api";
 import {
@@ -23,15 +32,28 @@ const providerId = String(route.params.id);
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
-const [
-  { data: providers, error: loadError, refresh: refreshProviders },
-  { data: accounts, error: accountsError, refresh: refreshAccounts },
-  { data: models, error: modelsError, refresh: refreshModels },
-] = await Promise.all([
-  useDashboardApi<Provider[]>("/providers"),
-  useDashboardApi<ProviderAccount[]>("/provider-accounts"),
-  useDashboardApi<UpstreamModel[]>("/upstream-models"),
-]);
+const {
+  data: providers,
+  status: providersStatus,
+  error: loadError,
+  refresh: refreshProviders,
+} = useDashboardApi<Provider[]>("/providers");
+const {
+  data: accounts,
+  status: accountsStatus,
+  error: accountsError,
+  refresh: refreshAccounts,
+} = useDashboardApi<ProviderAccount[]>("/provider-accounts");
+const {
+  data: models,
+  status: modelsStatus,
+  error: modelsError,
+  refresh: refreshModels,
+} = useDashboardApi<UpstreamModel[]>("/upstream-models");
+
+const isLoadingProvider = computed(() => providersStatus.value === "pending" && !providers.value);
+const isLoadingAccounts = computed(() => accountsStatus.value === "pending" && !accounts.value);
+const isLoadingModels = computed(() => modelsStatus.value === "pending" && !models.value);
 
 const provider = computed(() => providers.value?.find((each) => each.id === providerId));
 const ownAccounts = computed(() =>
@@ -127,194 +149,248 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
 </script>
 
 <template>
-  <NuxtLink class="back-link" to="/providers"><ArrowLeft :size="13" /> Providers</NuxtLink>
+  <div class="page-view">
+    <NuxtLink class="back-link" to="/providers"><ArrowLeft :size="13" /> Providers</NuxtLink>
 
-  <div v-if="loadError" class="panel empty-state empty-state--standalone">
-    <strong>Couldn't load this Provider.</strong
-    ><span>Check that the backend is running, then reload the page.</span>
-  </div>
-  <div v-else-if="!provider" class="panel empty-state empty-state--standalone">
-    <strong>This Provider doesn't exist.</strong
-    ><span>It may have been deleted. <NuxtLink to="/providers">Back to Providers</NuxtLink></span>
-  </div>
+    <EmptyState
+      v-if="loadError"
+      class="panel empty-state--standalone"
+      :icon="CloudOff"
+      tone="error"
+    >
+      <strong>Couldn't load this Provider.</strong
+      ><span>Check that the backend is running, then reload the page.</span>
+    </EmptyState>
+    <EmptyState
+      v-else-if="!provider && !isLoadingProvider"
+      class="panel empty-state--standalone"
+      :icon="FileQuestionMark"
+    >
+      <strong>This Provider doesn't exist.</strong
+      ><span>It may have been deleted. <NuxtLink to="/providers">Back to Providers</NuxtLink></span>
+    </EmptyState>
 
-  <template v-else>
-    <section class="provider-hero" :class="{ 'provider-hero--off': !provider.isEnabled }">
-      <ProviderLogo :slug="provider.slug" :name="provider.name" :base-url="provider.baseUrl" />
-      <div class="provider-hero__title">
-        <h1>{{ provider.name }}</h1>
-        <p class="provider-hero__meta">
-          <span>{{ PROTOCOL_LABELS[provider.protocol] }}</span>
-          <span :title="provider.baseUrl">{{ baseUrlHost(provider.baseUrl) }}</span>
-          <span>{{ provider.slug }}</span>
-        </p>
-      </div>
-      <div class="provider-hero__actions">
-        <span
-          class="status-badge"
-          :class="provider.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-          >{{ provider.isEnabled ? "Enabled" : "Disabled" }}</span
-        >
-        <button class="button" type="button" @click="isEditOpen = true">
-          <Pencil :size="14" /> Edit
-        </button>
-        <button class="button" type="button" @click="toggleProvider">
-          <Power :size="14" /> {{ provider.isEnabled ? "Disable" : "Enable" }}
-        </button>
-        <button
-          class="icon-action icon-action--danger"
-          type="button"
-          :aria-label="`Delete ${provider.name}`"
-          title="Delete"
-          @click="openDelete"
-        >
-          <Trash2 :size="15" />
-        </button>
-      </div>
-    </section>
-
-    <p v-if="stats?.isUnroutable && !accountsError && !modelsError" class="provider-hero__alert">
-      <CircleAlert :size="13" /> {{ unroutableReason(stats) }}
-    </p>
-
-    <TabsRoot v-model="activeTab" class="tabs" :unmount-on-hide="false">
-      <TabsList class="tabs__list" aria-label="Provider sections">
-        <TabsTrigger class="tabs__trigger" value="accounts">
-          Accounts
-          <span class="tabs__count tabular">{{ readyAccounts }}/{{ ownAccounts.length }}</span>
-        </TabsTrigger>
-        <TabsTrigger class="tabs__trigger" value="models">
-          Models
-          <span class="tabs__count tabular">{{ enabledModels }}/{{ ownModels.length }}</span>
-        </TabsTrigger>
-        <TabsTrigger class="tabs__trigger" value="configuration">Configuration</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="accounts" class="tabs__panel">
-        <div v-if="accountsError" class="panel empty-state empty-state--standalone">
-          <strong>Couldn't load Provider Accounts.</strong
-          ><span>Check that the backend is running, then reload the page.</span>
+    <template v-else-if="!provider">
+      <section class="provider-hero" aria-busy="true">
+        <div class="provider-hero__title">
+          <h1>Provider</h1>
         </div>
-        <ProviderAccountsPanel
-          v-else
-          :provider="provider"
-          :accounts="ownAccounts"
-          :refresh="refresh"
-        />
-      </TabsContent>
-
-      <TabsContent value="models" class="tabs__panel">
-        <div v-if="modelsError" class="panel empty-state empty-state--standalone">
-          <strong>Couldn't load Upstream Models.</strong
-          ><span>Check that the backend is running, then reload the page.</span>
+        <div class="provider-hero__actions">
+          <button class="button" type="button" disabled><Pencil :size="14" /> Edit</button>
         </div>
-        <UpstreamModelBrowser
-          v-else
-          :provider="provider"
-          :providers="providers ?? []"
-          :upstream-models="models ?? []"
-          :refresh="refresh"
-        >
-          <template #actions="{ openCreate }">
-            <button class="button button--primary" type="button" @click="openCreate">
-              <Plus :size="14" /> Add Model
-            </button>
-          </template>
-        </UpstreamModelBrowser>
-      </TabsContent>
+      </section>
+      <section class="panel loading-panel" aria-busy="true">
+        <AppSpinner />
+      </section>
+    </template>
 
-      <TabsContent value="configuration" class="tabs__panel">
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <h2>Configuration</h2>
-              <p>How the gateway calls {{ provider.name }}.</p>
-            </div>
-            <div class="panel-heading__tools">
-              <button class="button" type="button" @click="isEditOpen = true">
-                <Pencil :size="14" /> Edit
+    <template v-else>
+      <section class="provider-hero" :class="{ 'provider-hero--off': !provider.isEnabled }">
+        <ProviderLogo :slug="provider.slug" :name="provider.name" :base-url="provider.baseUrl" />
+        <div class="provider-hero__title">
+          <h1>{{ provider.name }}</h1>
+          <p class="provider-hero__meta">
+            <span>{{ PROTOCOL_LABELS[provider.protocol] }}</span>
+            <span :title="provider.baseUrl">{{ baseUrlHost(provider.baseUrl) }}</span>
+            <span>{{ provider.slug }}</span>
+          </p>
+        </div>
+        <div class="provider-hero__actions">
+          <span
+            class="status-badge"
+            :class="provider.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+            >{{ provider.isEnabled ? "Enabled" : "Disabled" }}</span
+          >
+          <button class="button" type="button" @click="isEditOpen = true">
+            <Pencil :size="14" /> Edit
+          </button>
+          <button class="button" type="button" @click="toggleProvider">
+            <Power :size="14" /> {{ provider.isEnabled ? "Disable" : "Enable" }}
+          </button>
+          <button
+            class="icon-action icon-action--danger"
+            type="button"
+            :aria-label="`Delete ${provider.name}`"
+            title="Delete"
+            @click="openDelete"
+          >
+            <Trash2 :size="15" />
+          </button>
+        </div>
+      </section>
+
+      <p
+        v-if="
+          stats?.isUnroutable &&
+          !isLoadingAccounts &&
+          !isLoadingModels &&
+          !accountsError &&
+          !modelsError
+        "
+        class="provider-hero__alert"
+      >
+        <CircleAlert :size="13" /> {{ unroutableReason(stats) }}
+      </p>
+
+      <TabsRoot v-model="activeTab" class="tabs" :unmount-on-hide="false">
+        <TabsList class="tabs__list" aria-label="Provider sections">
+          <TabsTrigger class="tabs__trigger" value="accounts">
+            Accounts
+            <AppSpinner v-if="isLoadingAccounts" label="" />
+            <span v-else class="tabs__count tabular"
+              >{{ readyAccounts }}/{{ ownAccounts.length }}</span
+            >
+          </TabsTrigger>
+          <TabsTrigger class="tabs__trigger" value="models">
+            Models
+            <AppSpinner v-if="isLoadingModels" label="" />
+            <span v-else class="tabs__count tabular"
+              >{{ enabledModels }}/{{ ownModels.length }}</span
+            >
+          </TabsTrigger>
+          <TabsTrigger class="tabs__trigger" value="configuration">Configuration</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="accounts" class="tabs__panel">
+          <EmptyState
+            v-if="accountsError"
+            class="panel empty-state--standalone"
+            :icon="CloudOff"
+            tone="error"
+          >
+            <strong>Couldn't load Provider Accounts.</strong
+            ><span>Check that the backend is running, then reload the page.</span>
+          </EmptyState>
+          <ProviderAccountsPanel
+            v-else
+            :provider="provider"
+            :accounts="ownAccounts"
+            :refresh="refresh"
+            :is-loading="isLoadingAccounts"
+          />
+        </TabsContent>
+
+        <TabsContent value="models" class="tabs__panel">
+          <EmptyState
+            v-if="modelsError"
+            class="panel empty-state--standalone"
+            :icon="CloudOff"
+            tone="error"
+          >
+            <strong>Couldn't load Upstream Models.</strong
+            ><span>Check that the backend is running, then reload the page.</span>
+          </EmptyState>
+          <UpstreamModelBrowser
+            v-else
+            :provider="provider"
+            :providers="providers ?? []"
+            :upstream-models="models ?? []"
+            :refresh="refresh"
+            :is-loading="isLoadingModels"
+          >
+            <template #actions="{ openCreate }">
+              <button class="button button--primary" type="button" @click="openCreate">
+                <Plus :size="14" /> Add Model
               </button>
-            </div>
-          </div>
-          <dl class="config-list">
-            <div>
-              <dt>Protocol</dt>
-              <dd>
-                {{ PROTOCOL_LABELS[provider.protocol] }}
-                <span class="cell-note">{{ provider.protocol }}</span>
-              </dd>
-            </div>
-            <div>
-              <dt>Base URL</dt>
-              <dd class="config-list__url">{{ provider.baseUrl }}</dd>
-            </div>
-            <div>
-              <dt>Authentication</dt>
-              <dd>
-                {{ provider.authStyle === "bearer" ? "Authorization: Bearer" : "x-api-key header" }}
-              </dd>
-            </div>
-            <div>
-              <dt>Slug</dt>
-              <dd>{{ provider.slug }}</dd>
-            </div>
-            <template v-if="provider.protocol === 'openai-chat'">
+            </template>
+          </UpstreamModelBrowser>
+        </TabsContent>
+
+        <TabsContent value="configuration" class="tabs__panel">
+          <section class="panel">
+            <div class="panel-heading">
               <div>
-                <dt>Reasoning in history</dt>
+                <h2>Configuration</h2>
+                <p>How the gateway calls {{ provider.name }}.</p>
+              </div>
+              <div class="panel-heading__tools">
+                <button class="button" type="button" @click="isEditOpen = true">
+                  <Pencil :size="14" /> Edit
+                </button>
+              </div>
+            </div>
+            <dl class="config-list">
+              <div>
+                <dt>Protocol</dt>
+                <dd>
+                  {{ PROTOCOL_LABELS[provider.protocol] }}
+                  <span class="cell-note">{{ provider.protocol }}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Base URL</dt>
+                <dd class="config-list__url">{{ provider.baseUrl }}</dd>
+              </div>
+              <div>
+                <dt>Authentication</dt>
                 <dd>
                   {{
-                    provider.quirks.reasoningContentInHistory
-                      ? REASONING_LABELS[provider.quirks.reasoningContentInHistory]
-                      : "Not needed"
+                    provider.authStyle === "bearer" ? "Authorization: Bearer" : "x-api-key header"
                   }}
                 </dd>
               </div>
               <div>
-                <dt>Request fields</dt>
-                <dd>{{ requestFields(provider) }}</dd>
+                <dt>Slug</dt>
+                <dd>{{ provider.slug }}</dd>
               </div>
-            </template>
-            <div v-if="provider.protocol === 'anthropic-messages'">
-              <dt>Cache marker limit</dt>
-              <dd class="tabular">
-                {{ provider.quirks.cacheMarkerLimit ?? 4
-                }}<span v-if="provider.quirks.cacheMarkerLimit === undefined" class="cell-note"
-                  >default</span
-                >
-              </dd>
-            </div>
-            <div>
-              <dt>Source</dt>
-              <dd>{{ provider.isFromCatalog ? "Catalog" : "Added by hand" }}</dd>
-            </div>
-            <div>
-              <dt>Updated</dt>
-              <dd class="tabular">{{ dateFormat.format(new Date(provider.updatedAt)) }}</dd>
-            </div>
-          </dl>
-        </section>
-      </TabsContent>
-    </TabsRoot>
+              <template v-if="provider.protocol === 'openai-chat'">
+                <div>
+                  <dt>Reasoning in history</dt>
+                  <dd>
+                    {{
+                      provider.quirks.reasoningContentInHistory
+                        ? REASONING_LABELS[provider.quirks.reasoningContentInHistory]
+                        : "Not needed"
+                    }}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Request fields</dt>
+                  <dd>{{ requestFields(provider) }}</dd>
+                </div>
+              </template>
+              <div v-if="provider.protocol === 'anthropic-messages'">
+                <dt>Cache marker limit</dt>
+                <dd class="tabular">
+                  {{ provider.quirks.cacheMarkerLimit ?? 4
+                  }}<span v-if="provider.quirks.cacheMarkerLimit === undefined" class="cell-note"
+                    >default</span
+                  >
+                </dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>{{ provider.isFromCatalog ? "Catalog" : "Added by hand" }}</dd>
+              </div>
+              <div>
+                <dt>Updated</dt>
+                <dd class="tabular">{{ dateFormat.format(new Date(provider.updatedAt)) }}</dd>
+              </div>
+            </dl>
+          </section>
+        </TabsContent>
+      </TabsRoot>
 
-    <ProviderFormDialog v-model:open="isEditOpen" :provider="provider" @saved="refresh" />
+      <ProviderFormDialog v-model:open="isEditOpen" :provider="provider" @saved="refresh" />
 
-    <AppDialog
-      v-model:open="isDeleteOpen"
-      title="Delete Provider"
-      :description="`${provider.name} is deleted with its Provider Accounts and Upstream Models. This can't be undone.`"
-    >
-      <p v-if="deleteError" class="form__error" role="alert">{{ deleteError }}</p>
-      <div class="dialog__actions">
-        <button class="button" type="button" @click="isDeleteOpen = false">Cancel</button>
-        <button
-          class="button button--danger"
-          type="button"
-          :disabled="isDeleting"
-          @click="deleteProvider"
-        >
-          Delete Provider
-        </button>
-      </div>
-    </AppDialog>
-  </template>
+      <AppDialog
+        v-model:open="isDeleteOpen"
+        title="Delete Provider"
+        :description="`${provider.name} is deleted with its Provider Accounts and Upstream Models. This can't be undone.`"
+      >
+        <p v-if="deleteError" class="form__error" role="alert">{{ deleteError }}</p>
+        <div class="dialog__actions">
+          <button class="button" type="button" @click="isDeleteOpen = false">Cancel</button>
+          <button
+            class="button button--danger"
+            type="button"
+            :disabled="isDeleting"
+            @click="deleteProvider"
+          >
+            Delete Provider
+          </button>
+        </div>
+      </AppDialog>
+    </template>
+  </div>
 </template>

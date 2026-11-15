@@ -30,15 +30,17 @@ async function createFirstUser(credentials: Credentials): Promise<void> {
 </script>
 
 <template>
-  <div class="auth-card__heading">
-    <h1>Set up RouterLM</h1>
-    <p>Create the first User. Every User can manage the whole gateway and add more Users.</p>
+  <div class="page-view">
+    <div class="auth-card__heading">
+      <h1>Set up RouterLM</h1>
+      <p>Create the first User. Every User can manage the whole gateway and add more Users.</p>
+    </div>
+    <CredentialsForm
+      submit-label="Create User and sign in"
+      password-autocomplete="new-password"
+      :is-submitting="isSubmitting"
+      :error-message="errorMessage"
+      @submit="createFirstUser"
+    />
   </div>
-  <CredentialsForm
-    submit-label="Create User and sign in"
-    password-autocomplete="new-password"
-    :is-submitting="isSubmitting"
-    :error-message="errorMessage"
-    @submit="createFirstUser"
-  />
 </template>

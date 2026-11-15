@@ -4,5 +4,7 @@ definePageMeta({ redirect: "/providers" });
 </script>
 
 <template>
-  <div />
+  <div class="page-view">
+    <div />
+  </div>
 </template>

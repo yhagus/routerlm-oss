@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ImagePlus, Send, Square, Trash2, X } from "@lucide/vue";
+import { Boxes, CloudOff, ImagePlus, MessageSquare, Send, Square, Trash2, X } from "@lucide/vue";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import { apiErrorMessage } from "~/lib/api";
 import { REASONING_EFFORTS, type ReasoningEffort } from "~/lib/parameterPolicy";
@@ -25,7 +25,12 @@ const { $dashboardApi } = useNuxtApp();
 
 // Settings
 
-const { data: models, error: modelsError } = await useDashboardApi<ModelSummary[]>("/models");
+const {
+  data: models,
+  error: modelsError,
+  status: modelsStatus,
+} = useDashboardApi<ModelSummary[]>("/models");
+const isLoadingModels = computed(() => modelsStatus.value === "pending" && !models.value);
 const modelOptions = computed(() =>
   (models.value ?? [])
     .filter((model) => model.isEnabled)
@@ -221,184 +226,196 @@ function summaryFacts(summary: PlaygroundSummary): { label: string; value: strin
 </script>
 
 <template>
-  <PageHeading
-    title="Playground"
-    description="Send requests to a Model through the same path client applications use. The conversation stays in this browser tab."
-  >
-    <button
-      class="button button--quiet"
-      type="button"
-      :disabled="conversation.length === 0"
-      @click="clearConversation"
+  <div class="page-view">
+    <PageHeading
+      title="Playground"
+      description="Send requests to a Model through the same path client applications use. The conversation stays in this browser tab."
     >
-      <Trash2 :size="14" /> Clear
-    </button>
-  </PageHeading>
+      <button
+        class="button button--quiet"
+        type="button"
+        :disabled="conversation.length === 0"
+        @click="clearConversation"
+      >
+        <Trash2 :size="14" /> Clear
+      </button>
+    </PageHeading>
 
-  <div class="playground">
-    <section class="panel playground__chat" aria-label="Conversation">
-      <div ref="log" class="playground__log" aria-live="polite">
-        <div v-if="modelsError" class="empty-state">
-          <strong>Couldn't load the Models.</strong
-          ><span>Check that the backend is running, then reload the page.</span>
-        </div>
-        <div v-else-if="modelOptions.length === 0" class="empty-state">
-          <strong>No enabled Model to try.</strong
-          ><span>Create or enable one on the <NuxtLink to="/models">Models</NuxtLink> page.</span>
-        </div>
-        <div v-else-if="conversation.length === 0" class="empty-state">
-          <strong>Nothing sent yet.</strong
-          ><span>Pick a Model, write a message and attach images if you need them.</span>
-        </div>
-        <article
-          v-for="(message, index) in conversation"
-          :key="index"
-          class="playground-message"
-          :class="`playground-message--${message.role}`"
-        >
-          <span class="field__label">{{ message.role === "user" ? "You" : "Model" }}</span>
-          <template v-if="message.role === 'user'">
-            <p v-if="message.text" class="playground-message__text">{{ message.text }}</p>
-            <div v-if="message.imageUrls.length > 0" class="playground-images">
-              <img
-                v-for="(url, imageIndex) in message.imageUrls"
-                :key="imageIndex"
-                :src="url"
-                alt="Attached image"
-              />
-            </div>
-          </template>
-          <template v-else>
-            <details v-if="message.reasoning" class="playground-message__reasoning">
-              <summary>Reasoning</summary>
-              <p class="playground-message__text">{{ message.reasoning }}</p>
-            </details>
-            <p v-if="message.text" class="playground-message__text">{{ message.text }}</p>
-            <p v-else-if="message.state.kind === 'streaming'" class="cell-note">
-              Waiting for the answer…
-            </p>
-            <p v-if="message.state.kind === 'stopped'" class="cell-note">Stopped.</p>
-            <p
-              v-if="message.state.kind === 'failed'"
-              class="playground-message__error"
-              role="alert"
-            >
-              <span class="status-badge status-badge--bad">{{
-                message.state.error.code ?? "Error"
-              }}</span>
-              {{ message.state.error.message }}
-            </p>
-            <dl
-              v-if="
-                (message.state.kind === 'done' || message.state.kind === 'failed') &&
-                message.state.summary
-              "
-              class="playground-summary"
-            >
-              <div v-for="fact in summaryFacts(message.state.summary)" :key="fact.label">
-                <dt>{{ fact.label }}</dt>
-                <dd class="tabular">{{ fact.value }}</dd>
+    <div class="playground">
+      <section class="panel playground__chat" aria-label="Conversation">
+        <div ref="log" class="playground__log" aria-live="polite">
+          <EmptyState v-if="modelsError" :icon="CloudOff" tone="error">
+            <strong>Couldn't load the Models.</strong
+            ><span>Check that the backend is running, then reload the page.</span>
+          </EmptyState>
+          <EmptyState v-else-if="!isLoadingModels && modelOptions.length === 0" :icon="Boxes">
+            <strong>No enabled Model to try.</strong
+            ><span>Create or enable one on the <NuxtLink to="/models">Models</NuxtLink> page.</span>
+          </EmptyState>
+          <EmptyState v-else-if="conversation.length === 0" :icon="MessageSquare">
+            <strong>Nothing sent yet.</strong
+            ><span>Pick a Model, write a message and attach images if you need them.</span>
+          </EmptyState>
+          <article
+            v-for="(message, index) in conversation"
+            :key="index"
+            class="playground-message"
+            :class="`playground-message--${message.role}`"
+          >
+            <span class="field__label">{{ message.role === "user" ? "You" : "Model" }}</span>
+            <template v-if="message.role === 'user'">
+              <p v-if="message.text" class="playground-message__text">{{ message.text }}</p>
+              <div v-if="message.imageUrls.length > 0" class="playground-images">
+                <img
+                  v-for="(url, imageIndex) in message.imageUrls"
+                  :key="imageIndex"
+                  :src="url"
+                  alt="Attached image"
+                />
               </div>
-            </dl>
-          </template>
-        </article>
-      </div>
+            </template>
+            <template v-else>
+              <details v-if="message.reasoning" class="playground-message__reasoning">
+                <summary>Reasoning</summary>
+                <p class="playground-message__text">{{ message.reasoning }}</p>
+              </details>
+              <p v-if="message.text" class="playground-message__text">{{ message.text }}</p>
+              <p v-else-if="message.state.kind === 'streaming'" class="cell-note">
+                Waiting for the answer…
+              </p>
+              <p v-if="message.state.kind === 'stopped'" class="cell-note">Stopped.</p>
+              <p
+                v-if="message.state.kind === 'failed'"
+                class="playground-message__error"
+                role="alert"
+              >
+                <span class="status-badge status-badge--bad">{{
+                  message.state.error.code ?? "Error"
+                }}</span>
+                {{ message.state.error.message }}
+              </p>
+              <dl
+                v-if="
+                  (message.state.kind === 'done' || message.state.kind === 'failed') &&
+                  message.state.summary
+                "
+                class="playground-summary"
+              >
+                <div v-for="fact in summaryFacts(message.state.summary)" :key="fact.label">
+                  <dt>{{ fact.label }}</dt>
+                  <dd class="tabular">{{ fact.value }}</dd>
+                </div>
+              </dl>
+            </template>
+          </article>
+        </div>
 
-      <form class="playground-composer" @submit.prevent="send">
-        <div v-if="draftImageUrls.length > 0" class="playground-images">
-          <div v-for="(url, index) in draftImageUrls" :key="index" class="playground-images__item">
-            <img :src="url" alt="Image to send" />
-            <button
-              class="icon-button"
-              type="button"
-              aria-label="Remove image"
-              @click="removeImage(index)"
+        <form class="playground-composer" @submit.prevent="send">
+          <div v-if="draftImageUrls.length > 0" class="playground-images">
+            <div
+              v-for="(url, index) in draftImageUrls"
+              :key="index"
+              class="playground-images__item"
             >
-              <X :size="12" />
+              <img :src="url" alt="Image to send" />
+              <button
+                class="icon-button"
+                type="button"
+                aria-label="Remove image"
+                @click="removeImage(index)"
+              >
+                <X :size="12" />
+              </button>
+            </div>
+          </div>
+          <textarea
+            v-model="draft"
+            class="text-input text-area"
+            rows="3"
+            aria-label="Message"
+            placeholder="Message the Model. Enter sends, Shift+Enter adds a line."
+            @keydown.enter="sendOnEnter"
+          />
+          <p v-if="composerError" class="form__error" role="alert">{{ composerError }}</p>
+          <div class="playground-composer__actions">
+            <label class="button button--quiet">
+              <ImagePlus :size="14" /> Attach images
+              <input class="sr-only" type="file" accept="image/*" multiple @change="attachImages" />
+            </label>
+            <button v-if="isSending" class="button" type="button" @click="stop">
+              <Square :size="14" /> Stop
+            </button>
+            <button v-else class="button button--primary" type="submit" :disabled="!canSend">
+              <Send :size="14" /> Send
             </button>
           </div>
-        </div>
-        <textarea
-          v-model="draft"
-          class="text-input text-area"
-          rows="3"
-          aria-label="Message"
-          placeholder="Message the Model. Enter sends, Shift+Enter adds a line."
-          @keydown.enter="sendOnEnter"
-        />
-        <p v-if="composerError" class="form__error" role="alert">{{ composerError }}</p>
-        <div class="playground-composer__actions">
-          <label class="button button--quiet">
-            <ImagePlus :size="14" /> Attach images
-            <input class="sr-only" type="file" accept="image/*" multiple @change="attachImages" />
-          </label>
-          <button v-if="isSending" class="button" type="button" @click="stop">
-            <Square :size="14" /> Stop
-          </button>
-          <button v-else class="button button--primary" type="submit" :disabled="!canSend">
-            <Send :size="14" /> Send
-          </button>
-        </div>
-      </form>
-    </section>
+        </form>
+      </section>
 
-    <section class="panel playground__settings" aria-label="Settings">
-      <header class="panel-heading">
-        <div>
-          <h2>Settings</h2>
-          <p>Empty parameters leave the choice to the Model's Parameter Policy.</p>
-        </div>
-      </header>
-      <div class="panel-body form">
-        <div class="field">
-          <span class="field__label">Model</span>
-          <AppSelect
-            v-model="modelName"
-            :options="modelOptions"
-            label="Model"
-            placeholder="No enabled Model"
-          />
-        </div>
-        <label class="field">
-          <span class="field__label">System prompt</span>
-          <textarea v-model="systemPrompt" class="text-input text-area" rows="4" />
-        </label>
-        <div class="form__grid">
-          <label class="field">
-            <span class="field__label">Temperature</span>
-            <NumberInput
-              v-model="temperature"
-              class="text-input"
-              :min="0"
-              :max="2"
-              placeholder="0 to 2"
-            />
-          </label>
-          <label class="field">
-            <span class="field__label">Top P</span>
-            <NumberInput v-model="topP" class="text-input" :min="0" :max="1" placeholder="0 to 1" />
-          </label>
-          <label class="field">
-            <span class="field__label">Max output tokens</span>
-            <NumberInput
-              v-model="maxOutputTokens"
-              class="text-input"
-              whole
-              tokens
-              :min="1"
-              placeholder="e.g. 4k"
-            />
-          </label>
+      <section class="panel playground__settings" aria-label="Settings">
+        <header class="panel-heading">
+          <div>
+            <h2>Settings</h2>
+            <p>Empty parameters leave the choice to the Model's Parameter Policy.</p>
+          </div>
+        </header>
+        <div class="panel-body form">
           <div class="field">
-            <span class="field__label">Reasoning effort</span>
+            <span class="field__label">Model</span>
             <AppSelect
-              v-model="reasoningEffort"
-              :options="reasoningOptions"
-              label="Reasoning effort"
+              v-model="modelName"
+              :options="modelOptions"
+              label="Model"
+              :placeholder="isLoadingModels ? 'Loading Models…' : 'No enabled Model'"
             />
           </div>
+          <label class="field">
+            <span class="field__label">System prompt</span>
+            <textarea v-model="systemPrompt" class="text-input text-area" rows="4" />
+          </label>
+          <div class="form__grid">
+            <label class="field">
+              <span class="field__label">Temperature</span>
+              <NumberInput
+                v-model="temperature"
+                class="text-input"
+                :min="0"
+                :max="2"
+                placeholder="0 to 2"
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">Top P</span>
+              <NumberInput
+                v-model="topP"
+                class="text-input"
+                :min="0"
+                :max="1"
+                placeholder="0 to 1"
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">Max output tokens</span>
+              <NumberInput
+                v-model="maxOutputTokens"
+                class="text-input"
+                whole
+                tokens
+                :min="1"
+                placeholder="e.g. 4k"
+              />
+            </label>
+            <div class="field">
+              <span class="field__label">Reasoning effort</span>
+              <AppSelect
+                v-model="reasoningEffort"
+                :options="reasoningOptions"
+                label="Reasoning effort"
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 </template>

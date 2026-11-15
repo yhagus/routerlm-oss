@@ -33,21 +33,24 @@ export interface UsageLogPage {
   pageSize: number;
 }
 
-/** One Model's or API Key's totals. A null `id` groups logs without one (deleted, or refused before it was known). */
-export interface UsageTotal {
-  id: string | null;
-  name: string | null;
+/**
+ * `GET /api/usage/totals` over the filtered requests. Unreported tokens count as zero; the
+ * percentiles are null when no request in the range reported that timing.
+ */
+export interface UsageSummary {
   requestCount: number;
+  succeededCount: number;
+  failedCount: number;
+  cancelledCount: number;
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
   cacheWriteTokens: number;
   cost: number;
-}
-
-export interface UsageTotals {
-  byModel: UsageTotal[];
-  byApiKey: UsageTotal[];
+  durationMsP50: number | null;
+  durationMsP95: number | null;
+  timeToFirstTokenMsP50: number | null;
+  timeToFirstTokenMsP95: number | null;
 }
 
 export const USAGE_STATUSES = ["succeeded", "failed", "cancelled"] as const;

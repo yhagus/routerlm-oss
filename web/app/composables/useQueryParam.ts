@@ -1,4 +1,11 @@
-import { computed, shallowRef, watch, type WritableComputedRef } from "vue";
+import {
+  computed,
+  shallowRef,
+  toValue,
+  watch,
+  type MaybeRefOrGetter,
+  type WritableComputedRef,
+} from "vue";
 import type { LocationQuery, Router } from "vue-router";
 
 /**
@@ -101,6 +108,59 @@ export function useQueryParam<Value extends string>(
       clearTimeout(timer);
       value.value = next;
     },
+  );
+
+  return value;
+}
+
+interface QueryListOptions<Value extends string> {
+  /** Whether one element from the URL is one this list accepts; others are dropped. */
+  isValid: (value: string) => value is Value;
+  /** Canonical order of the values. Values it doesn't name go after, alphabetically. */
+  order?: MaybeRefOrGetter<readonly string[]>;
+}
+
+const LIST_SEPARATOR = ",";
+
+/**
+ * A multi-value filter held in the URL as one comma-separated param
+ * (`?capability=vision,tools`), with the same refresh, link and back/forward
+ * behaviour as `useQueryParam`. An empty list leaves the URL. Values are
+ * deduplicated and kept in canonical order, so the same filter always gives
+ * the same URL.
+ */
+export function useQueryList<Value extends string>(
+  key: string,
+  options: QueryListOptions<Value>,
+): WritableComputedRef<Value[]> {
+  const text = useQueryParam(key, { default: "", isValid: anyText });
+
+  function canonical(values: readonly string[]): Value[] {
+    const order = toValue(options.order) ?? [];
+    const rank = (value: string) => {
+      const index = order.indexOf(value);
+      return index === -1 ? order.length : index;
+    };
+    const unique = [...new Set(values)].filter(options.isValid);
+    return unique.toSorted(
+      (first, second) => rank(first) - rank(second) || first.localeCompare(second),
+    );
+  }
+
+  const value = computed<Value[]>({
+    get: () => canonical(text.value.split(LIST_SEPARATOR)),
+    set: (next) => {
+      text.value = canonical(next).join(LIST_SEPARATOR);
+    },
+  });
+
+  // A link with invalid, repeated or reordered values is rewritten in canonical form.
+  watch(
+    () => value.value.join(LIST_SEPARATOR),
+    (canonicalText) => {
+      if (text.value !== canonicalText) text.value = canonicalText;
+    },
+    { immediate: true },
   );
 
   return value;
