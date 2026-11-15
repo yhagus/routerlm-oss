@@ -63,6 +63,45 @@ export class CooldownStore {
     }
   }
 
+  /**
+   * Skips a Provider Account until `until`, as Exhausted (GLOSSARY). Replaces
+   * any Cooldown it is in; leaves its failure streak alone, since running out
+   * of quota says nothing about how healthy the upstream is.
+   */
+  async markExhausted(providerAccountId: string, until: Date): Promise<void> {
+    const durationMs = until.getTime() - Date.now();
+    if (durationMs <= 0) {
+      return;
+    }
+    try {
+      await this.redis.set(
+        COOLDOWN_KEY_PREFIX + providerAccountId,
+        `${until.getTime()}${COOLDOWN_VALUE_SEPARATOR}exhausted`,
+        "PX",
+        durationMs,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Exhausted state not recorded for Provider Account ${providerAccountId}: ${String(error)}`,
+      );
+    }
+  }
+
+  /** Makes an Exhausted Provider Account routable again; a Cooldown from a failure stays. */
+  async endExhausted(providerAccountId: string): Promise<void> {
+    try {
+      const key = COOLDOWN_KEY_PREFIX + providerAccountId;
+      const value = await this.redis.get(key);
+      if (value !== null && cooldownOf(value).cause === "exhausted") {
+        await this.redis.del(key);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Exhausted state not cleared for Provider Account ${providerAccountId}: ${String(error)}`,
+      );
+    }
+  }
+
   /** The Cooldown of each given Provider Account in Cooldown. Others are absent. */
   async cooldowns(providerAccountIds: string[]): Promise<Map<string, Cooldown>> {
     const cooldowns = new Map<string, Cooldown>();
