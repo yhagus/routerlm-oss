@@ -82,6 +82,12 @@ export interface Snapshot {
   /** Live (unrevoked) API Keys by their public key id. */
   apiKeysByKeyId: ReadonlyMap<string, SnapshotApiKey>;
   modelsByName: ReadonlyMap<string, SnapshotModel>;
+  /** By row id, including those no Route uses: a direct Upstream Model test reaches them all. */
+  upstreamModelsById: ReadonlyMap<string, SnapshotUpstreamModel>;
 }
 
-export const EMPTY_SNAPSHOT: Snapshot = { apiKeysByKeyId: new Map(), modelsByName: new Map() };
+export const EMPTY_SNAPSHOT: Snapshot = {
+  apiKeysByKeyId: new Map(),
+  modelsByName: new Map(),
+  upstreamModelsById: new Map(),
+};

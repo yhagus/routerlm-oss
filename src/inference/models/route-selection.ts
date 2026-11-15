@@ -3,6 +3,7 @@ import type {
   SnapshotModel,
   SnapshotProviderAccount,
   SnapshotRoute,
+  SnapshotUpstreamModel,
 } from "@/snapshot/models/snapshot.js";
 import type { InferenceRequest } from "./internal-format.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS } from "../protocols/converters.js";
@@ -41,43 +42,63 @@ export function requiredCapabilities(request: InferenceRequest): Capability[] {
  * the gateway can translate to. Provider Accounts are not looked at here.
  */
 export function capableRoutes(model: SnapshotModel, request: InferenceRequest): SnapshotRoute[] {
-  const required = requiredCapabilities(request);
-  const neededContext = estimatedPromptTokens(request) + (request.maxOutputTokens ?? 0);
-  return model.routes.filter((route) => {
-    const { upstreamModel } = route;
-    const { provider } = upstreamModel;
-    return (
-      route.isEnabled &&
-      upstreamModel.isEnabled &&
-      provider.isEnabled &&
-      UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol] !== undefined &&
-      required.every((capability) => upstreamModel.capabilities.includes(capability)) &&
-      neededContext <= upstreamModel.contextSize
-    );
-  });
+  return model.routes.filter((route) => route.isEnabled && canServe(route.upstreamModel, request));
 }
 
-/** The Route and Provider Account an Attempt goes to. */
-export interface AttemptTarget {
-  route: SnapshotRoute;
+/**
+ * Whether the Upstream Model can serve the request: enabled along with its
+ * Provider, with every Capability the request needs, a context large enough,
+ * and a Protocol the gateway can translate to.
+ */
+export function canServe(upstreamModel: SnapshotUpstreamModel, request: InferenceRequest): boolean {
+  const { provider } = upstreamModel;
+  const neededContext = estimatedPromptTokens(request) + (request.maxOutputTokens ?? 0);
+  return (
+    upstreamModel.isEnabled &&
+    provider.isEnabled &&
+    UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol] !== undefined &&
+    requiredCapabilities(request).every((capability) =>
+      upstreamModel.capabilities.includes(capability),
+    ) &&
+    neededContext <= upstreamModel.contextSize
+  );
+}
+
+/**
+ * How Attempts reach an Upstream Model: through one of the Model's Routes, or,
+ * for a direct Upstream Model test, through no Route at all.
+ */
+export interface AttemptPath {
+  /** Null for a direct Upstream Model test. */
+  route: SnapshotRoute | null;
+  upstreamModel: SnapshotUpstreamModel;
+}
+
+/** The path, and the Provider Account, an Attempt goes to. */
+export interface AttemptTarget extends AttemptPath {
   providerAccount: SnapshotProviderAccount;
+}
+
+/** The path through a Model's Route. */
+export function routePath(route: SnapshotRoute): AttemptPath {
+  return { route, upstreamModel: route.upstreamModel };
 }
 
 /**
  * Where the Attempts of a request go, in order (spec "Inference path" step 6):
- * each Route's enabled Provider Accounts by priority, then the next Route.
+ * each path's enabled Provider Accounts by priority, then the next path.
  * Always the first healthy one, never round-robin, because upstream caches are
  * per account. `isSkipped` is asked lazily, as each target comes up, so a
  * Provider Account that failed earlier in the same request is skipped on a
  * later Route of the same Provider.
  */
 export function* attemptTargets(
-  routes: SnapshotRoute[],
+  paths: AttemptPath[],
   isSkipped: (target: AttemptTarget) => boolean,
 ): Generator<AttemptTarget> {
-  for (const route of routes) {
-    for (const providerAccount of route.upstreamModel.provider.providerAccounts) {
-      const target = { route, providerAccount };
+  for (const path of paths) {
+    for (const providerAccount of path.upstreamModel.provider.providerAccounts) {
+      const target = { ...path, providerAccount };
       if (providerAccount.isEnabled && !isSkipped(target)) {
         yield target;
       }

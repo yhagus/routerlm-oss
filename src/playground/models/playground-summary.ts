@@ -11,8 +11,13 @@ export interface PlaygroundSummary {
   usage: TokenUsage;
   /** USD, from the Upstream Model's prices at request time; null when unknown. */
   cost: number | null;
-  /** Null when no Attempt answered, or the Route was deleted meanwhile. */
+  /**
+   * Null when no Attempt answered, the Route was deleted meanwhile, or the
+   * request was a direct Upstream Model test, which goes through no Route.
+   */
   route: { id: string; providerSlug: string; upstreamModelId: string } | null;
+  /** The Upstream Model that answered; null when none did, or it was deleted meanwhile. */
+  upstreamModel: { id: string; upstreamModelId: string; providerSlug: string } | null;
   providerAccount: { id: string; name: string } | null;
 }
 
@@ -22,21 +27,29 @@ export function playgroundSummaryOf(job: UsageJob, snapshot: Snapshot): Playgrou
     usageMeasurementsOf(job.servedBy, job.usage);
   const usage = { inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, reasoningTokens };
   const { servedBy } = job;
-  const route = servedBy ? findRoute(snapshot, job.modelId, servedBy.routeId) : undefined;
-  if (!servedBy || !route) {
-    return { usage, cost, route: null, providerAccount: null };
+  const upstreamModel = servedBy && snapshot.upstreamModelsById.get(servedBy.upstreamModelId);
+  if (!servedBy || !upstreamModel) {
+    return { usage, cost, route: null, upstreamModel: null, providerAccount: null };
   }
-  const { upstreamModel } = route;
-  const providerAccount = upstreamModel.provider.providerAccounts.find(
+  const { provider } = upstreamModel;
+  const route = servedBy.routeId ? findRoute(snapshot, job.modelId, servedBy.routeId) : undefined;
+  const providerAccount = provider.providerAccounts.find(
     (account) => account.id === servedBy.providerAccountId,
   );
   return {
     usage,
     cost,
-    route: {
-      id: route.id,
-      providerSlug: upstreamModel.provider.slug,
+    route: route
+      ? {
+          id: route.id,
+          providerSlug: route.upstreamModel.provider.slug,
+          upstreamModelId: route.upstreamModel.upstreamModelId,
+        }
+      : null,
+    upstreamModel: {
+      id: upstreamModel.id,
       upstreamModelId: upstreamModel.upstreamModelId,
+      providerSlug: provider.slug,
     },
     providerAccount: providerAccount
       ? { id: providerAccount.id, name: providerAccount.name }

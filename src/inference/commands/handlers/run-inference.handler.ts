@@ -4,7 +4,7 @@ import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
 import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
-import type { SnapshotModel, SnapshotRoute } from "@/snapshot/models/snapshot.js";
+import type { SnapshotModel, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
@@ -32,15 +32,34 @@ import {
   writeClientStream,
 } from "../../protocols/client-protocol-converter.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "../../protocols/converters.js";
-import { type AttemptTarget, attemptTargets, capableRoutes } from "../../models/route-selection.js";
+import {
+  type AttemptPath,
+  type AttemptTarget,
+  attemptTargets,
+  canServe,
+  capableRoutes,
+  routePath,
+} from "../../models/route-selection.js";
 import {
   DEFAULT_TIMEOUTS,
   type UpstreamCall,
   UpstreamClient,
 } from "../../providers/upstream-client.js";
 import { UsageMeter } from "../../models/usage-meter.js";
-import type { InferenceCaller, InferenceResult } from "../../models/inference.js";
+import type { InferenceCaller, InferenceResult, InferenceTarget } from "../../models/inference.js";
 import { RunInferenceCommand } from "../impl/run-inference.command.js";
+
+/** What a request resolved to (spec step 3), with the paths its Attempts may take. */
+interface Destination {
+  /** Null for a direct Upstream Model test: no Parameter Policy, no automatic cache breakpoints. */
+  model: SnapshotModel | null;
+  /** The Model's id, or the Upstream Model's row id for a direct test. */
+  id: string;
+  /** What the response names as its model. */
+  name: string;
+  /** Capable of serving the request, in the order they are tried. */
+  paths: AttemptPath[];
+}
 
 /** What one Attempt needs besides the request and its target. */
 interface AttemptOptions {
@@ -61,7 +80,8 @@ const CLIENT_CLOSED_REQUEST = 499;
 
 /**
  * The inference path (spec "Inference path" steps 2 to 8) for any client
- * Protocol: parse, resolve the Model, select the capable Routes, then make
+ * Protocol: parse, resolve the Model (or, for a direct Upstream Model test,
+ * the Upstream Model), select the capable Routes, then make
  * Attempts with Fallback until one answers, and translate back. Reads only
  * the in-memory snapshot and the Cooldown state in Redis.
  */
@@ -85,6 +105,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     caller,
     connection,
     onUsage,
+    target,
   }: RunInferenceCommand): Promise<InferenceResult> {
     const meter = new UsageMeter(
       requestOwnerOf(caller),
@@ -97,7 +118,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       onUsage(job);
     };
     try {
-      const result = await this.serve(converter, body, caller, connection.signal, meter);
+      const result = await this.serve(converter, body, caller, target, connection.signal, meter);
       if (result.kind === "stream") {
         return {
           kind: "stream",
@@ -117,36 +138,30 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     converter: ClientProtocolConverter,
     body: unknown,
     caller: InferenceCaller,
+    inferenceTarget: InferenceTarget,
     clientSignal: AbortSignal,
     meter: UsageMeter,
   ): Promise<InferenceResult> {
     const clientRequest = converter.parseRequest(body);
     meter.requestParsed(clientRequest.stream !== null);
-    const model = this.resolveModel(clientRequest.model, caller);
-    meter.modelResolved(model.id);
-    // Routes are selected under the Model's policy (spec step 4 before 5); a
-    // Route override applies only to the Attempts on its own Route.
-    const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));
-    if (routes.length === 0) {
-      throw new GatewayError(
-        "no_capable_route",
-        `No Route of the Model "${model.name}" supports what this request needs`,
-      );
-    }
+    const destination =
+      inferenceTarget.kind === "upstream-model"
+        ? this.resolveUpstreamModel(inferenceTarget.upstreamModelId, clientRequest)
+        : this.resolveNamedModel(clientRequest, caller, meter);
     const context: ResponseContext = {
       requestId: randomUUID().replaceAll("-", ""),
-      modelName: model.name,
+      modelName: destination.name,
       createdAt: new Date(),
     };
-    const cacheKey = promptCacheKey(requestOwnerOf(caller), model.id);
+    const cacheKey = promptCacheKey(requestOwnerOf(caller), destination.id);
 
     // Accounts in Cooldown when the request arrived, plus the ones that fail during it.
-    const enabledAccountIds = enabledProviderAccountIdsOf(routes);
+    const enabledAccountIds = enabledProviderAccountIdsOf(destination.paths);
     const cooldowns = await this.cooldowns.cooldowns(enabledAccountIds);
     const skippedAccountIds = new Set(cooldowns.keys());
     const recordedExhaustedAccountIds = new Set<string>();
     const failures: AttemptFailedError[] = [];
-    const targets = attemptTargets(routes, (target) => {
+    const targets = attemptTargets(destination.paths, (target) => {
       const accountId = target.providerAccount.id;
       if (!skippedAccountIds.has(accountId)) {
         return false;
@@ -165,13 +180,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
         break;
       }
-      // Applied on the internal format, before any upstream translation, so it
-      // works the same for every client and upstream Protocol.
-      const policed = applyParameterPolicy(
-        clientRequest,
-        effectiveParameterPolicy(model.parameterPolicy, target.route.parameterPolicyOverride),
-      );
-      const request = withCacheBreakpointsFor(model, target.route, policed);
+      const request = upstreamRequestFor(clientRequest, destination.model, target);
       const providerAccountKey = this.cipher.decrypt(target.providerAccount.encryptedKey);
       meter.attemptStarted(target, providerAccountKey);
       try {
@@ -199,6 +208,55 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       failures,
       enabledAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
     );
+  }
+
+  /** The Model the request names, with its capable Routes (spec steps 3 to 5). */
+  private resolveNamedModel(
+    clientRequest: InferenceRequest,
+    caller: InferenceCaller,
+    meter: UsageMeter,
+  ): Destination {
+    const model = this.resolveModel(clientRequest.model, caller);
+    meter.modelResolved(model.id);
+    // Routes are selected under the Model's policy (spec step 4 before 5); a
+    // Route override applies only to the Attempts on its own Route.
+    const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));
+    if (routes.length === 0) {
+      throw new GatewayError(
+        "no_capable_route",
+        `No Route of the Model "${model.name}" supports what this request needs`,
+      );
+    }
+    return { model, id: model.id, name: model.name, paths: routes.map(routePath) };
+  }
+
+  /**
+   * The Upstream Model a direct Upstream Model test names by row id, if it
+   * and its Provider are enabled and it can serve the request as sent.
+   */
+  private resolveUpstreamModel(
+    upstreamModelRowId: string,
+    clientRequest: InferenceRequest,
+  ): Destination {
+    const upstreamModel = this.snapshot.current.upstreamModelsById.get(upstreamModelRowId);
+    if (!upstreamModel?.isEnabled || !upstreamModel.provider.isEnabled) {
+      throw new GatewayError(
+        "model_not_found",
+        `The Upstream Model "${upstreamModelRowId}" does not exist`,
+      );
+    }
+    if (!canServe(upstreamModel, clientRequest)) {
+      throw new GatewayError(
+        "no_capable_route",
+        `The Upstream Model "${upstreamModel.upstreamModelId}" does not support what this request needs`,
+      );
+    }
+    return {
+      model: null,
+      id: upstreamModel.id,
+      name: upstreamModel.upstreamModelId,
+      paths: [{ route: null, upstreamModel }],
+    };
   }
 
   /** The Model the request names, if the caller may use it (spec step 3). */
@@ -251,18 +309,17 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
 
   private upstreamCallFor(
     request: InferenceRequest,
-    { route }: AttemptTarget,
+    { route, upstreamModel }: AttemptTarget,
     {
       providerAccountKey,
       cacheKey,
       clientSignal,
     }: Pick<AttemptOptions, "providerAccountKey" | "cacheKey" | "clientSignal">,
   ): UpstreamCall {
-    const { upstreamModel } = route;
     const { provider } = upstreamModel;
     const converter = UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol];
     if (!converter) {
-      // capableRoutes() already skips these Routes.
+      // canServe() already skips these Upstream Models.
       throw new Error(`No converter for the upstream Protocol ${provider.protocol}`);
     }
     return {
@@ -277,9 +334,9 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       },
       authHeaders: upstreamAuthHeaders(provider.authStyle, providerAccountKey),
       timeouts: {
-        connectMs: route.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
-        firstTokenMs: route.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,
-        totalMs: route.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs,
+        connectMs: route?.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
+        firstTokenMs: route?.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,
+        totalMs: route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs,
       },
       clientSignal,
     };
@@ -327,12 +384,13 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
    */
   private async afterFailedAttempt(
     failure: AttemptFailedError,
-    { route, providerAccount }: AttemptTarget,
+    { route, upstreamModel, providerAccount }: AttemptTarget,
   ): Promise<void> {
+    const path = route ? `Route ${route.id}` : `Upstream Model ${upstreamModel.id} (direct)`;
     // Upstream error text stays in this log line and the dashboard, never in the reply.
     this.logger.warn(
       `Attempt failed (${failure.reason}, status ${failure.upstreamStatus ?? "none"}) ` +
-        `on Route ${route.id}, Provider Account ${providerAccount.id}: ${failure.message}`,
+        `on ${path}, Provider Account ${providerAccount.id}: ${failure.message}`,
     );
     const lastError = `${failure.reason}: ${failure.message}`;
     switch (failure.reason) {
@@ -419,16 +477,37 @@ function failedRequestUsage(
 }
 
 /**
+ * What the upstream gets for one Attempt. The Parameter Policy is applied on
+ * the internal format, before any upstream translation, so it works the same
+ * for every client and upstream Protocol. A direct Upstream Model test has no
+ * Model, so its request goes upstream as the Playground sent it.
+ */
+function upstreamRequestFor(
+  clientRequest: InferenceRequest,
+  model: SnapshotModel | null,
+  { route, upstreamModel }: AttemptTarget,
+): InferenceRequest {
+  if (!model) {
+    return clientRequest;
+  }
+  const policed = applyParameterPolicy(
+    clientRequest,
+    effectiveParameterPolicy(model.parameterPolicy, route?.parameterPolicyOverride ?? null),
+  );
+  return withCacheBreakpointsFor(model, upstreamModel, policed);
+}
+
+/**
  * Spec "Cache behavior": automatic breakpoints are for anthropic-messages
  * upstreams, when the Model has them on. Added after the Parameter Policy, so
  * its system prompt counts as part of the system prompt.
  */
 function withCacheBreakpointsFor(
   model: SnapshotModel,
-  route: SnapshotRoute,
+  upstreamModel: SnapshotUpstreamModel,
   request: InferenceRequest,
 ): InferenceRequest {
-  const { provider } = route.upstreamModel;
+  const { provider } = upstreamModel;
   if (!model.hasAutomaticCacheBreakpoints || provider.protocol !== "anthropic-messages") {
     return request;
   }
@@ -437,9 +516,9 @@ function withCacheBreakpointsFor(
 }
 
 /** The Provider Accounts Fallback may try, unless they are in Cooldown. */
-function enabledProviderAccountIdsOf(routes: SnapshotRoute[]): string[] {
-  return routes.flatMap((route) =>
-    route.upstreamModel.provider.providerAccounts
+function enabledProviderAccountIdsOf(paths: AttemptPath[]): string[] {
+  return paths.flatMap(({ upstreamModel }) =>
+    upstreamModel.provider.providerAccounts
       .filter((account) => account.isEnabled)
       .map((account) => account.id),
   );

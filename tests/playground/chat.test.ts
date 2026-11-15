@@ -71,7 +71,7 @@ describe("Playground (e2e)", () => {
       .send(body);
   }
 
-  it("streams the answer, then a summary of tokens, Cost, Route and Provider Account", async () => {
+  it("streams the answer, then a summary of tokens, Cost, Route, Upstream Model and Provider Account", async () => {
     upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
 
     const response = await sendToPlayground(PLAYGROUND_REQUEST).expect(200);
@@ -96,6 +96,7 @@ describe("Playground (e2e)", () => {
         reasoningTokens: 12,
       },
       route: { id: routeId, providerSlug: "acme-smart", upstreamModelId: UPSTREAM_MODEL_ID },
+      upstreamModel: { providerSlug: "acme-smart", upstreamModelId: UPSTREAM_MODEL_ID },
       providerAccount: { id: providerAccountId, name: "main" },
     });
     // (20 x 2 + 40 x 8 + 100 x 0.5) per million tokens.

@@ -25,9 +25,12 @@ export interface UpstreamModelPrices {
   cacheWritePrice: number | null;
 }
 
-/** The Route and Provider Account whose Attempt answered the request. */
+/** The Route, Upstream Model and Provider Account whose Attempt answered the request. */
 export interface ServedBy {
-  routeId: string;
+  /** Null for a direct Upstream Model test, which goes through no Route. */
+  routeId: string | null;
+  /** The `upstream_models` row id. */
+  upstreamModelId: string;
   providerAccountId: string;
   prices: UpstreamModelPrices;
 }
@@ -35,7 +38,8 @@ export interface ServedBy {
 /** One upstream call. Times are ISO strings: job data travels as JSON. */
 export interface AttemptRecord {
   startedAt: string;
-  routeId: string;
+  /** Null for a direct Upstream Model test, which goes through no Route. */
+  routeId: string | null;
   providerAccountId: string;
   /** Null when no response arrived. */
   upstreamStatus: number | null;

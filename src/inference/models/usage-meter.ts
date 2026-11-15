@@ -108,7 +108,7 @@ export class UsageMeter {
   attemptSkippedAsExhausted({ route, providerAccount }: AttemptTarget): void {
     this.attempts.push({
       startedAt: new Date().toISOString(),
-      routeId: route.id,
+      routeId: route?.id ?? null,
       providerAccountId: providerAccount.id,
       upstreamStatus: null,
       failureReason: "exhausted",
@@ -122,10 +122,11 @@ export class UsageMeter {
       return;
     }
     this.openAttempt.hasAnswered = true;
-    const { route, providerAccount } = this.openAttempt.target;
-    const { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice } = route.upstreamModel;
+    const { route, upstreamModel, providerAccount } = this.openAttempt.target;
+    const { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice } = upstreamModel;
     this.servedBy = {
-      routeId: route.id,
+      routeId: route?.id ?? null,
+      upstreamModelId: upstreamModel.id,
       providerAccountId: providerAccount.id,
       // Taken now, so a later price edit doesn't change this request's Cost.
       prices: { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice },
@@ -248,7 +249,7 @@ export class UsageMeter {
     const { target, startedAt, startedMs } = this.openAttempt;
     this.attempts.push({
       startedAt: startedAt.toISOString(),
-      routeId: target.route.id,
+      routeId: target.route?.id ?? null,
       providerAccountId: target.providerAccount.id,
       upstreamStatus,
       failureReason,

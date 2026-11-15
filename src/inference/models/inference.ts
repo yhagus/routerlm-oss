@@ -14,5 +14,14 @@ export type InferenceCaller =
   | { kind: "api-key"; principal: ApiKeyPrincipal }
   | { kind: "playground"; userId: string };
 
+/**
+ * What a request is sent to: the Model its body names, or one Upstream Model
+ * by its row id, with no Model in between (a direct Upstream Model test, which
+ * only the Playground makes).
+ */
+export type InferenceTarget =
+  | { kind: "named-model" }
+  | { kind: "upstream-model"; upstreamModelId: string };
+
 /** Called with the usage job once the request has ended, however it ended. */
 export type UsageListener = (job: UsageJob) => void;

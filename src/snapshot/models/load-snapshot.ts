@@ -122,7 +122,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     });
   }
 
-  return { apiKeysByKeyId, modelsByName };
+  return { apiKeysByKeyId, modelsByName, upstreamModelsById };
 }
 
 function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {

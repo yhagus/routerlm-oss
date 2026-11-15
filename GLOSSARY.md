@@ -105,5 +105,9 @@ The stored headers and body of a failed request or failed Attempt, kept for a li
 _Avoid_: Error log, debug log
 
 **Playground**:
-The dashboard screen where a User sends test requests to a Model through the same path client requests take.
+The dashboard screen where a User sends test requests to a Model through the same path client requests take, or straight to one Upstream Model in a Direct Upstream Model test.
 _Avoid_: Chat, tester, sandbox
+
+**Direct Upstream Model test**:
+A Playground request sent to one Upstream Model with no Model in between. It uses the Provider's enabled Provider Accounts with the same Fallback a Route gets, checks Capabilities, and applies no Parameter Policy. Its Usage Log has no Model and no Route.
+_Avoid_: Raw test, upstream test

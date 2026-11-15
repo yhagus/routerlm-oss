@@ -20,6 +20,7 @@ export class SendPlaygroundChatCompletionHandler implements ICommandHandler<Send
     body,
     user,
     connection,
+    target,
   }: SendPlaygroundChatCompletionCommand): Promise<AsyncIterable<string>> {
     let reportUsage: (job: UsageJob) => void = () => {};
     const usage = new Promise<UsageJob>((resolve) => {
@@ -32,6 +33,7 @@ export class SendPlaygroundChatCompletionHandler implements ICommandHandler<Send
         { kind: "playground", userId: user.id },
         connection,
         reportUsage,
+        target,
       ),
     );
     if (result.kind !== "stream") {
