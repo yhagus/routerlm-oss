@@ -8,10 +8,8 @@ export type QuotaMeterReading = Omit<
   "id" | "providerAccountId" | "observedAt"
 >;
 
-/** The columns the dashboard API returns for a Quota Meter; the Provider's raw entry stays internal. */
-const quotaMeterColumns = {
-  providerAccountId: quotaMeters.providerAccountId,
-  key: quotaMeters.key,
+/** What a reading stores for each meter, besides the account and key that identify it. */
+const readingColumns = {
   label: quotaMeters.label,
   unit: quotaMeters.unit,
   used: quotaMeters.used,
@@ -22,6 +20,16 @@ const quotaMeterColumns = {
   resetsAt: quotaMeters.resetsAt,
   scope: quotaMeters.scope,
   observedAt: quotaMeters.observedAt,
+};
+
+/** The columns a new reading overwrites in a meter row: the Provider's raw entry too. */
+export const overwrittenQuotaMeterColumns = { ...readingColumns, raw: quotaMeters.raw };
+
+/** The columns the dashboard API returns for a Quota Meter; the Provider's raw entry stays internal. */
+const quotaMeterColumns = {
+  providerAccountId: quotaMeters.providerAccountId,
+  key: quotaMeters.key,
+  ...readingColumns,
 };
 
 /** A Quota Meter as the dashboard API returns it. */

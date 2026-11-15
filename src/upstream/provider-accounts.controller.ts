@@ -14,8 +14,11 @@ import { DashboardController } from "@/auth/decorators/dashboard-controller.deco
 import { CreateProviderAccountCommand } from "./commands/impl/create-provider-account.command.js";
 import { DeleteProviderAccountCommand } from "./commands/impl/delete-provider-account.command.js";
 import { UpdateProviderAccountCommand } from "./commands/impl/update-provider-account.command.js";
-import type { ListedProviderAccount, ProviderAccount } from "./models/provider-account.js";
-import { ListProviderAccountsQuery } from "./queries/impl/list-provider-accounts.query.js";
+import type { ProviderAccount } from "./models/provider-account.js";
+import {
+  type ListedProviderAccount,
+  ListProviderAccountsQuery,
+} from "./queries/impl/list-provider-accounts.query.js";
 import {
   type NewProviderAccount,
   newProviderAccountSchema,

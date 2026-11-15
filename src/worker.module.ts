@@ -17,7 +17,8 @@ import {
   QuotaReadingSchedule,
   QuotaReadingScheduleProcessor,
 } from "@/quota-meters/jobs/quota-reading-schedule.js";
-import { QuotaReadingModule } from "@/quota-meters/quota-reading.module.js";
+import { QuotaMetersModule } from "@/quota-meters/quota-meters.module.js";
+import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageWriter } from "@/usage/providers/usage-writer.js";
 import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
 
@@ -47,7 +48,9 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     BullModule.registerQueue(...QUEUE_NAMES.map((name) => ({ name }))),
     CqrsModule.forRoot(),
     LibsModule,
-    QuotaReadingModule,
+    // Quota readings mark Provider Accounts Exhausted through UpstreamModule.
+    QuotaMetersModule,
+    UpstreamModule,
   ],
   providers: [
     PingProcessor,

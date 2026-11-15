@@ -1,5 +1,5 @@
 import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
+import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, type AnyColumn, eq, notInArray, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
@@ -9,10 +9,12 @@ import {
   providers,
   quotaMeters,
 } from "@/db/schemas/index.js";
-import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { exhaustedUntil } from "../../models/exhausted.js";
+import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end-provider-account-exhausted.command.js";
+import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
+import { GetProviderAccountKeyQuery } from "@/upstream/queries/impl/get-provider-account-key.query.js";
+import { exhaustedStateOf } from "../../models/exhausted.js";
 import {
+  overwrittenQuotaMeterColumns,
   type ProviderAccountQuota,
   type QuotaMeterReading,
   selectQuotaMeters,
@@ -24,9 +26,14 @@ type ReadingOutcome =
   | { kind: "read"; meters: QuotaMeterReading[] }
   | { kind: "failed"; error: string };
 
-/** The value an upsert tried to insert into `column`. */
-function excluded(column: AnyColumn): SQL {
-  return sql`excluded.${sql.identifier(column.name)}`;
+/** An upsert's SET that writes, into each of `columns`, the value the upsert tried to insert. */
+function excludedValuesOf(columns: Record<string, AnyColumn>): Record<string, SQL> {
+  return Object.fromEntries(
+    Object.entries(columns).map(([name, column]) => [
+      name,
+      sql`excluded.${sql.identifier(column.name)}`,
+    ]),
+  );
 }
 
 @CommandHandler(ReadProviderAccountQuotaCommand)
@@ -35,9 +42,9 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
 
   constructor(
     @InjectDrizzle() private readonly db: Database,
-    private readonly keyCipher: ProviderKeyCipher,
     private readonly readers: QuotaReaders,
-    private readonly cooldowns: CooldownStore,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   async execute({
@@ -45,7 +52,6 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
   }: ReadProviderAccountQuotaCommand): Promise<ProviderAccountQuota> {
     const [account] = await this.db
       .select({
-        encryptedKey: providerAccounts.encryptedKey,
         continueWhenExhausted: providerAccounts.continueWhenExhausted,
         quotaReader: providers.quotaReader,
       })
@@ -59,7 +65,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       throw new BadRequestException("The Provider of this Provider Account reports no quota");
     }
 
-    const outcome = await this.read(account.quotaReader, account.encryptedKey);
+    const outcome = await this.read(providerAccountId, account.quotaReader);
     if (outcome.kind === "failed") {
       this.logger.warn(
         `Quota reading of Provider Account ${providerAccountId} failed: ${outcome.error}`,
@@ -77,29 +83,34 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
   }
 
   /**
-   * Routing never reads Quota Meters, so a reading tells the CooldownStore
-   * whether the account is Exhausted. A failed reading changes nothing.
+   * Routing never reads Quota Meters, so a reading tells upstream whether the
+   * account is Exhausted. A failed reading changes nothing.
    */
   private async applyExhausted(
     providerAccountId: string,
     meters: QuotaMeterReading[],
     { checkedAt, continueWhenExhausted }: { checkedAt: Date; continueWhenExhausted: boolean },
   ): Promise<void> {
-    const until = exhaustedUntil(meters, checkedAt);
-    if (until === null) {
-      await this.cooldowns.endExhausted(providerAccountId);
+    const state = exhaustedStateOf(meters, checkedAt);
+    if (!state.isExhausted) {
+      await this.commandBus.execute(new EndProviderAccountExhaustedCommand(providerAccountId));
       return;
     }
     // The operator lets the Provider bill the excess; an Exhausted state set
     // by a refused Attempt still runs its course.
     if (!continueWhenExhausted) {
-      await this.cooldowns.markExhausted(providerAccountId, until);
+      await this.commandBus.execute(
+        new MarkProviderAccountExhaustedCommand(providerAccountId, state.until),
+      );
     }
   }
 
-  private async read(readerName: QuotaReaderName, encryptedKey: string): Promise<ReadingOutcome> {
+  private async read(
+    providerAccountId: string,
+    readerName: QuotaReaderName,
+  ): Promise<ReadingOutcome> {
     try {
-      const key = this.keyCipher.decrypt(encryptedKey);
+      const key = await this.queryBus.execute(new GetProviderAccountKeyQuery(providerAccountId));
       const meters = await this.readers.readerFor(readerName).read(key);
       return { kind: "read", meters };
     } catch (error) {
@@ -142,19 +153,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
           )
           .onConflictDoUpdate({
             target: [quotaMeters.providerAccountId, quotaMeters.key],
-            set: {
-              label: excluded(quotaMeters.label),
-              unit: excluded(quotaMeters.unit),
-              used: excluded(quotaMeters.used),
-              limit: excluded(quotaMeters.limit),
-              remainingPercent: excluded(quotaMeters.remainingPercent),
-              isUnlimited: excluded(quotaMeters.isUnlimited),
-              windowSeconds: excluded(quotaMeters.windowSeconds),
-              resetsAt: excluded(quotaMeters.resetsAt),
-              scope: excluded(quotaMeters.scope),
-              observedAt: excluded(quotaMeters.observedAt),
-              raw: excluded(quotaMeters.raw),
-            },
+            set: excludedValuesOf(overwrittenQuotaMeterColumns),
           });
       }
       await tx
