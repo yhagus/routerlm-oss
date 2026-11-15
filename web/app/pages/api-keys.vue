@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Ban, Copy, KeyRound, Plus } from "@lucide/vue";
-import { computed, h, ref } from "vue";
+import { computed, ref } from "vue";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { apiErrorMessage } from "~/lib/api";
 import {
@@ -11,7 +11,8 @@ import {
   endOfLocalDay,
   type ModelChoice,
 } from "~/lib/api-keys";
-import type { DataTableColumn } from "~/lib/dataTable";
+import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
+import { dateFormat } from "~/lib/dateFormats";
 
 useHead({ title: "API Keys" });
 
@@ -46,7 +47,6 @@ const isLoadingModelChoices = computed(
   () => modelChoicesStatus.value === "pending" && !modelChoices.value,
 );
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
 const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, what <input type="date"> takes
 
 function formatDate(value: string | null, whenNull: string): string {
@@ -92,7 +92,7 @@ const columns: DataTableColumn<ApiKeyRow>[] = [
   { id: "createdBy", header: "Created by", accessorFn: (row) => row.createdBy?.email ?? "" },
   { id: "expires", header: "Expires" },
   { id: "status", header: "Status" },
-  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+  actionsColumn(),
 ];
 
 function allowedModelsLabel(apiKey: ApiKeySummary): string {

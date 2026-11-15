@@ -170,9 +170,42 @@ function isPageNumber(value: string): value is string {
   return /^[1-9]\d*$/.test(value);
 }
 
+/**
+ * A param read straight from the route, for list state that a page's request
+ * is built from. Params changed by one navigation (back/forward to `?q=a&page=3`)
+ * then change together, so the request runs once with both, where separate
+ * copies updated one by one would each trigger it. A write shows once the URL
+ * has changed, a few milliseconds later.
+ */
+function useRouteQueryParam<Value extends string>(
+  key: string,
+  options: Pick<QueryParamOptions<Value>, "default" | "isValid">,
+): WritableComputedRef<Value> {
+  const route = useRoute();
+  const router = useRouter();
+  return computed<Value>({
+    get: () => {
+      const raw = route.query[key];
+      return typeof raw === "string" && options.isValid(raw) ? raw : options.default;
+    },
+    set: (next) => {
+      scheduleQueryPatch(router, { [key]: next === options.default ? undefined : next });
+    },
+  });
+}
+
+/**
+ * A list's committed search in `?q=`: what the rows are filtered by, not the
+ * text being typed. The DataTable's field writes it once typing pauses; a
+ * server-mode page reads it for its request.
+ */
+export function useQuerySearch(): WritableComputedRef<string> {
+  return useRouteQueryParam("q", { default: "", isValid: anyText });
+}
+
 /** The list page number in `?page=`; page 1 leaves the URL. */
 export function useQueryPage(): WritableComputedRef<number> {
-  const raw = useQueryParam("page", { default: "1", isValid: isPageNumber });
+  const raw = useRouteQueryParam("page", { default: "1", isValid: isPageNumber });
   return computed({
     get: () => Number(raw.value),
     set: (page) => {

@@ -4457,6 +4457,7 @@ svg.lucide {
   margin: -4px 0 0;
   padding: 0 18px 12px;
 }
+/* The paginator sits in the toolbar; on phones it moves here, under the rows. */
 .data-table__footer {
   display: none;
 }
@@ -4499,6 +4500,9 @@ svg.lucide {
 }
 .data-table-tool--spinning svg {
   animation: spinner-turn 0.8s linear infinite;
+}
+.data-table-tool__count {
+  display: none;
 }
 .data-table-pagination {
   display: flex;
@@ -4573,9 +4577,27 @@ svg.lucide {
     flex: 1;
   }
   .data-table-tool {
+    position: relative;
     justify-content: center;
     width: 38px;
     padding: 0;
+  }
+  .data-table-tool__count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: grid;
+    place-items: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border: 1.5px solid var(--panel);
+    border-radius: 6px;
+    background: var(--chip);
+    color: var(--chip-ink);
+    font-size: 10px;
+    font-weight: 650;
+    line-height: 1;
   }
   /* Icon-only on phones; the label stays as the button's accessible name. */
   .data-table-tool__label {

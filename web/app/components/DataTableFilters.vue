@@ -7,13 +7,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover
  * the default slot, stacked; they apply as they change.
  */
 const props = defineProps<{
-  /** How many filters are set; shown on the button as "Filters · 3". */
+  /** How many filters are set; shown on the button as "Filters · 3", or a badge on phones. */
   activeCount: number;
 }>();
 const emit = defineEmits<{ clearAll: [] }>();
 
+const hasActiveFilters = computed(() => props.activeCount > 0);
 const buttonText = computed(() =>
-  props.activeCount > 0 ? `Filters · ${props.activeCount}` : "Filters",
+  hasActiveFilters.value ? `Filters · ${props.activeCount}` : "Filters",
+);
+const accessibleName = computed(() =>
+  hasActiveFilters.value ? `Filters, ${props.activeCount} active` : "Filters",
 );
 </script>
 
@@ -22,11 +26,16 @@ const buttonText = computed(() =>
     <PopoverTrigger as-child>
       <button
         class="button data-table-tool"
-        :class="{ 'data-table-tool--active': activeCount > 0 }"
+        :class="{ 'data-table-tool--active': hasActiveFilters }"
         type="button"
+        :aria-label="accessibleName"
       >
         <ListFilter :size="14" aria-hidden="true" />
-        <span class="data-table-tool__label tabular">{{ buttonText }}</span>
+        <span class="data-table-tool__label tabular" aria-hidden="true">{{ buttonText }}</span>
+        <!-- Phones hide the label, so the count rides on the icon. -->
+        <span v-if="hasActiveFilters" class="data-table-tool__count tabular" aria-hidden="true">
+          {{ activeCount }}
+        </span>
       </button>
     </PopoverTrigger>
     <PopoverContent
@@ -43,7 +52,7 @@ const buttonText = computed(() =>
           <button
             class="text-button"
             type="button"
-            :disabled="activeCount === 0"
+            :disabled="!hasActiveFilters"
             @click="emit('clearAll')"
           >
             Clear all

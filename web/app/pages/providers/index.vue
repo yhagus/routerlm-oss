@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronRight, CircleAlert, Pencil, Plug, Plus, Power, Trash2 } from "@lucide/vue";
-import { computed, h, ref } from "vue";
+import { computed, ref } from "vue";
 import {
   baseUrlHost,
   providerStats,
@@ -17,7 +17,7 @@ import {
   UPSTREAM_PROTOCOLS,
 } from "~/lib/upstream";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
-import type { DataTableColumn } from "~/lib/dataTable";
+import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 
 useHead({ title: "Providers" });
 
@@ -153,7 +153,7 @@ const columns: DataTableColumn<ProviderRow>[] = [
   { id: "status", header: "Status" },
   { id: "accounts", header: "Accounts" },
   { id: "models", header: "Models" },
-  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+  actionsColumn(),
 ];
 
 function accountSegments(stats: ProviderStats) {

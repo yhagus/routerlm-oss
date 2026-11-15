@@ -19,6 +19,7 @@ import {
 } from "~/lib/usage";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
+import { dateTimeFormat } from "~/lib/dateFormats";
 
 useHead({ title: "Usage" });
 
@@ -59,7 +60,7 @@ const statusFilter = useQueryList("status", {
   isValid: oneOf(USAGE_STATUSES),
   order: USAGE_STATUSES,
 });
-const search = useQueryParam("q", { default: "", isValid: anyText, debounce: 300 });
+const search = useQuerySearch();
 const page = useQueryPage();
 // Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
 const from = ref(timeRangeStart(timeRange.value, Date.now()));
@@ -187,8 +188,6 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: "attempts", header: "Attempts" },
 ];
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" });
-
 /**
  * Failed requests from a known caller have Error Captures; a request refused
  * for its API Key never does. Captures expire, so the list may be empty.
@@ -210,7 +209,7 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
     <DataTable
       table-id="usage"
       label="Usage Logs"
-      search-placeholder="Search model, API key, error code or request id"
+      search-placeholder="Search model, key, error or ID"
       :columns="columns"
       :rows="usagePage?.items ?? []"
       :row-count="usagePage?.total ?? 0"
@@ -262,7 +261,7 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
         </div>
       </template>
       <template #cell-time="{ row: log }">
-        <span class="tabular">{{ timeFormat.format(new Date(log.createdAt)) }}</span>
+        <span class="tabular">{{ dateTimeFormat.format(new Date(log.createdAt)) }}</span>
       </template>
       <template #cell-model="{ row: log }">
         {{ log.modelName ?? (log.modelId ? "Deleted Model" : "—") }}

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ShieldCheck } from "@lucide/vue";
-import { h } from "vue";
-import { DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
+import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
+import { dateTimeFormat } from "~/lib/dateFormats";
 import {
   failedHopLabel,
   type ErrorCapturePage,
@@ -16,7 +16,7 @@ const usageLogId = computed(() =>
   typeof route.query.usageLogId === "string" ? route.query.usageLogId : undefined,
 );
 // The DataTable holds the search (?q=) and page (?page=) in the URL; this page reads them for its request.
-const search = useQueryParam("q", { default: "", isValid: anyText, debounce: 300 });
+const search = useQuerySearch();
 const page = useQueryPage();
 watch(usageLogId, () => {
   page.value = 1;
@@ -45,10 +45,8 @@ const columns: DataTableColumn<ErrorCaptureSummary>[] = [
   { id: "model", header: "Model" },
   { id: "apiKey", header: "API Key" },
   { id: "clientGot", header: "Client got" },
-  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+  actionsColumn(),
 ];
-
-const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" });
 </script>
 
 <template>
@@ -76,7 +74,7 @@ const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
       :refresh="refresh"
     >
       <template #cell-time="{ row: capture }">
-        <span class="tabular">{{ timeFormat.format(new Date(capture.createdAt)) }}</span>
+        <span class="tabular">{{ dateTimeFormat.format(new Date(capture.createdAt)) }}</span>
       </template>
       <template #cell-failedAt="{ row: capture }">
         <strong>{{ failedHopLabel(capture.failedHop) }}</strong>

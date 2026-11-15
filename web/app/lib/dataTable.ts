@@ -1,9 +1,9 @@
+import { h } from "vue";
 import {
   columnFilteringFeature,
   columnVisibilityFeature,
   createFilteredRowModel,
   createPaginatedRowModel,
-  filterFn_includesString,
   globalFilteringFeature,
   rowPaginationFeature,
   tableFeatures,
@@ -17,7 +17,9 @@ export const DATA_TABLE_PAGE_SIZE = 50;
 /**
  * The TanStack features every DataTable registers. The filtered and paginated
  * row models only run in client mode; server mode turns them off with
- * `manualFiltering` and `manualPagination`.
+ * `manualFiltering` and `manualPagination`. The search is the only filter; its
+ * `includesString` match comes with global filtering, so no filter functions
+ * are registered. Global filtering requires column filtering to be present.
  */
 export const dataTableFeatures = tableFeatures({
   columnFilteringFeature,
@@ -26,7 +28,6 @@ export const dataTableFeatures = tableFeatures({
   rowPaginationFeature,
   filteredRowModel: createFilteredRowModel(),
   paginatedRowModel: createPaginatedRowModel(),
-  filterFns: { includesString: filterFn_includesString },
 });
 
 /**
@@ -35,6 +36,18 @@ export const dataTableFeatures = tableFeatures({
  * client mode, the search matches the values of columns with an accessor.
  */
 export type DataTableColumn<Row extends RowData> = ColumnDef<typeof dataTableFeatures, Row>;
+
+/**
+ * The row-actions column: a header read only by screen readers, and always
+ * shown. Its cells come from the caller's `#cell-actions` slot.
+ */
+export function actionsColumn<Row extends RowData>(): DataTableColumn<Row> {
+  return {
+    id: "actions",
+    header: () => h("span", { class: "sr-only" }, "Actions"),
+    enableHiding: false,
+  };
+}
 
 /** A column as the Columns menu shows it. */
 export interface HideableColumn {

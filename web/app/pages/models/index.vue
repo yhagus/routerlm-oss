@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Boxes, Plus, Power } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
-import type { DataTableColumn } from "~/lib/dataTable";
+import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import type { ModelDetail, ModelSummary } from "~/lib/routing";
 
 useHead({ title: "Models" });
@@ -20,7 +20,7 @@ const columns: DataTableColumn<ModelSummary>[] = [
   { id: "model", header: "Model", enableHiding: false, accessorFn: (model) => model.name },
   { id: "routes", header: "Routes" },
   { id: "status", header: "Status" },
-  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+  actionsColumn(),
 ];
 
 const isCreateDialogOpen = ref(false);

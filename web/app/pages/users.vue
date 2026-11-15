@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { KeyRound, Trash2, UserRound } from "@lucide/vue";
-import { computed, h, ref } from "vue";
+import { computed, ref } from "vue";
 import { apiErrorMessage } from "~/lib/api";
-import type { DataTableColumn } from "~/lib/dataTable";
+import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
+import { dateFormat } from "~/lib/dateFormats";
 import { MIN_PASSWORD_LENGTH, type User } from "~/lib/users";
 
 useHead({ title: "Users" });
@@ -23,7 +24,6 @@ const {
 const isLoadingUsers = computed(() => usersStatus.value === "pending" && !users.value);
 
 const emailById = computed(() => new Map((users.value ?? []).map((user) => [user.id, user.email])));
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
 
 function addedByLabel(user: User): string {
   return (user.createdById && emailById.value.get(user.createdById)) || "—";
@@ -33,7 +33,7 @@ const columns: DataTableColumn<User>[] = [
   { id: "user", header: "User", enableHiding: false, accessorFn: (user) => user.email },
   { id: "added", header: "Added" },
   { id: "addedBy", header: "Added by", accessorFn: addedByLabel },
-  { id: "actions", header: () => h("span", { class: "sr-only" }, "Actions"), enableHiding: false },
+  actionsColumn(),
 ];
 
 const newEmail = ref("");
