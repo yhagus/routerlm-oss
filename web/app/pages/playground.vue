@@ -1,12 +1,60 @@
 <script setup lang="ts">
-import { Boxes, CloudOff, ImagePlus, MessageSquare, Send, Square, Trash2, X } from "@lucide/vue";
-import { computed, nextTick, reactive, ref, watch } from "vue";
+import {
+  Boxes,
+  CloudOff,
+  Code,
+  ImagePlus,
+  Route,
+  SlidersHorizontal,
+  Square,
+  Trash2,
+  X,
+} from "@lucide/vue";
+import {
+  DialogContent,
+  DialogDescription,
+  DialogOverlay,
+  DialogPortal,
+  DialogRoot,
+  DialogTitle,
+} from "reka-ui";
+import { computed, reactive, ref, watch } from "vue";
+import {
+  Context,
+  ContextContent,
+  ContextContentBody,
+  ContextContentFooter,
+  ContextTrigger,
+} from "@/components/ai-elements/context";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputButton,
+  PromptInputFooter,
+  PromptInputHeader,
+  type PromptInputMessage,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+  usePromptInputProvider,
+} from "@/components/ai-elements/prompt-input";
+import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
+import { Shimmer } from "@/components/ai-elements/shimmer";
+import { code } from "@stream-markdown/code";
+import { math } from "@stream-markdown/math";
+import { mermaid } from "@stream-markdown/mermaid";
+import { MarkdownProvider } from "vue-stream-markdown";
 import { apiErrorMessage } from "~/lib/api";
 import { REASONING_EFFORTS, type ReasoningEffort } from "~/lib/parameterPolicy";
 import {
   type AssistantMessage,
   chatCompletionRequest,
-  dataUrlOf,
   MAX_IMAGE_BYTES,
   type PlaygroundError,
   type PlaygroundMessage,
@@ -15,10 +63,19 @@ import {
   playgroundErrorOfFailure,
   streamEventsOf,
 } from "~/lib/playground";
-import type { ModelSummary } from "~/lib/routing";
+import type { ModelDetail, ModelSummary, RouteSummary } from "~/lib/routing";
+import type { Provider, ProviderAccount, UpstreamModel } from "~/lib/upstream";
 import { formatCost, formatCount } from "~/lib/usage";
 
 useHead({ title: "Playground" });
+
+/** Answers render as Markdown; code blocks follow the dashboard's light or dark theme. */
+const isDark = useIsDark();
+const markdownExtensions = {
+  code: code(),
+  math: math(),
+  mermaid: mermaid({ config: { securityLevel: "strict" } }),
+};
 
 const MODEL_DEFAULT = "default";
 const { $dashboardApi } = useNuxtApp();
@@ -31,10 +88,9 @@ const {
   status: modelsStatus,
 } = useDashboardApi<ModelSummary[]>("/models");
 const isLoadingModels = computed(() => modelsStatus.value === "pending" && !models.value);
+const enabledModels = computed(() => (models.value ?? []).filter((model) => model.isEnabled));
 const modelOptions = computed(() =>
-  (models.value ?? [])
-    .filter((model) => model.isEnabled)
-    .map((model) => ({ value: model.name, label: model.name })),
+  enabledModels.value.map((model) => ({ value: model.name, label: model.name })),
 );
 const modelName = ref("");
 watch(
@@ -47,6 +103,89 @@ watch(
   { immediate: true },
 );
 
+// The source: a Model (routed, under its policy) or one Upstream Model, sent directly.
+
+type Source = "model" | "upstream";
+const SOURCE_OPTIONS: { value: Source; label: string }[] = [
+  { value: "model", label: "Model" },
+  { value: "upstream", label: "Upstream Model" },
+];
+const source = ref<Source>("model");
+
+const {
+  data: providers,
+  error: providersError,
+  status: providersStatus,
+} = useDashboardApi<Provider[]>("/providers");
+const {
+  data: upstreamModels,
+  error: upstreamModelsError,
+  status: upstreamModelsStatus,
+} = useDashboardApi<UpstreamModel[]>("/upstream-models");
+const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>("/provider-accounts");
+const isLoadingUpstream = computed(
+  () =>
+    (providersStatus.value === "pending" && !providers.value) ||
+    (upstreamModelsStatus.value === "pending" && !upstreamModels.value),
+);
+const upstreamError = computed(() => providersError.value ?? upstreamModelsError.value);
+
+/** Enabled Upstream Models of enabled Providers: the ones a direct test can reach. */
+const testableUpstreamModels = computed(() => {
+  const enabledProviderIds = new Set(
+    (providers.value ?? []).filter((provider) => provider.isEnabled).map((provider) => provider.id),
+  );
+  return (upstreamModels.value ?? []).filter(
+    (upstreamModel) => upstreamModel.isEnabled && enabledProviderIds.has(upstreamModel.providerId),
+  );
+});
+const providerOptions = computed(() => {
+  const withModels = new Set(testableUpstreamModels.value.map((model) => model.providerId));
+  return (providers.value ?? [])
+    .filter((provider) => withModels.has(provider.id))
+    .map((provider) => ({ value: provider.id, label: provider.name }));
+});
+const providerId = ref("");
+watch(
+  providerOptions,
+  (options) => {
+    if (!options.some((option) => option.value === providerId.value)) {
+      providerId.value = options[0]?.value ?? "";
+    }
+  },
+  { immediate: true },
+);
+const upstreamModelOptions = computed(() =>
+  testableUpstreamModels.value
+    .filter((upstreamModel) => upstreamModel.providerId === providerId.value)
+    .map((upstreamModel) => ({ value: upstreamModel.id, label: upstreamModel.upstreamModelId })),
+);
+const upstreamModelRowId = ref("");
+watch(
+  upstreamModelOptions,
+  (options) => {
+    if (!options.some((option) => option.value === upstreamModelRowId.value)) {
+      upstreamModelRowId.value = options[0]?.value ?? "";
+    }
+  },
+  { immediate: true },
+);
+const providerNamesBySlug = computed(
+  () => new Map((providers.value ?? []).map((provider) => [provider.slug, provider.name])),
+);
+const selectedProvider = computed(
+  () => (providers.value ?? []).find((provider) => provider.id === providerId.value) ?? null,
+);
+const selectedUpstreamModel = computed(
+  () => testableUpstreamModels.value.find((model) => model.id === upstreamModelRowId.value) ?? null,
+);
+/** The selected Provider's accounts, in the order the gateway tries them. */
+const selectedProviderAccounts = computed(() =>
+  (providerAccounts.value ?? [])
+    .filter((account) => account.providerId === providerId.value)
+    .toSorted((first, second) => first.priority - second.priority),
+);
+
 const systemPrompt = ref("");
 const temperature = ref("");
 const topP = ref("");
@@ -56,6 +195,7 @@ const reasoningOptions = [
   { value: MODEL_DEFAULT, label: "Model default" },
   ...REASONING_EFFORTS.map((effort) => ({ value: effort, label: effort })),
 ];
+const isSettingsSheetOpen = ref(false);
 
 function isReasoningEffort(value: string): value is ReasoningEffort {
   return REASONING_EFFORTS.some((effort) => effort === value);
@@ -70,7 +210,13 @@ function numberField(text: string, isValid: (value: number) => boolean): number 
 
 /** The settings to send, or what is wrong with them. */
 function readSettings(): { settings: PlaygroundSettings } | { problem: string } {
-  if (modelName.value === "") return { problem: "Pick a Model." };
+  const target =
+    source.value === "model"
+      ? modelName.value
+      : (selectedUpstreamModel.value?.upstreamModelId ?? "");
+  if (target === "") {
+    return { problem: source.value === "model" ? "Pick a Model." : "Pick an Upstream Model." };
+  }
   const parsedTemperature = numberField(temperature.value, (value) => value >= 0 && value <= 2);
   if (parsedTemperature === null) return { problem: "Temperature must be from 0 to 2." };
   const parsedTopP = numberField(topP.value, (value) => value >= 0 && value <= 1);
@@ -84,7 +230,7 @@ function readSettings(): { settings: PlaygroundSettings } | { problem: string } 
   }
   return {
     settings: {
-      model: modelName.value,
+      model: target,
       systemPrompt: systemPrompt.value,
       temperature: parsedTemperature,
       topP: parsedTopP,
@@ -94,70 +240,145 @@ function readSettings(): { settings: PlaygroundSettings } | { problem: string } 
   };
 }
 
+/** The parameters this tab sends, shown in the Model bar so they're visible without the rail. */
+const sentParameters = computed(() => {
+  const parameters: string[] = [];
+  if (systemPrompt.value.trim() !== "") parameters.push("System prompt");
+  if (temperature.value.trim() !== "") parameters.push(`Temperature ${temperature.value}`);
+  if (topP.value.trim() !== "") parameters.push(`Top P ${topP.value}`);
+  if (maxOutputTokens.value.trim() !== "") {
+    const tokens = Number(maxOutputTokens.value);
+    parameters.push(
+      `Max ${Number.isFinite(tokens) ? formatCount(tokens) : maxOutputTokens.value} tokens`,
+    );
+  }
+  if (isReasoningEffort(reasoningEffort.value)) parameters.push(`Effort ${reasoningEffort.value}`);
+  return parameters;
+});
+
+// The selected Model's Routes and Parameter Policy, for the preview before a send.
+
+const modelDetail = ref<ModelDetail | null>(null);
+const modelDetailState = ref<"idle" | "loading" | "failed">("idle");
+const selectedModelId = computed(
+  () => enabledModels.value.find((model) => model.name === modelName.value)?.id ?? "",
+);
+watch(
+  selectedModelId,
+  async (id) => {
+    modelDetail.value = null;
+    if (id === "") {
+      modelDetailState.value = "idle";
+      return;
+    }
+    modelDetailState.value = "loading";
+    try {
+      const detail = await $dashboardApi<ModelDetail>(`/models/${id}`);
+      // A slow answer for a Model the user has since switched away from is dropped.
+      if (selectedModelId.value !== id) return;
+      modelDetail.value = detail;
+      modelDetailState.value = "idle";
+    } catch {
+      if (selectedModelId.value === id) modelDetailState.value = "failed";
+    }
+  },
+  { immediate: true },
+);
+
+/**
+ * Starters offer an image prompt only when the target sees images: the
+ * Upstream Model itself, or a Route of the Model that can serve requests.
+ */
+const canSeeImages = computed(() =>
+  source.value === "upstream"
+    ? Boolean(selectedUpstreamModel.value?.capabilities.includes("vision"))
+    : (modelDetail.value?.routes ?? []).some(
+        (route) =>
+          route.isEnabled &&
+          route.provider.isEnabled &&
+          route.upstreamModel.isEnabled &&
+          route.enabledProviderAccountCount > 0 &&
+          route.upstreamModel.capabilities.includes("vision"),
+      ),
+);
+
 // Conversation: lives in this page only, and is gone on reload.
 
+/**
+ * How each answer was requested: the Model's Routes as they were then, so its
+ * receipt can say "Route 2 of 3" after the Model is switched, or "direct" for
+ * an Upstream Model test.
+ */
+const routesByAnswer = new WeakMap<AssistantMessage, RouteSummary[]>();
+const directAnswers = new WeakSet<AssistantMessage>();
+function routesOf(message: AssistantMessage): RouteSummary[] | null {
+  return routesByAnswer.get(message) ?? null;
+}
+function isDirect(message: AssistantMessage): boolean {
+  return directAnswers.has(message);
+}
+
 const conversation = ref<PlaygroundMessage[]>([]);
-const draft = ref("");
-const draftImageUrls = ref<string[]>([]);
 const composerError = ref("");
 const runningRequest = ref<AbortController | null>(null);
-const log = ref<HTMLElement>();
 const isSending = computed(() => runningRequest.value !== null);
-const canSend = computed(
-  () =>
-    !isSending.value &&
-    modelName.value !== "" &&
-    (draft.value.trim() !== "" || draftImageUrls.value.length > 0),
+const canTry = computed(() =>
+  source.value === "model"
+    ? !modelsError.value && modelOptions.value.length > 0
+    : !upstreamError.value && upstreamModelOptions.value.length > 0,
+);
+const isLoadingSource = computed(() =>
+  source.value === "model" ? isLoadingModels.value : isLoadingUpstream.value,
 );
 
-watch(
-  conversation,
-  async () => {
-    await nextTick();
-    log.value?.scrollTo({ top: log.value.scrollHeight });
-  },
-  { deep: true },
+const INPUT_ERRORS: Record<string, string> = {
+  accept: "Only images can be attached.",
+  max_file_size: "Images must be 5 MB or smaller.",
+};
+
+const promptInput = usePromptInputProvider({
+  accept: "image/*",
+  maxFileSize: MAX_IMAGE_BYTES,
+  onSubmit: submit,
+  onError: (error) => (composerError.value = INPUT_ERRORS[error.code] ?? error.message),
+});
+const hasDraft = computed(
+  () => promptInput.textInput.value.trim() !== "" || promptInput.files.value.length > 0,
 );
+const canSend = computed(() => !isSending.value && canTry.value && hasDraft.value);
 
-async function attachImages(event: Event): Promise<void> {
-  const input = event.target;
-  if (!(input instanceof HTMLInputElement) || !input.files) return;
-  composerError.value = "";
-  for (const file of Array.from(input.files)) {
-    if (file.size > MAX_IMAGE_BYTES) {
-      composerError.value = `${file.name} is over 5 MB.`;
-      continue;
-    }
-    draftImageUrls.value.push(await dataUrlOf(file));
-  }
-  input.value = "";
-}
-
-function removeImage(index: number): void {
-  draftImageUrls.value.splice(index, 1);
-}
-
-function sendOnEnter(event: KeyboardEvent): void {
-  if (event.shiftKey || event.isComposing) return;
-  event.preventDefault();
-  if (canSend.value) void send();
-}
-
-async function send(): Promise<void> {
+/** The composer's submit. Throwing hands the text back to the composer and shows the problem. */
+async function submit(message: PromptInputMessage): Promise<void> {
+  if (isSending.value) return;
   const read = readSettings();
-  if ("problem" in read) {
-    composerError.value = read.problem;
-    return;
-  }
+  if ("problem" in read) throw new Error(read.problem);
+  const text = message.text.trim();
+  const imageUrls = message.files.map((file) => file.url);
+  if (text === "" && imageUrls.length === 0) return;
   composerError.value = "";
-  conversation.value.push({
-    role: "user",
-    text: draft.value.trim(),
-    imageUrls: draftImageUrls.value,
-  });
-  draft.value = "";
-  draftImageUrls.value = [];
-  const body = chatCompletionRequest(read.settings, conversation.value);
+  // The answer streams in the background; the composer is free again at once.
+  const path =
+    source.value === "upstream" && selectedUpstreamModel.value
+      ? `/playground/upstream-models/${selectedUpstreamModel.value.id}/chat/completions`
+      : "/playground/chat/completions";
+  void send(read.settings, path, text, imageUrls);
+}
+
+/** A starter prompt: text ones send at once, the image one waits for a file. */
+function start(prompt: string, withImage: boolean): void {
+  promptInput.setTextInput(prompt);
+  if (withImage) promptInput.openFileDialog();
+  else void promptInput.submitForm();
+}
+
+async function send(
+  settings: PlaygroundSettings,
+  path: string,
+  text: string,
+  imageUrls: string[],
+): Promise<void> {
+  conversation.value.push({ role: "user", text, imageUrls });
+  const body = chatCompletionRequest(settings, conversation.value);
   // Reactive, so the page shows the answer as it streams in.
   const answer = reactive<AssistantMessage>({
     role: "assistant",
@@ -165,12 +386,17 @@ async function send(): Promise<void> {
     reasoning: "",
     state: { kind: "streaming" },
   });
+  if (source.value === "upstream") {
+    directAnswers.add(answer);
+  } else if (modelDetail.value?.name === settings.model) {
+    routesByAnswer.set(answer, modelDetail.value.routes);
+  }
   conversation.value.push(answer);
 
   const request = new AbortController();
   runningRequest.value = request;
   try {
-    const stream = await $dashboardApi("/playground/chat/completions", {
+    const stream = await $dashboardApi(path, {
       method: "POST",
       body,
       responseType: "stream",
@@ -211,25 +437,85 @@ function clearConversation(): void {
   conversation.value = [];
 }
 
-function summaryFacts(summary: PlaygroundSummary): { label: string; value: string }[] {
-  const { usage, route, providerAccount } = summary;
-  return [
-    { label: "Input", value: formatCount(usage.inputTokens) },
-    { label: "Output", value: formatCount(usage.outputTokens) },
-    { label: "Cache read", value: formatCount(usage.cacheReadTokens) },
-    { label: "Cache write", value: formatCount(usage.cacheWriteTokens) },
-    { label: "Cost", value: formatCost(summary.cost) },
-    { label: "Route", value: route ? `${route.providerSlug} / ${route.upstreamModelId}` : "—" },
-    { label: "Provider Account", value: providerAccount?.name ?? "—" },
-  ];
+/** The answer still streaming its reasoning: the Reasoning block stays open until text starts. */
+function isThinking(message: AssistantMessage): boolean {
+  return message.state.kind === "streaming" && message.text === "";
 }
+
+// Session totals
+
+/** Totals over every answer in this tab, so a run of test sends adds up. */
+const sessionTotals = computed(() => {
+  const totals: {
+    requests: number;
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    reasoning: number;
+    cost: number | null;
+  } = { requests: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, cost: null };
+  for (const message of conversation.value) {
+    if (message.role !== "assistant" || message.state.kind === "streaming") continue;
+    totals.requests += 1;
+    const summary = message.state.kind === "stopped" ? null : message.state.summary;
+    if (!summary) continue;
+    totals.input += summary.usage.inputTokens ?? 0;
+    totals.output += summary.usage.outputTokens ?? 0;
+    totals.cacheRead += summary.usage.cacheReadTokens ?? 0;
+    totals.cacheWrite += summary.usage.cacheWriteTokens ?? 0;
+    totals.reasoning += summary.usage.reasoningTokens ?? 0;
+    if (summary.cost !== null) totals.cost = (totals.cost ?? 0) + summary.cost;
+  }
+  return totals;
+});
+const sessionRows = computed(() =>
+  [
+    { label: "Input", value: sessionTotals.value.input },
+    { label: "Output", value: sessionTotals.value.output },
+    { label: "Cache read", value: sessionTotals.value.cacheRead },
+    { label: "Cache write", value: sessionTotals.value.cacheWrite },
+    { label: "Reasoning", value: sessionTotals.value.reasoning },
+  ].filter((row, index) => index < 2 || row.value > 0),
+);
+
+const settingsHint = computed(() =>
+  source.value === "model"
+    ? "Empty parameters leave the choice to the Model's Parameter Policy."
+    : "Empty parameters aren't sent: a direct test applies no Parameter Policy.",
+);
+
+// Request as code
+
+const isCodeOpen = ref(false);
+/** The conversation so far plus the unsent message, as the body a client would send. */
+const codeRequest = computed(() => {
+  if (source.value === "upstream") {
+    return {
+      problem:
+        "Client applications reach Upstream Models only through a Model. Switch the source to Model to copy a request.",
+    };
+  }
+  const read = readSettings();
+  if ("problem" in read) return { problem: read.problem };
+  const pending: PlaygroundMessage[] = hasDraft.value
+    ? [
+        {
+          role: "user",
+          text: promptInput.textInput.value.trim(),
+          imageUrls: promptInput.files.value.map((file) => file.url),
+        },
+      ]
+    : [];
+  return { body: chatCompletionRequest(read.settings, [...conversation.value, ...pending]) };
+});
 </script>
 
 <template>
-  <div class="page-view">
+  <div class="page-view playground-page">
     <PageHeading
       title="Playground"
-      description="Send requests to a Model through the same path client applications use. The conversation stays in this browser tab."
+      description="Send requests to a Model through the same path client applications use, or straight to one Upstream Model. The conversation stays in this browser tab."
     >
       <button
         class="button button--quiet"
@@ -241,181 +527,376 @@ function summaryFacts(summary: PlaygroundSummary): { label: string; value: strin
       </button>
     </PageHeading>
 
-    <div class="playground">
-      <section class="panel playground__chat" aria-label="Conversation">
-        <div ref="log" class="playground__log" aria-live="polite">
-          <EmptyState v-if="modelsError" :icon="CloudOff" tone="error">
-            <strong>Couldn't load the Models.</strong
-            ><span>Check that the backend is running, then reload the page.</span>
-          </EmptyState>
-          <EmptyState v-else-if="!isLoadingModels && modelOptions.length === 0" :icon="Boxes">
-            <strong>No enabled Model to try.</strong
-            ><span>Create or enable one on the <NuxtLink to="/models">Models</NuxtLink> page.</span>
-          </EmptyState>
-          <EmptyState v-else-if="conversation.length === 0" :icon="MessageSquare">
-            <strong>Nothing sent yet.</strong
-            ><span>Pick a Model, write a message and attach images if you need them.</span>
-          </EmptyState>
-          <article
-            v-for="(message, index) in conversation"
-            :key="index"
-            class="playground-message"
-            :class="`playground-message--${message.role}`"
-          >
-            <span class="field__label">{{ message.role === "user" ? "You" : "Model" }}</span>
-            <template v-if="message.role === 'user'">
-              <p v-if="message.text" class="playground-message__text">{{ message.text }}</p>
-              <div v-if="message.imageUrls.length > 0" class="playground-images">
-                <img
-                  v-for="(url, imageIndex) in message.imageUrls"
-                  :key="imageIndex"
-                  :src="url"
-                  alt="Attached image"
-                />
-              </div>
-            </template>
-            <template v-else>
-              <details v-if="message.reasoning" class="playground-message__reasoning">
-                <summary>Reasoning</summary>
-                <p class="playground-message__text">{{ message.reasoning }}</p>
-              </details>
-              <p v-if="message.text" class="playground-message__text">{{ message.text }}</p>
-              <p v-else-if="message.state.kind === 'streaming'" class="cell-note">
-                Waiting for the answer…
-              </p>
-              <p v-if="message.state.kind === 'stopped'" class="cell-note">Stopped.</p>
-              <p
-                v-if="message.state.kind === 'failed'"
-                class="playground-message__error"
-                role="alert"
-              >
-                <span class="status-badge status-badge--bad">{{
-                  message.state.error.code ?? "Error"
-                }}</span>
-                {{ message.state.error.message }}
-              </p>
-              <dl
-                v-if="
-                  (message.state.kind === 'done' || message.state.kind === 'failed') &&
-                  message.state.summary
-                "
-                class="playground-summary"
-              >
-                <div v-for="fact in summaryFacts(message.state.summary)" :key="fact.label">
-                  <dt>{{ fact.label }}</dt>
-                  <dd class="tabular">{{ fact.value }}</dd>
-                </div>
-              </dl>
-            </template>
-          </article>
-        </div>
-
-        <form class="playground-composer" @submit.prevent="send">
-          <div v-if="draftImageUrls.length > 0" class="playground-images">
-            <div
-              v-for="(url, index) in draftImageUrls"
-              :key="index"
-              class="playground-images__item"
+    <div class="bench tw-scope">
+      <section class="panel bench__chat" aria-label="Conversation">
+        <header class="bench-bar">
+          <div class="segmented bench-bar__source" role="group" aria-label="Send to">
+            <button
+              v-for="option in SOURCE_OPTIONS"
+              :key="option.value"
+              class="segmented__option"
+              type="button"
+              :aria-pressed="source === option.value"
+              @click="source = option.value"
             >
-              <img :src="url" alt="Image to send" />
-              <button
-                class="icon-button"
-                type="button"
-                aria-label="Remove image"
-                @click="removeImage(index)"
-              >
-                <X :size="12" />
+              {{ option.label }}
+            </button>
+          </div>
+          <AppSelect
+            v-if="source === 'model'"
+            v-model="modelName"
+            class="bench-bar__model"
+            :options="modelOptions"
+            label="Model"
+            searchable
+            :placeholder="
+              modelsError
+                ? 'Models unavailable'
+                : isLoadingModels
+                  ? 'Loading Models…'
+                  : 'No enabled Model'
+            "
+          >
+            <template #leading><Route :size="14" :stroke-width="1.8" /></template>
+          </AppSelect>
+          <div v-else class="bench-bar__upstream">
+            <AppSelect
+              v-model="providerId"
+              class="bench-bar__provider"
+              :options="providerOptions"
+              label="Provider"
+              searchable
+              :placeholder="
+                upstreamError
+                  ? 'Providers unavailable'
+                  : isLoadingUpstream
+                    ? 'Loading Providers…'
+                    : 'No Provider'
+              "
+            />
+            <AppSelect
+              v-model="upstreamModelRowId"
+              class="bench-bar__model"
+              :options="upstreamModelOptions"
+              label="Upstream Model"
+              searchable
+              :placeholder="isLoadingUpstream ? 'Loading…' : 'No enabled Upstream Model'"
+            />
+          </div>
+          <p class="bench-bar__params">
+            <template v-if="sentParameters.length > 0">
+              <span v-for="parameter in sentParameters" :key="parameter" class="chip">{{
+                parameter
+              }}</span>
+            </template>
+            <span v-else class="bench-bar__muted">{{
+              source === "model"
+                ? "Parameters from the Model's policy"
+                : "No parameters: sent as-is"
+            }}</span>
+          </p>
+          <Context
+            v-if="sessionTotals.requests > 0"
+            :used-tokens="sessionTotals.input + sessionTotals.output"
+            :max-tokens="0"
+          >
+            <ContextTrigger>
+              <button class="bench-bar__totals tabular" type="button">
+                <span
+                  >{{ sessionTotals.requests }}
+                  {{ sessionTotals.requests === 1 ? "request" : "requests" }}</span
+                >
+                <span>{{ formatCount(sessionTotals.input + sessionTotals.output) }} tokens</span>
+                <span>{{ formatCost(sessionTotals.cost) }}</span>
               </button>
-            </div>
+            </ContextTrigger>
+            <ContextContent
+              class="w-60 rounded-xl border-[var(--line-soft)] bg-[var(--panel)] shadow-[var(--shadow-float)]"
+              align="end"
+            >
+              <ContextContentBody class="session-card">
+                <p class="session-card__title">This tab</p>
+                <dl>
+                  <div v-for="row in sessionRows" :key="row.label">
+                    <dt>{{ row.label }}</dt>
+                    <dd class="tabular">{{ formatCount(row.value) }}</dd>
+                  </div>
+                </dl>
+              </ContextContentBody>
+              <ContextContentFooter class="session-card__footer bg-[var(--panel-2)] text-[11px]">
+                <span>Cost reported by the gateway</span>
+                <strong class="tabular">{{ formatCost(sessionTotals.cost) }}</strong>
+              </ContextContentFooter>
+            </ContextContent>
+          </Context>
+          <div class="bench-bar__tools">
+            <button
+              class="button bench-bar__tool"
+              type="button"
+              aria-label="Request as code"
+              :disabled="!canTry"
+              @click="isCodeOpen = true"
+            >
+              <Code :size="14" /><span>Code</span>
+            </button>
+            <button
+              class="button bench-bar__tool bench-bar__settings"
+              type="button"
+              aria-label="Settings"
+              @click="isSettingsSheetOpen = true"
+            >
+              <SlidersHorizontal :size="14" /><span>Settings</span>
+            </button>
           </div>
-          <textarea
-            v-model="draft"
-            class="text-input text-area"
-            rows="3"
-            aria-label="Message"
-            placeholder="Message the Model. Enter sends, Shift+Enter adds a line."
-            @keydown.enter="sendOnEnter"
+        </header>
+
+        <MarkdownProvider :extensions="markdownExtensions" :is-dark="isDark">
+          <Conversation class="bench__log" aria-label="Messages" :initial="false">
+            <ConversationContent
+              class="gap-[22px] px-6 pt-[22px] pb-7 max-[760px]:px-3.5 max-[760px]:pt-[18px]"
+            >
+              <template v-if="source === 'model'">
+                <EmptyState v-if="modelsError" :icon="CloudOff" tone="error">
+                  <strong>Couldn't load the Models.</strong
+                  ><span>Check that the backend is running, then reload the page.</span>
+                </EmptyState>
+                <EmptyState v-else-if="!isLoadingModels && modelOptions.length === 0" :icon="Boxes">
+                  <strong>No enabled Model to try.</strong
+                  ><span
+                    >Create or enable one on the <NuxtLink to="/models">Models</NuxtLink> page, or
+                    send to an Upstream Model directly.</span
+                  >
+                </EmptyState>
+                <div v-else-if="isLoadingModels" class="route-preview__loading">
+                  <AppSpinner />
+                </div>
+                <PlaygroundRoutePreview
+                  v-else-if="conversation.length === 0"
+                  :model="modelDetail"
+                  :is-loading="modelDetailState === 'loading'"
+                  :has-error="modelDetailState === 'failed'"
+                />
+              </template>
+              <template v-else>
+                <EmptyState v-if="upstreamError" :icon="CloudOff" tone="error">
+                  <strong>Couldn't load the Upstream Models.</strong
+                  ><span>Check that the backend is running, then reload the page.</span>
+                </EmptyState>
+                <EmptyState
+                  v-else-if="!isLoadingUpstream && upstreamModelOptions.length === 0"
+                  :icon="Boxes"
+                >
+                  <strong>No enabled Upstream Model to try.</strong
+                  ><span
+                    >Enable a Provider and one of its models on the
+                    <NuxtLink to="/upstream-models">Upstream Models</NuxtLink> page.</span
+                  >
+                </EmptyState>
+                <div v-else-if="isLoadingUpstream" class="route-preview__loading">
+                  <AppSpinner />
+                </div>
+                <PlaygroundUpstreamPreview
+                  v-else-if="conversation.length === 0 && selectedProvider && selectedUpstreamModel"
+                  :provider="selectedProvider"
+                  :upstream-model="selectedUpstreamModel"
+                  :accounts="selectedProviderAccounts"
+                />
+              </template>
+
+              <Message
+                v-for="(message, index) in conversation"
+                :key="index"
+                :from="message.role"
+                :class="
+                  message.role === 'assistant'
+                    ? 'max-w-full'
+                    : 'max-w-[min(560px,88%)] max-[760px]:max-w-[92%]'
+                "
+              >
+                <MessageContent
+                  v-if="message.role === 'user'"
+                  class="group-[.is-user]:rounded-[14px_14px_4px_14px] group-[.is-user]:bg-[var(--chip)] group-[.is-user]:px-3.5 group-[.is-user]:py-2.5"
+                >
+                  <p v-if="message.text" class="exchange__text">{{ message.text }}</p>
+                  <div v-if="message.imageUrls.length > 0" class="playground-images">
+                    <img
+                      v-for="(url, imageIndex) in message.imageUrls"
+                      :key="imageIndex"
+                      :src="url"
+                      alt="Attached image"
+                    />
+                  </div>
+                </MessageContent>
+                <MessageContent v-else class="w-full max-w-[76ch] gap-2.5">
+                  <Reasoning
+                    v-if="message.reasoning"
+                    class="mb-0 rounded-[10px] border border-[var(--line-soft)] bg-[var(--panel-2)] px-3 py-2.5 text-xs [&_button]:text-xs"
+                    :is-streaming="isThinking(message)"
+                  >
+                    <ReasoningTrigger />
+                    <ReasoningContent :content="message.reasoning" />
+                  </Reasoning>
+                  <MessageResponse
+                    v-if="message.text"
+                    class="exchange__markdown text-[13px] leading-relaxed"
+                    :content="message.text"
+                  />
+                  <Shimmer
+                    v-else-if="isThinking(message) && !message.reasoning"
+                    class="exchange__waiting"
+                    :duration="1.6"
+                    >Waiting for the answer…</Shimmer
+                  >
+                  <p v-if="message.state.kind === 'stopped'" class="exchange__note">Stopped.</p>
+                  <p v-if="message.state.kind === 'failed'" class="exchange__error" role="alert">
+                    <span class="status-badge status-badge--bad">{{
+                      message.state.error.code ?? "Error"
+                    }}</span>
+                    {{ message.state.error.message }}
+                  </p>
+                  <PlaygroundReceipt
+                    v-if="
+                      (message.state.kind === 'done' || message.state.kind === 'failed') &&
+                      message.state.summary
+                    "
+                    :summary="message.state.summary"
+                    :routes="routesOf(message)"
+                    :direct="isDirect(message)"
+                    :provider-names="providerNamesBySlug"
+                  />
+                </MessageContent>
+              </Message>
+            </ConversationContent>
+            <ConversationScrollButton
+              v-if="conversation.length > 0"
+              class="right-3 bottom-3 left-auto translate-x-0 shadow-[var(--shadow-float)]"
+            />
+          </Conversation>
+        </MarkdownProvider>
+
+        <div class="composer">
+          <PlaygroundStarters
+            v-if="conversation.length === 0 && canTry && !isLoadingSource"
+            :can-see-images="canSeeImages"
+            @start="start"
           />
+          <PromptInput
+            class="[&_[data-slot=input-group]]:rounded-[14px] [&_[data-slot=input-group]]:bg-[var(--panel)] [&_[data-slot=input-group]]:shadow-[var(--shadow)]"
+            multiple
+            global-drop
+          >
+            <PromptInputHeader
+              v-if="promptInput.files.value.length > 0"
+              class="gap-2.5 px-3.5 pt-3"
+            >
+              <div
+                v-for="file in promptInput.files.value"
+                :key="file.id"
+                class="playground-images__item"
+              >
+                <img :src="file.url" :alt="file.filename ?? 'Image to send'" />
+                <button
+                  class="icon-button"
+                  type="button"
+                  :aria-label="`Remove ${file.filename ?? 'image'}`"
+                  @click="promptInput.removeFile(file.id)"
+                >
+                  <X :size="12" />
+                </button>
+              </div>
+            </PromptInputHeader>
+            <PromptInputBody>
+              <PromptInputTextarea
+                class="px-3.5 pt-3 pb-1 text-[13px] leading-normal text-[var(--ink)] placeholder:text-[var(--placeholder)] max-[760px]:min-h-10 max-[760px]:text-base"
+                aria-label="Message"
+                placeholder="Message the Model"
+              />
+            </PromptInputBody>
+            <PromptInputFooter class="px-2 pt-1 pb-2">
+              <PromptInputTools>
+                <PromptInputButton
+                  class="composer__attach text-xs text-[var(--muted)]"
+                  @click="promptInput.openFileDialog()"
+                >
+                  <ImagePlus class="size-4" /><span>Attach images</span>
+                </PromptInputButton>
+                <span class="composer__hint">Enter sends · Shift+Enter adds a line</span>
+              </PromptInputTools>
+              <PromptInputButton
+                v-if="isSending"
+                variant="default"
+                size="icon-sm"
+                aria-label="Stop"
+                @click="stop"
+              >
+                <Square class="size-3.5" />
+              </PromptInputButton>
+              <PromptInputSubmit v-else aria-label="Send" :disabled="!canSend" />
+            </PromptInputFooter>
+          </PromptInput>
           <p v-if="composerError" class="form__error" role="alert">{{ composerError }}</p>
-          <div class="playground-composer__actions">
-            <label class="button button--quiet">
-              <ImagePlus :size="14" /> Attach images
-              <input class="sr-only" type="file" accept="image/*" multiple @change="attachImages" />
-            </label>
-            <button v-if="isSending" class="button" type="button" @click="stop">
-              <Square :size="14" /> Stop
-            </button>
-            <button v-else class="button button--primary" type="submit" :disabled="!canSend">
-              <Send :size="14" /> Send
-            </button>
-          </div>
-        </form>
+        </div>
       </section>
 
-      <section class="panel playground__settings" aria-label="Settings">
+      <section class="panel bench__settings" aria-label="Settings">
         <header class="panel-heading">
           <div>
             <h2>Settings</h2>
-            <p>Empty parameters leave the choice to the Model's Parameter Policy.</p>
+            <p>{{ settingsHint }}</p>
           </div>
         </header>
-        <div class="panel-body form">
-          <div class="field">
-            <span class="field__label">Model</span>
-            <AppSelect
-              v-model="modelName"
-              :options="modelOptions"
-              label="Model"
-              :placeholder="isLoadingModels ? 'Loading Models…' : 'No enabled Model'"
-            />
-          </div>
-          <label class="field">
-            <span class="field__label">System prompt</span>
-            <textarea v-model="systemPrompt" class="text-input text-area" rows="4" />
-          </label>
-          <div class="form__grid">
-            <label class="field">
-              <span class="field__label">Temperature</span>
-              <NumberInput
-                v-model="temperature"
-                class="text-input"
-                :min="0"
-                :max="2"
-                placeholder="0 to 2"
-              />
-            </label>
-            <label class="field">
-              <span class="field__label">Top P</span>
-              <NumberInput
-                v-model="topP"
-                class="text-input"
-                :min="0"
-                :max="1"
-                placeholder="0 to 1"
-              />
-            </label>
-            <label class="field">
-              <span class="field__label">Max output tokens</span>
-              <NumberInput
-                v-model="maxOutputTokens"
-                class="text-input"
-                whole
-                tokens
-                :min="1"
-                placeholder="e.g. 4k"
-              />
-            </label>
-            <div class="field">
-              <span class="field__label">Reasoning effort</span>
-              <AppSelect
-                v-model="reasoningEffort"
-                :options="reasoningOptions"
-                label="Reasoning effort"
-              />
-            </div>
-          </div>
+        <div class="panel-body">
+          <PlaygroundSettings
+            v-model:system-prompt="systemPrompt"
+            v-model:temperature="temperature"
+            v-model:top-p="topP"
+            v-model:max-output-tokens="maxOutputTokens"
+            v-model:reasoning-effort="reasoningEffort"
+            :reasoning-options="reasoningOptions"
+          />
         </div>
       </section>
     </div>
+
+    <DialogRoot v-model:open="isSettingsSheetOpen">
+      <DialogPortal>
+        <DialogOverlay class="dialog-overlay" />
+        <DialogContent class="sheet tw-scope">
+          <header class="sheet__header">
+            <div>
+              <DialogTitle class="dialog__title">Settings</DialogTitle>
+              <DialogDescription class="dialog__description">
+                {{ settingsHint }}
+              </DialogDescription>
+            </div>
+            <button
+              class="icon-button"
+              type="button"
+              aria-label="Close settings"
+              @click="isSettingsSheetOpen = false"
+            >
+              <X :size="16" />
+            </button>
+          </header>
+          <PlaygroundSettings
+            v-model:system-prompt="systemPrompt"
+            v-model:temperature="temperature"
+            v-model:top-p="topP"
+            v-model:max-output-tokens="maxOutputTokens"
+            v-model:reasoning-effort="reasoningEffort"
+            :reasoning-options="reasoningOptions"
+          />
+          <button
+            class="button button--primary sheet__done"
+            type="button"
+            @click="isSettingsSheetOpen = false"
+          >
+            Done
+          </button>
+        </DialogContent>
+      </DialogPortal>
+    </DialogRoot>
+
+    <PlaygroundCodeDialog v-model:open="isCodeOpen" :request="codeRequest" />
   </div>
 </template>

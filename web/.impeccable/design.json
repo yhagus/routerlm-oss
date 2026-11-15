@@ -1,31 +1,189 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-14T00:00:00Z",
+  "generatedAt": "2026-11-15T00:00:00Z",
   "title": "Design System: RouterLM",
   "extensions": {
     "colorMeta": {
-      "ink": { "role": "neutral", "displayName": "Graphite Ink", "canonical": "#1d1d1f", "tonalRamp": ["#111113", "#1d1d1f", "#2c2c2e", "#424245", "#6e6e73", "#8e8e93", "#d1d1d6", "#f5f5f7"] },
-      "paper": { "role": "neutral", "displayName": "Paper Gray", "canonical": "#f5f5f7", "tonalRamp": ["#1d1d1f", "#424245", "#6e6e73", "#8e8e93", "#aeaeb2", "#d1d1d6", "#e3e3e8", "#f5f5f7"] },
-      "panel": { "role": "neutral", "displayName": "Panel White", "canonical": "#ffffff", "tonalRamp": ["#1d1d1f", "#424245", "#6e6e73", "#8e8e93", "#aeaeb2", "#d1d1d6", "#f5f5f7", "#ffffff"] },
-      "accent-success": { "role": "secondary", "displayName": "Operational Green", "canonical": "#248a3d", "tonalRamp": ["#10351b", "#165522", "#1e6f2d", "#248a3d", "#4cae5f", "#82c98d", "#b7e0bb", "#e4f4e5"] },
-      "accent-warning": { "role": "tertiary", "displayName": "Operational Amber", "canonical": "#b25000", "tonalRamp": ["#3d1900", "#612900", "#883b00", "#b25000", "#d57924", "#e9a363", "#f5c89d", "#fbe9d7"] }
+      "ink": {
+        "role": "neutral",
+        "displayName": "Graphite Ink",
+        "canonical": "#1d1d1f",
+        "tonalRamp": [
+          "#111113",
+          "#1d1d1f",
+          "#2c2c2e",
+          "#424245",
+          "#6e6e73",
+          "#8e8e93",
+          "#d1d1d6",
+          "#f5f5f7"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper Gray",
+        "canonical": "#f5f5f7",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#424245",
+          "#6e6e73",
+          "#8e8e93",
+          "#aeaeb2",
+          "#d1d1d6",
+          "#e3e3e8",
+          "#f5f5f7"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#424245",
+          "#6e6e73",
+          "#8e8e93",
+          "#aeaeb2",
+          "#d1d1d6",
+          "#f5f5f7",
+          "#ffffff"
+        ]
+      },
+      "accent-success": {
+        "role": "secondary",
+        "displayName": "Operational Green",
+        "canonical": "#248a3d",
+        "tonalRamp": [
+          "#10351b",
+          "#165522",
+          "#1e6f2d",
+          "#248a3d",
+          "#4cae5f",
+          "#82c98d",
+          "#b7e0bb",
+          "#e4f4e5"
+        ]
+      },
+      "accent-warning": {
+        "role": "tertiary",
+        "displayName": "Operational Amber",
+        "canonical": "#b25000",
+        "tonalRamp": [
+          "#3d1900",
+          "#612900",
+          "#883b00",
+          "#b25000",
+          "#d57924",
+          "#e9a363",
+          "#f5c89d",
+          "#fbe9d7"
+        ]
+      },
+      "chip": {
+        "role": "neutral",
+        "displayName": "Chip Gray",
+        "canonical": "#f2f2f7",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#424245",
+          "#6e6e73",
+          "#8e8e93",
+          "#aeaeb2",
+          "#d1d1d6",
+          "#e5e5ea",
+          "#f2f2f7"
+        ]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Faint Gray",
+        "canonical": "#76767b",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#424245",
+          "#5c5c61",
+          "#76767b",
+          "#8e8e93",
+          "#aeaeb2",
+          "#d1d1d6",
+          "#f5f5f7"
+        ]
+      }
     },
     "typographyMeta": {
-      "metric": { "displayName": "Metric", "purpose": "High-value operational counts and totals." },
-      "label": { "displayName": "Label", "purpose": "Tracked uppercase table headers and metric labels." }
+      "metric": {
+        "displayName": "Metric",
+        "purpose": "High-value operational counts and totals."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Tracked uppercase table headers and metric labels."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Conversation messages, the streamed Markdown answer, the composer input, and the page subtitle."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Secondary facts beside data: Route meta lines, session totals, composer hint."
+      }
     },
     "shadows": [
-      { "name": "panel-ambient", "value": "0 1px 2px rgba(0, 0, 0, 0.03), 0 6px 20px rgba(0, 0, 0, 0.04)", "purpose": "Resting cards and metric bands." },
-      { "name": "floating-chrome", "value": "0 1px 1px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08)", "purpose": "Floating sidebar and navigation chrome." }
+      {
+        "name": "panel-ambient",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.03), 0 6px 20px rgba(0, 0, 0, 0.04)",
+        "purpose": "Resting cards and metric bands."
+      },
+      {
+        "name": "floating-chrome",
+        "value": "0 1px 1px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08)",
+        "purpose": "Floating sidebar and navigation chrome."
+      },
+      {
+        "name": "segmented-thumb",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.08)",
+        "purpose": "Lifts the selected segmented option off its track."
+      }
     ],
     "motion": [
-      { "name": "control-response", "value": "cubic-bezier(0.2, 0.9, 0.25, 1)", "purpose": "Subtle button press and control response." },
-      { "name": "toast-transition", "value": "0.2s ease", "purpose": "Transient toast entrance and exit." }
+      {
+        "name": "control-response",
+        "value": "cubic-bezier(0.2, 0.9, 0.25, 1)",
+        "purpose": "Subtle button press and control response."
+      },
+      {
+        "name": "toast-transition",
+        "value": "0.2s ease",
+        "purpose": "Transient toast entrance and exit."
+      },
+      {
+        "name": "sheet-in",
+        "value": "0.32s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Side sheet slides 24px in; bottom sheet rises 32px."
+      },
+      {
+        "name": "sheet-out",
+        "value": "0.18s ease-in",
+        "purpose": "Sheet exit. Both sheet motions are removed under reduced motion."
+      }
     ],
     "breakpoints": [
-      { "name": "tablet", "value": "1120px" },
-      { "name": "mobile", "value": "760px" },
-      { "name": "small", "value": "480px" }
+      {
+        "name": "tablet",
+        "value": "1120px"
+      },
+      {
+        "name": "settings-rail",
+        "value": "1100px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "small",
+        "value": "480px"
+      }
     ]
   },
   "components": [
@@ -52,18 +210,89 @@
       "description": "Icon-led source-list item for the floating gateway sidebar.",
       "html": "<button class=\"ds-nav-item ds-nav-item-active\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"4\" y=\"4\" width=\"6\" height=\"6\"/><rect x=\"14\" y=\"4\" width=\"6\" height=\"6\"/><rect x=\"4\" y=\"14\" width=\"6\" height=\"6\"/><rect x=\"14\" y=\"14\" width=\"6\" height=\"6\"/></svg><span>Dashboard</span></button>",
       "css": ".ds-nav-item { display:flex; align-items:center; gap:10px; width:100%; height:36px; padding:9px 10px; border:0; border-radius:8px; background:transparent; color:#424245; font:400 12px/1.4 'Plus Jakarta Sans',ui-sans-serif,sans-serif; text-align:left; transition:background .2s,color .2s; } .ds-nav-item svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; } .ds-nav-item:hover { background:rgba(0,0,0,.045); color:#1d1d1f; } .ds-nav-item-active { background:rgba(0,0,0,.075); color:#1d1d1f; } .ds-nav-item:focus-visible { outline:3px solid rgba(0,0,0,.22); outline-offset:2px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented",
+      "description": "Two-to-four mutually exclusive views, such as a request shown as curl or TypeScript.",
+      "html": "<div class=\"ds-segmented\" role=\"group\" aria-label=\"Format\"><button class=\"ds-segmented__option\" aria-pressed=\"true\">curl</button><button class=\"ds-segmented__option\" aria-pressed=\"false\">TypeScript</button></div>",
+      "css": ".ds-segmented { display:inline-flex; gap:2px; padding:2px; border-radius:8px; background:#e8e8ed; } .ds-segmented__option { height:26px; padding:0 12px; border:0; border-radius:6px; background:transparent; color:#424245; font:400 12px/1 'Plus Jakarta Sans',ui-sans-serif,sans-serif; cursor:pointer; transition:background .2s,color .2s; } .ds-segmented__option:hover { color:#1d1d1f; } .ds-segmented__option[aria-pressed=\"true\"] { background:#fff; color:#1d1d1f; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.08); } .ds-segmented__option:focus-visible { outline:3px solid rgba(0,0,0,.22); outline-offset:2px; }"
+    },
+    {
+      "name": "Route List",
+      "kind": "custom",
+      "refersTo": "route-list-item",
+      "description": "A Model's Routes in fallback order; a Route that cannot serve is dimmed with its reason in a warning badge.",
+      "html": "<ol class=\"ds-route-list\"><li class=\"ds-route\"><span class=\"ds-route__order\">1</span><span class=\"ds-route__mark\">A</span><span class=\"ds-route__body\"><strong>claude-sonnet-4-5</strong><span>Anthropic · 2 accounts</span></span><span class=\"ds-chip\">vision</span></li><li class=\"ds-route ds-route--blocked\"><span class=\"ds-route__order\">2</span><span class=\"ds-route__mark\">M</span><span class=\"ds-route__body\"><strong>MiniMax-M2</strong><span>MiniMax</span></span><span class=\"ds-badge-warn\">No enabled accounts</span></li></ol>",
+      "css": ".ds-route-list { margin:0; padding:0; list-style:none; overflow:hidden; border:1px solid #ededf0; border-radius:12px; font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif; } .ds-route { display:grid; grid-template-columns:16px 28px minmax(0,1fr) auto; align-items:center; gap:12px; padding:11px 14px; background:#fff; } .ds-route + .ds-route { border-top:1px solid #ededf0; } .ds-route__order { color:#76767b; font-size:11px; font-weight:650; text-align:right; font-variant-numeric:tabular-nums; } .ds-route__mark { display:grid; place-items:center; width:28px; height:28px; border-radius:8px; background:#e5e5ea; color:#1d1d1f; font-size:10px; font-weight:700; } .ds-route__body { display:grid; gap:2px; min-width:0; } .ds-route__body strong { color:#1d1d1f; font-size:12px; font-weight:650; } .ds-route__body span { color:#6e6e73; font-size:11px; } .ds-chip { padding:2px 8px; border-radius:999px; background:#f2f2f7; color:#636366; font-size:11px; } .ds-badge-warn { padding:2px 8px; border-radius:999px; background:#f2f2f7; color:#b25000; font-size:11px; font-weight:600; } .ds-route--blocked { background:#fafafc; } .ds-route--blocked .ds-route__body, .ds-route--blocked .ds-route__mark { opacity:.55; }"
+    },
+    {
+      "name": "Receipt",
+      "kind": "custom",
+      "description": "Ruled footer under an answer: who served it, then what it cost. A hairline, never a card.",
+      "html": "<footer class=\"ds-receipt\"><p class=\"ds-receipt__route\"><span class=\"ds-chip\">Route 1</span><strong>Anthropic</strong><span class=\"ds-receipt__account\">prod-key</span></p><dl class=\"ds-receipt__facts\"><div><dt>Input</dt><dd>1,204</dd></div><div><dt>Output</dt><dd>386</dd></div><div><dt>Cost</dt><dd>$0.0094</dd></div><div><dt>Latency</dt><dd>2.1 s</dd></div></dl></footer>",
+      "css": ".ds-receipt { display:grid; gap:10px; padding-top:12px; border-top:1px solid #ededf0; font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif; } .ds-receipt__route { display:flex; align-items:center; gap:8px; margin:0; color:#424245; font-size:12px; } .ds-receipt__route strong { color:#1d1d1f; font-weight:650; } .ds-receipt__account { margin-left:auto; color:#6e6e73; } .ds-chip { padding:2px 8px; border-radius:999px; background:#f2f2f7; color:#636366; font-size:11px; font-variant-numeric:tabular-nums; } .ds-receipt__facts { display:flex; flex-wrap:wrap; gap:8px 22px; margin:0; } .ds-receipt__facts dt { color:#6e6e73; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; } .ds-receipt__facts dd { margin:3px 0 0; color:#1d1d1f; font-size:12px; font-variant-numeric:tabular-nums; }"
     }
   ],
   "narrative": {
     "northStar": "The Quiet Control Plane",
     "overview": "RouterLM presents operational complexity through a calm, familiar macOS-inspired workspace. The interface is compact and information-dense, but its neutral canvas, restrained type scale, and carefully separated surfaces keep routing and provider health legible during production work.\n\nThe visual language uses light and dark tonal layers, floating glass navigation, crisp white panels, and small system-color signals for health. Motion is brief and functional: controls respond with subtle color or scale changes, and transient feedback rises in a small glass toast.",
-    "keyCharacteristics": ["Neutral light and dark themes with shared semantic roles.", "Floating sidebar and top bar with blur reserved for chrome and transient feedback.", "Compact data tables and metric bands with tabular numerals.", "Green, amber, and red reserved for operational state."],
-    "rules": [
-      { "name": "The State-Only Accent Rule", "body": "Use green, amber, and red to communicate gateway state. Do not use them as decorative branding or arbitrary emphasis.", "section": "colors" },
-      { "name": "The Numeric-Clarity Rule", "body": "Apply tabular numerals to requests, latency, usage, percentages, and other values users compare vertically.", "section": "typography" },
-      { "name": "The Layered-Surface Rule", "body": "Keep resting content surfaces flat and let tonal contrast, one-pixel separators, and soft ambient shadows establish hierarchy.", "section": "elevation" }
+    "keyCharacteristics": [
+      "Neutral light and dark themes with shared semantic roles.",
+      "Floating sidebar and top bar with blur reserved for chrome and transient feedback.",
+      "Compact data tables and metric bands with tabular numerals.",
+      "Green, amber, and red reserved for operational state."
     ],
-    "dos": ["Do preserve the neutral-first canvas and reserve semantic color for gateway state.", "Do use Plus Jakarta Sans and tabular numerals for operational data.", "Do keep panels in the 18px radius family and controls in the 8–10px family.", "Do keep glass and blur limited to surfaces that float above content.", "Do provide keyboard-visible focus and responsive mobile drawer behavior."],
-    "donts": ["Don't introduce gradients, decorative patterns, or arbitrary bright accents.", "Don't use pills for large buttons, cards, or navigation containers.", "Don't turn every metric into a separate floating card; preserve the band and panel compositions.", "Don't use monospace as a generic technical costume; reserve tabular numerals for measured data.", "Don't use green, amber, or red for branding or emphasis unrelated to operational state."]
+    "rules": [
+      {
+        "name": "The State-Only Accent Rule",
+        "body": "Use green, amber, and red to communicate gateway state. Do not use them as decorative branding or arbitrary emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Numeric-Clarity Rule",
+        "body": "Apply tabular numerals to requests, latency, usage, percentages, and other values users compare vertically.",
+        "section": "typography"
+      },
+      {
+        "name": "The Reading-Size Rule",
+        "body": "Conversation text reads at 13px; data, controls and receipts stay at 12px, and meta at 11px. Code inside an answer drops back to 12px. Below 760px the composer input rises to 16px so mobile browsers don't zoom on focus.",
+        "section": "typography"
+      },
+      {
+        "name": "The Layered-Surface Rule",
+        "body": "Keep resting content surfaces flat and let tonal contrast, one-pixel separators, and soft ambient shadows establish hierarchy.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Ruled-Receipt Rule",
+        "body": "Under an answer, separate with a hairline, never a card; the answer stays the subject.",
+        "section": "components"
+      },
+      {
+        "name": "The Token-Bridge Rule",
+        "body": "Vendored components inherit DESIGN.md tokens; they never bring their own palette, and shadcn's global `--primary` / `--muted` variables stay undefined because those names already mean something else here.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do preserve the neutral-first canvas and reserve semantic color for gateway state.",
+      "Do use Plus Jakarta Sans and tabular numerals for operational data.",
+      "Do keep panels in the 18px radius family and controls in the 8–10px family.",
+      "Do keep glass and blur limited to surfaces that float above content.",
+      "Do provide keyboard-visible focus and responsive mobile drawer behavior.",
+      "Do set conversation text at 13px and keep data, receipts and controls at 12px.",
+      "Do restyle vendored shadcn-vue and AI Elements components with Tailwind classes on their `class` prop."
+    ],
+    "donts": [
+      "Don't introduce gradients, decorative patterns, or arbitrary bright accents.",
+      "Don't use pills for large buttons, cards, or navigation containers.",
+      "Don't turn every metric into a separate floating card; preserve the band and panel compositions.",
+      "Don't use monospace as a generic technical costume; reserve tabular numerals for measured data.",
+      "Don't use green, amber, or red for branding or emphasis unrelated to operational state.",
+      "Don't target vendored components with dashboard stylesheet rules, or define shadcn's colour variables globally.",
+      "Don't box a receipt or other answer footnote in a card; rule it off with a hairline."
+    ]
   }
 }

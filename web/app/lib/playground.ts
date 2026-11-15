@@ -13,7 +13,10 @@ export interface PlaygroundSummary {
     reasoningTokens: number | null;
   };
   cost: number | null;
+  /** The served Route; null for a direct Upstream Model test or when nothing answered. */
   route: { id: string; providerSlug: string; upstreamModelId: string } | null;
+  /** The Upstream Model that answered, for both sources; null when nothing answered. */
+  upstreamModel: { id: string; upstreamModelId: string; providerSlug: string } | null;
   providerAccount: { id: string; name: string } | null;
 }
 
