@@ -1,3 +1,10 @@
+import type { NestNodeApplication } from "@nestjs/platform-node";
+import { eq } from "drizzle-orm";
+import type { Database } from "@/db/schemas/relations.js";
+import { type OauthRegion, providerAccounts, providers } from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { storedOauthTokens } from "@/upstream/models/provider-account.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import type { FakeReply } from "./fake-upstream.js";
 
 // The fake upstream plays Kimi's auth host and its `/me`: these are the
@@ -58,4 +65,91 @@ export function profileReply(profile: {
   user_level_name?: string;
 }): FakeReply {
   return { kind: "json", status: 200, body: profile };
+}
+
+export const DEVICE_ID = "device-id-0123456789abcdef";
+export const CLIENT_ID = "client-id-of-the-cli";
+export const CLI_VERSION = "9.8.7";
+
+/** What the token endpoint answers to a refresh: new tokens, the refresh token rotated. */
+export function refreshedTokensReply(
+  tokens: { accessToken: string; refreshToken: string; expiresIn: number },
+  delayMs?: number,
+): FakeReply {
+  return {
+    kind: "json",
+    status: 200,
+    body: {
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+      expires_in: tokens.expiresIn,
+      token_type: "Bearer",
+    },
+    delayMs,
+  };
+}
+
+/** Makes a Provider offer OAuth Login at auth hosts the fake upstream plays, under `/global` and `/china`. */
+export async function offerOauthLogin(
+  db: Database,
+  providerId: string,
+  authOrigin: string,
+): Promise<void> {
+  await db
+    .update(providers)
+    .set({
+      oauthLogin: {
+        authHosts: { global: `${authOrigin}/global`, china: `${authOrigin}/china` },
+        clientId: CLIENT_ID,
+        cliVersion: CLI_VERSION,
+      },
+    })
+    .where(eq(providers.id, providerId));
+}
+
+export interface InsertedOauthLogin {
+  /** How long the access token lasted when it was granted. */
+  lifetimeSeconds: number;
+  /** How long ago it was granted; just now when not given. */
+  ageSeconds?: number;
+  accessToken?: string;
+  refreshToken?: string;
+  region?: OauthRegion;
+  /** Before every other account of the Provider when not given. */
+  priority?: number;
+}
+
+/**
+ * Adds a Provider Account holding an OAuth Login, as a completed sign-in
+ * leaves it, then refreshes the snapshot. Returns its id.
+ */
+export async function addOauthLoginAccount(
+  app: NestNodeApplication,
+  db: Database,
+  providerId: string,
+  login: InsertedOauthLogin,
+): Promise<string> {
+  const grantedAt = new Date(Date.now() - (login.ageSeconds ?? 0) * 1000);
+  const [providerAccount] = await db
+    .insert(providerAccounts)
+    .values({
+      providerId,
+      name: "signed in",
+      credentialKind: "oauth-login",
+      ...storedOauthTokens(
+        app.get(ProviderKeyCipher),
+        {
+          accessToken: login.accessToken ?? ACCESS_TOKEN,
+          refreshToken: login.refreshToken ?? REFRESH_TOKEN,
+          expiresInSeconds: login.lifetimeSeconds,
+        },
+        grantedAt,
+      ),
+      oauthRegion: login.region ?? "global",
+      oauthDeviceId: DEVICE_ID,
+      priority: login.priority ?? -1,
+    })
+    .returning({ id: providerAccounts.id });
+  await app.get(SnapshotService).changed();
+  return providerAccount.id;
 }

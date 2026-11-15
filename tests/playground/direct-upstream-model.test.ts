@@ -15,6 +15,12 @@ import {
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
 } from "../support/inference.js";
+import {
+  ACCESS_TOKEN,
+  addOauthLoginAccount,
+  DEVICE_ID,
+  offerOauthLogin,
+} from "../support/kimi-oauth.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
@@ -80,6 +86,20 @@ describe("Playground, direct Upstream Model test (e2e)", () => {
   function replyWithStream(): void {
     upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
   }
+
+  it("tests an Upstream Model with a Provider Account holding an OAuth Login", async () => {
+    await offerOauthLogin(db, providerId, upstream.origin);
+    await addOauthLoginAccount(app, db, providerId, { lifetimeSeconds: 3600 });
+    replyWithStream();
+
+    await sendDirect(upstreamModelRowId).expect(200);
+
+    expect(upstream.requests).toHaveLength(1);
+    expect(upstream.lastRequest.headers).toMatchObject({
+      authorization: `Bearer ${ACCESS_TOKEN}`,
+      "x-msh-device-id": DEVICE_ID,
+    });
+  });
 
   it("streams the answer from an Upstream Model no Route uses, then a summary without a Route", async () => {
     await db.delete(routes);

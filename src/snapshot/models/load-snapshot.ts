@@ -2,6 +2,7 @@ import { asc, isNull } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import {
   apiKeys,
+  type CredentialKind,
   models,
   providerAccounts,
   providers,
@@ -11,6 +12,7 @@ import {
 import type {
   Snapshot,
   SnapshotApiKey,
+  SnapshotCredential,
   SnapshotModel,
   SnapshotProvider,
   SnapshotProviderAccount,
@@ -59,14 +61,13 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         isEnabled: provider.isEnabled,
         providerAccounts: (accountsByProviderId.get(provider.id) ?? []).flatMap(
           (account): SnapshotProviderAccount[] => {
-            // An account holding an OAuth Login has no key, and the gateway
-            // can't serve from a login yet: no Route reaches it.
-            if (account.encryptedKey === null) return [];
+            const credential = snapshotCredentialOf(account);
+            if (credential === null) return [];
             return [
               {
                 id: account.id,
                 name: account.name,
-                encryptedKey: account.encryptedKey,
+                credential,
                 priority: account.priority,
                 isEnabled: account.isEnabled,
               },
@@ -130,6 +131,20 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
   }
 
   return { apiKeysByKeyId, modelsByName, upstreamModelsById };
+}
+
+/** Null for an API key account without a key, which no Route can use. */
+function snapshotCredentialOf(account: {
+  credentialKind: CredentialKind;
+  encryptedKey: string | null;
+}): SnapshotCredential | null {
+  if (account.credentialKind === "oauth-login") {
+    return { kind: "oauth-login" };
+  }
+  if (account.encryptedKey === null) {
+    return null;
+  }
+  return { kind: "api-key", encryptedKey: account.encryptedKey };
 }
 
 function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {

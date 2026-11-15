@@ -9,11 +9,12 @@ import { MiniMaxMPlanQuotaReader } from "./providers/minimax-m-plan-quota-reader
 import { QUOTA_READER_HTTP_CLIENT } from "./providers/quota-reader-http-client.js";
 import { QuotaReaders } from "./providers/quota-readers.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
+import { UpstreamModule } from "@/upstream/upstream.module.js";
 
 /**
  * Quota Meters: the quota readers, reading a Provider Account's meters now
  * from the dashboard, and the meters the dashboard lists. The worker imports
- * it too, for the reading schedule. Exhausted state and keys are UpstreamModule's.
+ * it too, for the reading schedule. Exhausted state and credentials are UpstreamModule's.
  */
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { QueryHandlers } from "./queries/handlers/index.js";
         redirect: "error",
       }),
     }),
+    UpstreamModule,
   ],
   controllers: [ProviderAccountQuotaController],
   providers: [

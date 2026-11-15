@@ -1,0 +1,1 @@
+ALTER TABLE "provider_accounts" ADD COLUMN "oauth_granted_at" timestamp with time zone;

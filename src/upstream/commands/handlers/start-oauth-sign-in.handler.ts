@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 import { BadGatewayException, ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { type ProviderOauthLogin, providers } from "@/db/schemas/index.js";
+import { type ProviderOauthLogin, providerAccounts, providers } from "@/db/schemas/index.js";
 import { OauthSignInPolling } from "../../jobs/oauth-sign-in-polling.js";
 import type { OauthSignIn } from "../../models/oauth-sign-in.js";
 import {
@@ -31,10 +31,14 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
   ) {}
 
   async execute({ newSignIn }: StartOauthSignInCommand): Promise<OauthSignIn> {
-    const { providerId, region } = newSignIn;
+    const { providerId, region, providerAccountId } = newSignIn;
     const oauthLogin = await this.oauthLoginOf(providerId);
-    // Generated once per Provider Account: the account the sign-in creates keeps it.
-    const deviceId = randomUUID().replaceAll("-", "");
+    // Generated once per Provider Account: the account the sign-in creates
+    // keeps it, and signing in again presents the account's own.
+    const deviceId =
+      providerAccountId === undefined
+        ? randomUUID().replaceAll("-", "")
+        : await this.deviceIdOf(providerAccountId, providerId);
     const authorization = await this.authorizeDevice(
       oauthLoginEndpointOf(oauthLogin, region, deviceId),
     );
@@ -47,6 +51,7 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
       {
         providerId,
         region,
+        providerAccountId,
         deviceId,
         encryptedDeviceCode: this.keyCipher.encrypt(authorization.deviceCode),
         userCode: authorization.userCode,
@@ -82,6 +87,28 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
       throw new ConflictException(`${provider.name} offers no OAuth Login`);
     }
     return provider.oauthLogin;
+  }
+
+  /** The device id of the Provider's own account that holds an OAuth Login to sign in again on. */
+  private async deviceIdOf(providerAccountId: string, providerId: string): Promise<string> {
+    const [account] = await this.db
+      .select({ deviceId: providerAccounts.oauthDeviceId })
+      .from(providerAccounts)
+      .where(
+        and(
+          eq(providerAccounts.id, providerAccountId),
+          eq(providerAccounts.providerId, providerId),
+        ),
+      );
+    if (!account) {
+      throw new NotFoundException("Provider Account not found");
+    }
+    if (account.deviceId === null) {
+      throw new ConflictException(
+        "Provider Account holds an API key, which a sign-in can't replace",
+      );
+    }
+    return account.deviceId;
   }
 
   private async authorizeDevice(endpoint: OauthLoginEndpoint): Promise<DeviceAuthorization> {

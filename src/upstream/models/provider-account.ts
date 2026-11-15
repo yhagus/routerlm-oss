@@ -34,6 +34,7 @@ export type ProviderAccount = Omit<
   | "encryptedKey"
   | "oauthEncryptedAccessToken"
   | "oauthEncryptedRefreshToken"
+  | "oauthGrantedAt"
   | "oauthExpiresAt"
   | "oauthDeviceId"
 >;
@@ -55,6 +56,7 @@ export interface OauthTokens {
 type StoredOauthTokens = {
   oauthEncryptedAccessToken: string;
   oauthEncryptedRefreshToken: string;
+  oauthGrantedAt: Date;
   oauthExpiresAt: Date;
 };
 
@@ -69,6 +71,7 @@ export function storedOauthTokens(
   return {
     oauthEncryptedAccessToken: keyCipher.encrypt(tokens.accessToken),
     oauthEncryptedRefreshToken: keyCipher.encrypt(tokens.refreshToken),
+    oauthGrantedAt: grantedAt,
     oauthExpiresAt: new Date(grantedAt.getTime() + tokens.expiresInSeconds * SECOND_MS),
   };
 }

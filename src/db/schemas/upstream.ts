@@ -100,7 +100,9 @@ export const providerAccounts = pgTable(
     // are AES-256-GCM ciphertext and never leave the gateway.
     oauthEncryptedAccessToken: text("oauth_encrypted_access_token"),
     oauthEncryptedRefreshToken: text("oauth_encrypted_refresh_token"),
-    // When the access token stops working.
+    // When the auth host granted the access token, and when it stops working:
+    // together they tell its lifetime, which decides when the gateway renews it.
+    oauthGrantedAt: at("oauth_granted_at"),
     oauthExpiresAt: at("oauth_expires_at"),
     oauthRegion: text("oauth_region", { enum: OAUTH_REGIONS }),
     // Generated once for the account and sent with every call made as the Provider's CLI.
@@ -108,7 +110,8 @@ export const providerAccounts = pgTable(
     // Lower runs first.
     priority: integer("priority").notNull().default(0),
     isEnabled: boolean("is_enabled").notNull().default(true),
-    // Set when the gateway disables the account (an upstream 401 or 403).
+    // Set when the gateway disables the account: an upstream 401 or 403, or an
+    // OAuth Login the Provider no longer renews. Null when an operator did.
     disabledReason: text("disabled_reason"),
     lastError: text("last_error"),
     lastErrorAt: at("last_error_at"),

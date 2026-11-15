@@ -13,7 +13,9 @@ import {
   OAUTH_LOGIN_TIMEOUT_MS,
   OauthLoginClient,
 } from "./providers/oauth-login-client.js";
+import { OauthRefreshLock } from "./providers/oauth-refresh-lock.js";
 import { OauthSignInStore } from "./providers/oauth-sign-in-store.js";
+import { ProviderAccountCredentials } from "./providers/provider-account-credentials.js";
 import { ProviderAccountHealth } from "./providers/provider-account-health.js";
 import { ProviderAccountsController } from "./provider-accounts.controller.js";
 import { ProviderKeyCipher, providerKeyCipherProvider } from "./providers/provider-key-cipher.js";
@@ -32,7 +34,7 @@ import { UpstreamModelsController } from "./upstream-models.controller.js";
     RedisModule,
     // The connection is the importing process's: QueueModule's in the backend, WorkerModule's in the worker.
     BullModule.registerQueue({ name: OAUTH_SIGN_INS_QUEUE }),
-    // No retries: the next poll is the retry. A redirect fails rather than
+    // No retries, but for a refresh: the next poll is the retry. A redirect fails rather than
     // carry a device code or a token to another host.
     HttpClientModule.register({
       name: OAUTH_LOGIN_HTTP_CLIENT,
@@ -50,15 +52,17 @@ import { UpstreamModelsController } from "./upstream-models.controller.js";
   providers: [
     CooldownStore,
     OauthLoginClient,
+    OauthRefreshLock,
     OauthSignInStore,
     OauthSignInPolling,
+    ProviderAccountCredentials,
     ProviderAccountHealth,
     providerKeyCipherProvider,
     ...CommandHandlers,
     ...QueryHandlers,
   ],
-  // The gateway decrypts Provider Account keys, and keeps their Cooldown and
-  // health.
-  exports: [ProviderKeyCipher, CooldownStore, ProviderAccountHealth],
+  // The gateway decrypts Provider Account keys, reads and refreshes OAuth
+  // Logins, and keeps the accounts' Cooldown and health.
+  exports: [ProviderKeyCipher, ProviderAccountCredentials, CooldownStore, ProviderAccountHealth],
 })
 export class UpstreamModule {}
