@@ -1,0 +1,45 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "fe813da6-73ea-45f0-b60a-d5c36f76c458",
+  "prevIds": [
+    "58077315-50be-4cd0-af71-2020c25083ef"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "provider_accounts"
+      ],
+      "writes": [
+        "s|ck|public.provider_accounts.provider_accounts_credential_kind_check",
+        "n|ck|public.provider_accounts.provider_accounts_credential_kind_check",
+        "e|ck|public.provider_accounts.provider_accounts_credential_kind_check",
+        "n|con|public.provider_accounts.provider_accounts_credential_kind_check"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public",
+        "n|col|public.provider_accounts.credential_kind",
+        "n|col|public.provider_accounts.encrypted_key",
+        "n|col|public.provider_accounts.oauth_encrypted_access_token",
+        "n|col|public.provider_accounts.oauth_encrypted_refresh_token"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "provider_accounts_credential_kind_check",
+        "value": "(\"credential_kind\" = 'api-key'\n          and \"encrypted_key\" is not null\n          and \"oauth_encrypted_access_token\" is null\n          and \"oauth_encrypted_refresh_token\" is null)\n        or (\"credential_kind\" = 'oauth-login'\n          and \"encrypted_key\" is null\n          and \"oauth_encrypted_access_token\" is not null\n          and \"oauth_encrypted_refresh_token\" is not null)",
+        "entityType": "checks"
+      }
+    }
+  ]
+}
