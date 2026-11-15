@@ -4,7 +4,23 @@
   "protocol": "openai-chat",
   "baseUrl": "https://api.kimi.com/coding/v1",
   "authStyle": "bearer",
-  "quirks": {},
+  "quirks": {
+    "reasoningContentInHistory": "tool-call-turns",
+    "reasoningAsThinking": {
+      "efforts": {
+        "none": "low",
+        "minimal": "low",
+        "low": "low",
+        "medium": "high",
+        "high": "high",
+        "xhigh": "max"
+      },
+      "upstreamModelsWithoutEffort": ["kimi-for-coding-highspeed"]
+    },
+    "forwardsClientPromptCacheKey": true,
+    "usesMaxCompletionTokens": true,
+    "exhaustedErrorCodes": ["exceeded_current_quota_error"]
+  },
   "source": {
     "urls": ["https://www.kimi.com/coding/docs/en/", "https://api.kimi.com/coding/v1/models"],
     "retrievedOn": "2026-11-15"

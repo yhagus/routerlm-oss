@@ -11,6 +11,7 @@ import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
+  ReasoningEffort,
   ResponseFormat,
   ToolChoice,
   UserContentPart,
@@ -29,6 +30,8 @@ import {
   tokenUsageOf,
   usageSchema,
 } from "./openai-chat-usage.js";
+
+type ReasoningAsThinking = NonNullable<CatalogProviderQuirks["reasoningAsThinking"]>;
 
 const CHAT_COMPLETIONS_PATH = "/chat/completions";
 const STREAM_END = "[DONE]";
@@ -63,7 +66,9 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     body.response_format = writeResponseFormat(request.responseFormat);
   }
   // Chat Completions has no thinking budget; only an effort level survives.
-  if (request.reasoning?.effort) {
+  if (quirks.reasoningAsThinking) {
+    body.thinking = writeThinking(request.reasoning?.effort, target, quirks.reasoningAsThinking);
+  } else if (request.reasoning?.effort) {
     body.reasoning_effort = request.reasoning.effort;
   }
   if (request.maxOutputTokens !== undefined) {
@@ -81,6 +86,8 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   }
   if (quirks.acceptsPromptCacheKey && target.promptCacheKey !== undefined) {
     body.prompt_cache_key = target.promptCacheKey;
+  } else if (quirks.forwardsClientPromptCacheKey && request.promptCacheKey !== undefined) {
+    body.prompt_cache_key = request.promptCacheKey;
   }
   if (request.stream) {
     body.stream = true;
@@ -91,6 +98,22 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   };
+}
+
+/**
+ * Reasoning for a Provider that takes a `thinking` object. Thinking stays
+ * enabled whatever the client asked: the Provider's models cannot turn it
+ * off. Without an effort the Provider's own default for the model applies.
+ */
+function writeThinking(
+  effort: ReasoningEffort | undefined,
+  target: UpstreamTarget,
+  { efforts, upstreamModelsWithoutEffort = [] }: ReasoningAsThinking,
+): Record<string, unknown> {
+  if (effort === undefined || upstreamModelsWithoutEffort.includes(target.upstreamModelId)) {
+    return { type: "enabled" };
+  }
+  return { type: "enabled", effort: efforts[effort] };
 }
 
 function writeMessage(
@@ -272,6 +295,8 @@ const completionSchema = z.object({
           tool_calls: z.array(toolCallSchema).nullish(),
         }),
         finish_reason: openAiFinishReasonSchema,
+        // Kimi Code may report usage here instead of at the top level.
+        usage: usageSchema.nullish(),
       }),
     )
     .min(1),
@@ -283,7 +308,7 @@ function parseResponse(body: unknown): InferenceResponse {
   if (!parsed.success) {
     throw new UpstreamProtocolError(`Not a chat completion: ${parsed.error.message}`);
   }
-  const [{ message, finish_reason }] = parsed.data.choices;
+  const [{ message, finish_reason, usage: usageInChoice }] = parsed.data.choices;
   const content: AssistantContentPart[] = [];
   if (message.reasoning_content) {
     content.push({ type: "reasoning", text: message.reasoning_content });
@@ -302,7 +327,7 @@ function parseResponse(body: unknown): InferenceResponse {
   return {
     content,
     stopReason: stopReasonOf(finish_reason),
-    usage: tokenUsageOf(parsed.data.usage ?? undefined),
+    usage: tokenUsageOf(parsed.data.usage ?? usageInChoice ?? undefined),
   };
 }
 
@@ -327,6 +352,7 @@ const chunkSchema = z.object({
         })
         .nullish(),
       finish_reason: openAiFinishReasonSchema.nullish(),
+      usage: usageSchema.nullish(),
     }),
   ),
   usage: usageSchema.nullish(),
@@ -385,8 +411,9 @@ function* eventsOfChunk(json: unknown): Iterable<InferenceStreamEvent> {
       yield { type: "finish", stopReason: stopReasonOf(choice.finish_reason) };
     }
   }
-  if (chunk.data.usage) {
-    yield { type: "usage", usage: tokenUsageOf(chunk.data.usage satisfies OpenAiUsage) };
+  const usage: OpenAiUsage | null | undefined = chunk.data.usage ?? chunk.data.choices[0]?.usage;
+  if (usage) {
+    yield { type: "usage", usage: tokenUsageOf(usage) };
   }
 }
 

@@ -143,6 +143,7 @@ const requestSchema = z.object({
   max_output_tokens: z.int().positive().nullish(),
   temperature: z.number().min(0).max(2).nullish(),
   top_p: z.number().min(0).max(1).nullish(),
+  prompt_cache_key: z.string().min(1).nullish(),
   stream: z.boolean().nullish(),
 });
 type ClientRequest = z.infer<typeof requestSchema>;
@@ -295,6 +296,9 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
   }
   if (request.top_p != null) {
     parsed.topP = request.top_p;
+  }
+  if (request.prompt_cache_key != null) {
+    parsed.promptCacheKey = request.prompt_cache_key;
   }
   return parsed;
 }

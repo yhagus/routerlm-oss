@@ -106,6 +106,17 @@ describe("Token usage an openai-chat upstream reports (e2e)", () => {
       },
     ],
     [
+      "reads the cache read count Kimi reports as cached_tokens beside the other counts",
+      { prompt_tokens: 120, completion_tokens: 30, cached_tokens: 100 },
+      {
+        inputTokens: 20,
+        outputTokens: 30,
+        cacheReadTokens: 100,
+        cacheWriteTokens: 0,
+        reasoningTokens: null,
+      },
+    ],
+    [
       "leaves every count empty when the upstream sent no usage",
       undefined,
       {
@@ -133,5 +144,67 @@ describe("Token usage an openai-chat upstream reports (e2e)", () => {
       .expect(200);
 
     expect(await writtenUsageLog()).toMatchObject(recorded);
+  });
+
+  it("reads the usage Kimi reports inside the first choice of a completion", async () => {
+    const completion = JSON.parse(openAiChatFixture("upstream-response-tool-call.json"));
+    const usageInChoice = {
+      prompt_tokens: 120,
+      completion_tokens: 30,
+      prompt_tokens_details: { cached_tokens: 100 },
+    };
+    upstream.reply({
+      kind: "json",
+      status: 200,
+      body: {
+        ...completion,
+        usage: undefined,
+        choices: [{ ...completion.choices[0], usage: usageInChoice }],
+      },
+    });
+
+    await request(app.getHttpServer())
+      .post("/v1/chat/completions")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .send({ model: "smart", messages: [{ role: "user", content: "Hi" }] })
+      .expect(200);
+
+    expect(await writtenUsageLog()).toMatchObject({
+      inputTokens: 20,
+      outputTokens: 30,
+      cacheReadTokens: 100,
+    });
+  });
+
+  it("reads the usage Kimi reports inside the first choice of a stream's last chunk", async () => {
+    const chunks = [
+      { choices: [{ index: 0, delta: { role: "assistant", content: "Hello." } }] },
+      {
+        choices: [
+          {
+            index: 0,
+            delta: {},
+            finish_reason: "stop",
+            usage: { prompt_tokens: 120, completion_tokens: 30, cached_tokens: 100 },
+          },
+        ],
+      },
+    ];
+    upstream.reply({
+      kind: "stream",
+      events: `${chunks.map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`).join("")}data: [DONE]\n\n`,
+    });
+
+    await request(app.getHttpServer())
+      .post("/v1/chat/completions")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .send({ model: "smart", messages: [{ role: "user", content: "Hi" }], stream: true })
+      .expect(200);
+
+    expect(await writtenUsageLog()).toMatchObject({
+      inputTokens: 20,
+      outputTokens: 30,
+      cacheReadTokens: 100,
+    });
   });
 });

@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import request from "supertest";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
 import { createTestApp, setUpFirstUser } from "../support/test-app.js";
@@ -17,8 +18,18 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const OLD_BASE_URL = "https://api.kimi.ai/coding/v1";
 const OLD_CONTEXT_SIZE = 1048576;
 
-type OldKimiCode = { baseUrl: string; contextSizes: Record<string, number> };
-type KimiCodeFromApi = { id: string; baseUrl: string; contextSizes: Record<string, number> };
+type OldKimiCode = {
+  baseUrl: string;
+  contextSizes: Record<string, number>;
+  /** `{}`, as the Catalog shipped them, when not given. */
+  quirks?: Record<string, unknown>;
+};
+type KimiCodeFromApi = {
+  id: string;
+  baseUrl: string;
+  contextSizes: Record<string, number>;
+  quirks: Record<string, unknown>;
+};
 
 describe("Kimi Code correction migration (e2e)", () => {
   const serverUrl = process.env.DATABASE_URL ?? "";
@@ -68,7 +79,7 @@ describe("Kimi Code correction migration (e2e)", () => {
 
     const kimiCode = await readKimiCodeThroughApi(db);
 
-    expect(kimiCode).toEqual({
+    expect(kimiCode).toMatchObject({
       id: providerId,
       baseUrl: "https://api.kimi.com/coding/v1",
       contextSizes: { "k3.1-pro": 262144, "k3.1-pro-highspeed": 1048576, k3: 262144 },
@@ -88,7 +99,35 @@ describe("Kimi Code correction migration (e2e)", () => {
       contextSizes: { "k3.1-pro": 524288, k3: 262144 },
     });
   });
+
+  it("gives an untouched Kimi Code Provider the Catalog's quirks", async () => {
+    const { db } = await upgradeInstallHolding({ baseUrl: OLD_BASE_URL, contextSizes: {} });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode.quirks).toEqual(await catalogKimiCodeQuirks());
+  });
+
+  it("keeps quirks the operator edited", async () => {
+    const { db } = await upgradeInstallHolding({
+      baseUrl: OLD_BASE_URL,
+      contextSizes: {},
+      quirks: { usesMaxCompletionTokens: true },
+    });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode.quirks).toEqual({ usesMaxCompletionTokens: true });
+  });
 });
+
+/** The quirks today's Catalog ships for Kimi Code. */
+async function catalogKimiCodeQuirks(): Promise<Record<string, unknown>> {
+  const catalog = await loadCatalog(CATALOG_DIRECTORY);
+  const kimiCode = catalog.find((provider) => provider.slug === "kimi-code");
+  if (!kimiCode) throw new Error("the Catalog has no Kimi Code Provider");
+  return kimiCode.quirks;
+}
 
 /** Copies every migration that precedes the correction into a temporary folder. */
 async function copyMigrationsBeforeCorrection(): Promise<string> {
@@ -109,14 +148,17 @@ async function copyMigrationsBeforeCorrection(): Promise<string> {
 }
 
 /** The Kimi Code Provider as the seeder created it before the correction. Returns its id. */
-async function insertKimiCode(pool: Pool, { baseUrl, contextSizes }: OldKimiCode): Promise<string> {
+async function insertKimiCode(
+  pool: Pool,
+  { baseUrl, contextSizes, quirks = {} }: OldKimiCode,
+): Promise<string> {
   // Plain SQL: Drizzle names every column of today's schema in an insert,
   // and later migrations may add columns this database doesn't have yet.
   const { rows } = await pool.query<{ id: string }>(
     `insert into providers (slug, name, protocol, base_url, auth_style, quirks, is_from_catalog)
-     values ('kimi-code', 'Kimi Code', 'openai-chat', $1, 'bearer', '{}', true)
+     values ('kimi-code', 'Kimi Code', 'openai-chat', $1, 'bearer', $2, true)
      returning id`,
-    [baseUrl],
+    [baseUrl, JSON.stringify(quirks)],
   );
   const providerId = rows[0]?.id;
   if (providerId === undefined) throw new Error("the Kimi Code Provider was not inserted");
@@ -143,7 +185,12 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
       .set("Cookie", cookie)
       .expect(200);
 
-    const providerRows: { id: string; slug: string; baseUrl: string }[] = providers.body;
+    const providerRows: {
+      id: string;
+      slug: string;
+      baseUrl: string;
+      quirks: Record<string, unknown>;
+    }[] = providers.body;
     const upstreamModelRows: { upstreamModelId: string; contextSize: number }[] =
       upstreamModels.body;
     const kimiCode = providerRows.find((provider) => provider.slug === "kimi-code");
@@ -152,6 +199,7 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
     return {
       id: kimiCode.id,
       baseUrl: kimiCode.baseUrl,
+      quirks: kimiCode.quirks,
       contextSizes: Object.fromEntries(
         upstreamModelRows.map((model) => [model.upstreamModelId, model.contextSize]),
       ),
