@@ -1,11 +1,19 @@
 import { InjectQueue, Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable, ServiceUnavailableException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import type { Job, Queue } from "bullmq";
 import { OAUTH_SIGN_INS_QUEUE } from "@/queue/models/queue-names.js";
+import { signInNeedsRedis } from "../models/oauth-sign-in.js";
 import { PollOauthSignInCommand } from "../commands/impl/poll-oauth-sign-in.command.js";
 
 const POLL_JOB = "poll";
+/**
+ * A poll that fails is run again, shortly: no later poll is queued behind
+ * it, so giving up on it would leave the sign-in pending until its code
+ * expires. Running a poll twice is safe (see PollOauthSignInHandler).
+ */
+const POLL_ATTEMPTS = 3;
+const POLL_RETRY_BACKOFF = { type: "exponential", delay: 1000 } as const;
 
 type PollJob = Job<{ signInId: string }>;
 
@@ -25,12 +33,16 @@ export class OauthSignInPolling {
       await this.queue.add(
         POLL_JOB,
         { signInId },
-        { delay: delayMs, removeOnComplete: true, removeOnFail: true },
+        {
+          delay: delayMs,
+          attempts: POLL_ATTEMPTS,
+          backoff: POLL_RETRY_BACKOFF,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
       );
     } catch (error) {
-      throw new ServiceUnavailableException("Sign-in needs Redis, which is unreachable", {
-        cause: error,
-      });
+      throw signInNeedsRedis(error);
     }
   }
 }
