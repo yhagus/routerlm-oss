@@ -14,22 +14,24 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "platform.moonshot.ai redirects to platform.kimi.ai. Thinking models expect the complete assistant message, including reasoning_content and tool_calls, to be sent back. The pricing page (https://platform.kimi.ai/docs/pricing/chat) renders its price table client-side and it was empty when fetched, so all prices are empty. K2 models are deprecated for new users and retire by the end of December 2026.",
+  "notes": "platform.moonshot.ai redirects to platform.kimi.ai. Thinking models expect the complete assistant message, including reasoning_content and tool_calls, to be sent back. The pricing page (https://platform.kimi.ai/docs/pricing/chat) renders its price table client-side and it was empty when fetched, so prices come from models.dev, which lists Moonshot's own rates; no cache write price is published for K2 models, so it is set to the input price. K2 models are deprecated for new users and retire by the end of December 2026. Release dates also come from models.dev (https://models.dev/). kimi-k2.7-code-highspeed was added from models.dev on 2026-11-15.",
   "upstreamModels": [
     {
       "upstreamModelId": "kimi-k3.1-pro",
+      "releaseDate": "2026-10-23",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
       "maxOutputTokens": 131072,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2,
       "source": {
         "urls": [
           "https://platform.kimi.ai/docs/models.md",
           "https://platform.kimi.ai/docs/pricing/chat",
-          "https://platform.kimi.ai/docs/api/chat"
+          "https://platform.kimi.ai/docs/api/chat",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -37,76 +39,100 @@
     },
     {
       "upstreamModelId": "kimi-k3.1-pro-highspeed",
-      "capabilities": ["tools", "reasoning", "structured-output"],
+      "releaseDate": "2026-10-23",
+      "capabilities": ["tools", "reasoning", "structured-output", "vision"],
       "contextSize": 1048576,
       "maxOutputTokens": 131072,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 4,
       "source": {
         "urls": [
           "https://platform.kimi.ai/docs/models.md",
           "https://platform.kimi.ai/docs/pricing/chat",
-          "https://platform.kimi.ai/docs/api/chat"
+          "https://platform.kimi.ai/docs/api/chat",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Vision not stated for this id."
+      "notes": "Vision not stated for this id. vision comes from models.dev."
     },
     {
       "upstreamModelId": "kimi-k3",
+      "releaseDate": "2026-07-16",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
       "maxOutputTokens": 131072,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3,
       "source": {
         "urls": [
           "https://platform.kimi.ai/docs/models.md",
           "https://platform.kimi.ai/docs/pricing/chat",
-          "https://platform.kimi.ai/docs/api/chat"
+          "https://platform.kimi.ai/docs/api/chat",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       }
     },
     {
       "upstreamModelId": "kimi-k2.6",
-      "capabilities": ["tools", "reasoning", "structured-output"],
+      "releaseDate": "2026-04-20",
+      "capabilities": ["tools", "reasoning", "structured-output", "vision"],
       "contextSize": 262144,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.95,
+      "outputPrice": 4,
+      "cacheReadPrice": 0.16,
+      "cacheWritePrice": 0.95,
       "source": {
         "urls": [
           "https://platform.kimi.ai/docs/models.md",
-          "https://platform.kimi.ai/docs/pricing/chat"
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Deprecated for new users. Keeps historical reasoning_content only with thinking.keep 'all'."
+      "notes": "Deprecated for new users. Keeps historical reasoning_content only with thinking.keep 'all'. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price. maxOutputTokens comes from models.dev. vision comes from models.dev."
     },
     {
       "upstreamModelId": "kimi-k2.7-code",
-      "capabilities": ["tools", "reasoning", "structured-output"],
+      "releaseDate": "2026-06-12",
+      "capabilities": ["tools", "reasoning", "structured-output", "vision"],
       "contextSize": 262144,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.95,
+      "outputPrice": 4,
+      "cacheReadPrice": 0.19,
+      "cacheWritePrice": 0.95,
       "source": {
         "urls": [
           "https://platform.kimi.ai/docs/models.md",
-          "https://platform.kimi.ai/docs/pricing/chat"
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Deprecated for new users. Thinking always on; thinking.type disabled returns an error."
+      "notes": "Deprecated for new users. Thinking always on; thinking.type disabled returns an error. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price. maxOutputTokens comes from models.dev. vision comes from models.dev."
+    },
+    {
+      "upstreamModelId": "kimi-k2.7-code-highspeed",
+      "releaseDate": "2026-06-12",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 262144,
+      "inputPrice": 1.9,
+      "outputPrice": 8,
+      "cacheReadPrice": 0.38,
+      "cacheWritePrice": 1.9,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
     }
   ]
 }

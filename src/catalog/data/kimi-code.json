@@ -9,94 +9,103 @@
     "urls": ["https://www.kimi.com/coding/docs/en/"],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Membership subscription, so no per-token prices are published. The docs give overseas (api.kimi.ai) and China (api.kimi.com) hosts, and an Anthropic-compatible endpoint at https://api.kimi.ai/coding/. The auth header is not stated; bearer is what the OpenAI-compatible endpoint implies. Tools and structured output are not stated per model. The docs require third-party tools to send their real User-Agent.",
+  "notes": "Membership subscription with no per-token prices; each model carries the list prices of its Moonshot pay-as-you-go API equivalent (from models.dev), so Cost is what a request would cost there. The docs give overseas (api.kimi.ai) and China (api.kimi.com) hosts, and an Anthropic-compatible endpoint at https://api.kimi.ai/coding/. The auth header is not stated; bearer is what the OpenAI-compatible endpoint implies. Tools and structured output are not stated per model, so they come from models.dev. The docs require third-party tools to send their real User-Agent. Release dates come from models.dev (https://models.dev/).",
   "upstreamModels": [
     {
       "upstreamModelId": "k3.1-pro",
-      "capabilities": ["vision", "reasoning"],
+      "releaseDate": "2026-10-23",
+      "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 1048576,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2,
       "source": {
-        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "1M context on the Pro plan and above. Thinking required."
+      "notes": "1M context on the Pro plan and above. Thinking required. Prices are Moonshot API list prices for kimi-k3.1-pro. maxOutputTokens is the Moonshot API value for kimi-k3.1-pro. tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "k3.1-pro-highspeed",
-      "capabilities": ["vision", "reasoning"],
+      "releaseDate": "2026-10-23",
+      "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 1048576,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 131072,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 4,
       "source": {
-        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
-      }
+      },
+      "notes": "Prices are Moonshot API list prices for kimi-k3.1-pro-highspeed. maxOutputTokens is the Moonshot API value for kimi-k3.1-pro-highspeed. tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "k3",
-      "capabilities": ["vision", "reasoning"],
+      "releaseDate": "2026-07-16",
+      "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 1048576,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 131072,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3,
       "source": {
-        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
-      }
+      },
+      "notes": "Prices are Moonshot API list prices for kimi-k3. maxOutputTokens is the Moonshot API value for kimi-k3. tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "k3-256k",
-      "capabilities": ["vision", "reasoning"],
+      "releaseDate": "2026-07-16",
+      "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 262144,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 131072,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3,
       "source": {
-        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
-      }
+      },
+      "notes": "Prices are Moonshot API list prices for kimi-k3. maxOutputTokens is the Moonshot API value for kimi-k3. tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "kimi-for-coding",
-      "capabilities": ["vision", "reasoning"],
+      "releaseDate": "2026-09-11",
+      "capabilities": ["vision", "reasoning", "tools"],
       "contextSize": 1048576,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 32768,
+      "inputPrice": 1,
+      "outputPrice": 4,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 1,
       "source": {
-        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Docs call it K2.8 Preview."
+      "notes": "Docs call it K2.8 Preview. Moonshot does not sell K2.8 Preview through its own API; prices are the rate third-party gateways list on models.dev, and cache write is set to the input price. maxOutputTokens comes from models.dev. tools comes from models.dev."
     },
     {
       "upstreamModelId": "kimi-for-coding-highspeed",
-      "capabilities": ["vision", "reasoning"],
+      "releaseDate": "2026-06-12",
+      "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 262144,
-      "maxOutputTokens": null,
-      "inputPrice": null,
-      "outputPrice": null,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "maxOutputTokens": 32768,
+      "inputPrice": 1.9,
+      "outputPrice": 8,
+      "cacheReadPrice": 0.38,
+      "cacheWritePrice": 1.9,
       "source": {
-        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html"],
+        "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Docs call it K2.7 Code HighSpeed."
+      "notes": "Docs call it K2.7 Code HighSpeed. Prices are Moonshot API list prices for kimi-k2.7-code-highspeed; cache write is not published and is set to the input price, since caching is automatic. maxOutputTokens comes from models.dev. tools and structured-output come from models.dev."
     }
   ]
 }

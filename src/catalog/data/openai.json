@@ -4,7 +4,10 @@
   "protocol": "openai-chat",
   "baseUrl": "https://api.openai.com/v1",
   "authStyle": "bearer",
-  "quirks": { "usesMaxCompletionTokens": true, "acceptsPromptCacheKey": true },
+  "quirks": {
+    "usesMaxCompletionTokens": true,
+    "acceptsPromptCacheKey": true
+  },
   "source": {
     "urls": [
       "https://developers.openai.com/api/reference/overview",
@@ -13,10 +16,11 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. Chat Completions accepts prompt_cache_key (cache routing before GPT-5.6, cache accounting from GPT-5.6); caching is automatic from 1,024 tokens.",
+  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. Chat Completions accepts prompt_cache_key (cache routing before GPT-5.6, cache accounting from GPT-5.6); caching is automatic from 1,024 tokens. Release dates come from models.dev (https://models.dev/). Models added on 2026-11-15 come from models.dev, checked against each model page: Responses-only models (the pro and codex models, the daybreak aliases), models OpenAI marks deprecated, and the gpt-5.6 alias of gpt-5.6-sol are left out.",
   "upstreamModels": [
     {
       "upstreamModelId": "gpt-6-astra",
+      "releaseDate": "2026-09-04",
       "capabilities": ["vision", "reasoning", "structured-output"],
       "contextSize": 1050000,
       "maxOutputTokens": 128000,
@@ -27,7 +31,8 @@
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6-astra",
-          "https://developers.openai.com/api/docs/pricing"
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -35,6 +40,7 @@
     },
     {
       "upstreamModelId": "gpt-6.1-sol",
+      "releaseDate": "2026-09-29",
       "capabilities": ["vision", "reasoning", "structured-output"],
       "contextSize": 1050000,
       "maxOutputTokens": 128000,
@@ -45,7 +51,8 @@
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
-          "https://developers.openai.com/api/docs/pricing"
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -53,6 +60,7 @@
     },
     {
       "upstreamModelId": "gpt-6.1-terra",
+      "releaseDate": "2026-10-26",
       "capabilities": ["vision", "reasoning", "structured-output"],
       "contextSize": 1050000,
       "maxOutputTokens": 128000,
@@ -63,7 +71,8 @@
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
-          "https://developers.openai.com/api/docs/pricing"
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -71,6 +80,7 @@
     },
     {
       "upstreamModelId": "gpt-6-luna",
+      "releaseDate": "2026-09-22",
       "capabilities": ["vision", "reasoning", "structured-output"],
       "contextSize": 1050000,
       "maxOutputTokens": 128000,
@@ -81,7 +91,8 @@
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6-luna",
-          "https://developers.openai.com/api/docs/pricing"
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -89,6 +100,7 @@
     },
     {
       "upstreamModelId": "gpt-5.6-sol",
+      "releaseDate": "2026-07-09",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1050000,
       "maxOutputTokens": 128000,
@@ -99,7 +111,8 @@
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
-          "https://developers.openai.com/api/docs/pricing"
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -107,6 +120,7 @@
     },
     {
       "upstreamModelId": "gpt-5.6-terra",
+      "releaseDate": "2026-07-09",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1050000,
       "maxOutputTokens": 128000,
@@ -117,13 +131,15 @@
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-          "https://developers.openai.com/api/docs/pricing"
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       }
     },
     {
       "upstreamModelId": "gpt-5.6-luna",
+      "releaseDate": "2026-07-09",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1050000,
       "maxOutputTokens": 128000,
@@ -134,10 +150,94 @@
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
-          "https://developers.openai.com/api/docs/pricing"
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       }
+    },
+    {
+      "upstreamModelId": "gpt-6-sol",
+      "releaseDate": "2026-09-22",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": ["https://developers.openai.com/api/docs/models/gpt-6-sol", "https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Over 272K context: input 4, output 15, cache read 0.4, cache write 5. Chat Completions supports function calling only with reasoning_effort none."
+    },
+    {
+      "upstreamModelId": "gpt-5.5",
+      "releaseDate": "2026-04-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 30,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": ["https://developers.openai.com/api/docs/models/gpt-5.5", "https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price. Over 272K context: input 10, output 45, cache read 1."
+    },
+    {
+      "upstreamModelId": "gpt-5.4-mini",
+      "releaseDate": "2026-03-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.75,
+      "outputPrice": 4.5,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": 0.75,
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
+    },
+    {
+      "upstreamModelId": "gpt-5.4",
+      "releaseDate": "2026-03-05",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2.5,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": ["https://developers.openai.com/api/docs/models/gpt-5.4", "https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price. Over 272K context: input 5, output 22.5, cache read 0.5."
+    },
+    {
+      "upstreamModelId": "gpt-5.2",
+      "releaseDate": "2025-12-11",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1.75,
+      "outputPrice": 14,
+      "cacheReadPrice": 0.175,
+      "cacheWritePrice": 1.75,
+      "source": {
+        "urls": ["https://developers.openai.com/api/docs/models/gpt-5.2", "https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
     }
   ]
 }

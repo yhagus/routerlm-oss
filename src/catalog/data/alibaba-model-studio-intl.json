@@ -1,6 +1,6 @@
 {
   "slug": "alibaba-model-studio-intl",
-  "name": "Alibaba Model Studio (international)",
+  "name": "Alibaba Model Studio (International)",
   "protocol": "openai-chat",
   "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
   "authStyle": "bearer",
@@ -14,21 +14,23 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Singapore deployment. The compatibility page now recommends a per-workspace host (https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1) and lists dashscope-intl as the domain to migrate from; operators can change baseUrl to their workspace host. Explicit cache takes cache_control markers on OpenAI-compatible messages; its USD prices are published only as ratios of the input price, so cache prices are empty. Prices are the lowest input-length tier. Models without a published context window (qwen3.8-max, qwen3.7-plus, qwen3.5-plus, qwen3.8-flash) are left out.",
+  "notes": "Singapore deployment. The compatibility page now recommends a per-workspace host (https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1) and lists dashscope-intl as the domain to migrate from; operators can change baseUrl to their workspace host. Explicit cache takes cache_control markers on OpenAI-compatible messages; its USD prices are published only as ratios of the input price (cache read 20%, cache write 125%); the cache prices come from models.dev, which matches those ratios. Prices are the lowest input-length tier. Release dates come from models.dev (https://models.dev/). Models whose source lists only https://models.dev/ were added from models.dev on 2026-11-15, leaving out deprecated and non-chat models. It includes models from other labs that Alibaba hosts (kimi-k3, glm-5.2, deepseek-v4-flash-0731).",
   "upstreamModels": [
     {
       "upstreamModelId": "qwen-plus",
+      "releaseDate": "2024-01-25",
       "capabilities": ["reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 32768,
       "inputPrice": 0.4,
       "outputPrice": 1.2,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "cacheReadPrice": 0.08,
+      "cacheWritePrice": 0.5,
       "source": {
         "urls": [
           "https://www.alibabacloud.com/help/en/model-studio/qwen-plus",
-          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -36,17 +38,19 @@
     },
     {
       "upstreamModelId": "qwen-flash",
+      "releaseDate": "2025-07-28",
       "capabilities": ["reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 32768,
       "inputPrice": 0.05,
       "outputPrice": 0.4,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": 0.0625,
       "source": {
         "urls": [
           "https://www.alibabacloud.com/help/en/model-studio/qwen-flash",
-          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -54,17 +58,19 @@
     },
     {
       "upstreamModelId": "qwen3-vl-plus",
+      "releaseDate": "2025-09-23",
       "capabilities": ["vision", "reasoning", "structured-output"],
       "contextSize": 262144,
       "maxOutputTokens": 32768,
       "inputPrice": 0.2,
       "outputPrice": 1.6,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "cacheReadPrice": 0.04,
+      "cacheWritePrice": 0.25,
       "source": {
         "urls": [
           "https://www.alibabacloud.com/help/en/model-studio/qwen3-vl-plus",
-          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
@@ -72,21 +78,370 @@
     },
     {
       "upstreamModelId": "qwen3-coder-flash",
+      "releaseDate": "2025-07-28",
       "capabilities": [],
       "contextSize": 1000000,
       "maxOutputTokens": 65536,
       "inputPrice": 0.3,
       "outputPrice": 1.5,
-      "cacheReadPrice": null,
-      "cacheWritePrice": null,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": 0.375,
       "source": {
         "urls": [
           "https://www.alibabacloud.com/help/en/model-studio/qwen3-coder-flash",
-          "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
       "notes": "Prices are the up-to-32K tier; 32K-128K: 0.5/2.5; 128K-256K: 0.8/4; 256K-1M: 1.6/9.6. The model page marks function calling unsupported in Singapore, although the qwen-coder guide shows a tool call example."
+    },
+    {
+      "upstreamModelId": "qwen3.8-omni-flash",
+      "releaseDate": "2026-09-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.47,
+      "cacheReadPrice": 0.016,
+      "cacheWritePrice": 0.15,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3.8-flash",
+      "releaseDate": "2026-08-26",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.47,
+      "cacheReadPrice": 0.016,
+      "cacheWritePrice": 0.2,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "qwen3.8-max",
+      "releaseDate": "2026-08-03",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2,
+      "outputPrice": 6,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "deepseek-v4-flash-0731",
+      "releaseDate": "2026-07-31",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.44,
+      "outputPrice": 1.32,
+      "cacheReadPrice": 0.088,
+      "cacheWritePrice": 0.44,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
+    },
+    {
+      "upstreamModelId": "kimi-k3",
+      "releaseDate": "2026-07-16",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 1048576,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3.7-flash",
+      "releaseDate": "2026-07-15",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.03,
+      "outputPrice": 0.13,
+      "cacheReadPrice": 0.006,
+      "cacheWritePrice": 0.0375,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Over 32K context: input 0.1, output 0.4, cache read 0.02, cache write 0.125. Over 256K context: input 0.2, output 0.8, cache read 0.04, cache write 0.25."
+    },
+    {
+      "upstreamModelId": "glm-5.2",
+      "releaseDate": "2026-06-13",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.28,
+      "cacheWritePrice": 0,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "qwen3.7-plus",
+      "releaseDate": "2026-06-02",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.4,
+      "outputPrice": 1.6,
+      "cacheReadPrice": 0.08,
+      "cacheWritePrice": 0.5,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Over 256K context: input 1.2, output 4.8, cache read 0.24, cache write 1.5."
+    },
+    {
+      "upstreamModelId": "qwen3.7-max",
+      "releaseDate": "2026-05-21",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2.5,
+      "outputPrice": 7.5,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 3.125,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "qwen3.6-flash",
+      "releaseDate": "2026-04-27",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.25,
+      "outputPrice": 1.5,
+      "cacheReadPrice": 0.025,
+      "cacheWritePrice": 0.3125,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Over 256K context: input 1, output 4, cache read 0.1, cache write 1.25."
+    },
+    {
+      "upstreamModelId": "qwen3.6-27b",
+      "releaseDate": "2026-04-22",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.6,
+      "outputPrice": 3.6,
+      "cacheReadPrice": 0.6,
+      "cacheWritePrice": 0.6,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3.6-35b-a3b",
+      "releaseDate": "2026-04-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.375,
+      "outputPrice": 2.25,
+      "cacheReadPrice": 0.375,
+      "cacheWritePrice": 0.375,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3.6-plus",
+      "releaseDate": "2026-04-02",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.5,
+      "outputPrice": 3,
+      "cacheReadPrice": 0.05,
+      "cacheWritePrice": 0.625,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Over 256K context: input 2, output 6, cache read 0.2, cache write 2.5."
+    },
+    {
+      "upstreamModelId": "qwen3.5-122b-a10b",
+      "releaseDate": "2026-02-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.4,
+      "outputPrice": 3.2,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 0.4,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3.5-27b",
+      "releaseDate": "2026-02-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.3,
+      "outputPrice": 2.4,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 0.3,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3.5-35b-a3b",
+      "releaseDate": "2026-02-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.25,
+      "outputPrice": 2,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 0.25,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3.5-flash",
+      "releaseDate": "2026-02-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.1,
+      "outputPrice": 0.4,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": 0.125,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "qwen3.5-plus",
+      "releaseDate": "2026-02-16",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.4,
+      "outputPrice": 2.4,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 0.4,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price. Over 256K context: input 0.5, output 3."
+    },
+    {
+      "upstreamModelId": "qwen3.5-397b-a17b",
+      "releaseDate": "2026-02-15",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.6,
+      "outputPrice": 3.6,
+      "cacheReadPrice": 0.6,
+      "cacheWritePrice": 0.6,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3-omni-flash",
+      "releaseDate": "2025-09-15",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 65536,
+      "maxOutputTokens": 16384,
+      "inputPrice": 0.43,
+      "outputPrice": 1.66,
+      "cacheReadPrice": 0.43,
+      "cacheWritePrice": 0.43,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen3-vl-30b-a3b",
+      "releaseDate": "2025-04-01",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 131072,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.2,
+      "outputPrice": 0.8,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 0.2,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price. Thinking output is 2.4. models.dev gives only the release month; the date is its first day."
+    },
+    {
+      "upstreamModelId": "qwen-max",
+      "releaseDate": "2024-04-03",
+      "capabilities": ["tools", "structured-output"],
+      "contextSize": 32768,
+      "maxOutputTokens": 8192,
+      "inputPrice": 1.6,
+      "outputPrice": 6.4,
+      "cacheReadPrice": 1.6,
+      "cacheWritePrice": 1.6,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "No prompt caching is published, so cache prices are set to the input price."
     }
   ]
 }

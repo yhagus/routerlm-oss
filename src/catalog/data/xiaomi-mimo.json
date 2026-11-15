@@ -9,6 +9,55 @@
     "urls": ["https://mimo.mi.com/models/en-US/mimo-v2.5"],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Xiaomi's docs and pricing pages (platform.xiaomimimo.com, mimo.mi.com/docs, mimo.mi.com/docs/pricing) are client-rendered and could not be read. The base URL comes from the search index of Xiaomi's own model page. Model ids, context sizes and prices could not be sourced, so no Upstream Models ship; operators add them from the dashboard.",
-  "upstreamModels": []
+  "notes": "Xiaomi's docs and pricing pages (platform.xiaomimimo.com, mimo.mi.com/docs, mimo.mi.com/docs/pricing) are client-rendered and could not be read. The base URL comes from the search index of Xiaomi's own model page. Model ids, context sizes and prices could not be read there, so the Upstream Models come from models.dev (2026-11-15), leaving out deprecated ones.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "mimo-v2.6-flash",
+      "releaseDate": "2026-09-22",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.14,
+      "outputPrice": 0.28,
+      "cacheReadPrice": 0.0028,
+      "cacheWritePrice": 0.14,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
+    },
+    {
+      "upstreamModelId": "mimo-v2.6-pro",
+      "releaseDate": "2026-09-22",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.435,
+      "outputPrice": 0.87,
+      "cacheReadPrice": 0.0036,
+      "cacheWritePrice": 0.435,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
+    },
+    {
+      "upstreamModelId": "mimo-v2.6-pro-ultraspeed",
+      "releaseDate": "2026-09-21",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 4.35,
+      "outputPrice": 8.7,
+      "cacheReadPrice": 0.036,
+      "cacheWritePrice": 4.35,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      },
+      "notes": "Cache write is not published and is set to the input price."
+    }
+  ]
 }

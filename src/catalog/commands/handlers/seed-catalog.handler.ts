@@ -1,9 +1,14 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
+import { type AnyColumn, and, eq, isNull, or, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
 import { SeedCatalogCommand, type SeedResult } from "../impl/seed-catalog.command.js";
+
+/** Keeps the stored price, or takes the Catalog's when the stored one is empty. */
+function fillPrice(column: AnyColumn, catalogPrice: number | null): SQL {
+  return sql`coalesce(${column}, ${catalogPrice}::numeric)`;
+}
 
 @CommandHandler(SeedCatalogCommand)
 export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
@@ -51,6 +56,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               outputPrice: model.outputPrice,
               cacheReadPrice: model.cacheReadPrice,
               cacheWritePrice: model.cacheWritePrice,
+              releaseDate: model.releaseDate,
             })),
           )
           .onConflictDoNothing({
@@ -58,6 +64,37 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
           })
           .returning({ id: upstreamModels.id });
         result.createdUpstreamModels += createdModels.length;
+
+        // The one exception to never changing existing rows (ADR 0003): an
+        // empty Release Date, max output or price gets the Catalog's value, so rows seeded
+        // before the Catalog knew it catch up. A value that is already set,
+        // Catalog or operator, is left alone.
+        for (const model of entry.upstreamModels) {
+          await tx
+            .update(upstreamModels)
+            .set({
+              releaseDate: sql`coalesce(${upstreamModels.releaseDate}, ${model.releaseDate}::date)`,
+              maxOutputTokens: sql`coalesce(${upstreamModels.maxOutputTokens}, ${model.maxOutputTokens}::integer)`,
+              inputPrice: fillPrice(upstreamModels.inputPrice, model.inputPrice),
+              outputPrice: fillPrice(upstreamModels.outputPrice, model.outputPrice),
+              cacheReadPrice: fillPrice(upstreamModels.cacheReadPrice, model.cacheReadPrice),
+              cacheWritePrice: fillPrice(upstreamModels.cacheWritePrice, model.cacheWritePrice),
+            })
+            .where(
+              and(
+                eq(upstreamModels.providerId, provider.id),
+                eq(upstreamModels.upstreamModelId, model.upstreamModelId),
+                or(
+                  isNull(upstreamModels.releaseDate),
+                  isNull(upstreamModels.maxOutputTokens),
+                  isNull(upstreamModels.inputPrice),
+                  isNull(upstreamModels.outputPrice),
+                  isNull(upstreamModels.cacheReadPrice),
+                  isNull(upstreamModels.cacheWritePrice),
+                ),
+              ),
+            );
+        }
       }
     });
 

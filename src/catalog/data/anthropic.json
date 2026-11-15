@@ -9,11 +9,12 @@
     "urls": ["https://platform.claude.com/docs/en/get-started"],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "cacheWritePrice is the 5-minute cache write price. Structured output is not stated on the pages read, so no model lists it. The Get Started examples send anthropic-version 2026-10-21.",
+  "notes": "cacheWritePrice is the 5-minute cache write price. Structured output is not stated on the pages read; it, and reasoning on the older models, come from models.dev. The Get Started examples send anthropic-version 2026-10-21. Release dates come from models.dev (https://models.dev/). Models whose source lists only https://models.dev/ were added from models.dev on 2026-11-15, leaving out deprecated and non-chat models.",
   "upstreamModels": [
     {
       "upstreamModelId": "claude-fable-5-2",
-      "capabilities": ["vision", "tools", "reasoning"],
+      "releaseDate": "2026-11-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 8,
@@ -24,15 +25,17 @@
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
           "https://platform.claude.com/docs/en/about-claude/pricing",
-          "https://platform.claude.com/docs/en/models/fable-5-2/overview"
+          "https://platform.claude.com/docs/en/models/fable-5-2/overview",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Adaptive thinking always on. Forced tool_choice (any or tool) returns 400; temperature, top_p and top_k must be omitted."
+      "notes": "Adaptive thinking always on. Forced tool_choice (any or tool) returns 400; temperature, top_p and top_k must be omitted. structured-output comes from models.dev."
     },
     {
       "upstreamModelId": "claude-opus-5-5",
-      "capabilities": ["vision", "tools", "reasoning"],
+      "releaseDate": "2026-09-22",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 4,
@@ -43,15 +46,17 @@
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
           "https://platform.claude.com/docs/en/about-claude/pricing",
-          "https://platform.claude.com/docs/en/models/opus-5-5/overview"
+          "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Adaptive thinking always on."
+      "notes": "Adaptive thinking always on. structured-output comes from models.dev."
     },
     {
       "upstreamModelId": "claude-sonnet-5-5",
-      "capabilities": ["vision", "tools", "reasoning"],
+      "releaseDate": "2026-09-28",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 2,
@@ -62,15 +67,17 @@
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
           "https://platform.claude.com/docs/en/about-claude/pricing",
-          "https://platform.claude.com/docs/en/models/sonnet-5-5/overview"
+          "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "temperature, top_p and top_k return 400."
+      "notes": "temperature, top_p and top_k return 400. structured-output comes from models.dev."
     },
     {
       "upstreamModelId": "claude-haiku-5-5",
-      "capabilities": ["vision", "tools", "reasoning"],
+      "releaseDate": "2026-10-07",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 0.1,
@@ -81,15 +88,17 @@
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
           "https://platform.claude.com/docs/en/about-claude/pricing",
-          "https://platform.claude.com/docs/en/models/haiku-5-5/overview"
+          "https://platform.claude.com/docs/en/models/haiku-5-5/overview",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Prices are for prompts up to 100,000 tokens. Longer prompts: input 0.50, output 2.50, cache read 0.05, cache write 0.625."
+      "notes": "Prices are for prompts up to 100,000 tokens. Longer prompts: input 0.50, output 2.50, cache read 0.05, cache write 0.625. structured-output comes from models.dev."
     },
     {
       "upstreamModelId": "claude-fable-5-1",
-      "capabilities": ["vision", "tools"],
+      "releaseDate": "2026-09-01",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 10,
@@ -99,15 +108,17 @@
       "source": {
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
-          "https://platform.claude.com/docs/en/about-claude/pricing"
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Reasoning not stated on the pages read."
+      "notes": "Reasoning not stated on the pages read. reasoning and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "claude-opus-5",
-      "capabilities": ["vision", "tools"],
+      "releaseDate": "2026-07-24",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 5,
@@ -117,15 +128,17 @@
       "source": {
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
-          "https://platform.claude.com/docs/en/about-claude/pricing"
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Reasoning not stated on the pages read."
+      "notes": "Reasoning not stated on the pages read. reasoning and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "claude-sonnet-5",
-      "capabilities": ["vision", "tools"],
+      "releaseDate": "2026-06-29",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 2,
@@ -135,15 +148,17 @@
       "source": {
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
-          "https://platform.claude.com/docs/en/about-claude/pricing"
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Reasoning not stated on the pages read."
+      "notes": "Reasoning not stated on the pages read. reasoning and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "claude-opus-4-8",
-      "capabilities": ["vision", "tools"],
+      "releaseDate": "2026-05-28",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
       "maxOutputTokens": 128000,
       "inputPrice": 5,
@@ -153,11 +168,102 @@
       "source": {
         "urls": [
           "https://platform.claude.com/docs/en/about-claude/models/overview",
-          "https://platform.claude.com/docs/en/about-claude/pricing"
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
         ],
         "retrievedOn": "2026-11-15"
       },
-      "notes": "Reasoning not stated on the pages read."
+      "notes": "Reasoning not stated on the pages read. reasoning and structured-output come from models.dev."
+    },
+    {
+      "upstreamModelId": "claude-fable-5",
+      "releaseDate": "2026-06-07",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 1,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "claude-opus-4-7",
+      "releaseDate": "2026-04-14",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "claude-sonnet-4-6",
+      "releaseDate": "2026-02-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3.75,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "claude-opus-4-6",
+      "releaseDate": "2026-02-04",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "claude-opus-4-5",
+      "releaseDate": "2025-11-24",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 200000,
+      "maxOutputTokens": 64000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
+    },
+    {
+      "upstreamModelId": "claude-haiku-4-5",
+      "releaseDate": "2025-10-15",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 200000,
+      "maxOutputTokens": 64000,
+      "inputPrice": 1,
+      "outputPrice": 5,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 1.25,
+      "source": {
+        "urls": ["https://models.dev/"],
+        "retrievedOn": "2026-11-15"
+      }
     }
   ]
 }

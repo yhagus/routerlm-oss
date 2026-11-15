@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -91,6 +92,8 @@ export const upstreamModels = pgTable(
     outputPrice: pricePerMillionTokens("output_price"),
     cacheReadPrice: pricePerMillionTokens("cache_read_price"),
     cacheWritePrice: pricePerMillionTokens("cache_write_price"),
+    // The day the Provider made the model available, as YYYY-MM-DD.
+    releaseDate: date("release_date", { mode: "string" }),
     isEnabled: boolean("is_enabled").notNull().default(true),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

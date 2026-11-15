@@ -31,6 +31,7 @@ const catalog: CatalogProvider[] = [
         outputPrice: 15,
         cacheReadPrice: 0.3,
         cacheWritePrice: null,
+        releaseDate: "2026-03-01",
         source,
       },
       {
@@ -42,6 +43,7 @@ const catalog: CatalogProvider[] = [
         outputPrice: null,
         cacheReadPrice: null,
         cacheWritePrice: null,
+        releaseDate: "2025-09-15",
         source,
       },
     ],
@@ -105,8 +107,14 @@ describe("Seed Catalog command (e2e)", () => {
         outputPrice: 15,
         cacheReadPrice: 0.3,
         cacheWritePrice: null,
+        releaseDate: "2026-03-01",
       },
-      { upstreamModelId: "example-small", inputPrice: null, maxOutputTokens: null },
+      {
+        upstreamModelId: "example-small",
+        inputPrice: null,
+        maxOutputTokens: null,
+        releaseDate: "2025-09-15",
+      },
     ]);
   });
 
@@ -131,6 +139,57 @@ describe("Seed Catalog command (e2e)", () => {
     expect(provider?.upstreamModels).toContainEqual(
       expect.objectContaining({ upstreamModelId: "example-large", inputPrice: 2.5 }),
     );
+  });
+
+  it("fills a missing Release Date and keeps the operator's other edits", async () => {
+    await db
+      .update(schema.upstreamModels)
+      .set({ releaseDate: null, outputPrice: 14 })
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-large"));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const [model] = await db
+      .select()
+      .from(schema.upstreamModels)
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-large"));
+    expect(model).toMatchObject({ releaseDate: "2026-03-01", outputPrice: 14 });
+  });
+
+  it("fills missing prices and max output and keeps the ones already set", async () => {
+    await db
+      .update(schema.upstreamModels)
+      .set({ inputPrice: null, cacheReadPrice: null, maxOutputTokens: null, outputPrice: 13 })
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-large"));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const [model] = await db
+      .select()
+      .from(schema.upstreamModels)
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-large"));
+    expect(model).toMatchObject({
+      maxOutputTokens: 8192,
+      inputPrice: 3,
+      outputPrice: 13,
+      cacheReadPrice: 0.3,
+      cacheWritePrice: null,
+    });
+  });
+
+  it("keeps a Release Date the operator changed", async () => {
+    await db
+      .update(schema.upstreamModels)
+      .set({ releaseDate: "2025-10-01" })
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-small"));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const [model] = await db
+      .select()
+      .from(schema.upstreamModels)
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-small"));
+    expect(model?.releaseDate).toBe("2025-10-01");
   });
 
   it("creates no Provider Accounts, Models or Routes", async () => {

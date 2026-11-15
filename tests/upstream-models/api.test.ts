@@ -15,6 +15,7 @@ const ACME_LARGE = {
   outputPrice: 15,
   cacheReadPrice: 0.3,
   cacheWritePrice: 3.75,
+  releaseDate: "2026-02-10",
 };
 
 describe("Upstream Models (e2e)", () => {
@@ -85,6 +86,45 @@ describe("Upstream Models (e2e)", () => {
       outputPrice: 12.5,
       cacheWritePrice: null,
     });
+  });
+
+  it("changes and clears the Release Date", async () => {
+    const server = app.getHttpServer();
+    const id = await createAcmeLarge();
+
+    const changed = await request(server)
+      .patch(`/api/upstream-models/${id}`)
+      .set("Cookie", cookie)
+      .send({ releaseDate: "2026-02-12" })
+      .expect(200);
+    const cleared = await request(server)
+      .patch(`/api/upstream-models/${id}`)
+      .set("Cookie", cookie)
+      .send({ releaseDate: null })
+      .expect(200);
+
+    expect(changed.body.releaseDate).toBe("2026-02-12");
+    expect(cleared.body.releaseDate).toBeNull();
+  });
+
+  it("adds an Upstream Model without a Release Date", async () => {
+    const { releaseDate: _omitted, ...withoutReleaseDate } = ACME_LARGE;
+
+    const created = await request(app.getHttpServer())
+      .post("/api/upstream-models")
+      .set("Cookie", cookie)
+      .send({ providerId, ...withoutReleaseDate })
+      .expect(201);
+
+    expect(created.body.releaseDate).toBeNull();
+  });
+
+  it("refuses a Release Date that isn't YYYY-MM-DD", async () => {
+    await request(app.getHttpServer())
+      .post("/api/upstream-models")
+      .set("Cookie", cookie)
+      .send({ providerId, ...ACME_LARGE, releaseDate: "2026/01/01" })
+      .expect(400);
   });
 
   it("refuses a second Upstream Model with the same name at one Provider", async () => {

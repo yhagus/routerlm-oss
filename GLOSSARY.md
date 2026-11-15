@@ -28,6 +28,10 @@ _Avoid_: Account, credential, upstream key
 A model as one Provider names and sells it.
 _Avoid_: Provider model, backend model
 
+**Release Date**:
+The day a Provider made an Upstream Model available, written YYYY-MM-DD.
+_Avoid_: Launch date, published date, last updated
+
 **Capability**:
 Something an Upstream Model can do that a request may need, such as vision, tools, reasoning or structured output.
 _Avoid_: Feature, modality
@@ -69,7 +73,7 @@ _Avoid_: Parameter control, model config
 ### Records
 
 **Cost**:
-What the gateway's operators pay the Provider for one request, computed from the Upstream Model's prices at the time of the request.
+What one request costs at the Upstream Model's prices at the time of the request. For a subscription Provider, those are the list prices of the matching pay-as-you-go API, so Cost is what the request would have cost there, not what was paid.
 _Avoid_: Price, charge, bill
 
 **Cache read**:

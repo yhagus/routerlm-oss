@@ -36,7 +36,10 @@ export const providerQuirksSchema = z.strictObject({
 });
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 
-/** Where a value came from: the Provider's own pages, and the day they were read. */
+/**
+ * Where a value came from: the Provider's own pages, or models.dev when they
+ * can't be read, and the day they were read.
+ */
 const sourceSchema = z.strictObject({
   urls: z.array(z.url()).min(1),
   retrievedOn: z.iso.date(),
@@ -54,6 +57,7 @@ const upstreamModelSchema = z.strictObject({
   outputPrice: priceSchema,
   cacheReadPrice: priceSchema,
   cacheWritePrice: priceSchema,
+  releaseDate: z.iso.date(),
   source: sourceSchema,
   notes: z.string().optional(),
 });
