@@ -21,8 +21,12 @@ A company or service whose inference API the gateway calls, such as DeepSeek or 
 _Avoid_: Upstream, vendor, channel
 
 **Provider Account**:
-One API key the gateway holds at one Provider, with its own Quota Meters when it is a Subscription Provider.
+One credential the gateway holds at one Provider, either an API key or an OAuth Login, with its own Quota Meters when it is a Subscription Provider.
 _Avoid_: Account, credential, upstream key
+
+**OAuth Login**:
+A sign-in to a Provider that a User grants the gateway, which the gateway keeps valid on its own. It is one of the two credentials a Provider Account can hold, the other being an API key.
+_Avoid_: Token, session, OAuth account
 
 **Subscription Provider**:
 A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code or MiniMax M Plan. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot or MiniMax API.
