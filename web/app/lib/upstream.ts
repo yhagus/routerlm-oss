@@ -68,6 +68,8 @@ export interface UpstreamModel {
   outputPrice: number | null;
   cacheReadPrice: number | null;
   cacheWritePrice: number | null;
+  /** The day the Provider made it available, "YYYY-MM-DD"; null when unknown. */
+  releaseDate: string | null;
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;

@@ -2137,6 +2137,227 @@ tbody tr:hover {
     top: 17px;
   }
 }
+/* Date field: typed YYYY-MM-DD segments that read like a text input, with the
+   calendar a click or Alt+Down away. */
+.date-input {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 12px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.date-input:focus-within {
+  border-color: var(--focus-border);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.date-input__segments {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+.date-input__segment {
+  padding: 2px 1px;
+  border-radius: 4px;
+  color: var(--ink);
+  caret-color: transparent;
+  outline: none;
+}
+.date-input__segment[data-placeholder] {
+  color: var(--placeholder);
+}
+.date-input__segment:focus {
+  background: var(--highlight);
+  color: var(--ink);
+}
+.date-input__literal {
+  padding: 0;
+  color: var(--faint);
+}
+.date-input__icon-button {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.date-input__icon-button:hover,
+.date-input__icon-button[data-state="open"] {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+/* Above the dialog (61): the calendar opens from fields inside dialogs. */
+.date-popover {
+  z-index: 70;
+  width: 260px;
+  padding: 10px;
+  border: 1px solid var(--glass-line);
+  border-radius: 14px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: 0 12px 32px var(--shadow-pop-color);
+  transform-origin: var(--reka-popover-content-transform-origin);
+  animation: date-popover-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes date-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .date-popover {
+    animation: none;
+  }
+}
+.date-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.date-calendar__heading {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.date-calendar__nav {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.date-calendar__nav:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.date-calendar__nav[data-disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+/* The grid is a table for screen readers; it lays out as blocks so global
+   table styles (header bands, row lines) stay out of the calendar. */
+.date-calendar__grid,
+.date-calendar__grid thead,
+.date-calendar__grid tbody {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.date-calendar__grid :is(thead, tbody, tr, th, td),
+.date-calendar__grid tbody tr:hover {
+  border: 0;
+  background: none;
+}
+.date-calendar__row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.date-calendar__weekday {
+  padding: 4px 0 6px;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.date-calendar__cell {
+  display: grid;
+  place-items: center;
+  padding: 1px;
+}
+.date-calendar__day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+.date-calendar__day:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.date-calendar__day[data-outside-view] {
+  color: var(--placeholder);
+}
+.date-calendar__day[data-today]::after {
+  position: absolute;
+  bottom: 4px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+.date-calendar__day[data-focused],
+.date-calendar__day:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--focus-border);
+}
+.date-calendar__day[data-selected] {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 650;
+}
+.date-calendar__day[data-disabled],
+.date-calendar__day[data-unavailable] {
+  color: var(--placeholder);
+  text-decoration: line-through;
+  cursor: default;
+}
+.date-popover__footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line-soft);
+}
+.date-popover__action {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+}
+.date-popover__action:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
 /* Text fields focus quietly: a firmer border and a soft halo hugging the field,
    instead of the detached ring buttons use. */
 .text-input:focus-visible,

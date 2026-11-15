@@ -69,7 +69,10 @@ const scopedModels = computed(() =>
 );
 
 const CONTEXT_MINIMUMS = ["", "32000", "128000", "200000", "256000", "1000000"] as const;
+const RELEASE_WINDOWS = ["", "30", "90", "180", "365"] as const;
 const SORT_ORDERS = [
+  "newest",
+  "oldest",
   "name",
   "provider",
   "input-asc",
@@ -80,12 +83,13 @@ const SORT_ORDERS = [
 
 const MODEL_STATUSES = ["enabled", "disabled"] as const;
 
-// Held in the URL (?q=…&provider=anthropic,openai&context=128000&capability=vision,tools&status=…&sort=…)
+// Held in the URL (?q=…&provider=anthropic,openai&context=128000&released=90&capability=vision,tools&status=…&sort=…)
 // so a refresh or a link keeps them. A Provider is its slug, readable and stable.
 const searchText = useQueryParam("q", { default: "", isValid: anyText, debounce: 300 });
 const providerSlugs = computed(() => props.providers.map((each) => each.slug));
 const providerFilter = useQueryList("provider", { isValid: anyText, order: providerSlugs });
 const contextFilter = useQueryParam("context", { default: "", isValid: oneOf(CONTEXT_MINIMUMS) });
+const releasedFilter = useQueryParam("released", { default: "", isValid: oneOf(RELEASE_WINDOWS) });
 const capabilityFilter = useQueryList("capability", {
   isValid: oneOf(CAPABILITIES),
   order: CAPABILITIES,
@@ -94,7 +98,7 @@ const statusFilter = useQueryList("status", {
   isValid: oneOf(MODEL_STATUSES),
   order: MODEL_STATUSES,
 });
-const sortOrder = useQueryParam("sort", { default: "name", isValid: oneOf(SORT_ORDERS) });
+const sortOrder = useQueryParam("sort", { default: "newest", isValid: oneOf(SORT_ORDERS) });
 
 const providerBySlug = computed(() => new Map(props.providers.map((each) => [each.slug, each])));
 const providerFilterOptions = computed(() => [
@@ -113,6 +117,14 @@ const contextFilterOptions = [
   { label: "256K+ context", value: "256000" },
   { label: "1M+ context", value: "1000000" },
 ];
+/** How recently a model must have been released, in days. */
+const releasedFilterOptions = [
+  { label: "Any release date", value: "" },
+  { label: "Released in 30 days", value: "30" },
+  { label: "Released in 90 days", value: "90" },
+  { label: "Released in 6 months", value: "180" },
+  { label: "Released in 1 year", value: "365" },
+];
 const capabilityFilterOptions = CAPABILITIES.map((capability) => ({
   label: CAPABILITY_LABELS[capability],
   value: capability,
@@ -122,6 +134,8 @@ const statusFilterOptions = [
   { label: "Disabled", value: "disabled" },
 ] satisfies { label: string; value: (typeof MODEL_STATUSES)[number] }[];
 const sortOptions = computed(() => [
+  { label: "Newest", value: "newest" },
+  { label: "Oldest", value: "oldest" },
   { label: "Name", value: "name" },
   ...(props.provider ? [] : [{ label: "Provider", value: "provider" }]),
   { label: "Input price, lowest", value: "input-asc" },
@@ -141,9 +155,30 @@ function comparePrices(first: number | null, second: number | null, direction: 1
   return (first - second) * direction;
 }
 
+/** Compares two optional Release Dates; models without one always sort last. */
+function compareReleaseDates(
+  first: string | null,
+  second: string | null,
+  direction: 1 | -1,
+): number {
+  if (first === null || second === null)
+    return (first === null ? 1 : 0) - (second === null ? 1 : 0);
+  // "YYYY-MM-DD" strings order the same as the dates they name.
+  return first.localeCompare(second) * direction;
+}
+
+/** The "YYYY-MM-DD" day a given number of days before today, in UTC. */
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+}
+
 function compareModels(first: UpstreamModel, second: UpstreamModel): number {
   const byName = first.upstreamModelId.localeCompare(second.upstreamModelId);
   switch (sortOrder.value) {
+    case "newest":
+      return compareReleaseDates(first.releaseDate, second.releaseDate, -1) || byName;
+    case "oldest":
+      return compareReleaseDates(first.releaseDate, second.releaseDate, 1) || byName;
     case "provider":
       return providerName(first).localeCompare(providerName(second)) || byName;
     case "input-asc":
@@ -162,11 +197,14 @@ function compareModels(first: UpstreamModel, second: UpstreamModel): number {
 const visibleModels = computed(() => {
   const query = searchText.value.trim().toLowerCase();
   const minContext = Number(contextFilter.value || 0);
+  const releasedSince = releasedFilter.value ? daysAgo(Number(releasedFilter.value)) : null;
   return scopedModels.value
     .filter((model) => {
       const slug = providerById.value.get(model.providerId)?.slug ?? "";
       if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
       if (model.contextSize < minContext) return false;
+      // A model without a Release Date can't be shown to fall inside the window.
+      if (releasedSince !== null && (model.releaseDate ?? "") < releasedSince) return false;
       // A model must have every picked capability.
       if (!capabilityFilter.value.every((capability) => model.capabilities.includes(capability))) {
         return false;
@@ -193,6 +231,7 @@ const isFiltered = computed(
     searchText.value !== "" ||
     providerFilter.value.length > 0 ||
     contextFilter.value !== "" ||
+    releasedFilter.value !== "" ||
     capabilityFilter.value.length > 0 ||
     statusFilter.value.length > 0,
 );
@@ -201,6 +240,7 @@ function clearFilters(): void {
   searchText.value = "";
   providerFilter.value = [];
   contextFilter.value = "";
+  releasedFilter.value = "";
   capabilityFilter.value = [];
   statusFilter.value = [];
 }
@@ -264,6 +304,8 @@ interface UpstreamModelForm {
   outputPrice: NumberInput;
   cacheReadPrice: NumberInput;
   cacheWritePrice: NumberInput;
+  /** "YYYY-MM-DD" from the date input, or "" when empty. */
+  releaseDate: string;
 }
 
 const form = ref<UpstreamModelForm>(emptyForm());
@@ -285,6 +327,7 @@ function emptyForm(): UpstreamModelForm {
     outputPrice: "",
     cacheReadPrice: "",
     cacheWritePrice: "",
+    releaseDate: "",
   };
 }
 
@@ -299,6 +342,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
     outputPrice: numberField(upstreamModel.outputPrice),
     cacheReadPrice: numberField(upstreamModel.cacheReadPrice),
     cacheWritePrice: numberField(upstreamModel.cacheWritePrice),
+    releaseDate: upstreamModel.releaseDate ?? "",
   };
 }
 
@@ -320,6 +364,7 @@ async function saveUpstreamModel(): Promise<void> {
     outputPrice: optionalNumber(form.value.outputPrice),
     cacheReadPrice: optionalNumber(form.value.cacheReadPrice),
     cacheWritePrice: optionalNumber(form.value.cacheWritePrice),
+    releaseDate: form.value.releaseDate || null,
   };
   const failureMessage = "Couldn't save the Upstream Model.";
   if (current.kind === "create") {
@@ -393,6 +438,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       noun="Providers"
     />
     <AppSelect v-model="contextFilter" :options="contextFilterOptions" label="Minimum context" />
+    <AppSelect v-model="releasedFilter" :options="releasedFilterOptions" label="Release date" />
     <AppMultiSelect
       v-model="capabilityFilter"
       :options="capabilityFilterOptions"
@@ -434,12 +480,13 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             <th class="model-table__num">Max output</th>
             <th class="model-table__num">Input $/M</th>
             <th class="model-table__num">Output $/M</th>
+            <th class="model-table__num">Released</th>
             <th class="model-table__center">Status</th>
             <th><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-          <LoadingRow v-if="isLoading" :columns="8" />
+          <LoadingRow v-if="isLoading" :columns="9" />
           <tr
             v-for="model in visibleModels"
             :key="model.id"
@@ -505,6 +552,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
                 formatPrice(model.cacheWritePrice)
               }}</span>
             </td>
+            <td class="model-table__num tabular">{{ model.releaseDate ?? "—" }}</td>
             <td class="model-table__center">
               <span
                 class="status-badge"
@@ -628,6 +676,10 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
                 </template>
                 <template v-else>Not published</template>
               </dd>
+            </div>
+            <div>
+              <dt>Released</dt>
+              <dd class="tabular">{{ detailsModel.releaseDate ?? "Unknown" }}</dd>
             </div>
           </dl>
         </section>
@@ -792,6 +844,10 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             suffix="/ 1M tokens"
             unit-label="US dollars per million tokens"
         /></label>
+        <div class="field">
+          <span class="field__label">Release date</span>
+          <AppDateInput v-model="form.releaseDate" label="Release date" />
+        </div>
       </div>
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
       <div class="dialog__actions">
