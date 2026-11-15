@@ -1,25 +1,22 @@
 import { Logger } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
+import { SECOND_MS } from "@/libs/models/duration.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { OauthSignInPolling } from "../../jobs/oauth-sign-in-polling.js";
 import { unusedConstellationName } from "../../models/constellation-name.js";
+import { type OauthProfile, oauthLoginEndpointOf } from "../../models/oauth-device-grant.js";
 import { type OauthTokens, storedOauthTokens } from "../../models/provider-account.js";
-import {
-  OauthLoginClient,
-  type OauthProfile,
-  oauthLoginEndpointOf,
-} from "../../providers/oauth-login-client.js";
+import { OauthLoginClient } from "../../providers/oauth-login-client.js";
 import { OauthRefreshLock } from "../../providers/oauth-refresh-lock.js";
 import { OauthSignInStore } from "../../providers/oauth-sign-in-store.js";
 import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
 import type { StoredOauthSignIn } from "../../schemas/oauth-sign-in.schema.js";
 import { PollOauthSignInCommand } from "../impl/poll-oauth-sign-in.command.js";
 
-const SECOND_MS = 1000;
 /** RFC 8628: `slow_down` lengthens the wait between polls by this much, for the rest of the sign-in. */
 const SLOW_DOWN_SECONDS = 5;
 
@@ -58,6 +55,10 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
   private async poll(
     signIn: StoredOauthSignIn,
   ): Promise<StoredOauthSignIn["outcome"] & { slowDown?: boolean }> {
+    const createdProviderAccountId = await this.providerAccountCreatedBy(signIn);
+    if (createdProviderAccountId !== undefined) {
+      return { status: "completed", providerAccountId: createdProviderAccountId };
+    }
     if (Date.now() >= signIn.expiresAt) {
       return { status: "expired" };
     }
@@ -92,8 +93,51 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     }
   }
 
-  /** Stores the granted OAuth Login on the Provider Account signed in again, or on a new one. */
+  /**
+   * The Provider Account an earlier run of this poll created without getting
+   * to record that the sign-in completed (Redis failed, so the queue runs
+   * the poll again). The grant spent the device code, so the auth host would
+   * no longer say; the device id, generated for this sign-in, does.
+   */
+  private async providerAccountCreatedBy(signIn: StoredOauthSignIn): Promise<string | undefined> {
+    if (signIn.providerAccountId !== undefined) {
+      return undefined;
+    }
+    const [created] = await this.db
+      .select({ id: providerAccounts.id })
+      .from(providerAccounts)
+      .where(
+        and(
+          eq(providerAccounts.providerId, signIn.providerId),
+          eq(providerAccounts.oauthDeviceId, signIn.deviceId),
+        ),
+      );
+    return created?.id;
+  }
+
+  /**
+   * Stores the granted OAuth Login on the Provider Account signed in again,
+   * or on a new one. The grant spent the device code, so no later poll can
+   * make up for a login that could not be stored: the sign-in ends here,
+   * denied, and the User starts another. Either write is one statement, so
+   * a failure leaves no account, and no login, half made.
+   */
   private async keepLogin(
+    signIn: StoredOauthSignIn,
+    baseUrl: string,
+    tokens: OauthTokens,
+  ): Promise<StoredOauthSignIn["outcome"]> {
+    try {
+      return await this.storeLogin(signIn, baseUrl, tokens);
+    } catch (error) {
+      this.logger.error(
+        `A sign-in was approved, but its OAuth Login could not be kept: ${failureOf(error)}`,
+      );
+      return { status: "denied" };
+    }
+  }
+
+  private async storeLogin(
     signIn: StoredOauthSignIn,
     baseUrl: string,
     tokens: OauthTokens,
@@ -177,6 +221,17 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       .where(eq(providerAccounts.providerId, providerId));
     return unusedConstellationName(new Set(siblings.map((sibling) => sibling.name)));
   }
+}
+
+/**
+ * Why a write failed, without the statement: a failed query's own message
+ * quotes its parameters, which here include the tokens' ciphertext.
+ */
+function failureOf(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return String(error);
+  }
+  return error.cause instanceof Error ? error.cause.message : error.message;
 }
 
 /** A name that tells accounts apart: who signed in and on which plan, such as `Ada (Allegretto)`. */

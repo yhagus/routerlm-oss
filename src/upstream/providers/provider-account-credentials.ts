@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
 import { cliIdentityHeaders } from "../models/cli-identity.js";
+import { type OauthLoginEndpoint, oauthLoginEndpointOf } from "../models/oauth-device-grant.js";
 import {
   needsRefresh,
   type OauthLoginLifetime,
@@ -16,11 +17,7 @@ import {
   type ProviderAccountCredential,
 } from "../models/provider-account-credential.js";
 import { storedOauthTokens } from "../models/provider-account.js";
-import {
-  OauthLoginClient,
-  type OauthLoginEndpoint,
-  oauthLoginEndpointOf,
-} from "./oauth-login-client.js";
+import { OauthLoginClient } from "./oauth-login-client.js";
 import { OauthRefreshLock } from "./oauth-refresh-lock.js";
 import { ProviderAccountHealth } from "./provider-account-health.js";
 import { ProviderKeyCipher } from "./provider-key-cipher.js";
@@ -157,6 +154,7 @@ export class ProviderAccountCredentials {
   private async read(providerAccountId: string): Promise<StoredCredential> {
     const [account] = await this.db
       .select({
+        credentialKind: providerAccounts.credentialKind,
         encryptedKey: providerAccounts.encryptedKey,
         encryptedAccessToken: providerAccounts.oauthEncryptedAccessToken,
         encryptedRefreshToken: providerAccounts.oauthEncryptedRefreshToken,
@@ -172,7 +170,10 @@ export class ProviderAccountCredentials {
     if (!account) {
       throw new NotFoundException("Provider Account not found");
     }
-    if (account.encryptedKey !== null) {
+    if (account.credentialKind === "api-key") {
+      if (account.encryptedKey === null) {
+        throw new CredentialUnavailableError("Provider Account holds no credential");
+      }
       return { kind: "api-key", key: this.keyCipher.decrypt(account.encryptedKey) };
     }
     const { encryptedAccessToken, encryptedRefreshToken, expiresAt, region, deviceId } = account;

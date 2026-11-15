@@ -1,4 +1,5 @@
 import { providerAccounts } from "@/db/schemas/index.js";
+import { SECOND_MS } from "@/libs/models/duration.js";
 import type { ProviderKeyCipher } from "../providers/provider-key-cipher.js";
 
 const KEY_HINT_LENGTH = 4;
@@ -59,8 +60,6 @@ type StoredOauthTokens = {
   oauthGrantedAt: Date;
   oauthExpiresAt: Date;
 };
-
-const SECOND_MS = 1000;
 
 /** The columns that store an OAuth Login's tokens, granted at `grantedAt`: both encrypted. */
 export function storedOauthTokens(

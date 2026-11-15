@@ -1,13 +1,21 @@
-import { Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
 import {
   HttpClient,
   HttpClientError,
+  type HttpResponse,
   type HttpRetryOptions,
   InjectHttpClient,
 } from "@nestjs/http-client";
 import { z } from "zod";
-import type { ProviderOauthLogin, OauthRegion } from "@/db/schemas/index.js";
-import { type CliIdentity, cliIdentityHeaders } from "../models/cli-identity.js";
+import { withoutTrailingSlash } from "@/libs/models/url.js";
+import { cliIdentityHeaders } from "../models/cli-identity.js";
+import type {
+  DeviceAuthorization,
+  OauthLoginEndpoint,
+  OauthProfile,
+  TokenPoll,
+  TokenRefresh,
+} from "../models/oauth-device-grant.js";
 import type { OauthTokens } from "../models/provider-account.js";
 
 /** The HTTP client for a Provider's auth host and profile; each request carries its full URL. */
@@ -21,14 +29,11 @@ const DEVICE_CODE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code";
 const REFRESH_GRANT_TYPE = "refresh_token";
 /** The token error (RFC 6749, section 5.2) of a refresh token that is no longer valid. */
 const INVALID_GRANT = "invalid_grant";
-const HTTP_UNAUTHORIZED = 401;
-const HTTP_FORBIDDEN = 403;
 // A refresh is retried on the client's defaults (connection errors, timeouts,
 // 429 and 5xx, with backoff), which leave out POST.
 const REFRESH_RETRY = { attempts: 3, methods: ["POST"] } satisfies HttpRetryOptions;
 /** RFC 8628: what a client waits between polls when the auth host names no interval. */
 const DEFAULT_POLL_INTERVAL_SECONDS = 5;
-const TRAILING_SLASH = /\/$/;
 // The dashboard shows it as a link, so it must not be a `javascript:` URL.
 const webLinkSchema = z.url({ protocol: /^https?$/ });
 
@@ -41,11 +46,17 @@ const deviceAuthorizationSchema = z.object({
   interval: z.number().positive().default(DEFAULT_POLL_INTERVAL_SECONDS),
 });
 
-const grantedTokensSchema = z.object({
-  access_token: z.string().min(1),
-  refresh_token: z.string().min(1),
-  expires_in: z.number().positive(),
-});
+const grantedTokensSchema = z
+  .object({
+    access_token: z.string().min(1),
+    refresh_token: z.string().min(1),
+    expires_in: z.number().positive(),
+  })
+  .transform((granted): OauthTokens => ({
+    accessToken: granted.access_token,
+    refreshToken: granted.refresh_token,
+    expiresInSeconds: granted.expires_in,
+  }));
 
 const tokenErrorSchema = z.object({ error: z.string() });
 
@@ -54,62 +65,6 @@ const profileSchema = z.object({
   email: z.string().nullish(),
   user_level_name: z.string().nullish(),
 });
-
-/** The auth host a sign-in talks to, and how the gateway presents itself there. */
-export interface OauthLoginEndpoint {
-  authHost: string;
-  clientId: string;
-  identity: CliIdentity;
-}
-
-/** The auth host of the region a User's account lives in, from the Provider's data. */
-export function oauthLoginEndpointOf(
-  oauthLogin: ProviderOauthLogin,
-  region: OauthRegion,
-  deviceId: string,
-): OauthLoginEndpoint {
-  return {
-    authHost: oauthLogin.authHosts[region],
-    clientId: oauthLogin.clientId,
-    identity: { cliVersion: oauthLogin.cliVersion, deviceId },
-  };
-}
-
-/** What the auth host hands out to start a device-code sign-in (RFC 8628, section 3.2). */
-export interface DeviceAuthorization {
-  deviceCode: string;
-  userCode: string;
-  verificationUri: string;
-  verificationUriComplete: string | null;
-  expiresInSeconds: number;
-  pollIntervalSeconds: number;
-}
-
-/** What one poll of the token endpoint says about a sign-in (RFC 8628, section 3.5). */
-export type TokenPoll =
-  | { kind: "granted"; tokens: OauthTokens }
-  | { kind: "pending" }
-  /** Still pending, and the auth host wants polls further apart from now on. */
-  | { kind: "slow-down" }
-  | { kind: "denied" }
-  | { kind: "expired" }
-  /** No usable answer (transport failure, 5xx, unknown error): worth another poll. */
-  | { kind: "unanswered"; reason: string };
-
-/** What the token endpoint says to a refresh (RFC 6749, section 6). */
-export type TokenRefresh =
-  | { kind: "refreshed"; tokens: OauthTokens }
-  /** The login is over: the refresh token is invalid, or the auth host answers 401 or 403. */
-  | { kind: "refused"; reason: string }
-  /** No usable answer after the retries (transport failure, 429, 5xx): the login may still be good. */
-  | { kind: "unanswered"; reason: string };
-
-/** Who signed in, as far as the Provider tells. Each field is null when it doesn't. */
-export interface OauthProfile {
-  nickname: string | null;
-  email: string | null;
-  levelName: string | null;
-}
 
 /** The auth host refused to start a sign-in, or could not be reached. */
 export class OauthLoginError extends Error {}
@@ -125,7 +80,7 @@ export class OauthLoginClient {
 
   /** Asks for a device code and the user code that goes with it. Throws OauthLoginError. */
   async authorizeDevice(endpoint: OauthLoginEndpoint): Promise<DeviceAuthorization> {
-    let answer: { status: number; ok: boolean; data: unknown };
+    let answer: HttpResponse;
     try {
       answer = await this.postForm(endpoint, DEVICE_AUTHORIZATION_PATH, {});
     } catch (error) {
@@ -154,7 +109,7 @@ export class OauthLoginClient {
 
   /** Asks once whether the User has approved the device code. Never throws for an HTTP failure. */
   async pollToken(endpoint: OauthLoginEndpoint, deviceCode: string): Promise<TokenPoll> {
-    let answer: { status: number; ok: boolean; data: unknown };
+    let answer: HttpResponse;
     try {
       answer = await this.postForm(endpoint, TOKEN_PATH, {
         device_code: deviceCode,
@@ -168,14 +123,7 @@ export class OauthLoginClient {
     }
     const granted = grantedTokensSchema.safeParse(answer.data);
     if (answer.ok && granted.success) {
-      return {
-        kind: "granted",
-        tokens: {
-          accessToken: granted.data.access_token,
-          refreshToken: granted.data.refresh_token,
-          expiresInSeconds: granted.data.expires_in,
-        },
-      };
+      return { kind: "granted", tokens: granted.data };
     }
     const refusal = tokenErrorSchema.safeParse(answer.data);
     switch (refusal.data?.error) {
@@ -197,7 +145,7 @@ export class OauthLoginClient {
    * replaces the one sent. Never throws for an HTTP failure.
    */
   async refreshTokens(endpoint: OauthLoginEndpoint, refreshToken: string): Promise<TokenRefresh> {
-    let answer: { status: number; ok: boolean; data: unknown };
+    let answer: HttpResponse;
     try {
       answer = await this.postForm(
         endpoint,
@@ -213,19 +161,12 @@ export class OauthLoginClient {
     }
     const granted = grantedTokensSchema.safeParse(answer.data);
     if (answer.ok && granted.success) {
-      return {
-        kind: "refreshed",
-        tokens: {
-          accessToken: granted.data.access_token,
-          refreshToken: granted.data.refresh_token,
-          expiresInSeconds: granted.data.expires_in,
-        },
-      };
+      return { kind: "refreshed", tokens: granted.data };
     }
     const tokenError = tokenErrorSchema.safeParse(answer.data).data?.error;
     const isRefused =
-      answer.status === HTTP_UNAUTHORIZED ||
-      answer.status === HTTP_FORBIDDEN ||
+      answer.status === HttpStatus.UNAUTHORIZED ||
+      answer.status === HttpStatus.FORBIDDEN ||
       tokenError === INVALID_GRANT;
     const reason = tokenError ? `HTTP ${answer.status}, ${tokenError}` : `HTTP ${answer.status}`;
     return { kind: isRefused ? "refused" : "unanswered", reason };
@@ -238,10 +179,9 @@ export class OauthLoginClient {
    */
   async readProfile(baseUrl: string, accessToken: string): Promise<OauthProfile | null> {
     try {
-      const response = await this.http.get(
-        `${baseUrl.replace(TRAILING_SLASH, "")}/${PROFILE_PATH}`,
-        { headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" } },
-      );
+      const response = await this.http.get(`${withoutTrailingSlash(baseUrl)}/${PROFILE_PATH}`, {
+        headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" },
+      });
       const profile = profileSchema.safeParse(response.data);
       if (!profile.success) {
         return null;
@@ -265,8 +205,8 @@ export class OauthLoginClient {
     path: string,
     fields: Record<string, string>,
     retry: HttpRetryOptions | false = false,
-  ): Promise<{ status: number; ok: boolean; data: unknown }> {
-    return this.http.post(`${authHost.replace(TRAILING_SLASH, "")}${path}`, {
+  ): Promise<HttpResponse> {
+    return this.http.post(`${withoutTrailingSlash(authHost)}${path}`, {
       headers: { ...cliIdentityHeaders(identity), accept: "application/json" },
       body: new URLSearchParams({ client_id: clientId, ...fields }),
       throwOnHttpError: false,

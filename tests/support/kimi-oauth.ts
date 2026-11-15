@@ -46,7 +46,8 @@ export function tokenErrorReply(
   return { kind: "json", status: 400, body: { error } };
 }
 
-export function grantedTokensReply(): FakeReply {
+/** The User approved: the tokens, held back `delayMs` when given. */
+export function grantedTokensReply(delayMs?: number): FakeReply {
   return {
     kind: "json",
     status: 200,
@@ -56,6 +57,7 @@ export function grantedTokensReply(): FakeReply {
       expires_in: 900,
       token_type: "Bearer",
     },
+    delayMs,
   };
 }
 

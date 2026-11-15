@@ -1,5 +1,7 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -126,6 +128,19 @@ export const providerAccounts = pgTable(
   },
   (table) => [
     index("provider_accounts_provider_id_priority_idx").on(table.providerId, table.priority),
+    // The credential kind and the filled columns never disagree: an API key
+    // account holds a key and no tokens, an OAuth Login account the reverse.
+    check(
+      "provider_accounts_credential_kind_check",
+      sql`(${table.credentialKind} = 'api-key'
+          and ${table.encryptedKey} is not null
+          and ${table.oauthEncryptedAccessToken} is null
+          and ${table.oauthEncryptedRefreshToken} is null)
+        or (${table.credentialKind} = 'oauth-login'
+          and ${table.encryptedKey} is null
+          and ${table.oauthEncryptedAccessToken} is not null
+          and ${table.oauthEncryptedRefreshToken} is not null)`,
+    ),
   ],
 );
 

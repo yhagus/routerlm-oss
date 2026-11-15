@@ -41,6 +41,8 @@ const POLL_INTERVAL_SECONDS = 0.1;
 const LONG_ENOUGH_SECONDS = 60;
 const WAIT_TIMEOUT_MS = 5_000;
 const WAIT_STEP_MS = 25;
+// Long enough for a dashboard request to finish while the auth host is still answering a poll.
+const GRANT_DELAY_MS = 500;
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
 
 type SignIn = {
@@ -395,6 +397,25 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     );
 
     const started = await startSignIn().expect(201);
+    const signIn = await endedSignIn(started.body.id);
+
+    expect(signIn).toEqual({ id: started.body.id, status: "denied" });
+    expect(await db.select().from(providerAccounts)).toEqual([]);
+  });
+
+  it("ends the sign-in at once when the granted OAuth Login can't be kept, and creates no Provider Account", async () => {
+    // The Provider is deleted while the auth host grants the tokens, so no account can hold them.
+    authHostAnswers(
+      { expiresIn: LONG_ENOUGH_SECONDS, interval: POLL_INTERVAL_SECONDS },
+      grantedTokensReply(GRANT_DELAY_MS),
+    );
+
+    const started = await startSignIn().expect(201);
+    await untilPolled(1);
+    await request(app.getHttpServer())
+      .delete(`/api/providers/${providerId}`)
+      .set("Cookie", cookie)
+      .expect(204);
     const signIn = await endedSignIn(started.body.id);
 
     expect(signIn).toEqual({ id: started.body.id, status: "denied" });

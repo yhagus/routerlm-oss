@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Logger } from "@nestjs/common";
+import { HttpStatus, Logger } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
 import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
@@ -84,7 +84,6 @@ interface AttemptOptions {
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
 const HTTP_OK = 200;
-const HTTP_UNAUTHORIZED = 401;
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 /** Recorded when the client left before any response; nginx's "client closed request". */
 const CLIENT_CLOSED_REQUEST = 499;
@@ -304,7 +303,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         throw error;
       }
       this.logger.warn(
-        `The upstream answered 401 to the OAuth Login of Provider Account ${account.id}; ` +
+        `The Provider answered 401 to the OAuth Login of Provider Account ${account.id}; ` +
           "refreshing it and trying once more",
       );
       meter.attemptFailed(error);
@@ -502,7 +501,7 @@ function isRejectedOauthLogin(
   return (
     account.credential.kind === "oauth-login" &&
     error instanceof AttemptFailedError &&
-    error.upstreamStatus === HTTP_UNAUTHORIZED
+    error.upstreamStatus === HttpStatus.UNAUTHORIZED
   );
 }
 

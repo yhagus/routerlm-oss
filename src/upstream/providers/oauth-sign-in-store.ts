@@ -1,6 +1,7 @@
-import { Injectable, ServiceUnavailableException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import type { Redis } from "ioredis";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
+import { signInNeedsRedis } from "../models/oauth-sign-in.js";
 import {
   type StoredOauthSignIn,
   storedOauthSignInSchema,
@@ -32,7 +33,7 @@ export class OauthSignInStore {
     try {
       await this.redis.set(SIGN_IN_KEY_PREFIX + signInId, JSON.stringify(signIn), "PX", lifetimeMs);
     } catch (error) {
-      throw unreachable(error);
+      throw signInNeedsRedis(error);
     }
   }
 
@@ -42,17 +43,11 @@ export class OauthSignInStore {
     try {
       stored = await this.redis.get(SIGN_IN_KEY_PREFIX + signInId);
     } catch (error) {
-      throw unreachable(error);
+      throw signInNeedsRedis(error);
     }
     if (stored === null) {
       return null;
     }
     return storedOauthSignInSchema.parse(JSON.parse(stored));
   }
-}
-
-function unreachable(error: unknown): ServiceUnavailableException {
-  return new ServiceUnavailableException("Sign-in needs Redis, which is unreachable", {
-    cause: error,
-  });
 }

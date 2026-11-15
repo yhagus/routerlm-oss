@@ -5,20 +5,18 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { type ProviderOauthLogin, providerAccounts, providers } from "@/db/schemas/index.js";
+import { SECOND_MS } from "@/libs/models/duration.js";
 import { OauthSignInPolling } from "../../jobs/oauth-sign-in-polling.js";
-import type { OauthSignIn } from "../../models/oauth-sign-in.js";
 import {
   type DeviceAuthorization,
-  OauthLoginClient,
-  OauthLoginError,
   type OauthLoginEndpoint,
   oauthLoginEndpointOf,
-} from "../../providers/oauth-login-client.js";
+} from "../../models/oauth-device-grant.js";
+import type { OauthSignIn } from "../../models/oauth-sign-in.js";
+import { OauthLoginClient, OauthLoginError } from "../../providers/oauth-login-client.js";
 import { OauthSignInStore } from "../../providers/oauth-sign-in-store.js";
 import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
 import { StartOauthSignInCommand } from "../impl/start-oauth-sign-in.command.js";
-
-const SECOND_MS = 1000;
 
 @CommandHandler(StartOauthSignInCommand)
 export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignInCommand> {

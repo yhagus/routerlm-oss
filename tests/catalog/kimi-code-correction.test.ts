@@ -1,6 +1,4 @@
-import { cp, mkdtemp, readdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { rm } from "node:fs/promises";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
@@ -8,10 +6,11 @@ import request from "supertest";
 import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "../support/migrations.js";
 import { createTestApp, setUpFirstUser } from "../support/test-app.js";
 
-const MIGRATIONS_FOLDER = "./drizzle";
 const CORRECTION_MIGRATION_SUFFIX = "_correct_kimi_code_base_url_and_context_sizes";
+const OAUTH_LOGIN_OFFER_MIGRATION_SUFFIX = "_offer_kimi_code_oauth_login";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
 // What the Catalog shipped for Kimi Code before the correction.
@@ -25,6 +24,8 @@ type OldKimiCode = {
   quirks?: Record<string, unknown>;
   /** None, as the Catalog shipped it, when not given. */
   quotaReader?: string;
+  /** What an operator set once Providers could hold OAuth Login data; none when not given. */
+  oauthLogin?: Record<string, unknown>;
 };
 type KimiCodeFromApi = {
   id: string;
@@ -38,10 +39,14 @@ type KimiCodeFromApi = {
 describe("Kimi Code correction migration (e2e)", () => {
   const serverUrl = process.env.DATABASE_URL ?? "";
   let migrationsBeforeCorrection: string;
+  let migrationsBeforeOauthLoginOffer: string;
   const opened: { databaseUrl: string; pool: Pool }[] = [];
 
   beforeAll(async () => {
-    migrationsBeforeCorrection = await copyMigrationsBeforeCorrection();
+    migrationsBeforeCorrection = await copyMigrationsBefore(CORRECTION_MIGRATION_SUFFIX);
+    migrationsBeforeOauthLoginOffer = await copyMigrationsBefore(
+      OAUTH_LOGIN_OFFER_MIGRATION_SUFFIX,
+    );
   });
 
   afterAll(async () => {
@@ -49,13 +54,15 @@ describe("Kimi Code correction migration (e2e)", () => {
       await pool.end();
       await dropDatabase(serverUrl, databaseUrl);
     }
-    if (migrationsBeforeCorrection)
-      await rm(migrationsBeforeCorrection, { recursive: true, force: true });
+    for (const folder of [migrationsBeforeCorrection, migrationsBeforeOauthLoginOffer]) {
+      if (folder) await rm(folder, { recursive: true, force: true });
+    }
   });
 
   /**
    * Upgrades an install that holds `oldKimiCode`: migrates a database up to the
-   * correction, inserts the Provider, then applies the remaining migrations.
+   * correction, inserts the Provider, then applies the remaining migrations
+   * (pausing where an operator could first set its OAuth Login data, to set it).
    * Returns the upgraded database and the Provider's id.
    */
   async function upgradeInstallHolding(
@@ -67,6 +74,13 @@ describe("Kimi Code correction migration (e2e)", () => {
     const db = drizzle({ client: pool, relations });
     await migrate(db, { migrationsFolder: migrationsBeforeCorrection });
     const providerId = await insertKimiCode(pool, oldKimiCode);
+    if (oldKimiCode.oauthLogin !== undefined) {
+      await migrate(db, { migrationsFolder: migrationsBeforeOauthLoginOffer });
+      await pool.query(`update providers set oauth_login = $1 where id = $2`, [
+        JSON.stringify(oldKimiCode.oauthLogin),
+        providerId,
+      ]);
+    }
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
     return { db, providerId };
   }
@@ -156,6 +170,23 @@ describe("Kimi Code correction migration (e2e)", () => {
     });
     expect(kimiCode.oauthLogin).toEqual(await catalogKimiCodeOauthLogin());
   });
+
+  it("keeps OAuth Login data the operator set", async () => {
+    const operatorOauthLogin = {
+      authHosts: { global: "https://auth.kimi-proxy.example", china: "https://auth.kimi.com" },
+      clientId: "client-id-the-operator-set",
+      cliVersion: "3.0.0",
+    };
+    const { db } = await upgradeInstallHolding({
+      baseUrl: OLD_BASE_URL,
+      contextSizes: {},
+      oauthLogin: operatorOauthLogin,
+    });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode.oauthLogin).toEqual(operatorOauthLogin);
+  });
 });
 
 /** The OAuth Login data today's Catalog ships for Kimi Code. */
@@ -170,24 +201,6 @@ async function catalogKimiCodeQuirks(): Promise<Record<string, unknown>> {
   const kimiCode = catalog.find((provider) => provider.slug === "kimi-code");
   if (!kimiCode) throw new Error("the Catalog has no Kimi Code Provider");
   return kimiCode.quirks;
-}
-
-/** Copies every migration that precedes the correction into a temporary folder. */
-async function copyMigrationsBeforeCorrection(): Promise<string> {
-  const migrationNames = (await readdir(MIGRATIONS_FOLDER)).sort();
-  const correctionIndex = migrationNames.findIndex((name) =>
-    name.endsWith(CORRECTION_MIGRATION_SUFFIX),
-  );
-  if (correctionIndex === -1) {
-    throw new Error(
-      `no migration ending in ${CORRECTION_MIGRATION_SUFFIX} in ${MIGRATIONS_FOLDER}`,
-    );
-  }
-  const folder = await mkdtemp(join(tmpdir(), "routerlm-migrations-"));
-  for (const name of migrationNames.slice(0, correctionIndex)) {
-    await cp(join(MIGRATIONS_FOLDER, name), join(folder, name), { recursive: true });
-  }
-  return folder;
 }
 
 /** The Kimi Code Provider as the seeder created it before the correction. Returns its id. */
