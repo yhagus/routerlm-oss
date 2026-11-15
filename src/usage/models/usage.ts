@@ -37,22 +37,22 @@ export interface UsageLogPage {
 }
 
 /**
- * The requests, tokens and Cost of one Model or API Key. `id` and `name` are
- * null for logs whose Model or API Key is gone, or never existed (a request
- * refused before either was known). Unreported tokens and unknown Costs count as 0.
+ * One summary of the Usage Logs matching the filters. The status counts follow
+ * the status filter's definitions. Unreported tokens and unknown Costs count as 0.
+ * A percentile is null when no matching log has that measurement.
  */
-export interface UsageTotal {
-  id: string | null;
-  name: string | null;
+export interface UsageSummary {
   requestCount: number;
+  succeededCount: number;
+  failedCount: number;
+  cancelledCount: number;
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
   cacheWriteTokens: number;
   cost: number;
-}
-
-export interface UsageTotals {
-  byModel: UsageTotal[];
-  byApiKey: UsageTotal[];
+  durationMsP50: number | null;
+  durationMsP95: number | null;
+  timeToFirstTokenMsP50: number | null;
+  timeToFirstTokenMsP95: number | null;
 }

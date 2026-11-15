@@ -1,4 +1,4 @@
-import { and, eq, gte, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
 import { usageLogs } from "@/db/schemas/index.js";
 import type { UsageFilter, UsageStatus } from "../schemas/usage.schema.js";
 
@@ -9,11 +9,25 @@ export function whereFilter(filter: UsageFilter): SQL | undefined {
   return and(
     filter.from === undefined ? undefined : gte(usageLogs.createdAt, filter.from),
     filter.to === undefined ? undefined : lt(usageLogs.createdAt, filter.to),
-    filter.modelId === undefined ? undefined : eq(usageLogs.modelId, filter.modelId),
-    filter.apiKeyId === undefined ? undefined : eq(usageLogs.apiKeyId, filter.apiKeyId),
-    filter.status === undefined ? undefined : statusCondition(filter.status),
-    filter.isPlayground === undefined ? undefined : eq(usageLogs.isPlayground, filter.isPlayground),
+    filter.modelId === undefined ? undefined : inArray(usageLogs.modelId, filter.modelId),
+    callerCondition(filter),
+    filter.status === undefined ? undefined : or(...filter.status.map(statusCondition)),
   );
+}
+
+/**
+ * Who sent the request. The Usage page's API Key filter offers the Playground beside the
+ * real keys, so picking both means either: listed keys OR the Playground.
+ */
+function callerCondition({ apiKeyId, isPlayground }: UsageFilter): SQL | undefined {
+  const listedKeysCondition =
+    apiKeyId === undefined ? undefined : inArray(usageLogs.apiKeyId, apiKeyId);
+  if (isPlayground === undefined) return listedKeysCondition;
+  const playgroundCondition = eq(usageLogs.isPlayground, isPlayground);
+  if (listedKeysCondition === undefined) return playgroundCondition;
+  return isPlayground
+    ? or(listedKeysCondition, playgroundCondition)
+    : and(listedKeysCondition, playgroundCondition);
 }
 
 export function statusCondition(status: UsageStatus): SQL | undefined {

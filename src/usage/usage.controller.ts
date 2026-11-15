@@ -1,9 +1,9 @@
 import { Get, Query } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import type { UsageLogPage, UsageTotals } from "./models/usage.js";
+import type { UsageLogPage, UsageSummary } from "./models/usage.js";
 import { ListUsageLogsQuery } from "./queries/impl/list-usage-logs.query.js";
-import { TotalUsageQuery } from "./queries/impl/total-usage.query.js";
+import { SummarizeUsageQuery } from "./queries/impl/summarize-usage.query.js";
 import {
   type UsageFilter,
   usageFilterSchema,
@@ -11,7 +11,7 @@ import {
   usagePageQuerySchema,
 } from "./schemas/usage.schema.js";
 
-/** The Usage page: Usage Logs and their totals, filtered. Only a User's session gets in. */
+/** The Usage page: Usage Logs and their summary, filtered. Only a User's session gets in. */
 @DashboardController("usage")
 export class UsageController {
   constructor(private readonly queryBus: QueryBus) {}
@@ -23,9 +23,9 @@ export class UsageController {
     return this.queryBus.execute(new ListUsageLogsQuery(query));
   }
 
-  /** Totals by Model and by API Key over the same filters as the list. */
+  /** One summary over the same filters as the list. */
   @Get("totals")
-  totalUsage(@Query({ schema: usageFilterSchema }) filter: UsageFilter): Promise<UsageTotals> {
-    return this.queryBus.execute(new TotalUsageQuery(filter));
+  summarizeUsage(@Query({ schema: usageFilterSchema }) filter: UsageFilter): Promise<UsageSummary> {
+    return this.queryBus.execute(new SummarizeUsageQuery(filter));
   }
 }

@@ -1,0 +1,59 @@
+import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
+import { InjectDrizzle } from "@nestjs/drizzle";
+import { count, type SQL, sql } from "drizzle-orm";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import type { Database } from "@/db/schemas/relations.js";
+import { usageLogs } from "@/db/schemas/index.js";
+import type { UsageSummary } from "../../models/usage.js";
+import { statusCondition, whereFilter } from "../../models/usage-filters.js";
+import type { UsageStatus } from "../../schemas/usage.schema.js";
+import { SummarizeUsageQuery } from "../impl/summarize-usage.query.js";
+
+const MEDIAN = 0.5;
+const P95 = 0.95;
+
+/** Every count, sum and percentile runs in one aggregate query. */
+@QueryHandler(SummarizeUsageQuery)
+export class SummarizeUsageHandler implements IQueryHandler<SummarizeUsageQuery> {
+  constructor(@InjectDrizzle() private readonly db: Database) {}
+
+  async execute({ filter }: SummarizeUsageQuery): Promise<UsageSummary> {
+    const [summary] = await this.db
+      .select({
+        requestCount: count(),
+        succeededCount: countWithStatus("succeeded"),
+        failedCount: countWithStatus("failed"),
+        cancelledCount: countWithStatus("cancelled"),
+        inputTokens: summed(usageLogs.inputTokens),
+        outputTokens: summed(usageLogs.outputTokens),
+        cacheReadTokens: summed(usageLogs.cacheReadTokens),
+        cacheWriteTokens: summed(usageLogs.cacheWriteTokens),
+        cost: summed(usageLogs.cost),
+        durationMsP50: percentile(MEDIAN, usageLogs.durationMs),
+        durationMsP95: percentile(P95, usageLogs.durationMs),
+        timeToFirstTokenMsP50: percentile(MEDIAN, usageLogs.timeToFirstTokenMs),
+        timeToFirstTokenMsP95: percentile(P95, usageLogs.timeToFirstTokenMs),
+      })
+      .from(usageLogs)
+      .where(whereFilter(filter));
+    return summary;
+  }
+}
+
+function countWithStatus(status: UsageStatus): SQL<number> {
+  return sql<number>`count(*) filter (where ${statusCondition(status)})`.mapWith(Number);
+}
+
+/** The sum of a nullable column; nulls (unreported, unknown) count as 0. */
+function summed(column: AnyPgColumn): SQL<number> {
+  return sql<number>`coalesce(sum(${column}), 0)`.mapWith(Number);
+}
+
+/** The interpolated percentile of a column's non-null values, or null when it has none. */
+function percentile(fraction: number, column: AnyPgColumn): SQL<number | null> {
+  return sql<
+    number | null
+  >`percentile_cont(${sql.raw(String(fraction))}) within group (order by ${column})`.mapWith(
+    Number,
+  );
+}

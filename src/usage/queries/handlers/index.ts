@@ -1,4 +1,4 @@
 import { ListUsageLogsHandler } from "./list-usage-logs.handler.js";
-import { TotalUsageHandler } from "./total-usage.handler.js";
+import { SummarizeUsageHandler } from "./summarize-usage.handler.js";
 
-export const QueryHandlers = [ListUsageLogsHandler, TotalUsageHandler];
+export const QueryHandlers = [ListUsageLogsHandler, SummarizeUsageHandler];

@@ -50,7 +50,13 @@ const providerAccountFieldsSchema = z.strictObject({
   isEnabled: z.boolean(),
 });
 
+/** A missing or blank `name` leaves it to CreateProviderAccountCommand to generate one. */
 export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
+  name: z
+    .string()
+    .trim()
+    .transform((name) => name || undefined)
+    .optional(),
   providerId: z.uuid(),
   priority: z.int().nonnegative().optional(),
   isEnabled: z.boolean().optional(),
