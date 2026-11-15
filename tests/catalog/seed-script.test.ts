@@ -1,10 +1,11 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { type Database, relations } from "@/db/schemas/relations.js";
-import { providers } from "@/db/schemas/index.js";
+import { providers, upstreamModels } from "@/db/schemas/index.js";
 import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
 
 const runFile = promisify(execFile);
@@ -53,4 +54,24 @@ describe("db:seed script (e2e)", () => {
     },
     SEED_TIMEOUT_MS,
   );
+
+  it("seeds Kimi Code on api.kimi.com with the context sizes Kimi serves", async () => {
+    const [kimiCode] = await db.select().from(providers).where(eq(providers.slug, "kimi-code"));
+    const kimiCodeModels = await db
+      .select({ id: upstreamModels.upstreamModelId, contextSize: upstreamModels.contextSize })
+      .from(upstreamModels)
+      .where(eq(upstreamModels.providerId, kimiCode?.id ?? ""));
+
+    expect(kimiCode?.baseUrl).toBe("https://api.kimi.com/coding/v1");
+    expect(
+      Object.fromEntries(kimiCodeModels.map((model) => [model.id, model.contextSize])),
+    ).toEqual({
+      "k3.1-pro": 262144,
+      "k3.1-pro-highspeed": 1048576,
+      k3: 262144,
+      "k3-256k": 262144,
+      "kimi-for-coding": 1048576,
+      "kimi-for-coding-highspeed": 262144,
+    });
+  });
 });

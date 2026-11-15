@@ -17,12 +17,16 @@ export interface TestApp {
   db: Database;
 }
 
-/** Boots the whole AppModule against the e2e database, with cheap password hashing. */
-export async function createTestApp(): Promise<TestApp> {
-  const moduleFixture = await Test.createTestingModule({ imports: [AppModule] })
+/**
+ * Boots the whole AppModule with cheap password hashing, against the e2e
+ * database or, when given, against `database` (whose connection the caller closes).
+ */
+export async function createTestApp(database?: Database): Promise<TestApp> {
+  const moduleBuilder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(PasswordHasher)
-    .useValue(CHEAP_PASSWORD_HASHER)
-    .compile();
+    .useValue(CHEAP_PASSWORD_HASHER);
+  if (database) moduleBuilder.overrideProvider(getDrizzleToken()).useValue(database);
+  const moduleFixture = await moduleBuilder.compile();
   const app = moduleFixture.createNestApplication<NestNodeApplication>(new NodeAdapter());
   configureApp(app);
   await app.init();

@@ -1,0 +1,162 @@
+import { cp, mkdtemp, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { Pool } from "pg";
+import request from "supertest";
+import { type Database, relations } from "@/db/schemas/relations.js";
+import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
+import { createTestApp, setUpFirstUser } from "../support/test-app.js";
+
+const MIGRATIONS_FOLDER = "./drizzle";
+const CORRECTION_MIGRATION_SUFFIX = "_correct_kimi_code_base_url_and_context_sizes";
+const OPERATOR = { email: "ops@example.com", password: "ops password" };
+
+// What the Catalog shipped for Kimi Code before the correction.
+const OLD_BASE_URL = "https://api.kimi.ai/coding/v1";
+const OLD_CONTEXT_SIZE = 1048576;
+
+type OldKimiCode = { baseUrl: string; contextSizes: Record<string, number> };
+type KimiCodeFromApi = { id: string; baseUrl: string; contextSizes: Record<string, number> };
+
+describe("Kimi Code correction migration (e2e)", () => {
+  const serverUrl = process.env.DATABASE_URL ?? "";
+  let migrationsBeforeCorrection: string;
+  const opened: { databaseUrl: string; pool: Pool }[] = [];
+
+  beforeAll(async () => {
+    migrationsBeforeCorrection = await copyMigrationsBeforeCorrection();
+  });
+
+  afterAll(async () => {
+    for (const { pool, databaseUrl } of opened) {
+      await pool.end();
+      await dropDatabase(serverUrl, databaseUrl);
+    }
+    if (migrationsBeforeCorrection)
+      await rm(migrationsBeforeCorrection, { recursive: true, force: true });
+  });
+
+  /**
+   * Upgrades an install that holds `oldKimiCode`: migrates a database up to the
+   * correction, inserts the Provider, then applies the remaining migrations.
+   * Returns the upgraded database and the Provider's id.
+   */
+  async function upgradeInstallHolding(
+    oldKimiCode: OldKimiCode,
+  ): Promise<{ db: Database; providerId: string }> {
+    const databaseUrl = await createEmptyDatabase(serverUrl, "kimi_code_correction");
+    const pool = new Pool({ connectionString: databaseUrl });
+    opened.push({ databaseUrl, pool });
+    const db = drizzle({ client: pool, relations });
+    await migrate(db, { migrationsFolder: migrationsBeforeCorrection });
+    const providerId = await insertKimiCode(pool, oldKimiCode);
+    await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+    return { db, providerId };
+  }
+
+  it("moves an untouched Kimi Code Provider to the new base URL and context sizes", async () => {
+    const { db, providerId } = await upgradeInstallHolding({
+      baseUrl: OLD_BASE_URL,
+      contextSizes: {
+        "k3.1-pro": OLD_CONTEXT_SIZE,
+        "k3.1-pro-highspeed": OLD_CONTEXT_SIZE,
+        k3: OLD_CONTEXT_SIZE,
+      },
+    });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode).toEqual({
+      id: providerId,
+      baseUrl: "https://api.kimi.com/coding/v1",
+      contextSizes: { "k3.1-pro": 262144, "k3.1-pro-highspeed": 1048576, k3: 262144 },
+    });
+  });
+
+  it("keeps a base URL and a context size the operator edited", async () => {
+    const { db } = await upgradeInstallHolding({
+      baseUrl: "https://kimi-proxy.example/coding/v1",
+      contextSizes: { "k3.1-pro": 524288, k3: OLD_CONTEXT_SIZE },
+    });
+
+    const kimiCode = await readKimiCodeThroughApi(db);
+
+    expect(kimiCode).toMatchObject({
+      baseUrl: "https://kimi-proxy.example/coding/v1",
+      contextSizes: { "k3.1-pro": 524288, k3: 262144 },
+    });
+  });
+});
+
+/** Copies every migration that precedes the correction into a temporary folder. */
+async function copyMigrationsBeforeCorrection(): Promise<string> {
+  const migrationNames = (await readdir(MIGRATIONS_FOLDER)).sort();
+  const correctionIndex = migrationNames.findIndex((name) =>
+    name.endsWith(CORRECTION_MIGRATION_SUFFIX),
+  );
+  if (correctionIndex === -1) {
+    throw new Error(
+      `no migration ending in ${CORRECTION_MIGRATION_SUFFIX} in ${MIGRATIONS_FOLDER}`,
+    );
+  }
+  const folder = await mkdtemp(join(tmpdir(), "routerlm-migrations-"));
+  for (const name of migrationNames.slice(0, correctionIndex)) {
+    await cp(join(MIGRATIONS_FOLDER, name), join(folder, name), { recursive: true });
+  }
+  return folder;
+}
+
+/** The Kimi Code Provider as the seeder created it before the correction. Returns its id. */
+async function insertKimiCode(pool: Pool, { baseUrl, contextSizes }: OldKimiCode): Promise<string> {
+  // Plain SQL: Drizzle names every column of today's schema in an insert,
+  // and later migrations may add columns this database doesn't have yet.
+  const { rows } = await pool.query<{ id: string }>(
+    `insert into providers (slug, name, protocol, base_url, auth_style, quirks, is_from_catalog)
+     values ('kimi-code', 'Kimi Code', 'openai-chat', $1, 'bearer', '{}', true)
+     returning id`,
+    [baseUrl],
+  );
+  const providerId = rows[0]?.id;
+  if (providerId === undefined) throw new Error("the Kimi Code Provider was not inserted");
+
+  for (const [upstreamModelId, contextSize] of Object.entries(contextSizes)) {
+    await pool.query(
+      `insert into upstream_models (provider_id, upstream_model_id, context_size)
+       values ($1, $2, $3)`,
+      [providerId, upstreamModelId, contextSize],
+    );
+  }
+  return providerId;
+}
+
+/** Boots the gateway on the database and reads Kimi Code as the dashboard API returns it. */
+async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
+  const { app } = await createTestApp(db);
+  try {
+    const cookie = await setUpFirstUser(app, OPERATOR);
+    const server = app.getHttpServer();
+    const providers = await request(server).get("/api/providers").set("Cookie", cookie).expect(200);
+    const upstreamModels = await request(server)
+      .get("/api/upstream-models")
+      .set("Cookie", cookie)
+      .expect(200);
+
+    const providerRows: { id: string; slug: string; baseUrl: string }[] = providers.body;
+    const upstreamModelRows: { upstreamModelId: string; contextSize: number }[] =
+      upstreamModels.body;
+    const kimiCode = providerRows.find((provider) => provider.slug === "kimi-code");
+    if (!kimiCode) throw new Error("the API lists no Kimi Code Provider");
+
+    return {
+      id: kimiCode.id,
+      baseUrl: kimiCode.baseUrl,
+      contextSizes: Object.fromEntries(
+        upstreamModelRows.map((model) => [model.upstreamModelId, model.contextSize]),
+      ),
+    };
+  } finally {
+    await app.close();
+  }
+}
