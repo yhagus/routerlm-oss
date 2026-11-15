@@ -8,7 +8,12 @@ import type { Database } from "@/db/schemas/relations.js";
 import { attempts, upstreamModels, usageLogs } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { addProviderAccount, insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
+import {
+  addProviderAccount,
+  insertApiKey,
+  insertOpenAiChatModel,
+  setProviderQuirks,
+} from "../support/inference.js";
 import { portOf } from "../support/port-of.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
@@ -46,6 +51,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
   let modelId: string;
   let routeId: string;
   let providerId: string;
+  let firstAccountId: string;
   let upstreamModelId: string;
 
   beforeAll(async () => {
@@ -62,7 +68,12 @@ describe("Usage Logs and Attempts (e2e)", () => {
     // The previous test's job must not land after the tables are emptied.
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
-    ({ modelId, routeId, providerId } = await insertOpenAiChatModel(app, db, {
+    ({
+      modelId,
+      routeId,
+      providerId,
+      providerAccountId: firstAccountId,
+    } = await insertOpenAiChatModel(app, db, {
       modelName: "smart",
       baseUrl: upstream.baseUrl,
     }));
@@ -312,6 +323,41 @@ describe("Usage Logs and Attempts (e2e)", () => {
         failureReason: null,
       }),
     ]);
+  });
+
+  it("records a Provider Account skipped as Exhausted as an Attempt with no upstream call", async () => {
+    const secondAccountId = await addProviderAccount(app, db, providerId, {
+      key: "sk-second-account",
+      priority: 1,
+    });
+    await setProviderQuirks(app, db, providerId, { exhaustedErrorCodes: [2056] });
+    const answer = JSON.parse(openAiChatFixture("upstream-response-tool-call.json"));
+    // The first request's refusal makes the first account Exhausted.
+    upstream.reply({
+      kind: "json",
+      status: 429,
+      body: { base_resp: { status_code: 2056, status_msg: "usage limit exceeded" } },
+    });
+    upstream.reply({ kind: "json", status: 200, body: answer });
+    await chat(CHAT_REQUEST).expect(200);
+    await writtenUsageLog();
+    await db.delete(usageLogs);
+    upstream.reply({ kind: "json", status: 200, body: answer });
+
+    await chat(CHAT_REQUEST).expect(200);
+
+    const written = await writtenUsageLog();
+    expect(written.usageLog).toMatchObject({ providerAccountId: secondAccountId });
+    expect(written.attempts).toEqual([
+      expect.objectContaining({
+        providerAccountId: firstAccountId,
+        upstreamStatus: null,
+        failureReason: "exhausted",
+        durationMs: 0,
+      }),
+      expect.objectContaining({ providerAccountId: secondAccountId, failureReason: null }),
+    ]);
+    expect(upstream.requests).toHaveLength(3);
   });
 
   it("flags a stream the client left as cancelled", async () => {

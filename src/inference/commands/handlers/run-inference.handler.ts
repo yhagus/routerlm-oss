@@ -144,8 +144,23 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     const enabledAccountIds = enabledProviderAccountIdsOf(routes);
     const cooldowns = await this.cooldowns.cooldowns(enabledAccountIds);
     const skippedAccountIds = new Set(cooldowns.keys());
+    const recordedExhaustedAccountIds = new Set<string>();
     const failures: AttemptFailedError[] = [];
-    const targets = attemptTargets(routes, (account) => skippedAccountIds.has(account.id));
+    const targets = attemptTargets(routes, (target) => {
+      const accountId = target.providerAccount.id;
+      if (!skippedAccountIds.has(accountId)) {
+        return false;
+      }
+      // Recorded once, even when the account comes up again on a later Route.
+      if (
+        cooldowns.get(accountId)?.cause === "exhausted" &&
+        !recordedExhaustedAccountIds.has(accountId)
+      ) {
+        recordedExhaustedAccountIds.add(accountId);
+        meter.attemptSkippedAsExhausted(target);
+      }
+      return true;
+    });
     for (const target of targets) {
       if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
         break;

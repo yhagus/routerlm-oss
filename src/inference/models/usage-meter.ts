@@ -100,6 +100,22 @@ export class UsageMeter {
     };
   }
 
+  /**
+   * Fallback skipped the target's Provider Account as Exhausted. Recorded as
+   * an Attempt without an upstream call (no status, no duration), so the
+   * Usage Log shows why the account did not serve the request.
+   */
+  attemptSkippedAsExhausted({ route, providerAccount }: AttemptTarget): void {
+    this.attempts.push({
+      startedAt: new Date().toISOString(),
+      routeId: route.id,
+      providerAccountId: providerAccount.id,
+      upstreamStatus: null,
+      failureReason: "exhausted",
+      durationMs: 0,
+    });
+  }
+
   /** The upstream answered: the whole response, or a stream's first event. */
   attemptAnswered(): void {
     if (!this.openAttempt) {
