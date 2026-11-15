@@ -8,6 +8,7 @@ import request from "supertest";
 import { AppModule } from "@/app.module.js";
 import { configureApp } from "@/configure-app.js";
 import type { Database } from "@/db/schemas/relations.js";
+import { truncateTables } from "./truncate.js";
 
 // The production cost (logN 17) takes ~128 MiB and a noticeable time per hash.
 const CHEAP_PASSWORD_HASHER = new PasswordHasher({ logN: 10 });
@@ -35,7 +36,7 @@ export async function createTestApp(database?: Database): Promise<TestApp> {
 
 /** Deletes every User, and with them their sessions. */
 export async function deleteAllUsers(db: Database): Promise<void> {
-  await db.execute(sql`truncate table users cascade`);
+  await truncateTables(db, sql.raw("users"));
 }
 
 /** The `name=value` pair of the session cookie a response set, to send back as a `Cookie` header. */
