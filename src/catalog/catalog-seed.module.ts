@@ -6,7 +6,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { type Env, envSchema } from "@/config/schemas/env.schema.js";
 import { relations } from "@/db/schemas/relations.js";
 import { LibsModule } from "@/libs/libs.module.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
+import { CatalogModule } from "./catalog.module.js";
 
 // Seeding needs only the database, so it doesn't demand REDIS_URL and the
 // other variables the API process validates.
@@ -26,7 +26,7 @@ const seedEnvSchema = envSchema.pick({ DATABASE_URL: true });
       }),
     }),
     LibsModule,
+    CatalogModule,
   ],
-  providers: [...CommandHandlers],
 })
 export class CatalogSeedModule {}

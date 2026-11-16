@@ -2,12 +2,16 @@ import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 
 /**
- * Creates an empty database named `<prefix>_<random>` on the server
- * `serverUrl` points at, so parallel runs never see each other's rows.
- * Returns its URL.
+ * Creates an empty database named `<prefix>_<random>` (plus `suffix`, for a
+ * script that checks the name) on the server `serverUrl` points at, so
+ * parallel runs never see each other's rows. Returns its URL.
  */
-export async function createEmptyDatabase(serverUrl: string, prefix: string): Promise<string> {
-  const name = `${prefix}_${randomUUID().replaceAll("-", "")}`;
+export async function createEmptyDatabase(
+  serverUrl: string,
+  prefix: string,
+  suffix = "",
+): Promise<string> {
+  const name = `${prefix}_${randomUUID().replaceAll("-", "")}${suffix}`;
   const admin = new Client({ connectionString: serverUrl });
   await admin.connect();
   await admin.query(`CREATE DATABASE "${name}"`);
