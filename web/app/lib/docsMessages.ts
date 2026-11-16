@@ -59,7 +59,7 @@ export const DOCS_MESSAGES: Record<DocsLocale, Record<DocsMessageKey, string>> =
   en: ENGLISH_MESSAGES,
   id: {
     docs: "Dokumentasi",
-    clientApi: "API Klien",
+    clientApi: "API Client",
     contents: "Daftar isi",
     openContents: "Buka daftar isi",
     closeContents: "Tutup daftar isi",
@@ -97,10 +97,10 @@ export const DOCS_MESSAGES: Record<DocsLocale, Record<DocsMessageKey, string>> =
     sectionLinkCopied: "Tautan ke bagian ini tersalin",
     previousAndNextPage: "Halaman sebelumnya dan berikutnya",
     previous: "Sebelumnya",
-    continuedOn: "Bersambung ke",
+    continuedOn: "Selanjutnya",
     loading: "Memuat…",
     loadFailed: "Halaman ini tidak dapat dimuat. Muat ulang untuk mencoba lagi.",
     notFound: "Tidak ada halaman dokumentasi di alamat ini.",
-    goToOverview: "Buka ikhtisar",
+    goToOverview: "Buka Pengantar",
   },
 };
