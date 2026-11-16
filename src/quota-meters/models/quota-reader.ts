@@ -1,4 +1,5 @@
 import { HttpClientError, HttpResponseError, HttpTimeoutError } from "@nestjs/http-client";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { QuotaMeterReading } from "./quota-meter.js";
 
 /**
@@ -7,10 +8,14 @@ import type { QuotaMeterReading } from "./quota-meter.js";
  */
 export interface QuotaReader {
   /**
-   * @param bearerCredential What the Provider Account authenticates with:
-   *   its API key, or its OAuth Login's access token.
+   * @param credential What the Provider Account authenticates with: its API
+   *   key, or its OAuth Login's access token and CLI identity headers. A
+   *   reader sends the identity headers only when its endpoint wants them.
    */
-  read(bearerCredential: string, provider: QuotaReaderProvider): Promise<QuotaMeterReading[]>;
+  read(
+    credential: ProviderAccountCredential,
+    provider: QuotaReaderProvider,
+  ): Promise<QuotaMeterReading[]>;
 }
 
 /** What a reader may build its quota endpoint's URL from; each reader uses one of the two. */

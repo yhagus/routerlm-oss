@@ -10,8 +10,10 @@
     "alwaysStreams": true,
     "includesEncryptedReasoning": true,
     "systemAsDeveloperMessage": true,
-    "droppedParameters": ["temperature", "top_p", "max_output_tokens"]
+    "droppedParameters": ["temperature", "top_p", "max_output_tokens"],
+    "exhaustedErrorCodes": ["usage_limit_reached"]
   },
+  "quotaReader": "openai-codex",
   "serviceTierValues": {
     "fast": "priority",
     "flex": "flex"

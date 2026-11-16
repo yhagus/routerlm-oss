@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
 import { withoutTrailingSlash } from "@/libs/models/url.js";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { QuotaMeterReading } from "../models/quota-meter.js";
 import {
   asQuotaReadError,
@@ -74,7 +75,7 @@ export class KimiCodeQuotaReader implements QuotaReader {
   constructor(@InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient) {}
 
   async read(
-    bearerCredential: string,
+    { secret: bearerCredential }: ProviderAccountCredential,
     { baseUrl }: QuotaReaderProvider,
   ): Promise<QuotaMeterReading[]> {
     const body = await this.fetchUsages(bearerCredential, baseUrl);
