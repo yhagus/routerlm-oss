@@ -174,6 +174,25 @@ describe("Provider Accounts (e2e)", () => {
       .expect(404);
   });
 
+  it("refuses an API key for a Provider that accepts only OAuth Login", async () => {
+    const server = app.getHttpServer();
+    await request(server)
+      .patch(`/api/providers/${providerId}`)
+      .set("Cookie", cookie)
+      .send({ credentialKinds: ["oauth-login"] })
+      .expect(200);
+
+    const refused = await request(server)
+      .post("/api/provider-accounts")
+      .set("Cookie", cookie)
+      .send({ providerId, name: "Production", key: PROVIDER_ACCOUNT_KEY })
+      .expect(409);
+
+    expect(refused.body.message).toContain("OAuth Login");
+    const list = await request(server).get("/api/provider-accounts").set("Cookie", cookie);
+    expect(list.body).toEqual([]);
+  });
+
   it("deletes a Provider Account", async () => {
     const server = app.getHttpServer();
     const id = await createAccount();

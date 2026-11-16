@@ -1,0 +1,1 @@
+ALTER TABLE "providers" ADD COLUMN "credential_kinds" text[] DEFAULT '{api-key,oauth-login}'::text[] NOT NULL;

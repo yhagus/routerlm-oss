@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "e330829f-cbc8-456a-9c7f-212499e28d6e",
+  "prevIds": [
+    "4164fba7-7d59-4714-a059-f77bc4b398f2"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "credential_kinds"
+      ],
+      "writes": [
+        "s|col|public.providers.credential_kinds",
+        "n|col|public.providers.credential_kinds",
+        "e|col|public.providers.credential_kinds"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "credential_kinds",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{api-key,oauth-login}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

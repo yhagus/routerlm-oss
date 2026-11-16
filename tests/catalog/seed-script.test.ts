@@ -49,6 +49,7 @@ describe("db:seed script (e2e)", () => {
         "minimax-m-plan",
         "moonshot",
         "openai",
+        "openai-codex",
         "xiaomi-mimo",
       ]);
     },
@@ -72,6 +73,35 @@ describe("db:seed script (e2e)", () => {
       "k3-256k": 262144,
       "kimi-for-coding": 1048576,
       "kimi-for-coding-highspeed": 262144,
+    });
+  });
+  it("seeds OpenAI Codex on the Responses Protocol, accepting only an OAuth Login", async () => {
+    const [codex] = await db.select().from(providers).where(eq(providers.slug, "openai-codex"));
+    const [openAi] = await db.select().from(providers).where(eq(providers.slug, "openai"));
+    const codexModels = await db
+      .select({ id: upstreamModels.upstreamModelId, contextSize: upstreamModels.contextSize })
+      .from(upstreamModels)
+      .where(eq(upstreamModels.providerId, codex?.id ?? ""));
+
+    expect(codex).toMatchObject({
+      protocol: "openai-responses",
+      baseUrl: "https://chatgpt.com/backend-api/codex",
+      credentialKinds: ["oauth-login"],
+    });
+    expect(openAi).toMatchObject({
+      protocol: "openai-chat",
+      credentialKinds: ["api-key", "oauth-login"],
+    });
+    expect(Object.fromEntries(codexModels.map((model) => [model.id, model.contextSize]))).toEqual({
+      "gpt-6-astra": 500000,
+      "gpt-6.1-sol": 500000,
+      "gpt-6.1-terra": 500000,
+      "gpt-6-sol": 272000,
+      "gpt-6-luna": 272000,
+      "gpt-5.6-sol": 272000,
+      "gpt-5.6-terra": 272000,
+      "gpt-5.6-luna": 272000,
+      "gpt-5.5": 272000,
     });
   });
 });
