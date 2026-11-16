@@ -20,6 +20,7 @@ import {
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
 import { dateTimeFormat } from "~/lib/dateFormats";
+import { SERVICE_TIER_LABELS } from "~/lib/parameterPolicy";
 
 useHead({ title: "Usage" });
 
@@ -178,6 +179,7 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: "model", header: "Model" },
   { id: "apiKey", header: "API Key" },
   { id: "status", header: "Status" },
+  { id: "serviceTier", header: "Tier" },
   { id: "inputTokens", header: "Input" },
   { id: "outputTokens", header: "Output" },
   { id: "cacheReadTokens", header: "Cache read" },
@@ -284,6 +286,9 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
           :to="`/error-captures?usageLogId=${log.id}`"
           >Error Captures</NuxtLink
         >
+      </template>
+      <template #cell-serviceTier="{ row: log }">
+        {{ log.serviceTier ? SERVICE_TIER_LABELS[log.serviceTier] : "Default" }}
       </template>
       <template #cell-inputTokens="{ row: log }">
         <span class="tabular">{{ formatCount(log.inputTokens) }}</span>
