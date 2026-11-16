@@ -20,7 +20,7 @@ import {
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
 import { dateTimeFormat } from "~/lib/dateFormats";
-import { SERVICE_TIER_LABELS } from "~/lib/parameterPolicy";
+import { SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/parameterPolicy";
 
 useHead({ title: "Usage" });
 
@@ -51,8 +51,8 @@ function isApiKeyChoice(value: string): value is string {
 
 // Filters
 
-// Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled) so a refresh or a link keeps
-// them. Model, API Key and status are comma-separated lists; a log matches any pick. The DataTable
+// Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled&serviceTier=fast) so a refresh or a link keeps
+// them. Model, API Key, status and tier are comma-separated lists; a log matches any pick. The DataTable
 // holds the search (?q=) and page (?page=) the same way; this page reads them for its requests.
 const timeRange = useQueryParam<TimeRange>("range", { default: "24h", isValid: isTimeRange });
 const modelFilter = useQueryList("model", { isValid: isUuid });
@@ -60,6 +60,10 @@ const apiKeyFilter = useQueryList("key", { isValid: isApiKeyChoice, order: [PLAY
 const statusFilter = useQueryList("status", {
   isValid: oneOf(USAGE_STATUSES),
   order: USAGE_STATUSES,
+});
+const serviceTierFilter = useQueryList("serviceTier", {
+  isValid: oneOf(SERVICE_TIERS),
+  order: SERVICE_TIERS,
 });
 const search = useQuerySearch();
 const page = useQueryPage();
@@ -78,6 +82,7 @@ function clearFilters(): void {
   modelFilter.value = [];
   apiKeyFilter.value = [];
   statusFilter.value = [];
+  serviceTierFilter.value = [];
 }
 
 // The DataTable returns to page 1 when the search or a filter token changes; the time range has no
@@ -118,11 +123,16 @@ const apiKeyOptions = computed(() => {
   return [...known, ...missingOptions(apiKeyFilter.value, known)];
 });
 const statusOptions = USAGE_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] }));
+const serviceTierOptions = SERVICE_TIERS.map((value) => ({
+  value,
+  label: SERVICE_TIER_LABELS[value],
+}));
 
 const activeFilters = computed<ActiveFilter[]>(() => [
   ...listFilterTokens("Model", modelFilter, modelOptions.value),
   ...listFilterTokens("API Key", apiKeyFilter, apiKeyOptions.value),
   ...listFilterTokens("Status", statusFilter, statusOptions),
+  ...listFilterTokens("Tier", serviceTierFilter, serviceTierOptions),
 ]);
 
 /** The picks as one comma-separated param, or none: the backend rejects an empty list. */
@@ -137,6 +147,7 @@ const filterQuery = computed(() => ({
   apiKeyId: listParam(apiKeyFilter.value.filter((value) => value !== PLAYGROUND)),
   isPlayground: apiKeyFilter.value.includes(PLAYGROUND) ? true : undefined,
   status: listParam(statusFilter.value),
+  serviceTier: listParam(serviceTierFilter.value),
   q: search.value.trim() || undefined,
 }));
 
@@ -259,6 +270,16 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
             label="Filter by status"
             placeholder="Any status"
             noun="statuses"
+          />
+        </div>
+        <div class="data-table-filter">
+          <span class="data-table-filter__label" aria-hidden="true">Tier</span>
+          <AppMultiSelect
+            v-model="serviceTierFilter"
+            :options="serviceTierOptions"
+            label="Filter by Service Tier"
+            placeholder="Any tier"
+            noun="tiers"
           />
         </div>
       </template>
