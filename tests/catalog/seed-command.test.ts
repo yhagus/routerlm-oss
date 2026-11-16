@@ -13,6 +13,7 @@ import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.
 const source = { urls: ["https://example.com/pricing"], retrievedOn: "2026-11-15" };
 
 const oauthLogin = {
+  flow: "kimi-code" as const,
   authHosts: { global: "https://auth.example.com", china: "https://auth.example.cn" },
   clientId: "example-cli",
   cliVersion: "1.2.3",

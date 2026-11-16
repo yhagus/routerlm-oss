@@ -84,6 +84,7 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     providerId = await createProvider({
       slug: "kimi-code",
       oauthLogin: {
+        flow: "kimi-code",
         authHosts: { global: globalAuthHost, china: chinaAuthHost },
         clientId: CLIENT_ID,
         cliVersion: CLI_VERSION,
@@ -521,6 +522,7 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     const otherProviderId = await createProvider({
       slug: "other",
       oauthLogin: {
+        flow: "kimi-code",
         authHosts: { global: globalAuthHost, china: chinaAuthHost },
         clientId: CLIENT_ID,
         cliVersion: CLI_VERSION,

@@ -24,6 +24,7 @@
   },
   "quotaReader": "kimi-code",
   "oauthLogin": {
+    "flow": "kimi-code",
     "authHosts": {
       "global": "https://auth.kimi.ai",
       "china": "https://auth.kimi.com"

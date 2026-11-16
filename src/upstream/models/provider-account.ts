@@ -1,5 +1,6 @@
 import { providerAccounts } from "@/db/schemas/index.js";
 import { SECOND_MS } from "@/libs/models/duration.js";
+import type { CodexAccount } from "./openai-codex-tokens.js";
 import type { ProviderKeyCipher } from "../providers/provider-key-cipher.js";
 
 const KEY_HINT_LENGTH = 4;
@@ -38,6 +39,10 @@ export type ProviderAccount = Omit<
   | "oauthGrantedAt"
   | "oauthExpiresAt"
   | "oauthDeviceId"
+  | "oauthEncryptedIdToken"
+  | "oauthAccountId"
+  | "oauthEmail"
+  | "oauthPlanType"
 >;
 
 type StoredKey = { encryptedKey: string; keyLastFour: string };
@@ -52,6 +57,11 @@ export interface OauthTokens {
   accessToken: string;
   refreshToken: string;
   expiresInSeconds: number;
+  /**
+   * OpenAI Codex only: the id_token granted with them and what it says.
+   * Absent from a refresh that returned no id_token, which keeps the stored one.
+   */
+  codexAccount?: CodexAccount;
 }
 
 type StoredOauthTokens = {
@@ -59,18 +69,36 @@ type StoredOauthTokens = {
   oauthEncryptedRefreshToken: string;
   oauthGrantedAt: Date;
   oauthExpiresAt: Date;
+  oauthEncryptedIdToken?: string;
+  oauthAccountId?: string | null;
+  oauthEmail?: string | null;
+  oauthPlanType?: string | null;
 };
 
-/** The columns that store an OAuth Login's tokens, granted at `grantedAt`: both encrypted. */
+/**
+ * The columns that store an OAuth Login's tokens, granted at `grantedAt`:
+ * every token encrypted, and the Codex account the id_token names.
+ */
 export function storedOauthTokens(
   keyCipher: ProviderKeyCipher,
   tokens: OauthTokens,
   grantedAt: Date,
 ): StoredOauthTokens {
-  return {
+  const stored: StoredOauthTokens = {
     oauthEncryptedAccessToken: keyCipher.encrypt(tokens.accessToken),
     oauthEncryptedRefreshToken: keyCipher.encrypt(tokens.refreshToken),
     oauthGrantedAt: grantedAt,
     oauthExpiresAt: new Date(grantedAt.getTime() + tokens.expiresInSeconds * SECOND_MS),
+  };
+  const { codexAccount } = tokens;
+  if (codexAccount === undefined) {
+    return stored;
+  }
+  return {
+    ...stored,
+    oauthEncryptedIdToken: keyCipher.encrypt(codexAccount.idToken),
+    oauthAccountId: codexAccount.accountId,
+    oauthEmail: codexAccount.email,
+    oauthPlanType: codexAccount.planType,
   };
 }

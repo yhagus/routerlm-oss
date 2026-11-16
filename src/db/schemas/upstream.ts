@@ -43,17 +43,35 @@ export type CredentialKind = (typeof CREDENTIAL_KINDS)[number];
 export const OAUTH_REGIONS = ["global", "china"] as const;
 export type OauthRegion = (typeof OAUTH_REGIONS)[number];
 
+/** How a Provider signs in: each flow is code of its own (ADR 0012, 0013). */
+export const OAUTH_LOGIN_FLOWS = ["kimi-code", "openai-codex"] as const;
+export type OauthLoginFlow = (typeof OAUTH_LOGIN_FLOWS)[number];
+
 /**
- * What signing in to a Provider needs (ADR 0012): the device-code flow is
+ * What signing in to Kimi Code needs (ADR 0012): the device-code flow is
  * code, and everything that names the Provider is this data.
  */
-export interface ProviderOauthLogin {
+export interface KimiCodeOauthLogin {
+  flow: "kimi-code";
   /** The auth host of each region, without a path. */
   authHosts: Record<OauthRegion, string>;
   clientId: string;
   /** The version of the Provider's own CLI the gateway presents itself as. */
   cliVersion: string;
 }
+
+/** What signing in to OpenAI Codex as the Codex CLI needs (ADR 0013). It has no regions. */
+export interface OpenAiCodexOauthLogin {
+  flow: "openai-codex";
+  /** The auth host, without a path, such as `https://auth.openai.com`. */
+  issuer: string;
+  clientId: string;
+  /** The version of the Codex CLI the gateway presents itself as. */
+  cliVersion: string;
+}
+
+/** What signing in to a Provider needs, keyed by its flow. */
+export type ProviderOauthLogin = KimiCodeOauthLogin | OpenAiCodexOauthLogin;
 
 /** What a Quota Meter's `used` and `limit` count. */
 export const QUOTA_METER_UNITS = ["percent", "count", "tokens", "usd"] as const;
@@ -118,9 +136,16 @@ export const providerAccounts = pgTable(
     // together they tell its lifetime, which decides when the gateway renews it.
     oauthGrantedAt: at("oauth_granted_at"),
     oauthExpiresAt: at("oauth_expires_at"),
+    // Null for a flow without regions, such as OpenAI Codex.
     oauthRegion: text("oauth_region", { enum: OAUTH_REGIONS }),
     // Generated once for the account and sent with every call made as the Provider's CLI.
     oauthDeviceId: text("oauth_device_id"),
+    // OpenAI Codex only (ADR 0013), null otherwise: the id_token (ciphertext),
+    // and what its claims say. The account id goes on every call to Codex.
+    oauthEncryptedIdToken: text("oauth_encrypted_id_token"),
+    oauthAccountId: text("oauth_account_id"),
+    oauthEmail: text("oauth_email"),
+    oauthPlanType: text("oauth_plan_type"),
     // Lower runs first.
     priority: integer("priority").notNull().default(0),
     isEnabled: boolean("is_enabled").notNull().default(true),

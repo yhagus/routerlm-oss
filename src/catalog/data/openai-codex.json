@@ -12,6 +12,12 @@
     "systemAsDeveloperMessage": true,
     "droppedParameters": ["temperature", "top_p", "max_output_tokens"]
   },
+  "oauthLogin": {
+    "flow": "openai-codex",
+    "issuer": "https://auth.openai.com",
+    "clientId": "app_EMoamEEZ73f0CkXaXp7hrann",
+    "cliVersion": "0.169.0"
+  },
   "credentialKinds": ["oauth-login"],
   "source": {
     "urls": [

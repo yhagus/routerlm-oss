@@ -12,6 +12,7 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const HOUR_SECONDS = 3600;
 
 const OAUTH_LOGIN = {
+  flow: "kimi-code",
   authHosts: { global: "https://auth.acme.example", china: "https://auth.acme.example.cn" },
   clientId: "acme-cli",
   cliVersion: "1.0.0",

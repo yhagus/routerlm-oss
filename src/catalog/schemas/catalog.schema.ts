@@ -3,6 +3,8 @@ import {
   AUTH_STYLES,
   CAPABILITIES,
   CREDENTIAL_KINDS,
+  type KimiCodeOauthLogin,
+  type OpenAiCodexOauthLogin,
   QUOTA_READERS,
   UPSTREAM_PROTOCOLS,
   type UpstreamProtocol,
@@ -137,17 +139,34 @@ export function quirksForeignToProtocol(
 /** A key into the logo set the dashboard owns; the gateway checks only its format. */
 export const providerLogoSchema = z.string().regex(/^[a-z0-9-]+$/);
 
-/**
- * What signing in to the Provider needs, for a Provider that offers OAuth
- * Login (ADR 0012). The device-code flow itself is code.
- */
-export const providerOauthLoginSchema = z.strictObject({
+/** Kimi Code's sign-in (ADR 0012): the auth host of each region a User's account lives in. */
+const kimiCodeOauthLoginSchema = z.strictObject({
+  flow: z.literal("kimi-code"),
   /** The auth host of each region, without a path: a User's account lives in one of them. */
   authHosts: z.strictObject({ global: z.url(), china: z.url() }),
   clientId: z.string().min(1),
   /** The version of the Provider's own CLI the gateway presents itself as. */
   cliVersion: z.string().min(1),
-});
+}) satisfies z.ZodType<KimiCodeOauthLogin>;
+
+/** OpenAI Codex's sign-in as the Codex CLI (ADR 0013): one issuer, no regions. */
+const openAiCodexOauthLoginSchema = z.strictObject({
+  flow: z.literal("openai-codex"),
+  /** The auth host, without a path. */
+  issuer: z.url(),
+  clientId: z.string().min(1),
+  /** The version of the Codex CLI the gateway presents itself as. */
+  cliVersion: z.string().min(1),
+}) satisfies z.ZodType<OpenAiCodexOauthLogin>;
+
+/**
+ * What signing in to the Provider needs, for a Provider that offers OAuth
+ * Login, keyed by its flow. The flow itself is code.
+ */
+export const providerOauthLoginSchema = z.discriminatedUnion("flow", [
+  kimiCodeOauthLoginSchema,
+  openAiCodexOauthLoginSchema,
+]);
 
 /**
  * Where a value came from: the Provider's own pages, or models.dev when they

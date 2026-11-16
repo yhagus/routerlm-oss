@@ -1,0 +1,149 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "f73d0a8f-5247-47db-9e29-901b657a5f36",
+  "prevIds": [
+    "e330829f-cbc8-456a-9c7f-212499e28d6e"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_encrypted_id_token"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_encrypted_id_token",
+        "n|col|public.provider_accounts.oauth_encrypted_id_token",
+        "e|col|public.provider_accounts.oauth_encrypted_id_token"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_account_id"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_account_id",
+        "n|col|public.provider_accounts.oauth_account_id",
+        "e|col|public.provider_accounts.oauth_account_id"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_email"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_email",
+        "n|col|public.provider_accounts.oauth_email",
+        "e|col|public.provider_accounts.oauth_email"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_plan_type"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_plan_type",
+        "n|col|public.provider_accounts.oauth_plan_type",
+        "e|col|public.provider_accounts.oauth_plan_type"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_encrypted_id_token",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_account_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_email",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "oauth_plan_type",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

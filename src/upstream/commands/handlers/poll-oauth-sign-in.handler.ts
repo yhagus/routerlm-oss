@@ -8,7 +8,7 @@ import { SECOND_MS } from "@/libs/models/duration.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { OauthSignInPolling } from "../../jobs/oauth-sign-in-polling.js";
 import { unusedConstellationName } from "../../models/constellation-name.js";
-import { type OauthProfile, oauthLoginEndpointOf } from "../../models/oauth-device-grant.js";
+import { oauthLoginEndpointOf } from "../../models/oauth-device-grant.js";
 import { type OauthTokens, storedOauthTokens } from "../../models/provider-account.js";
 import { OauthLoginClient } from "../../providers/oauth-login-client.js";
 import { OauthRefreshLock } from "../../providers/oauth-refresh-lock.js";
@@ -71,10 +71,15 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       return { status: "denied" };
     }
 
-    const poll = await this.oauthLoginClient.pollToken(
-      oauthLoginEndpointOf(provider.oauthLogin, signIn.region, signIn.deviceId),
-      this.keyCipher.decrypt(signIn.encryptedDeviceCode),
-    );
+    const endpoint = oauthLoginEndpointOf(provider.oauthLogin, signIn.region, signIn.deviceId);
+    if (endpoint === null) {
+      // An operator changed the Provider's sign-in to one with regions mid sign-in.
+      return { status: "denied" };
+    }
+    const poll = await this.oauthLoginClient.pollToken(endpoint, {
+      deviceCode: this.keyCipher.decrypt(signIn.encryptedDeviceCode),
+      userCode: signIn.userCode,
+    });
     switch (poll.kind) {
       case "granted":
         return this.keepLogin(signIn, provider.baseUrl, poll.tokens);
@@ -196,8 +201,8 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     tokens: OauthTokens,
   ): Promise<string> {
     const grantedAt = new Date();
-    const profile = await this.oauthLoginClient.readProfile(baseUrl, tokens.accessToken);
-    const name = profileName(profile) ?? (await this.generateName(signIn.providerId));
+    const name =
+      (await this.signedInName(baseUrl, tokens)) ?? (await this.generateName(signIn.providerId));
     const [created] = await this.db
       .insert(providerAccounts)
       .values({
@@ -211,6 +216,19 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       .returning({ id: providerAccounts.id });
     await this.snapshot.changed();
     return created.id;
+  }
+
+  /**
+   * Who signed in, as the Provider tells: OpenAI Codex in the id_token it
+   * granted, Kimi Code in its profile. Null when it doesn't.
+   */
+  private async signedInName(baseUrl: string, tokens: OauthTokens): Promise<string | null> {
+    const { codexAccount } = tokens;
+    if (codexAccount !== undefined) {
+      return accountName(codexAccount.email, codexAccount.planType);
+    }
+    const profile = await this.oauthLoginClient.readKimiCodeProfile(baseUrl, tokens.accessToken);
+    return accountName(profile?.nickname?.trim() || profile?.email, profile?.levelName);
   }
 
   /** A constellation name no other account of the Provider uses, when the Provider tells no name. */
@@ -235,11 +253,14 @@ function failureOf(error: unknown): string {
 }
 
 /** A name that tells accounts apart: who signed in and on which plan, such as `Ada (Allegretto)`. */
-function profileName(profile: OauthProfile | null): string | null {
-  const who = profile?.nickname?.trim() || profile?.email?.trim();
-  if (!who) {
+function accountName(
+  who: string | null | undefined,
+  plan: string | null | undefined,
+): string | null {
+  const trimmedWho = who?.trim();
+  if (!trimmedWho) {
     return null;
   }
-  const levelName = profile?.levelName?.trim();
-  return levelName ? `${who} (${levelName})` : who;
+  const trimmedPlan = plan?.trim();
+  return trimmedPlan ? `${trimmedWho} (${trimmedPlan})` : trimmedWho;
 }

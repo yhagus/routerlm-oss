@@ -8,11 +8,10 @@ import { CommandHandlers } from "./commands/handlers/index.js";
 import { OauthSignInPolling } from "./jobs/oauth-sign-in-polling.js";
 import { ProviderAccountSignInsController } from "./provider-account-sign-ins.controller.js";
 import { CooldownStore } from "./providers/cooldown-store.js";
-import {
-  OAUTH_LOGIN_HTTP_CLIENT,
-  OAUTH_LOGIN_TIMEOUT_MS,
-  OauthLoginClient,
-} from "./providers/oauth-login-client.js";
+import { KimiCodeLoginClient } from "./providers/kimi-code-login-client.js";
+import { OauthLoginClient } from "./providers/oauth-login-client.js";
+import { OAUTH_LOGIN_HTTP_CLIENT, OAUTH_LOGIN_TIMEOUT_MS } from "./providers/oauth-login-http.js";
+import { OpenAiCodexLoginClient } from "./providers/openai-codex-login-client.js";
 import { OauthRefreshLock } from "./providers/oauth-refresh-lock.js";
 import { OauthSignInStore } from "./providers/oauth-sign-in-store.js";
 import { ProviderAccountCredentials } from "./providers/provider-account-credentials.js";
@@ -51,6 +50,8 @@ import { UpstreamModelsController } from "./upstream-models.controller.js";
   ],
   providers: [
     CooldownStore,
+    KimiCodeLoginClient,
+    OpenAiCodexLoginClient,
     OauthLoginClient,
     OauthRefreshLock,
     OauthSignInStore,
