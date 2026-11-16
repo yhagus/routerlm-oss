@@ -1,6 +1,7 @@
 {
   "slug": "moonshot",
   "name": "Moonshot",
+  "logo": "moonshot",
   "protocol": "openai-chat",
   "baseUrl": "https://api.moonshot.ai/v1",
   "authStyle": "bearer",

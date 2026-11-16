@@ -1,6 +1,7 @@
 {
   "slug": "deepseek",
   "name": "DeepSeek",
+  "logo": "deepseek",
   "protocol": "openai-chat",
   "baseUrl": "https://api.deepseek.com",
   "authStyle": "bearer",

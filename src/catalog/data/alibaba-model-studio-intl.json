@@ -1,6 +1,7 @@
 {
   "slug": "alibaba-model-studio-intl",
   "name": "Alibaba Model Studio (International)",
+  "logo": "alibabacloud",
   "protocol": "openai-chat",
   "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
   "authStyle": "bearer",

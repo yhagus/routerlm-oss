@@ -2,7 +2,11 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { z } from "zod";
-import { type CatalogProvider, catalogProviderSchema } from "../schemas/catalog.schema.js";
+import {
+  type CatalogProvider,
+  catalogProviderSchema,
+  quirksForeignToProtocol,
+} from "../schemas/catalog.schema.js";
 
 /** The Catalog files that ship with the gateway, one JSON file per Provider. */
 export const CATALOG_DIRECTORY = fileURLToPath(new URL("../data", import.meta.url));
@@ -40,6 +44,13 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
   if (!result.success) {
     const problems = result.error.issues.map((issue) => describeIssue(json, issue));
     throw new Error(`Catalog ${fileName}: ${problems.join("; ")}`);
+  }
+
+  const foreignQuirks = quirksForeignToProtocol(result.data.protocol, result.data.quirks);
+  if (foreignQuirks.length > 0) {
+    throw new Error(
+      `Catalog ${fileName}: quirks ${foreignQuirks.join(", ")} don't apply to ${result.data.protocol}`,
+    );
   }
 
   const modelIds = result.data.upstreamModels.map((model) => model.upstreamModelId);

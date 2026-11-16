@@ -24,6 +24,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
           .values({
             slug: entry.slug,
             name: entry.name,
+            logo: entry.logo ?? null,
             protocol: entry.protocol,
             baseUrl: entry.baseUrl,
             authStyle: entry.authStyle,
@@ -42,6 +43,13 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
           .where(eq(providers.slug, entry.slug));
         if (provider === undefined) {
           throw new Error(`Provider "${entry.slug}" vanished while seeding`);
+        }
+        // The fill-empty exception below (ADR 0003) covers the Provider's logo too.
+        if (entry.logo !== undefined) {
+          await tx
+            .update(providers)
+            .set({ logo: entry.logo })
+            .where(and(eq(providers.id, provider.id), isNull(providers.logo)));
         }
         if (entry.upstreamModels.length === 0) continue;
 

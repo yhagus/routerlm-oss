@@ -69,6 +69,8 @@ export const providers = pgTable("providers", {
   id: id(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  // A key into the logo set the dashboard owns; null shows no logo.
+  logo: text("logo"),
   protocol: text("protocol", { enum: UPSTREAM_PROTOCOLS }).notNull(),
   baseUrl: text("base_url").notNull(),
   authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),

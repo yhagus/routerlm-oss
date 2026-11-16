@@ -1,6 +1,7 @@
 {
   "slug": "openai",
   "name": "OpenAI",
+  "logo": "openai",
   "protocol": "openai-chat",
   "baseUrl": "https://api.openai.com/v1",
   "authStyle": "bearer",

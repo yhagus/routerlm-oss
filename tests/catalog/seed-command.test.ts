@@ -22,6 +22,7 @@ const catalog: CatalogProvider[] = [
   {
     slug: "example",
     name: "Example",
+    logo: "example",
     protocol: "openai-chat",
     baseUrl: "https://api.example.com/v1",
     authStyle: "bearer",
@@ -97,6 +98,7 @@ describe("Seed Catalog command (e2e)", () => {
     });
     expect(provider).toMatchObject({
       name: "Example",
+      logo: "example",
       protocol: "openai-chat",
       baseUrl: "https://api.example.com/v1",
       authStyle: "bearer",
@@ -198,6 +200,30 @@ describe("Seed Catalog command (e2e)", () => {
       .from(schema.upstreamModels)
       .where(eq(schema.upstreamModels.upstreamModelId, "example-small"));
     expect(model?.releaseDate).toBe("2025-10-01");
+  });
+
+  it("fills a missing logo", async () => {
+    await db
+      .update(schema.providers)
+      .set({ logo: null })
+      .where(eq(schema.providers.slug, "example"));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const provider = await db.query.providers.findFirst({ where: { slug: "example" } });
+    expect(provider?.logo).toBe("example");
+  });
+
+  it("keeps a logo the operator chose", async () => {
+    await db
+      .update(schema.providers)
+      .set({ logo: "acme" })
+      .where(eq(schema.providers.slug, "example"));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const provider = await db.query.providers.findFirst({ where: { slug: "example" } });
+    expect(provider?.logo).toBe("acme");
   });
 
   it("creates no Provider Accounts, Models or Routes", async () => {

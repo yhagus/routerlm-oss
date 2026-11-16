@@ -4,6 +4,7 @@ import {
   CAPABILITIES,
   QUOTA_READERS,
   UPSTREAM_PROTOCOLS,
+  type UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import { REASONING_EFFORTS } from "@/inference/models/internal-format.js";
 
@@ -73,6 +74,41 @@ export const providerQuirksSchema = z.strictObject({
   quotaBaseUrl: z.url().optional(),
 });
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
+type QuirkKey = keyof CatalogProviderQuirks;
+
+/** The quirks every Protocol understands: the Attempt classifier and the quota readers read them. */
+const QUIRKS_OF_EVERY_PROTOCOL: readonly QuirkKey[] = ["exhaustedErrorCodes", "quotaBaseUrl"];
+
+/** The quirks only one Protocol's adapter reads, as the doc comments above say. */
+const QUIRKS_OF_ONE_PROTOCOL = {
+  "openai-chat": [
+    "reasoningContentInHistory",
+    "acceptsCacheControl",
+    "reasoningAsThinking",
+    "forwardsClientPromptCacheKey",
+    "acceptsPromptCacheKey",
+    "usesMaxCompletionTokens",
+  ],
+  "anthropic-messages": ["cacheMarkerLimit"],
+} as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
+
+/**
+ * The quirk keys in `quirks` that `protocol` doesn't read, in their order.
+ * A Provider must have none: such a quirk would silently do nothing.
+ */
+export function quirksForeignToProtocol(
+  protocol: UpstreamProtocol,
+  quirks: Record<string, unknown>,
+): string[] {
+  const understood: readonly string[] = [
+    ...QUIRKS_OF_EVERY_PROTOCOL,
+    ...QUIRKS_OF_ONE_PROTOCOL[protocol],
+  ];
+  return Object.keys(quirks).filter((key) => !understood.includes(key));
+}
+
+/** A key into the logo set the dashboard owns; the gateway checks only its format. */
+export const providerLogoSchema = z.string().regex(/^[a-z0-9-]+$/);
 
 /**
  * What signing in to the Provider needs, for a Provider that offers OAuth
@@ -116,6 +152,7 @@ export type CatalogUpstreamModel = z.infer<typeof upstreamModelSchema>;
 export const catalogProviderSchema = z.strictObject({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
+  logo: providerLogoSchema.optional(),
   protocol: z.enum(UPSTREAM_PROTOCOLS),
   /**
    * What the Protocol's path is appended to: `/chat/completions` for

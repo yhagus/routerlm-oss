@@ -1,6 +1,7 @@
 {
   "slug": "kimi-code",
   "name": "Kimi Code",
+  "logo": "kimi",
   "protocol": "openai-chat",
   "baseUrl": "https://api.kimi.com/coding/v1",
   "authStyle": "bearer",

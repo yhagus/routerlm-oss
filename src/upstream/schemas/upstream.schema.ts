@@ -2,9 +2,11 @@ import { z } from "zod";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 import {
   catalogProviderSchema,
+  providerLogoSchema,
   providerOauthLoginSchema,
   providerQuirksSchema,
 } from "@/catalog/schemas/catalog.schema.js";
+import { QUOTA_READERS } from "@/db/schemas/index.js";
 
 // What the dashboard sends to create or change Providers, Upstream Models and
 // Provider Accounts. The fields Catalog files share with the API reuse the
@@ -12,11 +14,20 @@ import {
 
 const providerFieldsSchema = catalogProviderSchema
   .pick({ slug: true, name: true, protocol: true, baseUrl: true, authStyle: true, quirks: true })
-  // Null for a Provider that offers no OAuth Login.
-  .extend({ oauthLogin: providerOauthLoginSchema.nullable(), isEnabled: z.boolean() });
+  .extend({
+    // Null shows no logo.
+    logo: providerLogoSchema.nullable(),
+    // Null for a Provider that reports no quota.
+    quotaReader: z.enum(QUOTA_READERS).nullable(),
+    // Null for a Provider that offers no OAuth Login.
+    oauthLogin: providerOauthLoginSchema.nullable(),
+    isEnabled: z.boolean(),
+  });
 
 export const newProviderSchema = providerFieldsSchema.extend({
   quirks: providerQuirksSchema.default({}),
+  logo: providerLogoSchema.nullable().optional(),
+  quotaReader: z.enum(QUOTA_READERS).nullable().optional(),
   oauthLogin: providerOauthLoginSchema.nullable().optional(),
   isEnabled: z.boolean().optional(),
 });

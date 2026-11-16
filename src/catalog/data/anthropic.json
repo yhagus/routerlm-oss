@@ -1,6 +1,7 @@
 {
   "slug": "anthropic",
   "name": "Anthropic",
+  "logo": "anthropic",
   "protocol": "anthropic-messages",
   "baseUrl": "https://api.anthropic.com",
   "authStyle": "x-api-key",
