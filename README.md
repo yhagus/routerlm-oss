@@ -10,10 +10,10 @@
   <a href="https://github.com/yhagus/routerlm-oss/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/yhagus/routerlm-oss/actions/workflows/ci.yml/badge.svg" /></a>
 </p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/overview-dark.png" />
-  <img alt="RouterLM overview: requests, cost, cache hit rate and error rate over the last 7 days" src="docs/images/overview.png" />
-</picture>
+<p align="center">
+  <img alt="RouterLM overview: requests, cost, cache hit rate and error rate over the last 7 days, light theme" src="docs/images/overview.png" width="49%" />
+  <img alt="RouterLM overview: requests, cost, cache hit rate and error rate over the last 7 days, dark theme" src="docs/images/overview-dark.png" width="49%" />
+</p>
 
 ## Why RouterLM
 
@@ -33,27 +33,48 @@ Clients call `/v1/chat/completions`, `/v1/messages` or `/v1/responses`. RouterLM
 
 ### Models and Routes
 
-![The "smart" Model with three Routes: Anthropic, OpenAI and Moonshot](docs/images/model.png)
+<p align="center">
+  <img alt="The &quot;smart&quot; Model with three Routes: Anthropic, OpenAI and Moonshot, light theme" src="docs/images/model.png" width="49%" />
+  <img alt="The &quot;smart&quot; Model with three Routes: Anthropic, OpenAI and Moonshot, dark theme" src="docs/images/model-dark.png" width="49%" />
+</p>
 
 A Model is the name clients send. RouterLM tries its Routes from the top. Each Model has a Parameter Policy: defaults, forced values, caps and a system prompt. A Route can override that policy. Routes also have their own timeouts, and Models can set automatic prompt cache breakpoints.
 
 ### Providers from the Catalog
 
-![Providers page with logos, account readiness and model counts](docs/images/providers.png)
+<p align="center">
+  <img alt="Providers page with logos, account readiness and model counts, light theme" src="docs/images/providers.png" width="49%" />
+  <img alt="Providers page with logos, account readiness and model counts, dark theme" src="docs/images/providers-dark.png" width="49%" />
+</p>
 
 The Catalog ships Alibaba Model Studio Intl, Anthropic, DeepSeek, Kimi Code, MiniMax API, MiniMax M Plan, Moonshot, OpenAI and Xiaomi MiMo. Each entry has context sizes, capabilities, prices and release dates. Add a key to start using a Provider. You can add any other OpenAI- or Anthropic-compatible service by hand. Kimi Code also supports "Sign in with Kimi", and RouterLM keeps that login valid on its own.
 
 ### Usage you can search
 
-![Usage page with totals, filters and a per-request table](docs/images/usage.png)
+<p align="center">
+  <img alt="Usage page with totals, filters and a per-request table, light theme" src="docs/images/usage.png" width="49%" />
+  <img alt="Usage page with totals, filters and a per-request table, dark theme" src="docs/images/usage-dark.png" width="49%" />
+</p>
 
 Every request is a Usage Log with its Attempts. Filter by Model, API Key or status, search by text, and keep the view in the URL to share it.
 
 ### Playground
 
-![Playground showing the Routes of the "coder" Model](docs/images/playground.png)
+<p align="center">
+  <img alt="Playground showing the Routes of the &quot;coder&quot; Model, light theme" src="docs/images/playground.png" width="49%" />
+  <img alt="Playground showing the Routes of the &quot;coder&quot; Model, dark theme" src="docs/images/playground-dark.png" width="49%" />
+</p>
 
 Send a request through a Model exactly as a client would, or straight to one upstream model, and copy the matching code snippet.
+
+### Client docs
+
+<p align="center">
+  <img alt="The Chat Completions page of the client docs, light theme" src="docs/images/docs.png" width="49%" />
+  <img alt="The Chat Completions page of the client docs, dark theme" src="docs/images/docs-dark.png" width="49%" />
+</p>
+
+The web app serves public client documentation at `/docs` (English) and `/id/docs` (Indonesian), with no sign-in. Each page covers one endpoint with copyable curl and TypeScript requests that use your gateway's URL, and the docs are searchable with ⌘K.
 
 ## Quick start
 
@@ -155,6 +176,17 @@ The Catalog is one JSON file per Provider in `src/catalog/data/`. The seeder onl
 - Put those page URLs and the date you read them in `source`.
 - Use `null` for a value the Provider doesn't publish. Never estimate one.
 - `src/catalog/schemas/catalog.schema.ts` defines the file shape. `tests/catalog/` checks every shipped file.
+
+### Demo data for screenshots
+
+`bun run db:seed:demo` fills a database with a fictional install (Provider Accounts with fake keys, Models, API Keys and a week of traffic) for re-capturing the dashboard screenshots. It truncates every table first, so it only runs when the database name ends in `_demo`. Create and fill one, then point the stack at it and sign in as `admin@example.com` / `routerlm-demo`:
+
+```bash
+docker compose exec db createdb -U routerlm routerlm_demo
+docker compose exec -e DATABASE_URL=postgres://routerlm:routerlm@db:5432/routerlm_demo backend bun run db:migrate
+docker compose exec -e DATABASE_URL=postgres://routerlm:routerlm@db:5432/routerlm_demo backend bun run db:seed:demo
+POSTGRES_DB=routerlm_demo docker compose up -d
+```
 
 ### Project conventions
 
