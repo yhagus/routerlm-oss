@@ -2,8 +2,8 @@ import type { User } from "~/lib/users";
 
 const LOGIN_PATH = "/login";
 const SETUP_PATH = "/setup";
-/** The client documentation is public: client developers have no dashboard login. */
-const DOCS_PATH = "/docs";
+/** The client documentation, in English and Indonesian, is public: client developers have no dashboard login. */
+const DOCS_PATHS = ["/docs", "/id/docs"];
 
 /**
  * Every page needs a signed-in User, except login, setup and the docs. While
@@ -48,5 +48,5 @@ async function fetchCurrentUser(): Promise<User | null> {
 }
 
 function isDocsPath(path: string): boolean {
-  return path === DOCS_PATH || path.startsWith(`${DOCS_PATH}/`);
+  return DOCS_PATHS.some((docsPath) => path === docsPath || path.startsWith(`${docsPath}/`));
 }

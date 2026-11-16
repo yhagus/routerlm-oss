@@ -52,9 +52,68 @@ typography:
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "0.12em"
+  # Docs reading ramp (/docs/**, /id/docs/**): the same faces, compact reading
+  # sizes. JetBrains Mono for code and literal values only.
+  docs-title:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "28px"
+    fontWeight: 700
+    lineHeight: 1.1
+    letterSpacing: "-0.035em"
+  docs-section:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "20px"
+    fontWeight: 700
+    lineHeight: 1.25
+    letterSpacing: "-0.03em"
+  docs-section-compact:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "-0.03em"
+  docs-subsection:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 650
+    lineHeight: 1.35
+    letterSpacing: "-0.015em"
+  docs-lede:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.55
+  docs-lede-compact:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.55
+  docs-body:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.6
+  docs-table:
+    fontFamily: "Plus Jakarta Sans Variable, Plus Jakarta Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.5
+  docs-value:
+    fontFamily: "JetBrains Mono Variable, JetBrains Mono, ui-monospace, Menlo, monospace"
+    fontSize: "13px"
+    fontWeight: 600
+    lineHeight: 1.35
+  docs-code:
+    fontFamily: "JetBrains Mono Variable, JetBrains Mono, ui-monospace, Menlo, monospace"
+    fontSize: "12.5px"
+    fontWeight: 400
+    lineHeight: 1.6
 rounded:
+  xs: "6px"
   sm: "8px"
   md: "10px"
+  box-sm: "12px"
+  box: "14px"
   lg: "18px"
   xl: "22px"
   pill: "999px"
@@ -130,6 +189,51 @@ components:
     rounded: "{rounded.lg}"
     padding: "20px"
     width: "380px"
+  docs-title-cells:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    typography: "{typography.docs-value}"
+    padding: "10px 18px"
+  docs-figure:
+    backgroundColor: "{colors.panel-secondary}"
+    textColor: "{colors.ink}"
+    typography: "{typography.docs-code}"
+    rounded: "{rounded.box-sm}"
+    padding: "12px 14px"
+  docs-figure-header:
+    backgroundColor: "{colors.panel-secondary}"
+    textColor: "{colors.ink-secondary}"
+    typography: "{typography.body}"
+    padding: "5px 6px"
+    height: "38px"
+  docs-table:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink-secondary}"
+    typography: "{typography.docs-table}"
+    rounded: "{rounded.box-sm}"
+    padding: "11px 14px"
+  docs-table-head:
+    backgroundColor: "{colors.panel-secondary}"
+    textColor: "{colors.muted}"
+    typography: "{typography.label}"
+    padding: "8px 12px"
+  docs-sheet:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+    padding: "26px 36px 22px"
+    width: "980px"
+  docs-pager-link:
+    backgroundColor: "{colors.panel-secondary}"
+    textColor: "{colors.ink}"
+    typography: "{typography.title}"
+    rounded: "{rounded.box-sm}"
+    padding: "11px 14px 12px"
+  docs-search-dialog:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+    width: "620px"
 ---
 
 # Design System: RouterLM
@@ -147,6 +251,7 @@ The visual language uses light and dark tonal layers, floating glass navigation,
 - Floating sidebar and top bar with blur reserved for chrome and transient feedback.
 - Compact data tables and metric bands with tabular numerals.
 - Green, amber, and red reserved for operational state.
+- The public client docs share every token and shape; only their reading ramp and page structure are their own (see Docs Surface).
 
 ## Colors
 
@@ -220,7 +325,7 @@ Depth comes from tonal layering and soft ambient shadows rather than hard outlin
 
 The form language is gently rounded but controlled. Panels and section shells use `18px` corners, the floating sidebar uses `22px`, and compact controls use `8–10px`. Pills are reserved for status tags and never used as the default shape for large controls. Borders are one-pixel neutral hairlines.
 
-Vendored Tailwind components read the same family through their radius scale (`6 / 8 / 10 / 14 / 18px`). Conversation surfaces use `14px`: the composer field, and the user's message bubble, whose bottom-right corner tightens to `4px` toward the composer side. Sheets keep the `18px` panel radius; the bottom sheet rounds only its top corners.
+The family also holds three in-between steps, each with a fixed job: `6px` for small tags and literals (chips such as the Docs tag and page counter, `kbd` shortcuts, inline code), `12px` for list and table boxes (data tables in the docs, the Route list), and `14px` for content boxes that sit inside a page (code figures, pager cards, the composer field). Vendored Tailwind components read the same family through their radius scale (`6 / 8 / 10 / 14 / 18px`). The user's message bubble takes `14px` with its bottom-right corner tightened to `4px` toward the composer side. Sheets and dialogs keep the `18px` panel radius; the bottom sheet rounds only its top corners.
 
 ## Components
 
@@ -284,7 +389,7 @@ Vendored Tailwind components read the same family through their radius scale (`6
 ### Do:
 - **Do** preserve the neutral-first canvas and reserve semantic color for gateway state.
 - **Do** use Plus Jakarta Sans and tabular numerals for operational data.
-- **Do** keep panels in the `18px` radius family and controls in the `8–10px` family.
+- **Do** keep panels in the `18px` radius family and controls in the `8–10px` family; use `6px`, `12px` and `14px` only for the jobs recorded in Shapes.
 - **Do** keep glass and blur limited to surfaces that float above content.
 - **Do** provide keyboard-visible focus and responsive mobile drawer behavior.
 - **Do** set conversation text at 13px and keep data, receipts and controls at 12px.
@@ -298,3 +403,53 @@ Vendored Tailwind components read the same family through their radius scale (`6
 - **Don't** use green, amber, or red for branding or emphasis unrelated to operational state.
 - **Don't** target vendored components with dashboard stylesheet rules, or define shadcn's colour variables globally.
 - **Don't** box a receipt or other answer footnote in a card; rule it off with a hairline.
+
+## Docs Surface
+
+**Scope.** The public client docs (`/docs/**`, `/id/docs/**`), rendered by the docs layout with a stylesheet (`docs.css`, classes prefixed `ds-`) that loads only there. **Same theme, its own structure.** The docs share every token, the type faces and the shape family in this file: no palette of their own, colours, shadows, focus and z-order read from the dashboard's root, the same light and dark switch, and the shared brand, icon button, segmented control and primary button used as they are. Their layout is deliberately not the dashboard's: the docs are a separate public surface for client developers, so they use no floating glass sidebar, no glass top bar and no panel grid. This section records what is specific to the docs.
+
+**The Same-Theme, Own-Structure Rule.** Docs take every token and shape from this file and never the dashboard's shell. Dashboard pages never take the docs shell.
+
+### Shell
+- **Header:** Full width, sticky, `56px`, solid paper with a `1px` hairline beneath (no glass). Its content lines up with the body's edges (at most `1320px`). Left: the brand (16px, `26px` mark), a "Docs" chip (`6px`, chip gray, 11px 600), then "Client API" and the page counter (03/09) in 12px faint after a hairline divider. Centre: the search field (`34px`, `8px`, up to `420px`; ⌘K / Ctrl K in a chip). Right: language as the segmented control, the theme icon button, Sign in or Dashboard as the primary button at `32px`.
+- **Contents:** A flat column on the paper canvas (`220px`, `196px` below `1100px`), sticky under the header: no panel, no glass, no border. A faint uppercase label, then pages at 13px in `30px` rows (`8px` radius) with faint tabular numbers 01–09; hover is the control hover fill. The current page lifts like a segmented thumb: panel white, soft hairline, `0 1px 2px` shadow, ink 600. Its numbered sections hang from a `1px` hairline guide at 12px muted; the one being read turns ink 600.
+- **Sheet:** Each page sits on one white sheet beside the contents: `18px`, soft hairline, panel ambient shadow, `26px 36px` inset (`22px 26px` below `1100px`), at most `980px`. Everything inside is recessed, never another raised card.
+- **Phones (below `760px`):** The header keeps the contents button, the brand and the search icon. The contents open as a drawer: an `18px` panel-white sheet inset `10px`, floating chrome shadow, a "Contents" title and close button, with language, theme and account at its foot; rows grow to `44px`. The sheet runs edge to edge with no radius, border or shadow, inset `20px 16px`.
+
+### Reading Type
+Compact: the reader should see the endpoint, the first request figure and the next section without scrolling far.
+- **Title** (`docs-title`): 28px 700, `-0.035em`, balanced wrap; 24px on phones. Description 13px muted at `70ch`.
+- **Lede** (`docs-lede`): 16px, 1.55, secondary ink; 15px on phones.
+- **Section** (`docs-section`): Numbered h2, 20px 700, under a soft hairline, `30px` above and `18px` padding (18px and `26px` on phones).
+- **Subsection** (`docs-subsection`): Numbered h3, 15px 650, `20px` above.
+- **Body** (`docs-body`): 15px, 1.6, paragraphs `12px` apart. Links are ink with a `1px` underline in the focus-border colour that turns to ink on hover. Inline code is mono at `0.84em` in a `6px` secondary-panel box with a soft hairline.
+- **Table** (`docs-table`, 13px), **Value** (`docs-value`, mono 13px 600), **Code** (`docs-code`, mono 12.5px, 1.6).
+- **Labels** (contents label, cell terms, figure captions, table heads, pager directions) use the dashboard's uppercase tracked label.
+
+**The Reading-Measure Rule.** Prose, lede and lists read at `72ch`; only the title block, code figures and tables take the sheet's full width.
+
+**The Literal-Mono Rule.** JetBrains Mono sets code figures, inline code and the title block's literal values (endpoint, page, revision); never labels, headings or prose.
+
+**The Numbered Sheet Rule.** Sections carry page.section numbers and subsections page.section.subsection, set before the heading in faint tabular numerals; figures are captioned FIG. with the two-digit page and the figure count (FIG. 03-1). Every number comes from CSS counters reset per page, so they always match the contents.
+
+### Title Block
+- **Style:** The heading and description, then one ruled row of data cells between soft hairlines (no panel): a label term over a mono value per cell (`10px 18px`, the first flush left), cells divided by soft hairlines, and a Copy page button (`32px`, `8px`, hairline) at the right end.
+- **Narrow:** Under a `700px` main column the endpoint takes a whole row and the rest share the next; on phones Copy grows to `40px`.
+- **Error:** A 15px 650 message and an underlined recovery link replace the heading on the sheet.
+
+### Code Figure
+- **Style:** A recessed `12px` box on the sheet: soft hairline, secondary panel fill, no shadow, `12px` above and `18px` below. Header (`38px`): the segmented control for curl / TypeScript (`24px` options), or a single 12px 600 label, with a quiet Copy button (`26px`, `6px`) pushed right. Code at `12px 14px`. A caption row (FIG. 03-1 · label) in faint label type under a soft hairline.
+
+### Table
+- **Style:** A `12px` box with a soft hairline on the sheet. Head row on the secondary panel surface in label type (`8px 12px`); body rows 13px divided by soft hairlines, row hover wash, tabular numerals; first column ink and unwrapped. Wide tables scroll inside the box (`34rem` minimum).
+- **Phones:** Each row becomes a record; every cell prints its column head above it in label type. With three or more columns, the first two cells head the record on one line (400 · invalid_request).
+
+### Pager
+- **Style:** At the foot of the sheet, `32px` below the last section: previous and next as two recessed `12px` boxes (soft hairline, secondary panel fill, no shadow, `10px` apart), each a label direction over a 14px 650 title with a faint tabular page number; hover strengthens the border and washes with row hover. A faint 11px imprint line closes the sheet. On phones the boxes stack.
+
+### Search
+- **Style:** A native modal dialog shaped like a sheet: `620px`, `18px`, glass hairline border, floating chrome shadow, over a 25% black backdrop (50% in dark) with `2px` blur. A `44px` field (`10px`, focus ring on focus-within), then results grouped by page (numbered, 600) with section rows indented beneath; matches in highlight marks.
+- **States:** The highlighted row takes the nav active fill; a failed search reports in danger ink.
+
+### Section Heading Anchor
+- **Style:** A `24px`, `6px` muted link icon after the heading, shown on hover or focus (always on touch screens), with the control hover fill.

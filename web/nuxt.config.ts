@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from "@tailwindcss/vite";
+import packageJson from "./package.json";
 
 // Runs before first paint so a stored theme never flashes the wrong palette.
 // With no stored choice, CSS follows prefers-color-scheme.
@@ -12,8 +13,9 @@ export default defineNuxtConfig({
   ssr: false,
   modules: ["@nuxt/content"],
   // Vendored shadcn-vue and AI Elements code is imported explicitly; its index.ts
-  // barrels would otherwise register as components.
-  components: [{ path: "~/components", ignore: ["ui/**", "ai-elements/**"] }],
+  // barrels would otherwise register as components. components/content is
+  // registered by @nuxt/content itself, without a path prefix.
+  components: [{ path: "~/components", ignore: ["ui/**", "ai-elements/**", "content/**"] }],
   content: {
     // node:sqlite, so the build needs no native addon. Under Bun (the dev
     // image) @nuxt/content falls back to bun:sqlite.
@@ -25,6 +27,13 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Where server/api/[...path].ts forwards dashboard calls. NUXT_BACKEND_URL overrides it.
     backendUrl: "http://localhost:3000",
+    public: {
+      // The gateway's address as clients reach it, shown in the docs' examples.
+      // NUXT_PUBLIC_GATEWAY_URL sets it; empty means the browser's host on port 3000.
+      gatewayUrl: "",
+      // The web app's release, printed as the docs' revision.
+      appVersion: packageJson.version,
+    },
   },
   css: ["@fontsource-variable/plus-jakarta-sans", "~/assets/css/main.css"],
   vite: { plugins: [tailwindcss()] },

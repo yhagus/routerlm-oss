@@ -1,69 +1,94 @@
 <script setup lang="ts">
-import { BookOpen, Menu, X } from "@lucide/vue";
-import { ref, watch } from "vue";
+import "@fontsource-variable/jetbrains-mono";
+import "~/assets/css/docs.css";
+import { X } from "@lucide/vue";
+import { nextTick, shallowRef, useTemplateRef, watch } from "vue";
+import type { DocsLocale } from "~/lib/docsMessages";
 
+/**
+ * The client docs: a full-width header, the numbered contents as a flat
+ * column on the canvas, and every page on one sheet beside it. The
+ * dashboard's tokens and shapes, in a structure of its own (see
+ * assets/css/docs.css). On a phone the contents open as a drawer.
+ */
 const route = useRoute();
-const isMobileNavOpen = ref(false);
+const { locale, t } = useDocsLocale();
+
+const search = useTemplateRef<{ open: () => void }>("search");
+const contentsCloseButton = useTemplateRef<HTMLButtonElement>("contentsCloseButton");
+const isContentsOpen = shallowRef(false);
+let contentsOpenedFrom: HTMLElement | null = null;
+
+function openContents(): void {
+  contentsOpenedFrom =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  isContentsOpen.value = true;
+  void nextTick(() => contentsCloseButton.value?.focus());
+}
+
+function closeContents(): void {
+  if (!isContentsOpen.value) return;
+  isContentsOpen.value = false;
+  contentsOpenedFrom?.focus();
+  contentsOpenedFrom = null;
+}
+
 watch(
   () => route.path,
-  () => (isMobileNavOpen.value = false),
+  () => (isContentsOpen.value = false),
 );
 
-// The page files are numbered (1.authentication.md, ...), so their stems sort in reading order.
-const { data: docsPages, status: docsPagesStatus } = useAsyncData(
-  "docs-navigation",
-  () => queryCollection("docs").order("stem", "ASC").select("title", "path").all(),
-  { lazy: true },
-);
+function handleContentsKeydown(event: KeyboardEvent): void {
+  if (event.key === "Escape") closeContents();
+}
+
+// Search engines and readers learn of the page's other language; English is the default.
+const origin = useRequestURL().origin;
+const pageUrlIn = (target: DocsLocale): string =>
+  `${origin}${docsPathIn(target, docsPagePathOf(route.path))}`;
+useHead({
+  htmlAttrs: { lang: locale },
+  link: () => [
+    { rel: "alternate", hreflang: "en", href: pageUrlIn("en") },
+    { rel: "alternate", hreflang: "id", href: pageUrlIn("id") },
+    { rel: "alternate", hreflang: "x-default", href: pageUrlIn("en") },
+  ],
+});
 </script>
 
 <template>
-  <div class="app-shell">
-    <div v-if="isMobileNavOpen" class="nav-scrim" @click="isMobileNavOpen = false" />
-    <aside class="sidebar" :class="{ 'sidebar--open': isMobileNavOpen }">
-      <div class="sidebar__brand">
-        <div class="brand">
-          <span class="brand__mark">R</span><span>router<span>lm</span></span>
+  <div class="datasheet">
+    <DocsRunningHead @open-search="search?.open()" @open-contents="openContents" />
+    <div class="datasheet__body">
+      <div v-if="isContentsOpen" class="datasheet__scrim" @click="closeContents" />
+      <aside
+        class="datasheet__contents"
+        :class="{ 'datasheet__contents--open': isContentsOpen }"
+        @keydown="handleContentsKeydown"
+      >
+        <div class="datasheet__sheet-head">
+          <span class="datasheet__sheet-title">{{ t("contents") }}</span>
+          <button
+            ref="contentsCloseButton"
+            class="icon-button"
+            type="button"
+            :aria-label="t('closeContents')"
+            @click="closeContents"
+          >
+            <X :size="18" :stroke-width="1.8" aria-hidden="true" />
+          </button>
         </div>
-        <button
-          class="icon-button sidebar__close"
-          aria-label="Close navigation"
-          @click="isMobileNavOpen = false"
-        >
-          <X :size="18" />
-        </button>
-      </div>
-      <nav class="sidebar__nav docs-nav" aria-label="Documentation">
-        <span class="nav-group-label">Client documentation</span>
-        <span v-if="docsPagesStatus === 'pending' && !docsPages" class="nav-item"
-          ><AppSpinner
-        /></span>
-        <NuxtLink
-          v-for="page in docsPages"
-          :key="page.path"
-          :to="page.path"
-          class="nav-item"
-          active-class=""
-          exact-active-class="nav-item--active"
-        >
-          <BookOpen :size="17" :stroke-width="1.8" /><span>{{ page.title }}</span>
-        </NuxtLink>
-      </nav>
-    </aside>
-    <main class="main-content">
-      <header class="topbar">
-        <button
-          class="icon-button mobile-menu"
-          aria-label="Open navigation"
-          @click="isMobileNavOpen = true"
-        >
-          <Menu :size="20" />
-        </button>
-        <div class="breadcrumbs"><span>RouterLM</span><span>/</span><strong>Docs</strong></div>
-      </header>
-      <div class="page-wrap">
+        <DocsContents @section-picked="closeContents" />
+        <div class="datasheet__sheet-settings">
+          <DocsLanguageSwitch />
+          <DocsThemeToggle />
+          <DocsAccountLink />
+        </div>
+      </aside>
+      <main class="datasheet__main">
         <slot />
-      </div>
-    </main>
+      </main>
+    </div>
+    <DocsSearch ref="search" />
   </div>
 </template>

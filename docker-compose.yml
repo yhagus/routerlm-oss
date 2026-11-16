@@ -119,6 +119,8 @@ services:
       HOST: 0.0.0.0
       PORT: 3000
       NUXT_BACKEND_URL: http://backend:3000
+      # The gateway address the docs' examples show. Empty: the browser's host on port 3000.
+      NUXT_PUBLIC_GATEWAY_URL: ${NUXT_PUBLIC_GATEWAY_URL:-}
     volumes:
       - ./web:/app
       - web_node_modules:/app/node_modules

@@ -56,5 +56,5 @@ export function useTheme() {
     applyPreference(next);
   }
 
-  return { preference, label, nextLabel, cycle, setPreference };
+  return { preference, nextPreference, label, nextLabel, cycle, setPreference };
 }

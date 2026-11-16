@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-15T00:00:00Z",
+  "generatedAt": "2026-11-16T12:00:00Z",
   "title": "Design System: RouterLM",
   "extensions": {
     "colorMeta": {
@@ -126,6 +126,56 @@
       "meta": {
         "displayName": "Meta",
         "purpose": "Secondary facts beside data: Route meta lines, session totals, composer hint."
+      },
+      "docs-title": {
+        "displayName": "Docs Title",
+        "purpose": "Docs page heading in the title block; same size and weight as the dashboard page heading.",
+        "scope": "docs"
+      },
+      "docs-section": {
+        "displayName": "Docs Section",
+        "purpose": "Numbered h2 under a 1px hairline.",
+        "scope": "docs"
+      },
+      "docs-section-compact": {
+        "displayName": "Docs Section, phone",
+        "purpose": "Numbered h2 below 760px.",
+        "scope": "docs"
+      },
+      "docs-subsection": {
+        "displayName": "Docs Subsection",
+        "purpose": "Numbered h3.",
+        "scope": "docs"
+      },
+      "docs-lede": {
+        "displayName": "Docs Lede",
+        "purpose": "Introduction before the first section, in secondary ink.",
+        "scope": "docs"
+      },
+      "docs-lede-compact": {
+        "displayName": "Docs Lede, phone",
+        "purpose": "Lede below 760px.",
+        "scope": "docs"
+      },
+      "docs-body": {
+        "displayName": "Docs Body",
+        "purpose": "Docs prose, lists and blockquotes at a 66ch measure.",
+        "scope": "docs"
+      },
+      "docs-table": {
+        "displayName": "Docs Table",
+        "purpose": "Docs table cells, tabular numerals.",
+        "scope": "docs"
+      },
+      "docs-value": {
+        "displayName": "Docs Value",
+        "purpose": "Mono literal values in the title block cells.",
+        "scope": "docs"
+      },
+      "docs-code": {
+        "displayName": "Docs Code",
+        "purpose": "Code figures.",
+        "scope": "docs"
       }
     },
     "shadows": [
@@ -183,8 +233,25 @@
       {
         "name": "small",
         "value": "480px"
+      },
+      {
+        "name": "docs-title-cells-wrap",
+        "value": "760px (docs main column container)",
+        "scope": "docs",
+        "purpose": "The title block endpoint cell takes a whole row."
       }
-    ]
+    ],
+    "scopes": {
+      "docs": {
+        "routes": [
+          "/docs/**",
+          "/id/docs/**"
+        ],
+        "stylesheet": "app/assets/css/docs.css (loaded only by app/layouts/docs.vue; classes prefixed ds-)",
+        "tokens": "Every dashboard token, face and shape; no palette of its own. Its structure is its own (full-width header, flat contents column, one white sheet per page, recessed figures, tables and pager), never the dashboard's floating glass shell. Docs-only frontmatter keys (docs- prefix) cover the compact reading ramp and the docs components.",
+        "section": "Docs Surface"
+      }
+    }
   },
   "components": [
     {
@@ -233,6 +300,42 @@
       "description": "Ruled footer under an answer: who served it, then what it cost. A hairline, never a card.",
       "html": "<footer class=\"ds-receipt\"><p class=\"ds-receipt__route\"><span class=\"ds-chip\">Route 1</span><strong>Anthropic</strong><span class=\"ds-receipt__account\">prod-key</span></p><dl class=\"ds-receipt__facts\"><div><dt>Input</dt><dd>1,204</dd></div><div><dt>Output</dt><dd>386</dd></div><div><dt>Cost</dt><dd>$0.0094</dd></div><div><dt>Latency</dt><dd>2.1 s</dd></div></dl></footer>",
       "css": ".ds-receipt { display:grid; gap:10px; padding-top:12px; border-top:1px solid #ededf0; font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif; } .ds-receipt__route { display:flex; align-items:center; gap:8px; margin:0; color:#424245; font-size:12px; } .ds-receipt__route strong { color:#1d1d1f; font-weight:650; } .ds-receipt__account { margin-left:auto; color:#6e6e73; } .ds-chip { padding:2px 8px; border-radius:999px; background:#f2f2f7; color:#636366; font-size:11px; font-variant-numeric:tabular-nums; } .ds-receipt__facts { display:flex; flex-wrap:wrap; gap:8px 22px; margin:0; } .ds-receipt__facts dt { color:#6e6e73; font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; } .ds-receipt__facts dd { margin:3px 0 0; color:#1d1d1f; font-size:12px; font-variant-numeric:tabular-nums; }"
+    },
+    {
+      "name": "Docs Title Block",
+      "kind": "card",
+      "scope": "docs",
+      "refersTo": "docs-title-cells",
+      "description": "Docs only. The 28px 700 heading and a 13px muted description, then one ruled row of data cells between soft hairlines (no panel): label over mono value, and a 32px Copy page button at the right end.",
+      "html": "<header class=\"ds-dt\"><div><h1>Chat completions</h1><p>OpenAI-compatible chat requests through the gateway.</p></div><div class=\"ds-dt__cells\"><dl class=\"ds-dt__cell ds-dt__cell--wide\"><dt>Endpoint</dt><dd>POST /v1/chat/completions</dd></dl><dl class=\"ds-dt__cell\"><dt>Rev</dt><dd>2.0.0</dd></dl><div class=\"ds-dt__action\"><button class=\"ds-dt__copy\">Copy page</button></div></div></header>",
+      "css": ".ds-dt { display:grid; gap:22px; font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif; color:#1d1d1f; } .ds-dt h1 { margin:0; font-size:clamp(29px,3.3vw,41px); font-weight:730; line-height:1.05; letter-spacing:-.04em; } .ds-dt p { margin:10px 0 0; max-width:64ch; color:#6e6e73; font-size:14px; line-height:1.5; } .ds-dt__cells { display:flex; overflow:hidden; border:1px solid #ededf0; border-radius:18px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.03),0 6px 20px rgba(0,0,0,.04); } .ds-dt__cell { display:flex; flex-direction:column; gap:8px; margin:0; padding:16px 21px 17px; } .ds-dt__cell + .ds-dt__cell { border-left:1px solid #ededf0; } .ds-dt__cell--wide { flex:1 1 auto; } .ds-dt__cell dt { color:#6e6e73; font-size:10px; font-weight:700; line-height:1.2; letter-spacing:.12em; text-transform:uppercase; } .ds-dt__cell dd { margin:0; font:600 14px/1.35 'JetBrains Mono Variable','JetBrains Mono',ui-monospace,Menlo,monospace; white-space:nowrap; } .ds-dt__action { display:flex; align-items:center; margin-left:auto; padding:0 18px; } .ds-dt__copy { height:36px; padding:0 14px; border:1px solid #e3e3e8; border-radius:8px; background:#fff; color:#424245; font:400 12px/1 'Plus Jakarta Sans',ui-sans-serif,sans-serif; transition:background .2s,color .2s,transform .12s cubic-bezier(.2,.9,.25,1); } .ds-dt__copy:hover { background:rgba(0,0,0,.045); color:#1d1d1f; } .ds-dt__copy:active { transform:scale(.97); } .ds-dt__copy:focus-visible { outline:3px solid rgba(0,0,0,.22); outline-offset:2px; }"
+    },
+    {
+      "name": "Docs Code Figure",
+      "kind": "custom",
+      "scope": "docs",
+      "refersTo": "docs-figure",
+      "description": "Docs only. A recessed 12px box on the sheet (secondary panel fill, no shadow): segmented curl / TypeScript tabs and a quiet Copy in a 38px header, 12.5px mono code, a FIG. PP-N caption.",
+      "html": "<figure class=\"ds-fig\"><div class=\"ds-fig__head\"><div class=\"ds-seg\" role=\"group\"><button class=\"ds-seg__opt\" aria-pressed=\"true\">curl</button><button class=\"ds-seg__opt\" aria-pressed=\"false\">TypeScript</button></div><button class=\"ds-fig__copy\">Copy</button></div><pre>curl $GATEWAY/v1/chat/completions</pre><figcaption>Fig. 03-1 · Typical request</figcaption></figure>",
+      "css": ".ds-fig { margin:0; overflow:hidden; border:1px solid #ededf0; border-radius:12px; background:#fafafc; font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif; } .ds-fig__head { display:flex; align-items:center; gap:10px; min-height:38px; padding:5px 6px; border-bottom:1px solid #ededf0; } .ds-seg { display:inline-flex; gap:2px; padding:2px; border-radius:8px; background:#e8e8ed; } .ds-seg__opt { height:24px; padding:0 12px; border:0; border-radius:6px; background:transparent; color:#424245; font:400 12px/1 'Plus Jakarta Sans',ui-sans-serif,sans-serif; cursor:pointer; transition:background-color .15s,color .15s; } .ds-seg__opt:hover { color:#1d1d1f; } .ds-seg__opt[aria-pressed=\"true\"] { background:#fff; color:#1d1d1f; font-weight:600; box-shadow:0 1px 2px rgba(0,0,0,.08); } .ds-fig__copy { height:30px; margin-left:auto; padding:0 10px; border:0; border-radius:8px; background:transparent; color:#6e6e73; font:400 12px/1 'Plus Jakarta Sans',ui-sans-serif,sans-serif; transition:background .15s,color .15s; } .ds-fig__copy:hover { background:rgba(0,0,0,.045); color:#1d1d1f; } .ds-seg__opt:focus-visible, .ds-fig__copy:focus-visible { outline:3px solid rgba(0,0,0,.22); outline-offset:2px; } .ds-fig pre { margin:0; padding:16px 18px; overflow-x:auto; color:#1d1d1f; font:400 13px/1.7 'JetBrains Mono Variable','JetBrains Mono',ui-monospace,Menlo,monospace; } .ds-fig figcaption { padding:10px 14px; border-top:1px solid #ededf0; color:#6e6e73; font-size:10px; font-weight:700; line-height:1.2; letter-spacing:.12em; text-transform:uppercase; color:#76767b; font-variant-numeric:tabular-nums; }"
+    },
+    {
+      "name": "Docs Table",
+      "kind": "custom",
+      "scope": "docs",
+      "refersTo": "docs-table",
+      "description": "Docs only. A 12px box with a soft hairline on the sheet; 13px cells at 8px 12px, label-type head on the secondary panel surface.",
+      "html": "<div class=\"ds-tbl\"><table><thead><tr><th>Status</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td>400</td><td>invalid_request</td><td>The body failed validation.</td></tr><tr><td>401</td><td>unauthorized</td><td>Missing or invalid key.</td></tr></tbody></table></div>",
+      "css": ".ds-tbl { overflow-x:auto; border:1px solid #ededf0; border-radius:12px; background:#fff; font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif; } .ds-tbl table { width:100%; border-collapse:collapse; font-size:14px; line-height:1.5; font-variant-numeric:tabular-nums; } .ds-tbl th { padding:11px 14px; border-bottom:1px solid #ededf0; background:#fafafc; text-align:left; white-space:nowrap; color:#6e6e73; font-size:10px; font-weight:700; line-height:1.2; letter-spacing:.12em; text-transform:uppercase; } .ds-tbl td { padding:11px 14px; border-bottom:1px solid #ededf0; color:#424245; vertical-align:top; } .ds-tbl tbody tr:last-child td { border-bottom:0; } .ds-tbl tbody tr:hover { background:#f7f7f9; } .ds-tbl td:first-child { color:#1d1d1f; white-space:nowrap; }"
+    },
+    {
+      "name": "Docs Pager",
+      "kind": "card",
+      "scope": "docs",
+      "refersTo": "docs-pager-link",
+      "description": "Docs only. Previous and next as two recessed 12px boxes at the foot of the sheet (secondary panel fill, no shadow), label direction over a 14px 650 title.",
+      "html": "<nav class=\"ds-pg\"><a class=\"ds-pg__link\" href=\"#\"><span class=\"ds-pg__dir\">Previous</span><span class=\"ds-pg__title\"><span class=\"ds-pg__num\">02</span>Authentication</span></a><a class=\"ds-pg__link ds-pg__link--next\" href=\"#\"><span class=\"ds-pg__dir\">Continued on</span><span class=\"ds-pg__title\"><span class=\"ds-pg__num\">04</span>Messages</span></a></nav>",
+      "css": ".ds-pg { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; font-family:'Plus Jakarta Sans',ui-sans-serif,sans-serif; } .ds-pg__link { display:grid; gap:8px; padding:16px 20px 18px; border:1px solid #ededf0; border-radius:12px; background:#fafafc; color:#1d1d1f; text-decoration:none; transition:background .15s,border-color .15s; } .ds-pg__link:hover { border-color:#e3e3e8; background:#f7f7f9; } .ds-pg__link:focus-visible { outline:3px solid rgba(0,0,0,.22); outline-offset:2px; } .ds-pg__link--next { text-align:right; } .ds-pg__dir { color:#6e6e73; font-size:10px; font-weight:700; line-height:1.2; letter-spacing:.12em; text-transform:uppercase; } .ds-pg__title { font-size:15px; font-weight:650; line-height:1.3; letter-spacing:-.025em; } .ds-pg__num { margin-right:8px; color:#76767b; font-size:12px; font-weight:600; letter-spacing:0; font-variant-numeric:tabular-nums; }"
     }
   ],
   "narrative": {
@@ -242,7 +345,8 @@
       "Neutral light and dark themes with shared semantic roles.",
       "Floating sidebar and top bar with blur reserved for chrome and transient feedback.",
       "Compact data tables and metric bands with tabular numerals.",
-      "Green, amber, and red reserved for operational state."
+      "Green, amber, and red reserved for operational state.",
+      "The public client docs share every token and shape; only their reading ramp and page structure are their own (see Docs Surface)."
     ],
     "rules": [
       {
@@ -274,12 +378,36 @@
         "name": "The Token-Bridge Rule",
         "body": "Vendored components inherit DESIGN.md tokens; they never bring their own palette, and shadcn's global `--primary` / `--muted` variables stay undefined because those names already mean something else here.",
         "section": "components"
+      },
+      {
+        "name": "The Reading-Measure Rule",
+        "body": "Prose, lede and lists read at `72ch`; only the title block, code figures and tables take the sheet's full width (the sheet is at most `980px`).",
+        "section": "layout",
+        "scope": "docs"
+      },
+      {
+        "name": "The Literal-Mono Rule",
+        "body": "JetBrains Mono sets code figures, inline code and the title block's literal values (endpoint, page, revision); never labels, headings or prose.",
+        "section": "typography",
+        "scope": "docs"
+      },
+      {
+        "name": "The Numbered Sheet Rule",
+        "body": "Sections carry page.section numbers and subsections page.section.subsection, set before the heading in faint tabular numerals (600; `0.6em` and `0.72em` of the heading); figures are captioned FIG. with the two-digit page and the figure count (FIG. 03-1). Every number comes from CSS counters reset per page, so they always match the contents.",
+        "section": "typography",
+        "scope": "docs"
+      },
+      {
+        "name": "The Same-Theme, Own-Structure Rule",
+        "body": "Docs take every token and shape from this file and never the dashboard's shell. Dashboard pages never take the docs shell.",
+        "section": "layout",
+        "scope": "docs"
       }
     ],
     "dos": [
       "Do preserve the neutral-first canvas and reserve semantic color for gateway state.",
       "Do use Plus Jakarta Sans and tabular numerals for operational data.",
-      "Do keep panels in the 18px radius family and controls in the 8–10px family.",
+      "Do keep panels in the `18px` radius family and controls in the `8–10px` family; use `6px`, `12px` and `14px` only for the jobs recorded in Shapes.",
       "Do keep glass and blur limited to surfaces that float above content.",
       "Do provide keyboard-visible focus and responsive mobile drawer behavior.",
       "Do set conversation text at 13px and keep data, receipts and controls at 12px.",

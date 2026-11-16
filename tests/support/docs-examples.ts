@@ -2,6 +2,8 @@ import { readdirSync, readFileSync } from "node:fs";
 
 /** The client documentation's Markdown pages, as the web app serves them at /docs. */
 export const DOCS_DIRECTORY = new URL("../../web/content/docs/", import.meta.url);
+/** The Indonesian translation of the same pages, served at /id/docs. */
+export const DOCS_ID_DIRECTORY = new URL("../../web/content/docs-id/", import.meta.url);
 
 /** The placeholders every example uses, so a reader knows what to substitute. */
 export const DOCS_BASE_URL = "https://gateway.example.com";
@@ -30,13 +32,13 @@ export interface CurlRequest {
   body: string | undefined;
 }
 
-export function readDocsPages(): DocsPage[] {
-  return readdirSync(DOCS_DIRECTORY)
+export function readDocsPages(directory: URL = DOCS_DIRECTORY): DocsPage[] {
+  return readdirSync(directory)
     .filter((fileName) => fileName.endsWith(".md"))
     .sort()
     .map((fileName) => ({
       fileName,
-      markdown: readFileSync(new URL(fileName, DOCS_DIRECTORY), "utf8"),
+      markdown: readFileSync(new URL(fileName, directory), "utf8"),
     }));
 }
 

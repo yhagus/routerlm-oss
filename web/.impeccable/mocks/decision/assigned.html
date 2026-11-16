@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Line Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@500;700;800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1440px;height:900px;overflow:hidden;background:#fff;color:#111}
+body{font-family:"Source Sans 3",sans-serif}
+:root{--red:#e2231a;--blue:#0072bc;--green:#00a650;--yellow:#f5b400;--rail:#c9c9c9}
+.top{height:56px;display:flex;align-items:center;gap:24px;padding:0 32px;border-bottom:3px solid #111;font-family:Overpass}
+.mark{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.01em}
+.mark i{width:22px;height:22px;border-radius:50%;border:5px solid #111;display:block}
+.search{margin-left:24px;flex:0 0 360px;height:34px;border:2px solid #111;display:flex;align-items:center;padding:0 12px;font-size:14px;color:#555;justify-content:space-between}
+.search kbd{font-family:"JetBrains Mono";font-size:11px;border:1px solid #999;padding:1px 5px}
+.top .r{margin-left:auto;display:flex;gap:18px;align-items:center;font-size:14px;font-weight:700}
+.top .r span{color:#555;font-weight:500}
+.btn{border:2px solid #111;padding:6px 12px}
+.wrap{display:grid;grid-template-columns:280px 1fr 240px;height:844px}
+nav{border-right:1px solid #ddd;padding:28px 0 0 32px;font-family:Overpass}
+nav h6{font-size:11px;letter-spacing:.14em;font-weight:800;color:#555;margin-bottom:16px}
+.line{position:relative;padding-left:34px}
+.line:before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:6px;background:#111}
+.st{position:relative;height:44px;display:flex;align-items:center;font-size:15px;font-weight:500}
+.st:before{content:"";position:absolute;left:-31px;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid #111}
+.st.done:before{background:#111}
+.st.here{font-weight:800}
+.st.here:before{width:18px;height:18px;left:-34px;border-width:5px;border-color:var(--red)}
+.st .b{width:18px;height:18px;border-radius:50%;margin-left:10px;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center}
+.st.ix:before{border-radius:4px;width:14px}
+main{padding:0 56px;overflow:hidden}
+.sign{margin:28px 0 0;background:#111;color:#fff;display:flex;align-items:center;gap:18px;padding:18px 24px;font-family:Overpass}
+.sign .bul{width:46px;height:46px;border-radius:50%;background:var(--red);display:grid;place-items:center;font-weight:800;font-size:20px}
+.sign h1{font-size:38px;font-weight:800;letter-spacing:-.02em}
+.sign .ep{margin-left:auto;font-family:"JetBrains Mono";font-size:14px;color:#ddd}
+.strip{height:8px;background:var(--red)}
+.lede{max-width:680px;font-size:17px;line-height:1.6;margin:26px 0 30px;color:#222}
+code{font-family:"JetBrains Mono";font-size:14px;background:#f1f1f1;padding:1px 5px}
+h2{font-family:Overpass;font-weight:800;font-size:22px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+h2 small{font-size:11px;letter-spacing:.14em;color:#777}
+.code{border:2px solid #111;max-width:820px}
+.plate{display:flex;align-items:center;font-family:Overpass;font-weight:700;font-size:13px;border-bottom:2px solid #111}
+.plate .tab{padding:9px 16px;border-right:2px solid #111}
+.plate .tab.on{background:#111;color:#fff}
+.plate .cp{margin-left:auto;padding:0 16px}
+pre{font-family:"JetBrains Mono";font-size:13.5px;line-height:1.75;padding:16px 20px;border-left:8px solid var(--red)}
+mark{background:#ffe066;color:#111}
+aside{padding:36px 28px 0 0;font-family:Overpass}
+aside h6{font-size:11px;letter-spacing:.14em;font-weight:800;color:#555;margin-bottom:14px}
+aside a{display:block;font-size:14px;padding:7px 0 7px 14px;border-left:3px solid #e2e2e2;color:#444}
+aside a.on{border-color:#111;color:#111;font-weight:700}
+.next{margin-top:28px;border-top:3px solid #111;padding-top:12px;font-size:13px}
+.next b{display:block;font-size:17px;margin-top:4px}
+</style></head><body>
+<header class="top">
+  <div class="mark"><i></i>routerlm <span style="font-weight:500;color:#666">docs</span></div>
+  <div class="search">Search the docs <kbd>⌘K</kbd></div>
+  <div class="r"><span>EN · ID</span><span>◐</span><span class="btn">Sign in to dashboard</span></div>
+</header>
+<div class="wrap">
+  <nav>
+    <h6>THE NETWORK</h6>
+    <div class="line">
+      <div class="st done">Overview</div>
+      <div class="st done ix">Authentication</div>
+      <div class="st here">Chat Completions <span class="b" style="background:var(--red)">C</span></div>
+      <div class="st">Messages <span class="b" style="background:var(--blue)">M</span></div>
+      <div class="st">Responses <span class="b" style="background:var(--green)">R</span></div>
+      <div class="st">Models <span class="b" style="background:var(--yellow);color:#111">L</span></div>
+      <div class="st">Sending images</div>
+      <div class="st">Using tools</div>
+      <div class="st ix">Errors</div>
+    </div>
+  </nav>
+  <main>
+    <div class="sign"><span class="bul">C</span><h1>Chat Completions</h1><span class="ep">POST /v1/chat/completions</span></div>
+    <div class="strip"></div>
+    <p class="lede"><code>POST /v1/chat/completions</code> takes a request in the Chat Completions format and answers in the same format. Clients and SDKs built for that format work once you change their base URL to <code>https://gateway.example.com/v1</code>.</p>
+    <h2>Request <small>3 LINES TO CHANGE</small></h2>
+    <div class="code">
+      <div class="plate"><span class="tab on">curl</span><span class="tab">TypeScript</span><span class="cp">Copy</span></div>
+<pre>curl <mark>https://gateway.example.com</mark>/v1/chat/completions \
+  -H "Authorization: Bearer <mark>$ROUTERLM_API_KEY</mark>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "<mark>my-model</mark>",
+    "messages": [
+      { "role": "system", "content": "You are a concise assistant." },
+      { "role": "user", "content": "Say hello in one sentence." }
+    ],
+    "max_tokens": 256
+  }'</pre>
+    </div>
+  </main>
+  <aside>
+    <h6>ON THIS PAGE</h6>
+    <a class="on">Request</a><a>Response</a><a>Streaming</a><a>Supported fields</a>
+    <div class="next">NEXT STATION<b>Messages →</b></div>
+  </aside>
+</div>
+</body></html>

@@ -1,0 +1,1155 @@
+/* Client documentation (/docs, /id/docs), imported only by layouts/docs.vue.
+   Same theme as the dashboard: it defines no palette of its own and reads the
+   dashboard tokens (dashboard.css :root: colours, focus, shadows, z-order),
+   its type (Plus Jakarta Sans; JetBrains Mono for code) and its shape family
+   (6–18px radii), so light and dark follow the same switch.
+   Its own structure, apart from the dashboard's floating glass sidebar and
+   panel grid: a full-width header, the numbered contents as a flat column on
+   the canvas, and each page on one white sheet. Dense: the reader should see
+   the endpoint, the request and the next section without scrolling far.
+   Shared controls come straight from dashboard.css: .brand, .icon-button,
+   .segmented. This file is unlayered, so it wins over dashboard.css (layer
+   components) wherever both style the same element. */
+
+.datasheet {
+  /* The header's height: the contents stick under it, anchors scroll clear of it. */
+  --ds-head-height: 56px;
+  --ds-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Labels: the dashboard's uppercase tracked label (table heads, metric labels). */
+.ds-title__cell dt,
+.ds-figure__caption,
+.ds-table th,
+.ds-pager__direction,
+.ds-contents__label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Header: full width, solid canvas, one hairline. */
+.ds-head {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 420px) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  height: var(--ds-head-height);
+  /* Its edges line up with the body's, which stops widening at 1320px. */
+  padding-inline: max(20px, calc((100% - 1320px) / 2 + 20px));
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+.ds-head__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.ds-head__brand {
+  color: var(--ink);
+  font-size: 16px;
+  text-decoration: none;
+}
+.ds-head__brand .brand__mark {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+.ds-head__tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--chip);
+  color: var(--chip-ink);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+.ds-head__identity .ds-head__wide:first-of-type {
+  margin-left: 6px;
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
+}
+.ds-head__counter {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ds-head__tools,
+.ds-head__settings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ds-head__tools {
+  justify-content: flex-end;
+}
+.ds-head__narrow,
+.datasheet__scrim,
+.datasheet__sheet-head,
+.datasheet__sheet-settings {
+  display: none;
+}
+
+/* The search trigger reads as the dashboard's search field. */
+.ds-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 34px;
+  padding: 0 6px 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--placeholder);
+  font-size: 12px;
+  text-align: left;
+  transition: border-color 0.15s;
+}
+.ds-search-trigger:hover {
+  border-color: var(--focus-border);
+}
+.ds-search-trigger svg {
+  flex: none;
+  color: var(--muted);
+}
+.ds-search-trigger span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-search-trigger kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--chip);
+  color: var(--chip-ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Language: the dashboard's segmented control; its options are links. */
+.ds-language__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  color: var(--ink-2);
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.ds-language__option:hover {
+  color: var(--ink);
+}
+.ds-language__option[aria-current="page"] {
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Dashboard / Sign in: the dashboard's primary button, at header height. */
+.ds-cell-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--primary-outline);
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--primary-shadow);
+  transition:
+    background 0.2s,
+    transform 0.12s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+.ds-cell-link:hover {
+  background: var(--primary-hover);
+}
+.ds-cell-link:active {
+  transform: scale(0.97);
+}
+
+/* Body: the flat contents column beside the sheet. */
+.datasheet__body {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  max-width: 1320px;
+  margin-inline: auto;
+  padding: 0 20px;
+}
+.datasheet__contents {
+  position: sticky;
+  top: var(--ds-head-height);
+  height: calc(100vh - var(--ds-head-height));
+  height: calc(100dvh - var(--ds-head-height));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
+}
+.datasheet__main {
+  container: ds-main / inline-size;
+  min-width: 0;
+  padding: 16px 0 28px;
+}
+
+/* Contents: a flat list on the canvas; the current page lifts like a segmented thumb. */
+.ds-contents {
+  padding: 18px 0 24px;
+}
+.ds-contents__label {
+  margin: 0 0 8px;
+  padding: 0 10px;
+  color: var(--faint);
+}
+.ds-contents__status {
+  margin: 0;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.ds-contents__pages,
+.ds-contents__sections {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ds-contents__pages {
+  display: grid;
+  gap: 1px;
+}
+.ds-contents__page {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.35;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.ds-contents__page:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.ds-contents__number {
+  flex: none;
+  min-width: 18px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ds-contents__page--current,
+.ds-contents__page--current:hover {
+  border-color: var(--line-soft);
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.ds-contents__page--current .ds-contents__number {
+  color: var(--ink-2);
+}
+/* The current page's sections hang from a hairline guide. */
+.ds-contents__sections {
+  display: grid;
+  margin: 4px 0 8px 19px;
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+}
+.ds-contents__section {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.ds-contents__section:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.ds-contents__section .ds-contents__number {
+  min-width: 22px;
+  font-size: 10.5px;
+}
+.ds-contents__section--active {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ds-contents__section--active .ds-contents__number {
+  color: var(--ink-2);
+}
+
+/* The sheet: every page on one white panel. */
+.ds-sheet {
+  max-width: 980px;
+  padding: 26px 36px 22px;
+  border: 1px solid var(--line-soft);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.ds-sheet__loading {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Title block: the heading, then its data cells as one ruled row. */
+.ds-title h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.ds-title__description {
+  max-width: 70ch;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ds-title__cells {
+  display: flex;
+  align-items: stretch;
+  margin-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+.ds-title__cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  margin: 0;
+  padding: 10px 18px;
+}
+.ds-title__cell:first-child {
+  padding-left: 0;
+}
+.ds-title__cell + .ds-title__cell {
+  border-left: 1px solid var(--line-soft);
+}
+.ds-title__cell dd {
+  margin: 0;
+}
+.ds-title__value {
+  color: var(--ink);
+  font-family: var(--ds-mono);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ds-title__cell--action,
+.ds-title__cell + .ds-title__cell--action {
+  margin-left: auto;
+  padding-right: 0;
+  border-left: 0;
+}
+/* Copy page: the dashboard's button, compact. */
+.ds-title__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink-2);
+  font-size: 12px;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    transform 0.12s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+.ds-title__copy:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.ds-title__copy:active {
+  transform: scale(0.97);
+}
+.ds-title--error {
+  padding: 4px 0;
+}
+.ds-title__message {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+}
+.ds-title__recovery {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  text-decoration: underline 1px;
+  text-underline-offset: 3px;
+}
+.ds-title__recovery:hover {
+  text-decoration-thickness: 2px;
+}
+/* Too narrow for the cells in one row: the endpoint takes a whole row. */
+@container ds-main (width < 700px) {
+  .ds-title__cells {
+    flex-wrap: wrap;
+  }
+  .ds-title__cell--endpoint {
+    flex-basis: 100%;
+    padding-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .ds-title__cell--endpoint + .ds-title__cell {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .ds-title__value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Article: numbered sections at a reading measure; figures and tables run the sheet's width.
+   The counters are reset on the article (DocsPage), with the page's number. */
+.ds-article {
+  margin-top: 18px;
+}
+.ds-prose {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.ds-prose :is(p, ul, ol, blockquote) {
+  max-width: 72ch;
+}
+.ds-prose p {
+  margin: 0 0 12px;
+}
+/* The lede: the page's introduction, before its first section. */
+.ds-prose > p:not(h2 ~ p) {
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.ds-prose :is(ul, ol) {
+  margin: 0 0 12px;
+  padding-left: 1.2em;
+}
+.ds-prose li + li {
+  margin-top: 4px;
+}
+.ds-prose li::marker {
+  color: var(--faint);
+}
+.ds-prose strong {
+  font-weight: 650;
+}
+.ds-prose a:not(.ds-heading__anchor) {
+  color: var(--ink);
+  text-decoration: underline 1px;
+  text-decoration-color: var(--focus-border);
+  text-underline-offset: 3px;
+}
+.ds-prose a:not(.ds-heading__anchor):hover {
+  text-decoration-color: currentColor;
+}
+.ds-prose :not(pre) > code {
+  padding: 0.08em 0.36em;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--ink);
+  font-family: var(--ds-mono);
+  font-size: 0.84em;
+}
+.ds-heading {
+  scroll-margin-top: calc(var(--ds-head-height) + 16px);
+  color: var(--ink);
+}
+h2.ds-heading {
+  margin: 30px 0 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  counter-increment: ds-section;
+  counter-reset: ds-subsection;
+}
+h3.ds-heading {
+  margin: 20px 0 6px;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+  counter-increment: ds-subsection;
+}
+.ds-heading::before {
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--faint);
+  font-size: 0.62em;
+  font-weight: 600;
+  letter-spacing: 0;
+  vertical-align: 0.18em;
+  font-variant-numeric: tabular-nums;
+}
+/* Numbered like the contents and the figures: page, section, subsection. */
+h2.ds-heading::before {
+  min-width: 2.2em;
+  content: counter(ds-page) "." counter(ds-section);
+}
+h3.ds-heading::before {
+  min-width: 3.2em;
+  font-size: 0.75em;
+  vertical-align: 0.06em;
+  content: counter(ds-page) "." counter(ds-section) "." counter(ds-subsection);
+}
+.ds-heading__anchor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  border-radius: 6px;
+  color: var(--muted);
+  vertical-align: middle;
+  opacity: 0;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.ds-heading:hover .ds-heading__anchor,
+.ds-heading__anchor:focus-visible {
+  opacity: 1;
+}
+.ds-heading__anchor:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+/* Touch screens have no hover: the anchor stays visible. */
+@media (hover: none) {
+  .ds-heading__anchor {
+    opacity: 1;
+  }
+}
+
+/* Code figures: a recessed box on the sheet, no shadow. */
+.ds-figure {
+  margin: 12px 0 18px;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--panel-2);
+  counter-increment: ds-figure;
+}
+.ds-figure__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 5px 6px 5px 6px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.ds-figure__tabs {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ds-figure__tab {
+  flex: none;
+  height: 24px;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.ds-figure__tab:hover {
+  color: var(--ink);
+}
+.ds-figure__label {
+  padding-left: 6px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ds-figure__copy {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  margin-left: auto;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.ds-figure__copy:hover {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.ds-figure pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  color: var(--ink);
+  font-family: var(--ds-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  tab-size: 2;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
+}
+.ds-figure pre code {
+  font: inherit;
+}
+.ds-figure pre:focus-visible {
+  outline-offset: -3px;
+}
+.ds-figure__caption {
+  padding: 7px 12px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.ds-figure__number::after {
+  content: " " counter(ds-page, decimal-leading-zero) "-" counter(ds-figure);
+}
+
+/* Tables: the dashboard's data table in a 12px box. */
+.ds-table {
+  margin: 12px 0 18px;
+  overflow-x: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+}
+.ds-table table {
+  width: 100%;
+  /* A narrow main column scrolls the table rather than crushing its columns;
+     phones stack it into records instead (below). */
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.ds-table th {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--panel-2);
+  text-align: left;
+  white-space: nowrap;
+}
+.ds-table td {
+  padding: 8px 12px;
+  border-top: 0;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-2);
+  font-size: inherit;
+  white-space: normal;
+  vertical-align: top;
+}
+.ds-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.ds-table tbody tr:hover {
+  background: var(--row-hover);
+}
+.ds-table td:first-child {
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Pager: previous and next at the foot of the sheet, then the imprint. */
+.ds-pager {
+  margin-top: 32px;
+}
+.ds-pager__links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.ds-pager__link {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 11px 14px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--panel-2);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+a.ds-pager__link:hover {
+  border-color: var(--line);
+  background: var(--row-hover);
+}
+.ds-pager__link--empty {
+  visibility: hidden;
+}
+.ds-pager__links > :nth-child(2) {
+  text-align: right;
+}
+.ds-pager__title {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+.ds-pager__number {
+  margin-right: 6px;
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ds-pager__imprint {
+  margin: 0;
+  padding: 16px 0 0;
+  color: var(--faint);
+  font-size: 11px;
+}
+
+/* Search: a native modal dialog, shaped like the dashboard's sheets. */
+.ds-search {
+  width: min(620px, calc(100vw - 32px));
+  max-width: none;
+  max-height: 76vh;
+  margin: 10vh auto auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--glass-line);
+  border-radius: 18px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: var(--shadow-float);
+}
+/* ::backdrop may not inherit the page's variables, so the scrim is spelled out. */
+.ds-search::backdrop {
+  background: rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+:root[data-theme="dark"] .ds-search::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ds-search::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+.ds-search[open] {
+  display: flex;
+}
+.ds-search__panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.ds-search__field {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  margin: 10px;
+  padding: 0 6px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--muted);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.ds-search__field:focus-within {
+  border-color: var(--focus-border);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.ds-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+  appearance: none;
+}
+.ds-search__input::placeholder {
+  color: var(--placeholder);
+}
+.ds-search__input::-webkit-search-cancel-button {
+  appearance: none;
+}
+.ds-search__input:focus-visible {
+  outline: none;
+}
+.ds-search__results {
+  display: grid;
+  gap: 1px;
+  min-height: 0;
+  margin: 0;
+  padding: 6px 8px 10px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line-soft);
+  list-style: none;
+}
+.ds-search__row {
+  display: grid;
+  gap: 2px;
+  padding: 6px 12px 6px 46px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ds-search__row--page {
+  margin-top: 6px;
+  padding: 8px 12px 6px;
+  font-weight: 600;
+}
+.ds-search__row--page:first-child {
+  margin-top: 0;
+}
+.ds-search__row--highlighted {
+  background: var(--nav-active);
+}
+.ds-search__title {
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.35;
+}
+.ds-search__number {
+  display: inline-block;
+  min-width: 34px;
+  color: var(--faint);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.ds-search__row--page .ds-search__snippet {
+  padding-left: 34px;
+  font-weight: 400;
+}
+.ds-search__snippet {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-search__snippet mark {
+  padding: 0 2px;
+  border-radius: 3px;
+  background: var(--highlight);
+  color: var(--ink);
+  font-weight: 650;
+}
+.ds-search__status {
+  margin: 0;
+  padding: 4px 18px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ds-search__status--failed {
+  color: var(--danger-ink);
+}
+
+/* Narrower screens: a slimmer contents column and sheet inset. */
+@media (max-width: 1100px) {
+  .ds-head {
+    grid-template-columns: auto minmax(160px, 1fr) auto;
+  }
+  .ds-head__identity .ds-head__wide {
+    display: none;
+  }
+  .datasheet__body {
+    grid-template-columns: 196px minmax(0, 1fr);
+    gap: 18px;
+  }
+  .ds-sheet {
+    padding: 22px 26px 20px;
+  }
+}
+
+/* Phones: the contents become a drawer that also takes the settings; the sheet runs edge to edge. */
+@media (max-width: 760px) {
+  .ds-head {
+    display: flex;
+    gap: 6px;
+    height: 56px;
+    padding: 0 8px 0 6px;
+  }
+  .ds-head__settings,
+  .ds-search-trigger {
+    display: none;
+  }
+  .ds-head__narrow {
+    display: grid;
+  }
+  .ds-head__tools {
+    margin-left: auto;
+  }
+  .datasheet__body {
+    display: block;
+    padding: 0;
+  }
+  .datasheet__contents {
+    position: fixed;
+    inset: 10px auto 10px 10px;
+    z-index: var(--z-nav);
+    display: flex;
+    flex-direction: column;
+    width: min(300px, calc(100vw - 40px));
+    height: auto;
+    padding: 8px 12px 12px;
+    border: 1px solid var(--glass-line);
+    border-radius: 18px;
+    background: var(--panel);
+    box-shadow: var(--shadow-float);
+    transform: translateX(calc(-100% - 20px));
+    visibility: hidden;
+    transition:
+      transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0s linear 0.32s;
+  }
+  .datasheet__contents--open {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .datasheet__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-nav-scrim);
+    display: block;
+    background: rgba(0, 0, 0, 0.25);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+  .datasheet__sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 10px;
+  }
+  .datasheet__sheet-title {
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+  }
+  .ds-contents {
+    padding-top: 6px;
+  }
+  .ds-contents__label {
+    display: none;
+  }
+  .ds-contents__page,
+  .ds-contents__section {
+    min-height: 44px;
+    align-items: center;
+  }
+  .datasheet__sheet-settings {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding: 12px 6px 2px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .datasheet__main {
+    padding: 0;
+  }
+  .ds-sheet {
+    padding: 20px 16px 24px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .ds-title h1 {
+    font-size: 24px;
+  }
+  .ds-title__cell {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 12px;
+  }
+  .ds-title__cell--endpoint {
+    flex-basis: 100%;
+  }
+  .ds-title__cell--action,
+  .ds-title__cell + .ds-title__cell--action {
+    flex: 0 0 auto;
+    padding-right: 0;
+  }
+  .ds-title__copy {
+    height: 40px;
+  }
+  h2.ds-heading {
+    margin-top: 26px;
+    font-size: 18px;
+  }
+  .ds-prose > p:not(h2 ~ p) {
+    font-size: 15px;
+  }
+  .ds-pager__links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ds-pager__link--empty {
+    display: none;
+  }
+  .ds-pager__links > :nth-child(2) {
+    text-align: left;
+  }
+  .ds-search {
+    margin-top: 8vh;
+  }
+  .ds-search__input {
+    font-size: 16px;
+  }
+  /* Tables stack into records: one block per row, each cell under its
+     column's header (data-label, set by ProseTable). */
+  .ds-table {
+    position: relative;
+  }
+  .ds-table table {
+    min-width: 0;
+  }
+  .ds-table :is(table, tbody, tr, td) {
+    display: block;
+  }
+  .ds-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ds-table tr {
+    padding: 10px 12px 12px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .ds-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .ds-table td {
+    padding: 0;
+    border-bottom: 0;
+  }
+  .ds-table td + td {
+    margin-top: 6px;
+  }
+  .ds-table td:first-child {
+    white-space: normal;
+  }
+  /* With three or more columns, the first two cells head the record on one
+     line (400 · invalid_request); the rest keep their labels. */
+  .ds-table tr:has(td:nth-child(3)) td:is(:first-child, :nth-child(2)) {
+    display: inline;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .ds-table tr:has(td:nth-child(3)) td:first-child::after {
+    content: " · ";
+    color: var(--faint);
+  }
+  .ds-table tr:has(td:nth-child(3)) td:nth-child(3) {
+    margin-top: 6px;
+  }
+  .ds-table tr:has(td:nth-child(3)) td:is(:first-child, :nth-child(2))::before {
+    content: none;
+  }
+  .ds-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .datasheet *,
+  .ds-search * {
+    transition: none !important;
+  }
+}

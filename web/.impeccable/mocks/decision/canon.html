@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Canon docs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1440px;height:900px;overflow:hidden;background:#fff;color:#0f172a;font-family:Inter,sans-serif}
+.top{height:60px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 28px;gap:28px}
+.logo{font-weight:700;font-size:17px}.logo span{color:#4f46e5}
+.search{width:320px;height:36px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:#64748b;font-size:14px}
+.top .r{margin-left:auto;display:flex;gap:18px;align-items:center;font-size:14px;color:#475569}
+.cta{background:#4f46e5;color:#fff;border-radius:8px;padding:8px 14px;font-weight:600}
+.wrap{display:grid;grid-template-columns:260px 1fr 240px;height:840px}
+nav{border-right:1px solid #e2e8f0;padding:24px 20px;font-size:14px}
+nav h6{font-size:12px;font-weight:600;color:#0f172a;margin:0 0 8px 10px}
+nav a{display:block;padding:7px 10px;border-radius:6px;color:#475569}
+nav a.on{background:#eef2ff;color:#4f46e5;font-weight:600}
+main{padding:40px 64px;max-width:860px}
+.eyebrow{color:#4f46e5;font-size:13px;font-weight:600}
+h1{font-size:34px;font-weight:700;letter-spacing:-.02em;margin:6px 0 12px}
+p{font-size:16px;line-height:1.7;color:#334155;margin-bottom:24px}
+code{font-family:"JetBrains Mono";font-size:14px;background:#f1f5f9;padding:2px 5px;border-radius:4px}
+h2{font-size:22px;margin-bottom:14px}
+.code{background:#0f172a;border-radius:12px;overflow:hidden}
+.tabs{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid #1e293b;font-size:13px;color:#94a3b8}
+.tabs span{padding:4px 10px;border-radius:6px}.tabs .on{background:#1e293b;color:#fff}
+pre{font-family:"JetBrains Mono";font-size:13.5px;line-height:1.7;color:#e2e8f0;padding:16px 20px}
+aside{padding:40px 24px;font-size:13px}
+aside h6{font-size:12px;margin-bottom:10px}
+aside a{display:block;padding:5px 0;color:#64748b}aside a.on{color:#4f46e5;font-weight:600}
+</style></head><body>
+<div class="top"><div class="logo">RouterLM <span>Docs</span></div><div class="search">Search… <span>⌘K</span></div>
+<div class="r"><span>English ▾</span><span>☾</span><span class="cta">Dashboard</span></div></div>
+<div class="wrap">
+<nav><h6>Getting started</h6><a>Overview</a><a>Authentication</a><h6 style="margin-top:18px">Endpoints</h6><a class="on">Chat Completions</a><a>Messages</a><a>Responses</a><a>Models</a><h6 style="margin-top:18px">Guides</h6><a>Sending images</a><a>Using tools</a><a>Errors</a></nav>
+<main><div class="eyebrow">Endpoints</div><h1>Chat Completions</h1>
+<p><code>POST /v1/chat/completions</code> takes a request in the Chat Completions format and answers in the same format. Clients and SDKs built for that format work once you change their base URL.</p>
+<h2>Request</h2>
+<div class="code"><div class="tabs"><span class="on">curl</span><span>TypeScript</span></div>
+<pre>curl https://gateway.example.com/v1/chat/completions \
+  -H "Authorization: Bearer $ROUTERLM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "my-model",
+    "messages": [
+      { "role": "user", "content": "Say hello in one sentence." }
+    ]
+  }'</pre></div></main>
+<aside><h6>On this page</h6><a class="on">Request</a><a>Response</a><a>Streaming</a><a>Supported fields</a></aside>
+</div></body></html>

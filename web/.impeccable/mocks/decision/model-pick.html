@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Datasheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Archivo+Narrow:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1440px;height:900px;overflow:hidden;background:#fff;color:#141414}
+body{font-family:Archivo,sans-serif}
+:root{--red:#c8102e;--grid:#eceef0}
+.run{height:40px;display:flex;align-items:center;padding:0 40px;font-family:"Archivo Narrow";font-size:12px;font-weight:700;letter-spacing:.08em;border-bottom:1px solid #141414}
+.run .l{display:flex;gap:28px}.run .r{margin-left:auto;display:flex;gap:22px;align-items:center}
+.run .r span{border:1px solid #141414;padding:3px 8px}
+.redrule{height:6px;background:var(--red)}
+.wrap{display:grid;grid-template-columns:230px 1fr;height:854px}
+nav{border-right:1px solid #141414;padding:22px 0;font-family:"Archivo Narrow"}
+nav h6{font-size:11px;letter-spacing:.12em;padding:0 22px 10px;color:#666}
+nav a{display:flex;gap:12px;padding:8px 22px;font-size:14px;font-weight:500}
+nav a em{font-style:normal;color:#888;width:22px;font-variant-numeric:tabular-nums}
+nav a.on{background:#141414;color:#fff}nav a.on em{color:#fff}
+main{padding:0 44px}
+.tb{display:grid;grid-template-columns:1fr 200px 160px 140px;border-bottom:2px solid #141414;margin-top:26px}
+.tb div{padding:10px 14px;border-left:1px solid #141414;font-family:"Archivo Narrow";font-size:11px;letter-spacing:.1em;color:#555}
+.tb div:first-child{border-left:0;padding-left:0}
+.tb b{display:block;color:#141414;font-size:15px;letter-spacing:0;margin-top:4px;font-family:"JetBrains Mono";font-weight:600}
+h1{font-size:44px;font-weight:800;letter-spacing:-.03em;margin:4px 0 0;font-family:Archivo}
+.cols{display:grid;grid-template-columns:1fr 560px;gap:40px;margin-top:24px}
+.desc h2{font-family:"Archivo Narrow";font-size:13px;letter-spacing:.1em;border-bottom:1px solid #141414;padding-bottom:6px;margin-bottom:12px}
+.desc p{font-size:16px;line-height:1.6;max-width:560px;margin-bottom:14px}
+code{font-family:"JetBrains Mono";font-size:13.5px;background:var(--grid);padding:1px 4px}
+.fig{border:1px solid #141414}
+.fig .cap{display:flex;font-family:"Archivo Narrow";font-size:12px;font-weight:700;letter-spacing:.06em;border-bottom:1px solid #141414}
+.fig .cap span{padding:8px 12px;border-right:1px solid #141414}.fig .cap .on{background:#141414;color:#fff}
+.fig .cap .cp{margin-left:auto;border:0}
+pre{font-family:"JetBrains Mono";font-size:12.5px;line-height:1.7;padding:14px 16px;background:#fafafa}
+.fig .foot{font-family:"Archivo Narrow";font-size:11px;padding:6px 12px;border-top:1px solid #141414;color:#555}
+table{width:100%;border-collapse:collapse;margin-top:28px;font-size:14px}
+caption{text-align:left;font-family:"Archivo Narrow";font-weight:700;font-size:13px;letter-spacing:.1em;padding-bottom:8px}
+th{font-family:"Archivo Narrow";font-size:11px;letter-spacing:.1em;text-align:left;padding:8px 10px;border-top:2px solid #141414;border-bottom:1px solid #141414;color:#555}
+td{padding:9px 10px;border-bottom:1px solid #d6d8db}
+td:first-child{font-family:"JetBrains Mono";font-weight:600}
+td.n{font-variant-numeric:tabular-nums}
+</style></head><body>
+<div class="run"><div class="l"><span>ROUTERLM · CLIENT API</span><span>REV 2.0</span><span>03 / 09</span></div>
+<div class="r"><span>⌘K SEARCH</span><b>EN · ID</b><b>◐</b><span>DASHBOARD →</span></div></div>
+<div class="redrule"></div>
+<div class="wrap">
+<nav><h6>CONTENTS</h6>
+<a><em>01</em>Overview</a><a><em>02</em>Authentication</a><a class="on"><em>03</em>Chat Completions</a><a><em>04</em>Messages</a><a><em>05</em>Responses</a><a><em>06</em>Models</a><a><em>07</em>Sending images</a><a><em>08</em>Using tools</a><a><em>09</em>Errors</a></nav>
+<main>
+<div class="tb"><div>ENDPOINT<h1>Chat Completions</h1></div><div>PART NO.<b>POST /v1/chat/completions</b></div><div>FORMAT<b>chat.completion</b></div><div>STREAM<b>SSE</b></div></div>
+<div class="cols">
+<div class="desc"><h2>1 · DESCRIPTION</h2>
+<p><code>POST /v1/chat/completions</code> takes a request in the Chat Completions format and answers in the same format.</p>
+<p>Clients and SDKs built for that format work once you change their base URL to <code>https://gateway.example.com/v1</code>.</p>
+<p>The response is a <code>chat.completion</code> object. Its <code>model</code> is the Model name you sent.</p></div>
+<div class="fig"><div class="cap"><span class="on">curl</span><span>TypeScript</span><span class="cp">COPY</span></div>
+<pre>curl https://gateway.example.com/v1/chat/completions \
+  -H "Authorization: Bearer $ROUTERLM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "my-model",
+    "messages": [
+      { "role": "user", "content": "Say hello in one sentence." }
+    ],
+    "max_tokens": 256
+  }'</pre><div class="foot">FIG. 3-1 · TYPICAL REQUEST</div></div>
+</div>
+<table><caption>2 · REQUEST FIELDS</caption>
+<thead><tr><th>FIELD</th><th>TYPE</th><th>REQUIRED</th><th>NOTES</th></tr></thead>
+<tbody><tr><td>model</td><td>string</td><td>yes</td><td>A Model name from GET /v1/models</td></tr>
+<tr><td>messages</td><td>array</td><td>yes</td><td>system, user, assistant and tool roles</td></tr>
+<tr><td>max_tokens</td><td>integer</td><td>no</td><td class="n">Upper bound on output tokens</td></tr></tbody></table>
+</main></div>
+</body></html>
