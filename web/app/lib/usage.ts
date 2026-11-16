@@ -1,3 +1,5 @@
+import type { ServiceTier } from "~/lib/parameterPolicy";
+
 /** A Usage Log as `GET /api/usage` lists it. Names are null once the Model or API Key is deleted. */
 export interface UsageLogSummary {
   id: string;
@@ -11,6 +13,8 @@ export interface UsageLogSummary {
   isStreamed: boolean;
   httpStatus: number;
   errorCode: string | null;
+  /** The Service Tier that served the request; null for the Provider's default. */
+  serviceTier: ServiceTier | null;
   inputTokens: number | null;
   outputTokens: number | null;
   cacheReadTokens: number | null;

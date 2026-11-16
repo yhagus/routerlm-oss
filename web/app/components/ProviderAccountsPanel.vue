@@ -2,9 +2,11 @@
 import { KeyRound, LogIn, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
 import { resetCountdown } from "~/lib/quotaMeters";
 import {
+  acceptsApiKey,
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
   needsNewSignIn,
   OAUTH_REGION_LABELS,
+  offersSignIn,
   optionalNumber,
   type Provider,
   type ProviderAccount,
@@ -76,11 +78,17 @@ function accountStatus(account: ProviderAccount): AccountStatus {
   return { kind: "cooldown", note: `until ${timeFormat.format(endsAt)}` };
 }
 
+/** What tells an OAuth Login apart: its region (Kimi Code), or who signed in on which plan (OpenAI Codex). */
+function oauthLoginNote(account: ProviderAccount): string | null {
+  if (account.oauthRegion) return OAUTH_REGION_LABELS[account.oauthRegion];
+  const identity = [account.oauthEmail, account.oauthPlanType].filter(Boolean);
+  return identity.length > 0 ? identity.join(" · ") : null;
+}
+
 /** Which credential the account holds and what tells it apart, never the credential itself. */
 function accountCredential(account: ProviderAccount): { label: string; note: string | null } {
   if (account.credentialKind === "oauth-login") {
-    const region = account.oauthRegion;
-    return { label: "OAuth Login", note: region ? OAUTH_REGION_LABELS[region] : null };
+    return { label: "OAuth Login", note: oauthLoginNote(account) };
   }
   return { label: "API key", note: account.keyLastFour ? `…${account.keyLastFour}` : null };
 }
@@ -97,10 +105,18 @@ const accountRows = computed(() =>
     })),
 );
 
-const emptyStateHint = computed(() => {
-  const ways = props.provider.oauthLogin ? "Add an API key or sign in" : "Add an API key";
-  return `${ways} for ${props.provider.name} so the gateway can call it.`;
-});
+/** How the Provider's accounts get their credential, as the empty state tells it. */
+function addAccountHint(provider: Provider): string {
+  const canAddKey = acceptsApiKey(provider);
+  const canSignIn = offersSignIn(provider);
+  if (canAddKey && canSignIn) return "Add an API key or sign in";
+  if (canSignIn) return "Sign in";
+  return "Add an API key";
+}
+
+const emptyStateHint = computed(
+  () => `${addAccountHint(props.provider)} for ${props.provider.name} so the gateway can call it.`,
+);
 
 const {
   dialog,
@@ -237,7 +253,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
       </div>
       <div class="panel-heading__tools">
         <button
-          v-if="provider.oauthLogin"
+          v-if="offersSignIn(provider)"
           class="button"
           type="button"
           @click="openDialog({ kind: 'sign-in', account: null })"
@@ -245,6 +261,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
           <LogIn :size="14" /> Sign in with {{ provider.name }}
         </button>
         <button
+          v-if="acceptsApiKey(provider)"
           class="button button--primary"
           type="button"
           @click="openDialog({ kind: 'create' })"

@@ -4,15 +4,25 @@
 export const REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh"] as const;
 export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 
+/** The gateway's Service Tier names; each Provider maps them to its own wire values. */
+export const SERVICE_TIERS = ["fast", "flex"] as const;
+export type ServiceTier = (typeof SERVICE_TIERS)[number];
+
+export const SERVICE_TIER_LABELS: Record<ServiceTier, string> = {
+  fast: "Fast",
+  flex: "Flex",
+};
+
 export interface ParameterValues {
   temperature?: number;
   topP?: number;
   maxOutputTokens?: number;
   reasoningEffort?: ReasoningEffort;
   stopSequences?: string[];
+  serviceTier?: ServiceTier;
 }
 
-export type ParameterCaps = Omit<ParameterValues, "stopSequences">;
+export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier">;
 
 export interface ParameterPolicy {
   defaults?: ParameterValues;
@@ -31,6 +41,7 @@ export const POLICY_PARAMETERS: { name: PolicyParameter; label: string; hint: st
   { name: "maxOutputTokens", label: "Max output tokens", hint: "Whole number" },
   { name: "reasoningEffort", label: "Reasoning effort", hint: "None to xhigh" },
   { name: "stopSequences", label: "Stop sequences", hint: "One per line" },
+  { name: "serviceTier", label: "Service tier", hint: "Dropped where unsupported" },
 ];
 
 export const RULE_KINDS: { kind: RuleKind; label: string }[] = [
@@ -39,9 +50,9 @@ export const RULE_KINDS: { kind: RuleKind; label: string }[] = [
   { kind: "caps", label: "Cap" },
 ];
 
-/** Stop sequences have no order, so they can't be capped. */
-export function isCappable(parameter: PolicyParameter): boolean {
-  return parameter !== "stopSequences";
+/** Stop sequences and Service Tiers have no order, so they can't be capped. */
+export function isCappable(parameter: PolicyParameter): parameter is keyof ParameterCaps {
+  return parameter !== "stopSequences" && parameter !== "serviceTier";
 }
 
 /** The editor's inputs as text: an empty field means "not set". */
@@ -111,6 +122,7 @@ function rowFromValues(values: ParameterValues | undefined): Record<PolicyParame
     maxOutputTokens: values?.maxOutputTokens?.toString() ?? "",
     reasoningEffort: values?.reasoningEffort ?? "",
     stopSequences: values?.stopSequences?.join("\n") ?? "",
+    serviceTier: values?.serviceTier ?? "",
   };
 }
 
@@ -124,6 +136,12 @@ function setValue(values: ParameterValues, parameter: PolicyParameter, text: str
     const effort = REASONING_EFFORTS.find((known) => known === text);
     if (!effort) return `use one of ${REASONING_EFFORTS.join(", ")}`;
     values.reasoningEffort = effort;
+    return "";
+  }
+  if (parameter === "serviceTier") {
+    const tier = SERVICE_TIERS.find((known) => known === text);
+    if (!tier) return `use one of ${SERVICE_TIERS.join(", ")}`;
+    values.serviceTier = tier;
     return "";
   }
   const { min, max, isWhole } = NUMBER_RANGES[parameter];
@@ -144,7 +162,7 @@ function setValue(values: ParameterValues, parameter: PolicyParameter, text: str
 function capProblem(policy: ParameterPolicy): string {
   for (const kind of ["defaults", "forced"] as const) {
     for (const { name, label } of POLICY_PARAMETERS) {
-      if (name === "stopSequences") continue;
+      if (!isCappable(name)) continue;
       const value = policy[kind]?.[name];
       const cap = policy.caps?.[name];
       if (value !== undefined && cap !== undefined && rank(value) > rank(cap)) {

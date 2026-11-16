@@ -20,12 +20,14 @@ import {
   numberField,
   optionalNumber,
   type Provider,
+  type TierPrices,
   type UpstreamModel,
   upstreamModelLabel,
 } from "~/lib/upstream";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { formatNumberInput } from "~/lib/numberInput";
+import { SERVICE_TIER_LABELS, SERVICE_TIERS, type ServiceTier } from "~/lib/parameterPolicy";
 
 /**
  * Upstream Models with filters, sorting and editing. With `provider` it shows
@@ -377,6 +379,41 @@ interface UpstreamModelForm {
   cacheWritePrice: NumberInput;
   /** "YYYY-MM-DD" from the date input, or "" when empty. */
   releaseDate: string;
+  serviceTiers: ServiceTier[];
+  /** Each accepted tier's prices; an empty field means the standard price. */
+  tierPrices: Record<ServiceTier, TierPriceFields>;
+}
+
+type TierPriceFields = Record<keyof Required<TierPrices>, NumberInput>;
+
+const TIER_PRICE_FIELDS = [
+  { key: "inputPrice", label: "Input" },
+  { key: "outputPrice", label: "Output" },
+  { key: "cacheReadPrice", label: "Cache read" },
+  { key: "cacheWritePrice", label: "Cache write" },
+] as const satisfies { key: keyof TierPrices; label: string }[];
+
+function tierPriceFields(prices: TierPrices | undefined): TierPriceFields {
+  return {
+    inputPrice: prices?.inputPrice ?? "",
+    outputPrice: prices?.outputPrice ?? "",
+    cacheReadPrice: prices?.cacheReadPrice ?? "",
+    cacheWritePrice: prices?.cacheWritePrice ?? "",
+  };
+}
+
+/** Prices for the accepted tiers only, each with just the prices typed in. */
+function tierPricesFromForm(form: UpstreamModelForm): Partial<Record<ServiceTier, TierPrices>> {
+  const tierPrices: Partial<Record<ServiceTier, TierPrices>> = {};
+  for (const tier of form.serviceTiers) {
+    const prices: TierPrices = {};
+    for (const { key } of TIER_PRICE_FIELDS) {
+      const price = optionalNumber(form.tierPrices[tier][key]);
+      if (price !== null) prices[key] = price;
+    }
+    if (Object.keys(prices).length > 0) tierPrices[tier] = prices;
+  }
+  return tierPrices;
 }
 
 const form = ref<UpstreamModelForm>(emptyForm());
@@ -400,6 +437,8 @@ function emptyForm(): UpstreamModelForm {
     cacheReadPrice: "",
     cacheWritePrice: "",
     releaseDate: "",
+    serviceTiers: [],
+    tierPrices: { fast: tierPriceFields(undefined), flex: tierPriceFields(undefined) },
   };
 }
 
@@ -416,6 +455,11 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
     cacheReadPrice: numberField(upstreamModel.cacheReadPrice),
     cacheWritePrice: numberField(upstreamModel.cacheWritePrice),
     releaseDate: upstreamModel.releaseDate ?? "",
+    serviceTiers: SERVICE_TIERS.filter((tier) => upstreamModel.serviceTiers.includes(tier)),
+    tierPrices: {
+      fast: tierPriceFields(upstreamModel.tierPrices.fast),
+      flex: tierPriceFields(upstreamModel.tierPrices.flex),
+    },
   };
 }
 
@@ -439,6 +483,8 @@ async function saveUpstreamModel(): Promise<void> {
     cacheReadPrice: optionalNumber(form.value.cacheReadPrice),
     cacheWritePrice: optionalNumber(form.value.cacheWritePrice),
     releaseDate: form.value.releaseDate || null,
+    serviceTiers: SERVICE_TIERS.filter((tier) => form.value.serviceTiers.includes(tier)),
+    tierPrices: tierPricesFromForm(form.value),
   };
   const failureMessage = "Couldn't save the Upstream Model.";
   if (current.kind === "create") {
@@ -925,6 +971,30 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           <span class="field__label">Release date</span>
           <AppDateInput v-model="form.releaseDate" label="Release date" />
         </div>
+      </div>
+      <fieldset class="check-group">
+        <legend class="field__label">Service Tiers</legend>
+        <label v-for="tier in SERVICE_TIERS" :key="tier" class="check-field"
+          ><input v-model="form.serviceTiers" type="checkbox" :value="tier" />
+          {{ SERVICE_TIER_LABELS[tier] }}</label
+        >
+      </fieldset>
+      <p class="form__hint">
+        A requested tier the model doesn't accept is dropped. A tier price left empty is the
+        standard price.
+      </p>
+      <div v-for="tier in form.serviceTiers" :key="tier" class="form__grid">
+        <label v-for="{ key, label } in TIER_PRICE_FIELDS" :key="key" class="field"
+          ><span class="field__label"
+            >{{ SERVICE_TIER_LABELS[tier] }} {{ label.toLowerCase() }} price</span
+          ><NumberInput
+            v-model="form.tierPrices[tier][key]"
+            class="text-input"
+            :min="0"
+            prefix="$"
+            suffix="/ 1M tokens"
+            unit-label="US dollars per million tokens"
+        /></label>
       </div>
       <p v-if="dialogError" class="form__error" role="alert">
         {{ dialogError }}
