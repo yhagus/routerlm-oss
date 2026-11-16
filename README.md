@@ -161,3 +161,7 @@ Backend modules follow a CQRS folder layout and prefer first-party `@nestjs/*` p
 ## Upgrading from v1
 
 v2 is a rewrite and does not import v1 data. The v1 app (Bun + Hono + Vue, SQLite) is kept in [`legacy/`](legacy/), and its npm package `@ciwergrp/routerlm` and image `ghcr.io/yhagus/routerlm-oss` stay at 1.6.5. See [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE)
