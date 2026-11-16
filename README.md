@@ -20,28 +20,28 @@
 Your tools speak OpenAI or Anthropic. Your keys are spread over Anthropic, OpenAI, DeepSeek, Moonshot, MiniMax, Alibaba and a couple of coding plans. RouterLM sits in between:
 
 - **One key per app.** Cursor, Claude Code, your CI and your internal tools each get their own `rlm_…` API Key, limited to the Models you allow.
-- **Fallback that just works.** A Model is an ordered list of Routes. A rate limit, a 5xx or a timeout moves the request to the next Route, and the failing account rests in Cooldown.
-- **Subscription plans, used to the last token.** Kimi Code and MiniMax M Plan accounts show their quota meters. An exhausted account is skipped until it resets.
+- **Automatic fallback.** A Model is an ordered list of Routes. A rate limit, a 5xx or a timeout moves the request to the next Route, and the failing account rests in Cooldown.
+- **Subscription plans, used to the last token.** Kimi Code and MiniMax M Plan accounts show their quota meters. RouterLM skips an exhausted account until its quota resets.
 - **Know what every request cost.** Tokens, cache reads and writes, latency, time to first token and USD cost for each request, per key and per Model.
-- **Debug failures without logging prompts.** RouterLM never stores prompt or response content. Only failed requests are kept, as Error Captures with credentials redacted, for 30 days.
+- **Debug failures without logging prompts.** RouterLM never stores prompt or response content. It keeps only failed requests, as Error Captures with credentials redacted, for 30 days.
 
 ## Features
 
 ### Three client protocols, any upstream
 
-Clients call `/v1/chat/completions`, `/v1/messages` or `/v1/responses`. Every request is converted to one internal format and sent to an OpenAI Chat or Anthropic Messages upstream, streamed or not. A Claude Code session can run on Kimi, and an OpenAI SDK app can run on Claude.
+Clients call `/v1/chat/completions`, `/v1/messages` or `/v1/responses`. RouterLM converts every request to one internal format. It then sends the request to an OpenAI Chat or Anthropic Messages upstream, streamed or not. A Claude Code session can run on Kimi, and an OpenAI SDK app can run on Claude.
 
 ### Models and Routes
 
 ![The "smart" Model with three Routes: Anthropic, OpenAI and Moonshot](docs/images/model.png)
 
-A Model is the name clients send. Its Routes are tried from the top. Each Model has a Parameter Policy (defaults, forced values, caps and a system prompt) that a Route can override, plus per-Route timeouts and automatic prompt cache breakpoints.
+A Model is the name clients send. RouterLM tries its Routes from the top. Each Model has a Parameter Policy: defaults, forced values, caps and a system prompt. A Route can override that policy. Routes also have their own timeouts, and Models can set automatic prompt cache breakpoints.
 
 ### Providers from the Catalog
 
 ![Providers page with logos, account readiness and model counts](docs/images/providers.png)
 
-The Catalog ships Alibaba Model Studio Intl, Anthropic, DeepSeek, Kimi Code, MiniMax API, MiniMax M Plan, Moonshot, OpenAI and Xiaomi MiMo, with context sizes, capabilities, prices and release dates. Add a key and go. Any other OpenAI- or Anthropic-compatible service can be added by hand. Kimi Code also supports "Sign in with Kimi", and RouterLM keeps that login valid on its own.
+The Catalog ships Alibaba Model Studio Intl, Anthropic, DeepSeek, Kimi Code, MiniMax API, MiniMax M Plan, Moonshot, OpenAI and Xiaomi MiMo. Each entry has context sizes, capabilities, prices and release dates. Add a key to start using a Provider. You can add any other OpenAI- or Anthropic-compatible service by hand. Kimi Code also supports "Sign in with Kimi", and RouterLM keeps that login valid on its own.
 
 ### Usage you can search
 
@@ -89,7 +89,7 @@ export ANTHROPIC_AUTH_TOKEN=$RLM_API_KEY
 The dashboard has full client documentation at http://localhost:3001/docs.
 
 > [!IMPORTANT]
-> Back up `ENCRYPTION_KEY`. Provider Account keys are encrypted with it (AES-256-GCM), and they can't be read without it.
+> Back up `ENCRYPTION_KEY`. RouterLM encrypts Provider Account keys with it (AES-256-GCM). Without it, nobody can read those keys.
 
 ## Architecture
 
@@ -120,6 +120,7 @@ Everything has a development default in `docker-compose.yml`. Override values in
 | ------------------------------ | --------- | ----------------------------------------------- |
 | `ENCRYPTION_KEY`               | required  | Encrypts Provider Account keys. 32 bytes, base64. |
 | `ERROR_CAPTURE_RETENTION_DAYS` | `30`      | Days to keep Error Captures.                    |
+| `NUXT_PUBLIC_GATEWAY_URL`      | browser host, port `3000` | Gateway base URL shown in the `/docs` examples. |
 | `BACKEND_PORT` / `WEB_PORT`    | `3000` / `3001` | Host ports.                               |
 | `DB_PORT` / `REDIS_PORT`       | `5432` / `6379` | Host ports.                               |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `routerlm` | Applied when the db volume is first created. |
@@ -135,7 +136,7 @@ cd web && bun run check  # lint, format, types (web)
 bun run test:docker      # feature tests against throwaway Postgres and Redis
 ```
 
-There are no unit tests. Every test is a feature test in `tests/<feature>/` that drives the app over HTTP, CLI or boot against real Postgres and Redis, with a fake upstream ([ADR 0009](docs/adr/0009-feature-tests-only.md)). `bun run test` runs them against `TEST_DATABASE_URL` and `REDIS_URL` you already have.
+There are no unit tests. Every test is a feature test in `tests/<feature>/`. It drives the app over HTTP, CLI or boot against real Postgres and Redis, with a fake upstream ([ADR 0009](docs/adr/0009-feature-tests-only.md)). `bun run test` runs them against `TEST_DATABASE_URL` and `REDIS_URL` you already have.
 
 ### Database
 
@@ -150,9 +151,10 @@ docker compose exec backend bun run db:migrate
 
 The Catalog is one JSON file per Provider in `src/catalog/data/`. The seeder only creates missing rows, so dashboard edits survive and it is safe to run again (`bun run db:seed`). When you update a file:
 
-- Take model ids, capabilities, context sizes and prices (USD per million tokens) from the Provider's own docs and pricing pages, and put those URLs and the date in `source`.
+- Take model ids, capabilities, context sizes and prices (USD per million tokens) from the Provider's own docs and pricing pages.
+- Put those page URLs and the date you read them in `source`.
 - Use `null` for a value the Provider doesn't publish. Never estimate one.
-- The file shape is defined in `src/catalog/schemas/catalog.schema.ts`. `tests/catalog/` checks every shipped file.
+- `src/catalog/schemas/catalog.schema.ts` defines the file shape. `tests/catalog/` checks every shipped file.
 
 ### Project conventions
 
@@ -160,7 +162,7 @@ Backend modules follow a CQRS folder layout and prefer first-party `@nestjs/*` p
 
 ## Upgrading from v1
 
-v2 is a rewrite and does not import v1 data. The v1 app (Bun + Hono + Vue, SQLite) is kept in [`legacy/`](legacy/), and its npm package `@ciwergrp/routerlm` and image `ghcr.io/yhagus/routerlm-oss` stay at 1.6.5. See [CHANGELOG.md](CHANGELOG.md).
+v2 is a rewrite and does not import v1 data. The v1 app (Bun + Hono + Vue, SQLite) stays in [`legacy/`](legacy/). Its npm package `@ciwergrp/routerlm` and image `ghcr.io/yhagus/routerlm-oss` stay at 1.6.5. See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
