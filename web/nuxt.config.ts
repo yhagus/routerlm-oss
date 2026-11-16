@@ -35,6 +35,11 @@ export default defineNuxtConfig({
       appVersion: packageJson.version,
     },
   },
+  // A mistyped singular path lands on the docs.
+  routeRules: {
+    "/doc": { redirect: "/docs" },
+    "/doc/**": { redirect: "/docs/**" },
+  },
   css: ["@fontsource-variable/plus-jakarta-sans", "~/assets/css/main.css"],
   vite: { plugins: [tailwindcss()] },
   app: {
