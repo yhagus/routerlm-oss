@@ -9,12 +9,10 @@ import {
   Pencil,
   Plus,
   Power,
-  Search,
-  SearchX,
   Trash2,
   Wrench,
 } from "@lucide/vue";
-import type { Component } from "vue";
+import type { Component, WritableComputedRef } from "vue";
 import {
   CAPABILITIES,
   CAPABILITY_LABELS,
@@ -24,7 +22,8 @@ import {
   type Provider,
   type UpstreamModel,
 } from "~/lib/upstream";
-import { type ActiveFilter, listFilterTokens, searchFilterTokens } from "~/lib/activeFilters";
+import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
+import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { formatNumberInput } from "~/lib/numberInput";
 
 /**
@@ -36,8 +35,10 @@ const props = defineProps<{
   upstreamModels: UpstreamModel[];
   refresh: () => Promise<unknown>;
   provider?: Provider;
-  /** The models haven't arrived yet: placeholder rows instead of the count and empty state. */
+  /** The models haven't arrived yet: placeholder rows instead of the empty state. */
   isLoading?: boolean;
+  /** A failed load; the table shows it with Retry, which calls `refresh`. */
+  error?: unknown;
 }>();
 
 type UpstreamModelDialog =
@@ -59,7 +60,10 @@ const providerById = computed(
   () => new Map(props.providers.map((provider) => [provider.id, provider])),
 );
 const providerOptions = computed(() =>
-  props.providers.map((provider) => ({ label: provider.name, value: provider.id })),
+  props.providers.map((provider) => ({
+    label: provider.name,
+    value: provider.id,
+  })),
 );
 
 const scopedModels = computed(() =>
@@ -83,13 +87,22 @@ const SORT_ORDERS = [
 
 const MODEL_STATUSES = ["enabled", "disabled"] as const;
 
-// Held in the URL (?q=…&provider=anthropic,openai&context=128000&released=90&capability=vision,tools&status=…&sort=…)
-// so a refresh or a link keeps them. A Provider is its slug, readable and stable.
-const searchText = useQueryParam("q", { default: "", isValid: anyText, debounce: 300 });
+// Held in the URL (?provider=anthropic,openai&context=128000&released=90&capability=vision,tools&status=…&sort=…)
+// so a refresh or a link keeps them. A Provider is its slug, readable and stable. The
+// DataTable holds the search and page the same way.
 const providerSlugs = computed(() => props.providers.map((each) => each.slug));
-const providerFilter = useQueryList("provider", { isValid: anyText, order: providerSlugs });
-const contextFilter = useQueryParam("context", { default: "", isValid: oneOf(CONTEXT_MINIMUMS) });
-const releasedFilter = useQueryParam("released", { default: "", isValid: oneOf(RELEASE_WINDOWS) });
+const providerFilter = useQueryList("provider", {
+  isValid: anyText,
+  order: providerSlugs,
+});
+const contextFilter = useQueryParam("context", {
+  default: "",
+  isValid: oneOf(CONTEXT_MINIMUMS),
+});
+const releasedFilter = useQueryParam("released", {
+  default: "",
+  isValid: oneOf(RELEASE_WINDOWS),
+});
 const capabilityFilter = useQueryList("capability", {
   isValid: oneOf(CAPABILITIES),
   order: CAPABILITIES,
@@ -98,7 +111,10 @@ const statusFilter = useQueryList("status", {
   isValid: oneOf(MODEL_STATUSES),
   order: MODEL_STATUSES,
 });
-const sortOrder = useQueryParam("sort", { default: "newest", isValid: oneOf(SORT_ORDERS) });
+const sortOrder = useQueryParam("sort", {
+  default: "newest",
+  isValid: oneOf(SORT_ORDERS),
+});
 
 const providerBySlug = computed(() => new Map(props.providers.map((each) => [each.slug, each])));
 const providerFilterOptions = computed(() => [
@@ -194,8 +210,8 @@ function compareModels(first: UpstreamModel, second: UpstreamModel): number {
   }
 }
 
+/** Models the filters keep, in the picked order; the DataTable applies the search. */
 const visibleModels = computed(() => {
-  const query = searchText.value.trim().toLowerCase();
   const minContext = Number(contextFilter.value || 0);
   const releasedSince = releasedFilter.value ? daysAgo(Number(releasedFilter.value)) : null;
   return scopedModels.value
@@ -210,34 +226,39 @@ const visibleModels = computed(() => {
         return false;
       }
       const status = model.isEnabled ? "enabled" : "disabled";
-      if (statusFilter.value.length && !statusFilter.value.includes(status)) return false;
-      if (!query) return true;
-      return [model.upstreamModelId, providerName(model)].some((field) =>
-        field.toLowerCase().includes(query),
-      );
+      return statusFilter.value.length === 0 || statusFilter.value.includes(status);
     })
     .toSorted(compareModels);
 });
 
+/** The picked option of a one-value filter as a token, or none while it is at "" (any). */
+function selectFilterTokens(
+  group: string,
+  selected: WritableComputedRef<string>,
+  options: { label: string; value: string }[],
+): ActiveFilter[] {
+  if (!selected.value) return [];
+  return [
+    {
+      key: group,
+      group,
+      label: options.find((option) => option.value === selected.value)?.label ?? selected.value,
+      remove: () => {
+        selected.value = "";
+      },
+    },
+  ];
+}
+
 const activeFilters = computed<ActiveFilter[]>(() => [
-  ...searchFilterTokens(searchText),
   ...listFilterTokens("Provider", providerFilter, providerFilterOptions.value),
+  ...selectFilterTokens("Context", contextFilter, contextFilterOptions),
+  ...selectFilterTokens("Released", releasedFilter, releasedFilterOptions),
   ...listFilterTokens("Capability", capabilityFilter, capabilityFilterOptions),
   ...listFilterTokens("Status", statusFilter, statusFilterOptions),
 ]);
 
-const isFiltered = computed(
-  () =>
-    searchText.value !== "" ||
-    providerFilter.value.length > 0 ||
-    contextFilter.value !== "" ||
-    releasedFilter.value !== "" ||
-    capabilityFilter.value.length > 0 ||
-    statusFilter.value.length > 0,
-);
-
 function clearFilters(): void {
-  searchText.value = "";
   providerFilter.value = [];
   contextFilter.value = "";
   releasedFilter.value = "";
@@ -245,8 +266,46 @@ function clearFilters(): void {
   statusFilter.value = [];
 }
 
+const columns: DataTableColumn<UpstreamModel>[] = [
+  {
+    id: "upstreamModel",
+    header: "Upstream Model",
+    enableHiding: false,
+    // What the search matches: the model's name or its Provider's.
+    accessorFn: (model) => [model.upstreamModelId, providerName(model)].join("\n"),
+  },
+  { id: "capabilities", header: "Capabilities" },
+  { id: "context", header: "Context" },
+  { id: "maxOutput", header: "Max output" },
+  { id: "inputPrice", header: "Input $/M" },
+  { id: "outputPrice", header: "Output $/M" },
+  { id: "released", header: "Released" },
+  { id: "status", header: "Status" },
+  actionsColumn(),
+];
+
+const NUMERIC_COLUMNS = new Set(["context", "maxOutput", "inputPrice", "outputPrice", "released"]);
+/** Columns faded in a disabled model's row, found by id so hiding a column doesn't shift them. */
+const FADED_WHEN_OFF_COLUMNS = new Set([
+  "capabilities",
+  "context",
+  "maxOutput",
+  "inputPrice",
+  "outputPrice",
+]);
+
+function columnClass(columnId: string): Record<string, boolean> {
+  return {
+    "model-table__num tabular": NUMERIC_COLUMNS.has(columnId),
+    "model-table__center": columnId === "status",
+    "model-table__fades": FADED_WHEN_OFF_COLUMNS.has(columnId),
+  };
+}
+
 /** Token counts in full with digit grouping, "1,048,576". */
-const tokenFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+const tokenFormat = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+});
 /** The short form, "1M", beside the full count in the details dialog. */
 const compactTokenFormat = new Intl.NumberFormat("en-US", {
   notation: "compact",
@@ -262,7 +321,10 @@ function formatPrice(price: number | null): string {
   return price === null ? "—" : priceFormat.format(price);
 }
 
-const shareFormat = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
+const shareFormat = new Intl.NumberFormat("en-US", {
+  style: "percent",
+  maximumFractionDigits: 1,
+});
 
 /** A cache price as a share of its group's price, "2.5% of input"; empty without both. */
 function shareOf(price: number | null, base: number | null, baseName: string): string {
@@ -270,7 +332,10 @@ function shareOf(price: number | null, base: number | null, baseName: string): s
   return `${shareFormat.format(price / base)} of ${baseName}`;
 }
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+const dateFormat = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 
 function capabilitySummary(model: UpstreamModel): string {
   const names = CAPABILITIES.filter((capability) => model.capabilities.includes(capability)).map(
@@ -419,186 +484,176 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
 </script>
 
 <template>
-  <div class="list-filters" role="group" aria-label="Filter Upstream Models">
-    <label class="search-control">
-      <Search :size="14" />
-      <input
-        v-model="searchText"
-        type="search"
-        :placeholder="provider ? 'Search models' : 'Search models or Providers'"
-        aria-label="Search Upstream Models"
-      />
-    </label>
-    <AppMultiSelect
-      v-if="!provider"
-      v-model="providerFilter"
-      :options="providerFilterOptions"
-      label="Filter by Provider"
-      placeholder="All Providers"
-      noun="Providers"
-    />
-    <AppSelect v-model="contextFilter" :options="contextFilterOptions" label="Minimum context" />
-    <AppSelect v-model="releasedFilter" :options="releasedFilterOptions" label="Release date" />
-    <AppMultiSelect
-      v-model="capabilityFilter"
-      :options="capabilityFilterOptions"
-      label="Filter by capability"
-      placeholder="Any capability"
-      noun="capabilities"
-      match="all"
-    />
-    <AppMultiSelect
-      v-model="statusFilter"
-      :options="statusFilterOptions"
-      label="Filter by status"
-      placeholder="Any status"
-      noun="statuses"
-    />
-    <AppSelect
-      v-model="sortOrder"
-      :options="sortOptions"
-      label="Sort by"
-      class="list-filters__sort"
-    >
-      <template #leading><ArrowDownUp :size="13" class="list-filters__sort-icon" /></template>
-    </AppSelect>
-    <span v-if="!isLoading" class="filter-note tabular"
-      >{{ visibleModels.length }} of {{ scopedModels.length }}</span
-    >
-    <slot name="actions" :open-create="() => openDialog({ kind: 'create' })" />
-  </div>
-  <ActiveFilters :filters="activeFilters" @clear-all="clearFilters" />
-
-  <section class="panel table-panel model-table">
-    <div class="table-wrap">
-      <table v-if="visibleModels.length || isLoading">
-        <thead>
-          <tr>
-            <th>Upstream Model</th>
-            <th>Capabilities</th>
-            <th class="model-table__num">Context</th>
-            <th class="model-table__num">Max output</th>
-            <th class="model-table__num">Input $/M</th>
-            <th class="model-table__num">Output $/M</th>
-            <th class="model-table__num">Released</th>
-            <th class="model-table__center">Status</th>
-            <th><span class="sr-only">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <LoadingRow v-if="isLoading" :columns="9" />
-          <tr
-            v-for="model in visibleModels"
-            :key="model.id"
-            :class="{ 'model-table__row--off': !model.isEnabled }"
+  <DataTable
+    class="model-table"
+    :table-id="provider ? 'provider-upstream-models' : 'upstream-models'"
+    label="Upstream Models"
+    :search-placeholder="provider ? 'Search models' : 'Search models or Providers'"
+    :columns="columns"
+    :rows="visibleModels"
+    :get-row-id="(model) => model.id"
+    :row-class="(model) => ({ 'model-table__row--off': !model.isEnabled })"
+    :column-class="columnClass"
+    :is-loading="isLoading"
+    :error="error"
+    :refresh="refresh"
+    :filters="activeFilters"
+    @clear-filters="clearFilters"
+  >
+    <template #controls>
+      <AppSelect v-model="sortOrder" :options="sortOptions" label="Sort by" class="model-sort">
+        <template #leading><ArrowDownUp :size="13" class="model-sort__icon" /></template>
+      </AppSelect>
+      <slot name="actions" :open-create="() => openDialog({ kind: 'create' })" />
+    </template>
+    <template #filters>
+      <div v-if="!provider" class="data-table-filter">
+        <span class="data-table-filter__label" aria-hidden="true">Provider</span>
+        <AppMultiSelect
+          v-model="providerFilter"
+          :options="providerFilterOptions"
+          label="Filter by Provider"
+          placeholder="All Providers"
+          noun="Providers"
+        />
+      </div>
+      <div class="data-table-filter">
+        <span class="data-table-filter__label" aria-hidden="true">Context</span>
+        <AppSelect
+          v-model="contextFilter"
+          :options="contextFilterOptions"
+          label="Minimum context"
+        />
+      </div>
+      <div class="data-table-filter">
+        <span class="data-table-filter__label" aria-hidden="true">Released</span>
+        <AppSelect v-model="releasedFilter" :options="releasedFilterOptions" label="Release date" />
+      </div>
+      <div class="data-table-filter">
+        <span class="data-table-filter__label" aria-hidden="true">Capability</span>
+        <AppMultiSelect
+          v-model="capabilityFilter"
+          :options="capabilityFilterOptions"
+          label="Filter by capability"
+          placeholder="Any capability"
+          noun="capabilities"
+          match="all"
+        />
+      </div>
+      <div class="data-table-filter">
+        <span class="data-table-filter__label" aria-hidden="true">Status</span>
+        <AppMultiSelect
+          v-model="statusFilter"
+          :options="statusFilterOptions"
+          label="Filter by status"
+          placeholder="Any status"
+          noun="statuses"
+        />
+      </div>
+    </template>
+    <template #cell-upstreamModel="{ row: model }">
+      <div class="table-entity model-table__entity">
+        <ProviderLogo
+          v-if="!provider && providerById.get(model.providerId)"
+          :slug="providerById.get(model.providerId)?.slug ?? ''"
+          :name="providerName(model)"
+          :base-url="providerById.get(model.providerId)?.baseUrl ?? ''"
+        />
+        <span class="model-table__name">
+          <button
+            class="model-table__open"
+            type="button"
+            :title="model.upstreamModelId"
+            @click="openDialog({ kind: 'details', upstreamModel: model })"
           >
-            <td>
-              <div class="table-entity model-table__entity">
-                <ProviderLogo
-                  v-if="!provider && providerById.get(model.providerId)"
-                  :slug="providerById.get(model.providerId)?.slug ?? ''"
-                  :name="providerName(model)"
-                  :base-url="providerById.get(model.providerId)?.baseUrl ?? ''"
-                />
-                <span class="model-table__name">
-                  <button
-                    class="model-table__open"
-                    type="button"
-                    :title="model.upstreamModelId"
-                    @click="openDialog({ kind: 'details', upstreamModel: model })"
-                  >
-                    {{ model.upstreamModelId }}
-                  </button>
-                  <NuxtLink
-                    v-if="!provider"
-                    class="cell-note"
-                    :to="`/providers/${model.providerId}?tab=models`"
-                    >{{ providerName(model) }}</NuxtLink
-                  >
-                </span>
-              </div>
-            </td>
-            <td>
-              <span class="capability-icons" role="img" :aria-label="capabilitySummary(model)">
-                <span
-                  v-for="capability in CAPABILITIES"
-                  :key="capability"
-                  class="capability-icons__item"
-                  :class="{ 'capability-icons__item--on': model.capabilities.includes(capability) }"
-                  :title="
-                    model.capabilities.includes(capability)
-                      ? CAPABILITY_LABELS[capability]
-                      : `No ${CAPABILITY_LABELS[capability].toLowerCase()}`
-                  "
-                  ><component :is="CAPABILITY_ICONS[capability]" :size="14" aria-hidden="true"
-                /></span>
-              </span>
-            </td>
-            <td class="model-table__num tabular">
-              {{ tokenFormat.format(model.contextSize) }}
-            </td>
-            <td class="model-table__num tabular">
-              {{ model.maxOutputTokens === null ? "—" : tokenFormat.format(model.maxOutputTokens) }}
-            </td>
-            <td class="model-table__num tabular">
-              <strong>{{ formatPrice(model.inputPrice) }}</strong>
-              <span v-if="model.cacheReadPrice !== null" class="cell-note" title="Cache read">{{
-                formatPrice(model.cacheReadPrice)
-              }}</span>
-            </td>
-            <td class="model-table__num tabular">
-              <strong>{{ formatPrice(model.outputPrice) }}</strong>
-              <span v-if="model.cacheWritePrice !== null" class="cell-note" title="Cache write">{{
-                formatPrice(model.cacheWritePrice)
-              }}</span>
-            </td>
-            <td class="model-table__num tabular">{{ model.releaseDate ?? "—" }}</td>
-            <td class="model-table__center">
-              <span
-                class="status-badge"
-                :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-                >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
-              >
-            </td>
-            <td>
-              <div class="row-actions provider-table__actions">
-                <button
-                  class="icon-action"
-                  type="button"
-                  :aria-label="`Edit ${model.upstreamModelId}`"
-                  title="Edit"
-                  @click="openDialog({ kind: 'edit', upstreamModel: model })"
-                >
-                  <Pencil :size="14" />
-                </button>
-                <button
-                  class="icon-action"
-                  type="button"
-                  :aria-label="`${model.isEnabled ? 'Disable' : 'Enable'} ${model.upstreamModelId}`"
-                  :title="model.isEnabled ? 'Disable' : 'Enable'"
-                  @click="toggleUpstreamModel(model)"
-                >
-                  <Power :size="14" />
-                </button>
-                <button
-                  class="icon-action icon-action--danger"
-                  type="button"
-                  :aria-label="`Delete ${model.upstreamModelId}`"
-                  title="Delete"
-                  @click="openDialog({ kind: 'delete', upstreamModel: model })"
-                >
-                  <Trash2 :size="14" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <EmptyState v-else-if="isFiltered" :icon="SearchX">
-        <strong>No Upstream Model matches these filters.</strong>
-        <button class="text-button" type="button" @click="clearFilters">Clear filters</button>
-      </EmptyState>
-      <EmptyState v-else :icon="Layers">
+            {{ model.upstreamModelId }}
+          </button>
+          <NuxtLink
+            v-if="!provider"
+            class="cell-note"
+            :to="`/providers/${model.providerId}?tab=models`"
+            >{{ providerName(model) }}</NuxtLink
+          >
+        </span>
+      </div>
+    </template>
+    <template #cell-capabilities="{ row: model }">
+      <span class="capability-icons" role="img" :aria-label="capabilitySummary(model)">
+        <span
+          v-for="capability in CAPABILITIES"
+          :key="capability"
+          class="capability-icons__item"
+          :class="{
+            'capability-icons__item--on': model.capabilities.includes(capability),
+          }"
+          :title="
+            model.capabilities.includes(capability)
+              ? CAPABILITY_LABELS[capability]
+              : `No ${CAPABILITY_LABELS[capability].toLowerCase()}`
+          "
+          ><component :is="CAPABILITY_ICONS[capability]" :size="14" aria-hidden="true"
+        /></span>
+      </span>
+    </template>
+    <template #cell-context="{ row: model }">
+      {{ tokenFormat.format(model.contextSize) }}
+    </template>
+    <template #cell-maxOutput="{ row: model }">
+      {{ model.maxOutputTokens === null ? "—" : tokenFormat.format(model.maxOutputTokens) }}
+    </template>
+    <template #cell-inputPrice="{ row: model }">
+      <strong>{{ formatPrice(model.inputPrice) }}</strong>
+      <span v-if="model.cacheReadPrice !== null" class="cell-note" title="Cache read">{{
+        formatPrice(model.cacheReadPrice)
+      }}</span>
+    </template>
+    <template #cell-outputPrice="{ row: model }">
+      <strong>{{ formatPrice(model.outputPrice) }}</strong>
+      <span v-if="model.cacheWritePrice !== null" class="cell-note" title="Cache write">{{
+        formatPrice(model.cacheWritePrice)
+      }}</span>
+    </template>
+    <template #cell-released="{ row: model }">{{ model.releaseDate ?? "—" }}</template>
+    <template #cell-status="{ row: model }">
+      <span
+        class="status-badge"
+        :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+        >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
+      >
+    </template>
+    <template #cell-actions="{ row: model }">
+      <div class="row-actions provider-table__actions">
+        <button
+          class="icon-action"
+          type="button"
+          :aria-label="`Edit ${model.upstreamModelId}`"
+          title="Edit"
+          @click="openDialog({ kind: 'edit', upstreamModel: model })"
+        >
+          <Pencil :size="14" />
+        </button>
+        <button
+          class="icon-action"
+          type="button"
+          :aria-label="`${model.isEnabled ? 'Disable' : 'Enable'} ${model.upstreamModelId}`"
+          :title="model.isEnabled ? 'Disable' : 'Enable'"
+          @click="toggleUpstreamModel(model)"
+        >
+          <Power :size="14" />
+        </button>
+        <button
+          class="icon-action icon-action--danger"
+          type="button"
+          :aria-label="`Delete ${model.upstreamModelId}`"
+          title="Delete"
+          @click="openDialog({ kind: 'delete', upstreamModel: model })"
+        >
+          <Trash2 :size="14" />
+        </button>
+      </div>
+    </template>
+    <template #empty>
+      <EmptyState :icon="Layers">
         <strong>No Upstream Models here yet.</strong>
         <span v-if="providers.length"
           >Add one, or run <code>bun run db:seed</code> to load the Catalog.</span
@@ -613,8 +668,8 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           <Plus :size="13" /> Add Upstream Model
         </button>
       </EmptyState>
-    </div>
-  </section>
+    </template>
+  </DataTable>
 
   <AppDialog
     v-if="detailsModel"
@@ -679,7 +734,9 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             </div>
             <div>
               <dt>Released</dt>
-              <dd class="tabular">{{ detailsModel.releaseDate ?? "Unknown" }}</dd>
+              <dd class="tabular">
+                {{ detailsModel.releaseDate ?? "Unknown" }}
+              </dd>
             </div>
           </dl>
         </section>
@@ -689,7 +746,9 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           <dl class="model-details__list">
             <div>
               <dt>Input</dt>
-              <dd class="tabular">{{ formatPrice(detailsModel.inputPrice) }}</dd>
+              <dd class="tabular">
+                {{ formatPrice(detailsModel.inputPrice) }}
+              </dd>
             </div>
             <div>
               <dt>Cache read</dt>
@@ -705,7 +764,9 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             </div>
             <div>
               <dt>Output</dt>
-              <dd class="tabular">{{ formatPrice(detailsModel.outputPrice) }}</dd>
+              <dd class="tabular">
+                {{ formatPrice(detailsModel.outputPrice) }}
+              </dd>
             </div>
             <div>
               <dt>Cache write</dt>
@@ -849,7 +910,9 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           <AppDateInput v-model="form.releaseDate" label="Release date" />
         </div>
       </div>
-      <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
+      <p v-if="dialogError" class="form__error" role="alert">
+        {{ dialogError }}
+      </p>
       <div class="dialog__actions">
         <button class="button" type="button" @click="closeDialog">Cancel</button>
         <button class="button button--primary" type="submit" :disabled="isSaving">

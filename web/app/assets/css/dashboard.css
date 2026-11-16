@@ -3609,25 +3609,6 @@ svg.lucide {
 .executive-band__lead p.executive-band__alert {
   color: var(--warning-ink);
 }
-.list-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 16px;
-}
-.list-filters .search-control {
-  flex: 1 1 240px;
-  max-width: 340px;
-}
-.list-filters .search-control input {
-  width: 100%;
-  min-width: 0;
-}
-.list-filters .filter-note {
-  margin: 0 0 0 auto;
-  font-size: 11px;
-}
 .provider-stats-note {
   margin: 0 0 12px;
 }
@@ -3769,18 +3750,12 @@ svg.lucide {
   opacity: 0.55;
 }
 /* Upstream Models: model, Provider under it, capability icons, prices with cache notes. */
-.list-filters__sort .select-control {
+.model-sort .select-control {
   gap: 7px;
 }
-.list-filters__sort-icon {
+.model-sort__icon {
   flex: none;
   color: var(--faint);
-}
-.list-filters .app-select {
-  flex: 0 1 164px;
-}
-.list-filters > .button {
-  flex: none;
 }
 .active-filters {
   display: flex;
@@ -4035,7 +4010,7 @@ svg.lucide {
   text-underline-offset: 3px;
 }
 .model-table__row--off .model-table__entity,
-.model-table__row--off td:nth-child(n + 2):nth-child(-n + 6) {
+.model-table__row--off .model-table__fades {
   opacity: 0.55;
 }
 .capability-icons {
@@ -4419,12 +4394,6 @@ svg.lucide {
 @media (max-width: 760px) {
   .executive-band--providers {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .list-filters .search-control {
-    max-width: none;
-  }
-  .list-filters .filter-note {
-    margin-left: 0;
   }
 }
 

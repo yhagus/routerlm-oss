@@ -64,6 +64,8 @@ const props = withDefaults(
     rows: Row[];
     getRowId: (row: Row) => string;
     rowClass?: (row: Row) => HTMLAttributes["class"];
+    /** One column's header and cell classes, such as right alignment for numbers. */
+    columnClass?: (columnId: string) => HTMLAttributes["class"];
     /** Nothing loaded yet: rows show placeholders. */
     isLoading: boolean;
     /** A failed load; shows an error with Retry in place of the rows. */
@@ -301,7 +303,11 @@ function handleClearAll(): void {
         <table>
           <thead>
             <tr v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-              <th v-for="header in headerGroup.headers" :key="header.id">
+              <th
+                v-for="header in headerGroup.headers"
+                :key="header.id"
+                :class="columnClass?.(header.column.id)"
+              >
                 <FlexRender v-if="!header.isPlaceholder" :header="header" />
               </th>
             </tr>
@@ -314,7 +320,11 @@ function handleClearAll(): void {
                 :key="row.id"
                 :class="rowClass?.(row.original)"
               >
-                <td v-for="cell in row.getVisibleCells()" :key="cell.id">
+                <td
+                  v-for="cell in row.getVisibleCells()"
+                  :key="cell.id"
+                  :class="columnClass?.(cell.column.id)"
+                >
                   <slot :name="`cell-${cell.column.id}`" :row="row.original">
                     <FlexRender :cell="cell" />
                   </slot>

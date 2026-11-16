@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CloudOff, Plus } from "@lucide/vue";
+import { Plus } from "@lucide/vue";
 import type { Provider, UpstreamModel } from "~/lib/upstream";
 
 useHead({ title: "Upstream Models" });
@@ -8,13 +8,19 @@ const {
   data: upstreamModels,
   status: upstreamModelsStatus,
   error: loadError,
-  refresh,
+  refresh: refreshUpstreamModels,
 } = useDashboardApi<UpstreamModel[]>("/upstream-models");
 const {
   data: providers,
   status: providersStatus,
   error: providersError,
+  refresh: refreshProviders,
 } = useDashboardApi<Provider[]>("/providers");
+
+/** Reloads both lists, so Retry recovers whichever one failed. */
+async function refresh(): Promise<void> {
+  await Promise.all([refreshUpstreamModels(), refreshProviders()]);
+}
 
 /** The table needs both lists: models to list, Providers to name them. */
 const isLoading = computed(
@@ -42,22 +48,13 @@ const browser = useTemplateRef<{ openCreate: () => void }>("browser");
       </button>
     </PageHeading>
 
-    <EmptyState
-      v-if="loadError || providersError"
-      class="panel empty-state--standalone"
-      :icon="CloudOff"
-      tone="error"
-    >
-      <strong>Couldn't load Upstream Models.</strong
-      ><span>Check that the backend is running, then reload the page.</span>
-    </EmptyState>
     <UpstreamModelBrowser
-      v-else
       ref="browser"
       :providers="providers ?? []"
       :upstream-models="upstreamModels ?? []"
       :refresh="refresh"
       :is-loading="isLoading"
+      :error="loadError || providersError"
     />
   </div>
 </template>
