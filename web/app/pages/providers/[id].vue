@@ -255,22 +255,13 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
         </TabsContent>
 
         <TabsContent value="models" class="tabs__panel">
-          <EmptyState
-            v-if="modelsError"
-            class="panel empty-state--standalone"
-            :icon="CloudOff"
-            tone="error"
-          >
-            <strong>Couldn't load Upstream Models.</strong
-            ><span>Check that the backend is running, then reload the page.</span>
-          </EmptyState>
           <UpstreamModelBrowser
-            v-else
             :provider="provider"
             :providers="providers ?? []"
             :upstream-models="models ?? []"
             :refresh="refresh"
             :is-loading="isLoadingModels"
+            :error="modelsError"
           >
             <template #actions="{ openCreate }">
               <button class="button button--primary" type="button" @click="openCreate">
