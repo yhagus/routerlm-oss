@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
+import { SECOND_MS } from "@/libs/models/duration.js";
 import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { QuotaMeterReading } from "../models/quota-meter.js";
 import {
@@ -15,7 +16,6 @@ import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 const USAGE_PATH = "/backend-api/wham/usage";
 
 const FULL_PERCENT = 100;
-const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
 const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
@@ -129,7 +129,7 @@ function meterOf(window: UsageWindow, scope: string | null, raw: unknown): Quota
     remainingPercent: Math.max(0, FULL_PERCENT - usedPercent),
     isUnlimited: false,
     windowSeconds: window.limit_window_seconds,
-    resetsAt: new Date(window.reset_at * MS_PER_SECOND),
+    resetsAt: new Date(window.reset_at * SECOND_MS),
     scope,
     raw,
   };
