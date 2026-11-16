@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   AUTH_STYLES,
   CAPABILITIES,
+  CREDENTIAL_KINDS,
   QUOTA_READERS,
   UPSTREAM_PROTOCOLS,
   type UpstreamProtocol,
@@ -42,12 +43,30 @@ export const providerQuirksSchema = z.strictObject({
     })
     .optional(),
   /**
-   * openai-chat only. A `prompt_cache_key` the client sent is passed on as
-   * it is; the gateway adds none of its own (that is `acceptsPromptCacheKey`).
+   * openai-chat and openai-responses. A `prompt_cache_key` the client sent is
+   * passed on as it is; the gateway adds none of its own (that is
+   * `acceptsPromptCacheKey`).
    */
   forwardsClientPromptCacheKey: z.boolean().optional(),
-  /** openai-chat only. The Provider accepts `prompt_cache_key`, and gets the gateway's. */
+  /** openai-chat and openai-responses. The Provider accepts `prompt_cache_key`, and gets the gateway's. */
   acceptsPromptCacheKey: z.boolean().optional(),
+  /**
+   * openai-responses only. The Provider answers only as a stream, so a
+   * non-streaming client's answer is gathered from one.
+   */
+  alwaysStreams: z.boolean().optional(),
+  /**
+   * openai-responses only. Every request asks for the reasoning's encrypted
+   * content, which a stateless conversation needs to send reasoning back.
+   */
+  includesEncryptedReasoning: z.boolean().optional(),
+  /**
+   * openai-responses only. The system prompt goes as a `developer` message at
+   * the start of `input`, not as `instructions`.
+   */
+  systemAsDeveloperMessage: z.boolean().optional(),
+  /** openai-responses only. Request parameters the Provider refuses, left out of every request. */
+  droppedParameters: z.array(z.enum(["temperature", "top_p", "max_output_tokens"])).optional(),
   /**
    * anthropic-messages only. How many cache markers the gateway may add per
    * request, when it differs from Anthropic's four; 0 adds none. Markers the
@@ -90,6 +109,14 @@ const QUIRKS_OF_ONE_PROTOCOL = {
     "usesMaxCompletionTokens",
   ],
   "anthropic-messages": ["cacheMarkerLimit"],
+  "openai-responses": [
+    "forwardsClientPromptCacheKey",
+    "acceptsPromptCacheKey",
+    "alwaysStreams",
+    "includesEncryptedReasoning",
+    "systemAsDeveloperMessage",
+    "droppedParameters",
+  ],
 } as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
 
 /**
@@ -158,7 +185,8 @@ export const catalogProviderSchema = z.strictObject({
   protocol: z.enum(UPSTREAM_PROTOCOLS),
   /**
    * What the Protocol's path is appended to: `/chat/completions` for
-   * openai-chat, `/v1/messages` for anthropic-messages.
+   * openai-chat, `/v1/messages` for anthropic-messages, `/responses` for
+   * openai-responses.
    */
   baseUrl: z.url(),
   authStyle: z.enum(AUTH_STYLES),
@@ -167,6 +195,11 @@ export const catalogProviderSchema = z.strictObject({
   quotaReader: z.enum(QUOTA_READERS).optional(),
   /** Only a Provider a User can sign in to; its Provider Accounts may then hold an OAuth Login. */
   oauthLogin: providerOauthLoginSchema.optional(),
+  /**
+   * The credentials its Provider Accounts may hold; both when left out (an
+   * OAuth Login still needs `oauthLogin`).
+   */
+  credentialKinds: z.array(z.enum(CREDENTIAL_KINDS)).min(1).optional(),
   source: sourceSchema,
   notes: z.string().optional(),
   upstreamModels: z.array(upstreamModelSchema),

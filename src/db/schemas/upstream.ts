@@ -17,7 +17,11 @@ import { at, createdAt, id, updatedAt } from "./columns.js";
 // Upstream: Providers, the Provider Accounts the gateway holds at them, and
 // the Upstream Models they sell.
 
-export const UPSTREAM_PROTOCOLS = ["openai-chat", "anthropic-messages"] as const;
+export const UPSTREAM_PROTOCOLS = [
+  "openai-chat",
+  "anthropic-messages",
+  "openai-responses",
+] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
 /** How a Provider expects the Provider Account key: `Authorization: Bearer` or an `x-api-key` header. */
@@ -79,6 +83,12 @@ export const providers = pgTable("providers", {
   quotaReader: text("quota_reader", { enum: QUOTA_READERS }),
   // Null for a Provider that offers no OAuth Login: its Provider Accounts hold API keys only.
   oauthLogin: jsonb("oauth_login").$type<ProviderOauthLogin>(),
+  // The credentials its Provider Accounts may hold. An OAuth Login also needs
+  // `oauthLogin`; a Subscription Provider without API keys lists only it.
+  credentialKinds: text("credential_kinds", { enum: CREDENTIAL_KINDS })
+    .array()
+    .notNull()
+    .default(["api-key", "oauth-login"]),
   isEnabled: boolean("is_enabled").notNull().default(true),
   isFromCatalog: boolean("is_from_catalog").notNull().default(false),
   createdAt: createdAt(),

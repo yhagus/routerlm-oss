@@ -1,0 +1,66 @@
+event: response.created
+data: {"type":"response.created","sequence_number":0,"response":{"id":"resp_upstream_9f8e7d","object":"response","created_at":1794700000,"model":"acme-large-2026","store":false,"status":"in_progress","output":[],"usage":null}}
+
+event: response.in_progress
+data: {"type":"response.in_progress","sequence_number":1,"response":{"id":"resp_upstream_9f8e7d","object":"response","created_at":1794700000,"model":"acme-large-2026","store":false,"status":"in_progress","output":[],"usage":null}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":2,"output_index":0,"item":{"id":"rs_upstream_1","type":"reasoning","summary":[]}}
+
+event: response.reasoning_summary_part.added
+data: {"type":"response.reasoning_summary_part.added","sequence_number":3,"item_id":"rs_upstream_1","output_index":0,"summary_index":0,"part":{"type":"summary_text","text":""}}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","sequence_number":4,"item_id":"rs_upstream_1","output_index":0,"summary_index":0,"delta":"The user wants"}
+
+event: response.reasoning_summary_text.delta
+data: {"type":"response.reasoning_summary_text.delta","sequence_number":5,"item_id":"rs_upstream_1","output_index":0,"summary_index":0,"delta":" the weather in Paris."}
+
+event: response.reasoning_summary_text.done
+data: {"type":"response.reasoning_summary_text.done","sequence_number":6,"item_id":"rs_upstream_1","output_index":0,"summary_index":0,"text":"The user wants the weather in Paris."}
+
+event: response.reasoning_summary_part.done
+data: {"type":"response.reasoning_summary_part.done","sequence_number":7,"item_id":"rs_upstream_1","output_index":0,"summary_index":0,"part":{"type":"summary_text","text":"The user wants the weather in Paris."}}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":8,"output_index":0,"item":{"id":"rs_upstream_1","type":"reasoning","summary":[{"type":"summary_text","text":"The user wants the weather in Paris."}],"encrypted_content":"gAAAAABencrypted-reasoning"}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":9,"output_index":1,"item":{"id":"msg_upstream_1","type":"message","status":"in_progress","role":"assistant","content":[]}}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","sequence_number":10,"item_id":"msg_upstream_1","output_index":1,"content_index":0,"part":{"type":"output_text","text":"","annotations":[]}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":11,"item_id":"msg_upstream_1","output_index":1,"content_index":0,"delta":"Checking"}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":12,"item_id":"msg_upstream_1","output_index":1,"content_index":0,"delta":" the weather."}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","sequence_number":13,"item_id":"msg_upstream_1","output_index":1,"content_index":0,"text":"Checking the weather."}
+
+event: response.content_part.done
+data: {"type":"response.content_part.done","sequence_number":14,"item_id":"msg_upstream_1","output_index":1,"content_index":0,"part":{"type":"output_text","text":"Checking the weather.","annotations":[]}}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":15,"output_index":1,"item":{"id":"msg_upstream_1","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"Checking the weather.","annotations":[]}]}}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","sequence_number":16,"output_index":2,"item":{"id":"fc_upstream_1","type":"function_call","status":"in_progress","call_id":"call_def456","name":"get_weather","arguments":""}}
+
+event: response.function_call_arguments.delta
+data: {"type":"response.function_call_arguments.delta","sequence_number":17,"item_id":"fc_upstream_1","output_index":2,"delta":"{\"city\":"}
+
+event: response.function_call_arguments.delta
+data: {"type":"response.function_call_arguments.delta","sequence_number":18,"item_id":"fc_upstream_1","output_index":2,"delta":"\"Paris\"}"}
+
+event: response.function_call_arguments.done
+data: {"type":"response.function_call_arguments.done","sequence_number":19,"item_id":"fc_upstream_1","output_index":2,"arguments":"{\"city\":\"Paris\"}"}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","sequence_number":20,"output_index":2,"item":{"id":"fc_upstream_1","type":"function_call","status":"completed","call_id":"call_def456","name":"get_weather","arguments":"{\"city\":\"Paris\"}"}}
+
+event: response.completed
+data: {"type":"response.completed","sequence_number":21,"response":{"id":"resp_upstream_9f8e7d","object":"response","created_at":1794700000,"model":"acme-large-2026","store":false,"status":"completed","output":[{"id":"rs_upstream_1","type":"reasoning","summary":[{"type":"summary_text","text":"The user wants the weather in Paris."}],"encrypted_content":"gAAAAABencrypted-reasoning"},{"id":"msg_upstream_1","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"Checking the weather.","annotations":[]}]},{"id":"fc_upstream_1","type":"function_call","status":"completed","call_id":"call_def456","name":"get_weather","arguments":"{\"city\":\"Paris\"}"}],"usage":{"input_tokens":120,"input_tokens_details":{"cached_tokens":100},"output_tokens":40,"output_tokens_details":{"reasoning_tokens":12},"total_tokens":160}}}
+

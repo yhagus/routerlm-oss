@@ -1,10 +1,10 @@
-import { NotFoundException } from "@nestjs/common";
+import { ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors.js";
 import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
+import { providerAccounts, providers } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { unusedConstellationName } from "../../models/constellation-name.js";
 import {
@@ -25,6 +25,7 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
 
   async execute({ newAccount }: CreateProviderAccountCommand): Promise<ProviderAccount> {
     const { key, name, ...fields } = newAccount;
+    await this.requireApiKeysAccepted(fields.providerId);
     try {
       const [created] = await this.db
         .insert(providerAccounts)
@@ -41,6 +42,19 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
         throw new NotFoundException("Provider not found");
       }
       throw error;
+    }
+  }
+
+  /** OpenAI Codex, for one, serves its plan to an OAuth Login only (ADR 0013). */
+  private async requireApiKeysAccepted(providerId: string): Promise<void> {
+    const [provider] = await this.db
+      .select({ name: providers.name, credentialKinds: providers.credentialKinds })
+      .from(providers)
+      .where(eq(providers.id, providerId));
+    if (provider && !provider.credentialKinds.includes("api-key")) {
+      throw new ConflictException(
+        `${provider.name} accepts only OAuth Login; sign in instead of adding an API key`,
+      );
     }
   }
 

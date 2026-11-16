@@ -1,0 +1,40 @@
+{
+  "id": "resp_upstream_9f8e7d",
+  "object": "response",
+  "created_at": 1794700000,
+  "status": "completed",
+  "error": null,
+  "incomplete_details": null,
+  "model": "acme-large-2026",
+  "output": [
+    {
+      "id": "rs_upstream_1",
+      "type": "reasoning",
+      "summary": [{ "type": "summary_text", "text": "The user wants the weather in Paris." }],
+      "encrypted_content": "gAAAAABencrypted-reasoning"
+    },
+    {
+      "id": "msg_upstream_1",
+      "type": "message",
+      "status": "completed",
+      "role": "assistant",
+      "content": [{ "type": "output_text", "text": "Checking the weather.", "annotations": [] }]
+    },
+    {
+      "id": "fc_upstream_1",
+      "type": "function_call",
+      "status": "completed",
+      "call_id": "call_def456",
+      "name": "get_weather",
+      "arguments": "{\"city\":\"Paris\"}"
+    }
+  ],
+  "store": false,
+  "usage": {
+    "input_tokens": 120,
+    "input_tokens_details": { "cached_tokens": 100 },
+    "output_tokens": 40,
+    "output_tokens_details": { "reasoning_tokens": 12 },
+    "total_tokens": 160
+  }
+}

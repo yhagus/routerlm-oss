@@ -1,0 +1,195 @@
+{
+  "slug": "openai-codex",
+  "name": "OpenAI Codex",
+  "logo": "openai",
+  "protocol": "openai-responses",
+  "baseUrl": "https://chatgpt.com/backend-api/codex",
+  "authStyle": "bearer",
+  "quirks": {
+    "acceptsPromptCacheKey": true,
+    "alwaysStreams": true,
+    "includesEncryptedReasoning": true,
+    "systemAsDeveloperMessage": true,
+    "droppedParameters": ["temperature", "top_p", "max_output_tokens"]
+  },
+  "credentialKinds": ["oauth-login"],
+  "source": {
+    "urls": [
+      "https://github.com/openai/codex",
+      "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json"
+    ],
+    "retrievedOn": "2026-11-16"
+  },
+  "notes": "ChatGPT plans served to the Codex CLI's OAuth Login (ADR 0013); no API keys. Models are the CLI's visible ones; hidden models (daybreak-*, codex-auto-review) are left out. Prices are the OpenAI API list prices for the same model, as in openai.json: the plan bills quota, not money, so Cost is what the same tokens would cost on the API. Context sizes are what the Codex backend serves, not the API's. Unverified until a live check: whether the backend refuses temperature, top_p and max_output_tokens, and accepts the system prompt as a developer message.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "gpt-6-astra",
+      "releaseDate": "2026-09-04",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 500000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 1,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-6.1-sol",
+      "releaseDate": "2026-09-29",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 500000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-6.1-terra",
+      "releaseDate": "2026-10-26",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 500000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1,
+      "outputPrice": 5,
+      "cacheReadPrice": 0.05,
+      "cacheWritePrice": 1.25,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-6-sol",
+      "releaseDate": "2026-09-22",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 272000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-6-sol"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-6-luna",
+      "releaseDate": "2026-09-22",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 272000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.1,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": 0.125,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-6-luna",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-5.6-sol",
+      "releaseDate": "2026-07-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 272000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-5.6-terra",
+      "releaseDate": "2026-07-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 272000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 12,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-5.6-luna",
+      "releaseDate": "2026-07-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 272000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.2,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.02,
+      "cacheWritePrice": 0.25,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-5.5",
+      "releaseDate": "2026-04-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 272000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 30,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-5.5"
+        ],
+        "retrievedOn": "2026-11-16"
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ const providerFieldsSchema = catalogProviderSchema
     quotaReader: z.enum(QUOTA_READERS).nullable(),
     // Null for a Provider that offers no OAuth Login.
     oauthLogin: providerOauthLoginSchema.nullable(),
+    credentialKinds: catalogProviderSchema.shape.credentialKinds.unwrap(),
     isEnabled: z.boolean(),
   });
 
@@ -29,6 +30,7 @@ export const newProviderSchema = providerFieldsSchema.extend({
   logo: providerLogoSchema.nullable().optional(),
   quotaReader: z.enum(QUOTA_READERS).nullable().optional(),
   oauthLogin: providerOauthLoginSchema.nullable().optional(),
+  credentialKinds: catalogProviderSchema.shape.credentialKinds,
   isEnabled: z.boolean().optional(),
 });
 export type NewProvider = z.infer<typeof newProviderSchema>;

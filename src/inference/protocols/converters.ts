@@ -5,6 +5,7 @@ import type { ClientProtocolConverter } from "./client-protocol-converter.js";
 import { openAiChatClientConverter } from "./openai-chat/openai-chat-client-converter.js";
 import { openAiChatUpstreamConverter } from "./openai-chat/openai-chat-upstream-converter.js";
 import { openAiResponsesClientConverter } from "./openai-responses/openai-responses-client-converter.js";
+import { openAiResponsesUpstreamConverter } from "./openai-responses/openai-responses-upstream-converter.js";
 import type { UpstreamProtocolConverter } from "./upstream-protocol-converter.js";
 
 // Adding a Protocol means writing its converter and adding it here (ADR 0002).
@@ -22,6 +23,7 @@ export const UPSTREAM_PROTOCOL_CONVERTERS: Partial<
 > = {
   "openai-chat": openAiChatUpstreamConverter,
   "anthropic-messages": anthropicMessagesUpstreamConverter,
+  "openai-responses": openAiResponsesUpstreamConverter,
 };
 
 /** The header carrying a Provider Account key, in the Provider's auth style. */
