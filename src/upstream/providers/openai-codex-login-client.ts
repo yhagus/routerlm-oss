@@ -3,7 +3,6 @@ import {
   HttpClient,
   HttpClientError,
   type HttpResponse,
-  type HttpRetryOptions,
   InjectHttpClient,
 } from "@nestjs/http-client";
 import { z } from "zod";
@@ -19,7 +18,8 @@ import {
 } from "../models/oauth-device-grant.js";
 import { codexAccountOf, secondsUntilExpiryOf } from "../models/openai-codex-tokens.js";
 import type { OauthTokens } from "../models/provider-account.js";
-import { OAUTH_LOGIN_HTTP_CLIENT } from "./oauth-login-http.js";
+import type { OauthFlowLoginClient } from "./oauth-flow-login-client.js";
+import { OAUTH_LOGIN_HTTP_CLIENT, REFRESH_RETRY } from "./oauth-login-http.js";
 
 type OpenAiCodexEndpoint = Extract<OauthLoginEndpoint, { flow: "openai-codex" }>;
 
@@ -31,8 +31,6 @@ const CALLBACK_PATH = "/deviceauth/callback";
 /** The Codex CLI gives up on a device code after 15 minutes; OpenAI states no expiry. */
 const DEVICE_CODE_LIFETIME_SECONDS = 15 * 60;
 const DEFAULT_POLL_INTERVAL_SECONDS = 5;
-// A refresh is retried as Kimi Code's is: connection errors, timeouts, 429 and 5xx.
-const REFRESH_RETRY = { attempts: 3, methods: ["POST"] } satisfies HttpRetryOptions;
 /** The refresh errors after which only a new sign-in helps (ADR 0013). */
 const REFUSED_REFRESH_ERRORS = new Set([
   "invalid_grant",
@@ -79,7 +77,7 @@ const tokenErrorSchema = z.object({
  * first-party OAuth client (ADR 0001).
  */
 @Injectable()
-export class OpenAiCodexLoginClient {
+export class OpenAiCodexLoginClient implements OauthFlowLoginClient<OpenAiCodexEndpoint> {
   private readonly logger = new Logger(OpenAiCodexLoginClient.name);
 
   constructor(@InjectHttpClient(OAUTH_LOGIN_HTTP_CLIENT) private readonly http: HttpClient) {}

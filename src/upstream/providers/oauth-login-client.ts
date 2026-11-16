@@ -8,7 +8,12 @@ import type {
   TokenRefresh,
 } from "../models/oauth-device-grant.js";
 import { KimiCodeLoginClient } from "./kimi-code-login-client.js";
+import type { OauthFlowLoginClient } from "./oauth-flow-login-client.js";
 import { OpenAiCodexLoginClient } from "./openai-codex-login-client.js";
+
+type OauthLoginFlow = OauthLoginEndpoint["flow"];
+type EndpointOf<Flow extends OauthLoginFlow> = Extract<OauthLoginEndpoint, { flow: Flow }>;
+type FlowLoginClients = { [Flow in OauthLoginFlow]: OauthFlowLoginClient<EndpointOf<Flow>> };
 
 /**
  * A Provider's sign-in and the refresh of the login it grants, whichever
@@ -16,35 +21,36 @@ import { OpenAiCodexLoginClient } from "./openai-codex-login-client.js";
  * own, and this hands the call to it.
  */
 @Injectable()
-export class OauthLoginClient {
+export class OauthLoginClient implements OauthFlowLoginClient<OauthLoginEndpoint> {
+  private readonly flowClients: FlowLoginClients;
+
   constructor(
     private readonly kimiCode: KimiCodeLoginClient,
-    private readonly openAiCodex: OpenAiCodexLoginClient,
-  ) {}
+    openAiCodex: OpenAiCodexLoginClient,
+  ) {
+    this.flowClients = { "kimi-code": kimiCode, "openai-codex": openAiCodex };
+  }
 
-  /** Asks for the code the User approves. Throws OauthLoginError. */
   authorizeDevice(endpoint: OauthLoginEndpoint): Promise<DeviceAuthorization> {
-    return endpoint.flow === "kimi-code"
-      ? this.kimiCode.authorizeDevice(endpoint)
-      : this.openAiCodex.authorizeDevice(endpoint);
+    return this.clientOf(endpoint).authorizeDevice(endpoint);
   }
 
-  /** Asks once whether the User has approved. Never throws for an HTTP failure. */
   pollToken(endpoint: OauthLoginEndpoint, pending: PendingDeviceCode): Promise<TokenPoll> {
-    return endpoint.flow === "kimi-code"
-      ? this.kimiCode.pollToken(endpoint, pending.deviceCode)
-      : this.openAiCodex.pollToken(endpoint, pending);
+    return this.clientOf(endpoint).pollToken(endpoint, pending);
   }
 
-  /** Trades the refresh token for new tokens. Never throws for an HTTP failure. */
   refreshTokens(endpoint: OauthLoginEndpoint, refreshToken: string): Promise<TokenRefresh> {
-    return endpoint.flow === "kimi-code"
-      ? this.kimiCode.refreshTokens(endpoint, refreshToken)
-      : this.openAiCodex.refreshTokens(endpoint, refreshToken);
+    return this.clientOf(endpoint).refreshTokens(endpoint, refreshToken);
   }
 
   /** Kimi Code's profile of the access token's owner; see KimiCodeLoginClient.readProfile. */
   readKimiCodeProfile(baseUrl: string, accessToken: string): Promise<OauthProfile | null> {
     return this.kimiCode.readProfile(baseUrl, accessToken);
+  }
+
+  private clientOf<Flow extends OauthLoginFlow>(
+    endpoint: EndpointOf<Flow>,
+  ): OauthFlowLoginClient<EndpointOf<Flow>> {
+    return this.flowClients[endpoint.flow];
   }
 }

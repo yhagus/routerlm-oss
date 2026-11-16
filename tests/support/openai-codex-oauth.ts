@@ -132,7 +132,7 @@ export async function addCodexLoginAccount(
   login: InsertedCodexLogin,
 ): Promise<string> {
   const now = new Date();
-  const codexAccount = codexAccountOf(idToken());
+  const codexAccount = codexAccountOf(idToken({ email: EMAIL }));
   const [providerAccount] = await db
     .insert(providerAccounts)
     .values({

@@ -13,6 +13,8 @@ export const providerAccountColumns = {
   credentialKind: providerAccounts.credentialKind,
   keyLastFour: providerAccounts.keyLastFour,
   oauthRegion: providerAccounts.oauthRegion,
+  oauthEmail: providerAccounts.oauthEmail,
+  oauthPlanType: providerAccounts.oauthPlanType,
   priority: providerAccounts.priority,
   isEnabled: providerAccounts.isEnabled,
   disabledReason: providerAccounts.disabledReason,
@@ -29,7 +31,7 @@ export const providerAccountColumns = {
  * A Provider Account as the dashboard API returns it: which credential it
  * holds, but never the key (only its last four characters) nor an OAuth
  * Login's tokens. `keyLastFour` is null for an OAuth Login, `oauthRegion` for
- * an API key.
+ * an API key, `oauthEmail` and `oauthPlanType` for all but an OpenAI Codex login.
  */
 export type ProviderAccount = Omit<
   typeof providerAccounts.$inferSelect,
@@ -41,8 +43,6 @@ export type ProviderAccount = Omit<
   | "oauthDeviceId"
   | "oauthEncryptedIdToken"
   | "oauthAccountId"
-  | "oauthEmail"
-  | "oauthPlanType"
 >;
 
 type StoredKey = { encryptedKey: string; keyLastFour: string };
@@ -70,14 +70,14 @@ type StoredOauthTokens = {
   oauthGrantedAt: Date;
   oauthExpiresAt: Date;
   oauthEncryptedIdToken?: string;
-  oauthAccountId?: string | null;
-  oauthEmail?: string | null;
-  oauthPlanType?: string | null;
+  oauthAccountId?: string;
+  oauthEmail?: string;
+  oauthPlanType?: string;
 };
 
 /**
  * The columns that store an OAuth Login's tokens, granted at `grantedAt`:
- * every token encrypted, and the Codex account the id_token names.
+ * every token encrypted, and whatever of the Codex account the id_token names.
  */
 export function storedOauthTokens(
   keyCipher: ProviderKeyCipher,
@@ -94,11 +94,13 @@ export function storedOauthTokens(
   if (codexAccount === undefined) {
     return stored;
   }
+  // A refreshed id_token may leave out a claim: the stored value stays, so the
+  // account id sent as `chatgpt-account-id` is never lost.
   return {
     ...stored,
     oauthEncryptedIdToken: keyCipher.encrypt(codexAccount.idToken),
-    oauthAccountId: codexAccount.accountId,
-    oauthEmail: codexAccount.email,
-    oauthPlanType: codexAccount.planType,
+    ...(codexAccount.accountId === null ? {} : { oauthAccountId: codexAccount.accountId }),
+    ...(codexAccount.email === null ? {} : { oauthEmail: codexAccount.email }),
+    ...(codexAccount.planType === null ? {} : { oauthPlanType: codexAccount.planType }),
   };
 }

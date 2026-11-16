@@ -14,11 +14,13 @@ import {
   type OauthLoginEndpoint,
   OauthLoginError,
   type OauthProfile,
+  type PendingDeviceCode,
   type TokenPoll,
   type TokenRefresh,
 } from "../models/oauth-device-grant.js";
 import type { OauthTokens } from "../models/provider-account.js";
-import { OAUTH_LOGIN_HTTP_CLIENT } from "./oauth-login-http.js";
+import type { OauthFlowLoginClient } from "./oauth-flow-login-client.js";
+import { OAUTH_LOGIN_HTTP_CLIENT, REFRESH_RETRY } from "./oauth-login-http.js";
 
 type KimiCodeEndpoint = Extract<OauthLoginEndpoint, { flow: "kimi-code" }>;
 
@@ -29,9 +31,6 @@ const DEVICE_CODE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code";
 const REFRESH_GRANT_TYPE = "refresh_token";
 /** The token error (RFC 6749, section 5.2) of a refresh token that is no longer valid. */
 const INVALID_GRANT = "invalid_grant";
-// A refresh is retried on the client's defaults (connection errors, timeouts,
-// 429 and 5xx, with backoff), which leave out POST.
-const REFRESH_RETRY = { attempts: 3, methods: ["POST"] } satisfies HttpRetryOptions;
 /** RFC 8628: what a client waits between polls when the auth host names no interval. */
 const DEFAULT_POLL_INTERVAL_SECONDS = 5;
 // The dashboard shows it as a link, so it must not be a `javascript:` URL.
@@ -73,7 +72,7 @@ const profileSchema = z.object({
  * nothing here names a host.
  */
 @Injectable()
-export class KimiCodeLoginClient {
+export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoint> {
   constructor(@InjectHttpClient(OAUTH_LOGIN_HTTP_CLIENT) private readonly http: HttpClient) {}
 
   /** Asks for a device code and the user code that goes with it. Throws OauthLoginError. */
@@ -106,11 +105,11 @@ export class KimiCodeLoginClient {
   }
 
   /** Asks once whether the User has approved the device code. Never throws for an HTTP failure. */
-  async pollToken(endpoint: KimiCodeEndpoint, deviceCode: string): Promise<TokenPoll> {
+  async pollToken(endpoint: KimiCodeEndpoint, pending: PendingDeviceCode): Promise<TokenPoll> {
     let answer: HttpResponse;
     try {
       answer = await this.postForm(endpoint, TOKEN_PATH, {
-        device_code: deviceCode,
+        device_code: pending.deviceCode,
         grant_type: DEVICE_CODE_GRANT_TYPE,
       });
     } catch (error) {

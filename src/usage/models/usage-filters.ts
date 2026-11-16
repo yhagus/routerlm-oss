@@ -14,6 +14,9 @@ export function whereFilter(filter: UsageFilter): SQL | undefined {
     filter.modelId === undefined ? undefined : inArray(usageLogs.modelId, filter.modelId),
     callerCondition(filter),
     filter.status === undefined ? undefined : or(...filter.status.map(statusCondition)),
+    filter.serviceTier === undefined
+      ? undefined
+      : inArray(usageLogs.serviceTier, filter.serviceTier),
     filter.q === undefined ? undefined : searchCondition(filter.q),
   );
 }
