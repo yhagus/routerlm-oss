@@ -19,6 +19,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "kimi-k3.1-pro",
+      "name": "Kimi K3.1 Pro",
       "releaseDate": "2026-10-23",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
@@ -40,6 +41,7 @@
     },
     {
       "upstreamModelId": "kimi-k3.1-pro-highspeed",
+      "name": "Kimi K3.1 Pro Highspeed",
       "releaseDate": "2026-10-23",
       "capabilities": ["tools", "reasoning", "structured-output", "vision"],
       "contextSize": 1048576,
@@ -61,6 +63,7 @@
     },
     {
       "upstreamModelId": "kimi-k3",
+      "name": "Kimi K3",
       "releaseDate": "2026-07-16",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
@@ -81,6 +84,7 @@
     },
     {
       "upstreamModelId": "kimi-k2.6",
+      "name": "Kimi K2.6",
       "releaseDate": "2026-04-20",
       "capabilities": ["tools", "reasoning", "structured-output", "vision"],
       "contextSize": 262144,
@@ -101,6 +105,7 @@
     },
     {
       "upstreamModelId": "kimi-k2.7-code",
+      "name": "Kimi K2.7 Code",
       "releaseDate": "2026-06-12",
       "capabilities": ["tools", "reasoning", "structured-output", "vision"],
       "contextSize": 262144,
@@ -121,6 +126,7 @@
     },
     {
       "upstreamModelId": "kimi-k2.7-code-highspeed",
+      "name": "Kimi K2.7 Code Highspeed",
       "releaseDate": "2026-06-12",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 262144,

@@ -8,6 +8,7 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
 const ACME_LARGE = {
   upstreamModelId: "acme-large",
+  name: "Acme Large",
   capabilities: ["vision", "tools"],
   contextSize: 200_000,
   maxOutputTokens: 32_000,
@@ -105,6 +106,25 @@ describe("Upstream Models (e2e)", () => {
 
     expect(changed.body.releaseDate).toBe("2026-02-12");
     expect(cleared.body.releaseDate).toBeNull();
+  });
+
+  it("changes and clears the name", async () => {
+    const server = app.getHttpServer();
+    const id = await createAcmeLarge();
+
+    const changed = await request(server)
+      .patch(`/api/upstream-models/${id}`)
+      .set("Cookie", cookie)
+      .send({ name: "Acme Large 2" })
+      .expect(200);
+    const cleared = await request(server)
+      .patch(`/api/upstream-models/${id}`)
+      .set("Cookie", cookie)
+      .send({ name: null })
+      .expect(200);
+
+    expect(changed.body.name).toBe("Acme Large 2");
+    expect(cleared.body.name).toBeNull();
   });
 
   it("adds an Upstream Model without a Release Date", async () => {

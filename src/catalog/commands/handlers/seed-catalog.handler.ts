@@ -59,6 +59,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             entry.upstreamModels.map((model) => ({
               providerId: provider.id,
               upstreamModelId: model.upstreamModelId,
+              name: model.name ?? null,
               capabilities: model.capabilities,
               contextSize: model.contextSize,
               maxOutputTokens: model.maxOutputTokens,
@@ -76,13 +77,14 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         result.createdUpstreamModels += createdModels.length;
 
         // The one exception to never changing existing rows (ADR 0003): an
-        // empty Release Date, max output or price gets the Catalog's value, so rows seeded
+        // empty name, Release Date, max output or price gets the Catalog's value, so rows seeded
         // before the Catalog knew it catch up. A value that is already set,
         // Catalog or operator, is left alone.
         for (const model of entry.upstreamModels) {
           await tx
             .update(upstreamModels)
             .set({
+              name: sql`coalesce(${upstreamModels.name}, ${model.name ?? null}::text)`,
               releaseDate: sql`coalesce(${upstreamModels.releaseDate}, ${model.releaseDate}::date)`,
               maxOutputTokens: sql`coalesce(${upstreamModels.maxOutputTokens}, ${model.maxOutputTokens}::integer)`,
               inputPrice: fillPrice(upstreamModels.inputPrice, model.inputPrice),
@@ -95,6 +97,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
                 eq(upstreamModels.providerId, provider.id),
                 eq(upstreamModels.upstreamModelId, model.upstreamModelId),
                 or(
+                  isNull(upstreamModels.name),
                   isNull(upstreamModels.releaseDate),
                   isNull(upstreamModels.maxOutputTokens),
                   isNull(upstreamModels.inputPrice),

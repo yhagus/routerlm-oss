@@ -188,6 +188,8 @@ export const upstreamModels = pgTable(
       .references(() => providers.id, { onDelete: "cascade" }),
     // The model name as the Provider spells it in requests.
     upstreamModelId: text("upstream_model_id").notNull(),
+    // The name the Provider's docs give the model; null when they give none.
+    name: text("name"),
     capabilities: text("capabilities", { enum: CAPABILITIES }).array("[]").notNull().default([]),
     contextSize: integer("context_size").notNull(),
     maxOutputTokens: integer("max_output_tokens"),

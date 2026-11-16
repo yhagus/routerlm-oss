@@ -32,6 +32,7 @@ const catalog: CatalogProvider[] = [
     upstreamModels: [
       {
         upstreamModelId: "example-large",
+        name: "Example Large",
         capabilities: ["tools", "vision"],
         contextSize: 200000,
         maxOutputTokens: 8192,
@@ -110,6 +111,7 @@ describe("Seed Catalog command (e2e)", () => {
     expect(provider?.upstreamModels).toMatchObject([
       {
         upstreamModelId: "example-large",
+        name: "Example Large",
         capabilities: ["tools", "vision"],
         contextSize: 200000,
         maxOutputTokens: 8192,
@@ -121,6 +123,7 @@ describe("Seed Catalog command (e2e)", () => {
       },
       {
         upstreamModelId: "example-small",
+        name: null,
         inputPrice: null,
         maxOutputTokens: null,
         releaseDate: "2025-09-15",
@@ -200,6 +203,27 @@ describe("Seed Catalog command (e2e)", () => {
       .from(schema.upstreamModels)
       .where(eq(schema.upstreamModels.upstreamModelId, "example-small"));
     expect(model?.releaseDate).toBe("2025-10-01");
+  });
+
+  it("fills a missing name and keeps one the operator set", async () => {
+    await db
+      .update(schema.upstreamModels)
+      .set({ name: null })
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-large"));
+    await db
+      .update(schema.upstreamModels)
+      .set({ name: "Small (operator)" })
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-small"));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const models = await db.select().from(schema.upstreamModels);
+    expect(models).toContainEqual(
+      expect.objectContaining({ upstreamModelId: "example-large", name: "Example Large" }),
+    );
+    expect(models).toContainEqual(
+      expect.objectContaining({ upstreamModelId: "example-small", name: "Small (operator)" }),
+    );
   });
 
   it("fills a missing logo", async () => {

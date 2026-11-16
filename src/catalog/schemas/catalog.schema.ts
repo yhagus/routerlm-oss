@@ -136,6 +136,8 @@ const priceSchema = z.number().nonnegative().nullable();
 
 const upstreamModelSchema = z.strictObject({
   upstreamModelId: z.string().min(1),
+  // The name the Provider's docs give the model, such as "K2.8 Preview".
+  name: z.string().min(1).optional(),
   capabilities: z.array(z.enum(CAPABILITIES)),
   contextSize: z.int().positive(),
   maxOutputTokens: z.int().positive().nullable(),

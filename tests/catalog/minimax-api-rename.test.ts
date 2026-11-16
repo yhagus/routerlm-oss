@@ -134,16 +134,19 @@ async function insertMiniMaxWithRoute(
      returning id`,
     [providerId],
   );
-  const [upstreamModel] = await db
-    .insert(schema.upstreamModels)
-    .values({ providerId, upstreamModelId: "MiniMax-M3", contextSize: 1000000 })
-    .returning();
+  const upstreamModelId = await insertReturningId(
+    pool,
+    `insert into upstream_models (provider_id, upstream_model_id, context_size)
+     values ($1, 'MiniMax-M3', 1000000)
+     returning id`,
+    [providerId],
+  );
   const [model] = await db.insert(schema.models).values({ name: "minimax-m3" }).returning();
-  if (!upstreamModel || !model) throw new Error("the MiniMax fixtures were not inserted");
+  if (!model) throw new Error("the MiniMax Model was not inserted");
 
   const [route] = await db
     .insert(schema.routes)
-    .values({ modelId: model.id, upstreamModelId: upstreamModel.id })
+    .values({ modelId: model.id, upstreamModelId })
     .returning();
   if (!route) throw new Error("the MiniMax Route was not inserted");
 

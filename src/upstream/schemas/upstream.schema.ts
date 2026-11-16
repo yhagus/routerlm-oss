@@ -43,10 +43,16 @@ export type ProviderChanges = z.infer<typeof providerChangesSchema>;
 const upstreamModelFieldsSchema = catalogProviderSchema.shape.upstreamModels.element
   .omit({ source: true, notes: true })
   // Every Catalog model has a Release Date; one the operator adds may not.
-  .extend({ releaseDate: z.iso.date().nullable(), isEnabled: z.boolean() });
+  // Null clears the name, so the dashboard shows only the model id.
+  .extend({
+    name: z.string().min(1).nullable(),
+    releaseDate: z.iso.date().nullable(),
+    isEnabled: z.boolean(),
+  });
 
 export const newUpstreamModelSchema = upstreamModelFieldsSchema.extend({
   providerId: z.uuid(),
+  name: z.string().min(1).nullable().optional(),
   releaseDate: z.iso.date().nullable().optional(),
   isEnabled: z.boolean().optional(),
 });

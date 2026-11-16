@@ -43,6 +43,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "k3.1-pro",
+      "name": "K3.1 Pro",
       "releaseDate": "2026-10-23",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 262144,
@@ -59,6 +60,7 @@
     },
     {
       "upstreamModelId": "k3.1-pro-highspeed",
+      "name": "K3.1 Pro Highspeed",
       "releaseDate": "2026-10-23",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 1048576,
@@ -75,6 +77,7 @@
     },
     {
       "upstreamModelId": "k3",
+      "name": "K3",
       "releaseDate": "2026-07-16",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 262144,
@@ -91,6 +94,7 @@
     },
     {
       "upstreamModelId": "k3-256k",
+      "name": "K3 256K",
       "releaseDate": "2026-07-16",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 262144,
@@ -107,6 +111,7 @@
     },
     {
       "upstreamModelId": "kimi-for-coding",
+      "name": "K2.8 Preview",
       "releaseDate": "2026-09-11",
       "capabilities": ["vision", "reasoning", "tools"],
       "contextSize": 1048576,
@@ -123,6 +128,7 @@
     },
     {
       "upstreamModelId": "kimi-for-coding-highspeed",
+      "name": "K2.7 Code Highspeed",
       "releaseDate": "2026-06-12",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 262144,

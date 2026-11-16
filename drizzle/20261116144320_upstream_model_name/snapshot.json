@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4164fba7-7d59-4714-a059-f77bc4b398f2",
+  "prevIds": [
+    "684f83e5-d724-4aee-92f7-1b79277e06f5"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "name"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.name",
+        "n|col|public.upstream_models.name",
+        "e|col|public.upstream_models.name"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}
