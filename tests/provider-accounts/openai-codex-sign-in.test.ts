@@ -211,6 +211,8 @@ describe("Signing in to OpenAI Codex as the Codex CLI (e2e)", () => {
         name: `${EMAIL} (${PLAN_TYPE})`,
         credentialKind: "oauth-login",
         oauthRegion: null,
+        oauthEmail: EMAIL,
+        oauthPlanType: PLAN_TYPE,
         isEnabled: true,
       }),
     });

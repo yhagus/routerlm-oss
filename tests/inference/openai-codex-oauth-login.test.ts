@@ -14,8 +14,11 @@ import {
   addCodexLoginAccount,
   CLI_VERSION,
   CLIENT_ID,
+  EMAIL,
   idToken,
+  jwtWith,
   offerCodexOauthLogin,
+  PLAN_TYPE,
   TOKEN_PATH,
   tokensReply,
 } from "../support/openai-codex-oauth.js";
@@ -169,6 +172,31 @@ describe("Inference from an OpenAI Codex OAuth Login (e2e)", () => {
       "chatgpt-account-2",
       "chatgpt-account-2",
     ]);
+  });
+
+  it("keeps the stored account id, email and plan when a refreshed id_token names none", async () => {
+    const accountId = await addCodexLoginAccount(app, db, providerId, {
+      accessToken: accessToken("near its end", SHORT_LIFETIME_SECONDS),
+      refreshToken: REFRESH_TOKEN,
+    });
+    openAi.replyTo(
+      TOKEN_PATH,
+      tokensReply({ accessToken: accessToken("renewed", HOUR_SECONDS), idToken: jwtWith({}) }),
+    );
+    openAi.reply(RESPONSE);
+
+    await chat().expect(200);
+    openAi.reply(RESPONSE);
+    await chat().expect(200);
+
+    expect(responsesCalls().map((call) => call.headers["chatgpt-account-id"])).toEqual([
+      ACCOUNT_ID,
+      ACCOUNT_ID,
+    ]);
+    expect(await listedAccount(accountId)).toMatchObject({
+      oauthEmail: EMAIL,
+      oauthPlanType: PLAN_TYPE,
+    });
   });
 
   it("refreshes once and tries again when Codex answers an Attempt with 401", async () => {
