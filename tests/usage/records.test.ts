@@ -23,7 +23,7 @@ import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("../support/test-app.js");
+const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 
@@ -416,6 +416,64 @@ describe("Usage Logs and Attempts (e2e)", () => {
       httpStatus: 401,
       errorCode: "invalid_api_key",
       clientProtocol: "openai-chat",
+    });
+  });
+
+  describe("with Service Tiers", () => {
+    let cookie: string;
+
+    beforeEach(async () => {
+      cookie = await setUpFirstUser(app, { email: "ops@example.com", password: "ops password" });
+      await request(app.getHttpServer())
+        .patch(`/api/providers/${providerId}`)
+        .set("Cookie", cookie)
+        .send({ serviceTierValues: { fast: "priority", flex: "flex" } })
+        .expect(200);
+      await request(app.getHttpServer())
+        .patch(`/api/upstream-models/${upstreamModelId}`)
+        .set("Cookie", cookie)
+        .send({
+          serviceTiers: ["fast", "flex"],
+          tierPrices: { flex: { inputPrice: 1, outputPrice: 4 } },
+        })
+        .expect(200);
+    });
+
+    it("records the tier sent and prices it at that tier, falling back to standard prices", async () => {
+      upstream.reply({
+        kind: "json",
+        status: 200,
+        body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      });
+
+      await chat({ ...CHAT_REQUEST, service_tier: "flex" }).expect(200);
+
+      const { usageLog } = await writtenUsageLog();
+      // (20 x 1 + 40 x 4) at flex, plus 100 cache reads x 0.5 at the standard price, per million.
+      expect(usageLog.cost).toBeCloseTo(0.00023, 10);
+      const listed = await request(app.getHttpServer())
+        .get("/api/usage")
+        .set("Cookie", cookie)
+        .expect(200);
+      expect(listed.body.items).toEqual([expect.objectContaining({ serviceTier: "flex" })]);
+    });
+
+    it("records the tier the upstream reports serving over the one sent", async () => {
+      const answer: Record<string, unknown> = JSON.parse(
+        openAiChatFixture("upstream-response-tool-call.json"),
+      );
+      upstream.reply({
+        kind: "json",
+        status: 200,
+        body: { ...answer, usage: FULL_USAGE, service_tier: "default" },
+      });
+
+      await chat({ ...CHAT_REQUEST, service_tier: "flex" }).expect(200);
+
+      const { usageLog } = await writtenUsageLog();
+      expect(usageLog.serviceTier).toBeNull();
+      // Standard prices: (1000 x 2 + 500 x 8 + 10000 x 0.5 + 2000 x 2.5) per million tokens.
+      expect(usageLog.cost).toBeCloseTo(0.016, 10);
     });
   });
 });

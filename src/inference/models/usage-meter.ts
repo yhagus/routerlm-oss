@@ -17,6 +17,11 @@ import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-fail
 import type { GatewayError } from "./gateway-error.js";
 import type { TokenUsage } from "./internal-format.js";
 import type { AttemptTarget } from "./route-selection.js";
+import {
+  pricesAtServiceTier,
+  type SentServiceTier,
+  serviceTierOfWireValue,
+} from "./service-tier.js";
 
 /**
  * The upstream status recorded for an Attempt that answered. UpstreamClient
@@ -27,6 +32,7 @@ const FIRST_ERROR_STATUS = 400;
 
 interface OpenAttempt {
   target: AttemptTarget;
+  sentServiceTier: SentServiceTier | null;
   startedAt: Date;
   startedMs: number;
   hasAnswered: boolean;
@@ -90,9 +96,11 @@ export class UsageMeter {
     this.modelId = modelId;
   }
 
-  attemptStarted(target: AttemptTarget): void {
+  /** `sentServiceTier` is the tier the Attempt asks for, null when it asks for none. */
+  attemptStarted(target: AttemptTarget, sentServiceTier: SentServiceTier | null): void {
     this.openAttempt = {
       target,
+      sentServiceTier,
       startedAt: new Date(),
       startedMs: performance.now(),
       hasAnswered: false,
@@ -127,21 +135,39 @@ export class UsageMeter {
     }
     this.openAttempt.hasAnswered = true;
     const { route, upstreamModel, providerAccount } = this.openAttempt.target;
-    const { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice } = upstreamModel;
+    const serviceTier = this.openAttempt.sentServiceTier?.tier ?? null;
     this.servedBy = {
       routeId: route?.id ?? null,
       upstreamModelId: upstreamModel.id,
       providerAccountId: providerAccount.id,
+      serviceTier,
       // Taken now, so a later price edit doesn't change this request's Cost.
-      prices: { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice },
+      prices: pricesAtServiceTier(upstreamModel, serviceTier),
     };
     if (this.isStreamed) {
       this.timeToFirstTokenMs = elapsedSince(this.receivedMs);
     }
   }
 
-  usageReported(usage: TokenUsage): void {
+  /**
+   * `servedTierValue` is the Service Tier the upstream says served the
+   * request, as it spells it; it replaces the tier the Attempt sent.
+   */
+  usageReported(usage: TokenUsage, servedTierValue: string | undefined): void {
     this.usage = usage;
+    if (servedTierValue === undefined || !this.servedBy || !this.openAttempt) {
+      return;
+    }
+    const { upstreamModel } = this.openAttempt.target;
+    const serviceTier = serviceTierOfWireValue(
+      servedTierValue,
+      upstreamModel.provider.serviceTierValues,
+    );
+    this.servedBy = {
+      ...this.servedBy,
+      serviceTier,
+      prices: pricesAtServiceTier(upstreamModel, serviceTier),
+    };
   }
 
   attemptFailed(failure: AttemptFailedError): void {

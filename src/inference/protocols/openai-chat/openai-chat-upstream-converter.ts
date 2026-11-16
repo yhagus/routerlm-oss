@@ -89,6 +89,9 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   } else if (quirks.forwardsClientPromptCacheKey && request.promptCacheKey !== undefined) {
     body.prompt_cache_key = request.promptCacheKey;
   }
+  if (target.serviceTierValue !== undefined) {
+    body.service_tier = target.serviceTierValue;
+  }
   if (request.stream) {
     body.stream = true;
     body.stream_options = { include_usage: true };
@@ -301,6 +304,7 @@ const completionSchema = z.object({
     )
     .min(1),
   usage: usageSchema.nullish(),
+  service_tier: z.string().nullish(),
 });
 
 function parseResponse(body: unknown): InferenceResponse {
@@ -328,6 +332,7 @@ function parseResponse(body: unknown): InferenceResponse {
     content,
     stopReason: stopReasonOf(finish_reason),
     usage: tokenUsageOf(parsed.data.usage ?? usageInChoice ?? undefined),
+    ...(parsed.data.service_tier && { servedTierValue: parsed.data.service_tier }),
   };
 }
 
@@ -356,6 +361,7 @@ const chunkSchema = z.object({
     }),
   ),
   usage: usageSchema.nullish(),
+  service_tier: z.string().nullish(),
 });
 
 const streamErrorSchema = z.object({ error: z.unknown() });
@@ -413,7 +419,11 @@ function* eventsOfChunk(json: unknown): Iterable<InferenceStreamEvent> {
   }
   const usage: OpenAiUsage | null | undefined = chunk.data.usage ?? chunk.data.choices[0]?.usage;
   if (usage) {
-    yield { type: "usage", usage: tokenUsageOf(usage) };
+    yield {
+      type: "usage",
+      usage: tokenUsageOf(usage),
+      ...(chunk.data.service_tier && { servedTierValue: chunk.data.service_tier }),
+    };
   }
 }
 

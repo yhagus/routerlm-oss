@@ -29,6 +29,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             baseUrl: entry.baseUrl,
             authStyle: entry.authStyle,
             quirks: entry.quirks,
+            serviceTierValues: entry.serviceTierValues ?? {},
             quotaReader: entry.quotaReader ?? null,
             oauthLogin: entry.oauthLogin ?? null,
             credentialKinds: entry.credentialKinds,
@@ -68,6 +69,8 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               outputPrice: model.outputPrice,
               cacheReadPrice: model.cacheReadPrice,
               cacheWritePrice: model.cacheWritePrice,
+              serviceTiers: model.serviceTiers ?? [],
+              tierPrices: model.tierPrices ?? {},
               releaseDate: model.releaseDate,
             })),
           )

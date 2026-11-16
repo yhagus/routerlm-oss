@@ -5,6 +5,9 @@ import {
   providerLogoSchema,
   providerOauthLoginSchema,
   providerQuirksSchema,
+  serviceTierPricesSchema,
+  serviceTiersSchema,
+  serviceTierValuesSchema,
 } from "@/catalog/schemas/catalog.schema.js";
 import { QUOTA_READERS } from "@/db/schemas/index.js";
 
@@ -15,6 +18,7 @@ import { QUOTA_READERS } from "@/db/schemas/index.js";
 const providerFieldsSchema = catalogProviderSchema
   .pick({ slug: true, name: true, protocol: true, baseUrl: true, authStyle: true, quirks: true })
   .extend({
+    serviceTierValues: serviceTierValuesSchema,
     // Null shows no logo.
     logo: providerLogoSchema.nullable(),
     // Null for a Provider that reports no quota.
@@ -27,6 +31,7 @@ const providerFieldsSchema = catalogProviderSchema
 
 export const newProviderSchema = providerFieldsSchema.extend({
   quirks: providerQuirksSchema.default({}),
+  serviceTierValues: serviceTierValuesSchema.default({}),
   logo: providerLogoSchema.nullable().optional(),
   quotaReader: z.enum(QUOTA_READERS).nullable().optional(),
   oauthLogin: providerOauthLoginSchema.nullable().optional(),
@@ -49,6 +54,8 @@ const upstreamModelFieldsSchema = catalogProviderSchema.shape.upstreamModels.ele
   .extend({
     name: z.string().min(1).nullable(),
     releaseDate: z.iso.date().nullable(),
+    serviceTiers: serviceTiersSchema,
+    tierPrices: serviceTierPricesSchema,
     isEnabled: z.boolean(),
   });
 
@@ -56,6 +63,8 @@ export const newUpstreamModelSchema = upstreamModelFieldsSchema.extend({
   providerId: z.uuid(),
   name: z.string().min(1).nullable().optional(),
   releaseDate: z.iso.date().nullable().optional(),
+  serviceTiers: serviceTiersSchema.optional(),
+  tierPrices: serviceTierPricesSchema.optional(),
   isEnabled: z.boolean().optional(),
 });
 export type NewUpstreamModel = z.infer<typeof newUpstreamModelSchema>;

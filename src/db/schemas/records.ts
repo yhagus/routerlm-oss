@@ -1,5 +1,6 @@
 import { boolean, index, integer, jsonb, numeric, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { apiKeys, users } from "./access.js";
+import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
 import { at, createdAt, id } from "./columns.js";
 import { routes, models } from "./routing.js";
 import { providerAccounts } from "./upstream.js";
@@ -73,6 +74,8 @@ export const usageLogs = pgTable(
     reasoningTokens: integer("reasoning_tokens"),
     requestBytes: integer("request_bytes").notNull(),
     responseBytes: integer("response_bytes").notNull(),
+    // The Service Tier that served the request; null for the Provider's default.
+    serviceTier: text("service_tier", { enum: SERVICE_TIERS }),
     // USD, from the Upstream Model's prices at request time. Null if unknown.
     cost: numeric("cost", { precision: 18, scale: 10, mode: "number" }),
     timeToFirstTokenMs: integer("time_to_first_token_ms"),

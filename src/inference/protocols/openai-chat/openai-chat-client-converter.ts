@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { GatewayError } from "../../models/gateway-error.js";
+import { serviceTierOfOpenAiClient } from "../../models/service-tier.js";
 import {
   type AssistantContentPart,
   type InferenceMessage,
@@ -97,6 +98,8 @@ const requestSchema = z.object({
   top_p: z.number().min(0).max(1).nullish(),
   stop: z.union([z.string(), z.array(z.string())]).nullish(),
   prompt_cache_key: z.string().min(1).nullish(),
+  // Any string: values that name no Service Tier ask for none.
+  service_tier: z.string().nullish(),
   stream: z.boolean().nullish(),
   stream_options: z.object({ include_usage: z.boolean().optional() }).nullish(),
 });
@@ -231,6 +234,10 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
   }
   if (request.prompt_cache_key != null) {
     parsed.promptCacheKey = request.prompt_cache_key;
+  }
+  const serviceTier = serviceTierOfOpenAiClient(request.service_tier);
+  if (serviceTier) {
+    parsed.serviceTier = serviceTier;
   }
   return parsed;
 }

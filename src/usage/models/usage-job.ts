@@ -3,7 +3,7 @@ import type {
   GatewayErrorCode,
   RecordedAttemptFailure,
 } from "@/db/schemas/index.js";
-import type { TokenUsage } from "@/inference/models/internal-format.js";
+import type { ServiceTier, TokenUsage } from "@/inference/models/internal-format.js";
 
 /** The job that turns one inference request into its Usage Log and Attempts. */
 export const RECORD_USAGE_JOB = "record";
@@ -32,6 +32,9 @@ export interface ServedBy {
   /** The `upstream_models` row id. */
   upstreamModelId: string;
   providerAccountId: string;
+  /** Null when it was served at the Provider's default. Missing in jobs queued before tiers existed. */
+  serviceTier?: ServiceTier | null;
+  /** The Upstream Model's prices at the Service Tier that served it. */
   prices: UpstreamModelPrices;
 }
 

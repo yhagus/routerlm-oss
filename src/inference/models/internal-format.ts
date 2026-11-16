@@ -75,6 +75,13 @@ export type ResponseFormat =
 export const REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh"] as const;
 export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 
+/**
+ * The gateway's Service Tier names (ADR 0014). Each Provider maps them to its
+ * own wire values; no tier means the Provider's default.
+ */
+export const SERVICE_TIERS = ["fast", "flex"] as const;
+export type ServiceTier = (typeof SERVICE_TIERS)[number];
+
 export interface InferenceRequest {
   /** The Model name the client asked for (ours, never an Upstream Model id). */
   model: string;
@@ -90,6 +97,8 @@ export interface InferenceRequest {
   temperature?: number;
   topP?: number;
   stopSequences?: string[];
+  /** Dropped for an Attempt whose Upstream Model doesn't accept it. */
+  serviceTier?: ServiceTier;
   /** The client's own `prompt_cache_key`, for Providers whose quirks pass it on. */
   promptCacheKey?: string;
   /** Null for a non-streaming request. */
@@ -117,6 +126,8 @@ export interface InferenceResponse {
   content: AssistantContentPart[];
   stopReason: StopReason;
   usage: TokenUsage;
+  /** The Service Tier wire value the upstream says served the request, when it says. */
+  servedTierValue?: string;
 }
 
 /**
@@ -130,7 +141,8 @@ export type InferenceStreamEvent =
   | { type: "tool-call-start"; index: number; id: string; name: string }
   | { type: "tool-call-delta"; index: number; argumentsDelta: string }
   | { type: "finish"; stopReason: StopReason }
-  | { type: "usage"; usage: TokenUsage };
+  /** `servedTierValue` as on InferenceResponse. */
+  | { type: "usage"; usage: TokenUsage; servedTierValue?: string };
 
 /** Usage before (or without) the upstream reporting any count. */
 export const UNREPORTED_USAGE: TokenUsage = {

@@ -1,4 +1,4 @@
-import type { ParameterPolicy, ParameterValues } from "@/db/schemas/index.js";
+import type { ParameterCaps, ParameterPolicy, ParameterValues } from "@/db/schemas/index.js";
 import {
   type InferenceRequest,
   REASONING_EFFORTS,
@@ -12,9 +12,11 @@ export const POLICY_PARAMETERS = [
   "maxOutputTokens",
   "reasoningEffort",
   "stopSequences",
+  "serviceTier",
 ] as const satisfies readonly (keyof ParameterValues)[];
 
 type PolicyParameter = (typeof POLICY_PARAMETERS)[number];
+type CappedParameter = keyof ParameterCaps;
 type NumericParameter = "temperature" | "topP" | "maxOutputTokens";
 
 /**
@@ -38,6 +40,7 @@ export function applyParameterPolicy(
     maxOutputTokens: numberUnderPolicy("maxOutputTokens", request.maxOutputTokens, policy),
     stopSequences:
       policy.forced?.stopSequences ?? request.stopSequences ?? policy.defaults?.stopSequences,
+    serviceTier: policy.forced?.serviceTier ?? request.serviceTier ?? policy.defaults?.serviceTier,
   };
   const reasoning = reasoningUnderPolicy(request.reasoning, policy);
   if (reasoning) {
@@ -116,8 +119,12 @@ function setsParameter(policy: ParameterPolicy, parameter: PolicyParameter): boo
   return (
     policy.defaults?.[parameter] !== undefined ||
     policy.forced?.[parameter] !== undefined ||
-    (parameter !== "stopSequences" && policy.caps?.[parameter] !== undefined)
+    (isCapped(parameter) && policy.caps?.[parameter] !== undefined)
   );
+}
+
+function isCapped(parameter: PolicyParameter): parameter is CappedParameter {
+  return parameter !== "stopSequences" && parameter !== "serviceTier";
 }
 
 function copyRules(from: ParameterPolicy, to: ParameterPolicy, parameter: PolicyParameter): void {
@@ -129,7 +136,7 @@ function copyRules(from: ParameterPolicy, to: ParameterPolicy, parameter: Policy
   if (forcedValue !== undefined) {
     to.forced = { ...to.forced, [parameter]: forcedValue };
   }
-  const cap = parameter === "stopSequences" ? undefined : from.caps?.[parameter];
+  const cap = isCapped(parameter) ? from.caps?.[parameter] : undefined;
   if (cap !== undefined) {
     to.caps = { ...to.caps, [parameter]: cap };
   }

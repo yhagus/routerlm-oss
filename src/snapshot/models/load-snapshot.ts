@@ -58,6 +58,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         baseUrl: provider.baseUrl,
         authStyle: provider.authStyle,
         quirks: provider.quirks,
+        serviceTierValues: provider.serviceTierValues,
         isEnabled: provider.isEnabled,
         providerAccounts: (accountsByProviderId.get(provider.id) ?? []).flatMap(
           (account): SnapshotProviderAccount[] => {
@@ -92,6 +93,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         outputPrice: upstreamModel.outputPrice,
         cacheReadPrice: upstreamModel.cacheReadPrice,
         cacheWritePrice: upstreamModel.cacheWritePrice,
+        serviceTiers: upstreamModel.serviceTiers,
+        tierPrices: upstreamModel.tierPrices,
         isEnabled: upstreamModel.isEnabled,
         provider,
       });

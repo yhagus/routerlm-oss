@@ -1,4 +1,5 @@
 import type { ClientProtocol, GatewayErrorCode } from "@/db/schemas/index.js";
+import type { ServiceTier } from "@/inference/models/internal-format.js";
 
 /** A Usage Log as the Usage page lists it. Names are null once the Model or API Key is deleted. */
 export interface UsageLogSummary {
@@ -13,6 +14,8 @@ export interface UsageLogSummary {
   isStreamed: boolean;
   httpStatus: number;
   errorCode: GatewayErrorCode | null;
+  /** The Service Tier that served the request; null for the Provider's default. */
+  serviceTier: ServiceTier | null;
   inputTokens: number | null;
   outputTokens: number | null;
   cacheReadTokens: number | null;

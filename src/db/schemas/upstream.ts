@@ -12,6 +12,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { SERVICE_TIERS, type ServiceTier } from "@/inference/models/internal-format.js";
 import { at, createdAt, id, updatedAt } from "./columns.js";
 
 // Upstream: Providers, the Provider Accounts the gateway holds at them, and
@@ -83,6 +84,20 @@ export type QuotaMeterUnit = (typeof QUOTA_METER_UNITS)[number];
  */
 export type ProviderQuirks = Record<string, unknown>;
 
+/** What a Provider calls each Service Tier on the wire (ADR 0014); a tier it doesn't name is never sent. */
+export type ServiceTierValues = Partial<Record<ServiceTier, string>>;
+
+/**
+ * An Upstream Model's prices for one Service Tier, in USD per million tokens.
+ * A price left out is the standard one.
+ */
+export interface TierPrices {
+  inputPrice?: number;
+  outputPrice?: number;
+  cacheReadPrice?: number;
+  cacheWritePrice?: number;
+}
+
 /** USD per million tokens. Six decimals hold prices below a cent per million. */
 const pricePerMillionTokens = (name: string) =>
   numeric(name, { precision: 12, scale: 6, mode: "number" });
@@ -97,6 +112,7 @@ export const providers = pgTable("providers", {
   baseUrl: text("base_url").notNull(),
   authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),
   quirks: jsonb("quirks").$type<ProviderQuirks>().notNull().default({}),
+  serviceTierValues: jsonb("service_tier_values").$type<ServiceTierValues>().notNull().default({}),
   // Null for a Provider that reports no quota, such as a pay-as-you-go API.
   quotaReader: text("quota_reader", { enum: QUOTA_READERS }),
   // Null for a Provider that offers no OAuth Login: its Provider Accounts hold API keys only.
@@ -233,6 +249,13 @@ export const upstreamModels = pgTable(
     outputPrice: pricePerMillionTokens("output_price"),
     cacheReadPrice: pricePerMillionTokens("cache_read_price"),
     cacheWritePrice: pricePerMillionTokens("cache_write_price"),
+    // The Service Tiers it accepts (ADR 0014); any other tier is dropped from its Attempts.
+    serviceTiers: text("service_tiers", { enum: SERVICE_TIERS }).array().notNull().default([]),
+    // Prices for a Service Tier that costs other than the standard prices above.
+    tierPrices: jsonb("tier_prices")
+      .$type<Partial<Record<ServiceTier, TierPrices>>>()
+      .notNull()
+      .default({}),
     // The day the Provider made the model available, as YYYY-MM-DD.
     releaseDate: date("release_date", { mode: "string" }),
     isEnabled: boolean("is_enabled").notNull().default(true),

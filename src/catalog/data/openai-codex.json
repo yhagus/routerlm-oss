@@ -12,6 +12,10 @@
     "systemAsDeveloperMessage": true,
     "droppedParameters": ["temperature", "top_p", "max_output_tokens"]
   },
+  "serviceTierValues": {
+    "fast": "priority",
+    "flex": "flex"
+  },
   "oauthLogin": {
     "flow": "openai-codex",
     "issuer": "https://auth.openai.com",
@@ -26,7 +30,7 @@
     ],
     "retrievedOn": "2026-11-16"
   },
-  "notes": "ChatGPT plans served to the Codex CLI's OAuth Login (ADR 0013); no API keys. Models are the CLI's visible ones; hidden models (daybreak-*, codex-auto-review) are left out. Prices are the OpenAI API list prices for the same model, as in openai.json: the plan bills quota, not money, so Cost is what the same tokens would cost on the API. Context sizes are what the Codex backend serves, not the API's. Unverified until a live check: whether the backend refuses temperature, top_p and max_output_tokens, and accepts the system prompt as a developer message.",
+  "notes": "ChatGPT plans served to the Codex CLI's OAuth Login (ADR 0013); no API keys. Models are the CLI's visible ones; hidden models (daybreak-*, codex-auto-review) are left out. Prices are the OpenAI API list prices for the same model, as in openai.json: the plan bills quota, not money, so Cost is what the same tokens would cost on the API. Service Tiers (ADR 0014): every model accepts fast, as models.json lists the priority service tier for each visible model, and flex, as the spec decides; tierPrices are the OpenAI API's short-context Fast and Flex rates, as in openai.json. Unverified until a live check: whether the Codex backend accepts flex. Context sizes are what the Codex backend serves, not the API's. Unverified until a live check: whether the backend refuses temperature, top_p and max_output_tokens, and accepts the system prompt as a developer message.",
   "upstreamModels": [
     {
       "upstreamModelId": "gpt-6-astra",
@@ -38,6 +42,21 @@
       "outputPrice": 50,
       "cacheReadPrice": 1,
       "cacheWritePrice": 12.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 20,
+          "outputPrice": 100,
+          "cacheReadPrice": 2,
+          "cacheWritePrice": 25
+        },
+        "flex": {
+          "inputPrice": 5,
+          "outputPrice": 25,
+          "cacheReadPrice": 0.5,
+          "cacheWritePrice": 6.25
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -57,6 +76,21 @@
       "outputPrice": 10,
       "cacheReadPrice": 0.1,
       "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 20,
+          "cacheReadPrice": 0.2,
+          "cacheWritePrice": 5
+        },
+        "flex": {
+          "inputPrice": 1,
+          "outputPrice": 5,
+          "cacheReadPrice": 0.05,
+          "cacheWritePrice": 1.25
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -76,6 +110,21 @@
       "outputPrice": 5,
       "cacheReadPrice": 0.05,
       "cacheWritePrice": 1.25,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 2,
+          "outputPrice": 10,
+          "cacheReadPrice": 0.1,
+          "cacheWritePrice": 2.5
+        },
+        "flex": {
+          "inputPrice": 0.5,
+          "outputPrice": 2.5,
+          "cacheReadPrice": 0.025,
+          "cacheWritePrice": 0.625
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -95,6 +144,21 @@
       "outputPrice": 10,
       "cacheReadPrice": 0.2,
       "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 20,
+          "cacheReadPrice": 0.4,
+          "cacheWritePrice": 5
+        },
+        "flex": {
+          "inputPrice": 1,
+          "outputPrice": 5,
+          "cacheReadPrice": 0.1,
+          "cacheWritePrice": 1.25
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -113,6 +177,21 @@
       "outputPrice": 0.5,
       "cacheReadPrice": 0.01,
       "cacheWritePrice": 0.125,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 0.2,
+          "outputPrice": 1,
+          "cacheReadPrice": 0.02,
+          "cacheWritePrice": 0.25
+        },
+        "flex": {
+          "inputPrice": 0.05,
+          "outputPrice": 0.25,
+          "cacheReadPrice": 0.005,
+          "cacheWritePrice": 0.0625
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -132,6 +211,21 @@
       "outputPrice": 20,
       "cacheReadPrice": 0.4,
       "cacheWritePrice": 5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 8,
+          "outputPrice": 40,
+          "cacheReadPrice": 0.8,
+          "cacheWritePrice": 10
+        },
+        "flex": {
+          "inputPrice": 2,
+          "outputPrice": 10,
+          "cacheReadPrice": 0.2,
+          "cacheWritePrice": 2.5
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -151,6 +245,21 @@
       "outputPrice": 12,
       "cacheReadPrice": 0.2,
       "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 24,
+          "cacheReadPrice": 0.4,
+          "cacheWritePrice": 5
+        },
+        "flex": {
+          "inputPrice": 1,
+          "outputPrice": 6,
+          "cacheReadPrice": 0.1,
+          "cacheWritePrice": 1.25
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -170,6 +279,21 @@
       "outputPrice": 1.2,
       "cacheReadPrice": 0.02,
       "cacheWritePrice": 0.25,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 0.4,
+          "outputPrice": 2.4,
+          "cacheReadPrice": 0.04,
+          "cacheWritePrice": 0.5
+        },
+        "flex": {
+          "inputPrice": 0.1,
+          "outputPrice": 0.6,
+          "cacheReadPrice": 0.01,
+          "cacheWritePrice": 0.125
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
@@ -189,6 +313,19 @@
       "outputPrice": 30,
       "cacheReadPrice": 0.5,
       "cacheWritePrice": 5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 12.5,
+          "outputPrice": 75,
+          "cacheReadPrice": 1.25
+        },
+        "flex": {
+          "inputPrice": 2.5,
+          "outputPrice": 15,
+          "cacheReadPrice": 0.25
+        }
+      },
       "source": {
         "urls": [
           "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",

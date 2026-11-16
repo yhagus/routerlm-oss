@@ -104,4 +104,32 @@ describe("db:seed script (e2e)", () => {
       "gpt-5.5": 272000,
     });
   });
+
+  it("seeds OpenAI and OpenAI Codex with fast and flex Service Tiers priced from the Catalog", async () => {
+    const tiered = await db
+      .select({
+        slug: providers.slug,
+        serviceTierValues: providers.serviceTierValues,
+        upstreamModelId: upstreamModels.upstreamModelId,
+        serviceTiers: upstreamModels.serviceTiers,
+        tierPrices: upstreamModels.tierPrices,
+      })
+      .from(upstreamModels)
+      .innerJoin(providers, eq(upstreamModels.providerId, providers.id))
+      .where(eq(upstreamModels.upstreamModelId, "gpt-6-sol"));
+
+    expect(tiered).toHaveLength(2);
+    for (const slug of ["openai", "openai-codex"]) {
+      expect(tiered.find((row) => row.slug === slug)).toEqual({
+        slug,
+        serviceTierValues: { fast: "priority", flex: "flex" },
+        upstreamModelId: "gpt-6-sol",
+        serviceTiers: ["fast", "flex"],
+        tierPrices: {
+          fast: { inputPrice: 4, outputPrice: 20, cacheReadPrice: 0.4, cacheWritePrice: 5 },
+          flex: { inputPrice: 1, outputPrice: 5, cacheReadPrice: 0.1, cacheWritePrice: 1.25 },
+        },
+      });
+    }
+  });
 });

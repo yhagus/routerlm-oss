@@ -17,6 +17,7 @@ export async function gatherStream(
   const toolCalls = new Map<number, Extract<AssistantContentPart, { type: "tool-call" }>>();
   let stopReason: StopReason = "end";
   let usage = UNREPORTED_USAGE;
+  let servedTierValue: string | undefined;
   for await (const event of events) {
     const last = content.at(-1);
     switch (event.type) {
@@ -60,8 +61,9 @@ export async function gatherStream(
         break;
       case "usage":
         usage = event.usage;
+        servedTierValue = event.servedTierValue;
         break;
     }
   }
-  return { content, stopReason, usage };
+  return { content, stopReason, usage, ...(servedTierValue && { servedTierValue }) };
 }
