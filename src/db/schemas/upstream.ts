@@ -33,7 +33,7 @@ export const CAPABILITIES = ["vision", "tools", "reasoning", "structured-output"
 export type Capability = (typeof CAPABILITIES)[number];
 
 /** The quota endpoint shapes the gateway can read (ADR 0010); a Provider names one, or none. */
-export const QUOTA_READERS = ["minimax-m-plan", "kimi-code"] as const;
+export const QUOTA_READERS = ["minimax-m-plan", "kimi-code", "openai-codex"] as const;
 export type QuotaReaderName = (typeof QUOTA_READERS)[number];
 
 /** The credential a Provider Account holds (GLOSSARY: Provider Account, OAuth Login). */

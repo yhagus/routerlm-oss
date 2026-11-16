@@ -6,6 +6,7 @@ import { CommandHandlers } from "./commands/handlers/index.js";
 import { ProviderAccountQuotaController } from "./provider-account-quota.controller.js";
 import { KimiCodeQuotaReader } from "./providers/kimi-code-quota-reader.js";
 import { MiniMaxMPlanQuotaReader } from "./providers/minimax-m-plan-quota-reader.js";
+import { OpenAiCodexQuotaReader } from "./providers/openai-codex-quota-reader.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./providers/quota-reader-http-client.js";
 import { QuotaReaders } from "./providers/quota-readers.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
@@ -36,6 +37,7 @@ import { UpstreamModule } from "@/upstream/upstream.module.js";
   providers: [
     MiniMaxMPlanQuotaReader,
     KimiCodeQuotaReader,
+    OpenAiCodexQuotaReader,
     QuotaReaders,
     ...CommandHandlers,
     ...QueryHandlers,

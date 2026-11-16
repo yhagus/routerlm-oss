@@ -124,7 +124,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       );
       const meters = await this.readers
         .readerFor(readerName)
-        .read(credential.secret, { baseUrl: provider.baseUrl, quotaBaseUrl });
+        .read(credential, { baseUrl: provider.baseUrl, quotaBaseUrl });
       return { kind: "read", meters };
     } catch (error) {
       return { kind: "failed", error: error instanceof Error ? error.message : String(error) };

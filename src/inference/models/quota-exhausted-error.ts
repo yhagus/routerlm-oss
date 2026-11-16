@@ -6,6 +6,8 @@ const CODE_AT_END_OF_MESSAGE = /\((\d+)\)\s*$/;
 // or three objects down (`error.code`, `error.error.type`).
 const NAMED_CODE_SEARCH_DEPTH = 4;
 
+const MS_PER_SECOND = 1000;
+
 /** One entry of a Provider's `exhaustedErrorCodes` quirk: MiniMax numbers its codes, Kimi names them. */
 export type ExhaustedErrorCode = number | string;
 
@@ -30,6 +32,19 @@ export function isQuotaExhaustedError(
   return exhaustedErrorCodes.some((code) =>
     typeof code === "number" ? numericCodes.includes(code) : namedCodes.includes(code),
   );
+}
+
+/**
+ * When an Exhausted refusal says the Provider Account's quota resets: OpenAI
+ * Codex sends `error.resets_at` in epoch seconds. Null when it doesn't say.
+ */
+export function exhaustedUntilOf(responseBody: string): Date | null {
+  const error = objectOrNull(parsedObject(responseBody)?.error);
+  const resetsAt = error?.resets_at;
+  if (typeof resetsAt !== "number" || !Number.isFinite(resetsAt)) {
+    return null;
+  }
+  return new Date(resetsAt * MS_PER_SECOND);
 }
 
 /** The codes the error numbers: `base_resp.status_code`, `status_code`, `code`, and the one in `error.message`. */

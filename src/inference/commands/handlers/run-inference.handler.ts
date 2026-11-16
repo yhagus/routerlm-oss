@@ -35,6 +35,7 @@ import {
   withAutomaticCacheBreakpoints,
 } from "../../models/automatic-cache-breakpoints.js";
 import { GatewayError } from "../../models/gateway-error.js";
+import { exhaustedUntilOf } from "../../models/quota-exhausted-error.js";
 import type { InferenceRequest, InferenceStreamEvent } from "../../models/internal-format.js";
 import { applyParameterPolicy, effectiveParameterPolicy } from "../../models/parameter-policy.js";
 import { type PromptCacheKeyOwner, promptCacheKey } from "../../models/prompt-cache-key.js";
@@ -475,11 +476,14 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         return;
       case "exhausted":
         void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
-        // Skipped for a short while: the upstream's refusal doesn't say until when.
+        // Until the reset the refusal names; for a short while when it names none.
         await this.commandBus.execute(
-          new MarkProviderAccountExhaustedCommand(providerAccount.id, null),
+          new MarkProviderAccountExhaustedCommand(
+            providerAccount.id,
+            exhaustedUntilOf(failure.upstreamResponse?.body ?? ""),
+          ),
         );
-        // Started only now, so the precise end it sets replaces the short one.
+        // Started only now, so the end a reading sets replaces the refusal's.
         void this.readQuota(providerAccount.id);
         return;
     }
