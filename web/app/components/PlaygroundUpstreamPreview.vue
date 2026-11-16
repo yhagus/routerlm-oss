@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { TriangleAlert } from "@lucide/vue";
 import { computed } from "vue";
-import type { Provider, ProviderAccount, UpstreamModel } from "~/lib/upstream";
+import {
+  type Provider,
+  type ProviderAccount,
+  type UpstreamModel,
+  upstreamModelLabel,
+} from "~/lib/upstream";
 
 /**
  * What a direct Upstream Model test will do before anything is sent: no Model,
@@ -55,7 +60,7 @@ function credentialNote(account: ProviderAccount): string {
   <div class="route-preview">
     <section class="route-preview__section" aria-labelledby="upstream-preview-target">
       <header class="route-preview__heading">
-        <h2 id="upstream-preview-target">Direct to {{ upstreamModel.upstreamModelId }}</h2>
+        <h2 id="upstream-preview-target">Direct to {{ upstreamModelLabel(upstreamModel) }}</h2>
         <p v-if="blocker" class="route-preview__warn">
           <TriangleAlert :size="13" /> {{ blocker }}, so a request fails.
         </p>
@@ -74,7 +79,7 @@ function credentialNote(account: ProviderAccount): string {
             :base-url="provider.baseUrl"
           />
           <span class="route-list__body">
-            <strong>{{ upstreamModel.upstreamModelId }}</strong>
+            <strong>{{ upstreamModelLabel(upstreamModel) }}</strong>
             <span class="route-list__meta">
               {{ provider.name }} · {{ usableAccounts.length }} of {{ accounts.length }}
               {{ accounts.length === 1 ? "account" : "accounts" }} enabled

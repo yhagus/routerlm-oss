@@ -109,6 +109,8 @@ export interface UpstreamModel {
   id: string;
   providerId: string;
   upstreamModelId: string;
+  /** The display name from the Provider's docs, e.g. "K2.8 Preview"; null when it has none. */
+  name: string | null;
   capabilities: Capability[];
   contextSize: number;
   maxOutputTokens: number | null;
@@ -121,6 +123,11 @@ export interface UpstreamModel {
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** An Upstream Model as a label reads it: "K2.8 Preview (kimi-for-coding)", or the id alone. */
+export function upstreamModelLabel(model: Pick<UpstreamModel, "name" | "upstreamModelId">): string {
+  return model.name === null ? model.upstreamModelId : `${model.name} (${model.upstreamModelId})`;
 }
 
 /** What a Quota Meter's `used` and `limit` count. */

@@ -64,7 +64,12 @@ import {
   streamEventsOf,
 } from "~/lib/playground";
 import type { ModelDetail, ModelSummary, RouteSummary } from "~/lib/routing";
-import type { Provider, ProviderAccount, UpstreamModel } from "~/lib/upstream";
+import {
+  type Provider,
+  type ProviderAccount,
+  type UpstreamModel,
+  upstreamModelLabel,
+} from "~/lib/upstream";
 import { formatCost, formatCount } from "~/lib/usage";
 
 useHead({ title: "Playground" });
@@ -158,7 +163,10 @@ watch(
 const upstreamModelOptions = computed(() =>
   testableUpstreamModels.value
     .filter((upstreamModel) => upstreamModel.providerId === providerId.value)
-    .map((upstreamModel) => ({ value: upstreamModel.id, label: upstreamModel.upstreamModelId })),
+    .map((upstreamModel) => ({
+      value: upstreamModel.id,
+      label: upstreamModelLabel(upstreamModel),
+    })),
 );
 const upstreamModelRowId = ref("");
 watch(

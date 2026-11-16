@@ -14,7 +14,7 @@ import { apiErrorMessage } from "~/lib/api";
 import { isNotFound } from "~/lib/errors";
 import { isEmptyPolicy, type ParameterPolicy } from "~/lib/parameterPolicy";
 import type { ModelDetail, RouteSummary } from "~/lib/routing";
-import type { Provider, UpstreamModel } from "~/lib/upstream";
+import { type Provider, type UpstreamModel, upstreamModelLabel } from "~/lib/upstream";
 
 type ModelDialog =
   | { kind: "rename" }
@@ -48,7 +48,7 @@ const providerNameById = computed(
 );
 const upstreamModelOptions = computed(() =>
   (upstreamModels.value ?? []).map((upstreamModel) => ({
-    label: `${providerNameById.value.get(upstreamModel.providerId) ?? "?"} · ${upstreamModel.upstreamModelId}`,
+    label: `${providerNameById.value.get(upstreamModel.providerId) ?? "?"} · ${upstreamModelLabel(upstreamModel)}`,
     value: upstreamModel.id,
   })),
 );

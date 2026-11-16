@@ -21,6 +21,7 @@ import {
   optionalNumber,
   type Provider,
   type UpstreamModel,
+  upstreamModelLabel,
 } from "~/lib/upstream";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
@@ -189,7 +190,9 @@ function daysAgo(days: number): string {
 }
 
 function compareModels(first: UpstreamModel, second: UpstreamModel): number {
-  const byName = first.upstreamModelId.localeCompare(second.upstreamModelId);
+  const byName = (first.name ?? first.upstreamModelId).localeCompare(
+    second.name ?? second.upstreamModelId,
+  );
   switch (sortOrder.value) {
     case "newest":
       return compareReleaseDates(first.releaseDate, second.releaseDate, -1) || byName;
@@ -271,8 +274,9 @@ const columns: DataTableColumn<UpstreamModel>[] = [
     id: "upstreamModel",
     header: "Upstream Model",
     enableHiding: false,
-    // What the search matches: the model's name or its Provider's.
-    accessorFn: (model) => [model.upstreamModelId, providerName(model)].join("\n"),
+    // What the search matches: the model's id, its name, or its Provider's name.
+    accessorFn: (model) =>
+      [model.upstreamModelId, model.name ?? "", providerName(model)].join("\n"),
   },
   { id: "capabilities", header: "Capabilities" },
   { id: "context", header: "Context" },
@@ -362,6 +366,8 @@ type NumberInput = number | string;
 interface UpstreamModelForm {
   providerId: string;
   upstreamModelId: string;
+  /** The display name, or "" when it has none. */
+  name: string;
   capabilities: Capability[];
   contextSize: NumberInput;
   maxOutputTokens: NumberInput;
@@ -385,6 +391,7 @@ function emptyForm(): UpstreamModelForm {
         : undefined) ||
       (providerOptions.value[0]?.value ?? ""),
     upstreamModelId: "",
+    name: "",
     capabilities: [],
     contextSize: "",
     maxOutputTokens: "",
@@ -400,6 +407,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
   return {
     providerId: upstreamModel.providerId,
     upstreamModelId: upstreamModel.upstreamModelId,
+    name: upstreamModel.name ?? "",
     capabilities: [...upstreamModel.capabilities],
     contextSize: upstreamModel.contextSize,
     maxOutputTokens: numberField(upstreamModel.maxOutputTokens),
@@ -422,6 +430,7 @@ async function saveUpstreamModel(): Promise<void> {
   if (!current || current.kind === "delete") return;
   const fields = {
     upstreamModelId: form.value.upstreamModelId,
+    name: form.value.name.trim() || null,
     capabilities: form.value.capabilities,
     contextSize: optionalNumber(form.value.contextSize),
     maxOutputTokens: optionalNumber(form.value.maxOutputTokens),
@@ -439,7 +448,7 @@ async function saveUpstreamModel(): Promise<void> {
           method: "POST",
           body: { providerId: form.value.providerId, ...fields },
         }),
-      `Added ${fields.upstreamModelId}`,
+      `Added ${upstreamModelLabel(fields)}`,
       failureMessage,
     );
     return;
@@ -450,7 +459,7 @@ async function saveUpstreamModel(): Promise<void> {
         method: "PATCH",
         body: fields,
       }),
-    `Saved ${fields.upstreamModelId}`,
+    `Saved ${upstreamModelLabel(fields)}`,
     failureMessage,
   );
 }
@@ -458,13 +467,13 @@ async function saveUpstreamModel(): Promise<void> {
 function deleteUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
   return deleteRow(
     upstreamModel,
-    upstreamModel.upstreamModelId,
+    upstreamModelLabel(upstreamModel),
     "Couldn't delete the Upstream Model.",
   );
 }
 
 function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
-  return toggleRow(upstreamModel, upstreamModel.upstreamModelId);
+  return toggleRow(upstreamModel, upstreamModelLabel(upstreamModel));
 }
 
 /** The model the details dialog shows, read fresh from the list so a toggle shows at once. */
@@ -563,11 +572,14 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           <button
             class="model-table__open"
             type="button"
-            :title="model.upstreamModelId"
+            :title="upstreamModelLabel(model)"
             @click="openDialog({ kind: 'details', upstreamModel: model })"
           >
-            {{ model.upstreamModelId }}
+            {{ model.name ?? model.upstreamModelId }}
           </button>
+          <span v-if="model.name !== null" class="cell-note model-table__id">{{
+            model.upstreamModelId
+          }}</span>
           <NuxtLink
             v-if="!provider"
             class="cell-note"
@@ -626,7 +638,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         <button
           class="icon-action"
           type="button"
-          :aria-label="`Edit ${model.upstreamModelId}`"
+          :aria-label="`Edit ${upstreamModelLabel(model)}`"
           title="Edit"
           @click="openDialog({ kind: 'edit', upstreamModel: model })"
         >
@@ -635,7 +647,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         <button
           class="icon-action"
           type="button"
-          :aria-label="`${model.isEnabled ? 'Disable' : 'Enable'} ${model.upstreamModelId}`"
+          :aria-label="`${model.isEnabled ? 'Disable' : 'Enable'} ${upstreamModelLabel(model)}`"
           :title="model.isEnabled ? 'Disable' : 'Enable'"
           @click="toggleUpstreamModel(model)"
         >
@@ -644,7 +656,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         <button
           class="icon-action icon-action--danger"
           type="button"
-          :aria-label="`Delete ${model.upstreamModelId}`"
+          :aria-label="`Delete ${upstreamModelLabel(model)}`"
           title="Delete"
           @click="openDialog({ kind: 'delete', upstreamModel: model })"
         >
@@ -675,8 +687,8 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     v-if="detailsModel"
     v-model:open="isDetailsOpen"
     wide
-    :title="detailsModel.upstreamModelId"
-    :description="`Upstream Model at ${providerName(detailsModel)}. Prices are per million tokens.`"
+    :title="detailsModel.name ?? detailsModel.upstreamModelId"
+    :description="`${detailsModel.name === null ? 'Upstream Model' : detailsModel.upstreamModelId} at ${providerName(detailsModel)}. Prices are per million tokens.`"
   >
     <div class="model-details">
       <div class="model-details__status">
@@ -810,7 +822,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     :title="
       dialog.kind === 'create'
         ? 'Add Upstream Model'
-        : `Edit ${dialog.upstreamModel.upstreamModelId}`
+        : `Edit ${upstreamModelLabel(dialog.upstreamModel)}`
     "
     description="Leave a price empty when the Provider doesn't publish it; Cost then stays empty."
   >
@@ -834,6 +846,10 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         <label class="field"
           ><span class="field__label">Name at the Provider</span
           ><input v-model="form.upstreamModelId" class="text-input" required
+        /></label>
+        <label class="field"
+          ><span class="field__label">Display name (optional)</span
+          ><input v-model="form.name" class="text-input" placeholder="e.g. K2.8 Preview"
         /></label>
       </div>
       <fieldset class="check-group">
@@ -926,7 +942,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     v-if="dialog?.kind === 'delete'"
     v-model:open="isDialogOpen"
     title="Delete Upstream Model"
-    :description="`${dialog.upstreamModel.upstreamModelId} is deleted. This can't be undone.`"
+    :description="`${upstreamModelLabel(dialog.upstreamModel)} is deleted. This can't be undone.`"
   >
     <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
     <div class="dialog__actions">
