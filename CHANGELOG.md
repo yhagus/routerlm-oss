@@ -1,3 +1,48 @@
+# v2.1.0 (2026-11-17)
+
+RouterLM 2.1 adds OpenAI Codex as a Provider, Service Tiers, and Indonesian client docs.
+
+## Upgrade
+
+- Run `git pull`, then `docker compose up -d`. The `migrate` service applies seven new migrations and adds the new Catalog rows on start.
+- Nothing is breaking. Existing Providers, Models and API Keys keep working.
+
+## Gateway
+
+- A Route can now send to an upstream that uses the OpenAI Responses protocol.
+- Service Tiers: a client or a Parameter Policy can ask for the `fast` or `flex` tier. Each Provider maps the tier to its own value. A Parameter Policy can force a tier or forbid one. If the Route's upstream model does not accept the tier, the gateway drops the tier for that Attempt and sends the request anyway. See ADR 0014.
+- The Usage Log records the tier that served each request. Cost uses that tier's price when the upstream model has one.
+
+## Providers
+
+- The Catalog adds OpenAI Codex. It accepts only an OAuth login: the operator signs in with a ChatGPT plan through the Codex CLI's device-code flow. See ADR 0013 for the risks.
+- OpenAI Codex accounts show a quota meter, with the account's email and plan. A used-up plan is marked exhausted and skipped until its quota resets.
+- A Provider states which credential kinds it accepts. You cannot add an API key to OpenAI Codex.
+- The OpenAI Provider now has the `fast` and `flex` Service Tiers.
+- Every upstream model has a display name.
+
+## Dashboard
+
+- The provider form has a logo picker and the advanced fields.
+- The OAuth login settings can be edited for each flow, and the dashboard can sign in to OpenAI Codex.
+- Parameter Policies and upstream models can set Service Tiers. Usage shows the served tier and can filter by it.
+- The upstream models list groups models that share an id across Providers. It shows the name above the id. Click the name to copy the id.
+- Recovered Error Captures show as a success, not as an error.
+- The last x-axis label on charts no longer overlaps the tick before it.
+
+## Client docs
+
+- `/docs` is now available in English and Indonesian (`/id/docs`). `/doc` redirects to `/docs`.
+- The Errors page calls the JSON error shape an "error body" and explains each field. The Indonesian pages use plain wording and shorter titles.
+
+## Repository
+
+- The README has features, a quick start, and light and dark screenshots.
+- The repository has an MIT license.
+- `bun run db:seed:demo` seeds demo data for taking the screenshots again.
+
+**Full changelog:** https://github.com/yhagus/routerlm-oss/compare/v2.0.0...v2.1.0
+
 # v2.0.0 (2026-11-16)
 
 RouterLM 2 is a rewrite. The backend is NestJS on Bun with PostgreSQL and Redis. The dashboard is a Nuxt app. The v1 app lives in `legacy/` and its history is in `legacy/CHANGELOG.md`.
