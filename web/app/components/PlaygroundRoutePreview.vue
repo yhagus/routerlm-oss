@@ -18,6 +18,8 @@ const props = defineProps<{
   model: ModelDetail | null;
   isLoading: boolean;
   hasError: boolean;
+  /** Provider logos by slug: a Route names its Provider without one. */
+  providerLogos: Map<string, string | null>;
 }>();
 
 /** Why a Route can't serve requests, or null when it can. */
@@ -95,7 +97,7 @@ const hasPolicyPrompt = computed(() => Boolean(props.model?.parameterPolicy.syst
             <span class="route-list__order tabular" aria-hidden="true">{{ index + 1 }}</span>
             <ProviderLogo
               class="provider-mark--sm"
-              :slug="route.provider.slug"
+              :logo="providerLogos.get(route.provider.slug) ?? null"
               :name="route.provider.name"
               base-url=""
             />

@@ -16,6 +16,8 @@ const props = defineProps<{
   direct: boolean;
   /** Provider names by slug, for answers no Route snapshot names. */
   providerNames: Map<string, string>;
+  /** Provider logos by slug: the summary names its Provider without one. */
+  providerLogos: Map<string, string | null>;
 }>();
 
 /** Who answered: the served Route's Upstream Model, or the direct target. */
@@ -61,7 +63,7 @@ const facts = computed(() => {
       <template v-if="answered">
         <ProviderLogo
           class="provider-mark--xs"
-          :slug="answered.providerSlug"
+          :logo="providerLogos.get(answered.providerSlug) ?? null"
           :name="providerName"
           base-url=""
         />

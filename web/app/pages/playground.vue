@@ -173,6 +173,9 @@ watch(
 const providerNamesBySlug = computed(
   () => new Map((providers.value ?? []).map((provider) => [provider.slug, provider.name])),
 );
+const providerLogosBySlug = computed(
+  () => new Map((providers.value ?? []).map((provider) => [provider.slug, provider.logo])),
+);
 const selectedProvider = computed(
   () => (providers.value ?? []).find((provider) => provider.id === providerId.value) ?? null,
 );
@@ -675,6 +678,7 @@ const codeRequest = computed(() => {
                   :model="modelDetail"
                   :is-loading="modelDetailState === 'loading'"
                   :has-error="modelDetailState === 'failed'"
+                  :provider-logos="providerLogosBySlug"
                 />
               </template>
               <template v-else>
@@ -763,6 +767,7 @@ const codeRequest = computed(() => {
                     :routes="routesOf(message)"
                     :direct="isDirect(message)"
                     :provider-names="providerNamesBySlug"
+                    :provider-logos="providerLogosBySlug"
                   />
                 </MessageContent>
               </Message>

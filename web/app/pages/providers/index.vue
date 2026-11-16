@@ -298,7 +298,7 @@ function toggleProvider(provider: Provider): Promise<void> {
       </template>
       <template #cell-provider="{ row: { provider } }">
         <NuxtLink class="table-entity provider-table__entity" :to="detailPath(provider)">
-          <ProviderLogo :slug="provider.slug" :name="provider.name" :base-url="provider.baseUrl" />
+          <ProviderLogo :logo="provider.logo" :name="provider.name" :base-url="provider.baseUrl" />
           <span class="provider-table__name">
             <strong :title="provider.name"
               >{{ provider.name }}<ChevronRight :size="13" aria-hidden="true"

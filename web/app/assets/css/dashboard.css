@@ -2588,6 +2588,98 @@ tbody tr:hover {
 .check-field input {
   accent-color: var(--ink);
 }
+/* A field with the Provider's mark before it, as a preview of its logo */
+.field__with-mark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.field__with-mark .text-input {
+  flex: 1;
+  min-width: 0;
+}
+.logo-select-menu .app-select-options {
+  max-height: 260px;
+}
+/* The Provider form's rarely needed settings, folded under a hairline */
+.form-advanced {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 12px;
+}
+.form-advanced__summary {
+  width: fit-content;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.form-advanced__summary:hover,
+.form-advanced[open] > .form-advanced__summary {
+  color: var(--ink);
+}
+.form-advanced__body {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+.form-advanced__efforts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+@media (max-width: 760px) {
+  .form-advanced__efforts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* Tags typed into one field: Enter or a comma adds one */
+.tag-list-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.tag-list-input:focus-within {
+  border-color: var(--focus-border);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.tag-list-input .tag {
+  font-size: 11px;
+}
+.tag-list-input__delete {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tag-list-input__delete:hover {
+  color: var(--ink);
+}
+.tag-list-input__field {
+  flex: 1;
+  min-width: 120px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+}
+.tag-list-input__field:focus-visible {
+  outline: none;
+}
 .cell-note {
   display: block;
   max-width: 280px;

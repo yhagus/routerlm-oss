@@ -555,7 +555,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       <div class="table-entity model-table__entity">
         <ProviderLogo
           v-if="!provider && providerById.get(model.providerId)"
-          :slug="providerById.get(model.providerId)?.slug ?? ''"
+          :logo="providerById.get(model.providerId)?.logo ?? null"
           :name="providerName(model)"
           :base-url="providerById.get(model.providerId)?.baseUrl ?? ''"
         />

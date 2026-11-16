@@ -170,7 +170,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
 
     <template v-else>
       <section class="provider-hero" :class="{ 'provider-hero--off': !provider.isEnabled }">
-        <ProviderLogo :slug="provider.slug" :name="provider.name" :base-url="provider.baseUrl" />
+        <ProviderLogo :logo="provider.logo" :name="provider.name" :base-url="provider.baseUrl" />
         <div class="provider-hero__title">
           <h1>{{ provider.name }}</h1>
           <p class="provider-hero__meta">

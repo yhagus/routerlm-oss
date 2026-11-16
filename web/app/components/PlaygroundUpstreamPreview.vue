@@ -69,7 +69,7 @@ function credentialNote(account: ProviderAccount): string {
           <span class="route-list__order" aria-hidden="true" />
           <ProviderLogo
             class="provider-mark--sm"
-            :slug="provider.slug"
+            :logo="provider.logo"
             :name="provider.name"
             :base-url="provider.baseUrl"
           />

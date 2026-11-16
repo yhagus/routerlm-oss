@@ -1,5 +1,7 @@
 // Providers, Upstream Models and Provider Accounts as the dashboard API returns them.
 
+import type { ReasoningEffort } from "~/lib/parameterPolicy";
+
 export const UPSTREAM_PROTOCOLS = ["openai-chat", "anthropic-messages"] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
@@ -30,10 +32,10 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
 export const REASONING_CONTENT_IN_HISTORY = ["all-assistant-turns", "tool-call-turns"] as const;
 
 /**
- * The quirk keys the backend accepts: `cacheMarkerLimit` applies to
- * `anthropic-messages` Providers, the reasoning, cache and token ones to
- * `openai-chat` ones. The dashboard edits the first five; the rest come from
- * the Catalog and are sent back as they are.
+ * The quirk keys the backend accepts, all edited by the Provider form.
+ * `cacheMarkerLimit` applies to `anthropic-messages` Providers, the reasoning,
+ * cache and token ones to `openai-chat` ones, and the last two to both. The
+ * backend refuses a quirk the Provider's Protocol doesn't read.
  */
 export interface ProviderQuirks {
   reasoningContentInHistory?: (typeof REASONING_CONTENT_IN_HISTORY)[number];
@@ -44,7 +46,7 @@ export interface ProviderQuirks {
   cacheMarkerLimit?: number;
   /** Reasoning goes out as a `thinking` object, with the Provider's own effort names. */
   reasoningAsThinking?: {
-    efforts: Record<string, string>;
+    efforts: Record<ReasoningEffort, string>;
     upstreamModelsWithoutEffort?: string[];
   };
   /** A `prompt_cache_key` the client sent is passed on as it is. */
@@ -54,6 +56,17 @@ export interface ProviderQuirks {
   /** Where the quota reader asks, when that is another host than the base URL. */
   quotaBaseUrl?: string;
 }
+
+/** The code that reads a Subscription Provider's Quota Meters. */
+export const QUOTA_READERS = ["minimax-m-plan", "kimi-code"] as const;
+export type QuotaReader = (typeof QUOTA_READERS)[number];
+
+/** For a select: the empty value is a Provider without a quota reader. */
+export const QUOTA_READER_OPTIONS = [
+  { label: "None", value: "" },
+  { label: "MiniMax M Plan", value: "minimax-m-plan" },
+  { label: "Kimi Code", value: "kimi-code" },
+] satisfies { label: string; value: QuotaReader | "" }[];
 
 /** Where an OAuth Login's account is registered: each region signs in at its own host. */
 export const OAUTH_REGIONS = ["global", "china"] as const;
@@ -76,6 +89,8 @@ export interface Provider {
   slug: string;
   name: string;
   protocol: UpstreamProtocol;
+  /** A key into the dashboard's logo set; null picks a mark by the base URL's host. */
+  logo: string | null;
   baseUrl: string;
   authStyle: AuthStyle;
   quirks: ProviderQuirks;
@@ -84,7 +99,7 @@ export interface Provider {
   isEnabled: boolean;
   isFromCatalog: boolean;
   /** The quota endpoint the gateway reads for its accounts; null when it has none. */
-  quotaReader: string | null;
+  quotaReader: QuotaReader | null;
   createdAt: string;
   updatedAt: string;
 }
