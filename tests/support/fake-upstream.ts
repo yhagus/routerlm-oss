@@ -89,7 +89,7 @@ export const TWO_THINKING_BLOCKS_STREAM = [
   "",
 ].join("\n\n");
 
-/** A recorded openai-responses exchange with a client. */
+/** A recorded openai-responses exchange, named as for openAiChatFixture. */
 export function openAiResponsesFixture(name: string): string {
   return readFileSync(
     new URL(`../../src/inference/protocols/openai-responses/fixtures/${name}`, import.meta.url),

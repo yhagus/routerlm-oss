@@ -39,6 +39,11 @@ export interface UpstreamHttpRequest {
   headers: Record<string, string>;
   /** JSON text. The same input always gives byte-identical output, so upstream prompt caches hit. */
   body: string;
+  /**
+   * Set when the upstream will answer a non-streaming request as a stream (a
+   * Provider that only streams): the caller gathers the stream into one response.
+   */
+  isAnsweredAsStream?: boolean;
 }
 
 /**

@@ -72,6 +72,15 @@ export function insertAnthropicMessagesModel(
   return insertModel(app, db, { protocol: "anthropic-messages", authStyle: "x-api-key" }, options);
 }
 
+/** As insertOpenAiChatModel, for an openai-responses Provider. */
+export function insertOpenAiResponsesModel(
+  app: NestNodeApplication,
+  db: Database,
+  options: ModelOptions,
+): Promise<InsertedModel> {
+  return insertModel(app, db, { protocol: "openai-responses", authStyle: "bearer" }, options);
+}
+
 async function insertModel(
   app: NestNodeApplication,
   db: Database,

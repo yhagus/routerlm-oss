@@ -16,6 +16,7 @@ import {
   UpstreamProtocolError,
   type UpstreamTarget,
 } from "../protocols/upstream-protocol-converter.js";
+import { gatherStream } from "../protocols/gather-stream.js";
 
 /** Spec "Fallback" defaults; a Route may override each. */
 export const DEFAULT_TIMEOUTS: AttemptTimeouts = {
@@ -146,7 +147,11 @@ export class UpstreamClient {
     const deadlines = new AttemptDeadlines(call.timeouts, call.clientSignal);
     deadlines.start("totalMs");
     try {
-      const response = await this.send(call, deadlines.signal);
+      const written = call.converter.writeRequest(call.request, call.target);
+      const response = await this.send(call, written, deadlines.signal);
+      if (written.isAnsweredAsStream) {
+        return await gatherStream(call.converter.parseStream(streamBodyOf(response)));
+      }
       const body = await response.data.text();
       // MiniMax may refuse an Exhausted Provider Account with HTTP 200 and an
       // error code in the body.
@@ -176,12 +181,10 @@ export class UpstreamClient {
     deadlines.start("totalMs");
     try {
       deadlines.start("connectMs");
-      const response = await this.send(call, deadlines.signal);
+      const written = call.converter.writeRequest(call.request, call.target);
+      const response = await this.send(call, written, deadlines.signal);
       deadlines.stop("connectMs");
-      const body = response.data.body;
-      if (!body) {
-        throw new UpstreamProtocolError("The upstream stream has no body");
-      }
+      const body = streamBodyOf(response);
       deadlines.start("firstTokenMs");
       const events = call.converter.parseStream(body)[Symbol.asyncIterator]();
       const first = await events.next();
@@ -215,8 +218,11 @@ export class UpstreamClient {
   }
 
   /** Resolves once the response headers have arrived. */
-  private async send(call: UpstreamCall, signal: AbortSignal): Promise<HttpResponse<Response>> {
-    const written: UpstreamHttpRequest = call.converter.writeRequest(call.request, call.target);
+  private async send(
+    call: UpstreamCall,
+    written: UpstreamHttpRequest,
+    signal: AbortSignal,
+  ): Promise<HttpResponse<Response>> {
     const response = await this.http.post<Response>(written.url, {
       body: written.body,
       headers: { "user-agent": GATEWAY_USER_AGENT, ...written.headers, ...call.authHeaders },
@@ -232,6 +238,14 @@ export class UpstreamClient {
     }
     return response;
   }
+}
+
+function streamBodyOf(response: HttpResponse<Response>): ReadableStream<Uint8Array> {
+  const body = response.data.body;
+  if (!body) {
+    throw new UpstreamProtocolError("The upstream stream has no body");
+  }
+  return body;
 }
 
 function parseJsonBody(text: string): unknown {

@@ -1,0 +1,52 @@
+{
+  "model": "acme-large-2026",
+  "instructions": "You are terse.",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        { "type": "input_text", "text": "What is in this picture, and what is the weather there?" },
+        { "type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo=" }
+      ]
+    },
+    {
+      "type": "function_call",
+      "call_id": "call_abc123",
+      "name": "get_weather",
+      "arguments": "{\"city\":\"Paris\"}"
+    },
+    { "type": "function_call_output", "call_id": "call_abc123", "output": "18°C, cloudy" }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "name": "get_weather",
+      "description": "Current weather for a city",
+      "parameters": {
+        "type": "object",
+        "properties": { "city": { "type": "string" } },
+        "required": ["city"]
+      },
+      "strict": false
+    }
+  ],
+  "tool_choice": "auto",
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "name": "answer",
+      "schema": {
+        "type": "object",
+        "properties": { "summary": { "type": "string" } },
+        "required": ["summary"]
+      },
+      "strict": true
+    }
+  },
+  "reasoning": { "effort": "low" },
+  "max_output_tokens": 512,
+  "temperature": 0.2,
+  "store": false,
+  "stream": true
+}
