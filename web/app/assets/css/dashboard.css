@@ -3874,10 +3874,23 @@ svg.lucide {
   text-decoration-color: var(--line);
   text-underline-offset: 3px;
 }
-.model-table__id {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* The name and its copy button share a line; the name truncates first. */
+.model-table__title {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.model-table__title .model-table__open {
+  min-width: 0;
+}
+.copy-icon-button {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  /* Overhangs the text line instead of growing it, so the note sits close. */
+  margin-block: -4px;
+  border-radius: 5px;
 }
 .model-table__open:focus-visible {
   outline: 2px solid var(--focus);
@@ -3992,7 +4005,6 @@ svg.lucide {
 }
 .model-table__name a.cell-note {
   display: inline-block;
-  margin-top: 2px;
   text-decoration: none;
 }
 .model-table__name a.cell-note:hover {
@@ -4000,26 +4012,48 @@ svg.lucide {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.model-table__expander {
-  flex: none;
-  width: 24px;
-  height: 24px;
-  margin-left: -6px;
-}
-.model-table__expander svg {
-  transition: transform 0.2s;
-}
-.model-table__expander[aria-expanded="true"] svg {
-  transform: rotate(90deg);
-}
-/* A group's Provider marks overlap, like a stack of cards. */
+/* A group's first two Provider marks overlap diagonally inside the same
+   28px box a single mark takes, so names stay aligned across rows. */
 .model-table__group-logos {
-  display: flex;
+  position: relative;
   flex: none;
+  width: 28px;
+  height: 28px;
 }
-.model-table__group-logos .provider-mark + .provider-mark {
-  margin-left: -12px;
+.model-table .model-table__group-logos .provider-mark {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+.model-table .model-table__group-logos .provider-mark:first-child {
+  top: 0;
+  left: 0;
+}
+.model-table .model-table__group-logos .provider-mark + .provider-mark {
+  right: 0;
+  bottom: 0;
   box-shadow: 0 0 0 2px var(--panel);
+}
+.model-table__row--open .model-table__group-logos .provider-mark + .provider-mark {
+  box-shadow: 0 0 0 2px var(--panel-2);
+}
+.model-table .model-table__group-logos .provider-mark svg {
+  width: 11px;
+  height: 11px;
+}
+.model-table .model-table__group-logos .provider-mark--monogram {
+  font-size: 8px;
+}
+/* An open group and its Providers' rows share a tint and an edge, so the
+   hierarchy reads without shifting any column. */
+.model-table__row--open > td,
+.data-table__sub-row > td {
+  background: var(--panel-2);
+}
+.model-table__row--open > td:first-child,
+.data-table__sub-row > td:first-child {
+  box-shadow: inset 2px 0 0 var(--line);
 }
 .model-table__row--off .model-table__entity,
 .model-table__row--off .model-table__fades {
@@ -4441,10 +4475,6 @@ svg.lucide {
 /* The paginator sits in the toolbar; on phones it moves here, under the rows. */
 .data-table__footer {
   display: none;
-}
-/* A sub-row sits under its expanded row, indented so the hierarchy reads. */
-.data-table__sub-row > td:first-child {
-  padding-left: 52px;
 }
 .data-table__retry {
   margin-top: 8px;

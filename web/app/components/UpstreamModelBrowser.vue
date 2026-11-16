@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   Braces,
   Brain,
-  ChevronRight,
   Eye,
   Layers,
   Pencil,
@@ -698,7 +697,10 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     :get-sub-rows="(row) => (isUpstreamModelGroup(row) ? row.members : undefined)"
     :count-label="countLabel"
     :row-class="
-      (row) => ({ 'model-table__row--off': !isUpstreamModelGroup(row) && !row.isEnabled })
+      (row) => ({
+        'model-table__row--off': !isUpstreamModelGroup(row) && !row.isEnabled,
+        'model-table__row--open': isUpstreamModelGroup(row) && expandedGroups[rowIdOf(row)],
+      })
     "
     :column-class="columnClass"
     :is-loading="isLoading"
@@ -760,18 +762,9 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     </template>
     <template #cell-upstreamModel="{ row, isExpanded, toggleExpanded }">
       <div v-if="isUpstreamModelGroup(row)" class="table-entity model-table__entity">
-        <button
-          class="icon-action model-table__expander"
-          type="button"
-          :aria-expanded="isExpanded"
-          :aria-label="`Show ${row.members.length} Providers for ${row.upstreamModelId}`"
-          @click="toggleExpanded"
-        >
-          <ChevronRight :size="15" aria-hidden="true" />
-        </button>
         <span class="model-table__group-logos">
           <ProviderLogo
-            v-for="model in row.members"
+            v-for="model in row.members.slice(0, 2)"
             :key="model.id"
             :logo="providerById.get(model.providerId)?.logo ?? null"
             :name="providerName(model)"
@@ -779,10 +772,18 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           />
         </span>
         <span class="model-table__name">
-          <strong>{{ groupName(row) ?? row.upstreamModelId }}</strong>
-          <span v-if="groupName(row) !== null" class="cell-note model-table__id">{{
-            row.upstreamModelId
-          }}</span>
+          <span class="model-table__title">
+            <button
+              class="model-table__open"
+              type="button"
+              :aria-expanded="isExpanded"
+              :title="`${isExpanded ? 'Hide' : 'Show'} ${row.members.length} Providers`"
+              @click="toggleExpanded"
+            >
+              {{ groupName(row) ?? row.upstreamModelId }}
+            </button>
+            <CopyIconButton :text="row.upstreamModelId" label="model id" />
+          </span>
           <span class="cell-note">{{ row.members.length }} Providers</span>
         </span>
       </div>
@@ -794,17 +795,17 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           :base-url="providerById.get(row.providerId)?.baseUrl ?? ''"
         />
         <span class="model-table__name">
-          <button
-            class="model-table__open"
-            type="button"
-            :title="upstreamModelLabel(row)"
-            @click="openDialog({ kind: 'details', upstreamModel: row })"
-          >
-            {{ row.name ?? row.upstreamModelId }}
-          </button>
-          <span v-if="row.name !== null" class="cell-note model-table__id">{{
-            row.upstreamModelId
-          }}</span>
+          <span class="model-table__title">
+            <button
+              class="model-table__open"
+              type="button"
+              :title="upstreamModelLabel(row)"
+              @click="openDialog({ kind: 'details', upstreamModel: row })"
+            >
+              {{ row.name ?? row.upstreamModelId }}
+            </button>
+            <CopyIconButton :text="row.upstreamModelId" label="model id" />
+          </span>
           <NuxtLink
             v-if="!provider"
             class="cell-note"
