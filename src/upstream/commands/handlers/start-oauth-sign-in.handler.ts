@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { BadGatewayException, ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  BadGatewayException,
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
@@ -10,10 +15,12 @@ import { OauthSignInPolling } from "../../jobs/oauth-sign-in-polling.js";
 import {
   type DeviceAuthorization,
   type OauthLoginEndpoint,
+  OauthLoginError,
   oauthLoginEndpointOf,
+  signInNeedsRegion,
 } from "../../models/oauth-device-grant.js";
 import type { OauthSignIn } from "../../models/oauth-sign-in.js";
-import { OauthLoginClient, OauthLoginError } from "../../providers/oauth-login-client.js";
+import { OauthLoginClient } from "../../providers/oauth-login-client.js";
 import { OauthSignInStore } from "../../providers/oauth-sign-in-store.js";
 import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
 import { StartOauthSignInCommand } from "../impl/start-oauth-sign-in.command.js";
@@ -29,17 +36,21 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
   ) {}
 
   async execute({ newSignIn }: StartOauthSignInCommand): Promise<OauthSignIn> {
-    const { providerId, region, providerAccountId } = newSignIn;
+    const { providerId, providerAccountId } = newSignIn;
     const oauthLogin = await this.oauthLoginOf(providerId);
+    // Only a sign-in with regions takes one; the account would keep it otherwise.
+    const region = signInNeedsRegion(oauthLogin) ? (newSignIn.region ?? null) : null;
     // Generated once per Provider Account: the account the sign-in creates
     // keeps it, and signing in again presents the account's own.
     const deviceId =
       providerAccountId === undefined
         ? randomUUID().replaceAll("-", "")
         : await this.deviceIdOf(providerAccountId, providerId);
-    const authorization = await this.authorizeDevice(
-      oauthLoginEndpointOf(oauthLogin, region, deviceId),
-    );
+    const endpoint = oauthLoginEndpointOf(oauthLogin, region, deviceId);
+    if (endpoint === null) {
+      throw new BadRequestException("Name the region the account lives in");
+    }
+    const authorization = await this.authorizeDevice(endpoint);
 
     const signInId = randomUUID();
     const startedAt = new Date();

@@ -164,6 +164,7 @@ describe("Kimi Code correction migration (e2e)", () => {
     const kimiCode = await readKimiCodeThroughApi(db);
 
     expect(kimiCode.oauthLogin).toEqual({
+      flow: "kimi-code",
       authHosts: { global: "https://auth.kimi.ai", china: "https://auth.kimi.com" },
       clientId: "17e5f671-d194-4dfb-9706-5516cb48c098",
       cliVersion: "2.6.2",
@@ -171,7 +172,7 @@ describe("Kimi Code correction migration (e2e)", () => {
     expect(kimiCode.oauthLogin).toEqual(await catalogKimiCodeOauthLogin());
   });
 
-  it("keeps OAuth Login data the operator set", async () => {
+  it("keeps OAuth Login data the operator set, keyed by the kimi-code flow", async () => {
     const operatorOauthLogin = {
       authHosts: { global: "https://auth.kimi-proxy.example", china: "https://auth.kimi.com" },
       clientId: "client-id-the-operator-set",
@@ -185,7 +186,7 @@ describe("Kimi Code correction migration (e2e)", () => {
 
     const kimiCode = await readKimiCodeThroughApi(db);
 
-    expect(kimiCode.oauthLogin).toEqual(operatorOauthLogin);
+    expect(kimiCode.oauthLogin).toEqual({ flow: "kimi-code", ...operatorOauthLogin });
   });
 });
 

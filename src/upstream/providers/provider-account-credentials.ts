@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
 import { cliIdentityHeaders } from "../models/cli-identity.js";
+import { codexInferenceHeaders } from "../models/codex-cli-identity.js";
 import { type OauthLoginEndpoint, oauthLoginEndpointOf } from "../models/oauth-device-grant.js";
 import {
   needsRefresh,
@@ -27,6 +28,8 @@ interface StoredLogin extends OauthLoginLifetime {
   accessToken: string;
   refreshToken: string;
   endpoint: OauthLoginEndpoint;
+  /** OpenAI Codex only: the ChatGPT account the login calls for. */
+  accountId: string | null;
 }
 
 type StoredCredential =
@@ -133,6 +136,7 @@ export class ProviderAccountCredentials {
           grantedAt,
           expiresAt: columns.oauthExpiresAt,
           endpoint: login.endpoint,
+          accountId: refresh.tokens.codexAccount?.accountId ?? login.accountId,
         };
       }
       case "refused":
@@ -162,6 +166,7 @@ export class ProviderAccountCredentials {
         expiresAt: providerAccounts.oauthExpiresAt,
         region: providerAccounts.oauthRegion,
         deviceId: providerAccounts.oauthDeviceId,
+        accountId: providerAccounts.oauthAccountId,
         oauthLogin: providers.oauthLogin,
       })
       .from(providerAccounts)
@@ -176,12 +181,11 @@ export class ProviderAccountCredentials {
       }
       return { kind: "api-key", key: this.keyCipher.decrypt(account.encryptedKey) };
     }
-    const { encryptedAccessToken, encryptedRefreshToken, expiresAt, region, deviceId } = account;
+    const { encryptedAccessToken, encryptedRefreshToken, expiresAt, deviceId } = account;
     if (
       encryptedAccessToken === null ||
       encryptedRefreshToken === null ||
       expiresAt === null ||
-      region === null ||
       deviceId === null
     ) {
       throw new CredentialUnavailableError("Provider Account holds no credential");
@@ -190,6 +194,11 @@ export class ProviderAccountCredentials {
       // An operator took the OAuth data off the Provider: nothing says how to present or refresh the login.
       throw new CredentialUnavailableError("The Provider no longer offers OAuth Login");
     }
+    const endpoint = oauthLoginEndpointOf(account.oauthLogin, account.region, deviceId);
+    if (endpoint === null) {
+      // Signed in without a region, but the Provider now signs in with regions.
+      throw new CredentialUnavailableError("The OAuth Login names no region of the Provider");
+    }
     return {
       kind: "oauth-login",
       login: {
@@ -197,12 +206,30 @@ export class ProviderAccountCredentials {
         refreshToken: this.keyCipher.decrypt(encryptedRefreshToken),
         grantedAt: account.grantedAt,
         expiresAt,
-        endpoint: oauthLoginEndpointOf(account.oauthLogin, region, deviceId),
+        endpoint,
+        accountId: account.accountId,
       },
     };
   }
 }
 
-function loginCredential({ accessToken, endpoint }: StoredLogin): ProviderAccountCredential {
-  return { secret: accessToken, identityHeaders: cliIdentityHeaders(endpoint.identity) };
+function loginCredential({
+  accessToken,
+  endpoint,
+  accountId,
+}: StoredLogin): ProviderAccountCredential {
+  return { secret: accessToken, identityHeaders: identityHeadersOf(endpoint, accountId) };
+}
+
+/** How a call made with the login presents itself as the Provider's CLI (ADR 0012, 0013). */
+function identityHeadersOf(
+  endpoint: OauthLoginEndpoint,
+  accountId: string | null,
+): Record<string, string> {
+  switch (endpoint.flow) {
+    case "kimi-code":
+      return cliIdentityHeaders(endpoint.identity);
+    case "openai-codex":
+      return codexInferenceHeaders({ cliVersion: endpoint.cliVersion, accountId });
+  }
 }

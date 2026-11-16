@@ -101,6 +101,7 @@ export async function offerOauthLogin(
     .update(providers)
     .set({
       oauthLogin: {
+        flow: "kimi-code",
         authHosts: { global: `${authOrigin}/global`, china: `${authOrigin}/china` },
         clientId: CLIENT_ID,
         cliVersion: CLI_VERSION,
