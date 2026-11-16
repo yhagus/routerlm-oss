@@ -8,6 +8,8 @@ import {
   policyFromForm,
   REASONING_EFFORTS,
   RULE_KINDS,
+  SERVICE_TIER_LABELS,
+  SERVICE_TIERS,
 } from "~/lib/parameterPolicy";
 
 // The Parameter Policy form, for a Model or a Route override. It checks the
@@ -34,6 +36,10 @@ watch(
 const effortOptions = [
   { label: "Not set", value: "" },
   ...REASONING_EFFORTS.map((effort) => ({ label: effort, value: effort })),
+];
+const serviceTierOptions = [
+  { label: "None", value: "" },
+  ...SERVICE_TIERS.map((tier) => ({ label: SERVICE_TIER_LABELS[tier], value: tier })),
 ];
 
 function submit(): void {
@@ -69,6 +75,12 @@ function submit(): void {
                 v-else-if="parameter.name === 'reasoningEffort'"
                 v-model="form.rules[kind].reasoningEffort"
                 :options="effortOptions"
+                :label="`${label} ${parameter.label}`"
+              />
+              <AppSelect
+                v-else-if="parameter.name === 'serviceTier'"
+                v-model="form.rules[kind].serviceTier"
+                :options="serviceTierOptions"
                 :label="`${label} ${parameter.label}`"
               />
               <textarea

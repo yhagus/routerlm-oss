@@ -15,7 +15,8 @@ import {
 
 /**
  * Signs in to a Provider that offers OAuth Login: asks which region the
- * account is in, shows the code and the Provider's verification page, and
+ * account is in when the flow has regions (Kimi Code; OpenAI Codex starts
+ * right away), shows the code and the Provider's verification page, and
  * waits for the gateway to report the outcome. With an `account` it signs in
  * again on that Provider Account. Emits `completed` with the Provider Account
  * that now holds the OAuth Login.
@@ -36,12 +37,16 @@ const POLL_INTERVAL_MS = 2000;
 const WEB_ADDRESS = /^https?:\/\//i;
 
 type SignInState =
-  | { step: "region" }
+  /** Choosing a region, or starting a flow without regions (or failing to). */
+  | { step: "start" }
   | { step: "pending"; signIn: PendingOauthSignIn }
   | { step: "ended"; outcome: "denied" | "expired" };
 
-const DESCRIPTIONS: Record<SignInState["step"], string> = {
-  region: "Choose where the account is registered. Each region signs in on its own page.",
+const REGION_DESCRIPTION =
+  "Choose where the account is registered. Each region signs in on its own page.";
+const START_DESCRIPTION = "Asking the Provider for a sign-in code.";
+
+const DESCRIPTIONS: Record<Exclude<SignInState["step"], "start">, string> = {
   pending: "Approve the sign-in on the verification page. This dialog finishes on its own.",
   ended: "Nothing was saved. Start again to get a new code.",
 };
@@ -53,7 +58,7 @@ const OUTCOME_MESSAGES = {
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "short" });
 
-const state = shallowRef<SignInState>({ step: "region" });
+const state = shallowRef<SignInState>({ step: "start" });
 const isStarting = ref(false);
 const error = ref("");
 
@@ -70,10 +75,31 @@ const title = computed(() => {
   return `Sign in with ${props.provider.name}`;
 });
 
+/** Kimi Code's auth hosts, one per region; null for a flow without regions. */
+const regionAuthHosts = computed(() => {
+  const oauthLogin = props.provider.oauthLogin;
+  return oauthLogin?.flow === "kimi-code" ? oauthLogin.authHosts : null;
+});
+
 const regionHint = computed(() => {
-  const hosts = props.provider.oauthLogin?.authHosts;
+  const hosts = regionAuthHosts.value;
   if (!hosts) return "";
   return `Global accounts sign in at ${hosts.global}, Chinese accounts at ${hosts.china}.`;
+});
+
+/** A flow without regions that failed to start, such as OpenAI with device login off. */
+const canRetryStart = computed(
+  () =>
+    state.value.step === "start" &&
+    !regionAuthHosts.value &&
+    !isStarting.value &&
+    error.value !== "",
+);
+
+const description = computed(() => {
+  const { step } = state.value;
+  if (step !== "start") return DESCRIPTIONS[step];
+  return regionAuthHosts.value ? REGION_DESCRIPTION : START_DESCRIPTION;
 });
 
 const verificationUrl = computed(() => {
@@ -91,7 +117,8 @@ const waitingNote = computed(() => {
   return `Waiting for approval. The code expires at ${expiresAt}.`;
 });
 
-async function startSignIn(region: OauthRegion): Promise<void> {
+/** Starts a sign-in; `region` only for a flow with regions. */
+async function startSignIn(region?: OauthRegion): Promise<void> {
   isStarting.value = true;
   error.value = "";
   try {
@@ -99,7 +126,7 @@ async function startSignIn(region: OauthRegion): Promise<void> {
       method: "POST",
       body: {
         providerId: props.provider.id,
-        region,
+        ...(region ? { region } : {}),
         ...(props.account ? { providerAccountId: props.account.id } : {}),
       },
     });
@@ -143,8 +170,14 @@ async function readSignIn(): Promise<void> {
 
 function startAgain(): void {
   error.value = "";
-  state.value = { step: "region" };
+  state.value = { step: "start" };
+  if (!regionAuthHosts.value) void startSignIn();
 }
+
+// A flow without regions has nothing to choose, so it asks for a code at once.
+onMounted(() => {
+  if (!regionAuthHosts.value) void startSignIn();
+});
 
 async function copyCode(code: string): Promise<void> {
   try {
@@ -161,8 +194,8 @@ function selectAll(event: FocusEvent): void {
 </script>
 
 <template>
-  <AppDialog v-model:open="isOpen" :title="title" :description="DESCRIPTIONS[state.step]">
-    <template v-if="state.step === 'region'">
+  <AppDialog v-model:open="isOpen" :title="title" :description="description">
+    <template v-if="state.step === 'start' && regionAuthHosts">
       <div class="sign-in__regions" role="group" aria-label="Account region">
         <button
           v-for="region in OAUTH_REGIONS"
@@ -178,6 +211,7 @@ function selectAll(event: FocusEvent): void {
       <AppSpinner v-if="isStarting" label="Starting the sign-in…" />
       <p v-else-if="regionHint" class="form__hint">{{ regionHint }}</p>
     </template>
+    <AppSpinner v-else-if="state.step === 'start' && isStarting" label="Starting the sign-in…" />
     <template v-else-if="state.step === 'pending'">
       <div class="key-reveal">
         <input
@@ -201,10 +235,14 @@ function selectAll(event: FocusEvent): void {
       >
         <ExternalLink :size="14" /> Open verification page
       </a>
-      <p v-else class="form__hint">Enter the code at {{ state.signIn.verificationUri }}</p>
+      <p v-if="!verificationUrl || !state.signIn.verificationUriComplete" class="form__hint">
+        Enter the code at {{ state.signIn.verificationUri }}
+      </p>
       <AppSpinner :label="waitingNote" />
     </template>
-    <p v-else class="form__error" role="alert">{{ OUTCOME_MESSAGES[state.outcome] }}</p>
+    <p v-else-if="state.step === 'ended'" class="form__error" role="alert">
+      {{ OUTCOME_MESSAGES[state.outcome] }}
+    </p>
     <p v-if="error" class="form__error" role="alert">{{ error }}</p>
     <div class="dialog__actions">
       <button class="button" type="button" @click="isOpen = false">
@@ -217,6 +255,14 @@ function selectAll(event: FocusEvent): void {
         @click="startAgain"
       >
         Start again
+      </button>
+      <button
+        v-else-if="canRetryStart"
+        class="button button--primary"
+        type="button"
+        @click="startAgain"
+      >
+        Try again
       </button>
     </div>
   </AppDialog>

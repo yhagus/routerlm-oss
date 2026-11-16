@@ -1,14 +1,19 @@
 // Providers, Upstream Models and Provider Accounts as the dashboard API returns them.
 
-import type { ReasoningEffort } from "~/lib/parameterPolicy";
+import type { ReasoningEffort, ServiceTier } from "~/lib/parameterPolicy";
 
-export const UPSTREAM_PROTOCOLS = ["openai-chat", "anthropic-messages"] as const;
+export const UPSTREAM_PROTOCOLS = [
+  "openai-chat",
+  "anthropic-messages",
+  "openai-responses",
+] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
 /** What the dashboard calls each Protocol: the API it speaks, not its internal value. */
 export const PROTOCOL_LABELS: Record<UpstreamProtocol, string> = {
   "openai-chat": "Chat Completions",
   "anthropic-messages": "Messages",
+  "openai-responses": "Responses",
 };
 
 export const PROTOCOL_OPTIONS = UPSTREAM_PROTOCOLS.map((protocol) => ({
@@ -31,10 +36,16 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
 
 export const REASONING_CONTENT_IN_HISTORY = ["all-assistant-turns", "tool-call-turns"] as const;
 
+/** The request parameters an `openai-responses` Provider can refuse, so the gateway leaves them out. */
+export const DROPPABLE_PARAMETERS = ["temperature", "top_p", "max_output_tokens"] as const;
+export type DroppableParameter = (typeof DROPPABLE_PARAMETERS)[number];
+
 /**
  * The quirk keys the backend accepts, all edited by the Provider form.
  * `cacheMarkerLimit` applies to `anthropic-messages` Providers, the reasoning,
- * cache and token ones to `openai-chat` ones, and the last two to both. The
+ * cache and token ones to `openai-chat` ones, the streaming, developer message
+ * and dropped parameter ones to `openai-responses` ones, the prompt cache key
+ * ones to both OpenAI Protocols, and the last two to every Protocol. The
  * backend refuses a quirk the Provider's Protocol doesn't read.
  */
 export interface ProviderQuirks {
@@ -51,6 +62,13 @@ export interface ProviderQuirks {
   };
   /** A `prompt_cache_key` the client sent is passed on as it is. */
   forwardsClientPromptCacheKey?: boolean;
+  /** The Provider answers only as a stream; a non-streaming client's answer is gathered from it. */
+  alwaysStreams?: boolean;
+  /** Every request asks for the reasoning's encrypted content. */
+  includesEncryptedReasoning?: boolean;
+  /** The system prompt goes as a `developer` message, not as `instructions`. */
+  systemAsDeveloperMessage?: boolean;
+  droppedParameters?: DroppableParameter[];
   /** The error codes that make a Provider Account Exhausted: numbers or names. */
   exhaustedErrorCodes?: (string | number)[];
   /** Where the quota reader asks, when that is another host than the base URL. */
@@ -77,11 +95,52 @@ export const OAUTH_REGION_LABELS: Record<OauthRegion, string> = {
   china: "Chinese account",
 };
 
-/** What signing in to a Provider needs; the gateway runs the flow. */
-export interface ProviderOauthLogin {
+/** How a Provider signs in; the flow itself is the gateway's code. */
+export const OAUTH_LOGIN_FLOWS = ["kimi-code", "openai-codex"] as const;
+export type OauthLoginFlow = (typeof OAUTH_LOGIN_FLOWS)[number];
+
+export const OAUTH_LOGIN_FLOW_LABELS: Record<OauthLoginFlow, string> = {
+  "kimi-code": "Kimi Code device code",
+  "openai-codex": "OpenAI Codex CLI device code",
+};
+
+/** Kimi Code's sign-in: a User's account lives in one of two regions, each with its own auth host. */
+export interface KimiCodeOauthLogin {
+  flow: "kimi-code";
   authHosts: Record<OauthRegion, string>;
   clientId: string;
+  /** The version of the Provider's CLI the gateway presents itself as. */
   cliVersion: string;
+}
+
+/** OpenAI Codex's sign-in as the Codex CLI: one issuer, no regions. */
+export interface OpenAiCodexOauthLogin {
+  flow: "openai-codex";
+  /** The auth host, without a path, such as `https://auth.openai.com`. */
+  issuer: string;
+  clientId: string;
+  /** The version of the Codex CLI the gateway presents itself as. */
+  cliVersion: string;
+}
+
+/** What signing in to a Provider needs, keyed by its flow; the gateway runs the flow. */
+export type ProviderOauthLogin = KimiCodeOauthLogin | OpenAiCodexOauthLogin;
+
+/** The one credential a Provider Account holds. */
+export const CREDENTIAL_KINDS = ["api-key", "oauth-login"] as const;
+export type CredentialKind = (typeof CREDENTIAL_KINDS)[number];
+
+export const CREDENTIAL_KIND_LABELS: Record<CredentialKind, string> = {
+  "api-key": "API key",
+  "oauth-login": "OAuth Login",
+};
+
+/** One Service Tier's prices, USD per million tokens; a price left out is the standard one. */
+export interface TierPrices {
+  inputPrice?: number;
+  outputPrice?: number;
+  cacheReadPrice?: number;
+  cacheWritePrice?: number;
 }
 
 export interface Provider {
@@ -96,6 +155,10 @@ export interface Provider {
   quirks: ProviderQuirks;
   /** Null when the Provider offers no OAuth Login: its accounts hold API keys only. */
   oauthLogin: ProviderOauthLogin | null;
+  /** The credentials its Provider Accounts may hold; an OAuth Login also needs `oauthLogin`. */
+  credentialKinds: CredentialKind[];
+  /** What the Provider calls each Service Tier on the wire; empty when it has none. */
+  serviceTierValues: Partial<Record<ServiceTier, string>>;
   isEnabled: boolean;
   isFromCatalog: boolean;
   /** The quota endpoint the gateway reads for its accounts; null when it has none. */
@@ -118,6 +181,10 @@ export interface UpstreamModel {
   outputPrice: number | null;
   cacheReadPrice: number | null;
   cacheWritePrice: number | null;
+  /** The Service Tiers it accepts; a requested tier it doesn't accept is dropped. */
+  serviceTiers: ServiceTier[];
+  /** Only the tiers that cost other than the standard prices. */
+  tierPrices: Partial<Record<ServiceTier, TierPrices>>;
   /** The day the Provider made it available, "YYYY-MM-DD"; null when unknown. */
   releaseDate: string | null;
   isEnabled: boolean;
@@ -157,9 +224,6 @@ export type ProviderAccountQuota = Pick<
   "quotaCheckedAt" | "quotaError" | "quotaMeters"
 >;
 
-/** The one credential a Provider Account holds. */
-export type CredentialKind = "api-key" | "oauth-login";
-
 /** Never the credential itself: an API key's last four characters, nothing of an OAuth Login. */
 export interface ProviderAccount {
   id: string;
@@ -168,8 +232,14 @@ export interface ProviderAccount {
   credentialKind: CredentialKind;
   /** Null for an OAuth Login. */
   keyLastFour: string | null;
-  /** The region chosen at sign-in; null for an API key. */
+  /** The region chosen at sign-in; null for an API key and for a flow without regions. */
   oauthRegion: OauthRegion | null;
+  /**
+   * Who signed in and on which plan, from an OpenAI Codex id_token. Absent
+   * until the dashboard API returns them, null for other credentials.
+   */
+  oauthEmail?: string | null;
+  oauthPlanType?: string | null;
   /** Lower runs first. */
   priority: number;
   isEnabled: boolean;
@@ -222,6 +292,15 @@ export function needsNewSignIn(account: ProviderAccount): boolean {
     !account.isEnabled &&
     account.disabledReason !== null
   );
+}
+
+/** Whether the Provider's accounts may hold an API key, an OAuth Login, or both. */
+export function acceptsApiKey(provider: Provider): boolean {
+  return provider.credentialKinds.includes("api-key");
+}
+
+export function offersSignIn(provider: Provider): boolean {
+  return provider.oauthLogin !== null && provider.credentialKinds.includes("oauth-login");
 }
 
 /** Shortest Provider Account key the backend accepts. */

@@ -1,7 +1,18 @@
 // What the Provider form edits, and the request body it turns into.
 
-import { REASONING_EFFORTS, type ReasoningEffort } from "~/lib/parameterPolicy";
 import {
+  REASONING_EFFORTS,
+  type ReasoningEffort,
+  SERVICE_TIERS,
+  type ServiceTier,
+} from "~/lib/parameterPolicy";
+import {
+  CREDENTIAL_KINDS,
+  type CredentialKind,
+  type DroppableParameter,
+  type KimiCodeOauthLogin,
+  OAUTH_LOGIN_FLOWS,
+  type OpenAiCodexOauthLogin,
   type Provider,
   type ProviderOauthLogin,
   type ProviderQuirks,
@@ -9,6 +20,8 @@ import {
   type QuotaReader,
   REASONING_CONTENT_IN_HISTORY,
 } from "~/lib/upstream";
+
+type FlowFields<Login> = Omit<Login, "flow">;
 
 /** Field values as the inputs hold them: "" for an empty select or text field. */
 export interface ProviderForm {
@@ -29,12 +42,21 @@ export interface ProviderForm {
   thinkingEfforts: Record<ReasoningEffort, string>;
   upstreamModelsWithoutEffort: string[];
   forwardsClientPromptCacheKey: boolean;
+  alwaysStreams: boolean;
+  includesEncryptedReasoning: boolean;
+  systemAsDeveloperMessage: boolean;
+  droppedParameters: DroppableParameter[];
   /** As typed; digits-only codes are sent as numbers. */
   exhaustedErrorCodes: string[];
   quotaReader: string;
   quotaBaseUrl: string;
-  hasOauthLogin: boolean;
-  oauthLogin: ProviderOauthLogin;
+  /** "" for a Provider without OAuth Login. Each flow keeps its fields, so switching back loses nothing. */
+  oauthLoginFlow: string;
+  kimiCodeOauthLogin: FlowFields<KimiCodeOauthLogin>;
+  openAiCodexOauthLogin: FlowFields<OpenAiCodexOauthLogin>;
+  credentialKinds: CredentialKind[];
+  /** The wire value for each Service Tier, "" when the Provider has no such tier. */
+  serviceTierValues: Record<ServiceTier, string>;
 }
 
 /** The fields `POST /providers` and `PATCH /providers/:id` share. */
@@ -47,13 +69,27 @@ export interface ProviderFields {
   quirks: ProviderQuirks;
   quotaReader: QuotaReader | null;
   oauthLogin: ProviderOauthLogin | null;
+  credentialKinds: CredentialKind[];
+  serviceTierValues: Partial<Record<ServiceTier, string>>;
 }
 
-const EMPTY_OAUTH_LOGIN: ProviderOauthLogin = {
-  authHosts: { global: "", china: "" },
-  clientId: "",
-  cliVersion: "",
-};
+function kimiCodeFields(login: ProviderOauthLogin | null): FlowFields<KimiCodeOauthLogin> {
+  if (login?.flow === "kimi-code") {
+    return {
+      authHosts: { ...login.authHosts },
+      clientId: login.clientId,
+      cliVersion: login.cliVersion,
+    };
+  }
+  return { authHosts: { global: "", china: "" }, clientId: "", cliVersion: "" };
+}
+
+function openAiCodexFields(login: ProviderOauthLogin | null): FlowFields<OpenAiCodexOauthLogin> {
+  if (login?.flow === "openai-codex") {
+    return { issuer: login.issuer, clientId: login.clientId, cliVersion: login.cliVersion };
+  }
+  return { issuer: "", clientId: "", cliVersion: "" };
+}
 
 const ALL_DIGITS = /^\d+$/;
 /** The accents NFKD splits off letters, so "Ü" slugs as "u". */
@@ -92,11 +128,21 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
       ...(quirks.reasoningAsThinking?.upstreamModelsWithoutEffort ?? []),
     ],
     forwardsClientPromptCacheKey: quirks.forwardsClientPromptCacheKey ?? false,
+    alwaysStreams: quirks.alwaysStreams ?? false,
+    includesEncryptedReasoning: quirks.includesEncryptedReasoning ?? false,
+    systemAsDeveloperMessage: quirks.systemAsDeveloperMessage ?? false,
+    droppedParameters: [...(quirks.droppedParameters ?? [])],
     exhaustedErrorCodes: (quirks.exhaustedErrorCodes ?? []).map(String),
     quotaReader: provider?.quotaReader ?? "",
     quotaBaseUrl: quirks.quotaBaseUrl ?? "",
-    hasOauthLogin: oauthLogin !== null,
-    oauthLogin: structuredClone(oauthLogin ?? EMPTY_OAUTH_LOGIN),
+    oauthLoginFlow: oauthLogin?.flow ?? "",
+    kimiCodeOauthLogin: kimiCodeFields(oauthLogin),
+    openAiCodexOauthLogin: openAiCodexFields(oauthLogin),
+    credentialKinds: [...(provider?.credentialKinds ?? CREDENTIAL_KINDS)],
+    serviceTierValues: {
+      fast: provider?.serviceTierValues.fast ?? "",
+      flex: provider?.serviceTierValues.flex ?? "",
+    },
   };
 }
 
@@ -120,8 +166,27 @@ export function providerFieldsFromForm(form: ProviderForm): ProviderFields {
     authStyle: form.authStyle,
     quirks: quirksFromForm(form),
     quotaReader: QUOTA_READERS.find((reader) => reader === form.quotaReader) ?? null,
-    oauthLogin: form.hasOauthLogin ? structuredClone(form.oauthLogin) : null,
+    oauthLogin: oauthLoginFromForm(form),
+    credentialKinds: CREDENTIAL_KINDS.filter((kind) => form.credentialKinds.includes(kind)),
+    serviceTierValues: serviceTierValuesFromForm(form),
   };
+}
+
+function oauthLoginFromForm(form: ProviderForm): ProviderOauthLogin | null {
+  const flow = OAUTH_LOGIN_FLOWS.find((known) => known === form.oauthLoginFlow);
+  if (flow === "kimi-code") return { flow, ...structuredClone(form.kimiCodeOauthLogin) };
+  if (flow === "openai-codex") return { flow, ...form.openAiCodexOauthLogin };
+  return null;
+}
+
+/** Only the tiers given a wire value: a tier left blank is one the Provider doesn't offer. */
+function serviceTierValuesFromForm(form: ProviderForm): Partial<Record<ServiceTier, string>> {
+  const values: Partial<Record<ServiceTier, string>> = {};
+  for (const tier of SERVICE_TIERS) {
+    const value = form.serviceTierValues[tier].trim();
+    if (value !== "") values[tier] = value;
+  }
+  return values;
 }
 
 /**
@@ -135,7 +200,19 @@ function quirksFromForm(form: ProviderForm): ProviderQuirks {
 function protocolQuirks(form: ProviderForm): ProviderQuirks {
   if (form.protocol === "anthropic-messages") return anthropicMessagesQuirks(form);
   if (form.protocol === "openai-chat") return openaiChatQuirks(form);
+  if (form.protocol === "openai-responses") return openaiResponsesQuirks(form);
   return {};
+}
+
+function openaiResponsesQuirks(form: ProviderForm): ProviderQuirks {
+  const quirks: ProviderQuirks = {};
+  if (form.acceptsPromptCacheKey) quirks.acceptsPromptCacheKey = true;
+  if (form.forwardsClientPromptCacheKey) quirks.forwardsClientPromptCacheKey = true;
+  if (form.alwaysStreams) quirks.alwaysStreams = true;
+  if (form.includesEncryptedReasoning) quirks.includesEncryptedReasoning = true;
+  if (form.systemAsDeveloperMessage) quirks.systemAsDeveloperMessage = true;
+  if (form.droppedParameters.length > 0) quirks.droppedParameters = [...form.droppedParameters];
+  return quirks;
 }
 
 function anthropicMessagesQuirks(form: ProviderForm): ProviderQuirks {
