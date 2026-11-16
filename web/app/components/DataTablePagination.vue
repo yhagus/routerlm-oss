@@ -6,16 +6,21 @@ import { formatCount } from "~/lib/usage";
 const props = defineProps<{
   rowCount: number;
   pageCount: number;
+  /** Replaces "1,234 results" when the caller counts its rows in its own words. */
+  countLabel?: string;
 }>();
 const page = defineModel<number>("page", { required: true });
 
 const resultsLabel = computed(() => (props.rowCount === 1 ? "result" : "results"));
+const summaryCount = computed(
+  () => props.countLabel ?? `${formatCount(props.rowCount)} ${resultsLabel.value}`,
+);
 </script>
 
 <template>
   <nav class="data-table-pagination" aria-label="Pagination">
     <span class="data-table-pagination__summary tabular"
-      >{{ formatCount(rowCount) }} {{ resultsLabel }} · Page {{ page }} of {{ pageCount }}</span
+      >{{ summaryCount }} · Page {{ page }} of {{ pageCount }}</span
     >
     <button
       class="icon-action data-table-pagination__arrow"

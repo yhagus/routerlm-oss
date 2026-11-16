@@ -31,6 +31,12 @@
  *   const { data, … } = useDashboardApi("/captures", { query: { q: search, page } });
  *   <DataTable … :rows="data?.items ?? []" :row-count="data?.total ?? 0" />
  *
+ * Sub-rows (`getSubRows`): a row with sub-rows can expand to list them below
+ * it. The search keeps a row when it or one of its sub-rows matches, and the
+ * paginator counts top-level rows only, so an expanded row never splits across
+ * pages. Cell slots get `isExpanded` and `toggleExpanded` for the expander;
+ * `v-model:expanded` holds which rows are open (component-local without it).
+ *
  * Rows stay on screen while `refresh` runs; placeholders show only while
  * `isLoading` (nothing loaded yet).
  */
@@ -39,6 +45,8 @@ import {
   FlexRender,
   functionalUpdate,
   useTable,
+  type ExpandedState,
+  type ExpandedStateList,
   type PaginationState,
   type RowData,
   type Updater,
@@ -77,6 +85,10 @@ const props = withDefaults(
     /** The caller's filters in effect, one token each; the search token is added here. */
     filters?: ActiveFilter[];
     searchPlaceholder?: string;
+    /** A row's sub-rows, listed below it while it is expanded; none for a plain row. */
+    getSubRows?: (row: Row) => Row[] | undefined;
+    /** Replaces the paginator's "1,234 results", such as a count in the caller's own terms. */
+    countLabel?: string;
   }>(),
   { filters: () => [], searchPlaceholder: "Search" },
 );
@@ -91,7 +103,11 @@ defineSlots<
     empty?: () => unknown;
   } & {
     /** One cell's content; without it the column's `cell` renders. */
-    [cell: `cell-${string}`]: (props: { row: Row }) => unknown;
+    [cell: `cell-${string}`]: (props: {
+      row: Row;
+      isExpanded: boolean;
+      toggleExpanded: () => void;
+    }) => unknown;
   }
 >();
 
@@ -100,6 +116,8 @@ const SEARCH_COMMIT_DELAY_MS = 300;
 const committedSearch = useQuerySearch();
 const page = useQueryPage();
 const columnVisibility = useColumnVisibility(props.tableId);
+/** The ids of the rows whose sub-rows are listed. */
+const expanded = defineModel<ExpandedStateList>("expanded", { default: () => ({}) });
 
 /** The field's text, ahead of `committedSearch` while typing. */
 const searchText = shallowRef(committedSearch.value);
@@ -157,12 +175,24 @@ const table = useTable({
     pagination: pagination.value,
     columnVisibility: columnVisibility.value,
     globalFilter: isServerMode.value ? undefined : searchQuery.value,
+    expanded: expanded.value,
   })),
   manualPagination: isServerMode,
   manualFiltering: isServerMode,
   autoResetPageIndex: false,
+  getSubRows: props.getSubRows,
+  // A row with sub-rows stays while one of them matches the search.
+  filterFromLeafRows: props.getSubRows !== undefined,
+  paginateExpandedRows: false,
+  // A refresh replaces the rows; the open ones stay open.
+  autoResetExpanded: false,
   onPaginationChange: (updater: Updater<PaginationState>) => {
     page.value = functionalUpdate(updater, pagination.value).pageIndex + 1;
+  },
+  onExpandedChange: (updater: Updater<ExpandedState>) => {
+    const next = functionalUpdate(updater, expanded.value);
+    // `true` (every row) only comes from expand-all, which this table doesn't offer.
+    if (next !== true) expanded.value = next;
   },
   onColumnVisibilityChange: (updater: Updater<ColumnVisibilityState>) => {
     columnVisibility.value = functionalUpdate(updater, columnVisibility.value);
@@ -276,6 +306,7 @@ function handleClearAll(): void {
         class="data-table__pagination"
         :row-count="totalRows"
         :page-count="pageCount"
+        :count-label="countLabel"
       />
     </div>
     <ActiveFilters
@@ -318,14 +349,19 @@ function handleClearAll(): void {
               <tr
                 v-for="row in table.getRowModel().rows"
                 :key="row.id"
-                :class="rowClass?.(row.original)"
+                :class="[rowClass?.(row.original), { 'data-table__sub-row': row.depth > 0 }]"
               >
                 <td
                   v-for="cell in row.getVisibleCells()"
                   :key="cell.id"
                   :class="columnClass?.(cell.column.id)"
                 >
-                  <slot :name="`cell-${cell.column.id}`" :row="row.original">
+                  <slot
+                    :name="`cell-${cell.column.id}`"
+                    :row="row.original"
+                    :is-expanded="row.getIsExpanded()"
+                    :toggle-expanded="() => row.toggleExpanded()"
+                  >
                     <FlexRender :cell="cell" />
                   </slot>
                 </td>
@@ -335,7 +371,12 @@ function handleClearAll(): void {
         </table>
       </div>
       <div v-if="isPaginatorShown" class="panel-footer data-table__footer">
-        <DataTablePagination v-model:page="page" :row-count="totalRows" :page-count="pageCount" />
+        <DataTablePagination
+          v-model:page="page"
+          :row-count="totalRows"
+          :page-count="pageCount"
+          :count-label="countLabel"
+        />
       </div>
     </template>
   </section>

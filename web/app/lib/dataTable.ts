@@ -2,9 +2,11 @@ import { h } from "vue";
 import {
   columnFilteringFeature,
   columnVisibilityFeature,
+  createExpandedRowModel,
   createFilteredRowModel,
   createPaginatedRowModel,
   globalFilteringFeature,
+  rowExpandingFeature,
   rowPaginationFeature,
   tableFeatures,
   type ColumnDef,
@@ -20,13 +22,16 @@ export const DATA_TABLE_PAGE_SIZE = 50;
  * `manualFiltering` and `manualPagination`. The search is the only filter; its
  * `includesString` match comes with global filtering, so no filter functions
  * are registered. Global filtering requires column filtering to be present.
+ * Row expanding only does anything for a table given `getSubRows`.
  */
 export const dataTableFeatures = tableFeatures({
   columnFilteringFeature,
   globalFilteringFeature,
   columnVisibilityFeature,
+  rowExpandingFeature,
   rowPaginationFeature,
   filteredRowModel: createFilteredRowModel(),
+  expandedRowModel: createExpandedRowModel(),
   paginatedRowModel: createPaginatedRowModel(),
 });
 

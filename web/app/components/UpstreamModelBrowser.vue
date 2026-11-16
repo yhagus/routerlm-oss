@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   Braces,
   Brain,
+  ChevronRight,
   Eye,
   Layers,
   Pencil,
@@ -28,10 +29,22 @@ import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { formatNumberInput } from "~/lib/numberInput";
 import { SERVICE_TIER_LABELS, SERVICE_TIERS, type ServiceTier } from "~/lib/parameterPolicy";
+import {
+  groupBySharedId,
+  groupCapabilities,
+  groupName,
+  isUpstreamModelGroup,
+  rangeOf,
+  type UpstreamModelGroup,
+  type UpstreamModelRow,
+} from "~/lib/upstreamModelGroups";
+import { formatCount } from "~/lib/usage";
 
 /**
  * Upstream Models with filters, sorting and editing. With `provider` it shows
  * only that Provider's models and drops the Provider filter and column note.
+ * Without it, Upstream Models that share an id across Providers show as one
+ * expandable group row.
  */
 const props = defineProps<{
   providers: Provider[];
@@ -215,25 +228,107 @@ function compareModels(first: UpstreamModel, second: UpstreamModel): number {
   }
 }
 
-/** Models the filters keep, in the picked order; the DataTable applies the search. */
-const visibleModels = computed(() => {
+/** Models the filters keep, before the search. */
+const filteredModels = computed(() => {
   const minContext = Number(contextFilter.value || 0);
   const releasedSince = releasedFilter.value ? daysAgo(Number(releasedFilter.value)) : null;
-  return scopedModels.value
-    .filter((model) => {
-      const slug = providerById.value.get(model.providerId)?.slug ?? "";
-      if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
-      if (model.contextSize < minContext) return false;
-      // A model without a Release Date can't be shown to fall inside the window.
-      if (releasedSince !== null && (model.releaseDate ?? "") < releasedSince) return false;
-      // A model must have every picked capability.
-      if (!capabilityFilter.value.every((capability) => model.capabilities.includes(capability))) {
-        return false;
-      }
-      const status = model.isEnabled ? "enabled" : "disabled";
-      return statusFilter.value.length === 0 || statusFilter.value.includes(status);
-    })
-    .toSorted(compareModels);
+  return scopedModels.value.filter((model) => {
+    const slug = providerById.value.get(model.providerId)?.slug ?? "";
+    if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
+    if (model.contextSize < minContext) return false;
+    // A model without a Release Date can't be shown to fall inside the window.
+    if (releasedSince !== null && (model.releaseDate ?? "") < releasedSince) return false;
+    // A model must have every picked capability.
+    if (!capabilityFilter.value.every((capability) => model.capabilities.includes(capability))) {
+      return false;
+    }
+    const status = model.isEnabled ? "enabled" : "disabled";
+    return statusFilter.value.length === 0 || statusFilter.value.includes(status);
+  });
+});
+
+/** What the search matches: the model's id, its name, or its Provider's name. */
+function searchTextOf(model: UpstreamModel): string {
+  return [model.upstreamModelId, model.name ?? "", providerName(model)].join("\n");
+}
+
+const search = useQuerySearch();
+/** The committed search as the DataTable matches it: trimmed, any case. */
+const searchQuery = computed(() => search.value.trim().toLowerCase());
+
+/**
+ * The rows the DataTable shows, in the picked order. On a Provider's page they
+ * are the filtered models, and the DataTable applies the search. Across
+ * Providers, the search runs here first so a group forms only from the
+ * Upstream Models it keeps: an id with one left is a plain row. The DataTable's
+ * own search then keeps every row, since each matches.
+ */
+const tableRows = computed<UpstreamModelRow[]>(() => {
+  if (props.provider) return filteredModels.value.toSorted(compareModels);
+  const matching = filteredModels.value.filter((model) =>
+    searchTextOf(model).toLowerCase().includes(searchQuery.value),
+  );
+  return groupBySharedId(matching, compareModels);
+});
+
+function rowIdOf(row: UpstreamModelRow): string {
+  return isUpstreamModelGroup(row) ? `group:${row.upstreamModelId}` : row.id;
+}
+
+/** How many Upstream Models the filters keep for each id, before the search. */
+const filteredCountById = computed(() => {
+  const counts = new Map<string, number>();
+  for (const model of filteredModels.value) {
+    counts.set(model.upstreamModelId, (counts.get(model.upstreamModelId) ?? 0) + 1);
+  }
+  return counts;
+});
+
+/** The search dropped some of the id's Upstream Models: the group opens so the matches show. */
+function isNarrowedBySearch(group: UpstreamModelGroup): boolean {
+  if (searchQuery.value === "") return false;
+  return (filteredCountById.value.get(group.upstreamModelId) ?? 0) > group.members.length;
+}
+
+/** Groups the reader opened or closed; the others follow `isNarrowedBySearch`. */
+const toggledGroups = shallowRef<Record<string, boolean>>({});
+// A new search starts over from the groups it narrows.
+watch(searchQuery, () => {
+  toggledGroups.value = {};
+});
+const expandedGroups = computed<Record<string, boolean>>({
+  get: () =>
+    Object.fromEntries(
+      tableRows.value
+        .filter(isUpstreamModelGroup)
+        .map((group) => [
+          rowIdOf(group),
+          toggledGroups.value[rowIdOf(group)] ?? isNarrowedBySearch(group),
+        ]),
+    ),
+  // The table drops a closed row's id rather than storing false, so record
+  // each change against what is shown; otherwise a group the search opened
+  // would reopen as soon as it was closed.
+  set: (next) => {
+    const toggled = { ...toggledGroups.value };
+    for (const [id, isOpen] of Object.entries(expandedGroups.value)) {
+      const isOpenNext = next[id] === true;
+      if (isOpenNext !== isOpen) toggled[id] = isOpenNext;
+    }
+    toggledGroups.value = toggled;
+  },
+});
+
+/** "214 Upstream Models · 202 model ids" while groups merge some, "214 Upstream Models" otherwise; a Provider's page keeps the usual count. */
+const countLabel = computed(() => {
+  const idCount = tableRows.value.length;
+  const modelCount = tableRows.value.reduce(
+    (count, row) => count + (isUpstreamModelGroup(row) ? row.members.length : 1),
+    0,
+  );
+  if (props.provider) return undefined;
+  if (modelCount === idCount) return `${formatCount(modelCount)} Upstream Models`;
+  return `${formatCount(modelCount)} Upstream Models · ${formatCount(idCount)} model ${idCount === 1 ? "id" : "ids"}`;
 });
 
 /** The picked option of a one-value filter as a token, or none while it is at "" (any). */
@@ -271,14 +366,14 @@ function clearFilters(): void {
   statusFilter.value = [];
 }
 
-const columns: DataTableColumn<UpstreamModel>[] = [
+const columns: DataTableColumn<UpstreamModelRow>[] = [
   {
     id: "upstreamModel",
     header: "Upstream Model",
     enableHiding: false,
-    // What the search matches: the model's id, its name, or its Provider's name.
-    accessorFn: (model) =>
-      [model.upstreamModelId, model.name ?? "", providerName(model)].join("\n"),
+    // The DataTable's search matches this; a group matches through its members' rows.
+    accessorFn: (row) =>
+      isUpstreamModelGroup(row) ? row.members.map(searchTextOf).join("\n") : searchTextOf(row),
   },
   { id: "capabilities", header: "Capabilities" },
   { id: "context", header: "Context" },
@@ -327,6 +422,58 @@ function formatPrice(price: number | null): string {
   return price === null ? "—" : priceFormat.format(price);
 }
 
+function compareNumbers(first: number, second: number): number {
+  return first - second;
+}
+
+function compareTexts(first: string, second: string): number {
+  return first.localeCompare(second);
+}
+
+/** A group's values as "min–max", one value when they agree, or "—" when none is set. */
+function formatRange<Value>(
+  values: (Value | null)[],
+  compare: (first: Value, second: Value) => number,
+  format: (value: Value) => string,
+): string {
+  const range = rangeOf(values, compare);
+  if (range === null) return "—";
+  const min = format(range.min);
+  const max = format(range.max);
+  return min === max ? min : `${min}–${max}`;
+}
+
+function groupPriceRange(group: UpstreamModelGroup, price: "inputPrice" | "outputPrice"): string {
+  return formatRange(
+    group.members.map((model) => model[price]),
+    compareNumbers,
+    (value) => priceFormat.format(value),
+  );
+}
+
+function groupTokenRange(
+  group: UpstreamModelGroup,
+  tokens: "contextSize" | "maxOutputTokens",
+): string {
+  return formatRange(
+    group.members.map((model) => model[tokens]),
+    compareNumbers,
+    (value) => tokenFormat.format(value),
+  );
+}
+
+function groupReleaseRange(group: UpstreamModelGroup): string {
+  return formatRange(
+    group.members.map((model) => model.releaseDate),
+    compareTexts,
+    (value) => value,
+  );
+}
+
+function rowCapabilities(row: UpstreamModelRow): Capability[] {
+  return isUpstreamModelGroup(row) ? groupCapabilities(row) : row.capabilities;
+}
+
 const shareFormat = new Intl.NumberFormat("en-US", {
   style: "percent",
   maximumFractionDigits: 1,
@@ -343,8 +490,8 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 });
 
-function capabilitySummary(model: UpstreamModel): string {
-  const names = CAPABILITIES.filter((capability) => model.capabilities.includes(capability)).map(
+function capabilitySummary(capabilities: Capability[]): string {
+  const names = CAPABILITIES.filter((capability) => capabilities.includes(capability)).map(
     (capability) => CAPABILITY_LABELS[capability],
   );
   return names.length ? `Capabilities: ${names.join(", ")}` : "No listed capabilities";
@@ -545,9 +692,14 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     label="Upstream Models"
     :search-placeholder="provider ? 'Search models' : 'Search models or Providers'"
     :columns="columns"
-    :rows="visibleModels"
-    :get-row-id="(model) => model.id"
-    :row-class="(model) => ({ 'model-table__row--off': !model.isEnabled })"
+    v-model:expanded="expandedGroups"
+    :rows="tableRows"
+    :get-row-id="rowIdOf"
+    :get-sub-rows="(row) => (isUpstreamModelGroup(row) ? row.members : undefined)"
+    :count-label="countLabel"
+    :row-class="
+      (row) => ({ 'model-table__row--off': !isUpstreamModelGroup(row) && !row.isEnabled })
+    "
     :column-class="columnClass"
     :is-loading="isLoading"
     :error="error"
@@ -606,46 +758,77 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         />
       </div>
     </template>
-    <template #cell-upstreamModel="{ row: model }">
-      <div class="table-entity model-table__entity">
+    <template #cell-upstreamModel="{ row, isExpanded, toggleExpanded }">
+      <div v-if="isUpstreamModelGroup(row)" class="table-entity model-table__entity">
+        <button
+          class="icon-action model-table__expander"
+          type="button"
+          :aria-expanded="isExpanded"
+          :aria-label="`Show ${row.members.length} Providers for ${row.upstreamModelId}`"
+          @click="toggleExpanded"
+        >
+          <ChevronRight :size="15" aria-hidden="true" />
+        </button>
+        <span class="model-table__group-logos">
+          <ProviderLogo
+            v-for="model in row.members"
+            :key="model.id"
+            :logo="providerById.get(model.providerId)?.logo ?? null"
+            :name="providerName(model)"
+            :base-url="providerById.get(model.providerId)?.baseUrl ?? ''"
+          />
+        </span>
+        <span class="model-table__name">
+          <strong>{{ groupName(row) ?? row.upstreamModelId }}</strong>
+          <span v-if="groupName(row) !== null" class="cell-note model-table__id">{{
+            row.upstreamModelId
+          }}</span>
+          <span class="cell-note">{{ row.members.length }} Providers</span>
+        </span>
+      </div>
+      <div v-else class="table-entity model-table__entity">
         <ProviderLogo
-          v-if="!provider && providerById.get(model.providerId)"
-          :logo="providerById.get(model.providerId)?.logo ?? null"
-          :name="providerName(model)"
-          :base-url="providerById.get(model.providerId)?.baseUrl ?? ''"
+          v-if="!provider && providerById.get(row.providerId)"
+          :logo="providerById.get(row.providerId)?.logo ?? null"
+          :name="providerName(row)"
+          :base-url="providerById.get(row.providerId)?.baseUrl ?? ''"
         />
         <span class="model-table__name">
           <button
             class="model-table__open"
             type="button"
-            :title="upstreamModelLabel(model)"
-            @click="openDialog({ kind: 'details', upstreamModel: model })"
+            :title="upstreamModelLabel(row)"
+            @click="openDialog({ kind: 'details', upstreamModel: row })"
           >
-            {{ model.name ?? model.upstreamModelId }}
+            {{ row.name ?? row.upstreamModelId }}
           </button>
-          <span v-if="model.name !== null" class="cell-note model-table__id">{{
-            model.upstreamModelId
+          <span v-if="row.name !== null" class="cell-note model-table__id">{{
+            row.upstreamModelId
           }}</span>
           <NuxtLink
             v-if="!provider"
             class="cell-note"
-            :to="`/providers/${model.providerId}?tab=models`"
-            >{{ providerName(model) }}</NuxtLink
+            :to="`/providers/${row.providerId}?tab=models`"
+            >{{ providerName(row) }}</NuxtLink
           >
         </span>
       </div>
     </template>
-    <template #cell-capabilities="{ row: model }">
-      <span class="capability-icons" role="img" :aria-label="capabilitySummary(model)">
+    <template #cell-capabilities="{ row }">
+      <span
+        class="capability-icons"
+        role="img"
+        :aria-label="capabilitySummary(rowCapabilities(row))"
+      >
         <span
           v-for="capability in CAPABILITIES"
           :key="capability"
           class="capability-icons__item"
           :class="{
-            'capability-icons__item--on': model.capabilities.includes(capability),
+            'capability-icons__item--on': rowCapabilities(row).includes(capability),
           }"
           :title="
-            model.capabilities.includes(capability)
+            rowCapabilities(row).includes(capability)
               ? CAPABILITY_LABELS[capability]
               : `No ${CAPABILITY_LABELS[capability].toLowerCase()}`
           "
@@ -653,58 +836,76 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         /></span>
       </span>
     </template>
-    <template #cell-context="{ row: model }">
-      {{ tokenFormat.format(model.contextSize) }}
+    <template #cell-context="{ row }">
+      <template v-if="isUpstreamModelGroup(row)">{{
+        groupTokenRange(row, "contextSize")
+      }}</template>
+      <template v-else>{{ tokenFormat.format(row.contextSize) }}</template>
     </template>
-    <template #cell-maxOutput="{ row: model }">
-      {{ model.maxOutputTokens === null ? "—" : tokenFormat.format(model.maxOutputTokens) }}
+    <template #cell-maxOutput="{ row }">
+      <template v-if="isUpstreamModelGroup(row)">{{
+        groupTokenRange(row, "maxOutputTokens")
+      }}</template>
+      <template v-else>{{
+        row.maxOutputTokens === null ? "—" : tokenFormat.format(row.maxOutputTokens)
+      }}</template>
     </template>
-    <template #cell-inputPrice="{ row: model }">
-      <strong>{{ formatPrice(model.inputPrice) }}</strong>
-      <span v-if="model.cacheReadPrice !== null" class="cell-note" title="Cache read">{{
-        formatPrice(model.cacheReadPrice)
-      }}</span>
+    <template #cell-inputPrice="{ row }">
+      <strong v-if="isUpstreamModelGroup(row)">{{ groupPriceRange(row, "inputPrice") }}</strong>
+      <template v-else>
+        <strong>{{ formatPrice(row.inputPrice) }}</strong>
+        <span v-if="row.cacheReadPrice !== null" class="cell-note" title="Cache read">{{
+          formatPrice(row.cacheReadPrice)
+        }}</span>
+      </template>
     </template>
-    <template #cell-outputPrice="{ row: model }">
-      <strong>{{ formatPrice(model.outputPrice) }}</strong>
-      <span v-if="model.cacheWritePrice !== null" class="cell-note" title="Cache write">{{
-        formatPrice(model.cacheWritePrice)
-      }}</span>
+    <template #cell-outputPrice="{ row }">
+      <strong v-if="isUpstreamModelGroup(row)">{{ groupPriceRange(row, "outputPrice") }}</strong>
+      <template v-else>
+        <strong>{{ formatPrice(row.outputPrice) }}</strong>
+        <span v-if="row.cacheWritePrice !== null" class="cell-note" title="Cache write">{{
+          formatPrice(row.cacheWritePrice)
+        }}</span>
+      </template>
     </template>
-    <template #cell-released="{ row: model }">{{ model.releaseDate ?? "—" }}</template>
-    <template #cell-status="{ row: model }">
+    <template #cell-released="{ row }">{{
+      isUpstreamModelGroup(row) ? groupReleaseRange(row) : (row.releaseDate ?? "—")
+    }}</template>
+    <!-- A group row has no status or actions of its own: its Providers' rows do. -->
+    <template #cell-status="{ row }">
       <span
+        v-if="!isUpstreamModelGroup(row)"
         class="status-badge"
-        :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-        >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
+        :class="row.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+        >{{ row.isEnabled ? "Enabled" : "Disabled" }}</span
       >
     </template>
-    <template #cell-actions="{ row: model }">
-      <div class="row-actions provider-table__actions">
+    <template #cell-actions="{ row }">
+      <div v-if="!isUpstreamModelGroup(row)" class="row-actions provider-table__actions">
         <button
           class="icon-action"
           type="button"
-          :aria-label="`Edit ${upstreamModelLabel(model)}`"
+          :aria-label="`Edit ${upstreamModelLabel(row)}`"
           title="Edit"
-          @click="openDialog({ kind: 'edit', upstreamModel: model })"
+          @click="openDialog({ kind: 'edit', upstreamModel: row })"
         >
           <Pencil :size="14" />
         </button>
         <button
           class="icon-action"
           type="button"
-          :aria-label="`${model.isEnabled ? 'Disable' : 'Enable'} ${upstreamModelLabel(model)}`"
-          :title="model.isEnabled ? 'Disable' : 'Enable'"
-          @click="toggleUpstreamModel(model)"
+          :aria-label="`${row.isEnabled ? 'Disable' : 'Enable'} ${upstreamModelLabel(row)}`"
+          :title="row.isEnabled ? 'Disable' : 'Enable'"
+          @click="toggleUpstreamModel(row)"
         >
           <Power :size="14" />
         </button>
         <button
           class="icon-action icon-action--danger"
           type="button"
-          :aria-label="`Delete ${upstreamModelLabel(model)}`"
+          :aria-label="`Delete ${upstreamModelLabel(row)}`"
           title="Delete"
-          @click="openDialog({ kind: 'delete', upstreamModel: model })"
+          @click="openDialog({ kind: 'delete', upstreamModel: row })"
         >
           <Trash2 :size="14" />
         </button>

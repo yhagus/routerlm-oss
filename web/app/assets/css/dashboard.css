@@ -4000,6 +4000,27 @@ svg.lucide {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.model-table__expander {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-left: -6px;
+}
+.model-table__expander svg {
+  transition: transform 0.2s;
+}
+.model-table__expander[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+/* A group's Provider marks overlap, like a stack of cards. */
+.model-table__group-logos {
+  display: flex;
+  flex: none;
+}
+.model-table__group-logos .provider-mark + .provider-mark {
+  margin-left: -12px;
+  box-shadow: 0 0 0 2px var(--panel);
+}
 .model-table__row--off .model-table__entity,
 .model-table__row--off .model-table__fades {
   opacity: 0.55;
@@ -4420,6 +4441,10 @@ svg.lucide {
 /* The paginator sits in the toolbar; on phones it moves here, under the rows. */
 .data-table__footer {
   display: none;
+}
+/* A sub-row sits under its expanded row, indented so the hierarchy reads. */
+.data-table__sub-row > td:first-child {
+  padding-left: 52px;
 }
 .data-table__retry {
   margin-top: 8px;
