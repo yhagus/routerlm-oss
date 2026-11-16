@@ -63,12 +63,16 @@ export function niceTicks(max: number, count = 4) {
   return { ticks, max: top };
 }
 
-/** Evenly spaced indices for x-axis labels, always including the last point. */
+/**
+ * Evenly spaced indices for x-axis labels, always including the last point.
+ * The last point sits at least one step after the tick before it, so their
+ * labels don't overlap.
+ */
 export function tickIndices(length: number, target = 6) {
   if (length <= target) return Array.from({ length }, (_, index) => index);
   const step = Math.ceil((length - 1) / (target - 1));
   const indices: number[] = [];
-  for (let index = 0; index < length - step / 2; index += step) indices.push(index);
+  for (let index = 0; index <= length - 1 - step; index += step) indices.push(index);
   indices.push(length - 1);
   return indices;
 }
