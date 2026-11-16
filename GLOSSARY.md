@@ -29,7 +29,7 @@ A sign-in to a Provider that a User grants the gateway, which the gateway keeps 
 _Avoid_: Token, session, OAuth account
 
 **Subscription Provider**:
-A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code or MiniMax M Plan. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot or MiniMax API.
+A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code, MiniMax M Plan or OpenAI Codex. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot, MiniMax API or OpenAI.
 _Avoid_: Coding plan, token plan, membership
 
 **Quota Meter**:
@@ -51,6 +51,10 @@ _Avoid_: Launch date, published date, last updated
 **Capability**:
 Something an Upstream Model can do that a request may need, such as vision, tools, reasoning or structured output.
 _Avoid_: Feature, modality
+
+**Service Tier**:
+The speed or priority class an Attempt asks a Provider for, such as fast or flex, which can cost more money or quota than the default. Each Provider accepts its own set of Service Tiers, or none.
+_Avoid_: Fast mode, priority, speed mode
 
 **Cooldown**:
 A period during which a Provider Account is skipped because it recently failed.

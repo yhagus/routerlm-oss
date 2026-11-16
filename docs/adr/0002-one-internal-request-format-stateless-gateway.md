@@ -13,3 +13,4 @@ Clients can call the gateway in three Protocols (OpenAI Chat Completions, Anthro
 - Stateful Responses features (`store`, `previous_response_id`, stored conversations) are rejected with a 400. Supporting them would mean storing prompts and responses, which ADR 0004 forbids.
 - Request fields the gateway doesn't know are dropped without an error, because passing them through breaks when Fallback changes Protocol.
 - Adding a client or upstream Protocol means writing one converter and touching nothing else.
+- OpenAI Responses became an upstream Protocol too, for OpenAI Codex (ADR 0013). Its upstream converter always sends `store: false`, so the gateway stays stateless on that side as well.
