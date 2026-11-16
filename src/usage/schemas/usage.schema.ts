@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
@@ -37,6 +38,8 @@ export const usageFilterSchema = z.object({
   apiKeyId: commaSeparated(z.uuid()).optional(),
   /** Any of these statuses. */
   status: commaSeparated(z.enum(USAGE_STATUSES)).optional(),
+  /** Served at any of these Service Tiers. */
+  serviceTier: commaSeparated(z.enum(SERVICE_TIERS)).optional(),
   /**
    * true: only the Playground's requests; false: only client applications'.
    * Alongside `apiKeyId`, true widens the match to the Playground's requests too.

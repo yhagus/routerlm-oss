@@ -149,6 +149,21 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
     ]);
   });
 
+  it("filters on the served Service Tier, in the list and its totals", async () => {
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, serviceTier: "fast" },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, serviceTier: "flex" },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId },
+    ]);
+
+    const response = await getUsage("?serviceTier=fast").expect(200);
+    const summary = await getUsage("/totals?serviceTier=fast,flex").expect(200);
+
+    expect(response.body.items).toEqual([expect.objectContaining({ serviceTier: "fast" })]);
+    expect(summary.body).toEqual(expect.objectContaining({ requestCount: 2 }));
+  });
+
   it("matches any of several Models and any of several statuses", async () => {
     const [{ id: cheapId }] = await db
       .insert(models)
@@ -265,6 +280,7 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
   it("refuses a list with an element that is not a valid value", async () => {
     await getUsage(`?modelId=${smartId},not-a-uuid`).expect(400);
     await getUsage("/totals?status=failed,,cancelled").expect(400);
+    await getUsage("?serviceTier=fast,priority").expect(400);
   });
 
   it("refuses a page size over the limit", async () => {
