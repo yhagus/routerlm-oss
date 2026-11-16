@@ -3,6 +3,7 @@ import { ShieldCheck } from "@lucide/vue";
 import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
 import { dateTimeFormat } from "~/lib/dateFormats";
 import {
+  clientOutcome,
   failedHopLabel,
   type ErrorCapturePage,
   type ErrorCaptureSummary,
@@ -84,9 +85,9 @@ const columns: DataTableColumn<ErrorCaptureSummary>[] = [
         {{ capture.isPlayground ? "Playground" : (capture.apiKeyName ?? "—") }}
       </template>
       <template #cell-clientGot="{ row: capture }">
-        <span class="status-badge status-badge--bad"
-          >{{ capture.errorCode ?? "error" }} · {{ capture.httpStatus }}</span
-        >
+        <span :class="['status-badge', clientOutcome(capture).badgeClass]">{{
+          clientOutcome(capture).label
+        }}</span>
       </template>
       <template #cell-actions="{ row: capture }">
         <NuxtLink class="row-action" :to="`/error-captures/${capture.id}`">View</NuxtLink>

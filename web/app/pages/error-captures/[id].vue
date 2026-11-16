@@ -4,6 +4,7 @@ import { isNotFound } from "~/lib/errors";
 
 import {
   attemptOutcomeLabel,
+  clientOutcome,
   type ErrorCaptureDetail,
   failedHopLabel,
   readableBody,
@@ -59,9 +60,9 @@ const attemptHop = computed(() =>
             <div>
               <dt>Client got</dt>
               <dd>
-                <span class="status-badge status-badge--bad"
-                  >{{ capture.errorCode ?? "error" }} · {{ capture.httpStatus }}</span
-                >
+                <span :class="['status-badge', clientOutcome(capture).badgeClass]">{{
+                  clientOutcome(capture).label
+                }}</span>
               </dd>
             </div>
             <div>

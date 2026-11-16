@@ -77,6 +77,23 @@ export function attemptOutcomeLabel(
     : `${reason} · HTTP ${hop.upstreamStatus}`;
 }
 
+/**
+ * What the client received, as a badge. A captured Attempt that Fallback
+ * recovered from leaves the client with a success, which is not an error.
+ */
+export function clientOutcome(capture: Pick<ErrorCaptureSummary, "httpStatus" | "errorCode">): {
+  label: string;
+  badgeClass: "status-badge--good" | "status-badge--bad";
+} {
+  if (capture.errorCode === null && capture.httpStatus < 400) {
+    return { label: `Recovered · ${capture.httpStatus}`, badgeClass: "status-badge--good" };
+  }
+  return {
+    label: `${capture.errorCode ?? "error"} · ${capture.httpStatus}`,
+    badgeClass: "status-badge--bad",
+  };
+}
+
 /** A JSON body indented for reading; any other text (a truncated body, HTML) as it is. */
 export function readableBody(body: string): string {
   try {
