@@ -28,6 +28,7 @@ export class ListUsageLogsHandler implements IQueryHandler<ListUsageLogsQuery> {
           isStreamed: usageLogs.isStreamed,
           httpStatus: usageLogs.httpStatus,
           errorCode: usageLogs.errorCode,
+          serviceTier: usageLogs.serviceTier,
           inputTokens: usageLogs.inputTokens,
           outputTokens: usageLogs.outputTokens,
           cacheReadTokens: usageLogs.cacheReadTokens,

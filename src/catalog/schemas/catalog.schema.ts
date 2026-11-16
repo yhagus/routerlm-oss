@@ -6,10 +6,12 @@ import {
   type KimiCodeOauthLogin,
   type OpenAiCodexOauthLogin,
   QUOTA_READERS,
+  type ServiceTierValues,
+  type TierPrices,
   UPSTREAM_PROTOCOLS,
   type UpstreamProtocol,
 } from "@/db/schemas/index.js";
-import { REASONING_EFFORTS } from "@/inference/models/internal-format.js";
+import { REASONING_EFFORTS, SERVICE_TIERS } from "@/inference/models/internal-format.js";
 
 // The shape of one Catalog file: a Provider and the Upstream Models it sells.
 // Field names match the `providers` and `upstream_models` columns.
@@ -180,6 +182,33 @@ const sourceSchema = z.strictObject({
 /** USD per million tokens; null when the Provider doesn't publish it. */
 const priceSchema = z.number().nonnegative().nullable();
 
+/** What the Provider calls each Service Tier on the wire (ADR 0014). */
+export const serviceTierValuesSchema = z
+  .strictObject({ fast: z.string().min(1), flex: z.string().min(1) })
+  .partial() satisfies z.ZodType<ServiceTierValues>;
+
+/** One Service Tier's prices; a price left out is the standard one. */
+const tierPricesSchema = z
+  .strictObject({
+    inputPrice: z.number().nonnegative(),
+    outputPrice: z.number().nonnegative(),
+    cacheReadPrice: z.number().nonnegative(),
+    cacheWritePrice: z.number().nonnegative(),
+  })
+  .partial() satisfies z.ZodType<TierPrices>;
+
+/** The Service Tiers an Upstream Model accepts, each once. */
+export const serviceTiersSchema = z
+  .array(z.enum(SERVICE_TIERS))
+  .refine((tiers) => new Set(tiers).size === tiers.length, {
+    error: "List each Service Tier once",
+  });
+
+/** Prices per Service Tier, for the tiers that cost other than the standard prices. */
+export const serviceTierPricesSchema = z
+  .strictObject({ fast: tierPricesSchema, flex: tierPricesSchema })
+  .partial();
+
 const upstreamModelSchema = z.strictObject({
   upstreamModelId: z.string().min(1),
   // The name the Provider's docs give the model, such as "K2.8 Preview".
@@ -191,6 +220,10 @@ const upstreamModelSchema = z.strictObject({
   outputPrice: priceSchema,
   cacheReadPrice: priceSchema,
   cacheWritePrice: priceSchema,
+  /** None when left out: the model then gets no Service Tier. */
+  serviceTiers: serviceTiersSchema.optional(),
+  /** Only for tiers that cost other than the standard prices. */
+  tierPrices: serviceTierPricesSchema.optional(),
   releaseDate: z.iso.date(),
   source: sourceSchema,
   notes: z.string().optional(),
@@ -210,6 +243,8 @@ export const catalogProviderSchema = z.strictObject({
   baseUrl: z.url(),
   authStyle: z.enum(AUTH_STYLES),
   quirks: providerQuirksSchema,
+  /** Only a Provider with Service Tiers; its Upstream Models list the tiers they accept. */
+  serviceTierValues: serviceTierValuesSchema.optional(),
   /** Subscription Providers only: the code that reads its Quota Meters (ADR 0010). */
   quotaReader: z.enum(QUOTA_READERS).optional(),
   /** Only a Provider a User can sign in to; its Provider Accounts may then hold an OAuth Login. */

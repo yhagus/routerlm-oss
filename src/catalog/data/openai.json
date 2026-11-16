@@ -9,6 +9,10 @@
     "usesMaxCompletionTokens": true,
     "acceptsPromptCacheKey": true
   },
+  "serviceTierValues": {
+    "fast": "priority",
+    "flex": "flex"
+  },
   "source": {
     "urls": [
       "https://developers.openai.com/api/reference/overview",
@@ -17,7 +21,7 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. Chat Completions accepts prompt_cache_key (cache routing before GPT-5.6, cache accounting from GPT-5.6); caching is automatic from 1,024 tokens. Release dates come from models.dev (https://models.dev/). Models added on 2026-11-15 come from models.dev, checked against each model page: Responses-only models (the pro and codex models, the daybreak aliases), models OpenAI marks deprecated, and the gpt-5.6 alias of gpt-5.6-sol are left out.",
+  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. Service Tiers (ADR 0014): fast is sent as service_tier priority (OpenAI renamed Priority processing to Fast mode on 2026-07-30), flex as flex; tierPrices are the short-context Fast and Flex rates from the pricing page, and a price a tier leaves out (cache writes where the page shows none) falls back to the standard one. Chat Completions accepts prompt_cache_key (cache routing before GPT-5.6, cache accounting from GPT-5.6); caching is automatic from 1,024 tokens. Release dates come from models.dev (https://models.dev/). Models added on 2026-11-15 come from models.dev, checked against each model page: Responses-only models (the pro and codex models, the daybreak aliases), models OpenAI marks deprecated, and the gpt-5.6 alias of gpt-5.6-sol are left out.",
   "upstreamModels": [
     {
       "upstreamModelId": "gpt-6-astra",
@@ -29,6 +33,21 @@
       "outputPrice": 50,
       "cacheReadPrice": 1,
       "cacheWritePrice": 12.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 20,
+          "outputPrice": 100,
+          "cacheReadPrice": 2,
+          "cacheWritePrice": 25
+        },
+        "flex": {
+          "inputPrice": 5,
+          "outputPrice": 25,
+          "cacheReadPrice": 0.5,
+          "cacheWritePrice": 6.25
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6-astra",
@@ -49,6 +68,21 @@
       "outputPrice": 10,
       "cacheReadPrice": 0.1,
       "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 20,
+          "cacheReadPrice": 0.2,
+          "cacheWritePrice": 5
+        },
+        "flex": {
+          "inputPrice": 1,
+          "outputPrice": 5,
+          "cacheReadPrice": 0.05,
+          "cacheWritePrice": 1.25
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
@@ -69,6 +103,21 @@
       "outputPrice": 5,
       "cacheReadPrice": 0.05,
       "cacheWritePrice": 1.25,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 2,
+          "outputPrice": 10,
+          "cacheReadPrice": 0.1,
+          "cacheWritePrice": 2.5
+        },
+        "flex": {
+          "inputPrice": 0.5,
+          "outputPrice": 2.5,
+          "cacheReadPrice": 0.025,
+          "cacheWritePrice": 0.625
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
@@ -89,6 +138,21 @@
       "outputPrice": 0.5,
       "cacheReadPrice": 0.01,
       "cacheWritePrice": 0.125,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 0.2,
+          "outputPrice": 1,
+          "cacheReadPrice": 0.02,
+          "cacheWritePrice": 0.25
+        },
+        "flex": {
+          "inputPrice": 0.05,
+          "outputPrice": 0.25,
+          "cacheReadPrice": 0.005,
+          "cacheWritePrice": 0.0625
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-6-luna",
@@ -109,6 +173,21 @@
       "outputPrice": 20,
       "cacheReadPrice": 0.4,
       "cacheWritePrice": 5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 8,
+          "outputPrice": 40,
+          "cacheReadPrice": 0.8,
+          "cacheWritePrice": 10
+        },
+        "flex": {
+          "inputPrice": 2,
+          "outputPrice": 10,
+          "cacheReadPrice": 0.2,
+          "cacheWritePrice": 2.5
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
@@ -129,6 +208,21 @@
       "outputPrice": 12,
       "cacheReadPrice": 0.2,
       "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 24,
+          "cacheReadPrice": 0.4,
+          "cacheWritePrice": 5
+        },
+        "flex": {
+          "inputPrice": 1,
+          "outputPrice": 6,
+          "cacheReadPrice": 0.1,
+          "cacheWritePrice": 1.25
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
@@ -148,6 +242,21 @@
       "outputPrice": 1.2,
       "cacheReadPrice": 0.02,
       "cacheWritePrice": 0.25,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 0.4,
+          "outputPrice": 2.4,
+          "cacheReadPrice": 0.04,
+          "cacheWritePrice": 0.5
+        },
+        "flex": {
+          "inputPrice": 0.1,
+          "outputPrice": 0.6,
+          "cacheReadPrice": 0.01,
+          "cacheWritePrice": 0.125
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
@@ -167,6 +276,21 @@
       "outputPrice": 10,
       "cacheReadPrice": 0.2,
       "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 20,
+          "cacheReadPrice": 0.4,
+          "cacheWritePrice": 5
+        },
+        "flex": {
+          "inputPrice": 1,
+          "outputPrice": 5,
+          "cacheReadPrice": 0.1,
+          "cacheWritePrice": 1.25
+        }
+      },
       "source": {
         "urls": ["https://developers.openai.com/api/docs/models/gpt-6-sol", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
@@ -183,6 +307,19 @@
       "outputPrice": 30,
       "cacheReadPrice": 0.5,
       "cacheWritePrice": 5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 12.5,
+          "outputPrice": 75,
+          "cacheReadPrice": 1.25
+        },
+        "flex": {
+          "inputPrice": 2.5,
+          "outputPrice": 15,
+          "cacheReadPrice": 0.25
+        }
+      },
       "source": {
         "urls": ["https://developers.openai.com/api/docs/models/gpt-5.5", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
@@ -199,6 +336,19 @@
       "outputPrice": 4.5,
       "cacheReadPrice": 0.075,
       "cacheWritePrice": 0.75,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 1.5,
+          "outputPrice": 9,
+          "cacheReadPrice": 0.15
+        },
+        "flex": {
+          "inputPrice": 0.375,
+          "outputPrice": 2.25,
+          "cacheReadPrice": 0.0375
+        }
+      },
       "source": {
         "urls": [
           "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
@@ -218,6 +368,19 @@
       "outputPrice": 15,
       "cacheReadPrice": 0.25,
       "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 5,
+          "outputPrice": 30,
+          "cacheReadPrice": 0.5
+        },
+        "flex": {
+          "inputPrice": 1.25,
+          "outputPrice": 7.5,
+          "cacheReadPrice": 0.13
+        }
+      },
       "source": {
         "urls": ["https://developers.openai.com/api/docs/models/gpt-5.4", "https://models.dev/"],
         "retrievedOn": "2026-11-15"
@@ -234,6 +397,19 @@
       "outputPrice": 14,
       "cacheReadPrice": 0.175,
       "cacheWritePrice": 1.75,
+      "serviceTiers": ["fast", "flex"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 3.5,
+          "outputPrice": 28,
+          "cacheReadPrice": 0.35
+        },
+        "flex": {
+          "inputPrice": 0.875,
+          "outputPrice": 7,
+          "cacheReadPrice": 0.0875
+        }
+      },
       "source": {
         "urls": ["https://developers.openai.com/api/docs/models/gpt-5.2", "https://models.dev/"],
         "retrievedOn": "2026-11-15"

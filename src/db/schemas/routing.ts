@@ -1,6 +1,6 @@
 import { boolean, index, integer, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "./columns.js";
-import type { ReasoningEffort } from "@/inference/models/internal-format.js";
+import type { ReasoningEffort, ServiceTier } from "@/inference/models/internal-format.js";
 import { upstreamModels } from "./upstream.js";
 
 // Routing: the Models the gateway exposes and the Routes that serve them.
@@ -16,10 +16,11 @@ export type ParameterValues = {
   maxOutputTokens?: number;
   reasoningEffort?: ReasoningEffort;
   stopSequences?: string[];
+  serviceTier?: ServiceTier;
 };
 
 /** The parameters with an order, which a cap can bound. */
-export type ParameterCaps = Omit<ParameterValues, "stopSequences">;
+export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier">;
 
 /**
  * What an operator sets on a Model, or overrides on a Route. Every part is

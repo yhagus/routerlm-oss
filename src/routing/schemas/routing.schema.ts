@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 import type { ParameterPolicy } from "@/db/schemas/index.js";
-import { REASONING_EFFORTS, type ReasoningEffort } from "@/inference/models/internal-format.js";
+import {
+  REASONING_EFFORTS,
+  type ReasoningEffort,
+  SERVICE_TIERS,
+} from "@/inference/models/internal-format.js";
 
 // What the dashboard sends to create or change Models and their Routes.
 
@@ -15,6 +19,7 @@ const capSchemas = {
 const parameterValuesSchema = z.strictObject({
   ...capSchemas,
   stopSequences: z.array(z.string().min(1)).min(1),
+  serviceTier: z.enum(SERVICE_TIERS),
 });
 const CAPPED_PARAMETERS = z.object(capSchemas).keyof().options;
 

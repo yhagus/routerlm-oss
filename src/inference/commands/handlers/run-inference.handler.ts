@@ -57,6 +57,7 @@ import {
   type UpstreamCall,
   UpstreamClient,
 } from "../../providers/upstream-client.js";
+import { serviceTierSentTo } from "../../models/service-tier.js";
 import { UsageMeter } from "../../models/usage-meter.js";
 import type { InferenceCaller, InferenceResult, InferenceTarget } from "../../models/inference.js";
 import { RunInferenceCommand } from "../impl/run-inference.command.js";
@@ -293,7 +294,8 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   ): Promise<InferenceResult> {
     const { meter } = options;
     const account = target.providerAccount;
-    meter.attemptStarted(target);
+    const sentServiceTier = serviceTierSentTo(request.serviceTier, target.upstreamModel);
+    meter.attemptStarted(target, sentServiceTier);
     const credential = await this.credentialOf(account);
     meter.credentialUsed(credential.secret);
     try {
@@ -307,7 +309,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
           "refreshing it and trying once more",
       );
       meter.attemptFailed(error);
-      meter.attemptStarted(target);
+      meter.attemptStarted(target, sentServiceTier);
       const renewed = await asAttemptFailure(() =>
         this.credentials.credentialAfterRejection(account.id, credential),
       );
@@ -345,7 +347,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
-      meter.usageReported(response.usage);
+      meter.usageReported(response.usage, response.servedTierValue);
       meter.attemptSucceeded();
       return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
@@ -369,6 +371,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     { cacheKey, clientSignal }: Pick<AttemptOptions, "cacheKey" | "clientSignal">,
   ): UpstreamCall {
     const { provider } = upstreamModel;
+    const sentServiceTier = serviceTierSentTo(request.serviceTier, upstreamModel);
     const converter = UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol];
     if (!converter) {
       // canServe() already skips these Upstream Models.
@@ -383,6 +386,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         quirks: provider.quirks,
         maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
         promptCacheKey: cacheKey,
+        ...(sentServiceTier && { serviceTierValue: sentServiceTier.wireValue }),
       },
       authHeaders: {
         ...credential.identityHeaders,
@@ -410,7 +414,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     try {
       for await (const event of events) {
         if (event.type === "usage") {
-          meter.usageReported(event.usage);
+          meter.usageReported(event.usage, event.servedTierValue);
         }
         yield event;
       }

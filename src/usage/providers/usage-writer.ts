@@ -42,6 +42,7 @@ export class UsageWriter {
           isStreamed: job.isStreamed,
           httpStatus: job.httpStatus,
           errorCode: job.errorCode,
+          serviceTier: job.servedBy?.serviceTier ?? null,
           ...usageMeasurementsOf(job.servedBy, job.usage),
           requestBytes: job.requestBytes,
           responseBytes: job.responseBytes,

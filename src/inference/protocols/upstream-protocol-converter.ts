@@ -28,6 +28,11 @@ export interface UpstreamTarget {
   maxOutputTokens?: number;
   /** Sent only where the Provider's quirks accept a prompt cache key. */
   promptCacheKey?: string;
+  /**
+   * The Service Tier as the Provider spells it, sent as `service_tier`. Unset
+   * when the request asks for none or the Upstream Model doesn't accept it.
+   */
+  serviceTierValue?: string;
 }
 
 /**

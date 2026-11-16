@@ -83,6 +83,9 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   } else if (quirks.forwardsClientPromptCacheKey && request.promptCacheKey !== undefined) {
     body.prompt_cache_key = request.promptCacheKey;
   }
+  if (target.serviceTierValue !== undefined) {
+    body.service_tier = target.serviceTierValue;
+  }
   // Nothing is ever stored upstream: the gateway is stateless (ADR 0002).
   body.store = false;
   const isAnsweredAsStream = request.stream === null && quirks.alwaysStreams === true;
@@ -268,6 +271,7 @@ const responseSchema = z.object({
   incomplete_details: z.object({ reason: z.string().nullish() }).nullish(),
   output: lenientOutputSchema,
   usage: usageSchema.nullish(),
+  service_tier: z.string().nullish(),
 });
 type UpstreamResponse = z.infer<typeof responseSchema>;
 
@@ -283,6 +287,7 @@ function parseResponse(body: unknown): InferenceResponse {
       parsed.data.output.some((item) => item.type === "function_call"),
     ),
     usage: tokenUsageOf(parsed.data.usage ?? undefined),
+    ...(parsed.data.service_tier && { servedTierValue: parsed.data.service_tier }),
   };
 }
 
@@ -471,7 +476,11 @@ class ResponseStreamReader {
           type: "finish",
           stopReason: stopReasonOf(event.response, this.toolIndexes.size > 0),
         };
-        yield { type: "usage", usage: tokenUsageOf(event.response.usage ?? undefined) };
+        yield {
+          type: "usage",
+          usage: tokenUsageOf(event.response.usage ?? undefined),
+          ...(event.response.service_tier && { servedTierValue: event.response.service_tier }),
+        };
         return;
       case "response.failed":
       case "error":

@@ -3,8 +3,11 @@ import type {
   Capability,
   ParameterPolicy,
   ProviderQuirks,
+  ServiceTierValues,
+  TierPrices,
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
+import type { ServiceTier } from "@/inference/models/internal-format.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
 // PostgreSQL query. Disabled rows are kept, with their flags: the inference
@@ -41,6 +44,7 @@ export interface SnapshotProvider {
   baseUrl: string;
   authStyle: AuthStyle;
   quirks: ProviderQuirks;
+  serviceTierValues: ServiceTierValues;
   isEnabled: boolean;
   /** Lowest priority first. */
   providerAccounts: SnapshotProviderAccount[];
@@ -57,6 +61,8 @@ export interface SnapshotUpstreamModel {
   outputPrice: number | null;
   cacheReadPrice: number | null;
   cacheWritePrice: number | null;
+  serviceTiers: ServiceTier[];
+  tierPrices: Partial<Record<ServiceTier, TierPrices>>;
   isEnabled: boolean;
   provider: SnapshotProvider;
 }
