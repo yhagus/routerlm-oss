@@ -17,19 +17,19 @@
 
 ## Why RouterLM
 
-Your tools speak OpenAI or Anthropic. Your keys are spread over Anthropic, OpenAI, DeepSeek, Moonshot, MiniMax, Alibaba and a couple of coding plans. RouterLM sits in between:
+Your tools speak OpenAI or Anthropic. You keep keys at Anthropic, OpenAI, DeepSeek, Moonshot, MiniMax, Alibaba and a couple of coding plans. RouterLM sits between your tools and those providers:
 
 - **One key per app.** Cursor, Claude Code, your CI and your internal tools each get their own `rlm_…` API Key, limited to the Models you allow.
 - **Automatic fallback.** A Model is an ordered list of Routes. A rate limit, a 5xx or a timeout moves the request to the next Route, and the failing account rests in Cooldown.
 - **Subscription plans, used to the last token.** Kimi Code and MiniMax M Plan accounts show their quota meters. RouterLM skips an exhausted account until its quota resets.
-- **Know what every request cost.** Tokens, cache reads and writes, latency, time to first token and USD cost for each request, per key and per Model.
+- **Know what every request cost.** RouterLM records tokens, cache reads and writes, latency, time to first token and USD cost for each request. You can view them per key and per Model.
 - **Debug failures without logging prompts.** RouterLM never stores prompt or response content. It keeps only failed requests, as Error Captures with credentials redacted, for 30 days.
 
 ## Features
 
 ### Three client protocols, any upstream
 
-Clients call `/v1/chat/completions`, `/v1/messages` or `/v1/responses`. RouterLM converts every request to one internal format. It then sends the request to an OpenAI Chat or Anthropic Messages upstream, streamed or not. A Claude Code session can run on Kimi, and an OpenAI SDK app can run on Claude.
+Clients call `/v1/chat/completions`, `/v1/messages` or `/v1/responses`. RouterLM converts every request to one internal format. It then sends the request to an OpenAI Chat or Anthropic Messages upstream, with or without streaming. A Claude Code session can run on Kimi, and an OpenAI SDK app can run on Claude.
 
 ### Models and Routes
 
@@ -56,7 +56,7 @@ The Catalog ships Alibaba Model Studio Intl, Anthropic, DeepSeek, Kimi Code, Min
   <img alt="Usage page with totals, filters and a per-request table, dark theme" src="docs/images/usage-dark.png" width="49%" />
 </p>
 
-Every request is a Usage Log with its Attempts. Filter by Model, API Key or status, search by text, and keep the view in the URL to share it.
+RouterLM records every request as a Usage Log with its Attempts. You can filter by Model, API Key or status, and search by text. The URL keeps the current view, so you can share it.
 
 ### Playground
 
@@ -65,7 +65,7 @@ Every request is a Usage Log with its Attempts. Filter by Model, API Key or stat
   <img alt="Playground showing the Routes of the &quot;coder&quot; Model, dark theme" src="docs/images/playground-dark.png" width="49%" />
 </p>
 
-Send a request through a Model exactly as a client would, or straight to one upstream model, and copy the matching code snippet.
+Send a request through a Model exactly as a client does, or send it directly to one upstream model. Then copy the matching code snippet.
 
 ### Client docs
 
@@ -74,7 +74,7 @@ Send a request through a Model exactly as a client would, or straight to one ups
   <img alt="The Chat Completions page of the client docs, dark theme" src="docs/images/docs-dark.png" width="49%" />
 </p>
 
-The web app serves public client documentation at `/docs` (English) and `/id/docs` (Indonesian), with no sign-in. Each page covers one endpoint with copyable curl and TypeScript requests that use your gateway's URL, and the docs are searchable with ⌘K.
+The web app serves public client docs at `/docs` (English) and `/id/docs` (Indonesian). Readers do not need to sign in. Each page covers one endpoint, with curl and TypeScript requests that use your gateway's URL. Readers can copy each request, and search all pages with ⌘K.
 
 ## Quick start
 
@@ -107,7 +107,7 @@ export ANTHROPIC_BASE_URL=http://localhost:3000
 export ANTHROPIC_AUTH_TOKEN=$RLM_API_KEY
 ```
 
-The dashboard has full client documentation at http://localhost:3001/docs.
+The web app serves the full client docs at http://localhost:3001/docs.
 
 > [!IMPORTANT]
 > Back up `ENCRYPTION_KEY`. RouterLM encrypts Provider Account keys with it (AES-256-GCM). Without it, nobody can read those keys.
@@ -131,11 +131,11 @@ clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
 | `redis`   | BullMQ queues between backend and worker.                           |
 | `migrate` | One-shot: applies migrations and seeds the Catalog on every `up`.   |
 
-The domain terms (Model, Route, Provider Account, Cooldown, Exhausted…) are defined in [GLOSSARY.md](GLOSSARY.md). Design decisions are in [docs/adr/](docs/adr/).
+[GLOSSARY.md](GLOSSARY.md) defines the domain terms (Model, Route, Provider Account, Cooldown, Exhausted…). [docs/adr/](docs/adr/) records the design decisions.
 
 ## Configuration
 
-Everything has a development default in `docker-compose.yml`. Override values in `.env` (see [.env.example](.env.example)):
+Every variable has a development default in `docker-compose.yml`. Set your own values in `.env` (see [.env.example](.env.example)):
 
 | Variable                       | Default   | Purpose                                         |
 | ------------------------------ | --------- | ----------------------------------------------- |
@@ -144,7 +144,7 @@ Everything has a development default in `docker-compose.yml`. Override values in
 | `NUXT_PUBLIC_GATEWAY_URL`      | browser host, port `3000` | Gateway base URL shown in the `/docs` examples. |
 | `BACKEND_PORT` / `WEB_PORT`    | `3000` / `3001` | Host ports.                               |
 | `DB_PORT` / `REDIS_PORT`       | `5432` / `6379` | Host ports.                               |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `routerlm` | Applied when the db volume is first created. |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `routerlm` | Postgres uses them only when it first creates the db volume. |
 
 ## Development
 
@@ -161,7 +161,7 @@ There are no unit tests. Every test is a feature test in `tests/<feature>/`. It 
 
 ### Database
 
-The schema lives in `src/db/schemas/`. After changing it, generate and apply a migration:
+The schema lives in `src/db/schemas/`. After you change it, generate and apply a migration:
 
 ```bash
 docker compose exec backend bun run db:generate
@@ -170,7 +170,7 @@ docker compose exec backend bun run db:migrate
 
 ### Catalog
 
-The Catalog is one JSON file per Provider in `src/catalog/data/`. The seeder only creates missing rows, so dashboard edits survive and it is safe to run again (`bun run db:seed`). When you update a file:
+The Catalog is one JSON file per Provider in `src/catalog/data/`. The seeder (`bun run db:seed`) only creates missing rows. It keeps your dashboard edits, and you can run it again safely. When you update a file:
 
 - Take model ids, capabilities, context sizes and prices (USD per million tokens) from the Provider's own docs and pricing pages.
 - Put those page URLs and the date you read them in `source`.
@@ -179,7 +179,9 @@ The Catalog is one JSON file per Provider in `src/catalog/data/`. The seeder onl
 
 ### Demo data for screenshots
 
-`bun run db:seed:demo` fills a database with a fictional install (Provider Accounts with fake keys, Models, API Keys and a week of traffic) for re-capturing the dashboard screenshots. It truncates every table first, so it only runs when the database name ends in `_demo`. Create and fill one, then point the stack at it and sign in as `admin@example.com` / `routerlm-demo`:
+`bun run db:seed:demo` fills a database with a fictional install: Provider Accounts with fake keys, Models, API Keys and a week of traffic. Use it to capture the dashboard screenshots again. The script empties every table first, so it runs only when the database name ends in `_demo`.
+
+Create and fill a demo database, then start the stack on it. Sign in as `admin@example.com` with the password `routerlm-demo`:
 
 ```bash
 docker compose exec db createdb -U routerlm routerlm_demo
