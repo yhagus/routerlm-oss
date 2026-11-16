@@ -211,8 +211,9 @@ export const serviceTierPricesSchema = z
 
 const upstreamModelSchema = z.strictObject({
   upstreamModelId: z.string().min(1),
-  // The name the Provider's docs give the model, such as "K2.8 Preview".
-  name: z.string().min(1).optional(),
+  // The name the Provider's docs give the model, such as "K2.8 Preview". Every
+  // Catalog model has one, so the dashboard never falls back to the bare id.
+  name: z.string().min(1),
   capabilities: z.array(z.enum(CAPABILITIES)),
   contextSize: z.int().positive(),
   maxOutputTokens: z.int().positive().nullable(),

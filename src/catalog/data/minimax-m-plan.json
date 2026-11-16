@@ -23,6 +23,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "MiniMax-M3.1-Flash",
+      "name": "MiniMax-M3.1-Flash",
       "releaseDate": "2026-10-19",
       "capabilities": ["vision", "tools", "reasoning"],
       "contextSize": 524288,
@@ -43,6 +44,7 @@
     },
     {
       "upstreamModelId": "MiniMax-M3",
+      "name": "MiniMax-M3",
       "releaseDate": "2026-06-01",
       "capabilities": ["vision", "tools", "reasoning"],
       "contextSize": 524288,
@@ -59,6 +61,7 @@
     },
     {
       "upstreamModelId": "MiniMax-M2.7",
+      "name": "MiniMax-M2.7",
       "releaseDate": "2026-03-18",
       "capabilities": ["tools", "reasoning"],
       "contextSize": 204800,
@@ -75,6 +78,7 @@
     },
     {
       "upstreamModelId": "MiniMax-M2.7-highspeed",
+      "name": "MiniMax-M2.7-highspeed",
       "releaseDate": "2026-03-18",
       "capabilities": ["tools", "reasoning"],
       "contextSize": 204800,

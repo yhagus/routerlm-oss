@@ -14,6 +14,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "claude-fable-5-2",
+      "name": "Claude Fable 5.2",
       "releaseDate": "2026-11-09",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -35,6 +36,7 @@
     },
     {
       "upstreamModelId": "claude-opus-5-5",
+      "name": "Claude Opus 5.5",
       "releaseDate": "2026-09-22",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -56,6 +58,7 @@
     },
     {
       "upstreamModelId": "claude-sonnet-5-5",
+      "name": "Claude Sonnet 5.5",
       "releaseDate": "2026-09-28",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -77,6 +80,7 @@
     },
     {
       "upstreamModelId": "claude-haiku-5-5",
+      "name": "Claude Haiku 5.5",
       "releaseDate": "2026-10-07",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -98,6 +102,7 @@
     },
     {
       "upstreamModelId": "claude-fable-5-1",
+      "name": "Claude Fable 5.1",
       "releaseDate": "2026-09-01",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -118,6 +123,7 @@
     },
     {
       "upstreamModelId": "claude-opus-5",
+      "name": "Claude Opus 5",
       "releaseDate": "2026-07-24",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -138,6 +144,7 @@
     },
     {
       "upstreamModelId": "claude-sonnet-5",
+      "name": "Claude Sonnet 5",
       "releaseDate": "2026-06-29",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -158,6 +165,7 @@
     },
     {
       "upstreamModelId": "claude-opus-4-8",
+      "name": "Claude Opus 4.8",
       "releaseDate": "2026-05-28",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -178,6 +186,7 @@
     },
     {
       "upstreamModelId": "claude-fable-5",
+      "name": "Claude Fable 5",
       "releaseDate": "2026-06-07",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -193,6 +202,7 @@
     },
     {
       "upstreamModelId": "claude-opus-4-7",
+      "name": "Claude Opus 4.7",
       "releaseDate": "2026-04-14",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -208,6 +218,7 @@
     },
     {
       "upstreamModelId": "claude-sonnet-4-6",
+      "name": "Claude Sonnet 4.6",
       "releaseDate": "2026-02-17",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -223,6 +234,7 @@
     },
     {
       "upstreamModelId": "claude-opus-4-6",
+      "name": "Claude Opus 4.6",
       "releaseDate": "2026-02-04",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -238,6 +250,7 @@
     },
     {
       "upstreamModelId": "claude-opus-4-5",
+      "name": "Claude Opus 4.5",
       "releaseDate": "2025-11-24",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 200000,
@@ -253,6 +266,7 @@
     },
     {
       "upstreamModelId": "claude-haiku-4-5",
+      "name": "Claude Haiku 4.5",
       "releaseDate": "2025-10-15",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 200000,

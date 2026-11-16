@@ -61,7 +61,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             entry.upstreamModels.map((model) => ({
               providerId: provider.id,
               upstreamModelId: model.upstreamModelId,
-              name: model.name ?? null,
+              name: model.name,
               capabilities: model.capabilities,
               contextSize: model.contextSize,
               maxOutputTokens: model.maxOutputTokens,
@@ -88,7 +88,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
           await tx
             .update(upstreamModels)
             .set({
-              name: sql`coalesce(${upstreamModels.name}, ${model.name ?? null}::text)`,
+              name: sql`coalesce(${upstreamModels.name}, ${model.name}::text)`,
               releaseDate: sql`coalesce(${upstreamModels.releaseDate}, ${model.releaseDate}::date)`,
               maxOutputTokens: sql`coalesce(${upstreamModels.maxOutputTokens}, ${model.maxOutputTokens}::integer)`,
               inputPrice: fillPrice(upstreamModels.inputPrice, model.inputPrice),

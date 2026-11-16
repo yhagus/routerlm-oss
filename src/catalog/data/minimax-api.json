@@ -20,6 +20,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "MiniMax-M3.1-Flash",
+      "name": "MiniMax-M3.1-Flash",
       "releaseDate": "2026-10-19",
       "capabilities": ["vision", "tools", "reasoning"],
       "contextSize": 1000000,
@@ -40,6 +41,7 @@
     },
     {
       "upstreamModelId": "MiniMax-M3",
+      "name": "MiniMax-M3",
       "releaseDate": "2026-06-01",
       "capabilities": ["vision", "tools", "reasoning"],
       "contextSize": 1000000,

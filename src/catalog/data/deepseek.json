@@ -19,6 +19,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "deepseek-flash",
+      "name": "DeepSeek V4.1 Flash 1017",
       "releaseDate": "2026-10-17",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1000000,
@@ -35,6 +36,7 @@
     },
     {
       "upstreamModelId": "deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
       "releaseDate": "2026-08-13",
       "capabilities": ["tools", "reasoning", "structured-output"],
       "contextSize": 1000000,

@@ -14,6 +14,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "mimo-v2.6-flash",
+      "name": "MiMo-V2.6-Flash",
       "releaseDate": "2026-09-22",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
@@ -30,6 +31,7 @@
     },
     {
       "upstreamModelId": "mimo-v2.6-pro",
+      "name": "MiMo-V2.6-Pro",
       "releaseDate": "2026-09-22",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
@@ -46,6 +48,7 @@
     },
     {
       "upstreamModelId": "mimo-v2.6-pro-ultraspeed",
+      "name": "MiMo-V2.6-Pro-UltraSpeed",
       "releaseDate": "2026-09-21",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,

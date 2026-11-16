@@ -36,6 +36,7 @@
   "upstreamModels": [
     {
       "upstreamModelId": "gpt-6-astra",
+      "name": "GPT-6 Astra",
       "releaseDate": "2026-09-04",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 500000,
@@ -70,6 +71,7 @@
     },
     {
       "upstreamModelId": "gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
       "releaseDate": "2026-09-29",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 500000,
@@ -104,6 +106,7 @@
     },
     {
       "upstreamModelId": "gpt-6.1-terra",
+      "name": "GPT-6.1 Terra",
       "releaseDate": "2026-10-26",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 500000,
@@ -138,6 +141,7 @@
     },
     {
       "upstreamModelId": "gpt-6-sol",
+      "name": "GPT-6 Sol",
       "releaseDate": "2026-09-22",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 272000,
@@ -171,6 +175,7 @@
     },
     {
       "upstreamModelId": "gpt-6-luna",
+      "name": "GPT-6 Luna",
       "releaseDate": "2026-09-22",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 272000,
@@ -205,6 +210,7 @@
     },
     {
       "upstreamModelId": "gpt-5.6-sol",
+      "name": "GPT-5.6 Sol",
       "releaseDate": "2026-07-09",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 272000,
@@ -239,6 +245,7 @@
     },
     {
       "upstreamModelId": "gpt-5.6-terra",
+      "name": "GPT-5.6 Terra",
       "releaseDate": "2026-07-09",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 272000,
@@ -273,6 +280,7 @@
     },
     {
       "upstreamModelId": "gpt-5.6-luna",
+      "name": "GPT-5.6 Luna",
       "releaseDate": "2026-07-09",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 272000,
@@ -307,6 +315,7 @@
     },
     {
       "upstreamModelId": "gpt-5.5",
+      "name": "GPT-5.5",
       "releaseDate": "2026-04-23",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 272000,

@@ -46,6 +46,7 @@ const catalog: CatalogProvider[] = [
       },
       {
         upstreamModelId: "example-small",
+        name: "Example Small",
         capabilities: [],
         contextSize: 32000,
         maxOutputTokens: null,
@@ -124,7 +125,7 @@ describe("Seed Catalog command (e2e)", () => {
       },
       {
         upstreamModelId: "example-small",
-        name: null,
+        name: "Example Small",
         inputPrice: null,
         maxOutputTokens: null,
         releaseDate: "2025-09-15",
