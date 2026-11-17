@@ -78,12 +78,14 @@ The web app serves public client docs at `/docs` (English) and `/id/docs` (Indon
 
 ## Quick start
 
-You need Docker with Compose.
+You need Docker with Compose. No clone: each release publishes the images `ghcr.io/yhagus/routerlm-backend` and `ghcr.io/yhagus/routerlm-web` (amd64 and arm64) and a `compose.yaml` that runs them.
 
 ```bash
-git clone https://github.com/yhagus/routerlm-oss.git
-cd routerlm-oss
-sed "s|^ENCRYPTION_KEY=$|ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env.example > .env
+mkdir routerlm && cd routerlm
+curl -LO https://github.com/yhagus/routerlm-oss/releases/latest/download/compose.yaml
+curl -L https://github.com/yhagus/routerlm-oss/releases/latest/download/env.example \
+  | sed -e "s|^ENCRYPTION_KEY=$|ENCRYPTION_KEY=$(openssl rand -base64 32)|" \
+        -e "s|^POSTGRES_PASSWORD=$|POSTGRES_PASSWORD=$(openssl rand -hex 16)|" > .env
 docker compose up -d
 ```
 
@@ -112,6 +114,32 @@ The web app serves the full client docs at http://localhost:3001/docs.
 > [!IMPORTANT]
 > Back up `ENCRYPTION_KEY`. RouterLM encrypts Provider Account keys with it (AES-256-GCM). Without it, nobody can read those keys.
 
+The stack publishes the gateway on port 3000 and the dashboard on 3001, over plain HTTP. Put your own reverse proxy with TLS in front of them, and set `WEB_ORIGIN` to the dashboard's public URL.
+
+### Upgrading
+
+The `compose.yaml` of a release runs that release's images. To upgrade, set `ROUTERLM_VERSION` in `.env` to the new version (or download the new release's `compose.yaml`), read its [CHANGELOG](CHANGELOG.md) entry, then:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+The `migrate` service applies new migrations and Catalog rows on start.
+
+### Moving an install made from a clone
+
+Earlier releases installed by running the development stack from a clone of this repo. `compose.yaml` uses the same project name (`routerlm-oss`) and volume names, so it keeps that install's data. In the clone's folder, with its `.env`:
+
+```bash
+docker compose down                      # stops the old stack; volumes stay
+curl -LO https://github.com/yhagus/routerlm-oss/releases/latest/download/compose.yaml
+echo "POSTGRES_PASSWORD=routerlm" >> .env   # the password your db volume was created with
+docker compose -f compose.yaml up -d
+```
+
+If the clone's folder is not named `routerlm-oss`, also add `COMPOSE_PROJECT_NAME=<folder name>` to `.env`.
+
 ## Architecture
 
 ```
@@ -135,18 +163,40 @@ clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
 
 ## Configuration
 
-Every variable has a development default in `docker-compose.yml`. Set your own values in `.env` (see [.env.example](.env.example)):
+Set these in the `.env` next to `compose.yaml` (see [deploy/.env.example](deploy/.env.example)). Settings a User changes in the dashboard, such as the Error Capture Retention Period, live in the database instead.
 
 | Variable                       | Default   | Purpose                                         |
 | ------------------------------ | --------- | ----------------------------------------------- |
 | `ENCRYPTION_KEY`               | required  | Encrypts Provider Account keys. 32 bytes, base64. |
-| `ERROR_CAPTURE_RETENTION_DAYS` | `7`       | Days to keep Error Captures.                    |
+| `POSTGRES_PASSWORD`            | required  | Postgres uses it only when it first creates the db volume. |
+| `ROUTERLM_VERSION`             | the release's version | The image version to run.            |
+| `WEB_ORIGIN`                   | `http://localhost:3001` | The dashboard's public URL.          |
 | `NUXT_PUBLIC_GATEWAY_URL`      | browser host, port `3000` | Gateway base URL shown in the `/docs` examples. |
 | `BACKEND_PORT` / `WEB_PORT`    | `3000` / `3001` | Host ports.                               |
-| `DB_PORT` / `REDIS_PORT`       | `5432` / `6379` | Host ports.                               |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `routerlm` | Postgres uses them only when it first creates the db volume. |
+| `POSTGRES_USER` / `POSTGRES_DB` | `routerlm` | Postgres uses them only when it first creates the db volume. |
 
 ## Development
+
+The development stack in `docker-compose.yml` builds from the source and reloads on change:
+
+```bash
+git clone https://github.com/yhagus/routerlm-oss.git
+cd routerlm-oss
+sed "s|^ENCRYPTION_KEY=$|ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env.example > .env
+docker compose up -d
+```
+
+It takes its project name from the folder, `routerlm-oss` for a default clone, the same name `deploy/compose.yaml` uses, so in that folder the two share containers and data. To try the production images on a development machine, build them and run `scripts/smoke-production.sh`, which uses its own project name and throwaway volumes:
+
+```bash
+docker build --target production -t ghcr.io/yhagus/routerlm-backend:local .
+docker build --target production -t ghcr.io/yhagus/routerlm-web:local web
+ROUTERLM_VERSION=local scripts/smoke-production.sh
+```
+
+### Releasing
+
+Bump `version` in `package.json` and `web/package.json`, turn the CHANGELOG's `# Unreleased` into `# vX.Y.Z (date)`, commit, then push a `vX.Y.Z` tag. The Release workflow runs CI, smoke-tests the images, publishes them and creates the GitHub Release with `compose.yaml` and `env.example` ([ADR 0018](docs/adr/0018-self-hosters-install-from-published-images.md)).
 
 ### Checks and tests
 

@@ -2,6 +2,9 @@
 
 ## Upgrade
 
+- **Install from published images.** RouterLM now ships as the images `ghcr.io/yhagus/routerlm-backend` and `ghcr.io/yhagus/routerlm-web` (amd64 and arm64), with a `compose.yaml` attached to each GitHub Release. Installing no longer needs a clone. See ADR 0018 and the README's Quick start.
+- **Moving an install made from a clone** keeps its data: `compose.yaml` uses the same project name (`routerlm-oss`) and volume names. In the clone's folder, run `docker compose down`, download the release's `compose.yaml`, add `POSTGRES_PASSWORD` to `.env` (`routerlm` unless you set another one when the database was created), then `docker compose -f compose.yaml up -d`. Keep the same `ENCRYPTION_KEY`. If the folder is not named `routerlm-oss`, also set `COMPOSE_PROJECT_NAME` to its name.
+- **Breaking:** `POSTGRES_PASSWORD` has no default in `compose.yaml`; the stack does not start without it.
 - **Breaking:** the `ERROR_CAPTURE_RETENTION_DAYS` environment variable is removed. An instance that set it falls back to 7 days until a User changes the Retention Period in the dashboard.
 
 ## Dashboard
