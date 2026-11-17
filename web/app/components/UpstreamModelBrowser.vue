@@ -13,6 +13,7 @@ import {
   Wrench,
 } from "@lucide/vue";
 import type { Component, WritableComputedRef } from "vue";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   CAPABILITIES,
   CAPABILITY_LABELS,
@@ -61,6 +62,14 @@ type UpstreamModelDialog =
   | { kind: "create" }
   | { kind: "edit"; upstreamModel: UpstreamModel }
   | { kind: "delete"; upstreamModel: UpstreamModel };
+
+/** What each icon means, shown in its tooltip. */
+const CAPABILITY_HINTS: Record<Capability, string> = {
+  vision: "Image input (vision)",
+  tools: "Tool calls (function calling)",
+  reasoning: "Reasoning (extended thinking)",
+  "structured-output": "Structured output (JSON schema)",
+};
 
 const CAPABILITY_ICONS: Record<Capability, Component> = {
   vision: Eye,
@@ -816,26 +825,32 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       </div>
     </template>
     <template #cell-capabilities="{ row }">
-      <span
-        class="capability-icons"
-        role="img"
-        :aria-label="capabilitySummary(rowCapabilities(row))"
-      >
+      <TooltipProvider :delay-duration="100">
         <span
-          v-for="capability in CAPABILITIES"
-          :key="capability"
-          class="capability-icons__item"
-          :class="{
-            'capability-icons__item--on': rowCapabilities(row).includes(capability),
-          }"
-          :title="
-            rowCapabilities(row).includes(capability)
-              ? CAPABILITY_LABELS[capability]
-              : `No ${CAPABILITY_LABELS[capability].toLowerCase()}`
-          "
-          ><component :is="CAPABILITY_ICONS[capability]" :size="14" aria-hidden="true"
-        /></span>
-      </span>
+          class="capability-icons"
+          role="img"
+          :aria-label="capabilitySummary(rowCapabilities(row))"
+        >
+          <Tooltip v-for="capability in CAPABILITIES" :key="capability">
+            <TooltipTrigger as-child>
+              <span
+                class="capability-icons__item"
+                :class="{
+                  'capability-icons__item--on': rowCapabilities(row).includes(capability),
+                }"
+                ><component :is="CAPABILITY_ICONS[capability]" :size="14" aria-hidden="true"
+              /></span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {{
+                rowCapabilities(row).includes(capability)
+                  ? CAPABILITY_HINTS[capability]
+                  : `No ${CAPABILITY_HINTS[capability].toLowerCase()}`
+              }}
+            </TooltipContent>
+          </Tooltip>
+        </span>
+      </TooltipProvider>
     </template>
     <template #cell-context="{ row }">
       <template v-if="isUpstreamModelGroup(row)">{{
