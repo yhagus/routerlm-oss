@@ -163,7 +163,7 @@
       "cacheWritePrice": 0.44,
       "source": {
         "urls": ["https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
       "notes": "Cache write is not published and is set to the input price."
     },
@@ -206,7 +206,7 @@
       "name": "GLM-5.2",
       "releaseDate": "2026-06-13",
       "capabilities": ["tools", "reasoning", "structured-output"],
-      "contextSize": 1000000,
+      "contextSize": 1048576,
       "maxOutputTokens": 131072,
       "inputPrice": 1.4,
       "outputPrice": 4.4,
@@ -214,7 +214,7 @@
       "cacheWritePrice": 0,
       "source": {
         "urls": ["https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       }
     },
     {

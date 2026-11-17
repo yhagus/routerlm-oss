@@ -85,7 +85,7 @@ describe("Kimi Code correction migration (e2e)", () => {
     return { db, providerId };
   }
 
-  it("moves an untouched Kimi Code Provider to the new base URL and context sizes", async () => {
+  it("moves an untouched Kimi Code Provider to the new base URL and today's context sizes", async () => {
     const { db, providerId } = await upgradeInstallHolding({
       baseUrl: OLD_BASE_URL,
       contextSizes: {
@@ -100,7 +100,7 @@ describe("Kimi Code correction migration (e2e)", () => {
     expect(kimiCode).toMatchObject({
       id: providerId,
       baseUrl: "https://api.kimi.com/coding/v1",
-      contextSizes: { "k3.1-pro": 262144, "k3.1-pro-highspeed": 1048576, k3: 262144 },
+      contextSizes: { "k3.1-pro": 1048576, "k3.1-pro-highspeed": 1048576, k3: 1048576 },
     });
   });
 
@@ -114,7 +114,7 @@ describe("Kimi Code correction migration (e2e)", () => {
 
     expect(kimiCode).toMatchObject({
       baseUrl: "https://kimi-proxy.example/coding/v1",
-      contextSizes: { "k3.1-pro": 524288, k3: 262144 },
+      contextSizes: { "k3.1-pro": 524288, k3: 1048576 },
     });
   });
 

@@ -15,22 +15,22 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "In thinking mode with tools, reasoning_content of every earlier assistant turn must be sent back or the API returns 400. Prices are the peak rates (01:00-04:00 and 06:00-10:00 UTC on weekdays); off-peak is half price. Caching is automatic and no cache write price is published, so cache write is set to the input price. Release dates come from models.dev (https://models.dev/).",
+  "notes": "In thinking mode with tools, reasoning_content of every earlier assistant turn must be sent back or the API returns 400. Prices are the peak rates (01:00-04:00 and 06:00-10:00 UTC on weekdays); off-peak is half price. Caching is automatic and no cache write price is published, so cache write is set to the input price. Release dates come from models.dev (https://models.dev/). Context is models.dev's 1,048,576 (the docs say \"1M\"). The pricing page states a 384K maximum output, which is 393,216 tokens (Alibaba states 393,216 for the same models).",
   "upstreamModels": [
     {
       "upstreamModelId": "deepseek-flash",
       "name": "DeepSeek V4.1 Flash 1017",
       "releaseDate": "2026-10-17",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
-      "contextSize": 1000000,
-      "maxOutputTokens": 384000,
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
       "inputPrice": 0.3,
       "outputPrice": 1.2,
       "cacheReadPrice": 0.006,
       "cacheWritePrice": 0.3,
       "source": {
         "urls": ["https://api-docs.deepseek.com/quick_start/pricing", "https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
       "notes": "Off-peak: input 0.15, cache read 0.003, output 0.6. maxOutputTokens is the published maximum. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price."
     },
@@ -39,15 +39,15 @@
       "name": "DeepSeek V4 Pro",
       "releaseDate": "2026-08-13",
       "capabilities": ["tools", "reasoning", "structured-output"],
-      "contextSize": 1000000,
-      "maxOutputTokens": 384000,
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
       "inputPrice": 1.32,
       "outputPrice": 3.96,
       "cacheReadPrice": 0.044,
       "cacheWritePrice": 1.32,
       "source": {
         "urls": ["https://api-docs.deepseek.com/quick_start/pricing", "https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
       "notes": "Off-peak: input 0.66, cache read 0.022, output 1.98. Vision not supported. maxOutputTokens is the published maximum. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price."
     }

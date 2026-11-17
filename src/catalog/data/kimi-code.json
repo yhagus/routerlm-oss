@@ -47,17 +47,17 @@
       "name": "K3.1 Pro",
       "releaseDate": "2026-10-23",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
-      "contextSize": 262144,
-      "maxOutputTokens": 131072,
+      "contextSize": 1048576,
+      "maxOutputTokens": 1048576,
       "inputPrice": 2,
       "outputPrice": 10,
       "cacheReadPrice": 0.2,
       "cacheWritePrice": 2,
       "source": {
         "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
-      "notes": "262,144 is the context every plan gets; higher plans get 1M (1,048,576), and an operator on one may raise the context size. Thinking required. Prices are Moonshot API list prices for kimi-k3.1-pro. maxOutputTokens is the Moonshot API value for kimi-k3.1-pro. tools and structured-output come from models.dev."
+      "notes": "1,048,576 is the context Pro and higher plans get; lower plans get 262,144, and an operator on one may lower the context size. Thinking required. Prices are Moonshot API list prices for kimi-k3.1-pro. maxOutputTokens is the Moonshot API ceiling for kimi-k3.1-pro (models.dev agrees for Kimi Code). tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "k3.1-pro-highspeed",
@@ -65,33 +65,33 @@
       "releaseDate": "2026-10-23",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 1048576,
-      "maxOutputTokens": 131072,
+      "maxOutputTokens": 1048576,
       "inputPrice": 4,
       "outputPrice": 20,
       "cacheReadPrice": 0.2,
       "cacheWritePrice": 4,
       "source": {
         "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
-      "notes": "Prices are Moonshot API list prices for kimi-k3.1-pro-highspeed. maxOutputTokens is the Moonshot API value for kimi-k3.1-pro-highspeed. tools and structured-output come from models.dev."
+      "notes": "Prices are Moonshot API list prices for kimi-k3.1-pro-highspeed. maxOutputTokens is the Moonshot API ceiling for kimi-k3.1-pro-highspeed (models.dev agrees for Kimi Code). tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "k3",
       "name": "K3",
       "releaseDate": "2026-07-16",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
-      "contextSize": 262144,
-      "maxOutputTokens": 131072,
+      "contextSize": 1048576,
+      "maxOutputTokens": 1048576,
       "inputPrice": 3,
       "outputPrice": 15,
       "cacheReadPrice": 0.3,
       "cacheWritePrice": 3,
       "source": {
         "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
-      "notes": "Prices are Moonshot API list prices for kimi-k3. maxOutputTokens is the Moonshot API value for kimi-k3. tools and structured-output come from models.dev."
+      "notes": "1,048,576 is the context Pro and higher plans get; lower plans get 262,144, and an operator on one may lower the context size. Prices are Moonshot API list prices for kimi-k3. maxOutputTokens is the Moonshot API ceiling for kimi-k3 (models.dev agrees for Kimi Code). tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "k3-256k",
@@ -99,16 +99,16 @@
       "releaseDate": "2026-07-16",
       "capabilities": ["vision", "reasoning", "tools", "structured-output"],
       "contextSize": 262144,
-      "maxOutputTokens": 131072,
+      "maxOutputTokens": 262144,
       "inputPrice": 3,
       "outputPrice": 15,
       "cacheReadPrice": 0.3,
       "cacheWritePrice": 3,
       "source": {
         "urls": ["https://www.kimi.com/code/docs/en/kimi-code/models.html", "https://models.dev/"],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
-      "notes": "Prices are Moonshot API list prices for kimi-k3. maxOutputTokens is the Moonshot API value for kimi-k3. tools and structured-output come from models.dev."
+      "notes": "Prices are Moonshot API list prices for kimi-k3. maxOutputTokens comes from models.dev, which caps it at the context size. tools and structured-output come from models.dev."
     },
     {
       "upstreamModelId": "kimi-for-coding",

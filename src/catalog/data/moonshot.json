@@ -23,7 +23,7 @@
       "releaseDate": "2026-10-23",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
-      "maxOutputTokens": 131072,
+      "maxOutputTokens": 1048576,
       "inputPrice": 2,
       "outputPrice": 10,
       "cacheReadPrice": 0.2,
@@ -35,9 +35,9 @@
           "https://platform.kimi.ai/docs/api/chat",
           "https://models.dev/"
         ],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
-      "notes": "Thinking always on; maxOutputTokens is the K3 default max_completion_tokens."
+      "notes": "Thinking always on. maxOutputTokens is the ceiling of max_completion_tokens (1,048,576); the API defaults to 131,072 when a request sends none, and shrinks the limit to fit when prompt plus output exceed the context."
     },
     {
       "upstreamModelId": "kimi-k3.1-pro-highspeed",
@@ -45,7 +45,7 @@
       "releaseDate": "2026-10-23",
       "capabilities": ["tools", "reasoning", "structured-output", "vision"],
       "contextSize": 1048576,
-      "maxOutputTokens": 131072,
+      "maxOutputTokens": 1048576,
       "inputPrice": 4,
       "outputPrice": 20,
       "cacheReadPrice": 0.2,
@@ -57,9 +57,9 @@
           "https://platform.kimi.ai/docs/api/chat",
           "https://models.dev/"
         ],
-        "retrievedOn": "2026-11-15"
+        "retrievedOn": "2026-11-17"
       },
-      "notes": "Vision not stated for this id. vision comes from models.dev."
+      "notes": "Vision not stated for this id. vision comes from models.dev. maxOutputTokens is the ceiling of max_completion_tokens (1,048,576); the API defaults to 131,072."
     },
     {
       "upstreamModelId": "kimi-k3",
@@ -67,7 +67,7 @@
       "releaseDate": "2026-07-16",
       "capabilities": ["vision", "tools", "reasoning", "structured-output"],
       "contextSize": 1048576,
-      "maxOutputTokens": 131072,
+      "maxOutputTokens": 1048576,
       "inputPrice": 3,
       "outputPrice": 15,
       "cacheReadPrice": 0.3,
@@ -79,8 +79,9 @@
           "https://platform.kimi.ai/docs/api/chat",
           "https://models.dev/"
         ],
-        "retrievedOn": "2026-11-15"
-      }
+        "retrievedOn": "2026-11-17"
+      },
+      "notes": "maxOutputTokens is the ceiling of max_completion_tokens (1,048,576); the API defaults to 131,072."
     },
     {
       "upstreamModelId": "kimi-k2.6",

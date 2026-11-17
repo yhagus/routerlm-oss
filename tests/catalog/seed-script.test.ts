@@ -67,9 +67,9 @@ describe("db:seed script (e2e)", () => {
     expect(
       Object.fromEntries(kimiCodeModels.map((model) => [model.id, model.contextSize])),
     ).toEqual({
-      "k3.1-pro": 262144,
+      "k3.1-pro": 1048576,
       "k3.1-pro-highspeed": 1048576,
-      k3: 262144,
+      k3: 1048576,
       "k3-256k": 262144,
       "kimi-for-coding": 1048576,
       "kimi-for-coding-highspeed": 262144,
@@ -93,14 +93,14 @@ describe("db:seed script (e2e)", () => {
       credentialKinds: ["api-key", "oauth-login"],
     });
     expect(Object.fromEntries(codexModels.map((model) => [model.id, model.contextSize]))).toEqual({
-      "gpt-6-astra": 500000,
-      "gpt-6.1-sol": 500000,
-      "gpt-6.1-terra": 500000,
-      "gpt-6-sol": 272000,
-      "gpt-6-luna": 272000,
-      "gpt-5.6-sol": 272000,
-      "gpt-5.6-terra": 272000,
-      "gpt-5.6-luna": 272000,
+      "gpt-6-astra": 872000,
+      "gpt-6.1-sol": 872000,
+      "gpt-6.1-terra": 872000,
+      "gpt-6-sol": 872000,
+      "gpt-6-luna": 872000,
+      "gpt-5.6-sol": 872000,
+      "gpt-5.6-terra": 872000,
+      "gpt-5.6-luna": 872000,
       "gpt-5.5": 272000,
     });
   });
