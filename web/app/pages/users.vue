@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { KeyRound, Trash2, UserRound } from "@lucide/vue";
 import { computed, ref } from "vue";
+import type { RowAction } from "~/components/RowActionsMenu.vue";
 import { apiErrorMessage } from "~/lib/api";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { dateFormat } from "~/lib/dateFormats";
@@ -9,6 +10,11 @@ import { MIN_PASSWORD_LENGTH, type User } from "~/lib/users";
 useHead({ title: "Users" });
 
 type UserAction = { kind: "reset-password"; user: User } | { kind: "delete"; user: User };
+
+const USER_ACTIONS: RowAction<UserAction["kind"]>[] = [
+  { id: "reset-password", label: "Reset password", icon: KeyRound },
+  { id: "delete", label: "Delete", icon: Trash2, isDestructive: true },
+];
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
@@ -174,12 +180,11 @@ async function afterAction(done: UserAction): Promise<void> {
       <template #cell-addedBy="{ row: user }">{{ addedByLabel(user) }}</template>
       <template #cell-actions="{ row: user }">
         <div class="row-actions">
-          <button class="row-action" @click="startAction({ kind: 'reset-password', user })">
-            <KeyRound :size="14" /> Reset password
-          </button>
-          <button class="row-action" @click="startAction({ kind: 'delete', user })">
-            <Trash2 :size="14" /> Delete
-          </button>
+          <RowActionsMenu
+            :label="`Actions for ${user.email}`"
+            :actions="USER_ACTIONS"
+            @select="(kind) => startAction({ kind, user })"
+          />
         </div>
       </template>
     </DataTable>
