@@ -250,4 +250,4 @@ v2 is a rewrite and does not import v1 data. The v1 app (Bun + Hono + Vue, SQLit
 
 ## License
 
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE). Third-party attributions are in [NOTICE](NOTICE).
