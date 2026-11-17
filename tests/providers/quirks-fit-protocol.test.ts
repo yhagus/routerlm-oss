@@ -77,6 +77,26 @@ describe("A Provider's quirks fit its Protocol (e2e)", () => {
     expect(refused.body.message).toContain("acceptsCacheControl");
   });
 
+  it("refuses forwardedClientHeaders on a Protocol that doesn't read them", async () => {
+    const id = await createAcme();
+
+    const refused = await updateProvider(id, {
+      protocol: "anthropic-messages",
+      quirks: { forwardedClientHeaders: ["user-agent"] },
+    }).expect(400);
+
+    expect(refused.body.message).toContain("forwardedClientHeaders");
+  });
+
+  it.each(["authorization", "x-api-key", "cookie", "host", "content-length", "connection"])(
+    "refuses to forward the %s header",
+    async (header) => {
+      const id = await createAcme();
+
+      await updateProvider(id, { quirks: { forwardedClientHeaders: [header] } }).expect(400);
+    },
+  );
+
   it("takes a new Protocol with its own quirks and the ones every Protocol reads", async () => {
     const id = await createAcme();
     const quirks = {

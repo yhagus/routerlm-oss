@@ -53,6 +53,8 @@ export interface UpstreamCall {
    * and the gateway's own User-Agent.
    */
   authHeaders: Record<string, string>;
+  /** The client's own headers the Provider's `forwardedClientHeaders` quirk asks for; they never override the credential. */
+  forwardedHeaders: Record<string, string>;
   timeouts: AttemptTimeouts;
   /** Aborts when the client disconnects. */
   clientSignal: AbortSignal;
@@ -225,7 +227,12 @@ export class UpstreamClient {
   ): Promise<HttpResponse<Response>> {
     const response = await this.http.post<Response>(written.url, {
       body: written.body,
-      headers: { "user-agent": GATEWAY_USER_AGENT, ...written.headers, ...call.authHeaders },
+      headers: {
+        "user-agent": GATEWAY_USER_AGENT,
+        ...call.forwardedHeaders,
+        ...written.headers,
+        ...call.authHeaders,
+      },
       responseType: "response",
       signal,
       // Fallback across Provider Accounts and Routes is the gateway's job.

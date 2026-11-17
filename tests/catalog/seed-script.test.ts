@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
@@ -43,6 +43,7 @@ describe("db:seed script (e2e)", () => {
       expect(seeded.map((provider) => provider.slug).sort()).toEqual([
         "alibaba-model-studio-intl",
         "anthropic",
+        "commandcode",
         "deepseek",
         "kimi-code",
         "minimax-api",
@@ -50,6 +51,7 @@ describe("db:seed script (e2e)", () => {
         "moonshot",
         "openai",
         "openai-codex",
+        "opencode-go",
         "xiaomi-mimo",
       ]);
     },
@@ -116,7 +118,12 @@ describe("db:seed script (e2e)", () => {
       })
       .from(upstreamModels)
       .innerJoin(providers, eq(upstreamModels.providerId, providers.id))
-      .where(eq(upstreamModels.upstreamModelId, "gpt-6-sol"));
+      .where(
+        and(
+          eq(upstreamModels.upstreamModelId, "gpt-6-sol"),
+          inArray(providers.slug, ["openai", "openai-codex"]),
+        ),
+      );
 
     expect(tiered).toHaveLength(2);
     for (const slug of ["openai", "openai-codex"]) {

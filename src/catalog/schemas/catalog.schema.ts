@@ -22,6 +22,38 @@ import {
 // Field names match the `providers` and `upstream_models` columns.
 
 /**
+ * Request headers a Provider's `forwardedClientHeaders` may not name: the
+ * credentials the gateway sets itself, and the headers describing the
+ * connection or the body it writes, which would break the upstream request.
+ */
+const UNFORWARDABLE_CLIENT_HEADERS = [
+  "authorization",
+  "proxy-authorization",
+  "x-api-key",
+  "api-key",
+  "cookie",
+  "host",
+  "content-length",
+  "content-type",
+  "accept-encoding",
+  "connection",
+  "keep-alive",
+  "proxy-connection",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+];
+
+/** A lowercase header name the gateway may pass from the client's request to the Provider. */
+const forwardableClientHeaderSchema = z
+  .string()
+  .regex(/^[a-z0-9-]+$/, { error: "Use a lowercase header name: letters, digits and hyphens" })
+  .refine((name) => !UNFORWARDABLE_CLIENT_HEADERS.includes(name), {
+    error: "This header carries a credential or describes the connection, and is never forwarded",
+  });
+
+/**
  * The quirk keys the Protocol adapters, the Attempt classifier and the quota
  * readers understand (ADR 0003, ADR 0010). Unknown keys are rejected so a typo
  * in a Catalog file fails loudly instead of doing nothing.
@@ -88,6 +120,13 @@ export const providerQuirksSchema = z.strictObject({
    */
   usesMaxCompletionTokens: z.boolean().optional(),
   /**
+   * openai-chat only. The request headers, by lowercase name, that the gateway
+   * copies from the client's request to the Provider when the client sent
+   * them; a header the client left out is not sent. The Provider Account's
+   * credential always overrides them.
+   */
+  forwardedClientHeaders: z.array(forwardableClientHeaderSchema).optional(),
+  /**
    * The error codes with which the Provider refuses a Provider Account whose
    * plan quota ran out, making it Exhausted instead of putting it in
    * Cooldown. A number is read from `base_resp.status_code`, `status_code`,
@@ -116,6 +155,7 @@ const QUIRKS_OF_ONE_PROTOCOL = {
     "forwardsClientPromptCacheKey",
     "acceptsPromptCacheKey",
     "usesMaxCompletionTokens",
+    "forwardedClientHeaders",
   ],
   "anthropic-messages": ["cacheMarkerLimit"],
   "openai-responses": [

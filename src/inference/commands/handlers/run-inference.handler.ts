@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { IncomingHttpHeaders } from "node:http";
 import { HttpStatus, Logger } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
@@ -9,6 +10,7 @@ import type {
   SnapshotProviderAccount,
   SnapshotUpstreamModel,
 } from "@/snapshot/models/snapshot.js";
+import type { ClientConnection } from "@/libs/models/client-connection.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { SIGN_IN_AGAIN_REASON } from "@/upstream/models/oauth-login.js";
@@ -59,6 +61,7 @@ import {
   UpstreamClient,
 } from "../../providers/upstream-client.js";
 import { serviceTierSentTo } from "../../models/service-tier.js";
+import { forwardedClientHeadersOf } from "../../providers/forwarded-client-headers.js";
 import { UsageMeter } from "../../models/usage-meter.js";
 import type { InferenceCaller, InferenceResult, InferenceTarget } from "../../models/inference.js";
 import { RunInferenceCommand } from "../impl/run-inference.command.js";
@@ -79,6 +82,7 @@ interface Destination {
 interface AttemptOptions {
   cacheKey: string;
   clientSignal: AbortSignal;
+  clientHeaders: IncomingHttpHeaders;
   meter: UsageMeter;
 }
 
@@ -131,7 +135,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       onUsage(job);
     };
     try {
-      const result = await this.serve(converter, body, caller, target, connection.signal, meter);
+      const result = await this.serve(converter, body, caller, target, connection, meter);
       if (result.kind === "stream") {
         return {
           kind: "stream",
@@ -152,7 +156,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     body: unknown,
     caller: InferenceCaller,
     inferenceTarget: InferenceTarget,
-    clientSignal: AbortSignal,
+    connection: ClientConnection,
     meter: UsageMeter,
   ): Promise<InferenceResult> {
     const clientRequest = converter.parseRequest(body);
@@ -197,7 +201,8 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       try {
         return await this.attemptWithCredential(converter, request, context, target, {
           cacheKey,
-          clientSignal,
+          clientSignal: connection.signal,
+          clientHeaders: connection.requestHeaders,
           meter,
         });
       } catch (error) {
@@ -342,9 +347,13 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     context: ResponseContext,
     target: AttemptTarget,
     credential: ProviderAccountCredential,
-    { cacheKey, clientSignal, meter }: AttemptOptions,
+    { cacheKey, clientSignal, clientHeaders, meter }: AttemptOptions,
   ): Promise<InferenceResult> {
-    const call = this.upstreamCallFor(request, target, credential, { cacheKey, clientSignal });
+    const call = this.upstreamCallFor(request, target, credential, {
+      cacheKey,
+      clientSignal,
+      clientHeaders,
+    });
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
@@ -369,7 +378,11 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     request: InferenceRequest,
     { route, upstreamModel }: AttemptTarget,
     credential: ProviderAccountCredential,
-    { cacheKey, clientSignal }: Pick<AttemptOptions, "cacheKey" | "clientSignal">,
+    {
+      cacheKey,
+      clientSignal,
+      clientHeaders,
+    }: Pick<AttemptOptions, "cacheKey" | "clientSignal" | "clientHeaders">,
   ): UpstreamCall {
     const { provider } = upstreamModel;
     const sentServiceTier = serviceTierSentTo(request.serviceTier, upstreamModel);
@@ -393,6 +406,10 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         ...credential.identityHeaders,
         ...upstreamAuthHeaders(provider.authStyle, credential.secret),
       },
+      forwardedHeaders: forwardedClientHeadersOf(
+        providerQuirksSchema.parse(provider.quirks),
+        clientHeaders,
+      ),
       timeouts: {
         connectMs: route?.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
         firstTokenMs: route?.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,
