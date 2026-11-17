@@ -1,0 +1,148 @@
+{
+  "slug": "google-gemini",
+  "name": "Google Gemini",
+  "logo": "gemini",
+  "protocol": "openai-chat",
+  "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+  "authStyle": "bearer",
+  "quirks": {},
+  "modelsDevProviderId": "google",
+  "source": {
+    "urls": [
+      "https://ai.google.dev/gemini-api/docs/openai",
+      "https://ai.google.dev/gemini-api/docs/models",
+      "https://ai.google.dev/gemini-api/docs/pricing",
+      "https://models.dev/"
+    ],
+    "retrievedOn": "2026-11-18"
+  },
+  "notes": "Gemini API through its OpenAI compatibility endpoint; the key is sent as a bearer token. No quirks: the endpoint takes reasoning_effort and the standard chat completions parameters, and the docs name no parameter it rejects. The free tier lets Google use submitted prompts and responses to improve its products, which conflicts with ADR 0004; use a billed (paid tier) project key. The endpoint also accepts service_tier priority or flex, which the gateway does not map yet (no serviceTierValues). Release dates and prices come from models.dev, checked against the Gemini models page; image, audio and embedding models, the Gemma models and the -latest aliases are left out.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "gemini-4-hydrogen",
+      "name": "Gemini 4 Hydrogen",
+      "releaseDate": "2026-11-12",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 1.5,
+      "outputPrice": 7.5,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Prices are the standard tier for text, image and video input; audio input costs more. Cache write is not published: Gemini charges for cache storage per hour instead."
+    },
+    {
+      "upstreamModelId": "gemini-4-carbon",
+      "name": "Gemini 4 Carbon",
+      "releaseDate": "2026-11-10",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 32768,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Prices are the standard tier for text, image and video input; audio input costs more. Cache write is not published: Gemini charges for cache storage per hour instead."
+    },
+    {
+      "upstreamModelId": "gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "releaseDate": "2026-10-13",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 32768,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Prices are the standard tier for text, image and video input; audio input costs more. Cache write is not published: Gemini charges for cache storage per hour instead."
+    },
+    {
+      "upstreamModelId": "gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "releaseDate": "2026-09-02",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.75,
+      "outputPrice": 3.75,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Prices are the standard tier for text, image and video input; audio input costs more. Cache write is not published: Gemini charges for cache storage per hour instead."
+    },
+    {
+      "upstreamModelId": "gemini-3.7-flash",
+      "name": "Gemini 3.7 Flash",
+      "releaseDate": "2026-08-13",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.75,
+      "outputPrice": 3.75,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Prices are the standard tier for text, image and video input; audio input costs more. Cache write is not published: Gemini charges for cache storage per hour instead."
+    },
+    {
+      "upstreamModelId": "gemini-3.5-flash-lite",
+      "name": "Gemini 3.5 Flash Lite",
+      "releaseDate": "2026-07-21",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.3,
+      "outputPrice": 2.5,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Prices are the standard tier for text, image and video input; audio input costs more. Cache write is not published: Gemini charges for cache storage per hour instead."
+    }
+  ]
+}

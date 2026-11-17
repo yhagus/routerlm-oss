@@ -8,6 +8,7 @@
   "quirks": {
     "cacheMarkerLimit": 0
   },
+  "modelsDevProviderId": "minimax",
   "source": {
     "urls": [
       "https://platform.minimax.io/docs/guides/text-generation",

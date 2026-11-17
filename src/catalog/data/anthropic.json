@@ -6,6 +6,7 @@
   "baseUrl": "https://api.anthropic.com",
   "authStyle": "x-api-key",
   "quirks": {},
+  "modelsDevProviderId": "anthropic",
   "source": {
     "urls": ["https://platform.claude.com/docs/en/get-started"],
     "retrievedOn": "2026-11-15"

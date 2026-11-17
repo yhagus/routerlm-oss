@@ -13,6 +13,7 @@
     "fast": "priority",
     "flex": "flex"
   },
+  "modelsDevProviderId": "openai",
   "source": {
     "urls": [
       "https://developers.openai.com/api/reference/overview",
@@ -21,8 +22,68 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. Service Tiers (ADR 0014): fast is sent as service_tier priority (OpenAI renamed Priority processing to Fast mode on 2026-07-30), flex as flex; tierPrices are the short-context Fast and Flex rates from the pricing page, and a price a tier leaves out (cache writes where the page shows none) falls back to the standard one. Chat Completions accepts prompt_cache_key (cache routing before GPT-5.6, cache accounting from GPT-5.6); caching is automatic from 1,024 tokens. Release dates come from models.dev (https://models.dev/). Models added on 2026-11-15 come from models.dev, checked against each model page: Responses-only models (the pro and codex models, the daybreak aliases), models OpenAI marks deprecated, and the gpt-5.6 alias of gpt-5.6-sol are left out.",
+  "notes": "Prices are the standard tier for prompts up to 272K input tokens; longer prompts cost 2x input and cache, 1.5x output. cacheWritePrice is the 30-minute cache write rate. Service Tiers (ADR 0014): fast is sent as service_tier priority (OpenAI renamed Priority processing to Fast mode on 2026-07-30), flex as flex; tierPrices are the short-context Fast and Flex rates from the pricing page, and a price a tier leaves out (cache writes where the page shows none) falls back to the standard one. Chat Completions accepts prompt_cache_key (cache routing before GPT-5.6, cache accounting from GPT-5.6); caching is automatic from 1,024 tokens. Release dates come from models.dev (https://models.dev/). GPT-6.2 Astra and Sol were added on 2026-11-18 from models.dev; their -pro variants are Responses-only and left out. Models added on 2026-11-15 come from models.dev, checked against each model page: Responses-only models (the pro and codex models, the daybreak aliases), models OpenAI marks deprecated, and the gpt-5.6 alias of gpt-5.6-sol are left out.",
   "upstreamModels": [
+    {
+      "upstreamModelId": "gpt-6.2-astra",
+      "name": "GPT-6.2 Astra",
+      "releaseDate": "2026-11-17",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 10,
+      "serviceTiers": ["fast"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 16,
+          "outputPrice": 80,
+          "cacheReadPrice": 0.8,
+          "cacheWritePrice": 20
+        }
+      },
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "No tools: tool calling requires the Responses API for this model. Over 272K context: input 16, output 60, cache read 0.8, cache write 20. Flex is left out: models.dev lists no flex rate for it."
+    },
+    {
+      "upstreamModelId": "gpt-6.2-sol",
+      "name": "GPT-6.2 Sol",
+      "releaseDate": "2026-11-17",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 20,
+          "cacheReadPrice": 0.2,
+          "cacheWritePrice": 5
+        }
+      },
+      "source": {
+        "urls": [
+          "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "No tools: tool calling requires the Responses API for this model. Over 272K context: input 4, output 15, cache read 0.2, cache write 5. Flex is left out: models.dev lists no flex rate for it."
+    },
     {
       "upstreamModelId": "gpt-6-astra",
       "name": "GPT-6 Astra",

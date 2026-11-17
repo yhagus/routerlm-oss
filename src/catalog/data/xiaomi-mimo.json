@@ -6,6 +6,7 @@
   "baseUrl": "https://api.xiaomimimo.com/v1",
   "authStyle": "bearer",
   "quirks": {},
+  "modelsDevProviderId": "xiaomi",
   "source": {
     "urls": ["https://mimo.mi.com/models/en-US/mimo-v2.5"],
     "retrievedOn": "2026-11-15"

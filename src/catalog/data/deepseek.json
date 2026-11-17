@@ -8,6 +8,7 @@
   "quirks": {
     "reasoningContentInHistory": "all-assistant-turns"
   },
+  "modelsDevProviderId": "deepseek",
   "source": {
     "urls": [
       "https://api-docs.deepseek.com/",

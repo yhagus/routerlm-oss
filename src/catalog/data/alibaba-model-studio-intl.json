@@ -8,6 +8,7 @@
   "quirks": {
     "acceptsCacheControl": true
   },
+  "modelsDevProviderId": "alibaba",
   "source": {
     "urls": [
       "https://www.alibabacloud.com/help/en/model-studio/compatibility-of-openai-with-dashscope",

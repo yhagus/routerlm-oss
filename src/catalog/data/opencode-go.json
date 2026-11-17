@@ -8,6 +8,7 @@
   "quirks": {
     "forwardedClientHeaders": ["user-agent", "x-opencode-session"]
   },
+  "modelsDevProviderId": "opencode-go",
   "source": {
     "urls": [
       "https://opencode.ai/docs/console/go",

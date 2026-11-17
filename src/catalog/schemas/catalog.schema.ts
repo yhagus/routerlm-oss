@@ -328,6 +328,8 @@ export const catalogProviderSchema = z.strictObject({
    */
   baseUrl: z.url(),
   authStyle: z.enum(AUTH_STYLES),
+  /** The provider's id on models.dev, used to report Catalog Gaps. */
+  modelsDevProviderId: z.string().optional(),
   quirks: providerQuirksSchema,
   /** Only a Provider with Service Tiers; its Upstream Models list the tiers they accept. */
   serviceTierValues: serviceTierValuesSchema.optional(),

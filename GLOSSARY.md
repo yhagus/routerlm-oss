@@ -51,6 +51,10 @@ _Avoid_: Provider model, backend model
 The day a Provider made an Upstream Model available, written YYYY-MM-DD.
 _Avoid_: Launch date, published date, last updated
 
+**Catalog Gap**:
+An Upstream Model that models.dev lists among a Provider's newest models but the Catalog does not yet hold.
+_Avoid_: Missing model, new model, diff
+
 **Capability**:
 Something an Upstream Model can do that a request may need, such as vision, tools, reasoning or structured output.
 _Avoid_: Feature, modality
@@ -68,7 +72,7 @@ A period during which a Provider Account is skipped because it recently failed.
 _Avoid_: Ban, circuit break, backoff
 
 **Catalog**:
-The Providers and Upstream Models, with their Capabilities and prices, that ship with the gateway.
+The Providers and Upstream Models, with their Capabilities and prices, that ship with the gateway. A Catalog Gap is only reported, never added automatically.
 _Avoid_: Master data, seed data
 
 **Protocol**:
