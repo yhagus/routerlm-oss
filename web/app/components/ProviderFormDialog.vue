@@ -148,12 +148,16 @@ async function save(): Promise<void> {
             :disabled="Boolean(provider)"
             required
             @input="handleSlugInput"
-          /><span v-if="!provider" class="field__note">{{
-            isSlugAuto
-              ? "Generated from the name. Type here to set your own."
-              : "Set by hand. Clear it to follow the name again."
-          }}</span></label
-        >
+        /></label>
+      </div>
+      <p v-if="!provider" class="form__hint">
+        {{
+          isSlugAuto
+            ? "Slug is generated from the name. Type in it to set your own."
+            : "Slug is set by hand. Clear it to follow the name again."
+        }}
+      </p>
+      <div class="form__grid">
         <div class="field">
           <span class="field__label">Protocol</span>
           <AppSelect v-model="form.protocol" :options="PROTOCOL_OPTIONS" label="Protocol" />
