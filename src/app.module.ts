@@ -10,6 +10,7 @@ import { AuthModule } from "@/auth/auth.module.js";
 import { type Env, envSchema } from "@/config/schemas/env.schema.js";
 import { relations } from "@/db/schemas/relations.js";
 import { ErrorCapturesModule } from "@/error-captures/error-captures.module.js";
+import { HealthModule } from "@/health/health.module.js";
 import { LibsModule } from "@/libs/libs.module.js";
 import { InferenceModule } from "@/inference/inference.module.js";
 import { OverviewModule } from "@/overview/overview.module.js";
@@ -48,6 +49,7 @@ import { UsageModule } from "@/usage/usage.module.js";
     SettingsModule,
     PlaygroundModule,
     QuotaMetersModule,
+    HealthModule,
   ],
   controllers: [AppController],
   // Validates every `@Body({ schema })`, `@Param({ schema })`… against its zod schema.

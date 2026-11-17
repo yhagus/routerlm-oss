@@ -15,6 +15,7 @@
         "@nestjs/http-client": "0.0.3",
         "@nestjs/locks": "0.0.6",
         "@nestjs/platform-node": "^12.5.0",
+        "@nestjs/terminus": "12.2.0",
         "bullmq": "6.7.6",
         "drizzle-orm": "^1.0.0-rc.5",
         "ioredis": "6.0.0",
@@ -165,6 +166,8 @@
     "@nestjs/platform-node": ["@nestjs/platform-node@12.5.0", "", { "dependencies": { "@fastify/proxy-addr": "5.1.2", "content-type": "2.1.0", "cookie": "0.7.2", "cookie-signature": "1.2.2", "cors": "2.8.6", "encodeurl": "2.0.1", "fast-querystring": "1.1.2", "find-my-way": "9.10.0", "light-my-request": "6.8.0", "mime-types": "3.0.2", "multer": "2.5.0", "on-finished": "2.4.2", "path-to-regexp": "8.4.2", "qs": "6.17.1", "secure-json-parse": "4.1.1", "send": "1.2.1", "serve-static": "2.2.1", "tslib": "2.9.1", "type-is": "2.1.0" }, "peerDependencies": { "@nestjs/common": "^12.0.0", "@nestjs/core": "^12.0.0", "rxjs": "^7.1.0" } }, "sha512-hlsEGk7OMAYmp7Eiv5cKbCajNpcsGZo7M+MdWrgdnDdz+QDUu6jfsz6t1234W43Mgi7Aqc7mSdh2suJO+lf+CQ=="],
 
     "@nestjs/schematics": ["@nestjs/schematics@12.0.13", "", { "dependencies": { "@angular-devkit/core": "22.2.6", "@angular-devkit/schematics": "22.2.6", "comment-json": "5.0.0", "jsonc-parser": "3.3.1", "pluralize": "8.0.0" }, "peerDependencies": { "prettier": "^3.0.0", "typescript": ">=6.0.0" }, "optionalPeers": ["prettier"] }, "sha512-Z9Xtp67fO5NuU7FgB/u44peK3XQnrL4qLxkf1dp6fqUk9l3ATBQneRNrWaC8e+HaimX8olxq2mH2ZXhhfalDhQ=="],
+
+    "@nestjs/terminus": ["@nestjs/terminus@12.2.0", "", { "peerDependencies": { "@grpc/grpc-js": "*", "@grpc/proto-loader": "*", "@mikro-orm/core": "*", "@mikro-orm/nestjs": "*", "@nestjs/axios": "^4.0.0 || ^12.0.0", "@nestjs/common": "^11.0.0 || ^12.0.0", "@nestjs/core": "^11.0.0 || ^12.0.0", "@nestjs/microservices": "^11.0.0 || ^12.0.0", "@nestjs/mongoose": "^11.0.0 || ^12.0.0", "@nestjs/sequelize": "^11.0.0 || ^12.0.0", "@nestjs/swagger": "^11.0.0 || ^12.0.0", "@nestjs/typeorm": "^11.0.0 || ^12.0.0", "@prisma/client": "*", "mongoose": "*", "reflect-metadata": "^0.1.12 || ^0.2.0", "rxjs": "^7.1.0", "sequelize": "*", "typeorm": "*" }, "optionalPeers": ["@grpc/grpc-js", "@grpc/proto-loader", "@mikro-orm/core", "@mikro-orm/nestjs", "@nestjs/axios", "@nestjs/microservices", "@nestjs/mongoose", "@nestjs/sequelize", "@nestjs/swagger", "@nestjs/typeorm", "@prisma/client", "mongoose", "sequelize", "typeorm"] }, "sha512-2ssbjf3rCZVVogAVzxOWnBAF5k2KxKHw4fabLfrLy8SiA0QTaG0YEgcdamzbSVSucnnMDF0QCbpYv0bEkxmwtw=="],
 
     "@nestjs/testing": ["@nestjs/testing@12.5.0", "", { "dependencies": { "tslib": "2.9.1" }, "peerDependencies": { "@nestjs/common": "^12.0.0", "@nestjs/core": "^12.0.0", "@nestjs/microservices": "^12.0.0", "@nestjs/platform-express": "^12.0.0" }, "optionalPeers": ["@nestjs/microservices", "@nestjs/platform-express"] }, "sha512-4zppUy+q+dmqdQBm/Q9KyTDeq0hsa/we6E0VtSaT1Dnewo/FkbcczCrrtivuIWIuZ7KNJ0U8UGYCgozFZJ2+zQ=="],
 

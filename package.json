@@ -47,6 +47,7 @@
     "@nestjs/http-client": "0.0.3",
     "@nestjs/locks": "0.0.6",
     "@nestjs/platform-node": "^12.5.0",
+    "@nestjs/terminus": "12.2.0",
     "bullmq": "6.7.6",
     "drizzle-orm": "^1.0.0-rc.5",
     "ioredis": "6.0.0",
