@@ -9,6 +9,12 @@
    components/ai-elements) win where they set a property. */
 @import "./dashboard.css" layer(components);
 
+/* `text-input` is the dashboard's own field class, but Tailwind also reads it as
+   its text-colour utility (`text-{color}` with `--color-input`). Left on, that
+   utility sets the typed text to the border colour and beats the dashboard's own
+   colour, so the text is faint against the field in both themes. */
+@source not inline("text-input");
+
 /* Dark follows the theme switch, and the system setting when none is stored. */
 @custom-variant dark {
   &:where([data-theme="dark"], [data-theme="dark"] *) {
