@@ -46,6 +46,7 @@ export interface ProviderForm {
   includesEncryptedReasoning: boolean;
   systemAsDeveloperMessage: boolean;
   droppedParameters: DroppableParameter[];
+  forwardedClientHeaders: string[];
   /** As typed; digits-only codes are sent as numbers. */
   exhaustedErrorCodes: string[];
   quotaReader: string;
@@ -132,6 +133,7 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
     includesEncryptedReasoning: quirks.includesEncryptedReasoning ?? false,
     systemAsDeveloperMessage: quirks.systemAsDeveloperMessage ?? false,
     droppedParameters: [...(quirks.droppedParameters ?? [])],
+    forwardedClientHeaders: [...(quirks.forwardedClientHeaders ?? [])],
     exhaustedErrorCodes: (quirks.exhaustedErrorCodes ?? []).map(String),
     quotaReader: provider?.quotaReader ?? "",
     quotaBaseUrl: quirks.quotaBaseUrl ?? "",
@@ -230,6 +232,9 @@ function openaiChatQuirks(form: ProviderForm): ProviderQuirks {
   if (form.acceptsPromptCacheKey) quirks.acceptsPromptCacheKey = true;
   if (form.usesMaxCompletionTokens) quirks.usesMaxCompletionTokens = true;
   if (form.forwardsClientPromptCacheKey) quirks.forwardsClientPromptCacheKey = true;
+  if (form.forwardedClientHeaders.length > 0) {
+    quirks.forwardedClientHeaders = [...form.forwardedClientHeaders];
+  }
   if (form.hasReasoningAsThinking) {
     const efforts = emptyEfforts();
     for (const effort of REASONING_EFFORTS) efforts[effort] = form.thinkingEfforts[effort].trim();

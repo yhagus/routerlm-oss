@@ -69,6 +69,8 @@ export interface ProviderQuirks {
   /** The system prompt goes as a `developer` message, not as `instructions`. */
   systemAsDeveloperMessage?: boolean;
   droppedParameters?: DroppableParameter[];
+  /** openai-chat only. Lowercase names of client request headers passed on to the Provider when the client sent them. */
+  forwardedClientHeaders?: string[];
   /** The error codes that make a Provider Account Exhausted: numbers or names. */
   exhaustedErrorCodes?: (string | number)[];
   /** Where the quota reader asks, when that is another host than the base URL. */

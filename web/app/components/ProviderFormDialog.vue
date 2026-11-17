@@ -288,6 +288,20 @@ async function save(): Promise<void> {
               </p>
             </template>
           </template>
+          <template v-if="form.protocol === 'openai-chat'">
+            <div class="field">
+              <span class="field__label">Forwarded client headers</span>
+              <TagListInput
+                v-model="form.forwardedClientHeaders"
+                label="Forwarded client headers"
+                placeholder="Lowercase header name, then Enter"
+              />
+            </div>
+            <p class="form__hint">
+              Request headers passed on to the Provider when the client sent them, such as
+              user-agent. Credentials and connection headers are rejected on save.
+            </p>
+          </template>
           <template v-if="isOpenAiProtocol">
             <fieldset class="check-group">
               <legend class="field__label">Client fields</legend>
