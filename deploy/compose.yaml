@@ -1,0 +1,129 @@
+# RouterLM production stack, from published images. Install:
+#
+#   mkdir routerlm && cd routerlm
+#   curl -LO https://github.com/yhagus/routerlm-oss/releases/latest/download/compose.yaml
+#   curl -L -o .env https://github.com/yhagus/routerlm-oss/releases/latest/download/env.example
+#   # fill in ENCRYPTION_KEY and POSTGRES_PASSWORD in .env
+#   docker compose up -d
+#
+#   backend -> the gateway and dashboard API, http://localhost:3000
+#   web     -> the dashboard, http://localhost:3001
+#   worker  -> runs queue jobs, no port
+#   migrate -> one-shot: applies migrations and seeds the Catalog, then exits
+#   db, redis -> not published to the host
+#
+# Upgrade: set ROUTERLM_VERSION in .env (or download the newer compose.yaml),
+# then `docker compose pull && docker compose up -d`.
+#
+# The project name and the volume names match the development stack
+# (docker-compose.yml), so an install made from a clone of the repo keeps its
+# data: stop the old stack and start this file in the same folder with the
+# same .env. A clone in a folder not named routerlm-oss sets
+# COMPOSE_PROJECT_NAME in .env to that folder's name. See ADR 0018.
+name: routerlm-oss
+
+x-postgres: &postgres
+  POSTGRES_USER: ${POSTGRES_USER:-routerlm}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+  POSTGRES_DB: ${POSTGRES_DB:-routerlm}
+
+# Shared by backend, worker and migrate. Hostnames are compose service names.
+x-app-env: &app-env
+  DATABASE_URL: postgres://${POSTGRES_USER:-routerlm}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-routerlm}
+  REDIS_URL: redis://redis:6379
+  WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3001}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env to the output of `openssl rand -base64 32`}
+
+# The release workflow replaces "latest" with the release's version in the
+# compose.yaml it attaches to a GitHub Release.
+x-backend-image: &backend-image ghcr.io/yhagus/routerlm-backend:${ROUTERLM_VERSION:-latest}
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment: *postgres
+    volumes:
+      # Postgres 18+ images keep PGDATA in a versioned subdirectory
+      # (/var/lib/postgresql/18/docker), so mount the parent directory.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Applies pending migrations, then creates missing Catalog rows. Both are
+  # idempotent, so this runs on every `docker compose up`.
+  migrate:
+    image: *backend-image
+    command: ["bun", "dist/migrate.js"]
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    image: *backend-image
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    environment:
+      <<: *app-env
+      PORT: 3000
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "fetch('http://localhost:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      # The backend survives Redis outages, so starting it is enough.
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  worker:
+    image: *backend-image
+    command: ["bun", "dist/worker.js"]
+    environment: *app-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/yhagus/routerlm-web:${ROUTERLM_VERSION:-latest}
+    ports:
+      - "${WEB_PORT:-3001}:3000"
+    environment:
+      NUXT_BACKEND_URL: http://backend:3000
+      # The gateway address the docs' examples show. Empty: the browser's host on port 3000.
+      NUXT_PUBLIC_GATEWAY_URL: ${NUXT_PUBLIC_GATEWAY_URL:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
