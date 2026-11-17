@@ -1,3 +1,18 @@
+# v3.1.0 (2026-11-17)
+
+## Upgrade
+
+- Run `docker compose pull`, then `docker compose up -d`. The `migrate` service applies one new migration.
+- Nothing is breaking. The migration raises an Upstream Model's context size or max output only where it still holds the old Catalog value, so a value you edited is kept.
+
+## Providers
+
+- The Catalog now gives each Upstream Model the most context and output its Provider accepts, not a default. Where a Provider's docs are silent, the figures are models.dev's.
+- Kimi K3, K3.1 Pro and K3.1 Pro Highspeed (Moonshot and Kimi Code) can output up to 1,048,576 tokens, up from 131,072, which is only Moonshot's default. On Kimi Code, K3 and K3.1 Pro have a 1,048,576 context, which Pro plans and higher get; on a lower plan, lower the context size of those two models. K3 256K can output up to 262,144.
+- OpenAI Codex models take the `max_context_window` of the Codex CLI's model list, 872,000 for eight of them, up from the CLI's default 272,000. GPT-5.5 stays at 272,000.
+- DeepSeek models have a 1,048,576 context and a 393,216 max output.
+- MiniMax M3 and M3.1 Flash on the M Plan have a 1,000,000 context, up from 524,288. GLM-5.2 on Alibaba has 1,048,576.
+
 # v3.0.0-rc.1 (2026-11-17)
 
 ## Upgrade
