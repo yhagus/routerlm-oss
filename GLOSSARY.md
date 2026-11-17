@@ -116,6 +116,14 @@ _Avoid_: Request log, history
 The stored headers and body of a failed request or failed Attempt, kept for a limited time so an operator can see why it failed.
 _Avoid_: Error log, debug log
 
+**Retention Period**:
+How many days an Error Capture is kept before it is deleted. It is a Setting, 7 days until a User changes it.
+_Avoid_: TTL, expiry, purge window
+
+**Setting**:
+A configuration value a User changes from the dashboard, kept in the database so a change takes effect without a restart.
+_Avoid_: Config, option, preference
+
 **Playground**:
 The dashboard screen where a User sends test requests to a Model through the same path client requests take, or straight to one Upstream Model in a Direct Upstream Model test.
 _Avoid_: Chat, tester, sandbox

@@ -4,7 +4,7 @@ The gateway carries other people's prompts. We decided that Usage Logs and Attem
 
 ## Consequences
 
-- Error Captures are stored only for requests that carry a valid API Key, have credentials redacted from headers, are truncated past a size limit, and are deleted after a retention period (30 days by default).
+- Error Captures are stored only for requests that carry a valid API Key, have credentials redacted from headers, are truncated past a size limit, and are deleted after a retention period (7 days by default, `ERROR_CAPTURE_RETENTION_DAYS`).
 - There is no gateway response cache and no stored conversations (see ADR 0002).
 - The Playground keeps its conversation in the browser only.
 - A successful request can't be replayed or inspected afterwards. Debugging one means reproducing it.
