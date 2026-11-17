@@ -120,6 +120,7 @@ async function signOut(): Promise<void> {
         <slot />
       </div>
     </main>
+    <CatalogGapsNotice />
     <Transition name="toast"
       ><div v-if="toastMessage" class="toast" role="status" aria-live="polite">
         <ShieldCheck :size="16" />{{ toastMessage }}

@@ -1531,6 +1531,23 @@ tbody tr:hover {
   box-shadow: 0 12px 32px var(--shadow-pop-color);
   font-size: 12px;
 }
+.catalog-gaps-notice {
+  right: auto;
+  left: 24px;
+  align-items: flex-start;
+  max-width: min(420px, calc(100vw - 48px));
+}
+.catalog-gaps-notice__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.catalog-gaps-notice ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
 .toast-enter-active,
 .toast-leave-active {
   transition: all 0.2s ease;
