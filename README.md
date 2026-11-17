@@ -25,57 +25,6 @@ Your tools speak OpenAI or Anthropic. You keep keys at Anthropic, OpenAI, DeepSe
 - **Know what every request cost.** RouterLM records tokens, cache reads and writes, latency, time to first token and USD cost for each request. You can view them per key and per Model.
 - **Debug failures without logging prompts.** RouterLM never stores prompt or response content. It keeps only failed requests, as Error Captures with credentials redacted, for 7 days by default (`ERROR_CAPTURE_RETENTION_DAYS`).
 
-## Features
-
-### Three client protocols, any upstream
-
-Clients call `/v1/chat/completions`, `/v1/messages` or `/v1/responses`. RouterLM converts every request to one internal format. It then sends the request to an OpenAI Chat or Anthropic Messages upstream, with or without streaming. A Claude Code session can run on Kimi, and an OpenAI SDK app can run on Claude.
-
-### Models and Routes
-
-<p align="center">
-  <img alt="The &quot;smart&quot; Model with three Routes: Anthropic, OpenAI and Moonshot, light theme" src="docs/images/model.png" width="49%" />
-  <img alt="The &quot;smart&quot; Model with three Routes: Anthropic, OpenAI and Moonshot, dark theme" src="docs/images/model-dark.png" width="49%" />
-</p>
-
-A Model is the name clients send. RouterLM tries its Routes from the top. Each Model has a Parameter Policy: defaults, forced values, caps and a system prompt. A Route can override that policy. Routes also have their own timeouts, and Models can set automatic prompt cache breakpoints.
-
-### Providers from the Catalog
-
-<p align="center">
-  <img alt="Providers page with logos, account readiness and model counts, light theme" src="docs/images/providers.png" width="49%" />
-  <img alt="Providers page with logos, account readiness and model counts, dark theme" src="docs/images/providers-dark.png" width="49%" />
-</p>
-
-The Catalog ships Alibaba Model Studio Intl, Anthropic, DeepSeek, Kimi Code, MiniMax API, MiniMax M Plan, Moonshot, OpenAI and Xiaomi MiMo. Each entry has context sizes, capabilities, prices and release dates. Add a key to start using a Provider. You can add any other OpenAI- or Anthropic-compatible service by hand. Kimi Code also supports "Sign in with Kimi", and RouterLM keeps that login valid on its own.
-
-### Usage you can search
-
-<p align="center">
-  <img alt="Usage page with totals, filters and a per-request table, light theme" src="docs/images/usage.png" width="49%" />
-  <img alt="Usage page with totals, filters and a per-request table, dark theme" src="docs/images/usage-dark.png" width="49%" />
-</p>
-
-RouterLM records every request as a Usage Log with its Attempts. You can filter by Model, API Key or status, and search by text. The URL keeps the current view, so you can share it.
-
-### Playground
-
-<p align="center">
-  <img alt="Playground showing the Routes of the &quot;coder&quot; Model, light theme" src="docs/images/playground.png" width="49%" />
-  <img alt="Playground showing the Routes of the &quot;coder&quot; Model, dark theme" src="docs/images/playground-dark.png" width="49%" />
-</p>
-
-Send a request through a Model exactly as a client does, or send it directly to one upstream model. Then copy the matching code snippet.
-
-### Client docs
-
-<p align="center">
-  <img alt="The Chat Completions page of the client docs, light theme" src="docs/images/docs.png" width="49%" />
-  <img alt="The Chat Completions page of the client docs, dark theme" src="docs/images/docs-dark.png" width="49%" />
-</p>
-
-The web app serves public client docs at `/docs` (English) and `/id/docs` (Indonesian). Readers do not need to sign in. Each page covers one endpoint, with curl and TypeScript requests that use your gateway's URL. Readers can copy each request, and search all pages with ⌘K.
-
 ## Quick start
 
 You need Docker with Compose. No clone: each release publishes the images `ghcr.io/yhagus/routerlm-backend` and `ghcr.io/yhagus/routerlm-web` (amd64 and arm64) and a `compose.yaml` that runs them.
@@ -116,30 +65,6 @@ The web app serves the full client docs at http://localhost:3001/docs.
 
 The stack publishes the gateway on port 3000 and the dashboard on 3001, over plain HTTP. Put your own reverse proxy with TLS in front of them, and set `WEB_ORIGIN` to the dashboard's public URL.
 
-### Upgrading
-
-The `compose.yaml` of a release runs that release's images. To upgrade, set `ROUTERLM_VERSION` in `.env` to the new version (or download the new release's `compose.yaml`), read its [CHANGELOG](CHANGELOG.md) entry, then:
-
-```bash
-docker compose pull
-docker compose up -d
-```
-
-The `migrate` service applies new migrations and Catalog rows on start.
-
-### Moving an install made from a clone
-
-Earlier releases installed by running the development stack from a clone of this repo. `compose.yaml` uses the same project name (`routerlm-oss`) and volume names, so it keeps that install's data. In the clone's folder, with its `.env`:
-
-```bash
-docker compose down                      # stops the old stack; volumes stay
-curl -LO https://github.com/yhagus/routerlm-oss/releases/latest/download/compose.yaml
-echo "POSTGRES_PASSWORD=routerlm" >> .env   # the password your db volume was created with
-docker compose -f compose.yaml up -d
-```
-
-If the clone's folder is not named `routerlm-oss`, also add `COMPOSE_PROJECT_NAME=<folder name>` to `.env`.
-
 ## Architecture
 
 ```
@@ -161,19 +86,66 @@ clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
 
 [GLOSSARY.md](GLOSSARY.md) defines the domain terms (Model, Route, Provider Account, Cooldown, Exhausted…). [docs/adr/](docs/adr/) records the design decisions.
 
+## Benchmark
+
+We measured the gateway with [k6](https://k6.io). The test stack has a fake upstream, so the results show the cost of RouterLM, not the cost of a Provider. Run the same test with `bun run perf:k6`. [tests/k6/README.md](tests/k6/README.md) describes the setup and the other scenarios.
+
+**Host:** Docker Desktop on macOS, Apple M3 Pro. The Docker VM has 4 CPUs and 7.6 GB of RAM.
+
+**Nodes:**
+
+| Node                  | Spec                                     |
+| --------------------- | ---------------------------------------- |
+| Gateway               | 2 CPU / 2 GB: 2 replicas of 1 CPU / 1 GB |
+| Worker                | 1 CPU / 1 GB                             |
+| PostgreSQL            | 1 CPU / 1 GB                             |
+| Redis                 | 0.5 CPU / 512 MB                         |
+| Fake upstream         | 1 CPU / 512 MB (test equipment)          |
+| Load balancer (nginx) | 1 CPU / 256 MB (test equipment)          |
+| k6                    | uncapped (test equipment)                |
+
+**Scenarios:** each scenario ran for one minute on a fresh stack. Every virtual user (VU) sends its next request as soon as the last one ends.
+
+1. **Gateway alone:** the fake upstream answers at once with 20 tokens. This scenario shows how much traffic the gateway can carry.
+2. **End to end:** the fake upstream waits 200 ms, then streams 200 tokens at 100 tokens/s. One answer takes about 2.2 s. This scenario shows what a client sees through a realistic upstream.
+
+| Result               | 1. Gateway alone | 2. End to end   |
+| -------------------- | ---------------- | --------------- |
+| VUs                  | 300              | 1,800           |
+| Total time           | 60 s             | 63 s            |
+| Total requests       | 125,525          | 27,784          |
+| Requests per second  | 2,081            | 444             |
+| Failed requests      | 0 (0.00%)        | 0 (0.00%)       |
+| Latency median / p95 | 101 ms / 335 ms  | 3.31 s / 6.01 s |
+| Out-of-memory kills  | none             | none            |
+
+**Resource use:** average CPU and RAM per node, sampled about every 5 s while k6 ran. A percentage is the share of that node's limit.
+
+| Node                  | 1. CPU           | 1. RAM        | 2. CPU           | 2. RAM        |
+| --------------------- | ---------------- | ------------- | ---------------- | ------------- |
+| Gateway               | 1.59 cores (79%) | 366 MiB (18%) | 1.34 cores (67%) | 528 MiB (26%) |
+| Worker                | 0.30 cores (30%) | 85 MiB (8%)   | 0.26 cores (26%) | 85 MiB (8%)   |
+| PostgreSQL            | 0.39 cores (39%) | 112 MiB (11%) | 0.35 cores (35%) | 124 MiB (12%) |
+| Redis                 | 0.24 cores (47%) | 93 MiB (18%)  | 0.10 cores (20%) | 15 MiB (3%)   |
+| Fake upstream         | 0.16 cores (16%) | 30 MiB (6%)   | 0.46 cores (46%) | 53 MiB (10%)  |
+| Load balancer (nginx) | 0.17 cores (17%) | 36 MiB (14%)  | 0.27 cores (27%) | 65 MiB (25%)  |
+| k6                    | 0.49 cores       | 171 MiB       | 0.61 cores       | 834 MiB       |
+
+k6 and the fake upstream share the host with the stack, so results can change by about 20% between runs on a laptop.
+
 ## Configuration
 
 Set these in the `.env` next to `compose.yaml` (see [deploy/.env.example](deploy/.env.example)). Settings a User changes in the dashboard, such as the Error Capture Retention Period, live in the database instead.
 
-| Variable                       | Default   | Purpose                                         |
-| ------------------------------ | --------- | ----------------------------------------------- |
-| `ENCRYPTION_KEY`               | required  | Encrypts Provider Account keys. 32 bytes, base64. |
-| `POSTGRES_PASSWORD`            | required  | Postgres uses it only when it first creates the db volume. |
-| `ROUTERLM_VERSION`             | the release's version | The image version to run.            |
-| `WEB_ORIGIN`                   | `http://localhost:3001` | The dashboard's public URL.          |
-| `NUXT_PUBLIC_GATEWAY_URL`      | browser host, port `3000` | Gateway base URL shown in the `/docs` examples. |
-| `BACKEND_PORT` / `WEB_PORT`    | `3000` / `3001` | Host ports.                               |
-| `POSTGRES_USER` / `POSTGRES_DB` | `routerlm` | Postgres uses them only when it first creates the db volume. |
+| Variable                        | Default                   | Purpose                                                      |
+| ------------------------------- | ------------------------- | ------------------------------------------------------------ |
+| `ENCRYPTION_KEY`                | required                  | Encrypts Provider Account keys. 32 bytes, base64.            |
+| `POSTGRES_PASSWORD`             | required                  | Postgres uses it only when it first creates the db volume.   |
+| `ROUTERLM_VERSION`              | the release's version     | The image version to run.                                    |
+| `WEB_ORIGIN`                    | `http://localhost:3001`   | The dashboard's public URL.                                  |
+| `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.              |
+| `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports.                                                  |
+| `POSTGRES_USER` / `POSTGRES_DB` | `routerlm`                | Postgres uses them only when it first creates the db volume. |
 
 ## Development
 
@@ -186,7 +158,9 @@ sed "s|^ENCRYPTION_KEY=$|ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env.exampl
 docker compose up -d
 ```
 
-It takes its project name from the folder, `routerlm-oss` for a default clone, the same name `deploy/compose.yaml` uses, so in that folder the two share containers and data. To try the production images on a development machine, build them and run `scripts/smoke-production.sh`, which uses its own project name and throwaway volumes:
+It takes its project name from the folder. For a default clone, that name is `routerlm-oss`, the same name that `deploy/compose.yaml` uses. In that folder, the two stacks share containers and data.
+
+To try the production images on a development machine, build them and run `scripts/smoke-production.sh`. The script uses its own project name and throwaway volumes:
 
 ```bash
 docker build --target production -t ghcr.io/yhagus/routerlm-backend:local .
@@ -194,59 +168,7 @@ docker build --target production -t ghcr.io/yhagus/routerlm-web:local web
 ROUTERLM_VERSION=local scripts/smoke-production.sh
 ```
 
-### Releasing
-
-Bump `version` in `package.json` and `web/package.json`, turn the CHANGELOG's `# Unreleased` into `# vX.Y.Z (date)`, commit, then push a `vX.Y.Z` tag. The Release workflow runs CI, smoke-tests the images, publishes them and creates the GitHub Release with `compose.yaml` and `env.example` ([ADR 0018](docs/adr/0018-self-hosters-install-from-published-images.md)).
-
-### Checks and tests
-
-```bash
-bun install
-bun run check            # lint, format, types (backend)
-cd web && bun run check  # lint, format, types (web)
-bun run test:docker      # feature tests against throwaway Postgres and Redis
-```
-
-There are no unit tests. Every test is a feature test in `tests/<feature>/`. It drives the app over HTTP, CLI or boot against real Postgres and Redis, with a fake upstream ([ADR 0009](docs/adr/0009-feature-tests-only.md)). `bun run test` runs them against `TEST_DATABASE_URL` and `REDIS_URL` you already have.
-
-### Database
-
-The schema lives in `src/db/schemas/`. After you change it, generate and apply a migration:
-
-```bash
-docker compose exec backend bun run db:generate
-docker compose exec backend bun run db:migrate
-```
-
-### Catalog
-
-The Catalog is one JSON file per Provider in `src/catalog/data/`. The seeder (`bun run db:seed`) only creates missing rows. It keeps your dashboard edits, and you can run it again safely. When you update a file:
-
-- Take model ids, capabilities, context sizes and prices (USD per million tokens) from the Provider's own docs and pricing pages.
-- Put those page URLs and the date you read them in `source`.
-- Use `null` for a value the Provider doesn't publish. Never estimate one.
-- `src/catalog/schemas/catalog.schema.ts` defines the file shape. `tests/catalog/` checks every shipped file.
-
-### Demo data for screenshots
-
-`bun run db:seed:demo` fills a database with a fictional install: Provider Accounts with fake keys, Models, API Keys and a week of traffic. Use it to capture the dashboard screenshots again. The script empties every table first, so it runs only when the database name ends in `_demo`.
-
-Create and fill a demo database, then start the stack on it. Sign in as `admin@example.com` with the password `routerlm-demo`:
-
-```bash
-docker compose exec db createdb -U routerlm routerlm_demo
-docker compose exec -e DATABASE_URL=postgres://routerlm:routerlm@db:5432/routerlm_demo backend bun run db:migrate
-docker compose exec -e DATABASE_URL=postgres://routerlm:routerlm@db:5432/routerlm_demo backend bun run db:seed:demo
-POSTGRES_DB=routerlm_demo docker compose up -d
-```
-
-### Project conventions
-
-Backend modules follow a CQRS folder layout and prefer first-party `@nestjs/*` packages. See [AGENTS.md](AGENTS.md) and [docs/adr/](docs/adr/).
-
-## Upgrading from v1
-
-v2 is a rewrite and does not import v1 data. The v1 app (Bun + Hono + Vue, SQLite) stays in [`legacy/`](legacy/). Its npm package `@ciwergrp/routerlm` and image `ghcr.io/yhagus/routerlm-oss` stay at 1.6.5. See [CHANGELOG.md](CHANGELOG.md).
+[AGENTS.md](AGENTS.md) lists the checks, the test setup and the project conventions.
 
 ## License
 
