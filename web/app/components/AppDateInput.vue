@@ -23,9 +23,11 @@ import {
 
 // A typed YYYY-MM-DD field with a calendar popover. The value is the
 // "YYYY-MM-DD" string the API speaks, or "" when no date is set.
-defineProps<{
+const props = defineProps<{
   /** The control's accessible name. */
   label: string;
+  /** The earliest date that can be picked, as YYYY-MM-DD. */
+  min?: string;
 }>();
 const model = defineModel<string>({ required: true });
 const open = ref(false);
@@ -48,6 +50,15 @@ const dateValue = computed<DateValue | undefined>({
   },
 });
 
+const minValue = computed<DateValue | undefined>(() => {
+  if (!props.min) return undefined;
+  try {
+    return parseDate(props.min);
+  } catch {
+    return undefined;
+  }
+});
+
 function pickToday() {
   dateValue.value = today(getLocalTimeZone());
   open.value = false;
@@ -63,6 +74,7 @@ function clear() {
     v-model="dateValue"
     v-model:open="open"
     :locale="LOCALE"
+    :min-value="minValue"
     granularity="day"
     :week-starts-on="1"
     weekday-format="short"

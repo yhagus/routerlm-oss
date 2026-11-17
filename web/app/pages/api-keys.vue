@@ -47,7 +47,7 @@ const isLoadingModelChoices = computed(
   () => modelChoicesStatus.value === "pending" && !modelChoices.value,
 );
 
-const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, what <input type="date"> takes
+const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, the earliest expiry the picker offers
 
 function formatDate(value: string | null, whenNull: string): string {
   return value ? dateFormat.format(new Date(value)) : whenNull;
@@ -287,10 +287,10 @@ async function revokeApiKey(): Promise<void> {
             placeholder="e.g. Support bot"
             required
         /></label>
-        <label class="field"
-          ><span class="field__label">Expires on (optional)</span
-          ><input v-model="newExpiryDate" class="text-input" type="date" :min="today"
-        /></label>
+        <div class="field">
+          <span class="field__label">Expires on (optional)</span>
+          <AppDateInput v-model="newExpiryDate" label="Expires on" :min="today" />
+        </div>
         <fieldset class="field model-choices">
           <legend class="field__label">Allowed Models</legend>
           <p class="model-choices__hint">Leave all unticked to allow every Model.</p>
