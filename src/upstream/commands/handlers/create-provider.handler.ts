@@ -5,7 +5,11 @@ import { hasPostgresErrorCode, UNIQUE_VIOLATION } from "@/libs/models/postgres-e
 import type { Database } from "@/db/schemas/relations.js";
 import { providers } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { assertQuirksFitProtocol, type Provider } from "../../models/provider.js";
+import {
+  assertQuirksFitProtocol,
+  assertServiceTierValuesFitProtocol,
+  type Provider,
+} from "../../models/provider.js";
 import { CreateProviderCommand } from "../impl/create-provider.command.js";
 
 @CommandHandler(CreateProviderCommand)
@@ -17,6 +21,7 @@ export class CreateProviderHandler implements ICommandHandler<CreateProviderComm
 
   async execute({ newProvider }: CreateProviderCommand): Promise<Provider> {
     assertQuirksFitProtocol(newProvider.protocol, newProvider.quirks);
+    assertServiceTierValuesFitProtocol(newProvider.protocol, newProvider.serviceTierValues);
     try {
       const [created] = await this.db.insert(providers).values(newProvider).returning();
       await this.snapshot.changed();

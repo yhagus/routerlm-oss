@@ -84,6 +84,15 @@ export type QuotaMeterUnit = (typeof QUOTA_METER_UNITS)[number];
  */
 export type ProviderQuirks = Record<string, unknown>;
 
+/**
+ * The Protocols whose adapter writes `service_tier` into the upstream request
+ * (ADR 0014). A Provider on any other Protocol can have no Service Tiers.
+ */
+export const PROTOCOLS_WITH_SERVICE_TIERS = [
+  "openai-chat",
+  "openai-responses",
+] as const satisfies readonly UpstreamProtocol[];
+
 /** What a Provider calls each Service Tier on the wire (ADR 0014); a tier it doesn't name is never sent. */
 export type ServiceTierValues = Partial<Record<ServiceTier, string>>;
 
@@ -102,32 +111,50 @@ export interface TierPrices {
 const pricePerMillionTokens = (name: string) =>
   numeric(name, { precision: 12, scale: 6, mode: "number" });
 
-export const providers = pgTable("providers", {
-  id: id(),
-  slug: text("slug").notNull().unique(),
-  name: text("name").notNull(),
-  // A key into the logo set the dashboard owns; null shows no logo.
-  logo: text("logo"),
-  protocol: text("protocol", { enum: UPSTREAM_PROTOCOLS }).notNull(),
-  baseUrl: text("base_url").notNull(),
-  authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),
-  quirks: jsonb("quirks").$type<ProviderQuirks>().notNull().default({}),
-  serviceTierValues: jsonb("service_tier_values").$type<ServiceTierValues>().notNull().default({}),
-  // Null for a Provider that reports no quota, such as a pay-as-you-go API.
-  quotaReader: text("quota_reader", { enum: QUOTA_READERS }),
-  // Null for a Provider that offers no OAuth Login: its Provider Accounts hold API keys only.
-  oauthLogin: jsonb("oauth_login").$type<ProviderOauthLogin>(),
-  // The credentials its Provider Accounts may hold. An OAuth Login also needs
-  // `oauthLogin`; a Subscription Provider without API keys lists only it.
-  credentialKinds: text("credential_kinds", { enum: CREDENTIAL_KINDS })
-    .array()
-    .notNull()
-    .default(["api-key", "oauth-login"]),
-  isEnabled: boolean("is_enabled").notNull().default(true),
-  isFromCatalog: boolean("is_from_catalog").notNull().default(false),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
+export const providers = pgTable(
+  "providers",
+  {
+    id: id(),
+    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    // A key into the logo set the dashboard owns; null shows no logo.
+    logo: text("logo"),
+    protocol: text("protocol", { enum: UPSTREAM_PROTOCOLS }).notNull(),
+    baseUrl: text("base_url").notNull(),
+    authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),
+    quirks: jsonb("quirks").$type<ProviderQuirks>().notNull().default({}),
+    serviceTierValues: jsonb("service_tier_values")
+      .$type<ServiceTierValues>()
+      .notNull()
+      .default({}),
+    // Null for a Provider that reports no quota, such as a pay-as-you-go API.
+    quotaReader: text("quota_reader", { enum: QUOTA_READERS }),
+    // Null for a Provider that offers no OAuth Login: its Provider Accounts hold API keys only.
+    oauthLogin: jsonb("oauth_login").$type<ProviderOauthLogin>(),
+    // The credentials its Provider Accounts may hold. An OAuth Login also needs
+    // `oauthLogin`; a Subscription Provider without API keys lists only it.
+    credentialKinds: text("credential_kinds", { enum: CREDENTIAL_KINDS })
+      .array()
+      .notNull()
+      .default(["api-key", "oauth-login"]),
+    isEnabled: boolean("is_enabled").notNull().default(true),
+    isFromCatalog: boolean("is_from_catalog").notNull().default(false),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    // Tier values on a Protocol that never sends a tier would do nothing, so the
+    // row can't hold them (ADR 0014).
+    check(
+      "providers_service_tier_values_protocol_check",
+      sql`${table.serviceTierValues} = '{}'::jsonb
+      or ${table.protocol} in (${sql.join(
+        PROTOCOLS_WITH_SERVICE_TIERS.map((protocol) => sql.raw(`'${protocol}'`)),
+        sql`, `,
+      )})`,
+    ),
+  ],
+);
 
 export const providerAccounts = pgTable(
   "provider_accounts",
@@ -266,6 +293,12 @@ export const upstreamModels = pgTable(
     unique("upstream_models_provider_id_upstream_model_id_unique").on(
       table.providerId,
       table.upstreamModelId,
+    ),
+    // A price for a tier the model doesn't list would never be used (ADR 0014).
+    // jsonb minus a text[] drops those keys, so nothing is left when all are listed.
+    check(
+      "upstream_models_tier_prices_listed_check",
+      sql`(${table.tierPrices} - ${table.serviceTiers}) = '{}'::jsonb`,
     ),
   ],
 );

@@ -12,4 +12,6 @@ OpenAI Codex has a fast mode (`service_tier: "priority"`) and a flex mode, the O
 
 - When no tier is set, no tier is sent, so the Provider's own default applies, even where that default is priority.
 - OpenAI's raw `priority` and Codex's legacy `fast` both read as `fast`; `default` and `auto` mean no tier. Anthropic's `service_tier` is ignored.
+- Service Tier values are allowed only on a Provider whose Protocol writes `service_tier` (`openai-chat` and `openai-responses`). Anthropic Messages never sends one, so a database check refuses tier values there. Any other Provider on those two Protocols may have them, because Providers are data (ADR 0003); the Catalog gives them to OpenAI and OpenAI Codex only.
+- An Upstream Model lists only tiers its Provider maps, and prices only tiers it lists. The API refuses a write that breaks the first rule, naming the tiers, and a Provider edit that would unmap a tier a model lists. A database check enforces the second rule, because it needs only one row. The Catalog loader applies both.
 - The Usage Log records the tier that served the request, and Cost uses the Upstream Model's price for that tier when it has one, falling back to the standard price.

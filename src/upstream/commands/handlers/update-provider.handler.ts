@@ -3,9 +3,20 @@ import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, count, eq, inArray } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers, quotaMeters } from "@/db/schemas/index.js";
+import {
+  providerAccounts,
+  providers,
+  quotaMeters,
+  type ServiceTierValues,
+  upstreamModels,
+} from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { assertQuirksFitProtocol, type Provider } from "../../models/provider.js";
+import { serviceTiersWithoutWireValue } from "@/catalog/schemas/catalog.schema.js";
+import {
+  assertQuirksFitProtocol,
+  assertServiceTierValuesFitProtocol,
+  type Provider,
+} from "../../models/provider.js";
 import { UpdateProviderCommand } from "../impl/update-provider.command.js";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -30,6 +41,11 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
 
       // A PATCH may change only the Protocol or only the quirks, so the result is what must fit.
       assertQuirksFitProtocol(changes.protocol ?? stored.protocol, changes.quirks ?? stored.quirks);
+      const serviceTierValues = changes.serviceTierValues ?? stored.serviceTierValues;
+      assertServiceTierValuesFitProtocol(changes.protocol ?? stored.protocol, serviceTierValues);
+      if (changes.serviceTierValues !== undefined) {
+        await refuseWhileModelsListUnmappedTiers(tx, providerId, serviceTierValues);
+      }
       if (changes.oauthLogin === null) {
         await refuseWhileOauthLoginAccountsExist(tx, providerId);
       }
@@ -50,6 +66,30 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
     await this.snapshot.changed();
     return updated;
   }
+}
+
+/** A tier the Provider stops mapping would be dropped from every Attempt of the Upstream Models that list it. */
+async function refuseWhileModelsListUnmappedTiers(
+  tx: Transaction,
+  providerId: string,
+  serviceTierValues: ServiceTierValues,
+): Promise<void> {
+  const models = await tx
+    .select({
+      upstreamModelId: upstreamModels.upstreamModelId,
+      serviceTiers: upstreamModels.serviceTiers,
+    })
+    .from(upstreamModels)
+    .where(eq(upstreamModels.providerId, providerId));
+  const affected = models.filter(
+    (model) => serviceTiersWithoutWireValue(model.serviceTiers, serviceTierValues).length > 0,
+  );
+  if (affected.length === 0) return;
+
+  const names = affected.map((model) => `"${model.upstreamModelId}"`).join(", ");
+  throw new ConflictException(
+    `The Upstream Models ${names} list Service Tiers this change would leave unmapped; remove the tiers from them first`,
+  );
 }
 
 /** Without OAuth Login these Provider Accounts could neither renew their tokens nor be signed in again. */

@@ -1,0 +1,63 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "1138879b-488a-4f6b-baf9-de27c45ccf80",
+  "prevIds": ["48f72197-4df2-4983-b9db-03d84d8bd4f2"],
+  "footprints": [
+    {
+      "statementType": "add_check",
+      "statementTarget": ["table", "public", "providers"],
+      "writes": [
+        "s|ck|public.providers.providers_service_tier_values_protocol_check",
+        "n|ck|public.providers.providers_service_tier_values_protocol_check",
+        "e|ck|public.providers.providers_service_tier_values_protocol_check",
+        "n|con|public.providers.providers_service_tier_values_protocol_check"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public",
+        "n|col|public.providers.service_tier_values",
+        "n|col|public.providers.protocol"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": ["table", "public", "upstream_models"],
+      "writes": [
+        "s|ck|public.upstream_models.upstream_models_tier_prices_listed_check",
+        "n|ck|public.upstream_models.upstream_models_tier_prices_listed_check",
+        "e|ck|public.upstream_models.upstream_models_tier_prices_listed_check",
+        "n|con|public.upstream_models.upstream_models_tier_prices_listed_check"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public",
+        "n|col|public.upstream_models.tier_prices",
+        "n|col|public.upstream_models.service_tiers"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "providers_service_tier_values_protocol_check",
+        "value": "\"service_tier_values\" = '{}'::jsonb\n      or \"protocol\" in ('openai-chat', 'openai-responses')",
+        "entityType": "checks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "upstream_models_tier_prices_listed_check",
+        "value": "(\"tier_prices\" - \"service_tiers\") = '{}'::jsonb",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

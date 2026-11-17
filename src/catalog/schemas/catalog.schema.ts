@@ -5,13 +5,18 @@ import {
   CREDENTIAL_KINDS,
   type KimiCodeOauthLogin,
   type OpenAiCodexOauthLogin,
+  PROTOCOLS_WITH_SERVICE_TIERS,
   QUOTA_READERS,
   type ServiceTierValues,
   type TierPrices,
   UPSTREAM_PROTOCOLS,
   type UpstreamProtocol,
 } from "@/db/schemas/index.js";
-import { REASONING_EFFORTS, SERVICE_TIERS } from "@/inference/models/internal-format.js";
+import {
+  REASONING_EFFORTS,
+  SERVICE_TIERS,
+  type ServiceTier,
+} from "@/inference/models/internal-format.js";
 
 // The shape of one Catalog file: a Provider and the Upstream Models it sells.
 // Field names match the `providers` and `upstream_models` columns.
@@ -136,6 +141,45 @@ export function quirksForeignToProtocol(
     ...QUIRKS_OF_ONE_PROTOCOL[protocol],
   ];
   return Object.keys(quirks).filter((key) => !understood.includes(key));
+}
+
+/**
+ * The tiers `serviceTierValues` maps on a Protocol whose adapter never sends
+ * one (ADR 0014). A Provider must have none: they would silently do nothing.
+ */
+export function serviceTierValuesForeignToProtocol(
+  protocol: UpstreamProtocol,
+  serviceTierValues: ServiceTierValues,
+): ServiceTier[] {
+  const sendsServiceTier = PROTOCOLS_WITH_SERVICE_TIERS.some((sending) => sending === protocol);
+  return sendsServiceTier
+    ? []
+    : SERVICE_TIERS.filter((tier) => serviceTierValues[tier] !== undefined);
+}
+
+/**
+ * The tiers in `serviceTiers` that the Provider maps to no wire value (ADR
+ * 0014). An Upstream Model must list none: the gateway would drop the tier on
+ * every Attempt.
+ */
+export function serviceTiersWithoutWireValue(
+  serviceTiers: readonly ServiceTier[],
+  serviceTierValues: ServiceTierValues,
+): ServiceTier[] {
+  return serviceTiers.filter((tier) => serviceTierValues[tier] === undefined);
+}
+
+/**
+ * The tiers `tierPrices` prices that `serviceTiers` doesn't list (ADR 0014).
+ * An Upstream Model must have none: no Attempt could be served at that tier.
+ */
+export function tierPricesWithoutListedTier(
+  tierPrices: Partial<Record<ServiceTier, unknown>>,
+  serviceTiers: readonly ServiceTier[],
+): ServiceTier[] {
+  return SERVICE_TIERS.filter(
+    (tier) => tierPrices[tier] !== undefined && !serviceTiers.includes(tier),
+  );
 }
 
 /** A key into the logo set the dashboard owns; the gateway checks only its format. */

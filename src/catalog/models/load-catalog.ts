@@ -6,6 +6,9 @@ import {
   type CatalogProvider,
   catalogProviderSchema,
   quirksForeignToProtocol,
+  serviceTierValuesForeignToProtocol,
+  serviceTiersWithoutWireValue,
+  tierPricesWithoutListedTier,
 } from "../schemas/catalog.schema.js";
 
 /** The Catalog files that ship with the gateway, one JSON file per Provider. */
@@ -51,6 +54,29 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
     throw new Error(
       `Catalog ${fileName}: quirks ${foreignQuirks.join(", ")} don't apply to ${result.data.protocol}`,
     );
+  }
+
+  const serviceTierValues = result.data.serviceTierValues ?? {};
+  const foreignTiers = serviceTierValuesForeignToProtocol(result.data.protocol, serviceTierValues);
+  if (foreignTiers.length > 0) {
+    throw new Error(
+      `Catalog ${fileName}: Service Tiers ${foreignTiers.join(", ")} don't apply to ${result.data.protocol}`,
+    );
+  }
+  for (const model of result.data.upstreamModels) {
+    const serviceTiers = model.serviceTiers ?? [];
+    const unmapped = serviceTiersWithoutWireValue(serviceTiers, serviceTierValues);
+    if (unmapped.length > 0) {
+      throw new Error(
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" lists Service Tiers ${unmapped.join(", ")} that the Provider maps to no wire value`,
+      );
+    }
+    const unlisted = tierPricesWithoutListedTier(model.tierPrices ?? {}, serviceTiers);
+    if (unlisted.length > 0) {
+      throw new Error(
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" prices Service Tiers ${unlisted.join(", ")} that it doesn't list`,
+      );
+    }
   }
 
   const modelIds = result.data.upstreamModels.map((model) => model.upstreamModelId);

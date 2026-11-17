@@ -1,4 +1,10 @@
-import { ConflictException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
+import {
+  serviceTiersWithoutWireValue,
+  tierPricesWithoutListedTier,
+} from "@/catalog/schemas/catalog.schema.js";
+import type { ServiceTierValues } from "@/db/schemas/index.js";
+import type { ServiceTier } from "@/inference/models/internal-format.js";
 import {
   FOREIGN_KEY_VIOLATION,
   hasPostgresErrorCode,
@@ -23,4 +29,32 @@ export function toUpstreamModelWriteError(
     return new NotFoundException("Provider not found");
   }
   return error;
+}
+
+/**
+ * Refuses an Upstream Model that lists a Service Tier its Provider maps to no
+ * wire value, or prices a tier it doesn't list (ADR 0014), naming the tiers.
+ */
+export function assertServiceTiersFitProvider(
+  upstreamModel: {
+    serviceTiers: readonly ServiceTier[];
+    tierPrices: Partial<Record<ServiceTier, unknown>>;
+  },
+  serviceTierValues: ServiceTierValues,
+): void {
+  const unmapped = serviceTiersWithoutWireValue(upstreamModel.serviceTiers, serviceTierValues);
+  if (unmapped.length > 0) {
+    throw new BadRequestException(
+      `The Provider maps no wire value for the Service Tiers ${unmapped.join(", ")}`,
+    );
+  }
+  const unlisted = tierPricesWithoutListedTier(
+    upstreamModel.tierPrices,
+    upstreamModel.serviceTiers,
+  );
+  if (unlisted.length > 0) {
+    throw new BadRequestException(
+      `The Upstream Model prices the Service Tiers ${unlisted.join(", ")} but doesn't list them`,
+    );
+  }
 }
