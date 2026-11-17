@@ -113,6 +113,7 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
+      target: dev
     ports:
       - "${WEB_PORT:-3001}:3000"
     environment:
