@@ -1,3 +1,13 @@
+# Unreleased
+
+## Upgrade
+
+- **Breaking:** the `ERROR_CAPTURE_RETENTION_DAYS` environment variable is removed. An instance that set it falls back to 7 days until a User changes the Retention Period in the dashboard.
+
+## Dashboard
+
+- The Retention Period of Error Captures is now a Setting you change from the dashboard, from 1 to 365 days. It is 7 days until you change it, and a change applies at the next hourly run without a restart. See ADR 0017.
+
 # v2.1.0 (2026-11-17)
 
 RouterLM 2.1 adds OpenAI Codex as a Provider, Service Tiers, and Indonesian client docs.

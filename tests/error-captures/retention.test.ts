@@ -4,13 +4,12 @@ import type { Queue } from "bullmq";
 import { sql } from "drizzle-orm";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
-import { errorCaptures, usageLogs } from "@/db/schemas/index.js";
+import { errorCaptures, settings, usageLogs } from "@/db/schemas/index.js";
 
 // Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-process.env.ERROR_CAPTURE_RETENTION_DAYS = "7";
 const { WorkerModule } = await import("@/worker.module.js");
 const { ERROR_CAPTURES_QUEUE } = await import("@/queue/models/queue-names.js");
 const { ErrorCaptureRetention, ERROR_CAPTURE_RETENTION_SCHEDULER } =
@@ -40,7 +39,7 @@ describe("Error Capture retention (e2e)", () => {
     expect(await queue.getJobScheduler(ERROR_CAPTURE_RETENTION_SCHEDULER)).toBeTruthy();
   });
 
-  it("deletes the captures older than the configured retention period and keeps the rest", async () => {
+  async function insertCapturesAged(...ageDays: number[]) {
     await db.execute(sql`truncate table usage_logs cascade`);
     const [{ id: usageLogId }] = await db
       .insert(usageLogs)
@@ -56,14 +55,44 @@ describe("Error Capture retention (e2e)", () => {
       })
       .returning({ id: usageLogs.id });
     const capture = { usageLogId, requestHeaders: {}, requestBody: "{}" };
-    await db.insert(errorCaptures).values([
-      { ...capture, requestBody: "expired", createdAt: new Date(NOW.getTime() - 8 * DAY_MS) },
-      { ...capture, requestBody: "kept", createdAt: new Date(NOW.getTime() - 6 * DAY_MS) },
-    ]);
+    await db.insert(errorCaptures).values(
+      ageDays.map((age) => ({
+        ...capture,
+        requestBody: `${age} days old`,
+        createdAt: new Date(NOW.getTime() - age * DAY_MS),
+      })),
+    );
+  }
+
+  async function bodiesLeft() {
+    const rows = await db
+      .select({ requestBody: errorCaptures.requestBody })
+      .from(errorCaptures)
+      .orderBy(errorCaptures.requestBody);
+    return rows.map((row) => row.requestBody);
+  }
+
+  beforeEach(async () => {
+    await db.delete(settings);
+  });
+
+  it("deletes the captures older than the default 7 days and keeps the rest", async () => {
+    await insertCapturesAged(8, 6);
 
     await worker.get(ErrorCaptureRetention).deleteExpiredCaptures(NOW);
 
-    const left = await db.select({ requestBody: errorCaptures.requestBody }).from(errorCaptures);
-    expect(left).toEqual([{ requestBody: "kept" }]);
+    expect(await bodiesLeft()).toEqual(["6 days old"]);
+  });
+
+  it("applies a changed Retention Period on the next run without a restart", async () => {
+    const retention = worker.get(ErrorCaptureRetention);
+    await insertCapturesAged(4, 2);
+    await retention.deleteExpiredCaptures(NOW);
+    expect(await bodiesLeft()).toEqual(["2 days old", "4 days old"]);
+
+    await db.insert(settings).values({ key: "errorCaptureRetentionDays", value: 3 });
+    await retention.deleteExpiredCaptures(NOW);
+
+    expect(await bodiesLeft()).toEqual(["2 days old"]);
   });
 });

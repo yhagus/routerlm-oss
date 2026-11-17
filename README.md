@@ -23,7 +23,7 @@ Your tools speak OpenAI or Anthropic. You keep keys at Anthropic, OpenAI, DeepSe
 - **Automatic fallback.** A Model is an ordered list of Routes. A rate limit, a 5xx or a timeout moves the request to the next Route, and the failing account rests in Cooldown.
 - **Subscription plans, used to the last token.** Kimi Code and MiniMax M Plan accounts show their quota meters. RouterLM skips an exhausted account until its quota resets.
 - **Know what every request cost.** RouterLM records tokens, cache reads and writes, latency, time to first token and USD cost for each request. You can view them per key and per Model.
-- **Debug failures without logging prompts.** RouterLM never stores prompt or response content. It keeps only failed requests, as Error Captures with credentials redacted, for 30 days.
+- **Debug failures without logging prompts.** RouterLM never stores prompt or response content. It keeps only failed requests, as Error Captures with credentials redacted, for 7 days by default (`ERROR_CAPTURE_RETENTION_DAYS`).
 
 ## Features
 
@@ -140,7 +140,7 @@ Every variable has a development default in `docker-compose.yml`. Set your own v
 | Variable                       | Default   | Purpose                                         |
 | ------------------------------ | --------- | ----------------------------------------------- |
 | `ENCRYPTION_KEY`               | required  | Encrypts Provider Account keys. 32 bytes, base64. |
-| `ERROR_CAPTURE_RETENTION_DAYS` | `30`      | Days to keep Error Captures.                    |
+| `ERROR_CAPTURE_RETENTION_DAYS` | `7`       | Days to keep Error Captures.                    |
 | `NUXT_PUBLIC_GATEWAY_URL`      | browser host, port `3000` | Gateway base URL shown in the `/docs` examples. |
 | `BACKEND_PORT` / `WEB_PORT`    | `3000` / `3001` | Host ports.                               |
 | `DB_PORT` / `REDIS_PORT`       | `5432` / `6379` | Host ports.                               |

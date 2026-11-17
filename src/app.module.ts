@@ -17,6 +17,7 @@ import { PlaygroundModule } from "@/playground/playground.module.js";
 import { QueueModule } from "@/queue/queue.module.js";
 import { QuotaMetersModule } from "@/quota-meters/quota-meters.module.js";
 import { RoutingModule } from "@/routing/routing.module.js";
+import { SettingsModule } from "@/settings/settings.module.js";
 import { TimeZoneModule } from "@/time-zone/time-zone.module.js";
 import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageModule } from "@/usage/usage.module.js";
@@ -44,6 +45,7 @@ import { UsageModule } from "@/usage/usage.module.js";
     ErrorCapturesModule,
     OverviewModule,
     TimeZoneModule,
+    SettingsModule,
     PlaygroundModule,
     QuotaMetersModule,
   ],

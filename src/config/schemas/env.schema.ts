@@ -18,7 +18,7 @@ export const envSchema = z.object({
       error: ENCRYPTION_KEY_HELP,
     }),
   // Spec "Records": the worker deletes Error Captures older than this.
-  ERROR_CAPTURE_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
+  ERROR_CAPTURE_RETENTION_DAYS: z.coerce.number().int().positive().default(7),
   // How long one Quota Meter reading may take before it counts as failed.
   QUOTA_READER_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 });
