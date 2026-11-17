@@ -2,6 +2,7 @@
 import { ArrowLeft, CircleAlert, CloudOff, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "reka-ui";
 import { apiErrorMessage } from "~/lib/api";
+import { TERMS_RISK_BLOCKED_HINT } from "~/lib/settings";
 import {
   accountStateOf,
   baseUrlHost,
@@ -21,6 +22,7 @@ type Tab = (typeof TABS)[number];
 const route = useRoute();
 const providerId = String(route.params.id);
 
+const { isBlocked } = useTermsRiskAllowed();
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 const {
@@ -169,7 +171,10 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
     </template>
 
     <template v-else>
-      <section class="provider-hero" :class="{ 'provider-hero--off': !provider.isEnabled }">
+      <section
+        class="provider-hero"
+        :class="{ 'provider-hero--off': !provider.isEnabled || isBlocked(provider) }"
+      >
         <ProviderLogo :logo="provider.logo" :name="provider.name" :base-url="provider.baseUrl" />
         <div class="provider-hero__title">
           <h1>{{ provider.name }}</h1>
@@ -177,6 +182,9 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
             <span>{{ PROTOCOL_LABELS[provider.protocol] }}</span>
             <span :title="provider.baseUrl">{{ baseUrlHost(provider.baseUrl) }}</span>
             <span>{{ provider.slug }}</span>
+            <span v-if="isBlocked(provider)" :title="TERMS_RISK_BLOCKED_HINT"
+              >Blocked: terms risk</span
+            >
           </p>
         </div>
         <div class="provider-hero__actions">

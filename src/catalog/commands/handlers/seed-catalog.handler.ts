@@ -25,6 +25,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             slug: entry.slug,
             name: entry.name,
             logo: entry.logo ?? null,
+            termsRisk: entry.termsRisk ?? false,
             protocol: entry.protocol,
             baseUrl: entry.baseUrl,
             authStyle: entry.authStyle,

@@ -4,13 +4,16 @@ import { eq } from "drizzle-orm";
 import { settings } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
 import {
+  type BooleanSettingKey,
+  type IntegerSettingKey,
   SETTING_DEFINITIONS,
   type SettingKey,
+  type SettingValueOf,
   settingValueSchema,
 } from "../models/setting-definitions.js";
 
-export interface SettingValue {
-  value: number;
+export interface SettingValue<Value = number> {
+  value: Value;
   isDefault: boolean;
 }
 
@@ -19,7 +22,9 @@ export interface SettingValue {
 export class SettingsStore {
   constructor(@InjectDrizzle() private readonly db: Database) {}
 
-  async read(key: SettingKey): Promise<SettingValue> {
+  read(key: IntegerSettingKey): Promise<SettingValue<number>>;
+  read(key: BooleanSettingKey): Promise<SettingValue<boolean>>;
+  async read(key: SettingKey): Promise<SettingValue<number | boolean>> {
     const [row] = await this.db
       .select({ value: settings.value })
       .from(settings)
@@ -31,7 +36,7 @@ export class SettingsStore {
     return { value: stored.data, isDefault: false };
   }
 
-  async write(key: SettingKey, value: number): Promise<void> {
+  async write<Key extends SettingKey>(key: Key, value: SettingValueOf<Key>): Promise<void> {
     await this.db
       .insert(settings)
       .values({ key, value })

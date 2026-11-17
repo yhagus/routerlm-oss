@@ -28,7 +28,7 @@ export class ListClientModelsHandler implements IQueryHandler<ListClientModelsQu
 function combinedCapabilities(model: SnapshotModel): Capability[] {
   const offered = new Set<Capability>();
   for (const { isEnabled, upstreamModel } of model.routes) {
-    if (isEnabled && upstreamModel.isEnabled && upstreamModel.provider.isEnabled) {
+    if (isEnabled && upstreamModel.isEnabled && upstreamModel.provider.isUsable) {
       upstreamModel.capabilities.forEach((capability) => offered.add(capability));
     }
   }

@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "cabe2348-ef6c-4b9b-abf2-d83ba87c6e06",
+  "prevIds": [
+    "c1cad881-9bf6-4bee-bcdd-0d65f57e5beb"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "terms_risk"
+      ],
+      "writes": [
+        "s|col|public.providers.terms_risk",
+        "n|col|public.providers.terms_risk",
+        "e|col|public.providers.terms_risk"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "terms_risk",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

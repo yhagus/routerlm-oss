@@ -12,6 +12,7 @@ import {
 } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
 import { isNotFound } from "~/lib/errors";
+import { TERMS_RISK_BLOCKED_HINT } from "~/lib/settings";
 import { isEmptyPolicy, type ParameterPolicy } from "~/lib/parameterPolicy";
 import type { ModelDetail, RouteSummary } from "~/lib/routing";
 import { type Provider, type UpstreamModel, upstreamModelLabel } from "~/lib/upstream";
@@ -32,6 +33,11 @@ useMissingResource(() => isNotFound(loadError.value), "Model");
 const { data: upstreamModels, status: upstreamModelsStatus } =
   useDashboardApi<UpstreamModel[]>("/upstream-models");
 const { data: providers, status: providersStatus } = useDashboardApi<Provider[]>("/providers");
+const { isBlocked } = useTermsRiskAllowed();
+/** A Route summary doesn't carry Terms Risk, so it is looked up from the Provider list. */
+const blockedProviderIds = computed(
+  () => new Set((providers.value ?? []).filter(isBlocked).map((provider) => provider.id)),
+);
 
 /** Add Route lists Upstream Models by Provider name, so it waits for both lists. */
 const isLoadingRouteOptions = computed(
@@ -319,6 +325,12 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
                   {{ modelRoute.provider.name }}
                   <span v-if="!modelRoute.provider.isEnabled" class="cell-note"
                     >Provider disabled</span
+                  >
+                  <span
+                    v-if="blockedProviderIds.has(modelRoute.provider.id)"
+                    class="cell-note"
+                    :title="TERMS_RISK_BLOCKED_HINT"
+                    >Blocked: terms risk</span
                   >
                 </td>
                 <td>

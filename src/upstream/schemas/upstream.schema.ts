@@ -21,6 +21,7 @@ const providerFieldsSchema = catalogProviderSchema
     serviceTierValues: serviceTierValuesSchema,
     // Null shows no logo.
     logo: providerLogoSchema.nullable(),
+    termsRisk: z.boolean(),
     // Null for a Provider that reports no quota.
     quotaReader: z.enum(QUOTA_READERS).nullable(),
     // Null for a Provider that offers no OAuth Login.
@@ -33,6 +34,7 @@ export const newProviderSchema = providerFieldsSchema.extend({
   quirks: providerQuirksSchema.default({}),
   serviceTierValues: serviceTierValuesSchema.default({}),
   logo: providerLogoSchema.nullable().optional(),
+  termsRisk: z.boolean().optional(),
   quotaReader: z.enum(QUOTA_READERS).nullable().optional(),
   oauthLogin: providerOauthLoginSchema.nullable().optional(),
   credentialKinds: catalogProviderSchema.shape.credentialKinds,

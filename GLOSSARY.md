@@ -20,6 +20,9 @@ _Avoid_: Token, client key, app key
 A company or service whose inference API the gateway calls, such as DeepSeek or Anthropic.
 _Avoid_: Upstream, vendor, channel
 
+**Terms Risk**:
+A flag on a Provider whose documented terms the gateway's use may breach, such as a plan limited to interactive use by one person. While the "allow terms-risk providers" Setting is off (the default), such a Provider is unusable: no inference, not listed to clients, though its own enabled flag is untouched.
+
 **Provider Account**:
 One credential the gateway holds at one Provider, either an API key or an OAuth Login, with its own Quota Meters when it is a Subscription Provider.
 _Avoid_: Account, credential, upstream key

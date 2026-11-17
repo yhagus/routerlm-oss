@@ -16,6 +16,7 @@ import {
   PROTOCOL_OPTIONS,
   UPSTREAM_PROTOCOLS,
 } from "~/lib/upstream";
+import { TERMS_RISK_BLOCKED_HINT } from "~/lib/settings";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 
@@ -32,6 +33,7 @@ const {
   error: loadError,
   refresh: refreshProviders,
 } = useDashboardApi<Provider[]>("/providers");
+const { isBlocked } = useTermsRiskAllowed();
 const {
   data: accounts,
   status: accountsStatus,
@@ -267,7 +269,11 @@ function toggleProvider(provider: Provider): Promise<void> {
       :columns="columns"
       :rows="filteredRows"
       :get-row-id="(row) => row.provider.id"
-      :row-class="(row) => ({ 'provider-table__row--off': !row.provider.isEnabled })"
+      :row-class="
+        (row) => ({
+          'provider-table__row--off': !row.provider.isEnabled || isBlocked(row.provider),
+        })
+      "
       :is-loading="isLoadingProviders"
       :error="loadError"
       :refresh="refresh"
@@ -303,6 +309,9 @@ function toggleProvider(provider: Provider): Promise<void> {
             <strong :title="provider.name"
               >{{ provider.name }}<ChevronRight :size="13" aria-hidden="true"
             /></strong>
+            <span v-if="isBlocked(provider)" class="cell-note" :title="TERMS_RISK_BLOCKED_HINT"
+              >Blocked: terms risk</span
+            >
             <span class="cell-note" :title="provider.baseUrl"
               >{{ provider.slug }} · {{ baseUrlHost(provider.baseUrl) }}</span
             >

@@ -55,7 +55,7 @@ export function canServe(upstreamModel: SnapshotUpstreamModel, request: Inferenc
   const neededContext = estimatedPromptTokens(request) + (request.maxOutputTokens ?? 0);
   return (
     upstreamModel.isEnabled &&
-    provider.isEnabled &&
+    provider.isUsable &&
     UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol] !== undefined &&
     requiredCapabilities(request).every((capability) =>
       upstreamModel.capabilities.includes(capability),

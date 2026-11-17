@@ -319,6 +319,7 @@ export const catalogProviderSchema = z.strictObject({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
   logo: providerLogoSchema.optional(),
+  termsRisk: z.boolean().optional(),
   protocol: z.enum(UPSTREAM_PROTOCOLS),
   /**
    * What the Protocol's path is appended to: `/chat/completions` for

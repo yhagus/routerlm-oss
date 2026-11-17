@@ -254,7 +254,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     clientRequest: InferenceRequest,
   ): Destination {
     const upstreamModel = this.snapshot.current.upstreamModelsById.get(upstreamModelRowId);
-    if (!upstreamModel?.isEnabled || !upstreamModel.provider.isEnabled) {
+    if (!upstreamModel?.isEnabled || !upstreamModel.provider.isUsable) {
       throw new GatewayError(
         "model_not_found",
         `The Upstream Model "${upstreamModelRowId}" does not exist`,

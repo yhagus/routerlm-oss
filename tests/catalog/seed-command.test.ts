@@ -24,6 +24,7 @@ const catalog: CatalogProvider[] = [
     slug: "example",
     name: "Example",
     logo: "example",
+    termsRisk: true,
     protocol: "openai-chat",
     baseUrl: "https://api.example.com/v1",
     authStyle: "bearer",
@@ -102,6 +103,7 @@ describe("Seed Catalog command (e2e)", () => {
     expect(provider).toMatchObject({
       name: "Example",
       logo: "example",
+      termsRisk: true,
       protocol: "openai-chat",
       baseUrl: "https://api.example.com/v1",
       authStyle: "bearer",

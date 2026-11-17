@@ -152,6 +152,8 @@ export interface Provider {
   protocol: UpstreamProtocol;
   /** A key into the dashboard's logo set; null picks a mark by the base URL's host. */
   logo: string | null;
+  /** The gateway's use of this Provider may breach its documented terms; unusable until Settings allows it. */
+  termsRisk: boolean;
   baseUrl: string;
   authStyle: AuthStyle;
   quirks: ProviderQuirks;
@@ -318,3 +320,7 @@ export function optionalNumber(typed: string | number): number | null {
 export function numberField(value: number | null): string {
   return value === null ? "" : String(value);
 }
+
+/** Explains the Terms Risk flag where it is edited. */
+export const TERMS_RISK_HINT =
+  "Using this Provider through a gateway may breach its terms of use. Blocked until Allow terms-risk providers is turned on in Settings.";

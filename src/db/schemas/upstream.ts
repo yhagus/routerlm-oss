@@ -119,6 +119,8 @@ export const providers = pgTable(
     name: text("name").notNull(),
     // A key into the logo set the dashboard owns; null shows no logo.
     logo: text("logo"),
+    // Informational only: the gateway's use may breach the Provider's documented terms.
+    termsRisk: boolean("terms_risk").notNull().default(false),
     protocol: text("protocol", { enum: UPSTREAM_PROTOCOLS }).notNull(),
     baseUrl: text("base_url").notNull(),
     authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),

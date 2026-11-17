@@ -29,6 +29,7 @@ export interface ProviderForm {
   name: string;
   /** "" picks a mark by the base URL's host. */
   logo: string;
+  termsRisk: boolean;
   protocol: string;
   baseUrl: string;
   authStyle: string;
@@ -64,6 +65,7 @@ export interface ProviderForm {
 export interface ProviderFields {
   name: string;
   logo: string | null;
+  termsRisk: boolean;
   protocol: string;
   baseUrl: string;
   authStyle: string;
@@ -115,6 +117,7 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
     slug: provider?.slug ?? "",
     name: provider?.name ?? "",
     logo: provider?.logo ?? "",
+    termsRisk: provider?.termsRisk ?? false,
     protocol: provider?.protocol ?? "openai-chat",
     baseUrl: provider?.baseUrl ?? "",
     authStyle: provider?.authStyle ?? "bearer",
@@ -163,6 +166,7 @@ export function providerFieldsFromForm(form: ProviderForm): ProviderFields {
   return {
     name: form.name,
     logo: form.logo === "" ? null : form.logo,
+    termsRisk: form.termsRisk,
     protocol: form.protocol,
     baseUrl: form.baseUrl,
     authStyle: form.authStyle,

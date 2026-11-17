@@ -122,6 +122,11 @@ const {
   error: providersError,
   status: providersStatus,
 } = useDashboardApi<Provider[]>("/providers");
+const { isBlocked } = useTermsRiskAllowed();
+/** A Route summary doesn't carry Terms Risk, so it is looked up from the Provider list. */
+const blockedProviderIds = computed(
+  () => new Set((providers.value ?? []).filter(isBlocked).map((provider) => provider.id)),
+);
 const {
   data: upstreamModels,
   error: upstreamModelsError,
@@ -135,10 +140,12 @@ const isLoadingUpstream = computed(
 );
 const upstreamError = computed(() => providersError.value ?? upstreamModelsError.value);
 
-/** Enabled Upstream Models of enabled Providers: the ones a direct test can reach. */
+/** Enabled Upstream Models of usable Providers: the ones a direct test can reach. */
 const testableUpstreamModels = computed(() => {
   const enabledProviderIds = new Set(
-    (providers.value ?? []).filter((provider) => provider.isEnabled).map((provider) => provider.id),
+    (providers.value ?? [])
+      .filter((provider) => provider.isEnabled && !isBlocked(provider))
+      .map((provider) => provider.id),
   );
   return (upstreamModels.value ?? []).filter(
     (upstreamModel) => upstreamModel.isEnabled && enabledProviderIds.has(upstreamModel.providerId),
@@ -307,6 +314,7 @@ const canSeeImages = computed(() =>
         (route) =>
           route.isEnabled &&
           route.provider.isEnabled &&
+          !blockedProviderIds.value.has(route.provider.id) &&
           route.upstreamModel.isEnabled &&
           route.enabledProviderAccountCount > 0 &&
           route.upstreamModel.capabilities.includes("vision"),

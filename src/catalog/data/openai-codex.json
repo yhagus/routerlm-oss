@@ -14,6 +14,7 @@
     "exhaustedErrorCodes": ["usage_limit_reached"]
   },
   "quotaReader": "openai-codex",
+  "termsRisk": true,
   "serviceTierValues": {
     "fast": "priority",
     "flex": "flex"
@@ -32,7 +33,7 @@
     ],
     "retrievedOn": "2026-11-16"
   },
-  "notes": "ChatGPT plans served to the Codex CLI's OAuth Login (ADR 0013); no API keys. Models are the CLI's visible ones; hidden models (daybreak-*, codex-auto-review) are left out. Prices are the OpenAI API list prices for the same model, as in openai.json: the plan bills quota, not money, so Cost is what the same tokens would cost on the API. Service Tiers (ADR 0014): every model accepts fast, as models.json lists the priority service tier for each visible model, and flex, as the spec decides; tierPrices are the OpenAI API's short-context Fast and Flex rates, as in openai.json. Unverified until a live check: whether the Codex backend accepts flex. Context sizes are each model's max_context_window in models.json, the ceiling the Codex CLI's model_context_window setting may raise the window to (the CLI defaults to the smaller context_window, a client-side compaction budget); they are not the API's. Unverified until a live check: whether the backend refuses temperature, top_p and max_output_tokens, and accepts the system prompt as a developer message.",
+  "notes": "ChatGPT plans served to the Codex CLI's OAuth Login (ADR 0013); no API keys. Flagged termsRisk: the gateway presents the Codex CLI's identity (originator codex_cli_rs) to use a subscription OpenAI registers no third-party client for, and OpenAI's position on that is unconfirmed. Models are the CLI's visible ones; hidden models (daybreak-*, codex-auto-review) are left out. Prices are the OpenAI API list prices for the same model, as in openai.json: the plan bills quota, not money, so Cost is what the same tokens would cost on the API. Service Tiers (ADR 0014): every model accepts fast, as models.json lists the priority service tier for each visible model, and flex, as the spec decides; tierPrices are the OpenAI API's short-context Fast and Flex rates, as in openai.json. Unverified until a live check: whether the Codex backend accepts flex. Context sizes are each model's max_context_window in models.json, the ceiling the Codex CLI's model_context_window setting may raise the window to (the CLI defaults to the smaller context_window, a client-side compaction budget); they are not the API's. Unverified until a live check: whether the backend refuses temperature, top_p and max_output_tokens, and accepts the system prompt as a developer message.",
   "upstreamModels": [
     {
       "upstreamModelId": "gpt-6-astra",

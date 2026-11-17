@@ -1,5 +1,6 @@
 import { asc, isNull } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
+import { SettingsStore } from "@/settings/providers/settings-store.js";
 import {
   apiKeys,
   type CredentialKind,
@@ -18,30 +19,40 @@ import type {
   SnapshotProviderAccount,
   SnapshotUpstreamModel,
 } from "./snapshot.js";
+import { providerIsUsable } from "./provider-usability.js";
 
 /** Reads the whole snapshot. The tables are operator-sized, so it reads them whole. */
 export async function loadSnapshot(db: Database): Promise<Snapshot> {
-  const [keyRows, providerRows, accountRows, upstreamModelRows, modelRows, routeRows] =
-    await Promise.all([
-      db
-        .select({
-          id: apiKeys.id,
-          keyId: apiKeys.keyId,
-          hash: apiKeys.hash,
-          expiresAt: apiKeys.expiresAt,
-          allowedModelIds: apiKeys.allowedModelIds,
-        })
-        .from(apiKeys)
-        .where(isNull(apiKeys.revokedAt)),
-      db.select().from(providers),
-      db
-        .select()
-        .from(providerAccounts)
-        .orderBy(asc(providerAccounts.priority), asc(providerAccounts.createdAt)),
-      db.select().from(upstreamModels),
-      db.select().from(models),
-      db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
-    ]);
+  const [
+    keyRows,
+    providerRows,
+    accountRows,
+    upstreamModelRows,
+    modelRows,
+    routeRows,
+    allowsTermsRiskProviders,
+  ] = await Promise.all([
+    db
+      .select({
+        id: apiKeys.id,
+        keyId: apiKeys.keyId,
+        hash: apiKeys.hash,
+        expiresAt: apiKeys.expiresAt,
+        allowedModelIds: apiKeys.allowedModelIds,
+      })
+      .from(apiKeys)
+      .where(isNull(apiKeys.revokedAt)),
+    db.select().from(providers),
+    db
+      .select()
+      .from(providerAccounts)
+      .orderBy(asc(providerAccounts.priority), asc(providerAccounts.createdAt)),
+    db.select().from(upstreamModels),
+    db.select().from(models),
+    db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
+    // Not injected: SettingsModule imports SnapshotModule to call changed().
+    new SettingsStore(db).read("allowTermsRiskProviders"),
+  ]);
 
   const apiKeysByKeyId = new Map<string, SnapshotApiKey>(
     keyRows.map(({ keyId, ...key }) => [keyId, key]),
@@ -59,7 +70,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         authStyle: provider.authStyle,
         quirks: provider.quirks,
         serviceTierValues: provider.serviceTierValues,
-        isEnabled: provider.isEnabled,
+        isUsable: providerIsUsable(provider, allowsTermsRiskProviders.value),
         providerAccounts: (accountsByProviderId.get(provider.id) ?? []).flatMap(
           (account): SnapshotProviderAccount[] => {
             const credential = snapshotCredentialOf(account);

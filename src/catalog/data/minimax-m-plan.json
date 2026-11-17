@@ -2,6 +2,7 @@
   "slug": "minimax-m-plan",
   "name": "MiniMax M Plan",
   "logo": "minimax",
+  "termsRisk": true,
   "protocol": "anthropic-messages",
   "baseUrl": "https://api.minimax.io/anthropic",
   "authStyle": "bearer",
@@ -19,7 +20,7 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Subscription with 5-hour and weekly usage limits and no per-token prices; each model carries the list prices of its MiniMax API pay-as-you-go equivalent, so Cost is what a request would cost there. Takes an M Plan API key (sk-cp-...), which is not interchangeable with a MiniMax API key although the base URL is the same. Global region only. The M Plan docs name only M3.1 Flash as the text model; the model list comes from MiniMax Code's packages/config/src/minimax-model-catalog.ts, which offers M3.1 Flash and M3 at 512K context on the plan and M2.7 and M2.7 highspeed at 200K. Caching is automatic prefix matching, so cacheMarkerLimit 0 keeps the gateway from adding markers, as for MiniMax API. Release dates come from models.dev (https://models.dev/). M3.1-Flash and M3 take the 1,000,000 context of the MiniMax API docs (models.dev lists the same for the coding plan); no doc caps the plan lower.",
+  "notes": "Subscription with 5-hour and weekly usage limits and no per-token prices; each model carries the list prices of its MiniMax API pay-as-you-go equivalent, so Cost is what a request would cost there. Takes an M Plan API key (sk-cp-...), which is not interchangeable with a MiniMax API key although the base URL is the same. Global region only. The M Plan docs name only M3.1 Flash as the text model; the model list comes from MiniMax Code's packages/config/src/minimax-model-catalog.ts, which offers M3.1 Flash and M3 at 512K context on the plan and M2.7 and M2.7 highspeed at 200K. Caching is automatic prefix matching, so cacheMarkerLimit 0 keeps the gateway from adding markers, as for MiniMax API. Release dates come from models.dev (https://models.dev/). M3.1-Flash and M3 take the 1,000,000 context of the MiniMax API docs (models.dev lists the same for the coding plan); no doc caps the plan lower. Terms risk: M Plan is documented as for individual, interactive developer use, with pay-as-you-go recommended for production, and the key must not be shared.",
   "upstreamModels": [
     {
       "upstreamModelId": "MiniMax-M3.1-Flash",

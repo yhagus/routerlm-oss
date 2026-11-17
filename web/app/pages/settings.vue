@@ -6,6 +6,8 @@ import {
   type ErrorCaptureImpact,
   type ErrorCaptureRetention,
   formatDays,
+  TERMS_RISK_PROVIDERS_PATH,
+  type TermsRiskProvidersSetting,
 } from "~/lib/settings";
 
 useHead({ title: "Settings" });
@@ -50,6 +52,44 @@ const isUnchanged = computed(() => enteredDays.value === retention.value?.days);
 const isLengthening = computed(
   () => retention.value !== undefined && enteredDays.value > retention.value.days,
 );
+
+const {
+  setting: termsRisk,
+  error: termsRiskLoadError,
+  status: termsRiskStatus,
+  refresh: refreshTermsRisk,
+} = useTermsRiskAllowed();
+const isTermsRiskLoading = computed(() => termsRiskStatus.value === "pending" && !termsRisk.value);
+const isTermsRiskBusy = ref(false);
+const termsRiskError = ref("");
+const isAllowConfirmOpen = ref(false);
+
+async function putTermsRiskAllowed(allowed: boolean): Promise<void> {
+  isTermsRiskBusy.value = true;
+  termsRiskError.value = "";
+  try {
+    await $dashboardApi<TermsRiskProvidersSetting>(TERMS_RISK_PROVIDERS_PATH, {
+      method: "PUT",
+      body: { allowed },
+    });
+    await refreshNuxtData(TERMS_RISK_PROVIDERS_PATH);
+    showToast(allowed ? "Terms-risk Providers allowed" : "Terms-risk Providers blocked");
+  } catch (error) {
+    termsRiskError.value = apiErrorMessage(error, "Couldn't update the setting.");
+  } finally {
+    isTermsRiskBusy.value = false;
+    isAllowConfirmOpen.value = false;
+  }
+}
+
+/** Turning on asks first; the switch only moves once the saved value changes. */
+function handleTermsRiskToggle(event: Event): void {
+  if (!(event.target instanceof HTMLInputElement) || !termsRisk.value) return;
+  const allowed = event.target.checked;
+  event.target.checked = termsRisk.value.allowed;
+  if (allowed) isAllowConfirmOpen.value = true;
+  else void putTermsRiskAllowed(false);
+}
 
 const isBusy = ref(false);
 const saveError = ref("");
@@ -194,6 +234,57 @@ async function confirmShortening(): Promise<void> {
         </div>
       </form>
     </section>
+
+    <section class="panel settings-panel" aria-labelledby="terms-risk-heading">
+      <div class="panel-heading">
+        <div>
+          <h2 id="terms-risk-heading">Terms risk</h2>
+          <p>Whether Providers marked Terms risk can be used.</p>
+        </div>
+      </div>
+
+      <AppSpinner v-if="isTermsRiskLoading" label="Loading setting" />
+      <div v-else-if="termsRiskLoadError || !termsRisk" class="settings-panel__body">
+        <p class="form__error" role="alert">Couldn't load the setting.</p>
+        <button class="button" type="button" @click="() => refreshTermsRisk()">Try again</button>
+      </div>
+      <div v-else class="settings-panel__body">
+        <label class="check-field">
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="termsRisk.allowed"
+            :disabled="isTermsRiskBusy"
+            @change="handleTermsRiskToggle"
+          />
+          Allow terms-risk providers
+        </label>
+        <p class="model-choices__hint">
+          Providers marked Terms risk, such as Kimi Code and MiniMax M Plan, may breach their
+          provider's terms of use when used through a gateway. While this is off they cannot be
+          used; they are not disabled, and turning this on makes them usable again.
+        </p>
+        <p v-if="termsRiskError" class="form__error" role="alert">{{ termsRiskError }}</p>
+      </div>
+    </section>
+
+    <AppDialog
+      v-model:open="isAllowConfirmOpen"
+      title="Allow terms-risk providers?"
+      description="Using these Providers through a gateway may breach their terms of use, which can put the accounts behind them at risk."
+    >
+      <div class="dialog__actions">
+        <button class="button" type="button" @click="isAllowConfirmOpen = false">Cancel</button>
+        <button
+          class="button button--danger"
+          type="button"
+          :disabled="isTermsRiskBusy"
+          @click="putTermsRiskAllowed(true)"
+        >
+          Allow
+        </button>
+      </div>
+    </AppDialog>
 
     <AppDialog
       v-if="pendingShortening"

@@ -2,6 +2,7 @@
 import { apiErrorMessage } from "~/lib/api";
 import { REASONING_EFFORTS, SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/parameterPolicy";
 import { PROVIDER_LOGOS } from "~/lib/providerLogos";
+import { TERMS_RISK_HINT } from "~/lib/upstream";
 import { providerFieldsFromForm, providerFormFor, slugFromName } from "~/lib/providerForm";
 import {
   type AuthStyle,
@@ -191,6 +192,10 @@ async function save(): Promise<void> {
         </AppSelect>
       </div>
       <p class="form__hint">Automatic picks a logo by the base URL's host, or shows initials.</p>
+      <label class="check-field"
+        ><input v-model="form.termsRisk" type="checkbox" /> Terms risk</label
+      >
+      <p class="form__hint">{{ TERMS_RISK_HINT }}</p>
       <div v-if="form.protocol === 'openai-chat'" class="field">
         <span class="field__label">Reasoning content in history</span>
         <AppSelect

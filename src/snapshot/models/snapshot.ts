@@ -45,7 +45,8 @@ export interface SnapshotProvider {
   authStyle: AuthStyle;
   quirks: ProviderQuirks;
   serviceTierValues: ServiceTierValues;
-  isEnabled: boolean;
+  /** Enabled, and allowed by the terms-risk Setting when the Provider has a Terms Risk. */
+  isUsable: boolean;
   /** Lowest priority first. */
   providerAccounts: SnapshotProviderAccount[];
 }
