@@ -94,15 +94,6 @@ We measured the gateway with [k6](https://k6.io) against a fake upstream, so the
 
 End-to-end scenario: the fake upstream waits 200 ms, then streams 200 tokens at 100 tokens/s. Each virtual user (VU) sends its next request as soon as the last one ends. The run lasted one minute on a fresh stack.
 
-| Result               | Value           |
-| -------------------- | --------------- |
-| VUs                  | 1,800           |
-| Total requests       | 27,784          |
-| Requests per second  | 444             |
-| Failed requests      | 0 (0.00%)       |
-| Latency median / p95 | 3.31 s / 6.01 s |
-| Out-of-memory kills  | none            |
-
 **Host:** Docker Desktop on macOS, Apple M3 Pro, with 4 CPUs and 7.6 GB of RAM for the Docker VM. **Limits:** Gateway 2 replicas of 1 CPU / 1 GB, Worker 1 CPU / 1 GB, PostgreSQL 1 CPU / 1 GB, Redis 0.5 CPU / 512 MB.
 
 ## Configuration
