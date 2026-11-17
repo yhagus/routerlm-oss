@@ -39,26 +39,165 @@ export interface SearchRow {
   snippet: SearchSnippet | null;
 }
 
-/** The terms of a query: its lowercased, whitespace-separated words. */
-export function searchTermsOf(query: string): string[] {
-  return query.toLowerCase().split(/\s+/).filter(Boolean);
+/**
+ * Text as lowercase words: camelCase, `_`, `-`, `.` and `/` all break words, so
+ * `service_tier`, `serviceTier`, "service-tier" and "Service tier" read the same.
+ */
+export function normalizeText(text: string): string {
+  return text
+    .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, "$1 $2")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
 }
 
-function snippetOf(content: string, terms: string[]): SearchSnippet | null {
-  const lowerContent = content.toLowerCase();
-  for (const term of terms) {
-    const start = lowerContent.indexOf(term);
-    if (start === -1) continue;
-    const end = start + term.length;
-    const from = Math.max(0, start - SNIPPET_BEFORE);
-    const to = Math.min(content.length, end + SNIPPET_AFTER);
-    return {
-      before: (from > 0 ? "…" : "") + content.slice(from, start),
-      match: content.slice(start, end),
-      after: content.slice(end, to) + (to < content.length ? "…" : ""),
-    };
+/** The terms of a query: its normalized words. */
+export function searchTermsOf(query: string): string[] {
+  return normalizeText(query).split(" ").filter(Boolean);
+}
+
+/**
+ * Words a reader may use for the same thing, in the docs' two languages. A
+ * query word also finds sections that hold one of its group. This is a small
+ * hand-kept list, not a language model: it covers how readers name the
+ * gateway's own concepts.
+ */
+const RELATED_WORDS: readonly (readonly string[])[] = [
+  ["tier", "priority", "fast", "flex", "speed", "latency"],
+  [
+    "key",
+    "apikey",
+    "token",
+    "bearer",
+    "credential",
+    "authentication",
+    "authorization",
+    "secret",
+    "kunci",
+  ],
+  ["limit", "quota", "throttle", "throttling", "ratelimit", "429"],
+  ["stream", "streaming", "sse", "events", "chunk", "delta"],
+  ["image", "images", "vision", "photo", "picture", "base64", "gambar"],
+  ["tool", "tools", "function", "functions", "alat", "fungsi"],
+  ["error", "errors", "failure", "failed", "status", "galat", "gagal"],
+  ["retry", "retries", "backoff", "fallback", "ulang", "percobaan"],
+  ["reasoning", "thinking", "effort"],
+  ["json", "schema", "structured", "terstruktur"],
+  ["model", "models", "capability", "capabilities"],
+  ["cache", "caching", "cached"],
+  ["timeout", "slow", "504"],
+  ["size", "large", "413", "mb", "ukuran"],
+];
+
+const RELATED_BY_WORD = new Map<string, readonly string[]>();
+for (const group of RELATED_WORDS) {
+  for (const word of group) {
+    RELATED_BY_WORD.set(word, [
+      ...(RELATED_BY_WORD.get(word) ?? []),
+      ...group.filter((other) => other !== word),
+    ]);
   }
-  return null;
+}
+
+/** How well a query word matches a word of the text: 0 for not at all, 4 for the same word. */
+type Strength = 0 | 1 | 2 | 3 | 4;
+
+function withinEdits(first: string, second: string, maxEdits: number): boolean {
+  if (Math.abs(first.length - second.length) > maxEdits) return false;
+  let previous = Array.from({ length: second.length + 1 }, (_, index) => index);
+  for (let row = 1; row <= first.length; row += 1) {
+    const current = [row];
+    for (let column = 1; column <= second.length; column += 1) {
+      const cost = first[row - 1] === second[column - 1] ? 0 : 1;
+      current[column] = Math.min(
+        (previous[column] ?? 0) + 1,
+        (current[column - 1] ?? 0) + 1,
+        (previous[column - 1] ?? 0) + cost,
+      );
+    }
+    previous = current;
+  }
+  return (previous[second.length] ?? Infinity) <= maxEdits;
+}
+
+function literalStrength(term: string, word: string): Strength {
+  if (word === term) return 4;
+  if (term.length >= 2 && word.startsWith(term)) return 3;
+  if (term.length >= 3 && word.includes(term)) return 2;
+  return 0;
+}
+
+/**
+ * A typo: one edit away for four to eight letters, two from nine. A four-letter
+ * word must keep its first letter, so short words don't match each other.
+ */
+function isTypoOf(term: string, word: string): boolean {
+  if (term.length < 4 || (term.length === 4 && term[0] !== word[0])) return false;
+  return withinEdits(term, word, term.length >= 9 ? 2 : 1);
+}
+
+function strengthOf(term: string, word: string): Strength {
+  const literal = literalStrength(term, word);
+  if (literal > 0) return literal;
+  const related = RELATED_BY_WORD.get(term) ?? [];
+  if (related.some((other) => literalStrength(other, word) >= 3)) return 2;
+  return isTypoOf(term, word) ? 1 : 0;
+}
+
+/** The best strength of a query word across the words of a text. */
+function bestStrengthIn(term: string, words: readonly string[]): Strength {
+  let best: Strength = 0;
+  for (const word of words) {
+    const strength = strengthOf(term, word);
+    if (strength > best) best = strength;
+    if (best === 4) break;
+  }
+  return best;
+}
+
+/** The words of each section's title and text, worked out once per section. */
+const wordsOfSection = new WeakMap<Section, { title: string[]; text: string[] }>();
+function wordsOf(section: Section): { title: string[]; text: string[] } {
+  const known = wordsOfSection.get(section);
+  if (known) return known;
+  const words = {
+    title: normalizeText(section.title).split(" ").filter(Boolean),
+    text: normalizeText(section.content).split(" ").filter(Boolean),
+  };
+  wordsOfSection.set(section, words);
+  return words;
+}
+
+/** Title matches weigh more than text matches. */
+const TITLE_WEIGHT = 3;
+
+/** What a section scores for each query word; a word it lacks scores 0. */
+function scoresOf(section: Section, terms: string[]): number[] {
+  const { title, text } = wordsOf(section);
+  return terms.map(
+    (term) => bestStrengthIn(term, text) + TITLE_WEIGHT * bestStrengthIn(term, title),
+  );
+}
+
+/** The text of a snippet is cut around the first word that matches a query word, whole: `service_tier` is marked as one. */
+function snippetOf(content: string, terms: string[]): SearchSnippet | null {
+  const spans = [...content.matchAll(/[\p{L}\p{N}_]+/gu)];
+  const bestSpan = (minimum: Strength) =>
+    spans.find((span) => {
+      const subwords = normalizeText(span[0]).split(" ").filter(Boolean);
+      return terms.some((term) => subwords.some((word) => strengthOf(term, word) >= minimum));
+    });
+  const span = bestSpan(2) ?? bestSpan(1);
+  if (!span) return null;
+  const start = span.index;
+  const end = start + span[0].length;
+  const from = Math.max(0, start - SNIPPET_BEFORE);
+  const to = Math.min(content.length, end + SNIPPET_AFTER);
+  return {
+    before: (from > 0 ? "…" : "") + content.slice(from, start),
+    match: content.slice(start, end),
+    after: content.slice(end, to) + (to < content.length ? "…" : ""),
+  };
 }
 
 function pagePathOf(sectionId: string): string {
@@ -66,9 +205,11 @@ function pagePathOf(sectionId: string): string {
 }
 
 /**
- * The sections holding every term of the query, in their title or their text,
- * as rows grouped under their page: sections whose title holds more terms
- * come first, and the pages follow the order of their best section.
+ * The sections that match the query, as rows grouped under their page. A word
+ * matches in a section's title or text as the same word, the start of one, a
+ * word that contains it, a related word, or a close typo. The best match comes
+ * first, title matches above text matches, and the pages follow the order of
+ * their best section.
  */
 export function searchSections(
   sections: Section[],
@@ -78,15 +219,20 @@ export function searchSections(
   const terms = searchTermsOf(query);
   if (terms.length === 0) return [];
 
-  const titleHitsOf = (section: Section): number =>
-    terms.filter((term) => section.title.toLowerCase().includes(term)).length;
-  const matches = sections
-    .filter((section) => {
-      const text = `${section.title} ${section.content}`.toLowerCase();
-      return terms.every((term) => text.includes(term));
-    })
-    .map((section) => ({ section, titleHits: titleHitsOf(section) }))
-    .sort((first, second) => second.titleHits - first.titleHits)
+  const scored = sections.map((section) => ({ section, scores: scoresOf(section, terms) }));
+  // Every query word has to match; when none of the sections hold them all,
+  // the sections that hold some of them are listed, the fullest match first.
+  let found = scored.filter(({ scores }) => scores.every((score) => score > 0));
+  if (found.length === 0 && terms.length > 1) {
+    found = scored.filter(({ scores }) => scores.some((score) => score > 0));
+  }
+  const matches = found
+    .map(({ section, scores }) => ({
+      section,
+      termsMatched: scores.filter((score) => score > 0).length,
+      total: scores.reduce((sum, score) => sum + score, 0),
+    }))
+    .sort((first, second) => second.termsMatched - first.termsMatched || second.total - first.total)
     .slice(0, MAX_MATCHES)
     .map(({ section }) => section);
 
