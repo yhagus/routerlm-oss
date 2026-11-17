@@ -1,10 +1,10 @@
 {
   "name": "routerlm-nest",
   "version": "3.1.0",
-  "description": "",
-  "author": "",
   "private": true,
+  "description": "",
   "license": "MIT",
+  "author": "",
   "type": "module",
   "scripts": {
     "build": "nest build",
@@ -26,6 +26,9 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:docker": "bun scripts/test-docker.ts",
+    "perf:k6": "sh tests/k6/benchmark.sh",
+    "perf:k6:run": "sh tests/k6/run.sh",
+    "perf:k6:limit": "sh tests/k6/find-limit.sh",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -33,9 +36,6 @@
     "db:seed": "bun run src/seed.ts",
     "db:seed:demo": "bun run src/seed-demo.ts",
     "prepare": "simple-git-hooks"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "[ ! -f scripts/pre-commit.ts ] || bun scripts/pre-commit.ts"
   },
   "dependencies": {
     "@nestjs/authentication": "0.1.6",
@@ -76,5 +76,8 @@
     "typescript": "^6.0.3",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "[ ! -f scripts/pre-commit.ts ] || bun scripts/pre-commit.ts"
   }
 }
