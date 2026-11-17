@@ -88,50 +88,22 @@ clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
 
 ## Benchmark
 
-We measured the gateway with [k6](https://k6.io). The test stack has a fake upstream, so the results show the cost of RouterLM, not the cost of a Provider. Run the same test with `bun run perf:k6`. [tests/k6/README.md](tests/k6/README.md) describes the setup and the other scenarios.
+We measured the gateway with [k6](https://k6.io) against a fake upstream, so the results show the cost of RouterLM, not the cost of a Provider. Run the same test with `bun run perf:k6`. [tests/k6/README.md](tests/k6/README.md) describes the setup and the other scenarios.
 
-**Host:** Docker Desktop on macOS, Apple M3 Pro. The Docker VM has 4 CPUs and 7.6 GB of RAM.
+<img alt="Benchmark: 1,800 virtual users, 444 requests per second, 0 failed requests, and CPU use per node" src="docs/images/benchmark.svg" width="100%" />
 
-**Nodes:**
+End-to-end scenario: the fake upstream waits 200 ms, then streams 200 tokens at 100 tokens/s. Each virtual user (VU) sends its next request as soon as the last one ends. The run lasted one minute on a fresh stack.
 
-| Node                  | Spec                                     |
-| --------------------- | ---------------------------------------- |
-| Gateway               | 2 CPU / 2 GB: 2 replicas of 1 CPU / 1 GB |
-| Worker                | 1 CPU / 1 GB                             |
-| PostgreSQL            | 1 CPU / 1 GB                             |
-| Redis                 | 0.5 CPU / 512 MB                         |
-| Fake upstream         | 1 CPU / 512 MB (test equipment)          |
-| Load balancer (nginx) | 1 CPU / 256 MB (test equipment)          |
-| k6                    | uncapped (test equipment)                |
+| Result               | Value           |
+| -------------------- | --------------- |
+| VUs                  | 1,800           |
+| Total requests       | 27,784          |
+| Requests per second  | 444             |
+| Failed requests      | 0 (0.00%)       |
+| Latency median / p95 | 3.31 s / 6.01 s |
+| Out-of-memory kills  | none            |
 
-**Scenarios:** each scenario ran for one minute on a fresh stack. Every virtual user (VU) sends its next request as soon as the last one ends.
-
-1. **Gateway alone:** the fake upstream answers at once with 20 tokens. This scenario shows how much traffic the gateway can carry.
-2. **End to end:** the fake upstream waits 200 ms, then streams 200 tokens at 100 tokens/s. One answer takes about 2.2 s. This scenario shows what a client sees through a realistic upstream.
-
-| Result               | 1. Gateway alone | 2. End to end   |
-| -------------------- | ---------------- | --------------- |
-| VUs                  | 300              | 1,800           |
-| Total time           | 60 s             | 63 s            |
-| Total requests       | 125,525          | 27,784          |
-| Requests per second  | 2,081            | 444             |
-| Failed requests      | 0 (0.00%)        | 0 (0.00%)       |
-| Latency median / p95 | 101 ms / 335 ms  | 3.31 s / 6.01 s |
-| Out-of-memory kills  | none             | none            |
-
-**Resource use:** average CPU and RAM per node, sampled about every 5 s while k6 ran. A percentage is the share of that node's limit.
-
-| Node                  | 1. CPU           | 1. RAM        | 2. CPU           | 2. RAM        |
-| --------------------- | ---------------- | ------------- | ---------------- | ------------- |
-| Gateway               | 1.59 cores (79%) | 366 MiB (18%) | 1.34 cores (67%) | 528 MiB (26%) |
-| Worker                | 0.30 cores (30%) | 85 MiB (8%)   | 0.26 cores (26%) | 85 MiB (8%)   |
-| PostgreSQL            | 0.39 cores (39%) | 112 MiB (11%) | 0.35 cores (35%) | 124 MiB (12%) |
-| Redis                 | 0.24 cores (47%) | 93 MiB (18%)  | 0.10 cores (20%) | 15 MiB (3%)   |
-| Fake upstream         | 0.16 cores (16%) | 30 MiB (6%)   | 0.46 cores (46%) | 53 MiB (10%)  |
-| Load balancer (nginx) | 0.17 cores (17%) | 36 MiB (14%)  | 0.27 cores (27%) | 65 MiB (25%)  |
-| k6                    | 0.49 cores       | 171 MiB       | 0.61 cores       | 834 MiB       |
-
-k6 and the fake upstream share the host with the stack, so results can change by about 20% between runs on a laptop.
+**Host:** Docker Desktop on macOS, Apple M3 Pro, with 4 CPUs and 7.6 GB of RAM for the Docker VM. **Limits:** Gateway 2 replicas of 1 CPU / 1 GB, Worker 1 CPU / 1 GB, PostgreSQL 1 CPU / 1 GB, Redis 0.5 CPU / 512 MB.
 
 ## Configuration
 
