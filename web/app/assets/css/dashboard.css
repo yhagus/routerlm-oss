@@ -5107,3 +5107,15 @@ svg.lucide {
     margin-top: 16px;
   }
 }
+.settings-panel__body {
+  display: grid;
+  gap: 12px;
+  padding: 0 21px 21px;
+}
+.settings-panel__days {
+  max-width: 220px;
+}
+.settings-panel__actions {
+  display: flex;
+  gap: 8px;
+}

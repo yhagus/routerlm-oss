@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   MessageSquareText,
   Network,
+  Settings,
   TriangleAlert,
   Users,
 } from "@lucide/vue";
@@ -50,6 +51,10 @@ export const navigationGroups: NavigationGroup[] = [
       { label: "API Keys", path: "/api-keys", icon: KeyRound },
       { label: "Users", path: "/users", icon: Users },
     ],
+  },
+  {
+    label: "System",
+    items: [{ label: "Settings", path: "/settings", icon: Settings }],
   },
 ];
 
