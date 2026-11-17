@@ -1,0 +1,130 @@
+{
+  "slug": "meta-ai",
+  "name": "Meta AI",
+  "logo": "meta",
+  "termsRisk": true,
+  "protocol": "openai-responses",
+  "baseUrl": "https://api.meta.ai/v1",
+  "authStyle": "bearer",
+  "quirks": {
+    "includesEncryptedReasoning": true
+  },
+  "source": {
+    "urls": [
+      "https://dev.meta.ai/docs/api-reference",
+      "https://dev.meta.ai/docs/authentication",
+      "https://dev.meta.ai/docs/reasoning",
+      "https://dev.meta.ai/legal/terms-of-service",
+      "https://dev.meta.ai/legal/geographic-use-policy"
+    ],
+    "retrievedOn": "2026-11-18"
+  },
+  "notes": "Meta Model API on its Responses endpoint, which Meta recommends for tools and agents and where reasoning carries across turns as encrypted content (Chat Completions drops it and redacts reasoning_content). Flagged termsRisk: Meta's Terms of Service (10.1(i), 3.1) forbid offering the API through a model aggregator, API gateway or proxy, or sharing a key with a third party, without Meta's written permission; an operator who holds that permission can allow the Provider. The Geographic Use Policy bans use from about 20 territories (among them China, Russia, Iran and North Korea) and bypassing its controls; the gateway cannot tell where a client is. The -contributor models (muse-spark-1.2-contributor, muse-spark-1.3-contributor) are left out: choosing them lets Meta train on every prompt and response. Image, speech and segmentation models (muse-image-1.0, muse-voice-transcribe-1.0, sam-3.1) are left out. modelsDevProviderId is left off on purpose: models.dev lists the Contributor models, which Catalog Gap reporting would flag with no way to dismiss them. tool_choice must be auto: none, required and a named tool return 400. reasoning_effort none returns 400 on every model here; the default is max on Wonder and Ember, high on Spark. Release dates, output limits and prices come from models.dev, checked against Meta's pricing page. Unverified until a live check: whether the Responses endpoint refuses any parameter the gateway sends (no droppedParameters are set), whether it takes the system prompt as instructions, and image input on Ember and Wonder (Meta's models table lists it for all five).",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "muse-ember-1.0",
+      "name": "Muse Ember 1.0",
+      "releaseDate": "2026-11-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 524288,
+      "inputPrice": 0.1,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.004,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Prices are for up to 200K input tokens; above that Meta charges $0.30 input, $0.012 cached input and $1.50 output for the whole request, which the Catalog cannot express. Meta does not list a context window for Ember; 1,048,576 is the value models.dev gives."
+    },
+    {
+      "upstreamModelId": "muse-wonder-1.0",
+      "name": "Muse Wonder 1.0",
+      "releaseDate": "2026-10-12",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "In preview at Meta. Not available from South Korea."
+    },
+    {
+      "upstreamModelId": "muse-spark-1.3",
+      "name": "Muse Spark 1.3",
+      "releaseDate": "2026-09-02",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.25,
+      "outputPrice": 4.25,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Standard mode: Meta does not train on content. Cache write is not published."
+    },
+    {
+      "upstreamModelId": "muse-spark-1.2",
+      "name": "Muse Spark 1.2",
+      "releaseDate": "2026-08-05",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.25,
+      "outputPrice": 4.25,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Standard mode: Meta does not train on content. Cache write is not published."
+    },
+    {
+      "upstreamModelId": "muse-spark-1.1",
+      "name": "Muse Spark 1.1",
+      "releaseDate": "2026-04-08",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.25,
+      "outputPrice": 4.25,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-18"
+      },
+      "notes": "Standard mode: Meta does not train on content. Cache write is not published."
+    }
+  ]
+}

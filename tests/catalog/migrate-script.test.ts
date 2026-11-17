@@ -9,7 +9,7 @@ import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.
 const runFile = promisify(execFile);
 // Bun startup, every migration and seeding every shipped Catalog file.
 const MIGRATE_TIMEOUT_MS = 60_000;
-const SHIPPED_PROVIDER_COUNT = 13;
+const SHIPPED_PROVIDER_COUNT = 14;
 
 describe("production migrate entrypoint (e2e)", () => {
   const serverUrl = process.env.DATABASE_URL ?? "";

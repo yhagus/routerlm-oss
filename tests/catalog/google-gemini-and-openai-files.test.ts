@@ -55,6 +55,7 @@ describe("The Google Gemini and OpenAI Catalog files", () => {
       deepseek: "deepseek",
       "google-gemini": "google",
       "kimi-code": undefined,
+      "meta-ai": undefined,
       "minimax-api": "minimax",
       "minimax-m-plan": undefined,
       moonshot: "moonshotai",

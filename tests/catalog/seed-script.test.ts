@@ -47,6 +47,7 @@ describe("db:seed script (e2e)", () => {
         "deepseek",
         "google-gemini",
         "kimi-code",
+        "meta-ai",
         "minimax-api",
         "minimax-m-plan",
         "moonshot",
