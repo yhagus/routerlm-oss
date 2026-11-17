@@ -673,6 +673,16 @@ select:focus-visible {
   gap: 9px;
   padding: 0 10px;
 }
+/* An option's label, with what its `option-leading` slot puts before it */
+.app-select-item__content {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.app-select-item__content > :not(.app-select-item__label) {
+  flex: none;
+}
 .app-select-item__label {
   overflow: hidden;
   min-width: 0;
@@ -2134,6 +2144,12 @@ tbody tr:hover {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+/* A line of guidance under a field's control */
+.field__note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
 .text-input {
   height: 34px;
   padding: 0 10px;
@@ -2600,6 +2616,25 @@ tbody tr:hover {
 }
 .logo-select-menu .app-select-options {
   max-height: 260px;
+}
+/* Compact rows for the logo list: a smaller mark and a shorter row than other selects */
+.logo-select-menu .app-select-item {
+  min-height: 43px;
+}
+.logo-select-menu .app-select-item__content {
+  gap: 11px;
+}
+.logo-select-menu .provider-mark--xs {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+}
+.logo-select-menu .provider-mark--xs svg {
+  width: 15px;
+  height: 15px;
+}
+.logo-select-menu .provider-mark--xs.provider-mark--monogram {
+  font-size: 11px;
 }
 /* The Provider form's rarely needed settings, folded under a hairline */
 .form-advanced {

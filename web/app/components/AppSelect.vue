@@ -139,7 +139,10 @@ function handleTriggerArrowKey(event: KeyboardEvent): void {
                 :value="option.value"
                 class="app-select-item"
               >
-                <span class="app-select-item__label">{{ option.label }}</span>
+                <span class="app-select-item__content">
+                  <slot name="option-leading" :option="option" />
+                  <span class="app-select-item__label">{{ option.label }}</span>
+                </span>
                 <ListboxItemIndicator as-child>
                   <Check class="app-select-item__indicator" :size="14" />
                 </ListboxItemIndicator>

@@ -47,6 +47,8 @@ const logoOptions = [
 const form = ref(providerFormFor(props.provider));
 /** A new Provider's slug follows its name until the slug is typed by hand. */
 const isSlugTyped = ref(false);
+/** The slug still follows the name: a new Provider whose slug nobody has typed in. */
+const isSlugAuto = computed(() => !props.provider && !isSlugTyped.value);
 const isSaving = ref(false);
 const error = ref("");
 
@@ -137,7 +139,7 @@ async function save(): Promise<void> {
             <input :value="form.name" class="text-input" required @input="handleNameInput" /> </span
         ></label>
         <label class="field"
-          ><span class="field__label">Slug</span
+          ><span class="field__label">Slug{{ isSlugAuto ? " (auto)" : "" }}</span
           ><input
             :value="form.slug"
             class="text-input"
@@ -146,7 +148,12 @@ async function save(): Promise<void> {
             :disabled="Boolean(provider)"
             required
             @input="handleSlugInput"
-        /></label>
+          /><span v-if="!provider" class="field__note">{{
+            isSlugAuto
+              ? "Generated from the name. Type here to set your own."
+              : "Set by hand. Clear it to follow the name again."
+          }}</span></label
+        >
         <div class="field">
           <span class="field__label">Protocol</span>
           <AppSelect v-model="form.protocol" :options="PROTOCOL_OPTIONS" label="Protocol" />
@@ -168,7 +175,16 @@ async function save(): Promise<void> {
           label="Logo"
           searchable
           menu-class="logo-select-menu"
-        />
+        >
+          <template #option-leading="{ option }">
+            <ProviderLogo
+              class="provider-mark--xs"
+              :logo="option.value || null"
+              :name="form.name"
+              :base-url="form.baseUrl"
+            />
+          </template>
+        </AppSelect>
       </div>
       <p class="form__hint">Automatic picks a logo by the base URL's host, or shows initials.</p>
       <div v-if="form.protocol === 'openai-chat'" class="field">
