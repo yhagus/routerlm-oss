@@ -10,7 +10,7 @@ RouterLM 2.1 adds OpenAI Codex as a Provider, Service Tiers, and Indonesian clie
 ## Gateway
 
 - A Route can now send to an upstream that uses the OpenAI Responses protocol.
-- Service Tiers: a client or a Parameter Policy can ask for the `fast` or `flex` tier. Each Provider maps the tier to its own value. A Parameter Policy can force a tier or forbid one. If the Route's upstream model does not accept the tier, the gateway drops the tier for that Attempt and sends the request anyway. See ADR 0014.
+- Service Tiers: a client or a Parameter Policy can ask for the `fast` or `flex` tier. Only OpenAI and OpenAI Codex have Service Tiers, and each maps the tier to its own value. Other Providers ignore the tier. A Parameter Policy can force a tier or forbid one. If the Route's upstream model does not accept the tier, the gateway drops the tier for that Attempt and sends the request anyway. See ADR 0014.
 - The Usage Log records the tier that served each request. Cost uses that tier's price when the upstream model has one.
 
 ## Providers
