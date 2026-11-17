@@ -796,6 +796,105 @@ select:focus-visible {
 .button--quiet {
   height: 38px;
 }
+/* The time zones button: the offset beside a globe, a menu for the detail. */
+.topbar__zone {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.topbar__zone:hover,
+.topbar__zone[data-state="open"] {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.topbar__zone-server {
+  color: var(--faint);
+}
+.zone-menu {
+  padding: 16px 18px 14px;
+}
+.zone-menu h2 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.zone-menu__rows {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+.zone-menu__row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--lead-surface);
+}
+.zone-menu__row dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.zone-menu__row dd {
+  margin: 0;
+  font-size: 12px;
+}
+.zone-menu__name {
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zone-menu__name--muted {
+  grid-column: 2 / -1;
+  color: var(--muted);
+}
+.zone-menu__time {
+  color: var(--ink);
+  white-space: nowrap;
+}
+.zone-menu__time span:last-child {
+  color: var(--muted);
+}
+.zone-menu__date {
+  margin-right: 4px;
+  color: var(--muted);
+}
+.zone-menu__gap {
+  margin: 10px 0 0;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+.zone-menu__notes {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--line-soft);
+  color: var(--faint);
+  font-size: 11px;
+  line-height: 1.45;
+  list-style: none;
+}
 .topbar__theme-select {
   flex: 0 0 32px;
   min-width: 0;
@@ -1549,6 +1648,15 @@ tbody tr:hover {
   }
   .topbar__theme-select {
     flex-basis: 32px;
+  }
+  /* Phones keep the globe and open the menu for the detail. */
+  .topbar__zone {
+    width: 32px;
+    justify-content: center;
+    padding: 0;
+  }
+  .topbar__zone-text {
+    display: none;
   }
   .topbar__theme-menu {
     width: 132px;

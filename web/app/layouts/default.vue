@@ -96,6 +96,7 @@ async function signOut(): Promise<void> {
           <span>RouterLM</span><span>/</span><strong>{{ pageTitle }}</strong>
         </div>
         <div class="topbar__actions">
+          <TimeZoneMenu />
           <AppSelect
             class="topbar__theme-select"
             menu-class="topbar__theme-menu"
