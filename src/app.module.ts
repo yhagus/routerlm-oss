@@ -7,6 +7,7 @@ import { APP_PIPE } from "@nestjs/core";
 import { ApiKeysModule } from "@/api-keys/api-keys.module.js";
 import { AppController } from "@/app.controller.js";
 import { AuthModule } from "@/auth/auth.module.js";
+import { CatalogGapsModule } from "@/catalog/catalog-gaps.module.js";
 import { type Env, envSchema } from "@/config/schemas/env.schema.js";
 import { relations } from "@/db/schemas/relations.js";
 import { ErrorCapturesModule } from "@/error-captures/error-captures.module.js";
@@ -49,6 +50,7 @@ import { UsageModule } from "@/usage/usage.module.js";
     SettingsModule,
     PlaygroundModule,
     QuotaMetersModule,
+    CatalogGapsModule,
     HealthModule,
   ],
   controllers: [AppController],
