@@ -33,7 +33,7 @@ A Provider sold as a plan with usage limits rather than per-token prices, such a
 _Avoid_: Coding plan, token plan, membership
 
 **Quota Meter**:
-One usage limit of a Provider Account at a Subscription Provider, such as a 5-hour or weekly window, with how much is used and when it resets.
+One usage limit of a Provider Account at a Subscription Provider, such as a 5-hour or weekly window, with how much is used and when it resets. A meter may apply to only one Model Kind, such as an image generation limit.
 _Avoid_: Quota, rate limit, usage limit
 
 **Exhausted**:
@@ -52,6 +52,10 @@ _Avoid_: Launch date, published date, last updated
 Something an Upstream Model can do that a request may need, such as vision, tools, reasoning or structured output.
 _Avoid_: Feature, modality
 
+**Model Kind**:
+What an Upstream Model or a Model produces, either chat (text, reasoning and tool calls) or image. A Model's Routes all point at Upstream Models of its Kind, and it only serves requests of its Kind.
+_Avoid_: Modality, model type, endpoint type
+
 **Service Tier**:
 The speed or priority class an Attempt asks a Provider for, such as fast or flex, which can cost more money or quota than the default. Each Provider accepts its own set of Service Tiers, or none.
 _Avoid_: Fast mode, priority, speed mode
@@ -65,7 +69,7 @@ The Providers and Upstream Models, with their Capabilities and prices, that ship
 _Avoid_: Master data, seed data
 
 **Protocol**:
-A wire format for inference requests and responses that a Provider or a client speaks.
+A wire format for inference requests and responses that a Provider or a client speaks. A Provider speaks one chat Protocol and, optionally, one image Protocol at the same base URL.
 _Avoid_: Format, dialect, API type
 
 ### Routing
