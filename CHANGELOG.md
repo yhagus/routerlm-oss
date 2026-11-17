@@ -1,3 +1,25 @@
+# v3.2.0 (2026-11-18)
+
+## Upgrade
+
+- Run `docker compose pull`, then `docker compose up -d`. The `migrate` service applies two new migrations.
+- **Behaviour change:** Kimi Code, MiniMax M Plan and OpenAI Codex now carry a Terms Risk flag, because their plans may not allow the gateway's use. While the new "Allow terms-risk providers" Setting is off, which is the default, these Providers serve no inference and are not listed to clients. An instance that uses one of them must turn the Setting on in the dashboard Settings page. Each Provider's own enabled flag is untouched.
+
+## Providers
+
+- New Provider: Google Gemini, through its OpenAI-compatible endpoint, with Gemini 4 Hydrogen, Carbon and Argon, Gemini 3.8 Flash, 3.7 Flash and 3.5 Flash Lite.
+- New Providers: Command Code and OpenCode Go. OpenCode Go forwards the client's user agent and session to its upstream.
+- OpenAI gains GPT-6.2 Astra and GPT-6.2 Sol, with the Fast service tier.
+
+## Dashboard
+
+- A Provider that speaks the OpenAI chat Protocol has a "Forwarded client headers" field, for request headers passed on to the Provider, such as `user-agent`.
+- The first page you open in a browser session shows a notice when models.dev lists one of the 5 newest models of your Providers that your Catalog does not hold yet. It only reports; it adds nothing. If models.dev cannot be reached, nothing is shown.
+
+## Other
+
+- The license is now Apache-2.0, up from MIT.
+
 # v3.1.0 (2026-11-17)
 
 ## Upgrade
