@@ -3353,7 +3353,8 @@ tbody tr:hover {
   color: var(--ink-2);
   font-size: 12px;
 }
-.segmented__option[aria-pressed="true"] {
+.segmented__option[aria-pressed="true"],
+.segmented__option[data-state="active"] {
   background: var(--panel);
   color: var(--ink);
   font-weight: 600;
@@ -3494,15 +3495,73 @@ tbody tr:hover {
   margin: 0 0 12px;
   color: var(--muted);
 }
-.capture-panel {
-  margin-bottom: 16px;
+/* The summary: where it failed, what the client got, and what the Provider said. */
+.capture-summary {
+  margin-bottom: 12px;
+  padding: 16px 21px 14px;
+}
+.capture-summary__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.capture-summary h2 {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: -0.025em;
+}
+.capture-summary__head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+/* "Client got" beside the outcome it labels. */
+.capture-outcome {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: 6px;
+}
+.capture-summary__head .capture-outcome__label {
+  color: var(--muted);
+  font-size: 11px;
+}
+.capture-cause {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: var(--lead-surface);
+  font-size: 12px;
+}
+.capture-cause__label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.capture-cause__text {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 .capture-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px 21px;
-  margin: 0;
-  padding: 0 21px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  margin: 10px 0 0;
+  padding: 0;
 }
 .capture-facts dt {
   color: var(--muted);
@@ -3512,14 +3571,128 @@ tbody tr:hover {
   text-transform: uppercase;
 }
 .capture-facts dd {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+.capture-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+.capture-link:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* The request and the response side by side, so both are in view while diagnosing. */
+.capture-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.capture-columns--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+.capture-pane__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 21px 12px;
+}
+.capture-pane__title h2 {
+  margin: 0 0 3px;
+  color: var(--ink);
+  font-size: 15px;
+  letter-spacing: -0.025em;
+}
+.capture-pane__title p {
+  margin: 0;
+  color: var(--faint);
+  font-size: 11px;
+}
+.capture-pane__tools {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+.capture-pane__tools .segmented__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.capture-pane__count {
+  color: var(--muted);
+  font-size: 11px;
+}
+/* As tall as the segmented control beside it (26px options in 2px padding). */
+.capture-pane__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+.capture-pane__copy {
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.capture-pane__copy:hover:not(:disabled) {
+  background: var(--control-hover);
+  color: var(--ink);
+}
+.capture-pane__copy:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.capture-pane__empty {
+  margin: 0;
+  padding: 18px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+.capture-pane__content {
+  padding: 0 21px 18px;
+}
+.capture-body,
+.capture-headers {
+  /* Fills what is left of the screen below the summary, so the page itself does not scroll. */
+  max-height: clamp(220px, calc(100vh - 480px), 640px);
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--lead-surface);
+  color: var(--ink);
+}
+.capture-body {
+  padding: 12px 14px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .capture-headers {
   display: grid;
   grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
-  gap: 6px 16px;
-  margin: 0;
-  padding: 0 21px 12px;
+  align-content: start;
+  gap: 4px 16px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.55;
 }
 .capture-headers > div {
   display: contents;
@@ -3531,20 +3704,29 @@ tbody tr:hover {
   margin: 0;
   overflow-wrap: anywhere;
 }
-.capture-body {
-  max-height: 480px;
-  margin: 0 21px 18px;
-  padding: 12px 14px;
-  overflow: auto;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: var(--lead-surface);
-  color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+.capture-body:focus-visible,
+.capture-headers:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+@media (max-width: 1180px) {
+  .capture-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .capture-body,
+  .capture-headers {
+    max-height: clamp(200px, 55vh, 520px);
+  }
+}
+@media (max-width: 640px) {
+  .capture-summary__head,
+  .capture-pane__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .capture-cause {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Overview page */

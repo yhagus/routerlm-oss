@@ -94,6 +94,28 @@ export function clientOutcome(capture: Pick<ErrorCaptureSummary, "httpStatus" | 
   };
 }
 
+/**
+ * The message an upstream error body carries, which is what the Provider said
+ * went wrong: `error.message` (OpenAI, Anthropic), `error` as a string, or a
+ * top-level `message`. Null when the body is not JSON or has none.
+ */
+export function upstreamErrorMessage(body: string | null): string | null {
+  if (body === null) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const error = "error" in parsed ? parsed.error : undefined;
+  if (typeof error === "string") return error;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    if (typeof error.message === "string") return error.message;
+  }
+  return "message" in parsed && typeof parsed.message === "string" ? parsed.message : null;
+}
+
 /** A JSON body indented for reading; any other text (a truncated body, HTML) as it is. */
 export function readableBody(body: string): string {
   try {
