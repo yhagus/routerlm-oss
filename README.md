@@ -90,13 +90,13 @@ clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
 
 ## Benchmark
 
-We measured the gateway with [k6](https://k6.io) against a fake upstream, so the results show the cost of RouterLM, not the cost of a Provider. Run the same test with `bun run perf:k6`. [tests/k6/README.md](tests/k6/README.md) describes the setup and the other scenarios.
+We measured the gateway with [k6](https://k6.io) against a fake upstream, so the results show the cost of RouterLM, not the cost of a Provider. Run the same test with `TOPOLOGY=cluster bun run perf:k6`. [tests/k6/README.md](tests/k6/README.md) describes the setup and the other scenarios.
 
-<img alt="Benchmark: 1,800 virtual users, 444 requests per second, 0 failed requests, and CPU use per node" src="docs/images/benchmark.svg" width="100%" />
+<img alt="Benchmark: 1,800 virtual users, 644 requests per second, 0 failed requests, and CPU use per node" src="docs/images/benchmark.svg" width="100%" />
 
 End-to-end scenario: the fake upstream waits 200 ms, then streams 200 tokens at 100 tokens/s. Each virtual user (VU) sends its next request as soon as the last one ends. The run lasted one minute on a fresh stack.
 
-**Host:** Docker Desktop on macOS, Apple M3 Pro, with 4 CPUs and 7.6 GB of RAM for the Docker VM. **Limits:** Gateway 2 replicas of 1 CPU / 1 GB, Worker 1 CPU / 1 GB, PostgreSQL 1 CPU / 1 GB, Redis 0.5 CPU / 512 MB.
+**Host:** Docker Desktop on macOS, Apple M3 Pro, with 4 CPUs and 7.6 GB of RAM for the Docker VM. **Limits:** Gateway 1 container of 2 CPUs / 2 GB running 2 processes (`BACKEND_PROCESSES=2`), Worker 1 CPU / 1 GB, PostgreSQL 1 CPU / 1 GB, Redis 0.5 CPU / 512 MB.
 
 ## Configuration
 
