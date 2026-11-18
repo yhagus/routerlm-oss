@@ -110,7 +110,7 @@ const encoder = new TextEncoder();
  * Protocol: parse, resolve the Model (or, for a direct Upstream Model test,
  * the Upstream Model), select the capable Routes, then make
  * Attempts with Fallback until one answers, and translate back. Reads only
- * the in-memory snapshot and the Cooldown state in Redis.
+ * the in-memory snapshot and a local copy of the Cooldown state in Redis.
  */
 @CommandHandler(RunInferenceCommand)
 export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand> {
@@ -185,7 +185,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
 
     // Accounts in Cooldown when the request arrived, plus the ones that fail during it.
     const enabledAccountIds = enabledProviderAccountIdsOf(destination.paths);
-    const cooldowns = await this.cooldowns.cooldowns(enabledAccountIds);
+    const cooldowns = await this.cooldowns.recentCooldowns(enabledAccountIds);
     const skippedAccountIds = new Set(cooldowns.keys());
     const recordedExhaustedAccountIds = new Set<string>();
     const failures: AttemptFailedError[] = [];
@@ -368,14 +368,14 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
-      void this.cooldowns.resetRefusals(target.providerAccount.id);
+      void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
       meter.usageReported(response.usage, response.servedTierValue);
       meter.attemptSucceeded();
       return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
     const upstream = await this.upstream.openStream(call);
     meter.attemptAnswered();
-    void this.cooldowns.resetRefusals(target.providerAccount.id);
+    void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
     return { kind: "stream", upstream, writer: converter.startStream(request, context), target };
   }
 

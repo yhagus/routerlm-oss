@@ -12,6 +12,7 @@ import {
   UPSTREAM_KEY,
 } from "../support/inference.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
+import { LOCAL_COPY_MAX_AGE_MS } from "@/upstream/providers/cooldown-store.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { createTestApp, setUpFirstUser } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
@@ -33,6 +34,10 @@ const STREAM_SUCCESS: FakeReply = {
 const RATE_LIMITED: FakeReply = { kind: "json", status: 429, body: { error: "slow down" } };
 const FORBIDDEN: FakeReply = { kind: "json", status: 403, body: { error: "forbidden" } };
 const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 describe("Fallback (e2e)", () => {
   let app: NestNodeApplication;
@@ -160,6 +165,21 @@ describe("Fallback (e2e)", () => {
       expect(secondsLeft).toBeLessThanOrEqual(120);
       expect(primary.lastError).toContain("rate_limited");
     });
+  });
+
+  it("skips a Provider Account that another process put in Cooldown within a second", async () => {
+    upstream.reply(SUCCESS);
+    upstream.reply(SUCCESS);
+    await chat().expect(200);
+    const endsAt = Date.now() + 60_000;
+
+    await app
+      .get(RedisConnection)
+      .client.set(`routerlm:cooldown:${primaryAccountId}`, `${endsAt}:rate_limited`, "PX", 60_000);
+    await sleep(LOCAL_COPY_MAX_AGE_MS);
+    await chat().expect(200);
+
+    expect(attemptedKeys()).toEqual([UPSTREAM_KEY, BACKUP_KEY]);
   });
 
   it("disables the Provider Account with a reason on 401, until an operator re-enables it", async () => {
@@ -321,8 +341,10 @@ describe("Fallback (e2e)", () => {
   }
 
   // Stands in for waiting out the Cooldown, which doubles with each failure.
+  /** Ends the Cooldown in Redis, as another process would, and waits until this one sees it. */
   async function endCooldown(providerAccountId: string): Promise<void> {
     await app.get(RedisConnection).client.del(`routerlm:cooldown:${providerAccountId}`);
+    await sleep(LOCAL_COPY_MAX_AGE_MS);
   }
 
   async function disableProviderAccount(providerAccountId: string): Promise<void> {
