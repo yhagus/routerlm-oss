@@ -83,6 +83,7 @@ describe("Authentication: login throttling behind a trusted proxy (e2e)", () => 
   });
 
   afterAll(async () => {
+    await forgetLoginAttempts(app);
     await app.close();
     delete process.env.TRUST_PROXY;
   });
@@ -144,7 +145,9 @@ describe("Authentication: login throttling without a trusted proxy (e2e)", () =>
     await forgetLoginAttempts(app);
   });
 
+  // The count is kept per socket address here, which later test files log in from too.
   afterAll(async () => {
+    await forgetLoginAttempts(app);
     await app.close();
   });
 
