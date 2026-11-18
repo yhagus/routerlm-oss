@@ -207,6 +207,32 @@ describe("Fallback (e2e)", () => {
     });
   });
 
+  it("counts 403s from zero again after an operator re-enables a Provider Account that 403s disabled", async () => {
+    for (let refusal = 1; refusal <= 3; refusal++) {
+      upstream.reply(FORBIDDEN);
+      upstream.reply(SUCCESS);
+      await chat().expect(200);
+      await endCooldown(primaryAccountId);
+    }
+    await vi.waitFor(async () => {
+      expect((await primaryAccount()).isEnabled).toBe(false);
+    });
+    await db
+      .update(providerAccounts)
+      .set({ isEnabled: true })
+      .where(eq(providerAccounts.id, primaryAccountId));
+    await app.get(SnapshotService).changed();
+
+    upstream.reply(FORBIDDEN);
+    upstream.reply(SUCCESS);
+    await chat().expect(200);
+
+    await vi.waitFor(async () => {
+      expect((await primaryAccount()).lastError).toContain("unauthorized");
+    });
+    expect((await primaryAccount()).isEnabled).toBe(true);
+  });
+
   it("counts 403s from zero again after a successful Attempt", async () => {
     upstream.reply(FORBIDDEN);
     upstream.reply(SUCCESS);

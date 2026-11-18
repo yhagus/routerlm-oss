@@ -2,8 +2,12 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { type FakeReply, FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
+import { eq } from "drizzle-orm";
+import { providers } from "@/db/schemas/index.js";
 import { insertApiKey, insertOpenAiChatModel, setProviderQuirks } from "../support/inference.js";
+import { addOauthLoginAccount, offerOauthLogin } from "../support/kimi-oauth.js";
 import { createTestApp } from "../support/test-app.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
@@ -58,6 +62,32 @@ describe("Private upstreams at connect time (e2e)", () => {
     const response = await chat().expect(502);
 
     expect(response.body.error.code).toBe("upstream_error");
+    expect(upstream.requests).toHaveLength(0);
+  });
+
+  it("refuses a stored plain http URL for a loopback address literal", async () => {
+    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    await db
+      .update(providers)
+      .set({ baseUrl: upstream.baseUrl })
+      .where(eq(providers.id, providerId));
+    await app.get(SnapshotService).changed();
+    upstream.reply(SUCCESS);
+
+    const response = await chat().expect(502);
+
+    expect(response.body.error.code).toBe("upstream_error");
+    expect(upstream.requests).toHaveLength(0);
+  });
+
+  it("refuses to refresh an OAuth Login at an auth host that resolves to loopback", async () => {
+    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    await offerOauthLogin(db, providerId, upstream.localhostBaseUrl.replace(/\/v1$/, ""));
+    await addOauthLoginAccount(app, db, providerId, { lifetimeSeconds: 60, ageSeconds: 120 });
+    upstream.reply(SUCCESS);
+
+    await chat();
+
     expect(upstream.requests).toHaveLength(0);
   });
 

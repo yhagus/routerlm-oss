@@ -1,23 +1,30 @@
 import { isIPv4, isIPv6 } from "node:net";
 import { z } from "zod";
 import { envSchema } from "@/config/schemas/env.schema.js";
+import { bareHostname } from "../models/url.js";
 
-/** [first, second octet] of the network and its prefix length; every prefix is at most 16 bits. */
-const NON_PUBLIC_IPV4_RANGES: readonly (readonly [number, number, number])[] = [
-  [0, 0, 8],
-  [10, 0, 8],
-  [127, 0, 8],
-  [169, 254, 16],
-  [172, 16, 12],
-  [192, 168, 16],
+/** A network by its first two octets and prefix length; every prefix is at most 16 bits. */
+interface Ipv4Range {
+  firstOctet: number;
+  secondOctet: number;
+  prefixBits: number;
+}
+
+const NON_PUBLIC_IPV4_RANGES: readonly Ipv4Range[] = [
+  { firstOctet: 0, secondOctet: 0, prefixBits: 8 },
+  { firstOctet: 10, secondOctet: 0, prefixBits: 8 },
+  { firstOctet: 127, secondOctet: 0, prefixBits: 8 },
+  { firstOctet: 169, secondOctet: 254, prefixBits: 16 },
+  { firstOctet: 172, secondOctet: 16, prefixBits: 12 },
+  { firstOctet: 192, secondOctet: 168, prefixBits: 16 },
 ];
 
 function isPrivateIpv4(address: string): boolean {
   const [first, second] = address.split(".").map(Number);
   const prefix = first * 256 + second;
-  return NON_PUBLIC_IPV4_RANGES.some(([networkFirst, networkSecond, bits]) => {
-    const shift = 16 - bits;
-    return prefix >> shift === (networkFirst * 256 + networkSecond) >> shift;
+  return NON_PUBLIC_IPV4_RANGES.some(({ firstOctet, secondOctet, prefixBits }) => {
+    const shift = 16 - prefixBits;
+    return prefix >> shift === (firstOctet * 256 + secondOctet) >> shift;
   });
 }
 
@@ -47,11 +54,9 @@ function isPrivateMappedIpv4(lower: string): boolean {
 
 /** Whether the URL's host is `localhost` or a loopback, private or link-local address literal. */
 function hasPrivateHost(url: URL): boolean {
-  const host = url.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  const host = bareHostname(url).toLowerCase();
   if (host === "localhost" || host.endsWith(".localhost")) return true;
-  if (isIPv4(host)) return isPrivateIpv4(host);
-  if (isIPv6(host)) return isPrivateIpv6(host);
-  return false;
+  return (isIPv4(host) || isIPv6(host)) && isPrivateAddress(host);
 }
 
 /**
@@ -63,20 +68,18 @@ export function allowsPrivateUpstreams(): boolean {
   return envSchema.shape.ALLOW_PRIVATE_UPSTREAMS.parse(process.env.ALLOW_PRIVATE_UPSTREAMS);
 }
 
+/** Whether the URL is https and its host is not a `localhost` or a private address literal. */
+export function isPublicHttpsUrl(url: URL): boolean {
+  return url.protocol === "https:" && !hasPrivateHost(url);
+}
+
 /**
  * A URL the gateway sends a credential to: https and not a loopback, private
  * or link-local literal, unless `ALLOW_PRIVATE_UPSTREAMS` lifts both rules.
  */
 export const providerUrlSchema = z.url().check(
-  z.refine(
-    (value) => {
-      if (allowsPrivateUpstreams()) return true;
-      const url = new URL(value);
-      return url.protocol === "https:" && !hasPrivateHost(url);
-    },
-    {
-      error:
-        "Must be an https URL that is not localhost, loopback, private or link-local (set ALLOW_PRIVATE_UPSTREAMS=true to allow them)",
-    },
-  ),
+  z.refine((value) => allowsPrivateUpstreams() || isPublicHttpsUrl(new URL(value)), {
+    error:
+      "Must be an https URL that is not localhost, loopback, private or link-local (set ALLOW_PRIVATE_UPSTREAMS=true to allow them)",
+  }),
 );
