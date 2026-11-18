@@ -526,6 +526,8 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   ): Promise<void> {
     const refusalCount = await this.cooldowns.countRefusal(providerAccountId);
     if (refusalCount >= DISABLING_REFUSAL_COUNT) {
+      // An operator who re-enables the account starts the count again.
+      await this.cooldowns.resetRefusals(providerAccountId);
       void this.providerAccountHealth.disable(
         providerAccountId,
         `The upstream refused this account's requests ${DISABLING_REFUSAL_COUNT} times in a row (repeated refusals, HTTP 403)`,
