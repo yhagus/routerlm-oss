@@ -33,8 +33,66 @@
     ],
     "retrievedOn": "2026-11-16"
   },
-  "notes": "ChatGPT plans served to the Codex CLI's OAuth Login (ADR 0013); no API keys. Flagged termsRisk: the gateway presents the Codex CLI's identity (originator codex_cli_rs) to use a subscription OpenAI registers no third-party client for, and OpenAI's position on that is unconfirmed. Models are the CLI's visible ones; hidden models (daybreak-*, codex-auto-review) are left out. Prices are the OpenAI API list prices for the same model, as in openai.json: the plan bills quota, not money, so Cost is what the same tokens would cost on the API. Service Tiers (ADR 0014): every model accepts fast, as models.json lists the priority service tier for each visible model, and flex, as the spec decides; tierPrices are the OpenAI API's short-context Fast and Flex rates, as in openai.json. Unverified until a live check: whether the Codex backend accepts flex. Context sizes are each model's max_context_window in models.json, the ceiling the Codex CLI's model_context_window setting may raise the window to (the CLI defaults to the smaller context_window, a client-side compaction budget); they are not the API's. Unverified until a live check: whether the backend refuses temperature, top_p and max_output_tokens, and accepts the system prompt as a developer message.",
+  "notes": "ChatGPT plans served to the Codex CLI's OAuth Login (ADR 0013); no API keys. Flagged termsRisk: the gateway presents the Codex CLI's identity (originator codex_cli_rs) to use a subscription OpenAI registers no third-party client for, and OpenAI's position on that is unconfirmed. Models are the CLI's visible ones; hidden models (daybreak-*, codex-auto-review) are left out. Prices are the OpenAI API list prices for the same model, as in openai.json: the plan bills quota, not money, so Cost is what the same tokens would cost on the API. Service Tiers (ADR 0014): every model accepts fast, as models.json lists the priority service tier for each visible model, and flex, as the spec decides; tierPrices are the OpenAI API's short-context Fast and Flex rates, as in openai.json. Unverified until a live check: whether the Codex backend accepts flex. Context sizes are each model's max_context_window in models.json, the ceiling the Codex CLI's model_context_window setting may raise the window to (the CLI defaults to the smaller context_window, a client-side compaction budget); they are not the API's. Unverified until a live check: whether the backend refuses temperature, top_p and max_output_tokens, and accepts the system prompt as a developer message. GPT-6.2 Sol and Astra were added on 2026-11-18 from models.json (openai/codex#62106); they accept only fast, as the API lists no flex rate for them.",
   "upstreamModels": [
+    {
+      "upstreamModelId": "gpt-6.2-sol",
+      "name": "GPT-6.2 Sol",
+      "releaseDate": "2026-11-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 872000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "serviceTiers": ["fast"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 4,
+          "outputPrice": 20,
+          "cacheReadPrice": 0.2,
+          "cacheWritePrice": 5
+        }
+      },
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-18"
+      }
+    },
+    {
+      "upstreamModelId": "gpt-6.2-astra",
+      "name": "GPT-6.2 Astra",
+      "releaseDate": "2026-11-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 872000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 10,
+      "serviceTiers": ["fast"],
+      "tierPrices": {
+        "fast": {
+          "inputPrice": 16,
+          "outputPrice": 80,
+          "cacheReadPrice": 0.8,
+          "cacheWritePrice": 20
+        }
+      },
+      "source": {
+        "urls": [
+          "https://github.com/openai/codex/blob/main/codex-rs/models-manager/models.json",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
+          "https://developers.openai.com/api/docs/pricing"
+        ],
+        "retrievedOn": "2026-11-18"
+      }
+    },
     {
       "upstreamModelId": "gpt-6-astra",
       "name": "GPT-6 Astra",

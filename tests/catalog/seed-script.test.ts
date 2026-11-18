@@ -98,6 +98,8 @@ describe("db:seed script (e2e)", () => {
       credentialKinds: ["api-key", "oauth-login"],
     });
     expect(Object.fromEntries(codexModels.map((model) => [model.id, model.contextSize]))).toEqual({
+      "gpt-6.2-sol": 872000,
+      "gpt-6.2-astra": 872000,
       "gpt-6-astra": 872000,
       "gpt-6.1-sol": 872000,
       "gpt-6.1-terra": 872000,
