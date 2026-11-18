@@ -7,27 +7,47 @@ export interface ServerSentEvent {
 const EVENT_SEPARATOR = /\r?\n\r?\n/;
 const LINE_SEPARATOR = /\r?\n/;
 
+/**
+ * Splits a server-sent-event byte stream into events as its bytes arrive,
+ * without awaiting anything: the relay loop pushes each network read and
+ * gets back every event it completed.
+ */
+export class ServerSentEventDecoder {
+  private readonly decoder = new TextDecoder();
+  private buffered = "";
+
+  /** The events this read completed, in order; often none, sometimes several. */
+  push(chunk: Uint8Array): ServerSentEvent[] {
+    this.buffered += this.decoder.decode(chunk, { stream: true });
+    const blocks = this.buffered.split(EVENT_SEPARATOR);
+    this.buffered = blocks.pop() ?? "";
+    const events: ServerSentEvent[] = [];
+    for (const block of blocks) {
+      const event = parseEventBlock(block);
+      if (event) {
+        events.push(event);
+      }
+    }
+    return events;
+  }
+
+  /** The last event, when the body ended without a blank line after it. */
+  end(): ServerSentEvent[] {
+    const last = parseEventBlock(this.buffered + this.decoder.decode());
+    this.buffered = "";
+    return last ? [last] : [];
+  }
+}
+
 /** Reads a server-sent-event byte stream (an upstream's streaming body) event by event. */
 export async function* readServerSentEvents(
   body: AsyncIterable<Uint8Array>,
 ): AsyncIterable<ServerSentEvent> {
-  const decoder = new TextDecoder();
-  let buffered = "";
+  const decoder = new ServerSentEventDecoder();
   for await (const chunk of body) {
-    buffered += decoder.decode(chunk, { stream: true });
-    const blocks = buffered.split(EVENT_SEPARATOR);
-    buffered = blocks.pop() ?? "";
-    for (const block of blocks) {
-      const event = parseEventBlock(block);
-      if (event) {
-        yield event;
-      }
-    }
+    yield* decoder.push(chunk);
   }
-  const last = parseEventBlock(buffered + decoder.decode());
-  if (last) {
-    yield last;
-  }
+  yield* decoder.end();
 }
 
 function parseEventBlock(block: string): ServerSentEvent | null {

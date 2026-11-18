@@ -6,8 +6,13 @@ import type {
   StopReason,
   TokenUsage,
 } from "../../models/internal-format.js";
-import { readServerSentEvents } from "../server-sent-events.js";
-import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
+import { isJsonObject } from "../json-object.js";
+import type { ServerSentEvent } from "../server-sent-events.js";
+import {
+  UpstreamProtocolError,
+  type UpstreamStreamParser,
+  parseUpstreamStream,
+} from "../upstream-protocol-converter.js";
 
 // Responses are read leniently: only the fields the internal format needs.
 // Block types it can't express (redacted_thinking, server tool blocks) are skipped.
@@ -177,34 +182,82 @@ class StreamState {
   }
 }
 
-export async function* parseMessagesStream(
-  body: AsyncIterable<Uint8Array>,
-): AsyncIterable<InferenceStreamEvent> {
-  const state = new StreamState();
-  for await (const { data } of readServerSentEvents(body)) {
-    const event = parseStreamEvent(data);
+/** The Protocol ends every stream with message_stop: a body that ends before it was cut off. */
+class MessagesStreamParser implements UpstreamStreamParser {
+  isDone = false;
+  private readonly state = new StreamState();
+
+  parse({ data }: ServerSentEvent): InferenceStreamEvent[] {
+    const json = parseJson(data);
+    const tokenEvents = eventsOfTokenDelta(json);
+    if (tokenEvents) {
+      return tokenEvents;
+    }
+    const event = parseStreamEvent(json);
     if (!event) {
-      continue;
+      return [];
     }
     if (event.type === "message_stop") {
-      yield { type: "usage", usage: tokenUsageOf(state.usage) };
-      return;
+      this.isDone = true;
+      return [{ type: "usage", usage: tokenUsageOf(this.state.usage) }];
     }
-    yield* eventsOf(event, state);
+    return [...eventsOf(event, this.state)];
   }
-  throw new UpstreamProtocolError("The stream ended before message_stop");
+
+  end(): InferenceStreamEvent[] {
+    throw new UpstreamProtocolError("The stream ended before message_stop");
+  }
+}
+
+export function startMessagesStream(): UpstreamStreamParser {
+  return new MessagesStreamParser();
+}
+
+export function parseMessagesStream(
+  body: AsyncIterable<Uint8Array>,
+): AsyncIterable<InferenceStreamEvent> {
+  return parseUpstreamStream(startMessagesStream, body);
 }
 
 const typedEventSchema = z.object({ type: z.string() });
 
-/** Null for an event type this reader doesn't know: the Protocol adds new ones over time. */
-function parseStreamEvent(data: string): StreamEvent | null {
-  let json: unknown;
+function parseJson(data: string): unknown {
   try {
-    json = JSON.parse(data);
+    return JSON.parse(data);
   } catch (error) {
     throw new UpstreamProtocolError("A stream event is not JSON", { cause: error });
   }
+}
+
+/**
+ * The event of a text or thinking delta (most of a stream), read without
+ * running two zod schemas on every token. Undefined for any other event, which
+ * takes the schema path: this accepts only what streamEventSchema and
+ * deltaSchema accept, and gives the event eventsOfDelta would.
+ */
+function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
+  if (!isJsonObject(json) || json.type !== "content_block_delta") {
+    return undefined;
+  }
+  // z.number() rejects Infinity, which JSON.parse gives for an overflowing number.
+  if (typeof json.index !== "number" || !Number.isFinite(json.index)) {
+    return undefined;
+  }
+  const delta = json.delta;
+  if (!isJsonObject(delta)) {
+    return undefined;
+  }
+  if (delta.type === "text_delta" && typeof delta.text === "string") {
+    return [{ type: "text-delta", text: delta.text }];
+  }
+  if (delta.type === "thinking_delta" && typeof delta.thinking === "string") {
+    return [{ type: "reasoning-delta", text: delta.thinking }];
+  }
+  return undefined;
+}
+
+/** Null for an event type this reader doesn't know: the Protocol adds new ones over time. */
+function parseStreamEvent(json: unknown): StreamEvent | null {
   const typed = typedEventSchema.safeParse(json);
   if (typed.success && !KNOWN_STREAM_EVENT_TYPES.has(typed.data.type)) {
     return null;

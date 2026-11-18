@@ -16,12 +16,15 @@ import type {
   ToolChoice,
   UserContentPart,
 } from "../../models/internal-format.js";
-import { readServerSentEvents } from "../server-sent-events.js";
+import { isJsonObject } from "../json-object.js";
+import type { ServerSentEvent } from "../server-sent-events.js";
 import {
   type UpstreamHttpRequest,
   UpstreamProtocolError,
   type UpstreamProtocolConverter,
+  type UpstreamStreamParser,
   type UpstreamTarget,
+  parseUpstreamStream,
 } from "../upstream-protocol-converter.js";
 import {
   type OpenAiUsage,
@@ -366,13 +369,30 @@ const chunkSchema = z.object({
 
 const streamErrorSchema = z.object({ error: z.unknown() });
 
-async function* parseStream(body: AsyncIterable<Uint8Array>): AsyncIterable<InferenceStreamEvent> {
-  for await (const { data } of readServerSentEvents(body)) {
+/** A body that ends without `[DONE]` ends normally: not every Provider sends it. */
+class ChatStreamParser implements UpstreamStreamParser {
+  isDone = false;
+
+  parse({ data }: ServerSentEvent): InferenceStreamEvent[] {
     if (data === STREAM_END) {
-      return;
+      this.isDone = true;
+      return [];
     }
-    yield* eventsOfChunk(parseJson(data));
+    const json = parseJson(data);
+    return eventsOfTokenChunk(json) ?? [...eventsOfChunk(json)];
   }
+
+  end(): InferenceStreamEvent[] {
+    return [];
+  }
+}
+
+function startStream(): UpstreamStreamParser {
+  return new ChatStreamParser();
+}
+
+function parseStream(body: AsyncIterable<Uint8Array>): AsyncIterable<InferenceStreamEvent> {
+  return parseUpstreamStream(startStream, body);
 }
 
 function parseJson(data: string): unknown {
@@ -381,6 +401,56 @@ function parseJson(data: string): unknown {
   } catch (error) {
     throw new UpstreamProtocolError("A stream chunk is not JSON", { cause: error });
   }
+}
+
+/**
+ * The events of a chunk that only carries text or reasoning (most of a
+ * stream), read without running two zod schemas on every token. Undefined for
+ * any other chunk, which takes the schema path: this accepts only chunks that
+ * streamErrorSchema rejects and chunkSchema accepts, and gives the events
+ * eventsOfChunk would.
+ */
+function eventsOfTokenChunk(json: unknown): InferenceStreamEvent[] | undefined {
+  // streamErrorSchema matches any object with an `error` key, whatever its value.
+  if (!isJsonObject(json) || "error" in json || !Array.isArray(json.choices)) {
+    return undefined;
+  }
+  if (!isNullish(json.usage) || !isNullishString(json.service_tier)) {
+    return undefined;
+  }
+  const events: InferenceStreamEvent[] = [];
+  for (const choice of json.choices) {
+    if (!isJsonObject(choice) || !isNullish(choice.finish_reason) || !isNullish(choice.usage)) {
+      return undefined;
+    }
+    const delta = choice.delta;
+    if (isNullish(delta)) {
+      continue;
+    }
+    if (
+      !isJsonObject(delta) ||
+      !isNullish(delta.tool_calls) ||
+      !isNullishString(delta.content) ||
+      !isNullishString(delta.reasoning_content)
+    ) {
+      return undefined;
+    }
+    if (delta.reasoning_content) {
+      events.push({ type: "reasoning-delta", text: delta.reasoning_content });
+    }
+    if (delta.content) {
+      events.push({ type: "text-delta", text: delta.content });
+    }
+  }
+  return events;
+}
+
+function isNullish(value: unknown): value is null | undefined {
+  return value === null || value === undefined;
+}
+
+function isNullishString(value: unknown): value is string | null | undefined {
+  return typeof value === "string" || isNullish(value);
 }
 
 function* eventsOfChunk(json: unknown): Iterable<InferenceStreamEvent> {
@@ -433,4 +503,5 @@ export const openAiChatUpstreamConverter: UpstreamProtocolConverter = {
   writeRequest,
   parseResponse,
   parseStream,
+  startStream,
 };

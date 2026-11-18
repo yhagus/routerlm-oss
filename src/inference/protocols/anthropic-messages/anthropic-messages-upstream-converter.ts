@@ -18,7 +18,11 @@ import type {
   UpstreamProtocolConverter,
   UpstreamTarget,
 } from "../upstream-protocol-converter.js";
-import { parseMessagesResponse, parseMessagesStream } from "./anthropic-messages-response.js";
+import {
+  parseMessagesResponse,
+  parseMessagesStream,
+  startMessagesStream,
+} from "./anthropic-messages-response.js";
 
 const MESSAGES_PATH = "/v1/messages";
 // The version every Anthropic-compatible Provider accepts; later versions
@@ -279,4 +283,5 @@ export const anthropicMessagesUpstreamConverter: UpstreamProtocolConverter = {
   writeRequest,
   parseResponse: parseMessagesResponse,
   parseStream: parseMessagesStream,
+  startStream: startMessagesStream,
 };

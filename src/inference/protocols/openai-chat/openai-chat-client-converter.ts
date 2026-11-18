@@ -14,7 +14,12 @@ import {
   type ToolChoice,
   type UserContentPart,
 } from "../../models/internal-format.js";
-import type { ClientProtocolConverter, ResponseContext } from "../client-protocol-converter.js";
+import {
+  type ClientProtocolConverter,
+  type ClientStreamWriter,
+  type ResponseContext,
+  writeStreamWith,
+} from "../client-protocol-converter.js";
 import { finishReasonOf, writeUsage } from "./openai-chat-usage.js";
 
 // The Chat Completions client Protocol (`POST /v1/chat/completions`).
@@ -367,66 +372,79 @@ function responseHeader(context: ResponseContext, object: string): Record<string
   };
 }
 
-async function* writeStream(
+function writeStream(
   events: AsyncIterable<InferenceStreamEvent>,
   request: InferenceRequest,
   context: ResponseContext,
 ): AsyncIterable<string> {
-  const header = responseHeader(context, "chat.completion.chunk");
-  const chunk = (delta: Record<string, unknown>, finishReason: string | null = null): string =>
-    serverSentEvent({
-      ...header,
-      choices: [{ index: 0, delta, logprobs: null, finish_reason: finishReason }],
-    });
-
-  let usage: TokenUsage | undefined;
-  yield chunk({ role: "assistant", content: "" });
-  for await (const event of events) {
-    if (event.type === "usage") {
-      usage = event.usage;
-      continue;
-    }
-    const written = writeStreamEvent(event, chunk);
-    if (written !== null) {
-      yield written;
-    }
-  }
-  // Usage goes last, in a chunk without choices, as OpenAI sends it.
-  if (request.stream?.includeUsage && usage) {
-    yield serverSentEvent({ ...header, choices: [], usage: writeUsage(usage) });
-  }
-  yield "data: [DONE]\n\n";
+  return writeStreamWith(startStream(request, context), events);
 }
 
-function writeStreamEvent(
-  event: Exclude<InferenceStreamEvent, { type: "usage" }>,
-  chunk: (delta: Record<string, unknown>, finishReason?: string | null) => string,
-): string | null {
-  switch (event.type) {
-    case "text-delta":
-      return chunk({ content: event.text });
-    case "reasoning-delta":
-      return chunk({ reasoning_content: event.text });
-    case "tool-call-start":
-      return chunk({
-        tool_calls: [
-          {
-            index: event.index,
-            id: event.id,
-            type: "function",
-            function: { name: event.name, arguments: "" },
-          },
-        ],
-      });
-    case "tool-call-delta":
-      return chunk({
-        tool_calls: [{ index: event.index, function: { arguments: event.argumentsDelta } }],
-      });
-    case "finish":
-      return chunk({}, finishReasonOf(event.stopReason));
-    case "reasoning-signature":
-      // Chat Completions has nowhere to carry a reasoning signature.
-      return null;
+function startStream(request: InferenceRequest, context: ResponseContext): ClientStreamWriter {
+  return new OpenAiChatStreamWriter(request, context);
+}
+
+class OpenAiChatStreamWriter implements ClientStreamWriter {
+  private readonly header: Record<string, unknown>;
+  private readonly isUsageRequested: boolean;
+  // Usage arrives before `finish` but goes out last, so it is held to the end.
+  private usage: TokenUsage | undefined;
+
+  constructor(request: InferenceRequest, context: ResponseContext) {
+    this.header = responseHeader(context, "chat.completion.chunk");
+    this.isUsageRequested = request.stream?.includeUsage ?? false;
+  }
+
+  start(): string {
+    return this.chunk({ role: "assistant", content: "" });
+  }
+
+  write(event: InferenceStreamEvent): string {
+    switch (event.type) {
+      case "text-delta":
+        return this.chunk({ content: event.text });
+      case "reasoning-delta":
+        return this.chunk({ reasoning_content: event.text });
+      case "tool-call-start":
+        return this.chunk({
+          tool_calls: [
+            {
+              index: event.index,
+              id: event.id,
+              type: "function",
+              function: { name: event.name, arguments: "" },
+            },
+          ],
+        });
+      case "tool-call-delta":
+        return this.chunk({
+          tool_calls: [{ index: event.index, function: { arguments: event.argumentsDelta } }],
+        });
+      case "finish":
+        return this.chunk({}, finishReasonOf(event.stopReason));
+      case "usage":
+        this.usage = event.usage;
+        return "";
+      case "reasoning-signature":
+        // Chat Completions has nowhere to carry a reasoning signature.
+        return "";
+    }
+  }
+
+  end(): string {
+    // Usage goes last, in a chunk without choices, as OpenAI sends it.
+    const usageChunk =
+      this.isUsageRequested && this.usage
+        ? serverSentEvent({ ...this.header, choices: [], usage: writeUsage(this.usage) })
+        : "";
+    return `${usageChunk}data: [DONE]\n\n`;
+  }
+
+  private chunk(delta: Record<string, unknown>, finishReason: string | null = null): string {
+    return serverSentEvent({
+      ...this.header,
+      choices: [{ index: 0, delta, logprobs: null, finish_reason: finishReason }],
+    });
   }
 }
 
@@ -465,6 +483,7 @@ export const openAiChatClientConverter: ClientProtocolConverter = {
   parseRequest,
   writeResponse,
   writeStream,
+  startStream,
   writeError,
   writeStreamError,
 };

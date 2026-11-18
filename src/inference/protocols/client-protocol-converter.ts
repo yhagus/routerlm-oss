@@ -40,12 +40,17 @@ export interface ClientProtocolConverter {
    * The bytes of a streaming response, as server-sent-event text. Errors from
    * `events` propagate: `writeClientStream` turns a GatewayError into the
    * Protocol's error event with `writeStreamError`.
+   * @deprecated Kept until the relay loop drives `startStream` itself; implement it
+   * as `(events, request, context) => writeStreamWith(startStream(request, context), events)`.
    */
   writeStream(
     events: AsyncIterable<InferenceStreamEvent>,
     request: InferenceRequest,
     context: ResponseContext,
   ): AsyncIterable<string>;
+
+  /** A writer for one streaming response, fed one internal event at a time. */
+  startStream(request: InferenceRequest, context: ResponseContext): ClientStreamWriter;
 
   /** The JSON body of an error response, in the Protocol's envelope. */
   writeError(error: GatewayError): unknown;
@@ -56,6 +61,43 @@ export interface ClientProtocolConverter {
    * status is already sent). Nothing follows it, so no end marker either.
    */
   writeStreamError(error: GatewayError): string;
+}
+
+/**
+ * Writes one streaming response in the client Protocol, one internal event at
+ * a time, with no async work of its own: whatever the Protocol holds back
+ * until the end (stop reason, usage, open blocks) lives in the writer. Each
+ * method returns server-sent-event text, possibly several events joined, or
+ * "" when it has nothing to send yet.
+ */
+export interface ClientStreamWriter {
+  /** What the Protocol sends before the first event (`message_start`, the role chunk). */
+  start(): string;
+  /** What one internal event becomes. */
+  write(event: InferenceStreamEvent): string;
+  /** What closes a stream that ended normally (held usage, the end marker). */
+  end(): string;
+}
+
+/** `writer`'s output for `events`, as the deprecated `writeStream` returns it. */
+export async function* writeStreamWith(
+  writer: ClientStreamWriter,
+  events: AsyncIterable<InferenceStreamEvent>,
+): AsyncIterable<string> {
+  const opening = writer.start();
+  if (opening !== "") {
+    yield opening;
+  }
+  for await (const event of events) {
+    const written = writer.write(event);
+    if (written !== "") {
+      yield written;
+    }
+  }
+  const closing = writer.end();
+  if (closing !== "") {
+    yield closing;
+  }
 }
 
 /**

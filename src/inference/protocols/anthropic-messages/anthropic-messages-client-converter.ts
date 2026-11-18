@@ -16,7 +16,12 @@ import {
   UNREPORTED_USAGE,
   type UserContentPart,
 } from "../../models/internal-format.js";
-import type { ClientProtocolConverter, ResponseContext } from "../client-protocol-converter.js";
+import {
+  type ClientProtocolConverter,
+  type ClientStreamWriter,
+  type ResponseContext,
+  writeStreamWith,
+} from "../client-protocol-converter.js";
 
 // The Anthropic Messages client Protocol (`POST /v1/messages`).
 // Schemas are plain (non-strict) zod objects: unknown fields are dropped (ADR 0002).
@@ -488,50 +493,70 @@ function writeUsage(usage: TokenUsage): Record<string, unknown> {
   };
 }
 
-/**
- * Stream events are written as the Protocol's named events. The stop reason
- * and usage arrive in any order, so both are held until the stream ends and
- * go out together in `message_delta`.
- */
-async function* writeStream(
+function writeStream(
   events: AsyncIterable<InferenceStreamEvent>,
-  _request: InferenceRequest,
+  request: InferenceRequest,
   context: ResponseContext,
 ): AsyncIterable<string> {
-  yield namedEvent("message_start", {
-    type: "message_start",
-    message: {
-      ...messageHeader(context),
-      content: [],
-      stop_reason: null,
-      stop_sequence: null,
-      usage: writeUsage(UNREPORTED_USAGE),
-    },
-  });
-  const blocks = new ContentBlockWriter();
-  let stopReason: StopReason = "end";
-  let usage = UNREPORTED_USAGE;
-  for await (const event of events) {
-    if (event.type === "finish") {
-      stopReason = event.stopReason;
-    } else if (event.type === "usage") {
-      usage = event.usage;
-    } else {
-      yield* blocks.write(event);
-    }
-  }
-  yield* blocks.closeOpenBlock();
-  yield namedEvent("message_delta", {
-    type: "message_delta",
-    delta: { stop_reason: STOP_REASONS[stopReason], stop_sequence: null },
-    usage: writeUsage(usage),
-  });
-  yield namedEvent("message_stop", { type: "message_stop" });
+  return writeStreamWith(startStream(request, context), events);
+}
+
+function startStream(_request: InferenceRequest, context: ResponseContext): ClientStreamWriter {
+  return new AnthropicMessagesStreamWriter(context);
 }
 
 /** The event that ends a stream which failed after its first chunk reached the client. */
 function writeStreamError(error: GatewayError): string {
   return namedEvent("error", writeError(error));
+}
+
+/**
+ * Stream events are written as the Protocol's named events. The stop reason
+ * and usage arrive in any order, so both are held until the stream ends and
+ * go out together in `message_delta`.
+ */
+class AnthropicMessagesStreamWriter implements ClientStreamWriter {
+  private readonly blocks = new ContentBlockWriter();
+  private stopReason: StopReason = "end";
+  private usage = UNREPORTED_USAGE;
+
+  constructor(private readonly context: ResponseContext) {}
+
+  start(): string {
+    return namedEvent("message_start", {
+      type: "message_start",
+      message: {
+        ...messageHeader(this.context),
+        content: [],
+        stop_reason: null,
+        stop_sequence: null,
+        usage: writeUsage(UNREPORTED_USAGE),
+      },
+    });
+  }
+
+  write(event: InferenceStreamEvent): string {
+    switch (event.type) {
+      case "finish":
+        this.stopReason = event.stopReason;
+        return "";
+      case "usage":
+        this.usage = event.usage;
+        return "";
+      default:
+        return this.blocks.write(event);
+    }
+  }
+
+  end(): string {
+    const messageDelta = namedEvent("message_delta", {
+      type: "message_delta",
+      delta: { stop_reason: STOP_REASONS[this.stopReason], stop_sequence: null },
+      usage: writeUsage(this.usage),
+    });
+    const messageStop = namedEvent("message_stop", { type: "message_stop" });
+    return this.blocks.closeOpenBlock() + messageDelta + messageStop;
+  }
 }
 
 type ContentEvent = Exclude<InferenceStreamEvent, { type: "finish" | "usage" }>;
@@ -548,66 +573,73 @@ class ContentBlockWriter {
   private index = -1;
   private open: OpenBlock | null = null;
 
-  *write(event: ContentEvent): Iterable<string> {
+  write(event: ContentEvent): string {
     switch (event.type) {
-      case "text-delta":
-        if (this.open?.type !== "text") {
-          yield* this.start({ type: "text" }, { type: "text", text: "" });
-        }
-        yield this.delta({ type: "text_delta", text: event.text });
-        return;
+      case "text-delta": {
+        const opening =
+          this.open?.type === "text"
+            ? ""
+            : this.start({ type: "text" }, { type: "text", text: "" });
+        return opening + this.delta({ type: "text_delta", text: event.text });
+      }
       case "reasoning-delta":
-        yield* this.startThinkingUnlessOpen();
-        yield this.delta({ type: "thinking_delta", thinking: event.text });
-        return;
-      case "reasoning-signature":
-        yield* this.startThinkingUnlessOpen();
-        yield this.delta({ type: "signature_delta", signature: event.signature });
+        return (
+          this.startThinkingUnlessOpen() +
+          this.delta({ type: "thinking_delta", thinking: event.text })
+        );
+      case "reasoning-signature": {
+        const written =
+          this.startThinkingUnlessOpen() +
+          this.delta({ type: "signature_delta", signature: event.signature });
         this.open = { type: "thinking", isSigned: true };
-        return;
+        return written;
+      }
       case "tool-call-start":
-        yield* this.start(
+        return this.start(
           { type: "tool_use", toolIndex: event.index },
           { type: "tool_use", id: event.id, name: event.name, input: {} },
         );
-        return;
       case "tool-call-delta":
         if (this.open?.type !== "tool_use" || this.open.toolIndex !== event.index) {
           // A stopped block can't be reopened. Upstreams finish one call's
           // arguments before starting the next, so this means a broken stream.
           throw new GatewayError("upstream_error", "The upstream interleaved tool call arguments");
         }
-        yield this.delta({ type: "input_json_delta", partial_json: event.argumentsDelta });
-        return;
+        return this.delta({ type: "input_json_delta", partial_json: event.argumentsDelta });
     }
   }
 
-  *closeOpenBlock(): Iterable<string> {
-    if (this.open !== null) {
-      yield namedEvent("content_block_stop", { type: "content_block_stop", index: this.index });
-      this.open = null;
+  closeOpenBlock(): string {
+    if (this.open === null) {
+      return "";
     }
+    this.open = null;
+    return namedEvent("content_block_stop", { type: "content_block_stop", index: this.index });
   }
 
   /** A signature ends a thinking block, so reasoning after it starts a new one. */
-  private *startThinkingUnlessOpen(): Iterable<string> {
-    if (this.open?.type !== "thinking" || this.open.isSigned) {
-      yield* this.start(
-        { type: "thinking", isSigned: false },
-        { type: "thinking", thinking: "", signature: "" },
-      );
+  private startThinkingUnlessOpen(): string {
+    if (this.open?.type === "thinking" && !this.open.isSigned) {
+      return "";
     }
+    return this.start(
+      { type: "thinking", isSigned: false },
+      { type: "thinking", thinking: "", signature: "" },
+    );
   }
 
-  private *start(block: OpenBlock, contentBlock: Record<string, unknown>): Iterable<string> {
-    yield* this.closeOpenBlock();
+  private start(block: OpenBlock, contentBlock: Record<string, unknown>): string {
+    const closing = this.closeOpenBlock();
     this.index += 1;
     this.open = block;
-    yield namedEvent("content_block_start", {
-      type: "content_block_start",
-      index: this.index,
-      content_block: contentBlock,
-    });
+    return (
+      closing +
+      namedEvent("content_block_start", {
+        type: "content_block_start",
+        index: this.index,
+        content_block: contentBlock,
+      })
+    );
   }
 
   private delta(delta: Record<string, unknown>): string {
@@ -648,6 +680,7 @@ export const anthropicMessagesClientConverter: ClientProtocolConverter = {
   parseRequest,
   writeResponse,
   writeStream,
+  startStream,
   writeError,
   writeStreamError,
 };

@@ -18,7 +18,12 @@ import {
   UNREPORTED_USAGE,
   type UserContentPart,
 } from "../../models/internal-format.js";
-import type { ClientProtocolConverter, ResponseContext } from "../client-protocol-converter.js";
+import {
+  type ClientProtocolConverter,
+  type ClientStreamWriter,
+  type ResponseContext,
+  writeStreamWith,
+} from "../client-protocol-converter.js";
 import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
 
 // The Responses client Protocol (`POST /v1/responses`), stateless only (ADR 0002).
@@ -615,37 +620,59 @@ function writeUsage(usage: TokenUsage): Record<string, unknown> {
   };
 }
 
+function writeStream(
+  events: AsyncIterable<InferenceStreamEvent>,
+  request: InferenceRequest,
+  context: ResponseContext,
+): AsyncIterable<string> {
+  return writeStreamWith(startStream(request, context), events);
+}
+
+function startStream(request: InferenceRequest, context: ResponseContext): ClientStreamWriter {
+  return new OpenAiResponsesStreamWriter(request, context);
+}
+
 /**
  * Stream events are the Protocol's numbered events: the response is created,
  * each output item is added, filled with deltas and done before the next one
  * starts, and the whole response comes last. The stop reason and usage arrive
  * in any order, so both are held until the stream ends.
  */
-async function* writeStream(
-  events: AsyncIterable<InferenceStreamEvent>,
-  request: InferenceRequest,
-  context: ResponseContext,
-): AsyncIterable<string> {
-  const writer = new ResponseEventWriter(request, context);
-  yield writer.lifecycleEvent("response.created", null);
-  yield writer.lifecycleEvent("response.in_progress", null);
-  let stopReason: StopReason = "end";
-  let usage = UNREPORTED_USAGE;
-  for await (const event of events) {
-    if (event.type === "finish") {
-      stopReason = event.stopReason;
-    } else if (event.type === "usage") {
-      usage = event.usage;
-    } else {
-      yield* writer.write(event);
+class OpenAiResponsesStreamWriter implements ClientStreamWriter {
+  private readonly items: ResponseEventWriter;
+  private stopReason: StopReason = "end";
+  private usage = UNREPORTED_USAGE;
+
+  constructor(request: InferenceRequest, context: ResponseContext) {
+    this.items = new ResponseEventWriter(request, context);
+  }
+
+  start(): string {
+    const created = this.items.lifecycleEvent("response.created", null);
+    return created + this.items.lifecycleEvent("response.in_progress", null);
+  }
+
+  write(event: InferenceStreamEvent): string {
+    switch (event.type) {
+      case "finish":
+        this.stopReason = event.stopReason;
+        return "";
+      case "usage":
+        this.usage = event.usage;
+        return "";
+      default:
+        return this.items.write(event);
     }
   }
-  yield* writer.closeOpenItem();
-  const ending = { stopReason, usage };
-  yield writer.lifecycleEvent(
-    responseStatusOf(ending) === "completed" ? "response.completed" : "response.incomplete",
-    ending,
-  );
+
+  end(): string {
+    // The open item's done events take their sequence numbers before the final response's.
+    const closing = this.items.closeOpenItem();
+    const ending = { stopReason: this.stopReason, usage: this.usage };
+    const lifecycleType =
+      responseStatusOf(ending) === "completed" ? "response.completed" : "response.incomplete";
+    return closing + this.items.lifecycleEvent(lifecycleType, ending);
+  }
 }
 
 type ContentEvent = Exclude<InferenceStreamEvent, { type: "finish" | "usage" }>;
@@ -663,12 +690,20 @@ type OpenFunctionCall = OpenItemPosition & {
 };
 type OpenItem = OpenMessage | OpenReasoning | OpenFunctionCall;
 
+/** An item made open, with the events that closed the previous item and announced this one. */
+interface Opened<Item> {
+  written: string;
+  item: Item;
+}
+
 /** The only content part of a message or reasoning item the gateway writes. */
 const CONTENT_INDEX = 0;
 
 /**
  * Turns internal deltas into the Protocol's output items and numbers every
  * event. Finished items are kept for the response that ends the stream.
+ * Events are numbered as they are built, so each method builds them in the
+ * order the client receives them.
  */
 class ResponseEventWriter {
   private sequenceNumber = 0;
@@ -687,36 +722,39 @@ class ResponseEventWriter {
     });
   }
 
-  *write(event: ContentEvent): Generator<string> {
+  write(event: ContentEvent): string {
     switch (event.type) {
       case "text-delta": {
-        const message = this.open?.type === "message" ? this.open : yield* this.startMessage();
+        const { written, item: message } = this.openMessage();
         message.text += event.text;
-        yield this.event("response.output_text.delta", {
-          ...this.contentPosition(message),
-          delta: event.text,
-          logprobs: [],
-        });
-        return;
+        return (
+          written +
+          this.event("response.output_text.delta", {
+            ...this.contentPosition(message),
+            delta: event.text,
+            logprobs: [],
+          })
+        );
       }
       case "reasoning-delta": {
-        const reasoning = yield* this.unsignedReasoning();
+        const { written, item: reasoning } = this.unsignedReasoning();
         reasoning.text += event.text;
-        yield this.event("response.reasoning_text.delta", {
-          ...this.contentPosition(reasoning),
-          delta: event.text,
-        });
-        return;
+        return (
+          written +
+          this.event("response.reasoning_text.delta", {
+            ...this.contentPosition(reasoning),
+            delta: event.text,
+          })
+        );
       }
       case "reasoning-signature": {
         // The signature goes out with the item once it is done.
-        const reasoning = yield* this.unsignedReasoning();
+        const { written, item: reasoning } = this.unsignedReasoning();
         reasoning.signature = event.signature;
-        return;
+        return written;
       }
       case "tool-call-start":
-        yield* this.startFunctionCall(event.index, { id: event.id, name: event.name });
-        return;
+        return this.startFunctionCall(event.index, { id: event.id, name: event.name });
       case "tool-call-delta": {
         const call = this.open;
         if (call?.type !== "function_call" || call.toolIndex !== event.index) {
@@ -725,49 +763,50 @@ class ResponseEventWriter {
           throw new GatewayError("upstream_error", "The upstream interleaved tool call arguments");
         }
         call.call.arguments += event.argumentsDelta;
-        yield this.event("response.function_call_arguments.delta", {
+        return this.event("response.function_call_arguments.delta", {
           item_id: call.id,
           output_index: call.outputIndex,
           delta: event.argumentsDelta,
         });
-        return;
       }
     }
   }
 
-  *closeOpenItem(): Generator<string> {
+  closeOpenItem(): string {
     const item = this.open;
     if (item === null) {
-      return;
+      return "";
     }
     this.open = null;
+    let written: string;
     let done: Record<string, unknown>;
     switch (item.type) {
       case "message": {
         const part = outputTextPart(item.text);
-        yield this.event("response.output_text.done", {
-          ...this.contentPosition(item),
-          text: item.text,
-          logprobs: [],
-        });
-        yield this.event("response.content_part.done", { ...this.contentPosition(item), part });
+        written =
+          this.event("response.output_text.done", {
+            ...this.contentPosition(item),
+            text: item.text,
+            logprobs: [],
+          }) + this.event("response.content_part.done", { ...this.contentPosition(item), part });
         done = messageItem(item.id, "completed", item.text);
         break;
       }
       case "reasoning": {
-        yield this.event("response.reasoning_text.done", {
-          ...this.contentPosition(item),
-          text: item.text,
-        });
-        yield this.event("response.content_part.done", {
-          ...this.contentPosition(item),
-          part: reasoningTextPart(item.text),
-        });
+        written =
+          this.event("response.reasoning_text.done", {
+            ...this.contentPosition(item),
+            text: item.text,
+          }) +
+          this.event("response.content_part.done", {
+            ...this.contentPosition(item),
+            part: reasoningTextPart(item.text),
+          });
         done = reasoningItem(item.id, "completed", item);
         break;
       }
       case "function_call":
-        yield this.event("response.function_call_arguments.done", {
+        written = this.event("response.function_call_arguments.done", {
           item_id: item.id,
           output_index: item.outputIndex,
           arguments: item.call.arguments,
@@ -776,63 +815,75 @@ class ResponseEventWriter {
         break;
     }
     this.finishedItems.push(done);
-    yield this.event("response.output_item.done", { output_index: item.outputIndex, item: done });
+    return (
+      written +
+      this.event("response.output_item.done", { output_index: item.outputIndex, item: done })
+    );
   }
 
-  private *startMessage(): Generator<string, OpenMessage> {
-    const message: OpenMessage = {
-      ...(yield* this.nextPosition("message")),
-      type: "message",
-      text: "",
-    };
+  /** The open message, or a new one when another kind of item (or none) is open. */
+  private openMessage(): Opened<OpenMessage> {
+    if (this.open?.type === "message") {
+      return { written: "", item: this.open };
+    }
+    const closing = this.closeOpenItem();
+    const message: OpenMessage = { ...this.nextPosition("message"), type: "message", text: "" };
     this.open = message;
-    yield this.itemAdded(message, messageItem(message.id, "in_progress", null));
-    yield this.event("response.content_part.added", {
-      ...this.contentPosition(message),
-      part: outputTextPart(""),
-    });
-    return message;
+    const written =
+      closing +
+      this.itemAdded(message, messageItem(message.id, "in_progress", null)) +
+      this.event("response.content_part.added", {
+        ...this.contentPosition(message),
+        part: outputTextPart(""),
+      });
+    return { written, item: message };
   }
 
   /** A signature ends a reasoning item, so reasoning after it starts a new one. */
-  private *unsignedReasoning(): Generator<string, OpenReasoning> {
+  private unsignedReasoning(): Opened<OpenReasoning> {
     if (this.open?.type === "reasoning" && this.open.signature === undefined) {
-      return this.open;
+      return { written: "", item: this.open };
     }
+    const closing = this.closeOpenItem();
     const reasoning: OpenReasoning = {
-      ...(yield* this.nextPosition("reasoning")),
+      ...this.nextPosition("reasoning"),
       type: "reasoning",
       text: "",
     };
     this.open = reasoning;
-    yield this.itemAdded(reasoning, reasoningItem(reasoning.id, "in_progress", null));
-    yield this.event("response.content_part.added", {
-      ...this.contentPosition(reasoning),
-      part: reasoningTextPart(""),
-    });
-    return reasoning;
+    const written =
+      closing +
+      this.itemAdded(reasoning, reasoningItem(reasoning.id, "in_progress", null)) +
+      this.event("response.content_part.added", {
+        ...this.contentPosition(reasoning),
+        part: reasoningTextPart(""),
+      });
+    return { written, item: reasoning };
   }
 
-  private *startFunctionCall(
+  private startFunctionCall(
     toolIndex: number,
     call: Omit<ToolCallPart, "type" | "arguments">,
-  ): Generator<string> {
+  ): string {
+    const closing = this.closeOpenItem();
     const functionCall: OpenFunctionCall = {
-      ...(yield* this.nextPosition("function_call")),
+      ...this.nextPosition("function_call"),
       type: "function_call",
       toolIndex,
       call: { ...call, arguments: "" },
     };
     this.open = functionCall;
-    yield this.itemAdded(
-      functionCall,
-      functionCallItem(functionCall.id, "in_progress", functionCall.call),
+    return (
+      closing +
+      this.itemAdded(
+        functionCall,
+        functionCallItem(functionCall.id, "in_progress", functionCall.call),
+      )
     );
   }
 
-  /** Closes the open item; the next one takes the following output index. */
-  private *nextPosition(type: OutputItemType): Generator<string, OpenItemPosition> {
-    yield* this.closeOpenItem();
+  /** The position of an item opened after the last one closed: the following output index. */
+  private nextPosition(type: OutputItemType): OpenItemPosition {
     const outputIndex = this.finishedItems.length;
     return { id: outputItemId(this.context, type, outputIndex), outputIndex };
   }
@@ -879,6 +930,7 @@ export const openAiResponsesClientConverter: ClientProtocolConverter = {
   parseRequest,
   writeResponse,
   writeStream,
+  startStream,
   writeError,
   writeStreamError,
 };

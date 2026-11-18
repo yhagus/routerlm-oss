@@ -14,12 +14,15 @@ import type {
   ToolChoice,
   UserContentPart,
 } from "../../models/internal-format.js";
-import { readServerSentEvents } from "../server-sent-events.js";
+import { isJsonObject } from "../json-object.js";
+import type { ServerSentEvent } from "../server-sent-events.js";
 import {
   type UpstreamHttpRequest,
   UpstreamProtocolError,
   type UpstreamProtocolConverter,
+  type UpstreamStreamParser,
   type UpstreamTarget,
+  parseUpstreamStream,
 } from "../upstream-protocol-converter.js";
 
 // The Responses API as an upstream (`POST {baseUrl}/responses`), stateless:
@@ -397,23 +400,67 @@ const READ_EVENT_TYPES: ReadonlySet<string> = new Set<StreamEvent["type"]>([
   "error",
 ]);
 
-async function* parseStream(body: AsyncIterable<Uint8Array>): AsyncIterable<InferenceStreamEvent> {
-  const reader = new ResponseStreamReader();
-  for await (const { data } of readServerSentEvents(body)) {
+/** The Protocol has no end marker: its stream ends with the body. */
+class ResponsesStreamParser implements UpstreamStreamParser {
+  readonly isDone = false;
+  private readonly reader = new ResponseStreamReader();
+
+  parse({ data }: ServerSentEvent): InferenceStreamEvent[] {
     const json = parseJson(data);
+    const tokenEvents = eventsOfTokenDelta(json);
+    if (tokenEvents) {
+      return tokenEvents;
+    }
     const typed = typedEventSchema.safeParse(json);
     if (!typed.success) {
       throw new UpstreamProtocolError(`Not a response stream event: ${typed.error.message}`);
     }
     if (!READ_EVENT_TYPES.has(typed.data.type)) {
-      continue;
+      return [];
     }
     const event = streamEventSchema.safeParse(json);
     if (!event.success) {
       throw new UpstreamProtocolError(`Not a response stream event: ${event.error.message}`);
     }
-    yield* reader.read(event.data);
+    return [...this.reader.read(event.data)];
   }
+
+  end(): InferenceStreamEvent[] {
+    return [];
+  }
+}
+
+function startStream(): UpstreamStreamParser {
+  return new ResponsesStreamParser();
+}
+
+function parseStream(body: AsyncIterable<Uint8Array>): AsyncIterable<InferenceStreamEvent> {
+  return parseUpstreamStream(startStream, body);
+}
+
+/** The text and reasoning deltas, by event type: what ResponseStreamReader makes of each. */
+const TOKEN_DELTA_TYPES: ReadonlyMap<string, "text-delta" | "reasoning-delta"> = new Map([
+  ["response.output_text.delta", "text-delta"],
+  ["response.refusal.delta", "text-delta"],
+  ["response.reasoning_text.delta", "reasoning-delta"],
+  ["response.reasoning_summary_text.delta", "reasoning-delta"],
+]);
+
+/**
+ * The event of a text or reasoning delta (most of a stream), read without
+ * running two zod schemas on every token. Undefined for any other event, which
+ * takes the schema path: this accepts only what streamEventSchema accepts, and
+ * gives the event ResponseStreamReader would.
+ */
+function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
+  if (!isJsonObject(json) || typeof json.type !== "string" || typeof json.delta !== "string") {
+    return undefined;
+  }
+  const deltaType = TOKEN_DELTA_TYPES.get(json.type);
+  if (!deltaType) {
+    return undefined;
+  }
+  return [{ type: deltaType, text: json.delta }];
 }
 
 function parseJson(data: string): unknown {
@@ -538,4 +585,5 @@ export const openAiResponsesUpstreamConverter: UpstreamProtocolConverter = {
   writeRequest,
   parseResponse,
   parseStream,
+  startStream,
 };
