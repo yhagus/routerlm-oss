@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HttpClientModule } from "@nestjs/http-client";
 import type { Env } from "@/config/schemas/env.schema.js";
+import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
 import { CommandHandlers } from "./commands/handlers/index.js";
 import { ProviderAccountQuotaController } from "./provider-account-quota.controller.js";
 import { KimiCodeQuotaReader } from "./providers/kimi-code-quota-reader.js";
@@ -21,14 +22,15 @@ import { UpstreamModule } from "@/upstream/upstream.module.js";
   imports: [
     HttpClientModule.registerAsync({
       name: QUOTA_READER_HTTP_CLIENT,
-      inject: [ConfigService],
+      inject: [ConfigService, OutboundFetch],
       // No retries: the next scheduled reading is the retry. No base URL: each
       // reader takes its Provider's, or the `quotaBaseUrl` quirk. A redirect
       // fails rather than carry the key elsewhere.
-      useFactory: (config: ConfigService<Env, true>) => ({
+      useFactory: (config: ConfigService<Env, true>, outbound: OutboundFetch) => ({
         timeout: config.get("QUOTA_READER_TIMEOUT_MS", { infer: true }),
         retry: false,
         redirect: "error",
+        fetch: outbound.fetch,
       }),
     }),
     UpstreamModule,

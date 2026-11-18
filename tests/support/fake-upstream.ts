@@ -129,6 +129,11 @@ export class FakeUpstream {
     return `http://127.0.0.1:${portOf(this.server.address())}/v1`;
   }
 
+  /** As `baseUrl`, through the name `localhost` rather than the loopback address, so the host has to be resolved. */
+  get localhostBaseUrl(): string {
+    return `http://localhost:${portOf(this.server.address())}/v1`;
+  }
+
   get lastRequest(): ReceivedRequest {
     const last = this.requests.at(-1);
     if (!last) {

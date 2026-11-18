@@ -218,6 +218,20 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     expect(await listedAccount(providerAccountId)).toMatchObject({ isEnabled: true });
   });
 
+  it("records an error without connecting when the quota endpoint is private and the deployment does not allow it", async () => {
+    const providerAccountId = await createAccount("minimax-m-plan");
+    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    fakeUpstream.reply(remainsReply());
+
+    const failed = await readNow(providerAccountId).expect(200);
+    vi.unstubAllEnvs();
+
+    expect(failed.body.quotaError).toEqual(
+      expect.stringMatching(/loopback, private or link-local/),
+    );
+    expect(fakeUpstream.requests).toHaveLength(0);
+  });
+
   it("refuses to read an account whose Provider has no quota reader", async () => {
     const providerAccountId = await createAccount(null);
 
