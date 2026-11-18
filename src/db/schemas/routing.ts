@@ -20,7 +20,10 @@ export type ParameterValues = {
 };
 
 /** The parameters with an order, which a cap can bound. */
-export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier">;
+export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier"> & {
+  /** Bounds an Anthropic `thinking.budget_tokens`; `reasoningEffort` bounds effort only. */
+  reasoningBudgetTokens?: number;
+};
 
 /**
  * What an operator sets on a Model, or overrides on a Route. Every part is
