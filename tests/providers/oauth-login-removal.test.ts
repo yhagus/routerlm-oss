@@ -63,6 +63,7 @@ describe("Removing a Provider's OAuth Login (e2e)", () => {
     await addOauthLoginAccount(app, db, providerId, { lifetimeSeconds: HOUR_SECONDS });
     const disabledAccountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: HOUR_SECONDS,
+      deviceId: "device-id-of-the-disabled-login",
     });
     await db
       .update(providerAccounts)

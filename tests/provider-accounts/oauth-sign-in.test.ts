@@ -1,4 +1,5 @@
 import { getQueueToken } from "@nestjs/bullmq";
+import { CommandBus } from "@nestjs/cqrs";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
@@ -6,6 +7,7 @@ import { eq } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
+import { PollOauthSignInCommand } from "@/upstream/commands/impl/poll-oauth-sign-in.command.js";
 import { CONSTELLATIONS } from "@/upstream/models/constellation-name.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { FakeUpstream, type ReceivedRequest } from "../support/fake-upstream.js";
@@ -292,6 +294,32 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     expect(responseText).not.toContain(ACCESS_TOKEN);
     expect(responseText).not.toContain(REFRESH_TOKEN);
     expect(Object.keys(list.body[0]).filter((field) => /token|device/i.test(field))).toEqual([]);
+  });
+
+  it("creates one Provider Account when two polls of the same sign-in are granted at once", async () => {
+    // A long interval keeps the queue's own poll away; the test runs the two polls itself.
+    authHostAnswers(
+      { expiresIn: LONG_ENOUGH_SECONDS, interval: LONG_ENOUGH_SECONDS },
+      grantedTokensReply(GRANT_DELAY_MS),
+      grantedTokensReply(),
+    );
+    // The slower poll loses the race to create the account and records its outcome last.
+    const started = await startSignIn().expect(201);
+    const commandBus = app.get(CommandBus);
+
+    await Promise.all([
+      commandBus.execute(new PollOauthSignInCommand(started.body.id)),
+      commandBus.execute(new PollOauthSignInCommand(started.body.id)),
+    ]);
+
+    const accounts = await db.select().from(providerAccounts);
+    expect(accounts).toHaveLength(1);
+    const signIn = await readSignIn(started.body.id);
+    expect(signIn).toEqual({
+      id: started.body.id,
+      status: "completed",
+      providerAccount: expect.objectContaining({ id: accounts[0].id }),
+    });
   });
 
   it("stores the OAuth Login's tokens as ciphertext, with their expiry and a device id", async () => {

@@ -164,6 +164,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
       lifetimeSeconds: HOUR_SECONDS,
       ageSeconds: HOUR_SECONDS / 2 - 60,
       accessToken: "younger-access-token",
+      deviceId: "device-id-of-the-younger-login",
       priority: -1,
     });
     kimi.replyTo(GLOBAL_TOKEN_PATH, refreshedTokensReply({ ...RENEWED, expiresIn: HOUR_SECONDS }));

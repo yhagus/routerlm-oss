@@ -10,6 +10,7 @@ import {
   pgTable,
   text,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { SERVICE_TIERS, type ServiceTier } from "@/inference/models/internal-format.js";
@@ -210,6 +211,12 @@ export const providerAccounts = pgTable(
   },
   (table) => [
     index("provider_accounts_provider_id_priority_idx").on(table.providerId, table.priority),
+    // One account per sign-in: two polls of one device flow can't both create one.
+    // API key accounts have no device id, and null values never collide.
+    uniqueIndex("provider_accounts_provider_id_oauth_device_id_unique").on(
+      table.providerId,
+      table.oauthDeviceId,
+    ),
     // The credential kind and the filled columns never disagree: an API key
     // account holds a key and no tokens, an OAuth Login account the reverse.
     check(

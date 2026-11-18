@@ -118,6 +118,8 @@ export interface InsertedOauthLogin {
   accessToken?: string;
   refreshToken?: string;
   region?: OauthRegion;
+  /** `DEVICE_ID` when not given; a Provider's accounts each need their own. */
+  deviceId?: string;
   /** Before every other account of the Provider when not given. */
   priority?: number;
 }
@@ -149,7 +151,7 @@ export async function addOauthLoginAccount(
         grantedAt,
       ),
       oauthRegion: login.region ?? "global",
-      oauthDeviceId: DEVICE_ID,
+      oauthDeviceId: login.deviceId ?? DEVICE_ID,
       priority: login.priority ?? -1,
     })
     .returning({ id: providerAccounts.id });

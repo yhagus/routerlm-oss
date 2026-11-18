@@ -1,0 +1,65 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "104d8898-70cf-4de7-8e7c-1b3579e7e834",
+  "prevIds": [
+    "a4c19c86-6235-4f63-a9b2-9337cbdd0df7"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "provider_accounts",
+        "provider_accounts_provider_id_oauth_device_id_unique"
+      ],
+      "writes": [
+        "s|idx|public.provider_accounts_provider_id_oauth_device_id_unique",
+        "n|idx|public.provider_accounts_provider_id_oauth_device_id_unique",
+        "e|idx|public.provider_accounts_provider_id_oauth_device_id_unique",
+        "n|rel|public.provider_accounts_provider_id_oauth_device_id_unique"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public",
+        "n|col|public.provider_accounts.provider_id",
+        "n|col|public.provider_accounts.oauth_device_id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "provider_accounts_provider_id_oauth_device_id_unique",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "provider_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "oauth_device_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": true,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

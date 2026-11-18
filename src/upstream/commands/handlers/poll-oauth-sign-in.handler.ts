@@ -213,7 +213,16 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
         oauthRegion: signIn.region,
         oauthDeviceId: signIn.deviceId,
       })
+      .onConflictDoNothing()
       .returning({ id: providerAccounts.id });
+    if (created === undefined) {
+      // A concurrent poll of this sign-in created the account first.
+      const existing = await this.providerAccountCreatedBy(signIn);
+      if (existing === undefined) {
+        throw new Error("The Provider Account of this sign-in vanished after a conflict");
+      }
+      return existing;
+    }
     await this.snapshot.changed();
     return created.id;
   }
