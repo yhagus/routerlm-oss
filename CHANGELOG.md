@@ -1,15 +1,44 @@
-# Unreleased
+# v3.3.0 (2026-11-18)
+
+## Upgrade
+
+- Run `docker compose pull`, then `docker compose up -d`. The `migrate` service applies three new migrations. One merges duplicate Provider Accounts that a single OAuth sign-in created, moving their usage history onto the account it keeps.
+- **Behaviour change:** Provider URLs (`baseUrl`, `quotaBaseUrl` and the OAuth login hosts and issuer) must now be https and must not point at localhost, loopback, private or link-local addresses, in Catalog files and in the dashboard. Self-hosters with a LAN upstream, such as Ollama or vLLM, must set `ALLOW_PRIVATE_UPSTREAMS=true` in `.env`. A stored URL that no longer passes is not rewritten, and the gateway refuses to connect to it.
+- **Behaviour change:** an upstream 403 now starts a Cooldown instead of disabling the Provider Account. The third 403 in a row, with no successful request between, disables it. A 401 still disables it at once.
+- Behind a reverse proxy, set `TRUST_PROXY` (to `true`, or to the proxy's address or subnet). It is off by default, so a forged `X-Forwarded-For` is ignored. Without it, every client appears as the proxy's IP.
+- To use more than one CPU, set `BACKEND_PROCESSES` in `.env` to the VM's CPU count. It defaults to 1, as before. It works on Linux hosts only; elsewhere the backend logs a warning and runs one process.
+
+## Performance
+
+- The backend can run several gateway processes on one port (`BACKEND_PROCESSES`). Before, it used one CPU however large the VM was.
+- Streams pass through one relay loop instead of eight stages per token, and common stream chunks skip full schema validation.
+- Each request waits on Redis less: Cooldown state comes from a per-process copy at most one second old.
+- On the k6 benchmark (2 CPUs for the gateway, 1,800 virtual users, a 2.2 s upstream answer), throughput rose from 444 to 644 requests per second and the median latency fell from 3.31 s to 2.37 s. The gateway alone handled 4,825 requests per second, up from 2,081.
 
 ## Security
 
 - Every backend instance reloads its snapshot from the database every 30 seconds (`SNAPSHOT_RELOAD_INTERVAL_MS`), and retries a failed reload after a change. A revoked API Key or a disabled Provider now stops working on every instance within that interval, even when the change notice was lost or Redis was down.
 - `POST /api/auth/login` allows 10 attempts a minute per client IP and answers 429 beyond that. The count is shared across instances through Redis, and login stays open if Redis is down.
 - The gateway does not rate limit `/v1`. Do that in your reverse proxy.
+- Login caps the length of the email and password it accepts.
+- A failing database health check answers 503 without the database's error text.
+- Requests to models.dev no longer follow redirects.
 
-## Upgrade
+## Providers
 
-- **Behaviour change:** Provider URLs (`baseUrl`, `quotaBaseUrl` and the OAuth login hosts and issuer) must now be https and must not point at localhost, loopback, private or link-local addresses, in Catalog files and in the dashboard. Self-hosters with a LAN upstream, such as Ollama or vLLM, must set `ALLOW_PRIVATE_UPSTREAMS=true` in `.env`. A stored URL that no longer passes is not rewritten.
-- Behind a reverse proxy, set `TRUST_PROXY` (to `true`, or to the proxy's address or subnet). It is off by default, so a forged `X-Forwarded-For` is ignored. Without it, every client appears as the proxy's IP.
+- New Providers: Xiaomi MiMo Token Plan (MiMo-V2.6-Pro, MiMo-V2.6-Flash) and Meta AI (Muse Ember 1.0, Muse Wonder 1.0, Muse Spark 1.3, 1.2 and 1.1). Both carry a Terms Risk flag, so they serve requests only while the "Allow terms-risk providers" Setting is on.
+
+## Dashboard
+
+- The Parameter Policy has a thinking budget Cap, which bounds Anthropic `thinking.budget_tokens`. A Cap never fills in a value the client omitted, and the dashboard points out a Cap that has no default.
+- Usage Logs keep the names they showed when the request was made. Renaming or deleting a Model, Provider, Provider Account or API Key no longer changes or blanks old rows. A Playground row shows "deleted user" once its User is gone.
+
+## Other
+
+- One OAuth sign-in creates exactly one Provider Account, even when its result is polled twice.
+- On SIGTERM the backend now shuts down cleanly instead of stopping at once.
+- A stream the gateway cannot translate for the client, such as tool call arguments that arrive interleaved, ends with the client Protocol's error event.
+- A usage job that fails for good is removed from Redis.
 
 # v3.2.0 (2026-11-18)
 
