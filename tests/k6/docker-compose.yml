@@ -11,6 +11,8 @@ x-app-env: &app-env
   REDIS_URL: redis://redis:6379
   # A fixed, throwaway key: it only encrypts the fake Provider Account key.
   ENCRYPTION_KEY: dGVzdC1vbmx5LWVuY3J5cHRpb24ta2V5LTMyLWJ5dGU=
+  # The fake upstream is plain http on the Compose network (ADR 0019).
+  ALLOW_PRIVATE_UPSTREAMS: "true"
 
 # One image for backend, worker and migrate. Only `backend` builds it (run.sh
 # builds it first), so the three never build the same tag at once.
