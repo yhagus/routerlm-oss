@@ -47,6 +47,7 @@ const FULL_USAGE = {
   completion_tokens_details: { reasoning_tokens: 100 },
 };
 const POLL_INTERVAL_MS = 50;
+const OPS_EMAIL = "ops@example.com";
 
 describe("Usage Logs and Attempts (e2e)", () => {
   let app: NestNodeApplication;
@@ -431,7 +432,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
     let cookie: string;
 
     beforeEach(async () => {
-      cookie = await setUpFirstUser(app, { email: "ops@example.com", password: "ops password" });
+      cookie = await setUpFirstUser(app, { email: OPS_EMAIL, password: "ops password" });
     });
 
     function dashboard() {
@@ -615,6 +616,8 @@ describe("Usage Logs and Attempts (e2e)", () => {
         apiKeyName: null,
         modelName: "smart",
       });
+      expect(JSON.stringify(usageLog)).not.toContain(OPS_EMAIL);
+      expect(Object.keys(usageLog).filter((key) => /email|userName/i.test(key))).toEqual([]);
     });
 
     it("deletes its Attempts and Error Captures with it", async () => {
