@@ -165,16 +165,21 @@ describe("Parameter Policy (e2e)", () => {
     let key: string;
     let chatModel: { modelId: string; routeId: string; providerId: string };
     let messagesModelId: string;
+    let messagesRouteId: string;
 
     beforeEach(async () => {
       chatModel = await insertOpenAiChatModel(app, db, {
         modelName: CHAT_MODEL,
         baseUrl: upstream.baseUrl,
       });
-      ({ modelId: messagesModelId } = await insertAnthropicMessagesModel(app, db, {
-        modelName: MESSAGES_MODEL,
-        baseUrl: new URL(upstream.baseUrl).origin,
-      }));
+      ({ modelId: messagesModelId, routeId: messagesRouteId } = await insertAnthropicMessagesModel(
+        app,
+        db,
+        {
+          modelName: MESSAGES_MODEL,
+          baseUrl: new URL(upstream.baseUrl).origin,
+        },
+      ));
       ({ key } = await insertApiKey(app, db));
     });
 
@@ -299,6 +304,52 @@ describe("Parameter Policy (e2e)", () => {
         thinking: { type: "adaptive" },
         output_config: { effort: "medium" },
       });
+    });
+
+    it.each([
+      ["clamps a thinking budget above the budget cap", 8000, 2048],
+      ["keeps a thinking budget below the budget cap", 1500, 1500],
+    ])("%s", async (_behaviour, clientBudget, sentBudget) => {
+      await saveModelPolicy(messagesModelId, { caps: { reasoningBudgetTokens: 2048 } });
+
+      await createMessage({ thinking: { type: "enabled", budget_tokens: clientBudget } });
+
+      expect(upstream.lastRequest.body).toMatchObject({
+        thinking: { type: "enabled", budget_tokens: sentBudget },
+      });
+    });
+
+    it("takes the thinking budget cap from the Route override over the Model's", async () => {
+      await saveModelPolicy(messagesModelId, { caps: { reasoningBudgetTokens: 2048 } });
+      await request(app.getHttpServer())
+        .patch(`/api/models/${messagesModelId}/routes/${messagesRouteId}`)
+        .set("Cookie", cookie)
+        .send({ parameterPolicyOverride: { caps: { reasoningBudgetTokens: 4096 } } })
+        .expect(200);
+
+      await createMessage({ thinking: { type: "enabled", budget_tokens: 8000 } });
+
+      expect(upstream.lastRequest.body).toMatchObject({
+        thinking: { type: "enabled", budget_tokens: 4096 },
+      });
+    });
+
+    it("lets an effort cap alone leave a thinking budget unchanged", async () => {
+      await saveModelPolicy(messagesModelId, { caps: { reasoningEffort: "low" } });
+
+      await createMessage({ thinking: { type: "enabled", budget_tokens: 8000 } });
+
+      expect(upstream.lastRequest.body).toMatchObject({
+        thinking: { type: "enabled", budget_tokens: 8000 },
+      });
+    });
+
+    it("does not invent a thinking budget the client omitted", async () => {
+      await saveModelPolicy(messagesModelId, { caps: { reasoningBudgetTokens: 2048 } });
+
+      await createMessage({});
+
+      expect(upstream.lastRequest.body).not.toHaveProperty("thinking");
     });
 
     it("places the system prompt verbatim before the client's system content", async () => {

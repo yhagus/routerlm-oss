@@ -16,7 +16,7 @@ export const POLICY_PARAMETERS = [
 ] as const satisfies readonly (keyof ParameterValues)[];
 
 type PolicyParameter = (typeof POLICY_PARAMETERS)[number];
-type CappedParameter = keyof ParameterCaps;
+type CappedParameter = Exclude<keyof ParameterCaps, "reasoningBudgetTokens">;
 type NumericParameter = "temperature" | "topP" | "maxOutputTokens";
 
 /**
@@ -67,6 +67,11 @@ export function effectiveParameterPolicy(
     const source = setsParameter(routeOverride, parameter) ? routeOverride : modelPolicy;
     copyRules(source, effective, parameter);
   }
+  const reasoningBudgetCap =
+    routeOverride.caps?.reasoningBudgetTokens ?? modelPolicy.caps?.reasoningBudgetTokens;
+  if (reasoningBudgetCap !== undefined) {
+    effective.caps = { ...effective.caps, reasoningBudgetTokens: reasoningBudgetCap };
+  }
   const systemPrompt = routeOverride.systemPrompt ?? modelPolicy.systemPrompt;
   if (systemPrompt !== undefined) {
     effective.systemPrompt = systemPrompt;
@@ -90,7 +95,8 @@ function numberUnderPolicy(
 /**
  * A forced effort replaces the client's whole reasoning setting (a thinking
  * budget included); a default applies only when the client asked for no
- * reasoning at all; a cap bounds an effort by the order of REASONING_EFFORTS.
+ * reasoning at all; a cap bounds an effort by the order of REASONING_EFFORTS,
+ * and the budget cap bounds a thinking budget the client supplied.
  */
 function reasoningUnderPolicy(
   clientReasoning: InferenceRequest["reasoning"],
@@ -102,10 +108,18 @@ function reasoningUnderPolicy(
   const reasoning =
     clientReasoning ??
     (defaults?.reasoningEffort ? { effort: defaults.reasoningEffort } : undefined);
-  if (!reasoning?.effort) {
+  if (!reasoning) {
     return reasoning;
   }
-  return { ...reasoning, effort: lowerEffort(reasoning.effort, caps?.reasoningEffort) };
+  const policed = { ...reasoning };
+  if (policed.effort) {
+    policed.effort = lowerEffort(policed.effort, caps?.reasoningEffort);
+  }
+  const budgetCap = caps?.reasoningBudgetTokens;
+  if (policed.budgetTokens !== undefined && budgetCap !== undefined) {
+    policed.budgetTokens = Math.min(policed.budgetTokens, budgetCap);
+  }
+  return policed;
 }
 
 function lowerEffort(effort: ReasoningEffort, cap: ReasoningEffort | undefined): ReasoningEffort {

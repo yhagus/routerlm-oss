@@ -214,6 +214,18 @@ describe("Models (e2e)", () => {
     expect(refused.body.message).toBe('A Model named "smart" already exists');
   });
 
+  it("accepts and returns a thinking budget cap", async () => {
+    const modelId = await createModel("smart");
+
+    const saved = await request(app.getHttpServer())
+      .patch(`/api/models/${modelId}`)
+      .set("Cookie", cookie)
+      .send({ parameterPolicy: { caps: { reasoningBudgetTokens: 2048 } } })
+      .expect(200);
+
+    expect(saved.body.parameterPolicy).toEqual({ caps: { reasoningBudgetTokens: 2048 } });
+  });
+
   it("refuses a Parameter Policy whose default is above its cap, saying which", async () => {
     const modelId = await createModel("smart");
 
