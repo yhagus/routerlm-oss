@@ -436,9 +436,10 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     clientSignal: AbortSignal,
     record: (job: UsageJob) => void,
   ): AsyncIterable<Uint8Array> {
-    let text = writer.start();
+    let text = "";
     try {
       try {
+        text = writer.start();
         for (let batch = await upstream.nextBatch(); batch; batch = await upstream.nextBatch()) {
           for (const event of batch) {
             if (event.type === "usage") {
@@ -455,6 +456,14 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         text += writer.end();
       } catch (error) {
         if (error instanceof ClientCancelledError) {
+          return;
+        }
+        if (error instanceof GatewayError) {
+          // The writer refused what the upstream sent (interleaved tool call
+          // arguments): the stream is broken, but the client still gets the
+          // Protocol's error event instead of a torn connection.
+          text += converter.writeStreamError(error);
+          yield encodedFor(meter, text);
           return;
         }
         if (!(error instanceof AttemptFailedError)) {

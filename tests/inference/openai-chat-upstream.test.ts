@@ -245,4 +245,47 @@ describe("An openai-chat upstream (e2e)", () => {
     expect(response.text.trim().split("\n\n").at(-1)).toContain('"code":"upstream_error"');
     expect(response.text).not.toContain("[DONE]");
   });
+
+  it("ends a Messages stream with an error event when the upstream interleaves tool call arguments", async () => {
+    // A Messages content block can't be reopened once the next one starts, so
+    // arguments for call 0 after call 1 began can't be written to the client.
+    const chunk = (toolCall: object): string =>
+      `data: ${JSON.stringify({
+        id: "chatcmpl-upstream-1",
+        object: "chat.completion.chunk",
+        created: 1794700000,
+        model: UPSTREAM_MODEL_ID,
+        choices: [{ index: 0, delta: { tool_calls: [toolCall] }, finish_reason: null }],
+      })}\n\n`;
+    upstream.reply({
+      kind: "stream",
+      events:
+        chunk({
+          index: 0,
+          id: "call_a",
+          type: "function",
+          function: { name: "a", arguments: "" },
+        }) +
+        chunk({
+          index: 1,
+          id: "call_b",
+          type: "function",
+          function: { name: "b", arguments: "" },
+        }) +
+        chunk({ index: 0, function: { arguments: "{}" } }) +
+        "data: [DONE]\n\n",
+    });
+
+    const response = await createMessage({
+      model: "smart",
+      max_tokens: 256,
+      messages: [{ role: "user", content: "Call both tools." }],
+      stream: true,
+    }).expect(200);
+
+    const lastEvent = response.text.trim().split("\n\n").at(-1);
+    expect(lastEvent).toContain("event: error");
+    expect(lastEvent).toContain("upstream_error");
+    expect(response.text).not.toContain("message_stop");
+  });
 });
