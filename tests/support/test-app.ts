@@ -1,12 +1,12 @@
 import { PasswordHasher } from "@nestjs/authentication";
 import { getDrizzleToken } from "@nestjs/drizzle";
-import { NestNodeApplication, NodeAdapter } from "@nestjs/platform-node";
+import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test } from "@nestjs/testing";
 import { sql } from "drizzle-orm";
 import type { Response } from "supertest";
 import request from "supertest";
 import { AppModule } from "@/app.module.js";
-import { configureApp } from "@/configure-app.js";
+import { configureApp, createNodeAdapter } from "@/configure-app.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { truncateTables } from "./truncate.js";
 
@@ -28,7 +28,7 @@ export async function createTestApp(database?: Database): Promise<TestApp> {
     .useValue(CHEAP_PASSWORD_HASHER);
   if (database) moduleBuilder.overrideProvider(getDrizzleToken()).useValue(database);
   const moduleFixture = await moduleBuilder.compile();
-  const app = moduleFixture.createNestApplication<NestNodeApplication>(new NodeAdapter());
+  const app = moduleFixture.createNestApplication<NestNodeApplication>(createNodeAdapter());
   configureApp(app);
   await app.init();
   return { app, db: app.get<Database>(getDrizzleToken()) };

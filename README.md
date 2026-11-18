@@ -65,6 +65,8 @@ The web app serves the full client docs at http://localhost:3001/docs.
 
 The stack publishes the gateway on port 3000 and the dashboard on 3001, over plain HTTP. Put your own reverse proxy with TLS in front of them, and set `WEB_ORIGIN` to the dashboard's public URL.
 
+Behind a reverse proxy, also set `TRUST_PROXY` (to `true`, or to the proxy's address or subnet). Dashboard login allows 10 attempts a minute per client IP, and without `TRUST_PROXY` every client appears as the proxy's IP. The gateway does not rate limit `/v1`; do that in the reverse proxy.
+
 ## Architecture
 
 ```
@@ -100,15 +102,16 @@ End-to-end scenario: the fake upstream waits 200 ms, then streams 200 tokens at 
 
 Set these in the `.env` next to `compose.yaml` (see [deploy/.env.example](deploy/.env.example)). Settings a User changes in the dashboard, such as the Error Capture Retention Period, live in the database instead.
 
-| Variable                        | Default                   | Purpose                                                      |
-| ------------------------------- | ------------------------- | ------------------------------------------------------------ |
-| `ENCRYPTION_KEY`                | required                  | Encrypts Provider Account keys. 32 bytes, base64.            |
-| `POSTGRES_PASSWORD`             | required                  | Postgres uses it only when it first creates the db volume.   |
-| `ROUTERLM_VERSION`              | the release's version     | The image version to run.                                    |
-| `WEB_ORIGIN`                    | `http://localhost:3001`   | The dashboard's public URL.                                  |
-| `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.              |
-| `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports.                                                  |
-| `POSTGRES_USER` / `POSTGRES_DB` | `routerlm`                | Postgres uses them only when it first creates the db volume. |
+| Variable                        | Default                   | Purpose                                                         |
+| ------------------------------- | ------------------------- | --------------------------------------------------------------- |
+| `ENCRYPTION_KEY`                | required                  | Encrypts Provider Account keys. 32 bytes, base64.               |
+| `POSTGRES_PASSWORD`             | required                  | Postgres uses it only when it first creates the db volume.      |
+| `ROUTERLM_VERSION`              | the release's version     | The image version to run.                                       |
+| `WEB_ORIGIN`                    | `http://localhost:3001`   | The dashboard's public URL.                                     |
+| `TRUST_PROXY`                   | unset                     | Proxies whose `X-Forwarded-For` is trusted. Set behind a proxy. |
+| `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.                 |
+| `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports.                                                     |
+| `POSTGRES_USER` / `POSTGRES_DB` | `routerlm`                | Postgres uses them only when it first creates the db volume.    |
 
 ## Development
 

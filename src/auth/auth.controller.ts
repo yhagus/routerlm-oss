@@ -1,6 +1,15 @@
 import { CurrentUser, Public, SignInService } from "@nestjs/authentication";
-import { Body, Get, HttpCode, HttpStatus, Post, UnauthorizedException } from "@nestjs/common";
+import {
+  Body,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UnauthorizedException,
+  UseGuards,
+} from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { ThrottlerGuard } from "@nestjs/throttler";
 import { z } from "zod";
 import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command.js";
 import type { User } from "@/users/models/user.js";
@@ -39,6 +48,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(ThrottlerGuard)
   @Post("login")
   @HttpCode(HttpStatus.OK)
   async login(@Body({ schema: loginSchema }) login: Login): Promise<User> {

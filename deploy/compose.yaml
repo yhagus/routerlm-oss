@@ -32,6 +32,7 @@ x-app-env: &app-env
   DATABASE_URL: postgres://${POSTGRES_USER:-routerlm}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-routerlm}
   REDIS_URL: redis://redis:6379
   WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3001}
+  TRUST_PROXY: ${TRUST_PROXY:-}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env to the output of `openssl rand -base64 32`}
 
 # The release workflow replaces "latest" with the release's version in the

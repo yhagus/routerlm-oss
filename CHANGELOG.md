@@ -1,3 +1,14 @@
+# Unreleased
+
+## Upgrade
+
+- Behind a reverse proxy, set `TRUST_PROXY` (to `true`, or to the proxy's address or subnet). It is off by default, so a forged `X-Forwarded-For` is ignored. Without it, every client appears as the proxy's IP.
+
+## Security
+
+- `POST /api/auth/login` allows 10 attempts a minute per client IP and answers 429 beyond that. The count is shared across instances through Redis, and login stays open if Redis is down.
+- The gateway does not rate limit `/v1`. Do that in your reverse proxy.
+
 # v3.2.0 (2026-11-18)
 
 ## Upgrade
