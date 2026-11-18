@@ -246,6 +246,20 @@ describe("Chat Completions (e2e)", () => {
     );
   });
 
+  it("sends a non-streamed answer as JSON with its length, as Nest sends a JSON body", async () => {
+    upstream.reply({
+      kind: "json",
+      status: 200,
+      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+    });
+
+    const response = await chat(EVERY_FEATURE_REQUEST).expect(200);
+
+    expect(response.headers["content-type"]).toBe("application/json; charset=utf-8");
+    expect(response.headers["content-length"]).toBe(String(Buffer.byteLength(response.text)));
+    expect(response.text).toBe(JSON.stringify(response.body));
+  });
+
   it("streams the recorded chunks, with the usage the client asked for, ending with [DONE]", async () => {
     upstream.reply({ kind: "stream", events: ONE_REASONING_DELTA_STREAM });
 

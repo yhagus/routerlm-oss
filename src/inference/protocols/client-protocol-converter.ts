@@ -1,5 +1,5 @@
 import type { ClientProtocol } from "@/db/schemas/index.js";
-import { GatewayError } from "../models/gateway-error.js";
+import type { GatewayError } from "../models/gateway-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
@@ -36,19 +36,6 @@ export interface ClientProtocolConverter {
     context: ResponseContext,
   ): unknown;
 
-  /**
-   * The bytes of a streaming response, as server-sent-event text. Errors from
-   * `events` propagate: `writeClientStream` turns a GatewayError into the
-   * Protocol's error event with `writeStreamError`.
-   * @deprecated Kept until the relay loop drives `startStream` itself; implement it
-   * as `(events, request, context) => writeStreamWith(startStream(request, context), events)`.
-   */
-  writeStream(
-    events: AsyncIterable<InferenceStreamEvent>,
-    request: InferenceRequest,
-    context: ResponseContext,
-  ): AsyncIterable<string>;
-
   /** A writer for one streaming response, fed one internal event at a time. */
   startStream(request: InferenceRequest, context: ResponseContext): ClientStreamWriter;
 
@@ -77,45 +64,4 @@ export interface ClientStreamWriter {
   write(event: InferenceStreamEvent): string;
   /** What closes a stream that ended normally (held usage, the end marker). */
   end(): string;
-}
-
-/** `writer`'s output for `events`, as the deprecated `writeStream` returns it. */
-export async function* writeStreamWith(
-  writer: ClientStreamWriter,
-  events: AsyncIterable<InferenceStreamEvent>,
-): AsyncIterable<string> {
-  const opening = writer.start();
-  if (opening !== "") {
-    yield opening;
-  }
-  for await (const event of events) {
-    const written = writer.write(event);
-    if (written !== "") {
-      yield written;
-    }
-  }
-  const closing = writer.end();
-  if (closing !== "") {
-    yield closing;
-  }
-}
-
-/**
- * A streaming response in the client Protocol: `converter.writeStream`, ended
- * by the Protocol's error event when `events` throws a GatewayError midway.
- */
-export async function* writeClientStream(
-  converter: ClientProtocolConverter,
-  events: AsyncIterable<InferenceStreamEvent>,
-  request: InferenceRequest,
-  context: ResponseContext,
-): AsyncIterable<string> {
-  try {
-    yield* converter.writeStream(events, request, context);
-  } catch (error) {
-    if (!(error instanceof GatewayError)) {
-      throw error;
-    }
-    yield converter.writeStreamError(error);
-  }
 }

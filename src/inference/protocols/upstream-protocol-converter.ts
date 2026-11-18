@@ -1,4 +1,5 @@
-import type { ProviderQuirks, UpstreamProtocol } from "@/db/schemas/index.js";
+import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
+import type { UpstreamProtocol } from "@/db/schemas/index.js";
 import type {
   InferenceRequest,
   InferenceResponse,
@@ -24,7 +25,8 @@ export interface UpstreamTarget {
   baseUrl: string;
   /** The model name as the Provider spells it. */
   upstreamModelId: string;
-  quirks: ProviderQuirks;
+  /** Validated when the snapshot loaded. */
+  quirks: StoredProviderQuirks;
   /** The Upstream Model's output limit, for Protocols that require one on every request. */
   maxOutputTokens?: number;
   /** Sent only where the Provider's quirks accept a prompt cache key. */
@@ -65,13 +67,6 @@ export interface UpstreamProtocolConverter {
 
   /** Parses a successful (2xx) non-streaming JSON body. Throws if it isn't the Protocol's shape. */
   parseResponse(body: unknown): InferenceResponse;
-
-  /**
-   * Parses a successful (2xx) streaming body. Throws if it isn't the Protocol's shape.
-   * @deprecated Kept until the relay loop drives `startStream` itself; implement it
-   * as `(body) => parseUpstreamStream(startStream, body)`.
-   */
-  parseStream(body: AsyncIterable<Uint8Array>): AsyncIterable<InferenceStreamEvent>;
 
   /** A parser for one successful (2xx) streaming body, fed one server-sent event at a time. */
   startStream(): UpstreamStreamParser;

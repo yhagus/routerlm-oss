@@ -8,20 +8,20 @@ const EVENT_STREAM_HEADERS = {
 };
 
 /**
- * A web Response streaming `chunks` as server-sent events, returned from a
- * plain `@Post` handler (ADR 0005). Nest cancels its body as soon as the
- * client disconnects, which stops reading `chunks` (and so the upstream call).
+ * A web Response streaming `chunks`, server-sent-event text already encoded,
+ * returned from a plain `@Post` handler (ADR 0005). Each chunk goes to the
+ * client as one write. Nest cancels its body as soon as the client
+ * disconnects, which stops reading `chunks` (and so the upstream call).
  */
-export function eventStreamResponse(chunks: AsyncIterable<string>): Response {
+export function eventStreamResponse(chunks: AsyncIterable<Uint8Array>): Response {
   const iterator = chunks[Symbol.asyncIterator]();
-  const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
     async pull(controller) {
       const next = await iterator.next();
       if (next.done) {
         controller.close();
       } else {
-        controller.enqueue(encoder.encode(next.value));
+        controller.enqueue(next.value);
       }
     },
     async cancel() {

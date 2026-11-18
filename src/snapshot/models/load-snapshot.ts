@@ -1,4 +1,5 @@
 import { asc, isNull } from "drizzle-orm";
+import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { SettingsStore } from "@/settings/providers/settings-store.js";
 import {
@@ -70,7 +71,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         protocol: provider.protocol,
         baseUrl: provider.baseUrl,
         authStyle: provider.authStyle,
-        quirks: provider.quirks,
+        quirks: storedProviderQuirksSchema.safeParse(provider.quirks),
         serviceTierValues: provider.serviceTierValues,
         isUsable: providerIsUsable(provider, allowsTermsRiskProviders.value),
         providerAccounts: (accountsByProviderId.get(provider.id) ?? []).flatMap(

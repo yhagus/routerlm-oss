@@ -3,12 +3,12 @@ import type { IncomingHttpHeaders } from "node:http";
 import { HttpStatus, Logger } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
-import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
-import type {
-  SnapshotModel,
-  SnapshotProviderAccount,
-  SnapshotUpstreamModel,
+import {
+  type SnapshotModel,
+  type SnapshotProviderAccount,
+  type SnapshotUpstreamModel,
+  validQuirksOf,
 } from "@/snapshot/models/snapshot.js";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
@@ -38,13 +38,13 @@ import {
 } from "../../models/automatic-cache-breakpoints.js";
 import { GatewayError } from "../../models/gateway-error.js";
 import { exhaustedUntilOf } from "../../models/quota-exhausted-error.js";
-import type { InferenceRequest, InferenceStreamEvent } from "../../models/internal-format.js";
+import type { InferenceRequest } from "../../models/internal-format.js";
 import { applyParameterPolicy, effectiveParameterPolicy } from "../../models/parameter-policy.js";
 import { type PromptCacheKeyOwner, promptCacheKey } from "../../models/prompt-cache-key.js";
-import {
-  type ClientProtocolConverter,
-  type ResponseContext,
-  writeClientStream,
+import type {
+  ClientProtocolConverter,
+  ClientStreamWriter,
+  ResponseContext,
 } from "../../protocols/client-protocol-converter.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "../../protocols/converters.js";
 import {
@@ -59,6 +59,7 @@ import {
   DEFAULT_TIMEOUTS,
   type UpstreamCall,
   UpstreamClient,
+  type UpstreamStream,
 } from "../../providers/upstream-client.js";
 import { serviceTierSentTo } from "../../models/service-tier.js";
 import { forwardedClientHeadersOf } from "../../providers/forwarded-client-headers.js";
@@ -86,6 +87,11 @@ interface AttemptOptions {
   meter: UsageMeter;
 }
 
+/** What a successful Attempt hands back, before it is written for the client. */
+type AttemptResult =
+  | { kind: "response"; body: unknown }
+  | { kind: "stream"; upstream: UpstreamStream; writer: ClientStreamWriter; target: AttemptTarget };
+
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
@@ -96,6 +102,8 @@ const HTTP_OK = 200;
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 /** Recorded when the client left before any response; nginx's "client closed request". */
 const CLIENT_CLOSED_REQUEST = 499;
+
+const encoder = new TextEncoder();
 
 /**
  * The inference path (spec "Inference path" steps 2 to 8) for any client
@@ -142,12 +150,12 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       if (result.kind === "stream") {
         return {
           kind: "stream",
-          chunks: meteredStream(result.chunks, meter, connection.signal, record),
+          chunks: this.relayStream(result, converter, meter, connection.signal, record),
         };
       }
-      meter.responseWritten(JSON.stringify(result.body));
+      const json = encodedFor(meter, JSON.stringify(result.body));
       record(meter.finish(HTTP_OK, false));
-      return result;
+      return { kind: "response", json };
     } catch (error) {
       record(failedRequestUsage(meter, converter, error));
       throw error;
@@ -161,7 +169,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     inferenceTarget: InferenceTarget,
     connection: ClientConnection,
     meter: UsageMeter,
-  ): Promise<InferenceResult> {
+  ): Promise<AttemptResult> {
     const clientRequest = converter.parseRequest(body);
     meter.requestParsed(clientRequest.stream !== null);
     const destination =
@@ -300,7 +308,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     context: ResponseContext,
     target: AttemptTarget,
     options: AttemptOptions,
-  ): Promise<InferenceResult> {
+  ): Promise<AttemptResult> {
     const { meter } = options;
     const account = target.providerAccount;
     const sentServiceTier = serviceTierSentTo(request.serviceTier, target.upstreamModel);
@@ -351,7 +359,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     target: AttemptTarget,
     credential: ProviderAccountCredential,
     { cacheKey, clientSignal, clientHeaders, meter }: AttemptOptions,
-  ): Promise<InferenceResult> {
+  ): Promise<AttemptResult> {
     const call = this.upstreamCallFor(request, target, credential, {
       cacheKey,
       clientSignal,
@@ -365,18 +373,10 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       meter.attemptSucceeded();
       return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
-    const events = await this.upstream.openStream(call);
+    const upstream = await this.upstream.openStream(call);
     meter.attemptAnswered();
     void this.cooldowns.resetRefusals(target.providerAccount.id);
-    return {
-      kind: "stream",
-      chunks: writeClientStream(
-        converter,
-        this.reportingFailures(events, target, meter),
-        request,
-        context,
-      ),
-    };
+    return { kind: "stream", upstream, writer: converter.startStream(request, context), target };
   }
 
   private upstreamCallFor(
@@ -390,6 +390,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     }: Pick<AttemptOptions, "cacheKey" | "clientSignal" | "clientHeaders">,
   ): UpstreamCall {
     const { provider } = upstreamModel;
+    const quirks = validQuirksOf(provider);
     const sentServiceTier = serviceTierSentTo(request.serviceTier, upstreamModel);
     const converter = UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol];
     if (!converter) {
@@ -402,7 +403,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       target: {
         baseUrl: provider.baseUrl,
         upstreamModelId: upstreamModel.upstreamModelId,
-        quirks: provider.quirks,
+        quirks,
         maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
         promptCacheKey: cacheKey,
         ...(sentServiceTier && { serviceTierValue: sentServiceTier.wireValue }),
@@ -411,10 +412,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         ...credential.identityHeaders,
         ...upstreamAuthHeaders(provider.authStyle, credential.secret),
       },
-      forwardedHeaders: forwardedClientHeadersOf(
-        storedProviderQuirksSchema.parse(provider.quirks),
-        clientHeaders,
-      ),
+      forwardedHeaders: forwardedClientHeadersOf(quirks, clientHeaders),
       timeouts: {
         connectMs: route?.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
         firstTokenMs: route?.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,
@@ -425,35 +423,55 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   }
 
   /**
-   * A failure after the first chunk reached the client gets no Fallback
-   * (spec "Fallback"): it becomes a GatewayError, which `writeClientStream`
-   * writes as the client Protocol's error event.
+   * Relays an open upstream stream to the client: the events of one network
+   * read go out as one chunk. A failure after the first chunk reached the
+   * client gets no Fallback (spec "Fallback"): the client Protocol's error
+   * event ends the stream instead. Records the usage job however it ends;
+   * the status went out with the first chunk.
    */
-  private async *reportingFailures(
-    events: AsyncIterable<InferenceStreamEvent>,
-    target: AttemptTarget,
+  private async *relayStream(
+    { upstream, writer, target }: Extract<AttemptResult, { kind: "stream" }>,
+    converter: ClientProtocolConverter,
     meter: UsageMeter,
-  ): AsyncIterable<InferenceStreamEvent> {
+    clientSignal: AbortSignal,
+    record: (job: UsageJob) => void,
+  ): AsyncIterable<Uint8Array> {
+    let text = writer.start();
     try {
-      for await (const event of events) {
-        if (event.type === "usage") {
-          meter.usageReported(event.usage, event.servedTierValue);
+      try {
+        for (let batch = await upstream.nextBatch(); batch; batch = await upstream.nextBatch()) {
+          for (const event of batch) {
+            if (event.type === "usage") {
+              meter.usageReported(event.usage, event.servedTierValue);
+            }
+            text += writer.write(event);
+          }
+          if (text !== "") {
+            yield encodedFor(meter, text);
+            text = "";
+          }
         }
-        yield event;
+        meter.attemptSucceeded();
+        text += writer.end();
+      } catch (error) {
+        if (error instanceof ClientCancelledError) {
+          return;
+        }
+        if (!(error instanceof AttemptFailedError)) {
+          throw error;
+        }
+        meter.attemptFailed(error);
+        await this.afterFailedAttempt(error, target);
+        const gatewayError = gatewayErrorFor(error);
+        meter.failedWith(gatewayError.code);
+        text += converter.writeStreamError(gatewayError);
       }
-      meter.attemptSucceeded();
-    } catch (error) {
-      if (error instanceof ClientCancelledError) {
-        return;
+      if (text !== "") {
+        yield encodedFor(meter, text);
       }
-      if (!(error instanceof AttemptFailedError)) {
-        throw error;
-      }
-      meter.attemptFailed(error);
-      await this.afterFailedAttempt(error, target);
-      const gatewayError = gatewayErrorFor(error);
-      meter.failedWith(gatewayError.code);
-      throw gatewayError;
+    } finally {
+      upstream.close();
+      record(meter.finish(HTTP_OK, clientSignal.aborted));
     }
   }
 
@@ -596,22 +614,11 @@ function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
     : { kind: "playground", userId: caller.userId };
 }
 
-/** Counts the bytes sent and records the usage job when the stream ends, however it ends. */
-async function* meteredStream(
-  chunks: AsyncIterable<string>,
-  meter: UsageMeter,
-  clientSignal: AbortSignal,
-  record: (job: UsageJob) => void,
-): AsyncIterable<string> {
-  try {
-    for await (const chunk of chunks) {
-      meter.responseWritten(chunk);
-      yield chunk;
-    }
-  } finally {
-    // The status went out with the first chunk; a later failure is an error event.
-    record(meter.finish(HTTP_OK, clientSignal.aborted));
-  }
+/** `text` encoded once, counted as sent: the client gets exactly these bytes. */
+function encodedFor(meter: UsageMeter, text: string): Uint8Array {
+  const bytes = encoder.encode(text);
+  meter.responseWritten(bytes.byteLength);
+  return bytes;
 }
 
 /** The usage job of a request that ended in an exception instead of a response. */
@@ -665,7 +672,7 @@ function withCacheBreakpointsFor(
   if (!model.hasAutomaticCacheBreakpoints || provider.protocol !== "anthropic-messages") {
     return request;
   }
-  const { cacheMarkerLimit } = storedProviderQuirksSchema.parse(provider.quirks);
+  const { cacheMarkerLimit } = validQuirksOf(provider);
   return withAutomaticCacheBreakpoints(request, cacheMarkerLimit ?? DEFAULT_CACHE_MARKER_LIMIT);
 }
 

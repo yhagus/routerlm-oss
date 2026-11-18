@@ -197,12 +197,13 @@ export class UsageMeter {
   /** Finishes a request answered with `error`, whose body is the client Protocol's `envelope`. */
   finishWithError(error: GatewayError, envelope: unknown): UsageJob {
     this.failedWith(error.code);
-    this.responseWritten(JSON.stringify(envelope));
+    this.responseWritten(Buffer.byteLength(JSON.stringify(envelope)));
     return this.finish(error.status, false);
   }
 
-  responseWritten(text: string): void {
-    this.responseBytes += Buffer.byteLength(text);
+  /** Counts `byteLength` more bytes of the response body as sent. */
+  responseWritten(byteLength: number): void {
+    this.responseBytes += byteLength;
   }
 
   finish(httpStatus: number, isCancelled: boolean): UsageJob {

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type {
   AssistantContentPart,
   FunctionTool,
@@ -22,7 +21,6 @@ import {
   type UpstreamProtocolConverter,
   type UpstreamStreamParser,
   type UpstreamTarget,
-  parseUpstreamStream,
 } from "../upstream-protocol-converter.js";
 
 // The Responses API as an upstream (`POST {baseUrl}/responses`), stateless:
@@ -42,7 +40,7 @@ const PART_SEPARATOR = "\n\n";
 // always gives the same bytes (upstream prompt caches compare prefixes).
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
-  const quirks = providerQuirksSchema.parse(target.quirks);
+  const { quirks } = target;
   const dropped = new Set(quirks.droppedParameters ?? []);
   const systemAsInput = quirks.systemAsDeveloperMessage === true && request.system.length > 0;
   const body: Record<string, unknown> = { model: target.upstreamModelId };
@@ -434,10 +432,6 @@ function startStream(): UpstreamStreamParser {
   return new ResponsesStreamParser();
 }
 
-function parseStream(body: AsyncIterable<Uint8Array>): AsyncIterable<InferenceStreamEvent> {
-  return parseUpstreamStream(startStream, body);
-}
-
 /** The text and reasoning deltas, by event type: what ResponseStreamReader makes of each. */
 const TOKEN_DELTA_TYPES: ReadonlyMap<string, "text-delta" | "reasoning-delta"> = new Map([
   ["response.output_text.delta", "text-delta"],
@@ -584,6 +578,5 @@ export const openAiResponsesUpstreamConverter: UpstreamProtocolConverter = {
   protocol: "openai-responses",
   writeRequest,
   parseResponse,
-  parseStream,
   startStream,
 };

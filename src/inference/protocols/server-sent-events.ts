@@ -39,17 +39,6 @@ export class ServerSentEventDecoder {
   }
 }
 
-/** Reads a server-sent-event byte stream (an upstream's streaming body) event by event. */
-export async function* readServerSentEvents(
-  body: AsyncIterable<Uint8Array>,
-): AsyncIterable<ServerSentEvent> {
-  const decoder = new ServerSentEventDecoder();
-  for await (const chunk of body) {
-    yield* decoder.push(chunk);
-  }
-  yield* decoder.end();
-}
-
 function parseEventBlock(block: string): ServerSentEvent | null {
   let event: string | undefined;
   const dataLines: string[] = [];

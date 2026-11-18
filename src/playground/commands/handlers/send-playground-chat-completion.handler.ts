@@ -9,6 +9,8 @@ import { SendPlaygroundChatCompletionCommand } from "../impl/send-playground-cha
 /** The name of the stream's last event, which carries the PlaygroundSummary. */
 export const SUMMARY_EVENT = "summary";
 
+const encoder = new TextEncoder();
+
 @CommandHandler(SendPlaygroundChatCompletionCommand)
 export class SendPlaygroundChatCompletionHandler implements ICommandHandler<SendPlaygroundChatCompletionCommand> {
   constructor(
@@ -21,7 +23,7 @@ export class SendPlaygroundChatCompletionHandler implements ICommandHandler<Send
     user,
     connection,
     target,
-  }: SendPlaygroundChatCompletionCommand): Promise<AsyncIterable<string>> {
+  }: SendPlaygroundChatCompletionCommand): Promise<AsyncIterable<Uint8Array>> {
     let reportUsage: (job: UsageJob) => void = () => {};
     const usage = new Promise<UsageJob>((resolve) => {
       reportUsage = resolve;
@@ -43,11 +45,11 @@ export class SendPlaygroundChatCompletionHandler implements ICommandHandler<Send
   }
 
   private async *followedBySummary(
-    chunks: AsyncIterable<string>,
+    chunks: AsyncIterable<Uint8Array>,
     usage: Promise<UsageJob>,
-  ): AsyncIterable<string> {
+  ): AsyncIterable<Uint8Array> {
     yield* chunks;
     const summary = playgroundSummaryOf(await usage, this.snapshot.current);
-    yield `event: ${SUMMARY_EVENT}\ndata: ${JSON.stringify(summary)}\n\n`;
+    yield encoder.encode(`event: ${SUMMARY_EVENT}\ndata: ${JSON.stringify(summary)}\n\n`);
   }
 }

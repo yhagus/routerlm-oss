@@ -22,7 +22,6 @@ import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-  writeStreamWith,
 } from "../client-protocol-converter.js";
 import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
 
@@ -620,14 +619,6 @@ function writeUsage(usage: TokenUsage): Record<string, unknown> {
   };
 }
 
-function writeStream(
-  events: AsyncIterable<InferenceStreamEvent>,
-  request: InferenceRequest,
-  context: ResponseContext,
-): AsyncIterable<string> {
-  return writeStreamWith(startStream(request, context), events);
-}
-
 function startStream(request: InferenceRequest, context: ResponseContext): ClientStreamWriter {
   return new OpenAiResponsesStreamWriter(request, context);
 }
@@ -929,7 +920,6 @@ export const openAiResponsesClientConverter: ClientProtocolConverter = {
   protocol: "openai-responses",
   parseRequest,
   writeResponse,
-  writeStream,
   startStream,
   writeError,
   writeStreamError,

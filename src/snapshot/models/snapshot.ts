@@ -1,8 +1,9 @@
+import type { z } from "zod";
+import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
 import type {
   AuthStyle,
   Capability,
   ParameterPolicy,
-  ProviderQuirks,
   ServiceTierValues,
   TierPrices,
   UpstreamProtocol,
@@ -46,12 +47,25 @@ export interface SnapshotProvider {
   protocol: UpstreamProtocol;
   baseUrl: string;
   authStyle: AuthStyle;
-  quirks: ProviderQuirks;
+  /** Validated once, when the snapshot loads: read them with `validQuirksOf`. */
+  quirks: z.ZodSafeParseResult<StoredProviderQuirks>;
   serviceTierValues: ServiceTierValues;
   /** Enabled, and allowed by the terms-risk Setting when the Provider has a Terms Risk. */
   isUsable: boolean;
   /** Lowest priority first. */
   providerAccounts: SnapshotProviderAccount[];
+}
+
+/**
+ * The Provider's quirks. Stored quirks that don't validate throw their
+ * validation error here, so they fail only the requests that use the
+ * Provider, never the snapshot load.
+ */
+export function validQuirksOf(provider: SnapshotProvider): StoredProviderQuirks {
+  if (!provider.quirks.success) {
+    throw provider.quirks.error;
+  }
+  return provider.quirks.data;
 }
 
 export interface SnapshotUpstreamModel {

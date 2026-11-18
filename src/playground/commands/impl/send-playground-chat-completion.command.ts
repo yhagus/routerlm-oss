@@ -11,7 +11,7 @@ import type { PlaygroundRequest } from "../../schemas/playground.schema.js";
  * sends all of it every time. `target` is the Model the body names, or one
  * Upstream Model for a direct Upstream Model test.
  */
-export class SendPlaygroundChatCompletionCommand extends Command<AsyncIterable<string>> {
+export class SendPlaygroundChatCompletionCommand extends Command<AsyncIterable<Uint8Array>> {
   constructor(
     readonly body: PlaygroundRequest,
     readonly user: User,

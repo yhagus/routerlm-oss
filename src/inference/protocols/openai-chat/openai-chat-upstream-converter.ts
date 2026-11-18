@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  type CatalogProviderQuirks,
-  providerQuirksSchema,
-} from "@/catalog/schemas/catalog.schema.js";
+import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
 import type {
   AssistantContentPart,
   CacheMarker,
@@ -24,7 +21,6 @@ import {
   type UpstreamProtocolConverter,
   type UpstreamStreamParser,
   type UpstreamTarget,
-  parseUpstreamStream,
 } from "../upstream-protocol-converter.js";
 import {
   type OpenAiUsage,
@@ -45,7 +41,7 @@ const REASONING_PLACEHOLDER = " ";
 // always gives the same bytes (upstream prompt caches compare prefixes).
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
-  const quirks = providerQuirksSchema.parse(target.quirks);
+  const { quirks } = target;
   const body: Record<string, unknown> = {
     model: target.upstreamModelId,
     messages: [
@@ -391,10 +387,6 @@ function startStream(): UpstreamStreamParser {
   return new ChatStreamParser();
 }
 
-function parseStream(body: AsyncIterable<Uint8Array>): AsyncIterable<InferenceStreamEvent> {
-  return parseUpstreamStream(startStream, body);
-}
-
 function parseJson(data: string): unknown {
   try {
     return JSON.parse(data);
@@ -502,6 +494,5 @@ export const openAiChatUpstreamConverter: UpstreamProtocolConverter = {
   protocol: "openai-chat",
   writeRequest,
   parseResponse,
-  parseStream,
   startStream,
 };

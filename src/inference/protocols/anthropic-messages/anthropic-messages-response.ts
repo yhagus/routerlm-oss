@@ -11,7 +11,6 @@ import type { ServerSentEvent } from "../server-sent-events.js";
 import {
   UpstreamProtocolError,
   type UpstreamStreamParser,
-  parseUpstreamStream,
 } from "../upstream-protocol-converter.js";
 
 // Responses are read leniently: only the fields the internal format needs.
@@ -211,12 +210,6 @@ class MessagesStreamParser implements UpstreamStreamParser {
 
 export function startMessagesStream(): UpstreamStreamParser {
   return new MessagesStreamParser();
-}
-
-export function parseMessagesStream(
-  body: AsyncIterable<Uint8Array>,
-): AsyncIterable<InferenceStreamEvent> {
-  return parseUpstreamStream(startMessagesStream, body);
 }
 
 const typedEventSchema = z.object({ type: z.string() });

@@ -1,10 +1,10 @@
 import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 
-/** What the client gets back: a JSON body, or the text of an event stream. */
+/** What the client gets back: a JSON body, or an event stream, both already encoded. */
 export type InferenceResult =
-  | { kind: "response"; body: unknown }
-  | { kind: "stream"; chunks: AsyncIterable<string> };
+  | { kind: "response"; json: Uint8Array }
+  | { kind: "stream"; chunks: AsyncIterable<Uint8Array> };
 
 /**
  * Who sends an inference request: a client application with its API Key, or

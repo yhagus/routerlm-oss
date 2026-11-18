@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
-import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version.js";
 import { AttemptFailedError, ClientCancelledError } from "../models/attempt-failure.js";
@@ -11,12 +10,15 @@ import type {
   InferenceStreamEvent,
 } from "../models/internal-format.js";
 import {
+  parseUpstreamStream,
   type UpstreamHttpRequest,
   type UpstreamProtocolConverter,
   UpstreamProtocolError,
+  type UpstreamStreamParser,
   type UpstreamTarget,
 } from "../protocols/upstream-protocol-converter.js";
 import { gatherStream } from "../protocols/gather-stream.js";
+import { type ServerSentEvent, ServerSentEventDecoder } from "../protocols/server-sent-events.js";
 
 /** Spec "Fallback" defaults; a Route may override each. */
 export const DEFAULT_TIMEOUTS: AttemptTimeouts = {
@@ -137,6 +139,122 @@ function describe(error: unknown): string {
 }
 
 /**
+ * Reads one upstream stream body into internal events, one network read at a
+ * time, with no async stage between the socket and the parser.
+ */
+class UpstreamEventReader {
+  private readonly decoder = new ServerSentEventDecoder();
+  private isEnded = false;
+  /** A failure that came in the same read as events before it, thrown once those went out. */
+  private deferredFailure: { error: unknown } | null = null;
+
+  constructor(
+    private readonly body: ReadableStreamDefaultReader<Uint8Array>,
+    private readonly parser: UpstreamStreamParser,
+  ) {}
+
+  /**
+   * The events of the next network read that carried any, or null once the
+   * body or the Protocol's end marker ended the stream.
+   */
+  async nextBatch(): Promise<InferenceStreamEvent[] | null> {
+    if (this.deferredFailure) {
+      throw this.deferredFailure.error;
+    }
+    while (!this.isEnded) {
+      const read = await this.body.read();
+      const batch = read.done ? this.lastEvents() : this.eventsOf(this.decoder.push(read.value));
+      if (batch.length > 0) {
+        return batch;
+      }
+    }
+    return null;
+  }
+
+  private eventsOf(serverSentEvents: ServerSentEvent[]): InferenceStreamEvent[] {
+    const events: InferenceStreamEvent[] = [];
+    try {
+      for (const serverSentEvent of serverSentEvents) {
+        events.push(...this.parser.parse(serverSentEvent));
+        if (this.parser.isDone) {
+          // Whatever follows the end marker is ignored.
+          this.isEnded = true;
+          break;
+        }
+      }
+    } catch (error) {
+      this.failAfter(events, error);
+    }
+    return events;
+  }
+
+  private lastEvents(): InferenceStreamEvent[] {
+    const events = this.eventsOf(this.decoder.end());
+    if (this.isEnded) {
+      return events;
+    }
+    this.isEnded = true;
+    try {
+      events.push(...this.parser.end());
+    } catch (error) {
+      this.failAfter(events, error);
+    }
+    return events;
+  }
+
+  /** The events before a failure still go out, as one batch; the failure ends the stream after them. */
+  private failAfter(events: InferenceStreamEvent[], error: unknown): void {
+    if (events.length === 0) {
+      throw error;
+    }
+    this.deferredFailure = { error };
+    this.isEnded = true;
+  }
+}
+
+/**
+ * An upstream stream whose first events have arrived. Its reader calls
+ * `nextBatch` until it returns null, and `close` when it stops early.
+ */
+export class UpstreamStream {
+  constructor(
+    private firstBatch: InferenceStreamEvent[] | null,
+    private readonly events: UpstreamEventReader,
+    private readonly deadlines: AttemptDeadlines,
+  ) {}
+
+  /**
+   * The internal events of the next network read, in order, or null once the
+   * stream has ended. Throws AttemptFailedError (`stream_interrupted`,
+   * `timeout`) or ClientCancelledError.
+   */
+  async nextBatch(): Promise<InferenceStreamEvent[] | null> {
+    const first = this.firstBatch;
+    if (first) {
+      this.firstBatch = null;
+      return first;
+    }
+    try {
+      const batch = await this.events.nextBatch();
+      if (batch === null) {
+        this.close();
+      }
+      return batch;
+    } catch (error) {
+      // Read the failure before close(), which aborts with ClientCancelledError.
+      const failure = this.deadlines.failureOf(error, true);
+      this.close();
+      throw failure;
+    }
+  }
+
+  /** Stops the timers and releases the upstream connection; calling it again does nothing. */
+  close(): void {
+    this.deadlines.finish();
+  }
+}
+
+/**
  * Makes one Attempt: sends the translated request to the upstream and reads
  * the answer back into the internal format. Throws AttemptFailedError (with
  * the Fallback reason) or ClientCancelledError; never retries.
@@ -152,7 +270,9 @@ export class UpstreamClient {
       const written = call.converter.writeRequest(call.request, call.target);
       const response = await this.send(call, written, deadlines.signal);
       if (written.isAnsweredAsStream) {
-        return await gatherStream(call.converter.parseStream(streamBodyOf(response)));
+        return await gatherStream(
+          parseUpstreamStream(() => call.converter.startStream(), streamBodyOf(response)),
+        );
       }
       const body = await response.data.text();
       // MiniMax may refuse an Exhausted Provider Account with HTTP 200 and an
@@ -176,9 +296,9 @@ export class UpstreamClient {
   /**
    * Resolves once the first stream event has arrived, so that a failure
    * before anything reaches the client is still an ordinary Attempt failure.
-   * Later failures are thrown from the returned iterable.
+   * Later failures are thrown from the returned stream's `nextBatch`.
    */
-  async openStream(call: UpstreamCall): Promise<AsyncIterable<InferenceStreamEvent>> {
+  async openStream(call: UpstreamCall): Promise<UpstreamStream> {
     const deadlines = new AttemptDeadlines(call.timeouts, call.clientSignal);
     deadlines.start("totalMs");
     try {
@@ -186,36 +306,20 @@ export class UpstreamClient {
       const written = call.converter.writeRequest(call.request, call.target);
       const response = await this.send(call, written, deadlines.signal);
       deadlines.stop("connectMs");
-      const body = streamBodyOf(response);
+      const events = new UpstreamEventReader(
+        streamBodyOf(response).getReader(),
+        call.converter.startStream(),
+      );
       deadlines.start("firstTokenMs");
-      const events = call.converter.parseStream(body)[Symbol.asyncIterator]();
-      const first = await events.next();
+      const firstBatch = await events.nextBatch();
       deadlines.stop("firstTokenMs");
-      return this.restOfStream(first, events, deadlines);
+      return new UpstreamStream(firstBatch, events, deadlines);
     } catch (error) {
       // Read the failure before finish(): finish() aborts with ClientCancelledError,
       // which would hide an upstream error status and stop the Fallback.
       const failure = deadlines.failureOf(error, false);
       deadlines.finish();
       throw failure;
-    }
-  }
-
-  private async *restOfStream(
-    first: IteratorResult<InferenceStreamEvent>,
-    events: AsyncIterator<InferenceStreamEvent>,
-    deadlines: AttemptDeadlines,
-  ): AsyncIterable<InferenceStreamEvent> {
-    try {
-      let next = first;
-      while (!next.done) {
-        yield next.value;
-        next = await events.next();
-      }
-    } catch (error) {
-      throw deadlines.failureOf(error, true);
-    } finally {
-      deadlines.finish();
     }
   }
 
@@ -266,7 +370,7 @@ function parseJsonBody(text: string): unknown {
 }
 
 function exhaustedErrorCodesOf(target: UpstreamTarget): ExhaustedErrorCode[] {
-  return storedProviderQuirksSchema.parse(target.quirks).exhaustedErrorCodes ?? [];
+  return target.quirks.exhaustedErrorCodes ?? [];
 }
 
 async function failedResponse(

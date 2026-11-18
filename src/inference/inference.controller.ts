@@ -7,11 +7,15 @@ import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
 import { clientConnectionOf } from "@/libs/models/client-connection.js";
 import { eventStreamResponse } from "@/libs/models/event-stream-response.js";
 import type { ClientModelList } from "./models/client-model.js";
+import type { InferenceResult } from "./models/inference.js";
 import { RunInferenceCommand } from "./commands/impl/run-inference.command.js";
 import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
+
+/** What Nest sends with a JSON body it serialises itself. */
+const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 
 /** Where client applications call the gateway. */
 export const INFERENCE_API_PREFIX = "v1";
@@ -35,7 +39,7 @@ export class InferenceController {
     @CurrentUser() principal: ApiKeyPrincipal,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
-  ): Promise<unknown> {
+  ): Promise<Uint8Array | Response> {
     const result = await this.commandBus.execute(
       new RunInferenceCommand(
         openAiChatClientConverter,
@@ -44,7 +48,7 @@ export class InferenceController {
         clientConnectionOf(request, response),
       ),
     );
-    return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
+    return replyWith(result, response);
   }
 
   @Post("messages")
@@ -54,7 +58,7 @@ export class InferenceController {
     @CurrentUser() principal: ApiKeyPrincipal,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
-  ): Promise<unknown> {
+  ): Promise<Uint8Array | Response> {
     const result = await this.commandBus.execute(
       new RunInferenceCommand(
         anthropicMessagesClientConverter,
@@ -63,7 +67,7 @@ export class InferenceController {
         clientConnectionOf(request, response),
       ),
     );
-    return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
+    return replyWith(result, response);
   }
 
   @Post("responses")
@@ -73,7 +77,7 @@ export class InferenceController {
     @CurrentUser() principal: ApiKeyPrincipal,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
-  ): Promise<unknown> {
+  ): Promise<Uint8Array | Response> {
     const result = await this.commandBus.execute(
       new RunInferenceCommand(
         openAiResponsesClientConverter,
@@ -82,11 +86,23 @@ export class InferenceController {
         clientConnectionOf(request, response),
       ),
     );
-    return result.kind === "response" ? result.body : eventStreamResponse(result.chunks);
+    return replyWith(result, response);
   }
 
   @Get("models")
   listModels(@CurrentUser() principal: ApiKeyPrincipal): Promise<ClientModelList> {
     return this.queryBus.execute(new ListClientModelsQuery(principal));
   }
+}
+
+/**
+ * The reply Nest sends for `result`. A JSON body is already serialised, so it
+ * goes out as those bytes, with the content type Nest gives a JSON reply.
+ */
+function replyWith(result: InferenceResult, response: ServerResponse): Uint8Array | Response {
+  if (result.kind === "stream") {
+    return eventStreamResponse(result.chunks);
+  }
+  response.setHeader("Content-Type", JSON_CONTENT_TYPE);
+  return result.json;
 }

@@ -150,6 +150,7 @@ export const providerQuirksSchema = z.strictObject({
 export const storedProviderQuirksSchema = providerQuirksSchema.extend({
   quotaBaseUrl: z.string().optional(),
 });
+export type StoredProviderQuirks = z.infer<typeof storedProviderQuirksSchema>;
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 type QuirkKey = keyof CatalogProviderQuirks;
 
