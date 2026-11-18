@@ -22,6 +22,7 @@ x-app-env: &app-env
   REDIS_URL: redis://redis:6379
   WEB_ORIGIN: http://localhost:${WEB_PORT:-3001}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env to the output of `openssl rand -base64 32` (see README)}
+  SNAPSHOT_RELOAD_INTERVAL_MS: ${SNAPSHOT_RELOAD_INTERVAL_MS:-30000}
   ERROR_CAPTURE_RETENTION_DAYS: ${ERROR_CAPTURE_RETENTION_DAYS:-7}
 
 services:

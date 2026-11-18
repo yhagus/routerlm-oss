@@ -1,7 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { Injectable, Logger, type OnApplicationBootstrap } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  type OnApplicationBootstrap,
+  type OnApplicationShutdown,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { InjectDrizzle } from "@nestjs/drizzle";
+import { SchedulerRegistry } from "@nestjs/schedule";
 import type { Redis } from "ioredis";
+import type { Env } from "@/config/schemas/env.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { loadSnapshot } from "../models/load-snapshot.js";
@@ -10,14 +18,20 @@ import { EMPTY_SNAPSHOT, type Snapshot } from "../models/snapshot.js";
 /** Every backend instance listens here and reloads its snapshot on another instance's message. */
 export const SNAPSHOT_CHANGED_CHANNEL = "routerlm:snapshot-changed";
 
+const RELOAD_INTERVAL_NAME = "snapshot-reload";
+const FIRST_RETRY_DELAY_MS = 100;
+const MAX_RETRY_DELAY_MS = 5000;
+
 /**
  * Holds the in-memory snapshot the inference path reads (API Keys, Models,
  * Routes, Upstream Models, Providers, Provider Accounts) and keeps it fresh:
  * a dashboard write calls `changed()`, which reloads this instance and tells
- * the others through Redis pub/sub.
+ * the others through Redis pub/sub. Every instance also reloads on a fixed
+ * interval, which bounds how long a lost message or a failed reload can leave
+ * a revoked API Key or a disabled Provider in use (ADR 0020).
  */
 @Injectable()
-export class SnapshotService implements OnApplicationBootstrap {
+export class SnapshotService implements OnApplicationBootstrap, OnApplicationShutdown {
   private readonly logger = new Logger(SnapshotService.name);
   private readonly publisher: Redis;
   private readonly subscriber: Redis;
@@ -25,11 +39,14 @@ export class SnapshotService implements OnApplicationBootstrap {
   private readonly instanceId = randomUUID();
   private snapshot: Snapshot = EMPTY_SNAPSHOT;
   // Reloads run one after another, so the last one always reads the latest writes.
-  private lastReload: Promise<void> = Promise.resolve();
+  private lastReload: Promise<unknown> = Promise.resolve();
+  private retryTimer: NodeJS.Timeout | undefined;
 
   constructor(
     @InjectDrizzle() private readonly db: Database,
     redis: RedisConnection,
+    private readonly config: ConfigService<Env, true>,
+    private readonly schedulerRegistry: SchedulerRegistry,
   ) {
     // A publish fails at once while Redis is down instead of holding the
     // dashboard write that triggered it.
@@ -53,11 +70,25 @@ export class SnapshotService implements OnApplicationBootstrap {
     this.subscriber.subscribe(SNAPSHOT_CHANGED_CHANNEL).catch((error: unknown) => {
       this.logger.warn(`Not subscribed to snapshot changes: ${String(error)}`);
     });
+    this.schedulerRegistry.addInterval(
+      RELOAD_INTERVAL_NAME,
+      setInterval(
+        () => void this.reload(),
+        this.config.get("SNAPSHOT_RELOAD_INTERVAL_MS", { infer: true }),
+      ),
+    );
+  }
+
+  onApplicationShutdown(): void {
+    clearTimeout(this.retryTimer);
   }
 
   /** Call after a dashboard write commits. Never throws: the write already happened. */
   async changed(): Promise<void> {
-    await this.reload();
+    const isReloaded = await this.reload();
+    if (!isReloaded) {
+      this.retryReloadWithBackoff(FIRST_RETRY_DELAY_MS);
+    }
     try {
       await this.publisher.publish(SNAPSHOT_CHANGED_CHANNEL, this.instanceId);
     } catch (error) {
@@ -65,14 +96,30 @@ export class SnapshotService implements OnApplicationBootstrap {
     }
   }
 
-  private reload(): Promise<void> {
-    this.lastReload = this.lastReload.then(async () => {
+  /** Retries in the background, so the write that triggered it is not held up. */
+  private retryReloadWithBackoff(delayMs: number): void {
+    clearTimeout(this.retryTimer);
+    this.retryTimer = setTimeout(() => {
+      void this.reload().then((isReloaded) => {
+        if (!isReloaded) {
+          this.retryReloadWithBackoff(Math.min(delayMs * 2, MAX_RETRY_DELAY_MS));
+        }
+      });
+    }, delayMs);
+  }
+
+  /** Resolves to whether the reload succeeded; a failed one keeps the previous snapshot. */
+  private reload(): Promise<boolean> {
+    const reloaded = this.lastReload.then(async () => {
       try {
         this.snapshot = await loadSnapshot(this.db);
+        return true;
       } catch (error) {
         this.logger.error(`Snapshot reload failed; keeping the previous one: ${String(error)}`);
+        return false;
       }
     });
-    return this.lastReload;
+    this.lastReload = reloaded;
+    return reloaded;
   }
 }

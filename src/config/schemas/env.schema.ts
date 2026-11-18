@@ -19,6 +19,9 @@ export const envSchema = z.object({
     }),
   // Spec "Records": the worker deletes Error Captures older than this.
   ERROR_CAPTURE_RETENTION_DAYS: z.coerce.number().int().positive().default(7),
+  // ADR 0020: every instance reloads its snapshot this often, which bounds how
+  // long a revoked API Key or a disabled Provider stays valid after a lost change notice.
+  SNAPSHOT_RELOAD_INTERVAL_MS: z.coerce.number().int().positive().default(30_000),
   // How long one Quota Meter reading may take before it counts as failed.
   QUOTA_READER_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   // Where Catalog Gaps are read from: every provider's models, as one JSON document.
