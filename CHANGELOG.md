@@ -1,3 +1,13 @@
+# Unreleased
+
+## Security
+
+- Every backend instance reloads its snapshot from the database every 30 seconds (`SNAPSHOT_RELOAD_INTERVAL_MS`), and retries a failed reload after a change. A revoked API Key or a disabled Provider now stops working on every instance within that interval, even when the change notice was lost or Redis was down.
+
+## Upgrade
+
+- **Behaviour change:** Provider URLs (`baseUrl`, `quotaBaseUrl` and the OAuth login hosts and issuer) must now be https and must not point at localhost, loopback, private or link-local addresses, in Catalog files and in the dashboard. Self-hosters with a LAN upstream, such as Ollama or vLLM, must set `ALLOW_PRIVATE_UPSTREAMS=true` in `.env`. A stored URL that no longer passes is not rewritten.
+
 # v3.2.0 (2026-11-18)
 
 ## Upgrade

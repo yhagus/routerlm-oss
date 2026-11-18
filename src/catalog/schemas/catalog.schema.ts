@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { providerUrlSchema } from "@/libs/schemas/provider-url.schema.js";
 import {
   AUTH_STYLES,
   CAPABILITIES,
@@ -138,7 +139,7 @@ export const providerQuirksSchema = z.strictObject({
    * Providers whose quota reader asks another host than `baseUrl`: the base
    * URL its quota endpoint path is appended to.
    */
-  quotaBaseUrl: z.url().optional(),
+  quotaBaseUrl: providerUrlSchema.optional(),
 });
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 type QuirkKey = keyof CatalogProviderQuirks;
@@ -229,7 +230,7 @@ export const providerLogoSchema = z.string().regex(/^[a-z0-9-]+$/);
 const kimiCodeOauthLoginSchema = z.strictObject({
   flow: z.literal("kimi-code"),
   /** The auth host of each region, without a path: a User's account lives in one of them. */
-  authHosts: z.strictObject({ global: z.url(), china: z.url() }),
+  authHosts: z.strictObject({ global: providerUrlSchema, china: providerUrlSchema }),
   clientId: z.string().min(1),
   /** The version of the Provider's own CLI the gateway presents itself as. */
   cliVersion: z.string().min(1),
@@ -239,7 +240,7 @@ const kimiCodeOauthLoginSchema = z.strictObject({
 const openAiCodexOauthLoginSchema = z.strictObject({
   flow: z.literal("openai-codex"),
   /** The auth host, without a path. */
-  issuer: z.url(),
+  issuer: providerUrlSchema,
   clientId: z.string().min(1),
   /** The version of the Codex CLI the gateway presents itself as. */
   cliVersion: z.string().min(1),
@@ -326,7 +327,7 @@ export const catalogProviderSchema = z.strictObject({
    * openai-chat, `/v1/messages` for anthropic-messages, `/responses` for
    * openai-responses.
    */
-  baseUrl: z.url(),
+  baseUrl: providerUrlSchema,
   authStyle: z.enum(AUTH_STYLES),
   /** The provider's id on models.dev, used to report Catalog Gaps. */
   modelsDevProviderId: z.string().optional(),

@@ -19,12 +19,17 @@ export const envSchema = z.object({
     }),
   // Spec "Records": the worker deletes Error Captures older than this.
   ERROR_CAPTURE_RETENTION_DAYS: z.coerce.number().int().positive().default(7),
+  // ADR 0020: every instance reloads its snapshot this often, which bounds how
+  // long a revoked API Key or a disabled Provider stays valid after a lost change notice.
+  SNAPSHOT_RELOAD_INTERVAL_MS: z.coerce.number().int().positive().default(30_000),
   // How long one Quota Meter reading may take before it counts as failed.
   QUOTA_READER_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
   // Where Catalog Gaps are read from: every provider's models, as one JSON document.
   MODELS_DEV_API_URL: z.url().default("https://models.dev/api.json"),
   // How long reading models.dev may take before the Catalog Gaps report comes back empty.
   MODELS_DEV_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  // Lets Provider URLs be http and point at localhost, private or link-local hosts (ADR 0019).
+  ALLOW_PRIVATE_UPSTREAMS: z.stringbool().default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -28,7 +28,10 @@ export const parameterPolicySchema = z
   .strictObject({
     defaults: parameterValuesSchema.partial().optional(),
     forced: parameterValuesSchema.partial().optional(),
-    caps: z.strictObject(capSchemas).partial().optional(),
+    caps: z
+      .strictObject({ ...capSchemas, reasoningBudgetTokens: z.int().positive() })
+      .partial()
+      .optional(),
     systemPrompt: z.string().optional(),
   })
   .superRefine((policy, context) => {

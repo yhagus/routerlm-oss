@@ -24,6 +24,8 @@ export default defineConfig({
       REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379',
       // A fixed test-only key; it encrypts nothing real.
       ENCRYPTION_KEY: 'dGVzdC1vbmx5LWVuY3J5cHRpb24ta2V5LTMyLWJ5dGU=',
+      // The fake upstream listens on localhost over http (ADR 0019).
+      ALLOW_PRIVATE_UPSTREAMS: 'true',
     },
   },
 });

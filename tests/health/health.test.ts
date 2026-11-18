@@ -41,13 +41,14 @@ describe("GET /health (e2e)", () => {
       await unreachablePool?.end();
     });
 
-    it("reports the database down with 503", async () => {
+    it("reports the database down with 503 and no internal error text", async () => {
       const response = await request(app.getHttpServer()).get("/health").expect(503);
 
       expect(response.body).toMatchObject({
         status: "error",
         error: { database: { status: "down" } },
       });
+      expect(JSON.stringify(response.body)).not.toMatch(/ECONNREFUSED|127\.0\.0\.1|connect/i);
     });
   });
 });

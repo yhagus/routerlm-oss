@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {
+  capsWithoutDefault,
   formFromPolicy,
+  isCapOnly,
   isCappable,
   numberRange,
   type ParameterPolicy,
@@ -32,6 +34,8 @@ watch(
     problem.value = "";
   },
 );
+
+const uncoveredCaps = computed(() => capsWithoutDefault(form.value));
 
 const effortOptions = [
   { label: "Not set", value: "" },
@@ -70,7 +74,11 @@ function submit(): void {
               <span class="cell-note">{{ parameter.hint }}</span>
             </td>
             <td v-for="{ kind, label } in RULE_KINDS" :key="kind">
-              <span v-if="kind === 'caps' && !isCappable(parameter.name)" class="cell-note">—</span>
+              <span
+                v-if="kind === 'caps' ? !isCappable(parameter.name) : isCapOnly(parameter.name)"
+                class="cell-note"
+                >—</span
+              >
               <AppSelect
                 v-else-if="parameter.name === 'reasoningEffort'"
                 v-model="form.rules[kind].reasoningEffort"
@@ -95,10 +103,12 @@ function submit(): void {
                 v-model="form.rules[kind][parameter.name]"
                 class="text-input"
                 :whole="numberRange(parameter.name)?.isWhole"
-                :tokens="parameter.name === 'maxOutputTokens'"
+                :tokens="
+                  parameter.name === 'maxOutputTokens' || parameter.name === 'reasoningBudgetTokens'
+                "
                 :min="numberRange(parameter.name)?.min"
                 :max="
-                  parameter.name === 'maxOutputTokens'
+                  parameter.name === 'maxOutputTokens' || parameter.name === 'reasoningBudgetTokens'
                     ? undefined
                     : numberRange(parameter.name)?.max
                 "
@@ -109,6 +119,10 @@ function submit(): void {
         </tbody>
       </table>
     </div>
+    <p v-if="uncoveredCaps.length > 0" class="form__hint" role="status">
+      A Cap only lowers a value that is sent. With no default beside it, an omitted parameter stays
+      omitted: {{ uncoveredCaps.join(", ") }}.
+    </p>
     <label class="field policy-form__prompt"
       ><span class="field__label">System prompt</span
       ><textarea
