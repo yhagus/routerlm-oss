@@ -235,7 +235,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     meter: UsageMeter,
   ): Destination {
     const model = this.resolveModel(clientRequest.model, caller);
-    meter.modelResolved(model.id);
+    meter.modelResolved(model.id, model.name);
     // Routes are selected under the Model's policy (spec step 4 before 5); a
     // Route override applies only to the Attempts on its own Route.
     const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));
@@ -588,7 +588,11 @@ async function asAttemptFailure(
 /** The API Key or User a request is made for, as its Usage Log and prompt cache key name it. */
 function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
   return caller.kind === "api-key"
-    ? { kind: "api-key", apiKeyId: caller.principal.apiKeyId }
+    ? {
+        kind: "api-key",
+        apiKeyId: caller.principal.apiKeyId,
+        apiKeyName: caller.principal.apiKeyName,
+      }
     : { kind: "playground", userId: caller.userId };
 }
 

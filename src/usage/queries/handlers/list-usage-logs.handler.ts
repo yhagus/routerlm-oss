@@ -1,13 +1,16 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys, models, usageLogs } from "@/db/schemas/index.js";
+import { usageLogs } from "@/db/schemas/index.js";
 import type { UsageLogPage } from "../../models/usage.js";
 import { whereFilter } from "../../models/usage-filters.js";
 import { ListUsageLogsQuery } from "../impl/list-usage-logs.query.js";
 
-/** Filtering and paging run in SQL, so a large table is never loaded whole. */
+/**
+ * Filtering and paging run in SQL, so a large table is never loaded whole.
+ * Reads only usage_logs: its names are copied at request time (ADR 0024).
+ */
 @QueryHandler(ListUsageLogsQuery)
 export class ListUsageLogsHandler implements IQueryHandler<ListUsageLogsQuery> {
   constructor(@InjectDrizzle() private readonly db: Database) {}
@@ -20,9 +23,9 @@ export class ListUsageLogsHandler implements IQueryHandler<ListUsageLogsQuery> {
           id: usageLogs.id,
           createdAt: usageLogs.createdAt,
           modelId: usageLogs.modelId,
-          modelName: models.name,
+          modelName: usageLogs.modelName,
           apiKeyId: usageLogs.apiKeyId,
-          apiKeyName: apiKeys.name,
+          apiKeyName: usageLogs.apiKeyName,
           isPlayground: usageLogs.isPlayground,
           clientProtocol: usageLogs.clientProtocol,
           isStreamed: usageLogs.isStreamed,
@@ -44,8 +47,6 @@ export class ListUsageLogsHandler implements IQueryHandler<ListUsageLogsQuery> {
           isIncomplete: usageLogs.isIncomplete,
         })
         .from(usageLogs)
-        .leftJoin(models, eq(models.id, usageLogs.modelId))
-        .leftJoin(apiKeys, eq(apiKeys.id, usageLogs.apiKeyId))
         .where(where)
         .orderBy(desc(usageLogs.createdAt), desc(usageLogs.id))
         .limit(pageQuery.pageSize)

@@ -13,7 +13,8 @@ export const RECORD_USAGE_JOB = "record";
  * Key was known (a bad key, or a body that could not be read).
  */
 export type UsageCaller =
-  | { kind: "api-key"; apiKeyId: string }
+  /** `apiKeyName` is missing in jobs queued before Usage Logs copied names (ADR 0024). */
+  | { kind: "api-key"; apiKeyId: string; apiKeyName?: string }
   | { kind: "playground"; userId: string }
   | { kind: "unidentified" };
 
@@ -32,6 +33,11 @@ export interface ServedBy {
   /** The `upstream_models` row id. */
   upstreamModelId: string;
   providerAccountId: string;
+  // The names below are missing in jobs queued before Usage Logs copied them (ADR 0024).
+  /** The model name as the Provider spells it in requests. */
+  upstreamModelName?: string;
+  providerSlug?: string;
+  providerAccountName?: string;
   /** Null when it was served at the Provider's default. Missing in jobs queued before tiers existed. */
   serviceTier?: ServiceTier | null;
   /** The Upstream Model's prices at the Service Tier that served it. */
@@ -44,6 +50,13 @@ export interface AttemptRecord {
   /** Null for a direct Upstream Model test, which goes through no Route. */
   routeId: string | null;
   providerAccountId: string;
+  // The fields below are missing in jobs queued before Attempts copied them (ADR 0024).
+  /** The `upstream_models` row id. */
+  upstreamModelId?: string;
+  /** The model name as the Provider spells it in requests. */
+  upstreamModelName?: string;
+  providerSlug?: string;
+  providerAccountName?: string;
   /** Null when no response arrived. */
   upstreamStatus: number | null;
   /** Null for the Attempt that answered and finished normally. */
@@ -89,6 +102,8 @@ export interface UsageJob {
   caller: UsageCaller;
   /** Null when the request failed before its Model was resolved. */
   modelId: string | null;
+  /** As named then. Missing in jobs queued before Usage Logs copied names (ADR 0024). */
+  modelName?: string | null;
   clientProtocol: ClientProtocol;
   isStreamed: boolean;
   httpStatus: number;

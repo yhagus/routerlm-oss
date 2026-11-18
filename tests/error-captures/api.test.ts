@@ -59,7 +59,9 @@ describe("Error Captures API (e2e)", () => {
       .values({
         createdAt: RECEIVED_AT,
         apiKeyId,
+        apiKeyName: "CI",
         modelId,
+        modelName: "smart",
         clientProtocol: "openai-chat",
         isStreamed: false,
         httpStatus: 502,
@@ -75,7 +77,9 @@ describe("Error Captures API (e2e)", () => {
       .values({
         usageLogId,
         startedAt: RECEIVED_AT,
+        providerSlug: "acme",
         providerAccountId,
+        providerAccountName: "Acme main",
         upstreamStatus: 500,
         failureReason: "server_error",
         durationMs: 250,
@@ -175,7 +179,9 @@ describe("Error Captures API (e2e)", () => {
       .values({
         createdAt: RECEIVED_AT,
         apiKeyId: laptopKeyId,
+        apiKeyName: "Laptop",
         modelId: fastId,
+        modelName: "fast",
         clientProtocol: "openai-chat",
         isStreamed: false,
         httpStatus: 504,

@@ -23,6 +23,12 @@ type NewUsageLog = typeof usageLogs.$inferInsert;
 type NewAttempt = typeof attempts.$inferInsert;
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
 
+/** A seeded Provider Account, as Usage Logs and Attempts copy it. */
+export interface TrafficProviderAccount {
+  id: string;
+  name: string;
+}
+
 /** One Route of a seeded Model, with the rows it points at. */
 export interface TrafficRoute {
   routeId: string;
@@ -30,19 +36,21 @@ export interface TrafficRoute {
   upstreamModelRowId: string;
   /** The model name as the Provider spells it. */
   upstreamModelName: string;
+  providerSlug: string;
   prices: UpstreamModelPrices;
   /** Its Provider's accounts, in priority order. */
-  providerAccountIds: string[];
+  providerAccounts: TrafficProviderAccount[];
 }
 
 export interface TrafficModel {
   modelId: string;
+  modelName: string;
   profile: TrafficProfile;
   routes: TrafficRoute[];
 }
 
 export type TrafficSource =
-  | { kind: "api-key"; apiKeyId: string }
+  | { kind: "api-key"; apiKeyId: string; apiKeyName: string }
   | { kind: "playground"; userId: string };
 
 export interface TrafficCaller {
@@ -112,7 +120,7 @@ const GATEWAY_ERRORS: Record<FallbackFailure, { httpStatus: number; errorCode: G
 
 interface Candidate {
   route: TrafficRoute;
-  providerAccountId: string;
+  providerAccount: TrafficProviderAccount;
 }
 
 interface FailedAttempt {
@@ -143,8 +151,12 @@ export function generateDemoTraffic(
     const model = modelFor(random, caller, models);
     const outcome = pickOutcome(random);
     const candidates = model.routes.flatMap((route) =>
-      route.providerAccountIds.map((providerAccountId) => ({ route, providerAccountId })),
+      route.providerAccounts.map((providerAccount) => ({ route, providerAccount })),
     );
+    const requestNames = {
+      modelName: model.modelName,
+      apiKeyName: source.kind === "api-key" ? source.apiKeyName : null,
+    };
     const isStreamed = random() < caller.streamedShare;
     const usageLogId = randomUUID();
 
@@ -154,7 +166,7 @@ export function generateDemoTraffic(
     for (const candidate of candidates.slice(0, failedAttemptCount)) {
       const failed = failedAttempt(
         random,
-        usageLogId,
+        { usageLogId, ...requestNames },
         candidate,
         new Date(createdAt.getTime() + elapsedMs),
       );
@@ -167,6 +179,7 @@ export function generateDemoTraffic(
       id: usageLogId,
       createdAt,
       ...attribution(source),
+      ...requestNames,
       modelId: model.modelId,
       clientProtocol: caller.clientProtocol,
       isStreamed,
@@ -194,12 +207,13 @@ export function generateDemoTraffic(
       ((tokens.outputTokens ?? 0) / model.profile.outputTokensPerSecond) * SECOND_MS,
     );
     const servingMs = firstTokenMs + generationMs;
+    const servingColumns = candidateColumnsOf(serving);
     traffic.attempts.push({
       id: randomUUID(),
       usageLogId,
+      ...requestNames,
+      ...servingColumns,
       startedAt: new Date(createdAt.getTime() + elapsedMs),
-      routeId: serving.route.routeId,
-      providerAccountId: serving.providerAccountId,
       upstreamStatus: 200,
       failureReason: null,
       durationMs: servingMs,
@@ -208,7 +222,7 @@ export function generateDemoTraffic(
       {
         routeId: serving.route.routeId,
         upstreamModelId: serving.route.upstreamModelRowId,
-        providerAccountId: serving.providerAccountId,
+        providerAccountId: serving.providerAccount.id,
         prices: serving.route.prices,
       },
       tokens,
@@ -217,8 +231,7 @@ export function generateDemoTraffic(
       ...base,
       ...measurements,
       attemptCount: base.attemptCount + 1,
-      routeId: serving.route.routeId,
-      providerAccountId: serving.providerAccountId,
+      ...servingColumns,
       httpStatus: 200,
       requestBytes: requestBytesFor(contextTokensOf(tokens)),
       responseBytes: (tokens.outputTokens ?? 0) * BYTES_PER_TOKEN + RESPONSE_ENVELOPE_BYTES,
@@ -282,9 +295,10 @@ function failedAttemptCountFor(random: Random, outcome: Outcome, candidateCount:
   return Math.min(between(random, 2, 3), candidateCount);
 }
 
+/** `request` is the Usage Log's id and the names an Attempt copies from it. */
 function failedAttempt(
   random: Random,
-  usageLogId: string,
+  request: Pick<NewAttempt, "usageLogId" | "modelName" | "apiKeyName">,
   candidate: Candidate,
   startedAt: Date,
 ): FailedAttempt {
@@ -294,10 +308,9 @@ function failedAttempt(
     candidate,
     attempt: {
       id: randomUUID(),
-      usageLogId,
+      ...request,
+      ...candidateColumnsOf(candidate),
       startedAt,
-      routeId: candidate.route.routeId,
-      providerAccountId: candidate.providerAccountId,
       upstreamStatus: upstreamStatusFor(random, failure),
       failureReason: failure,
       durationMs: failedAttemptDurationMs(random, failure),
@@ -325,6 +338,29 @@ function failedAttemptDurationMs(random: Random, failure: FallbackFailure): numb
     case "timeout":
       return FIRST_TOKEN_TIMEOUT_MS;
   }
+}
+
+/** What a candidate is, as an Attempt and a Usage Log copy it (ADR 0024). */
+function candidateColumnsOf({
+  route,
+  providerAccount,
+}: Candidate): Pick<
+  NewAttempt,
+  | "routeId"
+  | "upstreamModelId"
+  | "upstreamModelName"
+  | "providerSlug"
+  | "providerAccountId"
+  | "providerAccountName"
+> {
+  return {
+    routeId: route.routeId,
+    upstreamModelId: route.upstreamModelRowId,
+    upstreamModelName: route.upstreamModelName,
+    providerSlug: route.providerSlug,
+    providerAccountId: providerAccount.id,
+    providerAccountName: providerAccount.name,
+  };
 }
 
 function attribution(

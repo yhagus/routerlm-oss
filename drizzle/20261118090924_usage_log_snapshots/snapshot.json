@@ -1,0 +1,634 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "df150022-1612-42b7-af30-f8cb22a56583",
+  "prevIds": [
+    "104d8898-70cf-4de7-8e7c-1b3579e7e834"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "attempts"
+      ],
+      "writes": [
+        "s|fk|public.attempts.attempts_route_id_routes_id_fkey",
+        "n|fk|public.attempts.attempts_route_id_routes_id_fkey",
+        "e|fk|public.attempts.attempts_route_id_routes_id_fkey",
+        "n|con|public.attempts.attempts_route_id_routes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public",
+        "e|col|public.attempts.route_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "attempts"
+      ],
+      "writes": [
+        "s|fk|public.attempts.attempts_provider_account_id_provider_accounts_id_fkey",
+        "n|fk|public.attempts.attempts_provider_account_id_provider_accounts_id_fkey",
+        "e|fk|public.attempts.attempts_provider_account_id_provider_accounts_id_fkey",
+        "n|con|public.attempts.attempts_provider_account_id_provider_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public",
+        "e|col|public.attempts.provider_account_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "usage_logs"
+      ],
+      "writes": [
+        "s|fk|public.usage_logs.usage_logs_api_key_id_api_keys_id_fkey",
+        "n|fk|public.usage_logs.usage_logs_api_key_id_api_keys_id_fkey",
+        "e|fk|public.usage_logs.usage_logs_api_key_id_api_keys_id_fkey",
+        "n|con|public.usage_logs.usage_logs_api_key_id_api_keys_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "e|col|public.usage_logs.api_key_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "usage_logs"
+      ],
+      "writes": [
+        "s|fk|public.usage_logs.usage_logs_user_id_users_id_fkey",
+        "n|fk|public.usage_logs.usage_logs_user_id_users_id_fkey",
+        "e|fk|public.usage_logs.usage_logs_user_id_users_id_fkey",
+        "n|con|public.usage_logs.usage_logs_user_id_users_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "e|col|public.usage_logs.user_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "usage_logs"
+      ],
+      "writes": [
+        "s|fk|public.usage_logs.usage_logs_model_id_models_id_fkey",
+        "n|fk|public.usage_logs.usage_logs_model_id_models_id_fkey",
+        "e|fk|public.usage_logs.usage_logs_model_id_models_id_fkey",
+        "n|con|public.usage_logs.usage_logs_model_id_models_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "e|col|public.usage_logs.model_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "usage_logs"
+      ],
+      "writes": [
+        "s|fk|public.usage_logs.usage_logs_route_id_routes_id_fkey",
+        "n|fk|public.usage_logs.usage_logs_route_id_routes_id_fkey",
+        "e|fk|public.usage_logs.usage_logs_route_id_routes_id_fkey",
+        "n|con|public.usage_logs.usage_logs_route_id_routes_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "e|col|public.usage_logs.route_id"
+      ]
+    },
+    {
+      "statementType": "drop_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "usage_logs"
+      ],
+      "writes": [
+        "s|fk|public.usage_logs.usage_logs_provider_account_id_provider_accounts_id_fkey",
+        "n|fk|public.usage_logs.usage_logs_provider_account_id_provider_accounts_id_fkey",
+        "e|fk|public.usage_logs.usage_logs_provider_account_id_provider_accounts_id_fkey",
+        "n|con|public.usage_logs.usage_logs_provider_account_id_provider_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "e|col|public.usage_logs.provider_account_id"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "model_name"
+      ],
+      "writes": [
+        "s|col|public.attempts.model_name",
+        "n|col|public.attempts.model_name",
+        "e|col|public.attempts.model_name"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "api_key_name"
+      ],
+      "writes": [
+        "s|col|public.attempts.api_key_name",
+        "n|col|public.attempts.api_key_name",
+        "e|col|public.attempts.api_key_name"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "upstream_model_id"
+      ],
+      "writes": [
+        "s|col|public.attempts.upstream_model_id",
+        "n|col|public.attempts.upstream_model_id",
+        "e|col|public.attempts.upstream_model_id"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "upstream_model_name"
+      ],
+      "writes": [
+        "s|col|public.attempts.upstream_model_name",
+        "n|col|public.attempts.upstream_model_name",
+        "e|col|public.attempts.upstream_model_name"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "provider_slug"
+      ],
+      "writes": [
+        "s|col|public.attempts.provider_slug",
+        "n|col|public.attempts.provider_slug",
+        "e|col|public.attempts.provider_slug"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "provider_account_name"
+      ],
+      "writes": [
+        "s|col|public.attempts.provider_account_name",
+        "n|col|public.attempts.provider_account_name",
+        "e|col|public.attempts.provider_account_name"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "api_key_name"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.api_key_name",
+        "n|col|public.usage_logs.api_key_name",
+        "e|col|public.usage_logs.api_key_name"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "model_name"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.model_name",
+        "n|col|public.usage_logs.model_name",
+        "e|col|public.usage_logs.model_name"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "upstream_model_id"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.upstream_model_id",
+        "n|col|public.usage_logs.upstream_model_id",
+        "e|col|public.usage_logs.upstream_model_id"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "upstream_model_name"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.upstream_model_name",
+        "n|col|public.usage_logs.upstream_model_name",
+        "e|col|public.usage_logs.upstream_model_name"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "provider_slug"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.provider_slug",
+        "n|col|public.usage_logs.provider_slug",
+        "e|col|public.usage_logs.provider_slug"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "provider_account_name"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.provider_account_name",
+        "n|col|public.usage_logs.provider_account_name",
+        "e|col|public.usage_logs.provider_account_name"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "usage_logs",
+        "usage_logs_upstream_model_id_created_at_idx"
+      ],
+      "writes": [
+        "s|idx|public.usage_logs_upstream_model_id_created_at_idx",
+        "n|idx|public.usage_logs_upstream_model_id_created_at_idx",
+        "e|idx|public.usage_logs_upstream_model_id_created_at_idx",
+        "n|rel|public.usage_logs_upstream_model_id_created_at_idx"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "n|col|public.usage_logs.upstream_model_id",
+        "n|col|public.usage_logs.created_at"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "model_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "api_key_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "upstream_model_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "upstream_model_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "provider_slug",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "provider_account_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "api_key_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "model_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "upstream_model_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "upstream_model_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "provider_slug",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "provider_account_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "usage_logs_upstream_model_id_created_at_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "upstream_model_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "created_at",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"attempts\",\"attempts_route_id_routes_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"attempts\",\"attempts_provider_account_id_provider_accounts_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"usage_logs\",\"usage_logs_api_key_id_api_keys_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"usage_logs\",\"usage_logs_user_id_users_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"usage_logs\",\"usage_logs_model_id_models_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"usage_logs\",\"usage_logs_route_id_routes_id_fkey\"]"
+    },
+    {
+      "op": "drop",
+      "key": "fks\u0000[\"public\",\"usage_logs\",\"usage_logs_provider_account_id_provider_accounts_id_fkey\"]"
+    }
+  ]
+}

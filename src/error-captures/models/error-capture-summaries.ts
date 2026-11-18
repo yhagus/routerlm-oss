@@ -2,11 +2,8 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import {
   type RecordedAttemptFailure,
-  apiKeys,
   attempts,
   errorCaptures,
-  models,
-  providerAccounts,
   providers,
   usageLogs,
 } from "@/db/schemas/index.js";
@@ -17,15 +14,15 @@ const summaryColumns = {
   id: errorCaptures.id,
   createdAt: errorCaptures.createdAt,
   usageLogId: errorCaptures.usageLogId,
-  modelName: models.name,
-  apiKeyName: apiKeys.name,
+  modelName: usageLogs.modelName,
+  apiKeyName: usageLogs.apiKeyName,
   isPlayground: usageLogs.isPlayground,
   clientProtocol: usageLogs.clientProtocol,
   httpStatus: usageLogs.httpStatus,
   errorCode: usageLogs.errorCode,
   attemptId: attempts.id,
   providerAccountId: attempts.providerAccountId,
-  providerAccountName: providerAccounts.name,
+  providerAccountName: attempts.providerAccountName,
   providerName: providers.name,
   upstreamStatus: attempts.upstreamStatus,
   failureReason: attempts.failureReason,
@@ -33,18 +30,17 @@ const summaryColumns = {
 
 /**
  * Each capture with its Usage Log and, for a failed Attempt, the Provider
- * Account it went to. Map the rows with `summaryOf`.
+ * Account it went to, by the names copied at request time (ADR 0024). Only the
+ * Provider's display name is looked up, by the slug the Attempt copied; it is
+ * null once that Provider is gone. Map the rows with `summaryOf`.
  */
 export function selectSummaryRows(db: Database) {
   return db
     .select(summaryColumns)
     .from(errorCaptures)
     .innerJoin(usageLogs, eq(usageLogs.id, errorCaptures.usageLogId))
-    .leftJoin(models, eq(models.id, usageLogs.modelId))
-    .leftJoin(apiKeys, eq(apiKeys.id, usageLogs.apiKeyId))
     .leftJoin(attempts, eq(attempts.id, errorCaptures.attemptId))
-    .leftJoin(providerAccounts, eq(providerAccounts.id, attempts.providerAccountId))
-    .leftJoin(providers, eq(providers.id, providerAccounts.providerId));
+    .leftJoin(providers, eq(providers.slug, attempts.providerSlug));
 }
 
 /** A row of `summaryColumns`: the Attempt's columns are null for a client-to-gateway capture. */

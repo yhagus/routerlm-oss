@@ -61,6 +61,7 @@ export class UsageMeter {
   private readonly receivedMs = performance.now();
   private isStreamed = false;
   private modelId: string | null = null;
+  private modelName: string | null = null;
   private errorCode: GatewayErrorCode | null = null;
   private readonly attempts: AttemptRecord[] = [];
   private openAttempt: OpenAttempt | null = null;
@@ -92,8 +93,9 @@ export class UsageMeter {
     this.isStreamed = isStreamed;
   }
 
-  modelResolved(modelId: string): void {
+  modelResolved(modelId: string, modelName: string): void {
     this.modelId = modelId;
+    this.modelName = modelName;
   }
 
   /** `sentServiceTier` is the tier the Attempt asks for, null when it asks for none. */
@@ -117,11 +119,10 @@ export class UsageMeter {
    * an Attempt without an upstream call (no status, no duration), so the
    * Usage Log shows why the account did not serve the request.
    */
-  attemptSkippedAsExhausted({ route, providerAccount }: AttemptTarget): void {
+  attemptSkippedAsExhausted(target: AttemptTarget): void {
     this.attempts.push({
       startedAt: new Date().toISOString(),
-      routeId: route?.id ?? null,
-      providerAccountId: providerAccount.id,
+      ...targetSnapshotOf(target),
       upstreamStatus: null,
       failureReason: "exhausted",
       durationMs: 0,
@@ -134,15 +135,13 @@ export class UsageMeter {
       return;
     }
     this.openAttempt.hasAnswered = true;
-    const { route, upstreamModel, providerAccount } = this.openAttempt.target;
+    const { target } = this.openAttempt;
     const serviceTier = this.openAttempt.sentServiceTier?.tier ?? null;
     this.servedBy = {
-      routeId: route?.id ?? null,
-      upstreamModelId: upstreamModel.id,
-      providerAccountId: providerAccount.id,
+      ...targetSnapshotOf(target),
       serviceTier,
       // Taken now, so a later price edit doesn't change this request's Cost.
-      prices: pricesAtServiceTier(upstreamModel, serviceTier),
+      prices: pricesAtServiceTier(target.upstreamModel, serviceTier),
     };
     if (this.isStreamed) {
       this.timeToFirstTokenMs = elapsedSince(this.receivedMs);
@@ -219,6 +218,7 @@ export class UsageMeter {
       receivedAt: this.receivedAt.toISOString(),
       caller: this.caller,
       modelId: this.modelId,
+      modelName: this.modelName,
       clientProtocol: this.clientProtocol,
       isStreamed: this.isStreamed,
       httpStatus,
@@ -279,14 +279,25 @@ export class UsageMeter {
     const { target, startedAt, startedMs } = this.openAttempt;
     this.attempts.push({
       startedAt: startedAt.toISOString(),
-      routeId: target.route?.id ?? null,
-      providerAccountId: target.providerAccount.id,
+      ...targetSnapshotOf(target),
       upstreamStatus,
       failureReason,
       durationMs: elapsedSince(startedMs),
     });
     this.openAttempt = null;
   }
+}
+
+/** The ids and names of what an Attempt tried, as its records copy them (ADR 0024). */
+function targetSnapshotOf({ route, upstreamModel, providerAccount }: AttemptTarget) {
+  return {
+    routeId: route?.id ?? null,
+    upstreamModelId: upstreamModel.id,
+    upstreamModelName: upstreamModel.upstreamModelId,
+    providerSlug: upstreamModel.provider.slug,
+    providerAccountId: providerAccount.id,
+    providerAccountName: providerAccount.name,
+  } satisfies Partial<AttemptRecord>;
 }
 
 function elapsedSince(startMs: number): number {

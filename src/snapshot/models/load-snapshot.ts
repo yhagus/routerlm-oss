@@ -35,6 +35,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     db
       .select({
         id: apiKeys.id,
+        name: apiKeys.name,
         keyId: apiKeys.keyId,
         hash: apiKeys.hash,
         expiresAt: apiKeys.expiresAt,

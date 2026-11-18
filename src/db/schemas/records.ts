@@ -1,13 +1,13 @@
 import { boolean, index, integer, jsonb, numeric, pgTable, text, uuid } from "drizzle-orm/pg-core";
-import { apiKeys, users } from "./access.js";
 import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
 import { at, createdAt, id } from "./columns.js";
-import { routes, models } from "./routing.js";
-import { providerAccounts } from "./upstream.js";
 
-// Records, written by the worker. Usage Logs and Attempts hold measurements
-// only; any free text or JSON column here would break ADR 0004, and
-// schema.spec.ts fails if one is added. Error Captures are the one exception.
+// Records, written by the worker. Usage Logs and Attempts hold measurements,
+// and a snapshot of what served them (ADR 0024): plain ids with no foreign
+// key, and the names of that configuration as they were at request time, so
+// editing or deleting it never rewrites history. Any other free text or JSON
+// column here would break ADR 0004; tests/usage/records-schema.test.ts fails
+// if one is added. Error Captures are the one exception.
 
 export const CLIENT_PROTOCOLS = ["openai-chat", "anthropic-messages", "openai-responses"] as const;
 export type ClientProtocol = (typeof CLIENT_PROTOCOLS)[number];
@@ -50,18 +50,24 @@ export const usageLogs = pgTable(
     id: id(),
     // When the gateway received the request; the Usage page filters on it.
     createdAt: at("created_at").notNull(),
-    // Exactly one of apiKeyId and userId is set when written: a client
-    // request has an API Key, a Playground request a User. Both become null
-    // if that key or User is deleted; isPlayground keeps the distinction.
-    apiKeyId: uuid("api_key_id").references(() => apiKeys.id, { onDelete: "set null" }),
-    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    // At most one of apiKeyId and userId is set: a client request has an API
+    // Key, a Playground request a User, a request refused before its key was
+    // known neither. Either may point at a row deleted since. A User's name or
+    // email is never copied, so it does not outlive their account.
+    apiKeyId: uuid("api_key_id"),
+    apiKeyName: text("api_key_name"),
+    userId: uuid("user_id"),
     isPlayground: boolean("is_playground").notNull().default(false),
-    modelId: uuid("model_id").references(() => models.id, { onDelete: "set null" }),
-    // The Route and Provider Account that served the request; null if none did.
-    routeId: uuid("route_id").references(() => routes.id, { onDelete: "set null" }),
-    providerAccountId: uuid("provider_account_id").references(() => providerAccounts.id, {
-      onDelete: "set null",
-    }),
+    modelId: uuid("model_id"),
+    modelName: text("model_name"),
+    // What served the request; null if nothing did. A Route has no name.
+    routeId: uuid("route_id"),
+    upstreamModelId: uuid("upstream_model_id"),
+    // As the Provider spells it in requests.
+    upstreamModelName: text("upstream_model_name"),
+    providerSlug: text("provider_slug"),
+    providerAccountId: uuid("provider_account_id"),
+    providerAccountName: text("provider_account_name"),
     clientProtocol: text("client_protocol", { enum: CLIENT_PROTOCOLS }).notNull(),
     isStreamed: boolean("is_streamed").notNull(),
     httpStatus: integer("http_status").notNull(),
@@ -88,6 +94,7 @@ export const usageLogs = pgTable(
     index("usage_logs_created_at_idx").on(table.createdAt),
     index("usage_logs_api_key_id_created_at_idx").on(table.apiKeyId, table.createdAt),
     index("usage_logs_model_id_created_at_idx").on(table.modelId, table.createdAt),
+    index("usage_logs_upstream_model_id_created_at_idx").on(table.upstreamModelId, table.createdAt),
   ],
 );
 
@@ -100,10 +107,16 @@ export const attempts = pgTable(
       .references(() => usageLogs.id, { onDelete: "cascade" }),
     // Orders the Attempts of one request.
     startedAt: at("started_at").notNull(),
-    routeId: uuid("route_id").references(() => routes.id, { onDelete: "set null" }),
-    providerAccountId: uuid("provider_account_id").references(() => providerAccounts.id, {
-      onDelete: "set null",
-    }),
+    // The Usage Log's Model and API Key, and the target this Attempt tried,
+    // copied as the Usage Log copies them.
+    modelName: text("model_name"),
+    apiKeyName: text("api_key_name"),
+    routeId: uuid("route_id"),
+    upstreamModelId: uuid("upstream_model_id"),
+    upstreamModelName: text("upstream_model_name"),
+    providerSlug: text("provider_slug"),
+    providerAccountId: uuid("provider_account_id"),
+    providerAccountName: text("provider_account_name"),
     // Null when no response arrived (timeout or connection error).
     upstreamStatus: integer("upstream_status"),
     // Null for the Attempt that succeeded.

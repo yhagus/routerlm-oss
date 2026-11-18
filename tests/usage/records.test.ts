@@ -5,7 +5,14 @@ import type { Queue } from "bullmq";
 import { asc, eq } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { attempts, upstreamModels, usageLogs } from "@/db/schemas/index.js";
+import {
+  apiKeys,
+  attempts,
+  errorCaptures,
+  upstreamModels,
+  usageLogs,
+  users,
+} from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
 import {
@@ -13,6 +20,7 @@ import {
   insertApiKey,
   insertOpenAiChatModel,
   setProviderQuirks,
+  UPSTREAM_MODEL_ID,
 } from "../support/inference.js";
 import { portOf } from "../support/port-of.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
@@ -416,6 +424,190 @@ describe("Usage Logs and Attempts (e2e)", () => {
       httpStatus: 401,
       errorCode: "invalid_api_key",
       clientProtocol: "openai-chat",
+    });
+  });
+
+  describe("as a snapshot of what served the request", () => {
+    let cookie: string;
+
+    beforeEach(async () => {
+      cookie = await setUpFirstUser(app, { email: "ops@example.com", password: "ops password" });
+    });
+
+    function dashboard() {
+      return request(app.getHttpServer());
+    }
+
+    /** Waits until the worker wrote `count` Usage Logs, and returns them oldest first. */
+    async function writtenUsageLogs(count: number) {
+      const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
+      while (Date.now() < deadline) {
+        const written = await db.select().from(usageLogs).orderBy(asc(usageLogs.createdAt));
+        if (written.length === count) {
+          return written;
+        }
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      }
+      throw new Error(`The worker did not write ${count} Usage Logs`);
+    }
+
+    function upstreamAnswers(): void {
+      upstream.reply({
+        kind: "json",
+        status: 200,
+        body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      });
+    }
+
+    it("copies the names of what served it onto the Usage Log and each Attempt", async () => {
+      const secondAccountId = await addProviderAccount(app, db, providerId, {
+        key: "sk-second-account",
+        priority: 1,
+      });
+      upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+      upstreamAnswers();
+
+      await chat(CHAT_REQUEST).expect(200);
+
+      const written = await writtenUsageLog();
+      expect(written.usageLog).toMatchObject({
+        modelName: "smart",
+        apiKeyName: "client",
+        upstreamModelId,
+        upstreamModelName: UPSTREAM_MODEL_ID,
+        providerSlug: "acme-smart",
+        providerAccountId: secondAccountId,
+        providerAccountName: "account 1",
+      });
+      expect(written.attempts).toEqual([
+        expect.objectContaining({
+          modelName: "smart",
+          apiKeyName: "client",
+          upstreamModelId,
+          upstreamModelName: UPSTREAM_MODEL_ID,
+          providerSlug: "acme-smart",
+          providerAccountId: firstAccountId,
+          providerAccountName: "main",
+        }),
+        expect.objectContaining({
+          providerAccountId: secondAccountId,
+          providerAccountName: "account 1",
+        }),
+      ]);
+    });
+
+    it("keeps its ids and names after the API Key, Model, Route and Provider Account are deleted", async () => {
+      upstreamAnswers();
+      await chat(CHAT_REQUEST).expect(200);
+      const before = await writtenUsageLog();
+
+      await dashboard()
+        .delete(`/api/models/${modelId}/routes/${routeId}`)
+        .set("Cookie", cookie)
+        .expect(204);
+      await dashboard().delete(`/api/models/${modelId}`).set("Cookie", cookie).expect(204);
+      await dashboard()
+        .delete(`/api/provider-accounts/${firstAccountId}`)
+        .set("Cookie", cookie)
+        .expect(204);
+      await db.delete(apiKeys).where(eq(apiKeys.id, apiKeyId));
+
+      const after = await writtenUsageLog();
+      expect(after.usageLog).toEqual(before.usageLog);
+      expect(after.usageLog).toMatchObject({
+        apiKeyId,
+        apiKeyName: "client",
+        modelId,
+        modelName: "smart",
+        routeId,
+        providerAccountId: firstAccountId,
+        providerAccountName: "main",
+      });
+      expect(after.attempts).toEqual(before.attempts);
+    });
+
+    it("keeps the earlier names after the Model and API Key are renamed, and still finds them by id", async () => {
+      upstreamAnswers();
+      await chat(CHAT_REQUEST).expect(200);
+      await writtenUsageLogs(1);
+      await dashboard()
+        .patch(`/api/models/${modelId}`)
+        .set("Cookie", cookie)
+        .send({ name: "clever" })
+        .expect(200);
+      await db.update(apiKeys).set({ name: "renamed" }).where(eq(apiKeys.id, apiKeyId));
+      await app.get(SnapshotService).changed();
+      upstreamAnswers();
+
+      await chat({ ...CHAT_REQUEST, model: "clever" }).expect(200);
+
+      const [earlier, later] = await writtenUsageLogs(2);
+      expect(earlier).toMatchObject({ modelName: "smart", apiKeyName: "client" });
+      expect(later).toMatchObject({ modelName: "clever", apiKeyName: "renamed" });
+      const listed = await dashboard()
+        .get(`/api/usage?modelId=${modelId}&apiKeyId=${apiKeyId}`)
+        .set("Cookie", cookie)
+        .expect(200);
+      expect(listed.body.items).toEqual([
+        expect.objectContaining({ modelName: "clever", apiKeyName: "renamed" }),
+        expect.objectContaining({ modelName: "smart", apiKeyName: "client" }),
+      ]);
+    });
+
+    it("keeps the Upstream Model that served it after the Route is pointed at another", async () => {
+      const [{ id: otherUpstreamModelId }] = await db
+        .insert(upstreamModels)
+        .values({ providerId, upstreamModelId: "acme-small-2026", contextSize: 128_000 })
+        .returning({ id: upstreamModels.id });
+      upstreamAnswers();
+      await chat(CHAT_REQUEST).expect(200);
+      await writtenUsageLogs(1);
+
+      await dashboard()
+        .patch(`/api/models/${modelId}/routes/${routeId}`)
+        .set("Cookie", cookie)
+        .send({ upstreamModelId: otherUpstreamModelId })
+        .expect(200);
+
+      const [usageLog] = await writtenUsageLogs(1);
+      expect(usageLog).toMatchObject({ upstreamModelId, upstreamModelName: UPSTREAM_MODEL_ID });
+    });
+
+    it("keeps only the User's id for a Playground request", async () => {
+      upstream.reply({
+        kind: "stream",
+        events: openAiChatFixture("upstream-stream-tool-call.sse"),
+      });
+
+      await dashboard()
+        .post("/api/playground/chat/completions")
+        .set("Cookie", cookie)
+        .send({ ...CHAT_REQUEST, stream: true })
+        .expect(200);
+
+      const [usageLog] = await writtenUsageLogs(1);
+      const [ops] = await db.select({ id: users.id }).from(users);
+      expect(usageLog).toMatchObject({
+        userId: ops.id,
+        isPlayground: true,
+        apiKeyId: null,
+        apiKeyName: null,
+        modelName: "smart",
+      });
+    });
+
+    it("deletes its Attempts and Error Captures with it", async () => {
+      await addProviderAccount(app, db, providerId, { key: "sk-second-account", priority: 1 });
+      upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+      upstreamAnswers();
+      await chat(CHAT_REQUEST).expect(200);
+      await writtenUsageLog();
+      expect(await db.select().from(errorCaptures)).toHaveLength(1);
+
+      await db.delete(usageLogs);
+
+      expect(await db.select().from(attempts)).toEqual([]);
+      expect(await db.select().from(errorCaptures)).toEqual([]);
     });
   });
 

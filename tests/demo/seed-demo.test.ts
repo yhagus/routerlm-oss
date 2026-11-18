@@ -1,13 +1,13 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import type { NestNodeApplication } from "@nestjs/platform-node";
-import { count } from "drizzle-orm";
+import { and, count, eq, isNotNull, isNull, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import request from "supertest";
 import { type Database, relations } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
+import { attempts, usageLogs } from "@/db/schemas/index.js";
 import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
 import { MIGRATIONS_FOLDER } from "../support/migrations.js";
 import { createTestApp, sessionCookieOf } from "../support/test-app.js";
@@ -64,6 +64,44 @@ describe("db:seed:demo script (e2e)", () => {
     },
     2 * SEED_TIMEOUT_MS,
   );
+
+  it("copies what served each request onto its Usage Log and Attempts", async () => {
+    const servedWithoutSnapshot = await db
+      .select({ id: usageLogs.id })
+      .from(usageLogs)
+      .where(
+        and(
+          eq(usageLogs.httpStatus, 200),
+          or(
+            isNull(usageLogs.modelName),
+            isNull(usageLogs.upstreamModelId),
+            isNull(usageLogs.upstreamModelName),
+            isNull(usageLogs.providerSlug),
+            isNull(usageLogs.providerAccountName),
+          ),
+        ),
+      );
+    const clientRequestsWithoutKeyName = await db
+      .select({ id: usageLogs.id })
+      .from(usageLogs)
+      .where(and(isNotNull(usageLogs.apiKeyId), isNull(usageLogs.apiKeyName)));
+    const attemptsWithoutSnapshot = await db
+      .select({ id: attempts.id })
+      .from(attempts)
+      .where(
+        or(
+          isNull(attempts.modelName),
+          isNull(attempts.upstreamModelId),
+          isNull(attempts.upstreamModelName),
+          isNull(attempts.providerSlug),
+          isNull(attempts.providerAccountName),
+        ),
+      );
+
+    expect(servedWithoutSnapshot).toEqual([]);
+    expect(clientRequestsWithoutKeyName).toEqual([]);
+    expect(attemptsWithoutSnapshot).toEqual([]);
+  });
 
   it("signs the demo User in to an Overview with a week of traffic", async () => {
     ({ app } = await createTestApp(db));

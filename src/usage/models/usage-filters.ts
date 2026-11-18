@@ -1,7 +1,6 @@
 import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
-import { QueryBuilder } from "drizzle-orm/pg-core";
 import { z } from "zod";
-import { apiKeys, models, usageLogs } from "@/db/schemas/index.js";
+import { usageLogs } from "@/db/schemas/index.js";
 import type { UsageFilter, UsageStatus } from "../schemas/usage.schema.js";
 
 const FIRST_ERROR_STATUS = 400;
@@ -29,20 +28,13 @@ function searchCondition(text: string): SQL | undefined {
 
 /**
  * The Usage Logs whose Model name, API Key name or error code contains `text`, ignoring
- * case. Subselects rather than joins, so it works in queries that don't join those tables.
+ * case. The names are the ones copied at request time (ADR 0024).
  */
 export function namesOrErrorCodeContain(text: string): SQL | undefined {
   const pattern = `%${escapeLikeWildcards(text)}%`;
-  const queryBuilder = new QueryBuilder();
   return or(
-    inArray(
-      usageLogs.modelId,
-      queryBuilder.select({ id: models.id }).from(models).where(ilike(models.name, pattern)),
-    ),
-    inArray(
-      usageLogs.apiKeyId,
-      queryBuilder.select({ id: apiKeys.id }).from(apiKeys).where(ilike(apiKeys.name, pattern)),
-    ),
+    ilike(usageLogs.modelName, pattern),
+    ilike(usageLogs.apiKeyName, pattern),
     ilike(usageLogs.errorCode, pattern),
   );
 }

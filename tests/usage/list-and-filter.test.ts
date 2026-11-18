@@ -8,6 +8,9 @@ import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-a
 const ADA = { email: "ada@example.com", password: "ada's password" };
 
 type NewUsageLog = typeof usageLogs.$inferInsert;
+/** A Model's or API Key's id with the name a Usage Log copies of it (ADR 0024). */
+type ModelColumns = Pick<NewUsageLog, "modelId" | "modelName">;
+type ApiKeyColumns = Pick<NewUsageLog, "apiKeyId" | "apiKeyName">;
 
 const SERVED_REQUEST: Omit<NewUsageLog, "createdAt"> = {
   clientProtocol: "openai-chat",
@@ -32,6 +35,10 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
   let fastId: string;
   let ciKeyId: string;
   let laptopKeyId: string;
+  let smart: ModelColumns;
+  let fast: ModelColumns;
+  let ci: ApiKeyColumns;
+  let laptop: ApiKeyColumns;
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -52,6 +59,10 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
         { name: "Laptop", keyId: "laptop", hash: "hash-laptop" },
       ])
       .returning({ id: apiKeys.id });
+    smart = { modelId: smartId, modelName: "smart" };
+    fast = { modelId: fastId, modelName: "fast" };
+    ci = { apiKeyId: ciKeyId, apiKeyName: "CI" };
+    laptop = { apiKeyId: laptopKeyId, apiKeyName: "Laptop" };
   });
 
   afterAll(async () => {
@@ -64,14 +75,14 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
 
   it("lists Usage Logs newest first, one page at a time, with Model and API Key names", async () => {
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt: new Date("2026-11-01T10:00:00Z"), modelId: smartId },
+      { ...SERVED_REQUEST, createdAt: new Date("2026-11-01T10:00:00Z"), ...smart },
       {
         ...SERVED_REQUEST,
         createdAt: new Date("2026-11-01T11:00:00Z"),
-        modelId: fastId,
-        apiKeyId: ciKeyId,
+        ...fast,
+        ...ci,
       },
-      { ...SERVED_REQUEST, createdAt: new Date("2026-11-01T12:00:00Z"), modelId: smartId },
+      { ...SERVED_REQUEST, createdAt: new Date("2026-11-01T12:00:00Z"), ...smart },
     ]);
 
     const firstPage = await getUsage("?pageSize=2").expect(200);
@@ -94,29 +105,29 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
   it("filters by time range, Model, API Key and status", async () => {
     const inRange = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt: inRange, modelId: smartId, apiKeyId: ciKeyId },
+      { ...SERVED_REQUEST, createdAt: inRange, ...smart, ...ci },
       {
         ...SERVED_REQUEST,
         createdAt: inRange,
-        modelId: smartId,
-        apiKeyId: ciKeyId,
+        ...smart,
+        ...ci,
         httpStatus: 502,
         errorCode: "upstream_error",
       },
       {
         ...SERVED_REQUEST,
         createdAt: inRange,
-        modelId: smartId,
-        apiKeyId: ciKeyId,
+        ...smart,
+        ...ci,
         isCancelled: true,
       },
-      { ...SERVED_REQUEST, createdAt: inRange, modelId: fastId, apiKeyId: ciKeyId },
-      { ...SERVED_REQUEST, createdAt: inRange, modelId: smartId, apiKeyId: laptopKeyId },
+      { ...SERVED_REQUEST, createdAt: inRange, ...fast, ...ci },
+      { ...SERVED_REQUEST, createdAt: inRange, ...smart, ...laptop },
       {
         ...SERVED_REQUEST,
         createdAt: new Date("2026-11-05T10:00:00Z"),
-        modelId: smartId,
-        apiKeyId: ciKeyId,
+        ...smart,
+        ...ci,
       },
     ]);
     const filters =
@@ -138,8 +149,8 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
     const [{ id: adaId }] = await db.select({ id: users.id }).from(users);
     const createdAt = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId },
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, userId: adaId, isPlayground: true },
+      { ...SERVED_REQUEST, createdAt, ...smart, ...ci },
+      { ...SERVED_REQUEST, createdAt, ...smart, userId: adaId, isPlayground: true },
     ]);
 
     const response = await getUsage("?isPlayground=true").expect(200);
@@ -152,9 +163,9 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
   it("filters on the served Service Tier, in the list and its totals", async () => {
     const createdAt = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, serviceTier: "fast" },
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, serviceTier: "flex" },
-      { ...SERVED_REQUEST, createdAt, modelId: smartId },
+      { ...SERVED_REQUEST, createdAt, ...smart, serviceTier: "fast" },
+      { ...SERVED_REQUEST, createdAt, ...smart, serviceTier: "flex" },
+      { ...SERVED_REQUEST, createdAt, ...smart },
     ]);
 
     const response = await getUsage("?serviceTier=fast").expect(200);
@@ -171,10 +182,10 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
       .returning({ id: models.id });
     const createdAt = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, httpStatus: 502 },
-      { ...SERVED_REQUEST, createdAt, modelId: fastId, isCancelled: true },
-      { ...SERVED_REQUEST, createdAt, modelId: fastId },
-      { ...SERVED_REQUEST, createdAt, modelId: cheapId, httpStatus: 502 },
+      { ...SERVED_REQUEST, createdAt, ...smart, httpStatus: 502 },
+      { ...SERVED_REQUEST, createdAt, ...fast, isCancelled: true },
+      { ...SERVED_REQUEST, createdAt, ...fast },
+      { ...SERVED_REQUEST, createdAt, modelId: cheapId, modelName: "cheap", httpStatus: 502 },
     ]);
 
     const response = await getUsage(`?modelId=${smartId},${fastId}&status=failed,cancelled`).expect(
@@ -200,13 +211,13 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
   it("searches Model names, API Key names and error codes, ignoring case", async () => {
     const createdAt = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId },
-      { ...SERVED_REQUEST, createdAt, modelId: fastId, apiKeyId: laptopKeyId },
+      { ...SERVED_REQUEST, createdAt, ...smart, ...ci },
+      { ...SERVED_REQUEST, createdAt, ...fast, ...laptop },
       {
         ...SERVED_REQUEST,
         createdAt,
-        modelId: fastId,
-        apiKeyId: ciKeyId,
+        ...fast,
+        ...ci,
         httpStatus: 504,
         errorCode: "upstream_timeout",
       },
@@ -228,8 +239,8 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
     const [{ id }] = await db
       .insert(usageLogs)
       .values([
-        { ...SERVED_REQUEST, createdAt, modelId: smartId },
-        { ...SERVED_REQUEST, createdAt, modelId: fastId },
+        { ...SERVED_REQUEST, createdAt, ...smart },
+        { ...SERVED_REQUEST, createdAt, ...fast },
       ])
       .returning({ id: usageLogs.id });
 
@@ -245,10 +256,10 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
       .returning({ id: models.id });
     const createdAt = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt, modelId: underscoredId },
-      { ...SERVED_REQUEST, createdAt, modelId: percentId },
-      { ...SERVED_REQUEST, createdAt, modelId: backslashId },
-      { ...SERVED_REQUEST, createdAt, modelId: smartId },
+      { ...SERVED_REQUEST, createdAt, modelId: underscoredId, modelName: "gpt_4" },
+      { ...SERVED_REQUEST, createdAt, modelId: percentId, modelName: "50%off" },
+      { ...SERVED_REQUEST, createdAt, modelId: backslashId, modelName: "a\\b" },
+      { ...SERVED_REQUEST, createdAt, ...smart },
     ]);
 
     const underscore = await getUsage("?q=_").expect(200);
@@ -263,9 +274,9 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
   it("combines the search with the other filters, in the list and its totals", async () => {
     const createdAt = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId },
-      { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId, httpStatus: 502 },
-      { ...SERVED_REQUEST, createdAt, modelId: fastId, apiKeyId: ciKeyId, httpStatus: 502 },
+      { ...SERVED_REQUEST, createdAt, ...smart, ...ci },
+      { ...SERVED_REQUEST, createdAt, ...smart, ...ci, httpStatus: 502 },
+      { ...SERVED_REQUEST, createdAt, ...fast, ...ci, httpStatus: 502 },
     ]);
 
     const response = await getUsage("?q=smart&status=failed").expect(200);

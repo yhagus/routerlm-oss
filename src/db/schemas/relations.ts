@@ -14,7 +14,6 @@ export const relations = defineRelations(schema, (r) => ({
   },
   apiKeys: {
     createdBy: r.one.users({ from: r.apiKeys.createdById, to: r.users.id }),
-    usageLogs: r.many.usageLogs(),
   },
   providers: {
     providerAccounts: r.many.providerAccounts(),
@@ -55,24 +54,11 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
   usageLogs: {
-    apiKey: r.one.apiKeys({ from: r.usageLogs.apiKeyId, to: r.apiKeys.id }),
-    user: r.one.users({ from: r.usageLogs.userId, to: r.users.id }),
-    model: r.one.models({ from: r.usageLogs.modelId, to: r.models.id }),
-    route: r.one.routes({ from: r.usageLogs.routeId, to: r.routes.id }),
-    providerAccount: r.one.providerAccounts({
-      from: r.usageLogs.providerAccountId,
-      to: r.providerAccounts.id,
-    }),
     attempts: r.many.attempts(),
     errorCaptures: r.many.errorCaptures(),
   },
   attempts: {
     usageLog: r.one.usageLogs({ from: r.attempts.usageLogId, to: r.usageLogs.id, optional: false }),
-    route: r.one.routes({ from: r.attempts.routeId, to: r.routes.id }),
-    providerAccount: r.one.providerAccounts({
-      from: r.attempts.providerAccountId,
-      to: r.providerAccounts.id,
-    }),
   },
   errorCaptures: {
     usageLog: r.one.usageLogs({

@@ -35,6 +35,7 @@ import {
   generateDemoTraffic,
   type TrafficCaller,
   type TrafficModel,
+  type TrafficProviderAccount,
 } from "../../models/demo-traffic.js";
 import { DemoApiKeyGenerator } from "../../providers/demo-api-key-generator.js";
 import { SeedDemoCommand, type SeedDemoResult } from "../impl/seed-demo.command.js";
@@ -58,8 +59,8 @@ const APP_TABLES: PgTable[] = [
 // Keeps each insert well under PostgreSQL's 65,535 bind parameters.
 const INSERT_BATCH_SIZE = 500;
 
-/** Provider Account ids per Provider slug, in priority order. */
-type AccountsBySlug = ReadonlyMap<string, string[]>;
+/** Provider Accounts per Provider slug, in priority order. */
+type AccountsBySlug = ReadonlyMap<string, TrafficProviderAccount[]>;
 
 @CommandHandler(SeedDemoCommand)
 export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
@@ -111,7 +112,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
   private async createProviderAccounts(now: Date): Promise<AccountsBySlug> {
     const providerIds = await this.providerIdsBySlug();
     const quotaSlugs = new Set(DEMO_QUOTA_METERS.map((meter) => meter.providerSlug));
-    const accountsBySlug = new Map<string, string[]>();
+    const accountsBySlug = new Map<string, TrafficProviderAccount[]>();
     for (const account of DEMO_PROVIDER_ACCOUNTS) {
       const [created] = await this.db
         .insert(providerAccounts)
@@ -122,9 +123,9 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
           ...storedKey(this.keyCipher, account.key),
           quotaCheckedAt: quotaSlugs.has(account.providerSlug) ? now : null,
         })
-        .returning({ id: providerAccounts.id });
+        .returning({ id: providerAccounts.id, name: providerAccounts.name });
       const siblings = accountsBySlug.get(account.providerSlug) ?? [];
-      accountsBySlug.set(account.providerSlug, [...siblings, created.id]);
+      accountsBySlug.set(account.providerSlug, [...siblings, created]);
     }
     return accountsBySlug;
   }
@@ -133,7 +134,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
     await this.db.insert(quotaMeters).values(
       DEMO_QUOTA_METERS.flatMap((meter) =>
         requireValue(accountsBySlug, meter.providerSlug, "Provider Account").map(
-          (providerAccountId) => ({
+          ({ id: providerAccountId }) => ({
             providerAccountId,
             key: meter.key,
             label: meter.label,
@@ -191,12 +192,14 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
           routeId: created.id,
           upstreamModelRowId: upstreamModel.id,
           upstreamModelName: upstreamModel.upstreamModelId,
+          providerSlug: route.providerSlug,
           prices: upstreamModel,
-          providerAccountIds: requireValue(accountsBySlug, route.providerSlug, "Provider Account"),
+          providerAccounts: requireValue(accountsBySlug, route.providerSlug, "Provider Account"),
         });
       }
       trafficModels.set(demoModel.name, {
         modelId: model.id,
+        modelName: demoModel.name,
         profile: demoModel.profile,
         routes: trafficRoutes,
       });
@@ -217,7 +220,10 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
         .insert(apiKeys)
         .values({ name: caller.apiKeyName, keyId, hash, createdById: userId })
         .returning({ id: apiKeys.id });
-      callers.push({ source: { kind: "api-key", apiKeyId: created.id }, caller });
+      callers.push({
+        source: { kind: "api-key", apiKeyId: created.id, apiKeyName: caller.apiKeyName },
+        caller,
+      });
     }
     return callers;
   }

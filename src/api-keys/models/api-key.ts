@@ -38,6 +38,8 @@ export interface CreatedApiKey extends ApiKeySummary {
 export interface ApiKeyPrincipal {
   /** The `api_keys` row id (not the public key id), as Usage Logs reference it. */
   apiKeyId: string;
+  /** As named when the snapshot was loaded, for the request's Usage Log. */
+  apiKeyName: string;
   /** Empty means every Model. */
   allowedModelIds: string[];
 }

@@ -16,6 +16,7 @@ import type { ServiceTier } from "@/inference/models/internal-format.js";
 export interface SnapshotApiKey {
   /** The `api_keys` row id. */
   id: string;
+  name: string;
   hash: string;
   expiresAt: Date | null;
   /** Empty means every Model. */

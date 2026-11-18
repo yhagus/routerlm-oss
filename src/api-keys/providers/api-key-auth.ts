@@ -35,7 +35,7 @@ export class ApiKeyAuth extends ApiKeyProvider<ApiKeyPrincipal> {
     return {
       hash: found.hash,
       expiresAt: found.expiresAt,
-      user: { apiKeyId: found.id, allowedModelIds: found.allowedModelIds },
+      user: { apiKeyId: found.id, apiKeyName: found.name, allowedModelIds: found.allowedModelIds },
     };
   }
 }

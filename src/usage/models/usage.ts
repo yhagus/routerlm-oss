@@ -1,7 +1,11 @@
 import type { ClientProtocol, GatewayErrorCode } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
 
-/** A Usage Log as the Usage page lists it. Names are null once the Model or API Key is deleted. */
+/**
+ * A Usage Log as the Usage page lists it. Names are as they were at request
+ * time, and stay after the Model or API Key is renamed or deleted (ADR 0024).
+ * They are null when there was none, or for rows written before names were copied.
+ */
 export interface UsageLogSummary {
   id: string;
   createdAt: Date;
