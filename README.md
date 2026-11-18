@@ -107,6 +107,7 @@ Set these in the `.env` next to `compose.yaml` (see [deploy/.env.example](deploy
 | `ROUTERLM_VERSION`              | the release's version     | The image version to run.                                    |
 | `WEB_ORIGIN`                    | `http://localhost:3001`   | The dashboard's public URL.                                  |
 | `SNAPSHOT_RELOAD_INTERVAL_MS`   | `30000`                   | How often each backend instance reloads its snapshot (ms).   |
+| `ALLOW_PRIVATE_UPSTREAMS`       | `false`                   | Set `true` to allow http and private Provider URLs (LAN upstreams). |
 | `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.              |
 | `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports.                                                  |
 | `POSTGRES_USER` / `POSTGRES_DB` | `routerlm`                | Postgres uses them only when it first creates the db volume. |
