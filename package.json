@@ -50,6 +50,7 @@
     "@nestjs/platform-node": "^12.5.0",
     "@nestjs/schedule": "12.0.4",
     "@nestjs/terminus": "12.2.0",
+    "@nestjs/throttler": "6.8.0",
     "bullmq": "6.7.6",
     "drizzle-orm": "^1.0.0-rc.5",
     "ioredis": "6.0.0",

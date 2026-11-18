@@ -17,6 +17,9 @@ export const envSchema = z.object({
     .refine((value) => Buffer.from(value, "base64").length === ENCRYPTION_KEY_BYTES, {
       error: ENCRYPTION_KEY_HELP,
     }),
+  // Proxies whose X-Forwarded-For is believed: `true`, or addresses and subnets such as
+  // `loopback` or `10.0.0.0/8`, comma-separated. Unset: the socket address is the client IP.
+  TRUST_PROXY: z.string().optional(),
   // Spec "Records": the worker deletes Error Captures older than this.
   ERROR_CAPTURE_RETENTION_DAYS: z.coerce.number().int().positive().default(7),
   // ADR 0020: every instance reloads its snapshot this often, which bounds how

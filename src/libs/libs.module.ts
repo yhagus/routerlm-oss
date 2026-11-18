@@ -1,6 +1,27 @@
 import { Global, Module } from "@nestjs/common";
+import { minutes, ThrottlerModule } from "@nestjs/throttler";
+import { RedisConnection } from "@/redis/providers/redis-connection.js";
+import { RedisModule } from "@/redis/redis.module.js";
+import { RedisThrottlerStorage } from "./providers/redis-throttler-storage.js";
+
+/** Login attempts allowed per client IP per minute (ADR 0021). */
+const LOGINS_PER_MINUTE = 10;
 
 // Shared injectables that belong to no module's domain are registered and exported here.
 @Global()
-@Module({ providers: [], exports: [] })
+@Module({
+  imports: [
+    RedisModule,
+    ThrottlerModule.forRootAsync({
+      imports: [RedisModule],
+      inject: [RedisConnection],
+      useFactory: (redis: RedisConnection) => ({
+        throttlers: [{ ttl: minutes(1), limit: LOGINS_PER_MINUTE }],
+        storage: new RedisThrottlerStorage(redis),
+      }),
+    }),
+  ],
+  providers: [],
+  exports: [ThrottlerModule],
+})
 export class LibsModule {}
