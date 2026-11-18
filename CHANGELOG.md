@@ -1,3 +1,9 @@
+# Unreleased
+
+## Upgrade
+
+- **Behaviour change:** Provider URLs (`baseUrl`, `quotaBaseUrl` and the OAuth login hosts and issuer) must now be https and must not point at localhost, loopback, private or link-local addresses, in Catalog files and in the dashboard. Self-hosters with a LAN upstream, such as Ollama or vLLM, must set `ALLOW_PRIVATE_UPSTREAMS=true` in `.env`. A stored URL that no longer passes is not rewritten.
+
 # v3.2.0 (2026-11-18)
 
 ## Upgrade

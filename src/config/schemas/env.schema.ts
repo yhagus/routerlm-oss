@@ -25,6 +25,8 @@ export const envSchema = z.object({
   MODELS_DEV_API_URL: z.url().default("https://models.dev/api.json"),
   // How long reading models.dev may take before the Catalog Gaps report comes back empty.
   MODELS_DEV_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  // Lets Provider URLs be http and point at localhost, private or link-local hosts (ADR 0019).
+  ALLOW_PRIVATE_UPSTREAMS: z.stringbool().default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;
