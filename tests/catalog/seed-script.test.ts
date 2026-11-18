@@ -55,6 +55,7 @@ describe("db:seed script (e2e)", () => {
         "openai-codex",
         "opencode-go",
         "xiaomi-mimo",
+        "xiaomi-mimo-token-plan",
       ]);
     },
     SEED_TIMEOUT_MS,
