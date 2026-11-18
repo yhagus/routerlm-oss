@@ -1,3 +1,9 @@
+# Unreleased
+
+## Security
+
+- Every backend instance reloads its snapshot from the database every 30 seconds (`SNAPSHOT_RELOAD_INTERVAL_MS`), and retries a failed reload after a change. A revoked API Key or a disabled Provider now stops working on every instance within that interval, even when the change notice was lost or Redis was down.
+
 # v3.2.0 (2026-11-18)
 
 ## Upgrade
