@@ -108,13 +108,15 @@ export const attempts = pgTable(
     // Orders the Attempts of one request.
     startedAt: at("started_at").notNull(),
     // The Usage Log's Model and API Key, and the target this Attempt tried,
-    // copied as the Usage Log copies them.
+    // copied as the Usage Log copies them, plus the Provider's display name
+    // for the Error Captures list.
     modelName: text("model_name"),
     apiKeyName: text("api_key_name"),
     routeId: uuid("route_id"),
     upstreamModelId: uuid("upstream_model_id"),
     upstreamModelName: text("upstream_model_name"),
     providerSlug: text("provider_slug"),
+    providerName: text("provider_name"),
     providerAccountId: uuid("provider_account_id"),
     providerAccountName: text("provider_account_name"),
     // Null when no response arrived (timeout or connection error).

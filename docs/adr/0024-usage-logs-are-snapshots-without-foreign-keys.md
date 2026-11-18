@@ -2,7 +2,7 @@
 
 A Usage Log answers "what happened then", so editing or deleting configuration must not rewrite it. Before this, `usage_logs` and `attempts` referenced API Keys, Users, Models, Routes and Provider Accounts through foreign keys with `ON DELETE SET NULL`. Deleting a Provider Account blanked its history, and since a row showed live names through joins, renaming a Model changed what old rows said.
 
-We decided that Usage Logs and Attempts keep those references as plain indexed uuids with no foreign key, and copy the names they display at request time: the Model's name, the Upstream Model's id and name as the Provider spells it, the Provider's slug, the Provider Account's id and name, and the API Key's name. A Route has no name and stays a bare id. The Usage page reads only these copies and filters by id, never joining to configuration tables.
+We decided that Usage Logs and Attempts keep those references as plain indexed uuids with no foreign key, and copy the names they display at request time: the Model's name, the Upstream Model's id and name as the Provider spells it, the Provider's slug, the Provider Account's id and name, and the API Key's name; each Attempt also copies the Provider's name, which the Error Captures list shows. A Route has no name and stays a bare id. The Usage page reads only these copies and filters by id, never joining to configuration tables.
 
 Users are the exception: a Playground row keeps only `user_id`, and the page shows "deleted user" once the User is gone, so a person's email does not outlive their account.
 

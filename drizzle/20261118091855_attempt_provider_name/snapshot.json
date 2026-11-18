@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "043f61c2-f9b3-4721-81a2-2a052273bf69",
+  "prevIds": [
+    "df150022-1612-42b7-af30-f8cb22a56583"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "provider_name"
+      ],
+      "writes": [
+        "s|col|public.attempts.provider_name",
+        "n|col|public.attempts.provider_name",
+        "e|col|public.attempts.provider_name"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "provider_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

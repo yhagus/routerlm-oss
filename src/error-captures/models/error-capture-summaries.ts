@@ -4,7 +4,6 @@ import {
   type RecordedAttemptFailure,
   attempts,
   errorCaptures,
-  providers,
   usageLogs,
 } from "@/db/schemas/index.js";
 import type { ErrorCaptureSummary, FailedHop } from "./error-capture.js";
@@ -23,24 +22,22 @@ const summaryColumns = {
   attemptId: attempts.id,
   providerAccountId: attempts.providerAccountId,
   providerAccountName: attempts.providerAccountName,
-  providerName: providers.name,
+  providerName: attempts.providerName,
   upstreamStatus: attempts.upstreamStatus,
   failureReason: attempts.failureReason,
 };
 
 /**
  * Each capture with its Usage Log and, for a failed Attempt, the Provider
- * Account it went to, by the names copied at request time (ADR 0024). Only the
- * Provider's display name is looked up, by the slug the Attempt copied; it is
- * null once that Provider is gone. Map the rows with `summaryOf`.
+ * Account it went to, by the names copied at request time (ADR 0024). Map the
+ * rows with `summaryOf`.
  */
 export function selectSummaryRows(db: Database) {
   return db
     .select(summaryColumns)
     .from(errorCaptures)
     .innerJoin(usageLogs, eq(usageLogs.id, errorCaptures.usageLogId))
-    .leftJoin(attempts, eq(attempts.id, errorCaptures.attemptId))
-    .leftJoin(providers, eq(providers.slug, attempts.providerSlug));
+    .leftJoin(attempts, eq(attempts.id, errorCaptures.attemptId));
 }
 
 /** A row of `summaryColumns`: the Attempt's columns are null for a client-to-gateway capture. */

@@ -41,6 +41,8 @@ export interface SnapshotProviderAccount {
 export interface SnapshotProvider {
   id: string;
   slug: string;
+  /** The display name, which Attempts copy for the Error Captures list. */
+  name: string;
   protocol: UpstreamProtocol;
   baseUrl: string;
   authStyle: AuthStyle;

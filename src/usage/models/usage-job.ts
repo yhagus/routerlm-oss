@@ -13,8 +13,12 @@ export const RECORD_USAGE_JOB = "record";
  * Key was known (a bad key, or a body that could not be read).
  */
 export type UsageCaller =
-  /** `apiKeyName` is missing in jobs queued before Usage Logs copied names (ADR 0024). */
-  | { kind: "api-key"; apiKeyId: string; apiKeyName?: string }
+  | {
+      kind: "api-key";
+      apiKeyId: string;
+      /** Always set now; optional only for jobs queued before Usage Logs copied names (ADR 0024). */
+      apiKeyName?: string;
+    }
   | { kind: "playground"; userId: string }
   | { kind: "unidentified" };
 
@@ -26,18 +30,45 @@ export interface UpstreamModelPrices {
   cacheWritePrice: number | null;
 }
 
-/** The Route, Upstream Model and Provider Account whose Attempt answered the request. */
-export interface ServedBy {
+/**
+ * What an Attempt tried, and so what served a request: the ids and the names
+ * its records copy at request time (ADR 0024).
+ */
+export interface ServingTarget {
   /** Null for a direct Upstream Model test, which goes through no Route. */
   routeId: string | null;
   /** The `upstream_models` row id. */
   upstreamModelId: string;
-  providerAccountId: string;
-  // The names below are missing in jobs queued before Usage Logs copied them (ADR 0024).
   /** The model name as the Provider spells it in requests. */
-  upstreamModelName?: string;
-  providerSlug?: string;
-  providerAccountName?: string;
+  upstreamModelName: string;
+  providerSlug: string;
+  /** The Provider's display name. */
+  providerName: string;
+  providerAccountId: string;
+  providerAccountName: string;
+}
+
+/**
+ * A ServingTarget as a job carries it. Jobs queued before Usage Logs copied
+ * names (ADR 0024) lack all but the Route and Provider Account ids, and jobs
+ * queued before Attempts copied the Provider's name lack `providerName`. The
+ * writer turns what is missing into null in one place.
+ */
+export type QueuedServingTarget = Pick<ServingTarget, "routeId" | "providerAccountId"> &
+  Partial<Omit<ServingTarget, "routeId" | "providerAccountId">>;
+
+/** The request's names that every Attempt copies from its Usage Log (ADR 0024). */
+export interface RequestNames {
+  /** Null when the request failed before its Model was resolved. */
+  modelName: string | null;
+  /** Null unless the caller used an API Key. */
+  apiKeyName: string | null;
+}
+
+/** The target whose Attempt answered the request. */
+export interface ServedBy extends QueuedServingTarget {
+  /** Every job has it here; only an Attempt in an old job may lack it. */
+  upstreamModelId: string;
   /** Null when it was served at the Provider's default. Missing in jobs queued before tiers existed. */
   serviceTier?: ServiceTier | null;
   /** The Upstream Model's prices at the Service Tier that served it. */
@@ -45,18 +76,8 @@ export interface ServedBy {
 }
 
 /** One upstream call. Times are ISO strings: job data travels as JSON. */
-export interface AttemptRecord {
+export interface AttemptRecord extends QueuedServingTarget {
   startedAt: string;
-  /** Null for a direct Upstream Model test, which goes through no Route. */
-  routeId: string | null;
-  providerAccountId: string;
-  // The fields below are missing in jobs queued before Attempts copied them (ADR 0024).
-  /** The `upstream_models` row id. */
-  upstreamModelId?: string;
-  /** The model name as the Provider spells it in requests. */
-  upstreamModelName?: string;
-  providerSlug?: string;
-  providerAccountName?: string;
   /** Null when no response arrived. */
   upstreamStatus: number | null;
   /** Null for the Attempt that answered and finished normally. */

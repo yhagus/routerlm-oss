@@ -66,6 +66,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       {
         id: provider.id,
         slug: provider.slug,
+        name: provider.name,
         protocol: provider.protocol,
         baseUrl: provider.baseUrl,
         authStyle: provider.authStyle,

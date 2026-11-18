@@ -78,6 +78,7 @@ describe("Error Captures API (e2e)", () => {
         usageLogId,
         startedAt: RECEIVED_AT,
         providerSlug: "acme",
+        providerName: "Acme",
         providerAccountId,
         providerAccountName: "Acme main",
         upstreamStatus: 500,

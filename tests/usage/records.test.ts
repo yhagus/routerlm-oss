@@ -554,6 +554,27 @@ describe("Usage Logs and Attempts (e2e)", () => {
       ]);
     });
 
+    it("keeps the Provider's earlier name on its Error Capture after the Provider is renamed", async () => {
+      await addProviderAccount(app, db, providerId, { key: "sk-second-account", priority: 1 });
+      upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+      upstreamAnswers();
+      await chat(CHAT_REQUEST).expect(200);
+      await writtenUsageLog();
+
+      await dashboard()
+        .patch(`/api/providers/${providerId}`)
+        .set("Cookie", cookie)
+        .send({ name: "Renamed Acme" })
+        .expect(200);
+
+      const listed = await dashboard().get("/api/error-captures").set("Cookie", cookie).expect(200);
+      expect(listed.body.items).toEqual([
+        expect.objectContaining({
+          failedHop: expect.objectContaining({ providerAccountName: "main", providerName: "Acme" }),
+        }),
+      ]);
+    });
+
     it("keeps the Upstream Model that served it after the Route is pointed at another", async () => {
       const [{ id: otherUpstreamModelId }] = await db
         .insert(upstreamModels)

@@ -10,6 +10,7 @@ import type {
   CapturedMessage,
   ErrorCaptureRecord,
   ServedBy,
+  ServingTarget,
   UsageCaller,
   UsageJob,
 } from "@/usage/models/usage-job.js";
@@ -122,7 +123,7 @@ export class UsageMeter {
   attemptSkippedAsExhausted(target: AttemptTarget): void {
     this.attempts.push({
       startedAt: new Date().toISOString(),
-      ...targetSnapshotOf(target),
+      ...servingTargetOf(target),
       upstreamStatus: null,
       failureReason: "exhausted",
       durationMs: 0,
@@ -138,7 +139,7 @@ export class UsageMeter {
     const { target } = this.openAttempt;
     const serviceTier = this.openAttempt.sentServiceTier?.tier ?? null;
     this.servedBy = {
-      ...targetSnapshotOf(target),
+      ...servingTargetOf(target),
       serviceTier,
       // Taken now, so a later price edit doesn't change this request's Cost.
       prices: pricesAtServiceTier(target.upstreamModel, serviceTier),
@@ -279,7 +280,7 @@ export class UsageMeter {
     const { target, startedAt, startedMs } = this.openAttempt;
     this.attempts.push({
       startedAt: startedAt.toISOString(),
-      ...targetSnapshotOf(target),
+      ...servingTargetOf(target),
       upstreamStatus,
       failureReason,
       durationMs: elapsedSince(startedMs),
@@ -289,15 +290,16 @@ export class UsageMeter {
 }
 
 /** The ids and names of what an Attempt tried, as its records copy them (ADR 0024). */
-function targetSnapshotOf({ route, upstreamModel, providerAccount }: AttemptTarget) {
+function servingTargetOf({ route, upstreamModel, providerAccount }: AttemptTarget): ServingTarget {
   return {
     routeId: route?.id ?? null,
     upstreamModelId: upstreamModel.id,
     upstreamModelName: upstreamModel.upstreamModelId,
     providerSlug: upstreamModel.provider.slug,
+    providerName: upstreamModel.provider.name,
     providerAccountId: providerAccount.id,
     providerAccountName: providerAccount.name,
-  } satisfies Partial<AttemptRecord>;
+  };
 }
 
 function elapsedSince(startMs: number): number {

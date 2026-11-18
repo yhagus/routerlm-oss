@@ -10,7 +10,7 @@ import type { TokenUsage } from "@/inference/models/internal-format.js";
 import { REDACTED } from "@/error-captures/models/captured-content.js";
 import { SECOND_MS } from "@/libs/models/duration.js";
 import { usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
-import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
+import type { RequestNames, ServingTarget, UpstreamModelPrices } from "@/usage/models/usage-job.js";
 import {
   type DemoCaller,
   DEMO_MODEL_NAMES,
@@ -37,6 +37,8 @@ export interface TrafficRoute {
   /** The model name as the Provider spells it. */
   upstreamModelName: string;
   providerSlug: string;
+  /** The Provider's display name. */
+  providerName: string;
   prices: UpstreamModelPrices;
   /** Its Provider's accounts, in priority order. */
   providerAccounts: TrafficProviderAccount[];
@@ -153,7 +155,7 @@ export function generateDemoTraffic(
     const candidates = model.routes.flatMap((route) =>
       route.providerAccounts.map((providerAccount) => ({ route, providerAccount })),
     );
-    const requestNames = {
+    const requestNames: RequestNames = {
       modelName: model.modelName,
       apiKeyName: source.kind === "api-key" ? source.apiKeyName : null,
     };
@@ -166,7 +168,8 @@ export function generateDemoTraffic(
     for (const candidate of candidates.slice(0, failedAttemptCount)) {
       const failed = failedAttempt(
         random,
-        { usageLogId, ...requestNames },
+        usageLogId,
+        requestNames,
         candidate,
         new Date(createdAt.getTime() + elapsedMs),
       );
@@ -207,31 +210,22 @@ export function generateDemoTraffic(
       ((tokens.outputTokens ?? 0) / model.profile.outputTokensPerSecond) * SECOND_MS,
     );
     const servingMs = firstTokenMs + generationMs;
-    const servingColumns = candidateColumnsOf(serving);
     traffic.attempts.push({
       id: randomUUID(),
       usageLogId,
       ...requestNames,
-      ...servingColumns,
+      ...servingTargetOf(serving),
       startedAt: new Date(createdAt.getTime() + elapsedMs),
       upstreamStatus: 200,
       failureReason: null,
       durationMs: servingMs,
     });
-    const measurements = usageMeasurementsOf(
-      {
-        routeId: serving.route.routeId,
-        upstreamModelId: serving.route.upstreamModelRowId,
-        providerAccountId: serving.providerAccount.id,
-        prices: serving.route.prices,
-      },
-      tokens,
-    );
+    const measurements = usageMeasurementsOf({ prices: serving.route.prices }, tokens);
     traffic.usageLogs.push({
       ...base,
       ...measurements,
       attemptCount: base.attemptCount + 1,
-      ...servingColumns,
+      ...usageLogTargetOf(serving),
       httpStatus: 200,
       requestBytes: requestBytesFor(contextTokensOf(tokens)),
       responseBytes: (tokens.outputTokens ?? 0) * BYTES_PER_TOKEN + RESPONSE_ENVELOPE_BYTES,
@@ -295,10 +289,10 @@ function failedAttemptCountFor(random: Random, outcome: Outcome, candidateCount:
   return Math.min(between(random, 2, 3), candidateCount);
 }
 
-/** `request` is the Usage Log's id and the names an Attempt copies from it. */
 function failedAttempt(
   random: Random,
-  request: Pick<NewAttempt, "usageLogId" | "modelName" | "apiKeyName">,
+  usageLogId: string,
+  requestNames: RequestNames,
   candidate: Candidate,
   startedAt: Date,
 ): FailedAttempt {
@@ -308,8 +302,9 @@ function failedAttempt(
     candidate,
     attempt: {
       id: randomUUID(),
-      ...request,
-      ...candidateColumnsOf(candidate),
+      usageLogId,
+      ...requestNames,
+      ...servingTargetOf(candidate),
       startedAt,
       upstreamStatus: upstreamStatusFor(random, failure),
       failureReason: failure,
@@ -340,19 +335,16 @@ function failedAttemptDurationMs(random: Random, failure: FallbackFailure): numb
   }
 }
 
-/** What a candidate is, as an Attempt and a Usage Log copy it (ADR 0024). */
-function candidateColumnsOf({
+/** What an Attempt on a candidate tried, as the Attempt copies it (ADR 0024). */
+function servingTargetOf(candidate: Candidate): ServingTarget {
+  return { ...usageLogTargetOf(candidate), providerName: candidate.route.providerName };
+}
+
+/** The part of a candidate's ServingTarget a Usage Log copies: all but the Provider's name. */
+function usageLogTargetOf({
   route,
   providerAccount,
-}: Candidate): Pick<
-  NewAttempt,
-  | "routeId"
-  | "upstreamModelId"
-  | "upstreamModelName"
-  | "providerSlug"
-  | "providerAccountId"
-  | "providerAccountName"
-> {
+}: Candidate): Omit<ServingTarget, "providerName"> {
   return {
     routeId: route.routeId,
     upstreamModelId: route.upstreamModelRowId,

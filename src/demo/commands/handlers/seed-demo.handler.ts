@@ -159,6 +159,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
       .select({
         id: upstreamModels.id,
         providerSlug: providers.slug,
+        providerName: providers.name,
         upstreamModelId: upstreamModels.upstreamModelId,
         inputPrice: upstreamModels.inputPrice,
         outputPrice: upstreamModels.outputPrice,
@@ -193,6 +194,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
           upstreamModelRowId: upstreamModel.id,
           upstreamModelName: upstreamModel.upstreamModelId,
           providerSlug: route.providerSlug,
+          providerName: upstreamModel.providerName,
           prices: upstreamModel,
           providerAccounts: requireValue(accountsBySlug, route.providerSlug, "Provider Account"),
         });

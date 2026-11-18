@@ -25,7 +25,7 @@ const NOT_REPORTED: TokenUsage = {
  * estimated, so the Cost then covers only the reported counts.
  */
 export function usageMeasurementsOf(
-  servedBy: ServedBy | null,
+  servedBy: Pick<ServedBy, "prices"> | null,
   usage: TokenUsage | null,
 ): UsageMeasurements {
   if (!servedBy) {
