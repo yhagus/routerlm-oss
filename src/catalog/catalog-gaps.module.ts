@@ -20,6 +20,8 @@ import { QueryHandlers } from "./queries/handlers/index.js";
       useFactory: (config: ConfigService<Env, true>) => ({
         timeout: config.get("MODELS_DEV_TIMEOUT_MS", { infer: true }),
         retry: false,
+        // A redirect fails rather than carry the request to another host.
+        redirect: "error",
       }),
     }),
   ],

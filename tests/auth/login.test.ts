@@ -32,6 +32,22 @@ describe("Authentication: login (e2e)", () => {
     expect(response.get("Set-Cookie")?.[0]).toMatch(/HttpOnly/i);
   });
 
+  it("rejects an oversized password with a validation error", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/auth/login")
+      .send({ email: FIRST_USER.email, password: "x".repeat(100_000) });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects an oversized email with a validation error", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/auth/login")
+      .send({ email: `${"a".repeat(1_000)}@example.com`, password: FIRST_USER.password });
+
+    expect(response.status).toBe(400);
+  });
+
   it("answers a wrong password and an unknown email the same way", async () => {
     const server = app.getHttpServer();
     const wrongPassword = await request(server)

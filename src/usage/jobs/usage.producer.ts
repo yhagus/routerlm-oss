@@ -19,6 +19,8 @@ export class UsageProducer {
   enqueue(job: UsageJob): void {
     void addJobOrLog(this.usageQueue, this.logger, RECORD_USAGE_JOB, job, {
       removeOnComplete: true,
+      // A failed job carries an Error Capture's content, which must not outlive the Retention Period (ADR 0004).
+      removeOnFail: true,
       attempts: WRITE_ATTEMPTS,
       backoff: { type: "exponential", delay: FIRST_RETRY_DELAY_MS },
     });
