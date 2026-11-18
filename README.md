@@ -109,6 +109,7 @@ Set these in the `.env` next to `compose.yaml` (see [deploy/.env.example](deploy
 | `ROUTERLM_VERSION`              | the release's version     | The image version to run.                                    |
 | `WEB_ORIGIN`                    | `http://localhost:3001`   | The dashboard's public URL.                                  |
 | `SNAPSHOT_RELOAD_INTERVAL_MS`   | `30000`                   | How often each backend instance reloads its snapshot (ms).   |
+| `BACKEND_PROCESSES`             | `1`                       | Gateway processes on the backend's port. Set it to the VM's CPU count. |
 | `ALLOW_PRIVATE_UPSTREAMS`       | `false`                   | Set `true` to allow http and private Provider URLs (LAN upstreams). |
 | `TRUST_PROXY`                   | unset                     | Proxies whose `X-Forwarded-For` is trusted. Set behind a proxy. |
 | `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.              |

@@ -6,7 +6,7 @@
 #   STEPS=...       VU counts to try, lowest first (default "300 600 900 1200 1500 1800")
 #   SCENARIO=...    default mixed (the paced upstream); raw is a fixed-rate run, not VUs
 #   DURATION=...    length of each step's hold (default 1m)
-#   TOPOLOGY=...    dual (default) or single, see run.sh
+#   TOPOLOGY=...    dual (default), single or cluster, see run.sh
 cd "$(dirname "$0")" || exit 1
 STEPS="${STEPS:-300 600 900 1200 1500 1800}"
 export PROFILE=steady

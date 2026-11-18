@@ -55,7 +55,18 @@ and memory each node used. Raw output stays in `results/` (gitignored).
 | Fake upstream, nginx | test equipment: 1 CPU / 512 MB, 1 CPU / 256 MB        |
 | k6                   | uncapped, test equipment                              |
 
-The two replicas are because the gateway is one event loop and uses one CPU.
+The two replicas are because one gateway process is one event loop and uses one
+CPU. `TOPOLOGY` picks how the 2 CPU / 2 GB budget is spent (`run.sh`):
+
+| `TOPOLOGY`       | Gateway                                                               | k6 targets             |
+| ---------------- | --------------------------------------------------------------------- | ---------------------- |
+| `dual` (default) | `backend-a`, `backend-b`: 2 containers of 1 CPU / 1 GB behind nginx   | `lb:8080`              |
+| `single`         | `backend`: 1 container of 2 CPU / 2 GB, 1 process                     | `backend:3000`         |
+| `cluster`        | `backend-cluster`: 1 container of 2 CPU / 2 GB, `BACKEND_PROCESSES=2` | `backend-cluster:3000` |
+
+`cluster` is how a self-hoster runs one VM (ADR 0025): the processes share one
+port, with no load balancer. `TOPOLOGY=cluster bun run perf:k6` benchmarks it.
+
 `BUN_CONFIG_MAX_HTTP_REQUESTS` is set to 4096 on the gateway: Bun's default of 256
 simultaneous outbound requests per process capped it at about 107 req/s (one
 process) or 213 req/s (two) with the paced upstream, whatever its CPU.
@@ -76,6 +87,7 @@ reports whether the backend was OOM-killed, and removes the stack afterwards.
 
 | Variable                | Values                                                                                    | Default |
 | ----------------------- | ----------------------------------------------------------------------------------------- | ------- |
+| `TOPOLOGY`              | `dual`, `single`, `cluster` (see "Benchmark")                                             | `dual`  |
 | `PROFILE`               | `smoke` (30 s), `load` (about 4.5 min), `stress` (about 5.5 min, steps up)                | `smoke` |
 | `SCENARIO`              | `raw`, `mixed`, `edge`, `upstream`, `all` (mixed + edge + upstream), or one scenario name | `mixed` |
 | `UPSTREAM_LATENCY_MS`   | paced upstream: wait before the first token                                               | `200`   |

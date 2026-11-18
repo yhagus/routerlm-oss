@@ -1,8 +1,11 @@
 #!/bin/sh
 # `bun run perf:k6`: builds and starts the stack, runs k6 against the
 # gateway, and always removes the stack afterwards. Exits with k6's status.
-#   TOPOLOGY=dual|single   dual (default): 2 replicas of 1 CPU / 1 GB behind nginx
+#   TOPOLOGY=dual|single|cluster
+#                          dual (default): 2 replicas of 1 CPU / 1 GB behind nginx
 #                          single: 1 process of 2 CPUs / 2 GB
+#                          cluster: 1 container of 2 CPUs / 2 GB running 2
+#                          processes on one port (BACKEND_PROCESSES=2)
 #   PROFILE=smoke|load|stress|steady   (default smoke)
 #   SCENARIO=raw|mixed|edge|upstream|all|<one scenario name>   (default mixed)
 #   VUS, DURATION          for PROFILE=steady
@@ -22,8 +25,13 @@ case "$TOPOLOGY" in
     services="backend worker"
     export BASE_URL="http://backend:3000"
     ;;
+  cluster)
+    gateways="backend-cluster"
+    services="backend-cluster worker"
+    export BASE_URL="http://backend-cluster:3000"
+    ;;
   *)
-    echo "TOPOLOGY must be dual or single" >&2
+    echo "TOPOLOGY must be dual, single or cluster" >&2
     exit 1
     ;;
 esac

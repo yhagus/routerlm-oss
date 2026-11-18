@@ -7,6 +7,8 @@ const ENCRYPTION_KEY_HELP =
 /** Environment variables the app needs; validated by ConfigModule at bootstrap. */
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
+  // ADR 0025: how many gateway processes share PORT. Linux only; set it to the CPU count.
+  BACKEND_PROCESSES: z.coerce.number().int().min(1).default(1),
   DATABASE_URL: z.url({ error: "DATABASE_URL is not set or not a URL; see .env.example" }),
   // The web app's origin: its server forwards dashboard calls here with this Origin.
   WEB_ORIGIN: z.url().default("http://localhost:3001"),

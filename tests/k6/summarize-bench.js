@@ -6,15 +6,18 @@ import { fileURLToPath } from "node:url";
 
 const results = join(dirname(fileURLToPath(import.meta.url)), "results");
 
+// The gateway's containers and spec in each TOPOLOGY of run.sh.
+const GATEWAY_BY_TOPOLOGY = {
+  dual: { containers: /backend-[ab]-1/, spec: "2 CPU / 2 GB (2 replicas x 1 CPU / 1 GB)" },
+  single: { containers: /-backend-1/, spec: "2 CPU / 2 GB (1 process)" },
+  cluster: { containers: /backend-cluster-1/, spec: "2 CPU / 2 GB (1 container, 2 processes)" },
+};
+const gateway = GATEWAY_BY_TOPOLOGY[process.env.TOPOLOGY ?? "dual"];
+if (!gateway) throw new Error("TOPOLOGY must be dual, single or cluster");
+
 // The spec each node runs with: keep in step with docker-compose.yml.
 const NODES = [
-  {
-    label: "Gateway (app)",
-    containers: /backend-[ab]-1/,
-    spec: "2 CPU / 2 GB (2 replicas x 1 CPU / 1 GB)",
-    cpuLimit: 2,
-    memLimitMiB: 2048,
-  },
+  { label: "Gateway (app)", ...gateway, cpuLimit: 2, memLimitMiB: 2048 },
   { label: "Worker", containers: /worker-1/, spec: "1 CPU / 1 GB", cpuLimit: 1, memLimitMiB: 1024 },
   {
     label: "PostgreSQL",

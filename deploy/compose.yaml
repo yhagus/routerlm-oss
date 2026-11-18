@@ -85,6 +85,8 @@ services:
     environment:
       <<: *app-env
       PORT: 3000
+      # Gateway processes sharing port 3000; set it to the VM's CPU count (ADR 0025).
+      BACKEND_PROCESSES: ${BACKEND_PROCESSES:-1}
     healthcheck:
       test:
         - CMD

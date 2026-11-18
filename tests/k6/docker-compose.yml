@@ -169,6 +169,23 @@ services:
   backend-b:
     <<: *backend-replica
 
+  # The same budget as `backend`, with the gateway running two processes on one
+  # port (ADR 0025), so both CPUs work without a load balancer. TOPOLOGY=cluster.
+  backend-cluster:
+    <<: *backend-replica
+    profiles: [cluster]
+    environment:
+      <<: *app-env
+      PORT: 3000
+      BACKEND_PROCESSES: 2
+      # Bun allows only 256 simultaneous outbound requests per process by default,
+      # which caps the gateway at about 256 / answer-time req/s whatever its CPU
+      # (measured: 107 req/s for one process with the paced upstream).
+      BUN_CONFIG_MAX_HTTP_REQUESTS: ${BUN_CONFIG_MAX_HTTP_REQUESTS:-4096}
+    cpus: 2
+    mem_limit: 2g
+    memswap_limit: 2g
+
   # Not part of the budget: it only spreads connections over the two replicas.
   lb:
     image: nginx:alpine

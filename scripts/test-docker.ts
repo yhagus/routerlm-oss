@@ -50,7 +50,8 @@ function runTests(): number {
     console.error("test:docker: the test services did not become healthy.");
     return upStatus;
   }
-  return run("bun", ["run", "test"], { ...process.env, ...TEST_ENV });
+  // Arguments go to vitest: `bun run test:docker tests/health` runs only that folder.
+  return run("bun", ["run", "test", ...process.argv.slice(2)], { ...process.env, ...TEST_ENV });
 }
 
 // Ctrl-C reaches the test run too; outliving it lets the teardown below run.
