@@ -160,6 +160,25 @@ describe("Catalog Gaps API (e2e)", () => {
     expect(response.body).toEqual({ checkedAt: null, gaps: [] });
   });
 
+  it("does not follow a redirect from models.dev", async () => {
+    modelsDev.replyTo("/api.json", {
+      kind: "json",
+      status: 302,
+      body: {},
+      headers: { location: "/elsewhere.json" },
+    });
+    modelsDev.replyTo("/elsewhere.json", {
+      kind: "json",
+      status: 200,
+      body: { anthropic: { models: { "claude-new": modelsDevModel("claude-new", "2026-11-05") } } },
+    });
+
+    const response = await listGaps().expect(200);
+
+    expect(response.body).toEqual({ checkedAt: null, gaps: [] });
+    expect(modelsDev.requests.map((received) => received.path)).toEqual(["/api.json"]);
+  });
+
   it("rejects a request without a session", async () => {
     await request(app.getHttpServer()).get("/api/catalog/gaps").expect(401);
   });
