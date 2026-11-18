@@ -120,8 +120,20 @@ Tokens a Provider stores in its prompt cache, at their own price. Grouped with O
 _Avoid_: Cache creation, cache miss
 
 **Usage Log**:
-The record of one inference request's measurements: tokens, cache counts, sizes, cost and timing. It never holds prompt or response content.
+The record of one inference request's measurements: tokens, cache counts, sizes, cost and timing, and what served it as it was at that moment. Editing or deleting a Model, Route, Upstream Model, Provider Account, API Key or User afterwards never changes it. It never holds prompt or response content.
 _Avoid_: Request log, history
+
+**Time to First Token**:
+How long a streamed request waited, from the gateway receiving it, until the first event that carries output: text, reasoning or a tool call. Events with no output, such as a stream's opening message, don't count. It includes any failed Attempts before the one that served it.
+_Avoid_: TTFT alone in prose, latency
+
+**Output Speed**:
+Output tokens per second while a streamed response is being generated, after its Time to First Token. Reasoning tokens count only when they were streamed; hidden reasoning happens before the first output and is left out. Only successful, complete, uncancelled streamed requests with enough output to measure have one.
+_Avoid_: TPS, throughput, tokens per second
+
+**Finish Reason**:
+Why a successful response stopped, in the gateway's own words whatever the Provider called it: it finished, it hit the output limit, it called a tool, or the Provider filtered it.
+_Avoid_: Stop reason, end reason
 
 **Error Capture**:
 The stored headers and body of a failed request or failed Attempt, kept for a limited time so an operator can see why it failed.
