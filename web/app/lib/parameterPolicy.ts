@@ -18,6 +18,8 @@ export interface ParameterValues {
   topP?: number;
   maxOutputTokens?: number;
   reasoningEffort?: ReasoningEffort;
+  /** Cap only: the backend rejects it as a default or forced value. */
+  reasoningBudgetTokens?: number;
   stopSequences?: string[];
   serviceTier?: ServiceTier;
 }
@@ -40,6 +42,11 @@ export const POLICY_PARAMETERS: { name: PolicyParameter; label: string; hint: st
   { name: "topP", label: "Top P", hint: "0 to 1" },
   { name: "maxOutputTokens", label: "Max output tokens", hint: "Whole number" },
   { name: "reasoningEffort", label: "Reasoning effort", hint: "None to xhigh" },
+  {
+    name: "reasoningBudgetTokens",
+    label: "Thinking budget",
+    hint: "Whole number of tokens, Cap only",
+  },
   { name: "stopSequences", label: "Stop sequences", hint: "One per line" },
   { name: "serviceTier", label: "Service tier", hint: "Dropped where unsupported" },
 ];
@@ -55,6 +62,11 @@ export function isCappable(parameter: PolicyParameter): parameter is keyof Param
   return parameter !== "stopSequences" && parameter !== "serviceTier";
 }
 
+/** A thinking budget has no default or forced value; only a Cap limits it. */
+export function isCapOnly(parameter: PolicyParameter): boolean {
+  return parameter === "reasoningBudgetTokens";
+}
+
 /** The editor's inputs as text: an empty field means "not set". */
 export interface PolicyForm {
   rules: Record<RuleKind, Record<PolicyParameter, string>>;
@@ -65,6 +77,7 @@ const NUMBER_RANGES = {
   temperature: { min: 0, max: 2, isWhole: false },
   topP: { min: 0, max: 1, isWhole: false },
   maxOutputTokens: { min: 1, max: Number.MAX_SAFE_INTEGER, isWhole: true },
+  reasoningBudgetTokens: { min: 1, max: Number.MAX_SAFE_INTEGER, isWhole: true },
 } as const;
 
 /** The allowed range of a numeric parameter, or undefined for the others. */
@@ -75,6 +88,7 @@ export function numberRange(
     case "temperature":
     case "topP":
     case "maxOutputTokens":
+    case "reasoningBudgetTokens":
       return NUMBER_RANGES[parameter];
     default:
       return undefined;
@@ -99,7 +113,8 @@ export function policyFromForm(
     const values: ParameterValues = {};
     for (const { name, label: parameterLabel } of POLICY_PARAMETERS) {
       const text = form.rules[kind][name].trim();
-      if (text === "" || (kind === "caps" && !isCappable(name))) continue;
+      if (text === "") continue;
+      if (kind === "caps" ? !isCappable(name) : isCapOnly(name)) continue;
       const problem = setValue(values, name, text);
       if (problem) return { problem: `${label} ${parameterLabel.toLowerCase()}: ${problem}` };
     }
@@ -111,6 +126,16 @@ export function policyFromForm(
   return { policy };
 }
 
+/** Labels of the Caps set without a default beside them: the parameter then stays omitted. */
+export function capsWithoutDefault(form: PolicyForm): string[] {
+  return POLICY_PARAMETERS.filter(
+    ({ name }) =>
+      isCappable(name) &&
+      form.rules.caps[name].trim() !== "" &&
+      (isCapOnly(name) || form.rules.defaults[name].trim() === ""),
+  ).map(({ label }) => label);
+}
+
 export function isEmptyPolicy(policy: ParameterPolicy): boolean {
   return Object.keys(policy).length === 0;
 }
@@ -120,6 +145,7 @@ function rowFromValues(values: ParameterValues | undefined): Record<PolicyParame
     temperature: values?.temperature?.toString() ?? "",
     topP: values?.topP?.toString() ?? "",
     maxOutputTokens: values?.maxOutputTokens?.toString() ?? "",
+    reasoningBudgetTokens: values?.reasoningBudgetTokens?.toString() ?? "",
     reasoningEffort: values?.reasoningEffort ?? "",
     stopSequences: values?.stopSequences?.join("\n") ?? "",
     serviceTier: values?.serviceTier ?? "",
