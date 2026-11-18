@@ -9,7 +9,13 @@ import { IsSetupRequiredQuery } from "@/users/queries/impl/is-setup-required.que
 import { type NewUser, newUserSchema } from "@/users/schemas/new-user.schema.js";
 import { DashboardController } from "./decorators/dashboard-controller.decorator.js";
 
-const loginSchema = z.object({ email: z.string(), password: z.string() });
+// Far above any real value; they only stop an oversized body before it is hashed.
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 1_024;
+const loginSchema = z.object({
+  email: z.string().max(MAX_EMAIL_LENGTH),
+  password: z.string().max(MAX_PASSWORD_LENGTH),
+});
 type Login = z.infer<typeof loginSchema>;
 
 // One message for an unknown email and a wrong password, so neither is revealed.
