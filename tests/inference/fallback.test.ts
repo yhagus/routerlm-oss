@@ -11,6 +11,7 @@ import {
   insertOpenAiChatModel,
   UPSTREAM_KEY,
 } from "../support/inference.js";
+import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { createTestApp, setUpFirstUser } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
@@ -30,6 +31,7 @@ const STREAM_SUCCESS: FakeReply = {
   events: openAiChatFixture("upstream-stream-tool-call.sse"),
 };
 const RATE_LIMITED: FakeReply = { kind: "json", status: 429, body: { error: "slow down" } };
+const FORBIDDEN: FakeReply = { kind: "json", status: 403, body: { error: "forbidden" } };
 const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
 
 describe("Fallback (e2e)", () => {
@@ -160,25 +162,70 @@ describe("Fallback (e2e)", () => {
     });
   });
 
-  it.each([401, 403])(
-    "disables the Provider Account with a reason on %i, until an operator re-enables it",
-    async (status) => {
-      upstream.reply({ kind: "json", status, body: { error: "bad key" } });
+  it("disables the Provider Account with a reason on 401, until an operator re-enables it", async () => {
+    upstream.reply({ kind: "json", status: 401, body: { error: "bad key" } });
+    upstream.reply(SUCCESS);
+
+    await chat().expect(200);
+
+    expect(attemptedKeys()).toEqual([UPSTREAM_KEY, BACKUP_KEY]);
+    await vi.waitFor(async () => {
+      const primary = await primaryAccount();
+      expect(primary.isEnabled).toBe(false);
+      expect(primary.disabledReason).toContain("401");
+    });
+  });
+
+  it("starts a Cooldown on one 403 and falls back, leaving the Provider Account enabled", async () => {
+    upstream.reply(FORBIDDEN);
+    upstream.reply(SUCCESS);
+    upstream.reply(SUCCESS);
+
+    await chat().expect(200);
+    await chat().expect(200);
+
+    expect(attemptedKeys()).toEqual([UPSTREAM_KEY, BACKUP_KEY, BACKUP_KEY]);
+    await vi.waitFor(async () => {
+      const primary = await primaryAccount();
+      expect(primary.lastError).toContain("unauthorized");
+    });
+    expect((await primaryAccount()).isEnabled).toBe(true);
+  });
+
+  it("disables the Provider Account on the third consecutive 403, naming repeated refusals", async () => {
+    for (let refusal = 1; refusal <= 3; refusal++) {
+      upstream.reply(FORBIDDEN);
       upstream.reply(SUCCESS);
-
       await chat().expect(200);
+      await endCooldown(primaryAccountId);
+    }
 
-      expect(attemptedKeys()).toEqual([UPSTREAM_KEY, BACKUP_KEY]);
-      await vi.waitFor(async () => {
-        const [primary] = await db
-          .select()
-          .from(providerAccounts)
-          .where(eq(providerAccounts.id, primaryAccountId));
-        expect(primary.isEnabled).toBe(false);
-        expect(primary.disabledReason).toContain(String(status));
-      });
-    },
-  );
+    await vi.waitFor(async () => {
+      const primary = await primaryAccount();
+      expect(primary.isEnabled).toBe(false);
+      expect(primary.disabledReason).toContain("repeated refusals");
+    });
+  });
+
+  it("counts 403s from zero again after a successful Attempt", async () => {
+    upstream.reply(FORBIDDEN);
+    upstream.reply(SUCCESS);
+    await chat().expect(200);
+    await endCooldown(primaryAccountId);
+    upstream.reply(SUCCESS);
+    await chat().expect(200);
+    for (let refusal = 1; refusal <= 2; refusal++) {
+      upstream.reply(FORBIDDEN);
+      upstream.reply(SUCCESS);
+      await chat().expect(200);
+      await endCooldown(primaryAccountId);
+    }
+
+    await vi.waitFor(async () => {
+      expect((await primaryAccount()).lastError).toContain("unauthorized");
+    });
+    expect((await primaryAccount()).isEnabled).toBe(true);
+  });
 
   it("ends the request with invalid_request on another 4xx, without another Attempt", async () => {
     upstream.reply({ kind: "json", status: 422, body: { error: "bad schema" } });
@@ -238,6 +285,19 @@ describe("Fallback (e2e)", () => {
       expect(upstream.requests).toHaveLength(2);
     },
   );
+
+  async function primaryAccount() {
+    const [account] = await db
+      .select()
+      .from(providerAccounts)
+      .where(eq(providerAccounts.id, primaryAccountId));
+    return account;
+  }
+
+  // Stands in for waiting out the Cooldown, which doubles with each failure.
+  async function endCooldown(providerAccountId: string): Promise<void> {
+    await app.get(RedisConnection).client.del(`routerlm:cooldown:${providerAccountId}`);
+  }
 
   async function disableProviderAccount(providerAccountId: string): Promise<void> {
     await db

@@ -89,6 +89,9 @@ interface AttemptOptions {
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
+/** ADR 0023: this many 403s in a row, with no success between, disable the Provider Account. */
+const DISABLING_REFUSAL_COUNT = 3;
+
 const HTTP_OK = 200;
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 /** Recorded when the client left before any response; nginx's "client closed request". */
@@ -357,12 +360,14 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
+      void this.cooldowns.resetRefusals(target.providerAccount.id);
       meter.usageReported(response.usage, response.servedTierValue);
       meter.attemptSucceeded();
       return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
     const events = await this.upstream.openStream(call);
     meter.attemptAnswered();
+    void this.cooldowns.resetRefusals(target.providerAccount.id);
     return {
       kind: "stream",
       chunks: writeClientStream(
@@ -454,8 +459,8 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
 
   /**
    * What a failed Attempt does to its Provider Account (spec "Fallback"):
-   * 401/403 disable it until an operator re-enables it or, for an OAuth
-   * Login, signs in again; rate limits, 5xx,
+   * 401 disables it until an operator re-enables it or, for an OAuth
+   * Login, signs in again; repeated 403s do too, one 403, rate limits, 5xx,
    * timeouts and connection errors put it in Cooldown; running out of quota
    * makes it Exhausted; a bad request says nothing about the account. The
    * database writes and the quota reading are not awaited.
@@ -475,6 +480,10 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       case "bad_request":
         return;
       case "unauthorized":
+        if (failure.upstreamStatus === HttpStatus.FORBIDDEN) {
+          await this.afterForbiddenAttempt(failure, providerAccount.id, lastError);
+          return;
+        }
         void this.providerAccountHealth.disable(
           providerAccount.id,
           providerAccount.credential.kind === "oauth-login"
@@ -504,6 +513,28 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         void this.readQuota(providerAccount.id);
         return;
     }
+  }
+
+  /**
+   * A 403 may be tied to one request, so it starts a Cooldown like a 5xx; the
+   * third in a row with no success between disables the account (ADR 0023).
+   */
+  private async afterForbiddenAttempt(
+    failure: AttemptFailedError,
+    providerAccountId: string,
+    lastError: string,
+  ): Promise<void> {
+    const refusalCount = await this.cooldowns.countRefusal(providerAccountId);
+    if (refusalCount >= DISABLING_REFUSAL_COUNT) {
+      void this.providerAccountHealth.disable(
+        providerAccountId,
+        `The upstream refused this account's requests ${DISABLING_REFUSAL_COUNT} times in a row (repeated refusals, HTTP 403)`,
+        lastError,
+      );
+      return;
+    }
+    void this.providerAccountHealth.recordFailure(providerAccountId, lastError);
+    await this.cooldowns.startCooldown(providerAccountId, failure.reason, failure.retryAfter);
   }
 
   /** A failed reading, or a Provider with no quota reader, leaves the short Exhausted state. */

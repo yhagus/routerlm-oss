@@ -9,6 +9,10 @@ const FAILURE_STREAK_KEY_PREFIX = "routerlm:cooldown-streak:";
 // A Provider Account that has not failed for this long after its Cooldown
 // ended starts again from the shortest Cooldown.
 const FAILURE_STREAK_MEMORY_MS = 10 * 60_000;
+const REFUSAL_COUNT_KEY_PREFIX = "routerlm:refusal-count:";
+// Consecutive 403s are counted across Cooldowns; a count left untouched this
+// long is stale rather than consecutive.
+const REFUSAL_COUNT_MEMORY_MS = 60 * 60_000;
 const COOLDOWN_VALUE_SEPARATOR = ":";
 
 /** A Provider Account's Cooldown, and the Attempt failure that started it. */
@@ -59,6 +63,36 @@ export class CooldownStore {
     } catch (error) {
       this.logger.warn(
         `Cooldown not recorded for Provider Account ${providerAccountId}: ${String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Counts one more upstream 403 on a Provider Account with no successful
+   * Attempt since the last, and returns the count. 0 when Redis is down, so
+   * a Redis outage never disables an account.
+   */
+  async countRefusal(providerAccountId: string): Promise<number> {
+    try {
+      const key = REFUSAL_COUNT_KEY_PREFIX + providerAccountId;
+      const refusalCount = await this.redis.incr(key);
+      await this.redis.pexpire(key, REFUSAL_COUNT_MEMORY_MS);
+      return refusalCount;
+    } catch (error) {
+      this.logger.warn(
+        `Refusal not counted for Provider Account ${providerAccountId}: ${String(error)}`,
+      );
+      return 0;
+    }
+  }
+
+  /** A successful Attempt ends the run of consecutive 403s. */
+  async resetRefusals(providerAccountId: string): Promise<void> {
+    try {
+      await this.redis.del(REFUSAL_COUNT_KEY_PREFIX + providerAccountId);
+    } catch (error) {
+      this.logger.warn(
+        `Refusal count not reset for Provider Account ${providerAccountId}: ${String(error)}`,
       );
     }
   }
