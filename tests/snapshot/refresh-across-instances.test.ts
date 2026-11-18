@@ -1,4 +1,5 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
+import { SchedulerRegistry } from "@nestjs/schedule";
 import request from "supertest";
 import { vi } from "vitest";
 import type { Database } from "@/db/schemas/relations.js";
@@ -27,9 +28,11 @@ vi.mock("@/snapshot/models/load-snapshot.js", async (importOriginal) => {
 // Spec "Inference path": a dashboard change takes effect within about a second.
 const PROPAGATION_LIMIT_MS = 1000;
 const POLL_INTERVAL_MS = 50;
+// The app reads its env when AppModule is imported, so this must run before the imports.
 // Far shorter than the production default, so the interval reload fits the limit above.
-const SNAPSHOT_RELOAD_INTERVAL_MS = "200";
-process.env.SNAPSHOT_RELOAD_INTERVAL_MS = SNAPSHOT_RELOAD_INTERVAL_MS;
+vi.hoisted(() => {
+  process.env.SNAPSHOT_RELOAD_INTERVAL_MS = "200";
+});
 
 /** Retries `check` until it passes or the propagation limit is over. */
 async function eventually(check: () => Promise<void>): Promise<void> {
@@ -147,10 +150,9 @@ describe("Snapshot refresh across backend instances (e2e)", () => {
   });
 
   it("retries a failed reload until the revoking instance refuses the key too", async () => {
-    // A long interval, so only the retry after the failed reload can fix this instance.
-    process.env.SNAPSHOT_RELOAD_INTERVAL_MS = "3600000";
     const { app: revokingInstance } = await createTestApp();
-    process.env.SNAPSHOT_RELOAD_INTERVAL_MS = SNAPSHOT_RELOAD_INTERVAL_MS;
+    // No interval reload, so only the retry after the failed reload can fix this instance.
+    revokingInstance.get(SchedulerRegistry).deleteInterval("snapshot-reload");
     try {
       const { key, id } = await insertApiKey(revokingInstance, db);
       await request(revokingInstance.getHttpServer())
