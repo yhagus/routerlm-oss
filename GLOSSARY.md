@@ -101,6 +101,10 @@ _Avoid_: Try, hop, upstream request
 The defaults, forced values, caps and system prompt an operator sets on a Model, optionally overridden per Route.
 _Avoid_: Parameter control, model config
 
+**Cap**:
+A ceiling in a Parameter Policy on a value the client or a default supplies. It lowers a value that is too high and never invents one: when the client omits the parameter and no default is set, the parameter stays omitted and the Provider's own default applies. A reasoning effort Cap bounds effort only; a thinking budget has its own Cap.
+_Avoid_: Limit, max, clamp
+
 ### Records
 
 **Cost**:

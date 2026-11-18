@@ -1,6 +1,8 @@
 # Never store prompt or response content, except in Error Captures
 
-The gateway carries other people's prompts. We decided that Usage Logs and Attempts record only measurements (tokens, cache counts, sizes, Cost, timing, status) and never the request or response content. The one exception is an Error Capture: when a request or an Attempt fails, its headers and body are stored so an operator can see why, and that body does contain the prompt.
+The gateway carries other people's prompts. We decided that Usage Logs and Attempts record only measurements (tokens, cache counts, sizes, Cost, timing, status) and never the request or response content. The one exception is an Error Capture: when a request or an Attempt fails, its headers and body are stored so an operator can see why, and that body does contain the prompt. This includes an Attempt that failed while Fallback went on to answer the request, and a failed Playground request (ADR 0006).
+
+An Error Capture's content lives only in Postgres and only for the Retention Period. Any other copy, such as a queued job that carries it, must be removed when the job ends, so nothing outlives the Retention Period.
 
 ## Consequences
 
