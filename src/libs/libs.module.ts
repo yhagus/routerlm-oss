@@ -2,6 +2,7 @@ import { Global, Module } from "@nestjs/common";
 import { minutes, ThrottlerModule } from "@nestjs/throttler";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { RedisModule } from "@/redis/redis.module.js";
+import { OutboundFetch } from "./providers/outbound-fetch.js";
 import { RedisThrottlerStorage } from "./providers/redis-throttler-storage.js";
 
 /** Login attempts allowed per client IP per minute (ADR 0021). */
@@ -21,7 +22,7 @@ const LOGINS_PER_MINUTE = 10;
       }),
     }),
   ],
-  providers: [],
-  exports: [ThrottlerModule],
+  providers: [OutboundFetch],
+  exports: [ThrottlerModule, OutboundFetch],
 })
 export class LibsModule {}

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
-import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
+import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version.js";
 import { AttemptFailedError, ClientCancelledError } from "../models/attempt-failure.js";
@@ -266,7 +266,7 @@ function parseJsonBody(text: string): unknown {
 }
 
 function exhaustedErrorCodesOf(target: UpstreamTarget): ExhaustedErrorCode[] {
-  return providerQuirksSchema.parse(target.quirks).exhaustedErrorCodes ?? [];
+  return storedProviderQuirksSchema.parse(target.quirks).exhaustedErrorCodes ?? [];
 }
 
 async function failedResponse(

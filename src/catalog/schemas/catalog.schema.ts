@@ -141,6 +141,15 @@ export const providerQuirksSchema = z.strictObject({
    */
   quotaBaseUrl: providerUrlSchema.optional(),
 });
+/**
+ * The quirks of a stored Provider as the inference path reads them. A
+ * `quotaBaseUrl` that no longer passes the URL policy (ADR 0019) stays as
+ * stored: only the quota reader uses it, and it reports the error itself, so
+ * it must not fail inference.
+ */
+export const storedProviderQuirksSchema = providerQuirksSchema.extend({
+  quotaBaseUrl: z.string().optional(),
+});
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 type QuirkKey = keyof CatalogProviderQuirks;
 

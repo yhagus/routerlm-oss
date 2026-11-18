@@ -1,6 +1,7 @@
 import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { HttpClientModule } from "@nestjs/http-client";
+import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
 import { OAUTH_SIGN_INS_QUEUE } from "@/queue/models/queue-names.js";
 import { RedisModule } from "@/redis/redis.module.js";
 import { SnapshotModule } from "@/snapshot/snapshot.module.js";
@@ -35,11 +36,15 @@ import { UpstreamModelsController } from "./upstream-models.controller.js";
     BullModule.registerQueue({ name: OAUTH_SIGN_INS_QUEUE }),
     // No retries, but for a refresh: the next poll is the retry. A redirect fails rather than
     // carry a device code or a token to another host.
-    HttpClientModule.register({
+    HttpClientModule.registerAsync({
       name: OAUTH_LOGIN_HTTP_CLIENT,
-      timeout: OAUTH_LOGIN_TIMEOUT_MS,
-      retry: false,
-      redirect: "error",
+      inject: [OutboundFetch],
+      useFactory: (outbound: OutboundFetch) => ({
+        timeout: OAUTH_LOGIN_TIMEOUT_MS,
+        retry: false,
+        redirect: "error",
+        fetch: outbound.fetch,
+      }),
     }),
   ],
   controllers: [

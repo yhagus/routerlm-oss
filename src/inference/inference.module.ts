@@ -1,6 +1,7 @@
 import { type MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { HttpClientModule } from "@nestjs/http-client";
+import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
 import { SnapshotModule } from "@/snapshot/snapshot.module.js";
 import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageModule } from "@/usage/usage.module.js";
@@ -15,7 +16,10 @@ import { UpstreamClient } from "./providers/upstream-client.js";
 @Module({
   // Retries are off: Fallback across Provider Accounts and Routes is the gateway's job.
   imports: [
-    HttpClientModule.register({ retry: false }),
+    HttpClientModule.registerAsync({
+      inject: [OutboundFetch],
+      useFactory: (outbound: OutboundFetch) => ({ retry: false, fetch: outbound.fetch }),
+    }),
     SnapshotModule,
     UpstreamModule,
     UsageModule,

@@ -21,6 +21,11 @@ function isPrivateIpv4(address: string): boolean {
   });
 }
 
+/** Whether an IP address literal is loopback, private or link-local. */
+export function isPrivateAddress(address: string): boolean {
+  return isIPv4(address) ? isPrivateIpv4(address) : isPrivateIpv6(address);
+}
+
 function isPrivateIpv6(address: string): boolean {
   const lower = address.toLowerCase();
   if (lower === "::" || lower === "::1") return true;
@@ -54,7 +59,7 @@ function hasPrivateHost(url: URL): boolean {
  * use it are module constants. The deploy-time variable is not a Setting, so a
  * hijacked session cannot turn the rule off (ADR 0019).
  */
-function allowsPrivateUpstreams(): boolean {
+export function allowsPrivateUpstreams(): boolean {
   return envSchema.shape.ALLOW_PRIVATE_UPSTREAMS.parse(process.env.ALLOW_PRIVATE_UPSTREAMS);
 }
 

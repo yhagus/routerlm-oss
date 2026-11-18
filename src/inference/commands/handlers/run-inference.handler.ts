@@ -3,7 +3,7 @@ import type { IncomingHttpHeaders } from "node:http";
 import { HttpStatus, Logger } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
-import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
+import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import type {
   SnapshotModel,
@@ -407,7 +407,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         ...upstreamAuthHeaders(provider.authStyle, credential.secret),
       },
       forwardedHeaders: forwardedClientHeadersOf(
-        providerQuirksSchema.parse(provider.quirks),
+        storedProviderQuirksSchema.parse(provider.quirks),
         clientHeaders,
       ),
       timeouts: {
@@ -628,7 +628,7 @@ function withCacheBreakpointsFor(
   if (!model.hasAutomaticCacheBreakpoints || provider.protocol !== "anthropic-messages") {
     return request;
   }
-  const { cacheMarkerLimit } = providerQuirksSchema.parse(provider.quirks);
+  const { cacheMarkerLimit } = storedProviderQuirksSchema.parse(provider.quirks);
   return withAutomaticCacheBreakpoints(request, cacheMarkerLimit ?? DEFAULT_CACHE_MARKER_LIMIT);
 }
 
