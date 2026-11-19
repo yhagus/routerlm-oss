@@ -9,6 +9,7 @@ const PLAYGROUND_KINDS = [
   "chat",
   "image",
   "speech",
+  "transcription",
   "video",
 ] as const satisfies readonly ModelKind[];
 type PlaygroundKind = (typeof PLAYGROUND_KINDS)[number];
@@ -41,6 +42,7 @@ const kind = ref<PlaygroundKind>("chat");
       <PlaygroundChat v-if="kind === 'chat'" />
       <PlaygroundImages v-else-if="kind === 'image'" />
       <PlaygroundSpeech v-else-if="kind === 'speech'" />
+      <PlaygroundTranscription v-else-if="kind === 'transcription'" />
       <PlaygroundVideo v-else-if="kind === 'video'" />
     </KeepAlive>
   </div>

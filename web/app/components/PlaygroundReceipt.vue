@@ -58,6 +58,9 @@ const facts = computed(() => {
     if (units.outputSeconds !== undefined) {
       list.push({ label: "Video seconds", value: formatCount(units.outputSeconds) });
     }
+    if (units.audioSeconds !== undefined) {
+      list.push({ label: "Audio seconds", value: formatCount(units.audioSeconds) });
+    }
     if (units.tier !== undefined) list.push({ label: "Tier", value: units.tier });
     list.push({ label: "Cost", value: formatCost(props.summary.cost) });
     return list;

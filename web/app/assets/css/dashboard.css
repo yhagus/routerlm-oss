@@ -3473,6 +3473,26 @@ tbody tr:hover {
   font-size: 11px;
 }
 
+/* The transcription tab's composer: the chosen file, then Transcribe. */
+.transcription-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.transcription-composer__file {
+  min-width: 0;
+  margin-right: auto;
+}
+.transcription-composer__file span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Settings: one column in the rail and the sheet. */
 .playground-settings__grid {
   display: grid;
