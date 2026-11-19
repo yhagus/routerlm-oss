@@ -10,6 +10,7 @@ import {
   PROTOCOL_KINDS,
   UPSTREAM_PROTOCOLS,
 } from "@/db/schemas/upstream.js";
+import { ERROR_ORIGINS } from "@/db/schemas/records.js";
 import { AUDIO_FORMATS } from "@/inference/models/speech-synthesis.js";
 
 interface Mirror {
@@ -31,6 +32,7 @@ const MIRRORS: Mirror[] = [
     webFile: "web/app/lib/upstream.ts",
     backend: Object.entries(PROTOCOL_KINDS).map(([protocol, kind]) => `${protocol}=${kind}`),
   },
+  { name: "ERROR_ORIGINS", webFile: "web/app/lib/errorOrigins.ts", backend: ERROR_ORIGINS },
   { name: "AUDIO_FORMATS", webFile: "web/app/lib/playgroundSpeech.ts", backend: AUDIO_FORMATS },
 ];
 
