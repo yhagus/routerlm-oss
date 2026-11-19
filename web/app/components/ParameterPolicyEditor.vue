@@ -2,8 +2,7 @@
 import {
   capsWithoutDefault,
   formFromPolicy,
-  isCapOnly,
-  isCappable,
+  isRuleOffered,
   numberRange,
   type ParameterPolicy,
   POLICY_PARAMETERS,
@@ -45,6 +44,11 @@ const serviceTierOptions = [
   { label: "None", value: "" },
   ...SERVICE_TIERS.map((tier) => ({ label: SERVICE_TIER_LABELS[tier], value: tier })),
 ];
+const watermarkOptions = [
+  { label: "Not set", value: "" },
+  { label: "On", value: "true" },
+  { label: "Off", value: "false" },
+];
 
 function submit(): void {
   const result = policyFromForm(form.value);
@@ -74,11 +78,7 @@ function submit(): void {
               <span class="cell-note">{{ parameter.hint }}</span>
             </td>
             <td v-for="{ kind, label } in RULE_KINDS" :key="kind">
-              <span
-                v-if="kind === 'caps' ? !isCappable(parameter.name) : isCapOnly(parameter.name)"
-                class="cell-note"
-                >—</span
-              >
+              <span v-if="!isRuleOffered(parameter.name, kind)" class="cell-note">—</span>
               <AppSelect
                 v-else-if="parameter.name === 'reasoningEffort'"
                 v-model="form.rules[kind].reasoningEffort"
@@ -90,6 +90,19 @@ function submit(): void {
                 v-model="form.rules[kind].serviceTier"
                 :options="serviceTierOptions"
                 :label="`${label} ${parameter.label}`"
+              />
+              <AppSelect
+                v-else-if="parameter.name === 'watermark'"
+                v-model="form.rules[kind].watermark"
+                :options="watermarkOptions"
+                :label="`${label} ${parameter.label}`"
+              />
+              <input
+                v-else-if="parameter.name === 'voice'"
+                v-model="form.rules[kind].voice"
+                class="text-input"
+                type="text"
+                :aria-label="`${label} ${parameter.label}`"
               />
               <textarea
                 v-else-if="parameter.name === 'stopSequences'"

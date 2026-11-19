@@ -22,9 +22,16 @@ export interface ParameterValues {
   reasoningBudgetTokens?: number;
   stopSequences?: string[];
   serviceTier?: ServiceTier;
+  /** Forced only: a speech request always names a voice, so a default never applies. */
+  voice?: string;
+  /** Whether a media Provider marks what it generates; off when not set. */
+  watermark?: boolean;
 }
 
-export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier">;
+export type ParameterCaps = Omit<
+  ParameterValues,
+  "stopSequences" | "serviceTier" | "voice" | "watermark"
+>;
 
 export interface ParameterPolicy {
   defaults?: ParameterValues;
@@ -49,6 +56,8 @@ export const POLICY_PARAMETERS: { name: PolicyParameter; label: string; hint: st
   },
   { name: "stopSequences", label: "Stop sequences", hint: "One per line" },
   { name: "serviceTier", label: "Service tier", hint: "Dropped where unsupported" },
+  { name: "voice", label: "Voice", hint: "Speech, Forced only" },
+  { name: "watermark", label: "Watermark", hint: "Media Kinds, off when not set" },
 ];
 
 export const RULE_KINDS: { kind: RuleKind; label: string }[] = [
@@ -57,14 +66,27 @@ export const RULE_KINDS: { kind: RuleKind; label: string }[] = [
   { kind: "caps", label: "Cap" },
 ];
 
-/** Stop sequences and Service Tiers have no order, so they can't be capped. */
+/** Stop sequences, Service Tiers, voices and watermarks have no order, so they can't be capped. */
 export function isCappable(parameter: PolicyParameter): parameter is keyof ParameterCaps {
-  return parameter !== "stopSequences" && parameter !== "serviceTier";
+  return (
+    parameter !== "stopSequences" &&
+    parameter !== "serviceTier" &&
+    parameter !== "voice" &&
+    parameter !== "watermark"
+  );
 }
 
 /** A thinking budget has no default or forced value; only a Cap limits it. */
 export function isCapOnly(parameter: PolicyParameter): boolean {
   return parameter === "reasoningBudgetTokens";
+}
+
+/** Whether the editor offers `parameter` as a rule of `kind`. */
+export function isRuleOffered(parameter: PolicyParameter, kind: RuleKind): boolean {
+  if (kind === "caps") return isCappable(parameter);
+  if (isCapOnly(parameter)) return false;
+  // The backend takes a default voice but never applies it, so it isn't offered.
+  return !(kind === "defaults" && parameter === "voice");
 }
 
 /** The editor's inputs as text: an empty field means "not set". */
@@ -114,7 +136,7 @@ export function policyFromForm(
     for (const { name, label: parameterLabel } of POLICY_PARAMETERS) {
       const text = form.rules[kind][name].trim();
       if (text === "") continue;
-      if (kind === "caps" ? !isCappable(name) : isCapOnly(name)) continue;
+      if (!isRuleOffered(name, kind)) continue;
       const problem = setValue(values, name, text);
       if (problem) return { problem: `${label} ${parameterLabel.toLowerCase()}: ${problem}` };
     }
@@ -149,6 +171,8 @@ function rowFromValues(values: ParameterValues | undefined): Record<PolicyParame
     reasoningEffort: values?.reasoningEffort ?? "",
     stopSequences: values?.stopSequences?.join("\n") ?? "",
     serviceTier: values?.serviceTier ?? "",
+    voice: values?.voice ?? "",
+    watermark: values?.watermark === undefined ? "" : String(values.watermark),
   };
 }
 
@@ -168,6 +192,15 @@ function setValue(values: ParameterValues, parameter: PolicyParameter, text: str
     const tier = SERVICE_TIERS.find((known) => known === text);
     if (!tier) return `use one of ${SERVICE_TIERS.join(", ")}`;
     values.serviceTier = tier;
+    return "";
+  }
+  if (parameter === "voice") {
+    values.voice = text;
+    return "";
+  }
+  if (parameter === "watermark") {
+    if (text !== "true" && text !== "false") return "use on or off";
+    values.watermark = text === "true";
     return "";
   }
   const { min, max, isWhole } = NUMBER_RANGES[parameter];
