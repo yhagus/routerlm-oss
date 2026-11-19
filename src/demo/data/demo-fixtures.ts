@@ -160,6 +160,8 @@ export interface DemoCaller {
   /** The share of requests that stream. */
   streamedShare: number;
   userAgent: string;
+  /** The address the requests come from, as the gateway's socket sees it. */
+  clientIp: string;
   models: ModelMix;
 }
 
@@ -170,6 +172,7 @@ export const DEMO_CALLERS: DemoCaller[] = [
     clientProtocol: "anthropic-messages",
     streamedShare: 1,
     userAgent: "claude-cli/3.4.2 (external, cli)",
+    clientIp: "10.20.0.14",
     models: { smart: 5, coder: 3, fast: 2 },
   },
   {
@@ -178,6 +181,7 @@ export const DEMO_CALLERS: DemoCaller[] = [
     clientProtocol: "openai-chat",
     streamedShare: 0.95,
     userAgent: "Cursor/2.8.1",
+    clientIp: "10.20.0.27",
     models: { coder: 5, smart: 3, fast: 2 },
   },
   {
@@ -186,6 +190,7 @@ export const DEMO_CALLERS: DemoCaller[] = [
     clientProtocol: "openai-responses",
     streamedShare: 0.4,
     userAgent: "OpenAI/Python 2.31.0",
+    clientIp: "10.30.1.5",
     models: { fast: 4, vision: 3, reasoning: 2, smart: 1 },
   },
   {
@@ -194,6 +199,7 @@ export const DEMO_CALLERS: DemoCaller[] = [
     clientProtocol: "openai-chat",
     streamedShare: 0,
     userAgent: "OpenAI/JS 7.57.0",
+    clientIp: "10.40.2.9",
     models: { coder: 3, fast: 3, reasoning: 1 },
   },
   {
@@ -202,6 +208,7 @@ export const DEMO_CALLERS: DemoCaller[] = [
     clientProtocol: "openai-chat",
     streamedShare: 1,
     userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_6) AppleWebKit/605.1.15",
+    clientIp: "10.20.0.31",
     models: { smart: 3, reasoning: 2, vision: 1, fast: 1, coder: 1 },
   },
 ];

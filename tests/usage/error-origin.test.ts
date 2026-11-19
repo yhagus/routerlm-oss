@@ -3,7 +3,6 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
-import { attempts } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { type FakeReply, FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
 import { addProviderAccount, insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
@@ -36,7 +35,20 @@ const SUCCESS: FakeReply = {
 };
 const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
 
+/** One openai-chat stream chunk that carries a single tool call delta. */
+function toolCallChunk(toolCall: object): string {
+  const chunk = {
+    id: "chatcmpl-upstream-1",
+    object: "chat.completion.chunk",
+    created: 1794700000,
+    model: "upstream-model",
+    choices: [{ index: 0, delta: { tool_calls: [toolCall] }, finish_reason: null }],
+  };
+  return `data: ${JSON.stringify(chunk)}\n\n`;
+}
+
 interface UsageLogItem {
+  id: string;
   httpStatus: number;
   errorCode: string | null;
   errorOrigin: string | null;
@@ -97,6 +109,21 @@ async function newestUsageLog(gateway: RecordingApp, count = 1): Promise<UsageLo
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
   throw new Error(`The worker wrote fewer than ${count} Usage Logs`);
+}
+
+interface UsageLogAttemptItem {
+  upstreamRequestId: string | null;
+  failureReason: string | null;
+}
+
+/** The Attempts of the Usage Page's newest row, from its detail view. */
+async function newestUsageLogAttempts(gateway: RecordingApp): Promise<UsageLogAttemptItem[]> {
+  const { id } = await newestUsageLog(gateway);
+  const detail = await request(gateway.app.getHttpServer())
+    .get(`/api/usage/${id}`)
+    .set("Cookie", gateway.cookie)
+    .expect(200);
+  return detail.body.attempts;
 }
 
 /** The one Error Capture, whole, once the worker has written it. */
@@ -219,6 +246,33 @@ describe("Error Origin, client and Provider request id of recorded requests (e2e
     });
   });
 
+  it("records a Messages stream the gateway refused mid-way as an upstream error whose Attempt broke off", async () => {
+    // Arguments for call 0 after call 1 began can't be written as Messages
+    // content blocks, so the gateway ends the stream with an error event.
+    upstream.reply({
+      kind: "stream",
+      events:
+        toolCallChunk({ index: 0, id: "call_a", type: "function", function: { name: "a" } }) +
+        toolCallChunk({ index: 1, id: "call_b", type: "function", function: { name: "b" } }) +
+        toolCallChunk({ index: 0, function: { arguments: "{}" } }) +
+        "data: [DONE]\n\n",
+    });
+
+    await request(gateway.app.getHttpServer())
+      .post("/v1/messages")
+      .set("x-api-key", gateway.apiKey)
+      .send({ ...CHAT_REQUEST, max_tokens: 256, stream: true })
+      .expect(200);
+
+    expect(await newestUsageLog(gateway)).toMatchObject({
+      errorCode: "upstream_error",
+      errorOrigin: "upstream",
+    });
+    expect(await newestUsageLogAttempts(gateway)).toMatchObject([
+      { failureReason: "stream_interrupted" },
+    ]);
+  });
+
   it("records no Error Origin for a successful request", async () => {
     upstream.reply(SUCCESS);
 
@@ -299,14 +353,14 @@ describe("Error Origin, client and Provider request id of recorded requests (e2e
     });
   });
 
-  // No HTTP API lists a Usage Log's Attempts yet, so these read the attempts table.
   it("records the Provider request id of an answered Attempt", async () => {
     upstream.reply({ ...SUCCESS, headers: { "request-id": "req_answered_1" } });
 
     await chat(gateway).expect(200);
 
-    await newestUsageLog(gateway);
-    expect(await attemptRequestIds(gateway.db)).toEqual(["req_answered_1"]);
+    expect(await newestUsageLogAttempts(gateway)).toMatchObject([
+      { upstreamRequestId: "req_answered_1" },
+    ]);
   });
 
   it("records the Provider request id of an answered stream Attempt", async () => {
@@ -318,8 +372,9 @@ describe("Error Origin, client and Provider request id of recorded requests (e2e
 
     await chat(gateway, { ...CHAT_REQUEST, stream: true }).expect(200);
 
-    await newestUsageLog(gateway);
-    expect(await attemptRequestIds(gateway.db)).toEqual(["req_streamed_1"]);
+    expect(await newestUsageLogAttempts(gateway)).toMatchObject([
+      { upstreamRequestId: "req_streamed_1" },
+    ]);
   });
 
   it("records no Provider request id when no response arrived", async () => {
@@ -327,8 +382,7 @@ describe("Error Origin, client and Provider request id of recorded requests (e2e
 
     await chat(gateway).expect(504);
 
-    await newestUsageLog(gateway);
-    expect(await attemptRequestIds(gateway.db)).toEqual([null]);
+    expect(await newestUsageLogAttempts(gateway)).toMatchObject([{ upstreamRequestId: null }]);
   });
 });
 
@@ -364,8 +418,3 @@ describe("Client IP behind a trusted proxy (e2e)", () => {
     expect((await onlyErrorCapture(gateway)).clientIp).toBe(FORGED_CLIENT_IP);
   });
 });
-
-async function attemptRequestIds(db: Database): Promise<(string | null)[]> {
-  const written = await db.select({ upstreamRequestId: attempts.upstreamRequestId }).from(attempts);
-  return written.map((attempt) => attempt.upstreamRequestId);
-}

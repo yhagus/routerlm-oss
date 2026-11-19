@@ -187,6 +187,8 @@ export function generateDemoTraffic(
       clientProtocol: caller.clientProtocol,
       isStreamed,
       attemptCount: failedAttempts.length,
+      userAgent: caller.userAgent,
+      clientIp: caller.clientIp,
     };
 
     const lastFailure = failedAttempts.at(-1);
@@ -194,6 +196,8 @@ export function generateDemoTraffic(
       const usageLog: NewUsageLog = {
         ...base,
         ...GATEWAY_ERRORS[lastFailure.failure],
+        // Every Fallback failure is the upstream's, as its error code says.
+        errorOrigin: "upstream",
         requestBytes: requestBytesFor(model.profile.contextTokens),
         responseBytes: ERROR_RESPONSE_BYTES,
         durationMs: elapsedMs,
@@ -403,6 +407,8 @@ function errorCaptureOf(
     createdAt: failed.attempt.startedAt,
     usageLogId: failed.attempt.usageLogId,
     attemptId: failed.attempt.id,
+    userAgent: caller.userAgent,
+    clientIp: caller.clientIp,
     requestHeaders: {
       authorization: REDACTED,
       "content-type": "application/json",

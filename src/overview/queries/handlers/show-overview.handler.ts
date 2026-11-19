@@ -1,9 +1,10 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, count, eq, gte, lt, type SQL, sql } from "drizzle-orm";
+import { and, count, gte, lt, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
-import { statusCondition } from "@/usage/models/usage-filters.js";
+import { byErrorOrigin } from "@/usage/models/by-error-origin.js";
+import { failedWithOriginCondition, statusCondition } from "@/usage/models/usage-filters.js";
 import {
   OVERVIEW_BUCKETS,
   type Overview,
@@ -20,11 +21,8 @@ const EMPTY_STATS: OverviewStats = {
   cost: 0,
   cacheHitRate: null,
   errorRate: null,
-  errorsByOrigin: {
-    client: { count: 0, rate: null },
-    upstream: { count: 0, rate: null },
-    gateway: { count: 0, rate: null },
-  },
+  failedCount: 0,
+  errorsByOrigin: byErrorOrigin(() => ({ count: 0, rate: null })),
 };
 
 /**
@@ -77,6 +75,9 @@ function statsColumns() {
   const totalInputTokens = sql`coalesce(${usageLogs.inputTokens}, 0)
     + coalesce(${usageLogs.cacheReadTokens}, 0)
     + coalesce(${usageLogs.cacheWriteTokens}, 0)`;
+  const failedCount = sql<number>`count(*) filter (where ${statusCondition("failed")})`.mapWith(
+    Number,
+  );
   return {
     requestCount: count(),
     cost: sql<number>`coalesce(sum(${usageLogs.cost}), 0)`.mapWith(Number),
@@ -84,12 +85,9 @@ function statsColumns() {
       sql`sum(coalesce(${usageLogs.cacheReadTokens}, 0))`,
       sql`sum(${totalInputTokens})`,
     ),
-    errorRate: ratio(sql`count(*) filter (where ${statusCondition("failed")})`, sql`count(*)`),
-    errorsByOrigin: {
-      client: originErrorsColumn("client"),
-      upstream: originErrorsColumn("upstream"),
-      gateway: originErrorsColumn("gateway"),
-    },
+    errorRate: ratio(failedCount, sql`count(*)`),
+    failedCount,
+    errorsByOrigin: byErrorOrigin(originErrorsColumn),
   };
 }
 
@@ -98,7 +96,7 @@ function statsColumns() {
  * a Drizzle selection nests only one level deep.
  */
 function originErrorsColumn(origin: ErrorOrigin): SQL<OriginErrors> {
-  const failedWithOrigin = sql`count(*) filter (where ${eq(usageLogs.errorOrigin, origin)})`;
+  const failedWithOrigin = sql`count(*) filter (where ${failedWithOriginCondition(origin)})`;
   return sql<OriginErrors>`json_build_object(
     'count', ${failedWithOrigin},
     'rate', ${ratio(failedWithOrigin, sql`count(*)`)}

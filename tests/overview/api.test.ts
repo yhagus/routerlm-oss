@@ -96,6 +96,7 @@ describe("Overview API (e2e)", () => {
       cost: 0,
       cacheHitRate: null,
       errorRate: null,
+      failedCount: 0,
       errorsByOrigin: NO_ERRORS_BY_ORIGIN,
     });
     expect(response.body.buckets[20]).toMatchObject({
@@ -115,7 +116,7 @@ describe("Overview API (e2e)", () => {
     });
   });
 
-  it("splits failed requests by Error Origin per bucket and in the totals", async () => {
+  it("counts failed requests, origin or not, and splits them by Error Origin per bucket and in the totals", async () => {
     const currentHour = currentBucketStart(HOUR_MS);
     const twoHoursAgo = currentHour - 2 * HOUR_MS;
     await db.insert(usageLogs).values([
@@ -134,12 +135,14 @@ describe("Overview API (e2e)", () => {
     expect(response.body.buckets[21]).toMatchObject({
       requestCount: 4,
       errorRate: 1,
+      failedCount: 4,
       errorsByOrigin: {
         client: { count: 1, rate: 0.25 },
         upstream: { count: 2, rate: 0.5 },
         gateway: { count: 0, rate: 0 },
       },
     });
+    expect(response.body.buckets[23].failedCount).toBe(1);
     expect(response.body.buckets[23].errorsByOrigin).toEqual({
       client: { count: 0, rate: 0 },
       upstream: { count: 0, rate: 0 },
@@ -148,6 +151,7 @@ describe("Overview API (e2e)", () => {
     expect(response.body.totals).toMatchObject({
       requestCount: 6,
       errorRate: 5 / 6,
+      failedCount: 5,
       errorsByOrigin: {
         client: { count: 1, rate: 1 / 6 },
         upstream: { count: 2, rate: 2 / 6 },
@@ -190,6 +194,7 @@ describe("Overview API (e2e)", () => {
       cost: 0,
       cacheHitRate: null,
       errorRate: null,
+      failedCount: 0,
       errorsByOrigin: NO_ERRORS_BY_ORIGIN,
     });
   });

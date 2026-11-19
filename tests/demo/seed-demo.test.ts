@@ -119,5 +119,18 @@ describe("db:seed:demo script (e2e)", () => {
     expect(overview.body.totals.cost).toBeGreaterThan(0);
     expect(overview.body.totals.errorRate).toBeGreaterThan(0);
     expect(overview.body.totals.errorRate).toBeLessThan(0.05);
+    // Every demo failure is the upstream's, as its error code says.
+    expect(overview.body.totals.errorsByOrigin.upstream.count).toBe(
+      overview.body.totals.failedCount,
+    );
+  });
+
+  it("records who sent each demo request", async () => {
+    const [{ withoutSender }] = await db
+      .select({ withoutSender: count() })
+      .from(usageLogs)
+      .where(or(isNull(usageLogs.userAgent), isNull(usageLogs.clientIp)));
+
+    expect(withoutSender).toBe(0);
   });
 });

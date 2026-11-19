@@ -41,6 +41,13 @@ export interface MediaUpstreamCall<Request, Result> extends Omit<
   target: MediaUpstreamTarget;
 }
 
+/** One HTTP call a media Protocol makes to its upstream. */
+interface MediaHttpRequest {
+  method: "GET" | "POST";
+  body?: string;
+  headers: Record<string, string>;
+}
+
 /**
  * Makes one media Attempt: lets the Protocol call its upstream and fetch the
  * files it generated, all under the Attempt's deadline. Throws
@@ -59,7 +66,7 @@ export class MediaUpstreamClient {
   ): Promise<AnsweredMediaAttempt<Result>> {
     const failureReasonOf = (status: number, body: string): AttemptFailureReason =>
       call.protocol.failureReasonOf(status, body);
-    const { answer, upstreamRequestId } = await this.exchangeNoting(
+    const { answer, upstreamRequestId } = await this.exchangeCapturingRequestId(
       { ...call, failureReasonOf },
       (exchange) => call.protocol.generate(call.request, call.target, exchange),
     );
@@ -74,21 +81,21 @@ export class MediaUpstreamClient {
     connection: MediaConnection,
     use: (exchange: MediaExchange) => Promise<Answer>,
   ): Promise<Answer> {
-    const { answer } = await this.exchangeNoting(connection, use);
+    const { answer } = await this.exchangeCapturingRequestId(connection, use);
     return answer;
   }
 
-  /** As `exchange`, noting the first request id the Provider returned (null when none). */
-  private async exchangeNoting<Answer>(
+  /** As `exchange`, capturing the first request id the Provider returned (null when none). */
+  private async exchangeCapturingRequestId<Answer>(
     connection: MediaConnection,
     use: (exchange: MediaExchange) => Promise<Answer>,
   ): Promise<{ answer: Answer; upstreamRequestId: string | null }> {
     const deadlines = new AttemptDeadlines(connection.timeouts, connection.clientSignal);
     deadlines.start("totalMs");
     let upstreamRequestId: string | null = null;
-    const sendNoting = async (
+    const sendCapturingRequestId = async (
       url: string,
-      request: { method: "GET" | "POST"; body?: string; headers: Record<string, string> },
+      request: MediaHttpRequest,
     ): Promise<unknown> => {
       const answered = await this.send(connection, url, deadlines.signal, request);
       upstreamRequestId ??= answered.upstreamRequestId;
@@ -97,12 +104,12 @@ export class MediaUpstreamClient {
     try {
       const answer = await use({
         postJson: (url, body, headers = {}) =>
-          sendNoting(url, {
+          sendCapturingRequestId(url, {
             method: "POST",
             body: JSON.stringify(body),
             headers: { "content-type": "application/json", ...headers },
           }),
-        getJson: (url) => sendNoting(url, { method: "GET", headers: {} }),
+        getJson: (url) => sendCapturingRequestId(url, { method: "GET", headers: {} }),
         fetchMedia: (url) => this.fetcher.fetch(url, deadlines.signal),
       });
       return { answer, upstreamRequestId };
@@ -117,7 +124,7 @@ export class MediaUpstreamClient {
     connection: MediaConnection,
     url: string,
     signal: AbortSignal,
-    request: { method: "GET" | "POST"; body?: string; headers: Record<string, string> },
+    request: MediaHttpRequest,
   ): Promise<{ body: unknown; upstreamRequestId: string | null }> {
     const response = await this.http.request<Response>(url, {
       method: request.method,
