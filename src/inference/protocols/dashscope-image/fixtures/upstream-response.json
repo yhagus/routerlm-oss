@@ -1,0 +1,29 @@
+{
+  "output": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "message": {
+          "content": [
+            {
+              "image": "https://dashscope-result-sg.oss-ap-southeast-1.aliyuncs.com/1d/first.png?Expires=1794786400&Signature=abc"
+            },
+            {
+              "image": "https://dashscope-result-sg.oss-ap-southeast-1.aliyuncs.com/1d/second.png?Expires=1794786400&Signature=def"
+            }
+          ],
+          "role": "assistant"
+        }
+      }
+    ]
+  },
+  "usage": {
+    "output_height": 1024,
+    "output_width": 1024,
+    "input_image_count": 0,
+    "input_image_type": "qima_input_1k",
+    "output_image_count": 2,
+    "output_image_type": "qima_output_1k"
+  },
+  "request_id": "571ae02f-5c9d-436c-83c2-f221e6df0xxx"
+}

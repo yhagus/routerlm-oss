@@ -73,7 +73,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         result.createdProviders += created.length;
 
         const [provider] = await tx
-          .select({ id: providers.id })
+          .select({ id: providers.id, endpoints: providers.endpoints })
           .from(providers)
           .where(eq(providers.slug, entry.slug));
         if (provider === undefined) {
@@ -85,6 +85,18 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             .update(providers)
             .set({ logo: entry.logo })
             .where(and(eq(providers.id, provider.id), isNull(providers.logo)));
+        }
+        // So is an endpoint for a Kind the Provider has none for: a Kind the
+        // Catalog gained since the Provider was seeded, whose models need it.
+        const servedKinds = new Set(provider.endpoints.map((endpoint) => endpoint.kind));
+        const missingEndpoints = entry.endpoints.filter(
+          (endpoint) => !servedKinds.has(endpoint.kind),
+        );
+        if (missingEndpoints.length > 0) {
+          await tx
+            .update(providers)
+            .set({ endpoints: [...provider.endpoints, ...missingEndpoints] })
+            .where(eq(providers.id, provider.id));
         }
         if (entry.upstreamModels.length === 0) continue;
 

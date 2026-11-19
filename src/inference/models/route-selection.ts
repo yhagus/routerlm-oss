@@ -70,7 +70,7 @@ export function canServe(upstreamModel: SnapshotUpstreamModel, request: Inferenc
     requiredCapabilities(request).every((capability) =>
       upstreamModel.capabilities.includes(capability),
     ) &&
-    neededContext <= upstreamModel.contextSize
+    (upstreamModel.contextSize === null || neededContext <= upstreamModel.contextSize)
   );
 }
 

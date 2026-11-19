@@ -9,6 +9,8 @@ import type { User } from "@/users/models/user.js";
 import { PlaygroundExceptionFilter } from "./filters/playground-exception.filter.js";
 import { type PlaygroundRequest, playgroundRequestSchema } from "./schemas/playground.schema.js";
 import { SendPlaygroundChatCompletionCommand } from "./commands/impl/send-playground-chat-completion.command.js";
+import { SendPlaygroundImageGenerationCommand } from "./commands/impl/send-playground-image-generation.command.js";
+import type { PlaygroundImageGeneration } from "./models/playground-image-generation.js";
 
 /** The Playground's endpoints: a signed-in User's session, never an API Key. */
 @DashboardController("playground")
@@ -49,5 +51,39 @@ export class PlaygroundController {
       }),
     );
     return eventStreamResponse(chunks);
+  }
+
+  /** An image request as a client sends it to `/v1/images/generations`; the answer adds a summary. */
+  @Post("images/generations")
+  @HttpCode(200)
+  generateImage(
+    @Body() body: unknown,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundImageGeneration> {
+    return this.commandBus.execute(
+      new SendPlaygroundImageGenerationCommand(body, user, clientConnectionOf(request, response), {
+        kind: "named-model",
+      }),
+    );
+  }
+
+  /** A direct Upstream Model test of image generation: the body's `model` is not resolved. */
+  @Post("upstream-models/:upstreamModelId/images/generations")
+  @HttpCode(200)
+  generateImageWithUpstreamModel(
+    @Param("upstreamModelId", ParseUUIDPipe) upstreamModelId: string,
+    @Body() body: unknown,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundImageGeneration> {
+    return this.commandBus.execute(
+      new SendPlaygroundImageGenerationCommand(body, user, clientConnectionOf(request, response), {
+        kind: "upstream-model",
+        upstreamModelId,
+      }),
+    );
   }
 }

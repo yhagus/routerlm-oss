@@ -1,0 +1,1 @@
+ALTER TABLE "upstream_models" ALTER COLUMN "context_size" DROP NOT NULL;

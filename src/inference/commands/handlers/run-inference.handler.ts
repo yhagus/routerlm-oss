@@ -1,47 +1,37 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingHttpHeaders } from "node:http";
-import { HttpStatus, Logger } from "@nestjs/common";
-import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { mayUseModel } from "@/api-keys/models/api-key.js";
+import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { CLIENT_PROTOCOL_KINDS, type ModelKind } from "@/db/schemas/index.js";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import {
   type SnapshotModel,
-  type SnapshotProviderAccount,
   type SnapshotUpstreamModel,
   validQuirksOf,
 } from "@/snapshot/models/snapshot.js";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
-import { SIGN_IN_AGAIN_REASON } from "@/upstream/models/oauth-login.js";
-import {
-  apiKeyCredential,
-  CredentialUnavailableError,
-  OauthLoginRefusedError,
-  type ProviderAccountCredential,
-} from "@/upstream/models/provider-account-credential.js";
-import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 import { UsageProducer } from "@/usage/jobs/usage.producer.js";
-import { ProviderAccountCredentials } from "@/upstream/providers/provider-account-credentials.js";
-import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import {
   AttemptFailedError,
   ClientCancelledError,
-  exhaustionError,
   gatewayErrorFor,
 } from "../../models/attempt-failure.js";
 import {
   DEFAULT_CACHE_MARKER_LIMIT,
   withAutomaticCacheBreakpoints,
 } from "../../models/automatic-cache-breakpoints.js";
+import {
+  assertKindServedHere,
+  type Destination,
+  upstreamModelServedHere,
+  usableModel,
+} from "../../models/destination.js";
 import { GatewayError } from "../../models/gateway-error.js";
-import { exhaustedUntilOf } from "../../models/quota-exhausted-error.js";
 import type { InferenceRequest } from "../../models/internal-format.js";
 import { applyParameterPolicy, effectiveParameterPolicy } from "../../models/parameter-policy.js";
-import { type PromptCacheKeyOwner, promptCacheKey } from "../../models/prompt-cache-key.js";
+import { promptCacheKey } from "../../models/prompt-cache-key.js";
+import { encodedFor, failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
 import type {
   ClientProtocolConverter,
   ClientStreamWriter,
@@ -49,14 +39,13 @@ import type {
 } from "../../protocols/client-protocol-converter.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "../../protocols/converters.js";
 import {
-  type AttemptPath,
   type AttemptTarget,
-  attemptTargets,
   canServe,
   capableRoutes,
   endpointOf,
   routePath,
 } from "../../models/route-selection.js";
+import { AttemptRunner } from "../../providers/attempt-runner.js";
 import {
   DEFAULT_TIMEOUTS,
   type UpstreamCall,
@@ -68,18 +57,6 @@ import { forwardedClientHeadersOf } from "../../providers/forwarded-client-heade
 import { UsageMeter } from "../../models/usage-meter.js";
 import type { InferenceCaller, InferenceResult, InferenceTarget } from "../../models/inference.js";
 import { RunInferenceCommand } from "../impl/run-inference.command.js";
-
-/** What a request resolved to (spec step 3), with the paths its Attempts may take. */
-interface Destination {
-  /** Null for a direct Upstream Model test: no Parameter Policy, no automatic cache breakpoints. */
-  model: SnapshotModel | null;
-  /** The Model's id, or the Upstream Model's row id for a direct test. */
-  id: string;
-  /** What the response names as its model. */
-  name: string;
-  /** Capable of serving the request, in the order they are tried. */
-  paths: AttemptPath[];
-}
 
 /** What one Attempt needs besides the request and its target. */
 interface AttemptOptions {
@@ -94,18 +71,7 @@ type AttemptResult =
   | { kind: "response"; body: unknown }
   | { kind: "stream"; upstream: UpstreamStream; writer: ClientStreamWriter; target: AttemptTarget };
 
-/** Spec "Fallback": at most this many upstream calls per client request. */
-export const MAX_ATTEMPTS_PER_REQUEST = 5;
-
-/** ADR 0023: this many 403s in a row, with no success between, disable the Provider Account. */
-const DISABLING_REFUSAL_COUNT = 3;
-
 const HTTP_OK = 200;
-const HTTP_INTERNAL_SERVER_ERROR = 500;
-/** Recorded when the client left before any response; nginx's "client closed request". */
-const CLIENT_CLOSED_REQUEST = 499;
-
-const encoder = new TextEncoder();
 
 /**
  * The inference path (spec "Inference path" steps 2 to 8) for any client
@@ -116,17 +82,11 @@ const encoder = new TextEncoder();
  */
 @CommandHandler(RunInferenceCommand)
 export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand> {
-  private readonly logger = new Logger(RunInferenceHandler.name);
-
   constructor(
     private readonly snapshot: SnapshotService,
-    private readonly cipher: ProviderKeyCipher,
-    private readonly credentials: ProviderAccountCredentials,
     private readonly upstream: UpstreamClient,
-    private readonly cooldowns: CooldownStore,
-    private readonly providerAccountHealth: ProviderAccountHealth,
+    private readonly attempts: AttemptRunner,
     private readonly usage: UsageProducer,
-    private readonly commandBus: CommandBus,
   ) {}
 
   async execute({
@@ -159,7 +119,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       record(meter.finish(HTTP_OK, false));
       return { kind: "response", json };
     } catch (error) {
-      record(failedRequestUsage(meter, converter, error));
+      record(failedRequestUsage(meter, (failure) => converter.writeError(failure), error));
       throw error;
     }
   }
@@ -186,57 +146,19 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     };
     const cacheKey = promptCacheKey(requestOwnerOf(caller), destination.id);
 
-    // Accounts in Cooldown when the request arrived, plus the ones that fail during it.
-    const enabledAccountIds = enabledProviderAccountIdsOf(destination.paths);
-    const cooldowns = await this.cooldowns.recentCooldowns(enabledAccountIds);
-    const skippedAccountIds = new Set(cooldowns.keys());
-    const recordedExhaustedAccountIds = new Set<string>();
-    const failures: AttemptFailedError[] = [];
-    const targets = attemptTargets(destination.paths, (target) => {
-      const accountId = target.providerAccount.id;
-      if (!skippedAccountIds.has(accountId)) {
-        return false;
-      }
-      // Recorded once, even when the account comes up again on a later Route.
-      if (
-        cooldowns.get(accountId)?.cause === "exhausted" &&
-        !recordedExhaustedAccountIds.has(accountId)
-      ) {
-        recordedExhaustedAccountIds.add(accountId);
-        meter.attemptSkippedAsExhausted(target);
-      }
-      return true;
-    });
-    for (const target of targets) {
-      if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
-        break;
-      }
+    return await this.attempts.firstAnswer(destination.paths, meter, (target) => {
       const request = upstreamRequestFor(clientRequest, destination.model, target);
-      try {
-        return await this.attemptWithCredential(converter, request, context, target, {
-          cacheKey,
-          clientSignal: connection.signal,
-          clientHeaders: connection.requestHeaders,
-          meter,
-        });
-      } catch (error) {
-        if (!(error instanceof AttemptFailedError)) {
-          throw error;
-        }
-        meter.attemptFailed(error);
-        failures.push(error);
-        skippedAccountIds.add(target.providerAccount.id);
-        await this.afterFailedAttempt(error, target);
-        if (error.reason === "bad_request") {
-          // The request itself is bad: another Provider Account would refuse it too.
-          throw gatewayErrorFor(error);
-        }
-      }
-    }
-    throw exhaustionError(
-      failures,
-      enabledAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
-    );
+      return {
+        sentServiceTier: serviceTierSentTo(request.serviceTier, target.upstreamModel),
+        send: (credential) =>
+          this.attempt(converter, request, context, target, credential, {
+            cacheKey,
+            clientSignal: connection.signal,
+            clientHeaders: connection.requestHeaders,
+            meter,
+          }),
+      };
+    });
   }
 
   /** The Model the request names, with its capable Routes (spec steps 3 to 5). */
@@ -246,7 +168,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     caller: InferenceCaller,
     meter: UsageMeter,
   ): Destination {
-    const model = this.resolveModel(clientRequest.model, caller);
+    const model = usableModel(this.snapshot.current, clientRequest.model, caller);
     meter.modelResolved(model.id, model.name);
     assertKindServedHere(`Model "${model.name}"`, model.kind, kind);
     // Routes are selected under the Model's policy (spec step 4 before 5); a
@@ -263,25 +185,14 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
 
   /**
    * The Upstream Model a direct Upstream Model test names by row id, if it
-   * and its Provider are enabled and it can serve the request as sent.
+   * can serve the request as sent.
    */
   private resolveUpstreamModel(
     upstreamModelRowId: string,
     kind: ModelKind,
     clientRequest: InferenceRequest,
   ): Destination {
-    const upstreamModel = this.snapshot.current.upstreamModelsById.get(upstreamModelRowId);
-    if (!upstreamModel?.isEnabled || !upstreamModel.provider.isUsable) {
-      throw new GatewayError(
-        "model_not_found",
-        `The Upstream Model "${upstreamModelRowId}" does not exist`,
-      );
-    }
-    assertKindServedHere(
-      `Upstream Model "${upstreamModel.upstreamModelId}"`,
-      upstreamModel.kind,
-      kind,
-    );
+    const upstreamModel = upstreamModelServedHere(this.snapshot.current, upstreamModelRowId, kind);
     if (!canServe(upstreamModel, clientRequest)) {
       throw new GatewayError(
         "no_capable_route",
@@ -294,69 +205,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       name: upstreamModel.upstreamModelId,
       paths: [{ route: null, upstreamModel }],
     };
-  }
-
-  /** The Model the request names, if the caller may use it (spec step 3). */
-  private resolveModel(name: string, caller: InferenceCaller): SnapshotModel {
-    const model = this.snapshot.current.modelsByName.get(name);
-    if (!model?.isEnabled) {
-      throw new GatewayError("model_not_found", `The Model "${name}" does not exist`);
-    }
-    if (caller.kind === "api-key" && !mayUseModel(caller.principal, model.id)) {
-      throw new GatewayError("model_not_allowed", `This API Key may not use the Model "${name}"`);
-    }
-    return model;
-  }
-
-  /**
-   * One Attempt with the Provider Account's credential. An OAuth Login the
-   * upstream answers with 401 is refreshed once and tried once more (spec
-   * "OAuth Login"), as a second Attempt on the same Provider Account.
-   */
-  private async attemptWithCredential(
-    converter: ClientProtocolConverter,
-    request: InferenceRequest,
-    context: ResponseContext,
-    target: AttemptTarget,
-    options: AttemptOptions,
-  ): Promise<AttemptResult> {
-    const { meter } = options;
-    const account = target.providerAccount;
-    const sentServiceTier = serviceTierSentTo(request.serviceTier, target.upstreamModel);
-    meter.attemptStarted(target, sentServiceTier);
-    const credential = await this.credentialOf(account);
-    meter.credentialUsed(credential.secret);
-    try {
-      return await this.attempt(converter, request, context, target, credential, options);
-    } catch (error) {
-      if (!isRejectedOauthLogin(error, account)) {
-        throw error;
-      }
-      this.logger.warn(
-        `The Provider answered 401 to the OAuth Login of Provider Account ${account.id}; ` +
-          "refreshing it and trying once more",
-      );
-      meter.attemptFailed(error);
-      meter.attemptStarted(target, sentServiceTier);
-      const renewed = await asAttemptFailure(() =>
-        this.credentials.credentialAfterRejection(account.id, credential),
-      );
-      meter.credentialUsed(renewed.secret);
-      return await this.attempt(converter, request, context, target, renewed, options);
-    }
-  }
-
-  /**
-   * An API key comes from the snapshot, as ever. An OAuth Login is read where
-   * it is stored, and refreshed first when it is about to run out.
-   */
-  private credentialOf(account: SnapshotProviderAccount): Promise<ProviderAccountCredential> {
-    if (account.credential.kind === "api-key") {
-      return Promise.resolve(
-        apiKeyCredential(this.cipher.decrypt(account.credential.encryptedKey)),
-      );
-    }
-    return asAttemptFailure(() => this.credentials.credentialOf(account.id));
   }
 
   /**
@@ -379,14 +227,12 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     if (!request.stream) {
       const response = await this.upstream.complete(call);
       meter.attemptAnswered();
-      void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
       meter.usageReported(response.usage, response.servedTierValue);
       meter.attemptSucceeded();
       return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
     const upstream = await this.upstream.openStream(call);
     meter.attemptAnswered();
-    void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
     return { kind: "stream", upstream, writer: converter.startStream(request, context), target };
   }
 
@@ -484,7 +330,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
           throw error;
         }
         meter.attemptFailed(error);
-        await this.afterFailedAttempt(error, target);
+        await this.attempts.afterFailedAttempt(error, target);
         const gatewayError = gatewayErrorFor(error);
         meter.failedWith(gatewayError.code);
         text += converter.writeStreamError(gatewayError);
@@ -497,180 +343,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       record(meter.finish(HTTP_OK, clientSignal.aborted));
     }
   }
-
-  /**
-   * What a failed Attempt does to its Provider Account (spec "Fallback"):
-   * 401 disables it until an operator re-enables it or, for an OAuth
-   * Login, signs in again; repeated 403s do too, one 403, rate limits, 5xx,
-   * timeouts and connection errors put it in Cooldown; running out of quota
-   * makes it Exhausted; a bad request says nothing about the account. The
-   * database writes and the quota reading are not awaited.
-   */
-  private async afterFailedAttempt(
-    failure: AttemptFailedError,
-    { route, upstreamModel, providerAccount }: AttemptTarget,
-  ): Promise<void> {
-    const path = route ? `Route ${route.id}` : `Upstream Model ${upstreamModel.id} (direct)`;
-    // Upstream error text stays in this log line and the dashboard, never in the reply.
-    this.logger.warn(
-      `Attempt failed (${failure.reason}, status ${failure.upstreamStatus ?? "none"}) ` +
-        `on ${path}, Provider Account ${providerAccount.id}: ${failure.message}`,
-    );
-    const lastError = `${failure.reason}: ${failure.message}`;
-    switch (failure.reason) {
-      case "bad_request":
-        return;
-      case "unauthorized":
-        if (failure.upstreamStatus === HttpStatus.FORBIDDEN) {
-          await this.afterForbiddenAttempt(failure, providerAccount.id, lastError);
-          return;
-        }
-        void this.providerAccountHealth.disable(
-          providerAccount.id,
-          providerAccount.credential.kind === "oauth-login"
-            ? SIGN_IN_AGAIN_REASON
-            : `The upstream refused this key (HTTP ${failure.upstreamStatus ?? "unknown"})`,
-          lastError,
-        );
-        return;
-      case "rate_limited":
-      case "server_error":
-      case "timeout":
-      case "connection_error":
-      case "stream_interrupted":
-        void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
-        await this.cooldowns.startCooldown(providerAccount.id, failure.reason, failure.retryAfter);
-        return;
-      case "exhausted":
-        void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
-        // Until the reset the refusal names; for a short while when it names none.
-        await this.commandBus.execute(
-          new MarkProviderAccountExhaustedCommand(
-            providerAccount.id,
-            exhaustedUntilOf(failure.upstreamResponse?.body ?? ""),
-          ),
-        );
-        // Started only now, so the end a reading sets replaces the refusal's.
-        void this.readQuota(providerAccount.id);
-        return;
-    }
-  }
-
-  /**
-   * A 403 may be tied to one request, so it starts a Cooldown like a 5xx; the
-   * third in a row with no success between disables the account (ADR 0023).
-   */
-  private async afterForbiddenAttempt(
-    failure: AttemptFailedError,
-    providerAccountId: string,
-    lastError: string,
-  ): Promise<void> {
-    const refusalCount = await this.cooldowns.countRefusal(providerAccountId);
-    if (refusalCount >= DISABLING_REFUSAL_COUNT) {
-      // An operator who re-enables the account starts the count again.
-      await this.cooldowns.resetRefusals(providerAccountId);
-      void this.providerAccountHealth.disable(
-        providerAccountId,
-        `The upstream refused this account's requests ${DISABLING_REFUSAL_COUNT} times in a row (repeated refusals, HTTP 403)`,
-        lastError,
-      );
-      return;
-    }
-    void this.providerAccountHealth.recordFailure(providerAccountId, lastError);
-    await this.cooldowns.startCooldown(providerAccountId, failure.reason, failure.retryAfter);
-  }
-
-  /** A failed reading, or a Provider with no quota reader, leaves the short Exhausted state. */
-  private async readQuota(providerAccountId: string): Promise<void> {
-    try {
-      await this.commandBus.execute(new ReadProviderAccountQuotaCommand(providerAccountId));
-    } catch (error) {
-      this.logger.warn(
-        `Quota of Exhausted Provider Account ${providerAccountId} not read: ${String(error)}`,
-      );
-    }
-  }
-}
-
-/** Whether the upstream answered 401 to an OAuth Login, which one refresh may cure. */
-/**
- * Refuses a Model or Upstream Model of another Kind than the client endpoint
- * serves (GLOSSARY "Model Kind"), naming both Kinds.
- */
-function assertKindServedHere(named: string, itsKind: ModelKind, endpointKind: ModelKind): void {
-  if (itsKind !== endpointKind) {
-    throw new GatewayError(
-      "invalid_request",
-      `The ${named} has the Kind ${itsKind}, but this endpoint serves the Kind ${endpointKind}`,
-    );
-  }
-}
-
-function isRejectedOauthLogin(
-  error: unknown,
-  account: SnapshotProviderAccount,
-): error is AttemptFailedError {
-  return (
-    account.credential.kind === "oauth-login" &&
-    error instanceof AttemptFailedError &&
-    error.upstreamStatus === HttpStatus.UNAUTHORIZED
-  );
-}
-
-/**
- * Reads an OAuth Login's credential, turning what keeps it from being read
- * into a failed Attempt, so Fallback moves on: a login the Provider refuses
- * counts as unauthorized, one that can't be refreshed for now as a
- * connection error.
- */
-async function asAttemptFailure(
-  readCredential: () => Promise<ProviderAccountCredential>,
-): Promise<ProviderAccountCredential> {
-  try {
-    return await readCredential();
-  } catch (error) {
-    if (error instanceof OauthLoginRefusedError) {
-      throw new AttemptFailedError("unauthorized", null, error.message, null, { cause: error });
-    }
-    if (error instanceof CredentialUnavailableError) {
-      throw new AttemptFailedError("connection_error", null, error.message, null, { cause: error });
-    }
-    throw error;
-  }
-}
-
-/** The API Key or User a request is made for, as its Usage Log and prompt cache key name it. */
-function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
-  return caller.kind === "api-key"
-    ? {
-        kind: "api-key",
-        apiKeyId: caller.principal.apiKeyId,
-        apiKeyName: caller.principal.apiKeyName,
-      }
-    : { kind: "playground", userId: caller.userId };
-}
-
-/** `text` encoded once, counted as sent: the client gets exactly these bytes. */
-function encodedFor(meter: UsageMeter, text: string): Uint8Array {
-  const bytes = encoder.encode(text);
-  meter.responseWritten(bytes.byteLength);
-  return bytes;
-}
-
-/** The usage job of a request that ended in an exception instead of a response. */
-function failedRequestUsage(
-  meter: UsageMeter,
-  converter: ClientProtocolConverter,
-  error: unknown,
-): UsageJob {
-  if (error instanceof GatewayError) {
-    return meter.finishWithError(error, converter.writeError(error));
-  }
-  if (error instanceof ClientCancelledError) {
-    return meter.finish(CLIENT_CLOSED_REQUEST, true);
-  }
-  // A bug: Nest answers 500.
-  return meter.finish(HTTP_INTERNAL_SERVER_ERROR, false);
 }
 
 /**
@@ -713,13 +385,4 @@ function withCacheBreakpointsFor(
   }
   const { cacheMarkerLimit } = validQuirksOf(provider);
   return withAutomaticCacheBreakpoints(request, cacheMarkerLimit ?? DEFAULT_CACHE_MARKER_LIMIT);
-}
-
-/** The Provider Accounts Fallback may try, unless they are in Cooldown. */
-function enabledProviderAccountIdsOf(paths: AttemptPath[]): string[] {
-  return paths.flatMap(({ upstreamModel }) =>
-    upstreamModel.provider.providerAccounts
-      .filter((account) => account.isEnabled)
-      .map((account) => account.id),
-  );
 }

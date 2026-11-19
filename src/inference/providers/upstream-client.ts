@@ -71,8 +71,8 @@ class DeadlineExceeded extends Error {
   }
 }
 
-/** One AbortController for the Attempt, aborted by the client or by whichever timer fires first. */
-class AttemptDeadlines {
+/** One AbortController for the Attempt, aborted by the client or by whichever timer fires first. Media Attempts share it. */
+export class AttemptDeadlines {
   private readonly controller = new AbortController();
   private readonly timers = new Map<Deadline, NodeJS.Timeout>();
   private readonly onClientAbort = (): void => this.controller.abort(new ClientCancelledError());
@@ -397,6 +397,11 @@ function failureReasonOf(
   if (isQuotaExhaustedError(body, exhaustedErrorCodes)) {
     return "exhausted";
   }
+  return failureReasonOfStatus(status);
+}
+
+/** The Fallback reason an upstream's non-2xx status means when nothing in its body says more. */
+export function failureReasonOfStatus(status: number): AttemptFailureReason {
   if (status === 429) {
     return "rate_limited";
   }

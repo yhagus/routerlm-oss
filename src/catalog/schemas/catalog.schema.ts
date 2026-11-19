@@ -182,6 +182,7 @@ const QUIRKS_OF_ONE_PROTOCOL = {
     "systemAsDeveloperMessage",
     "droppedParameters",
   ],
+  "dashscope-image": [],
 } as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
 
 /**
@@ -352,7 +353,8 @@ const upstreamModelSchema = z.strictObject({
   // Catalog model has one, so the dashboard never falls back to the bare id.
   name: z.string().min(1),
   capabilities: z.array(z.enum(CAPABILITIES)),
-  contextSize: z.int().positive(),
+  /** Null for a media Kind, which has no token context. */
+  contextSize: z.int().positive().nullable(),
   maxOutputTokens: z.int().positive().nullable(),
   inputPrice: priceSchema,
   outputPrice: priceSchema,

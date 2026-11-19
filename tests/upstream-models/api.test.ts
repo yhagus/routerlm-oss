@@ -124,6 +124,60 @@ describe("Upstream Models (e2e)", () => {
       .expect(400);
   });
 
+  describe("on a Provider with chat and image endpoints", () => {
+    beforeEach(async () => {
+      await request(app.getHttpServer())
+        .patch(`/api/providers/${providerId}`)
+        .set("Cookie", cookie)
+        .send({
+          endpoints: [
+            { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example" },
+            {
+              kind: "image",
+              protocol: "dashscope-image",
+              baseUrl: "https://media.acme.example/api/v1",
+            },
+          ],
+        })
+        .expect(200);
+    });
+
+    it("creates an image Upstream Model without a context size", async () => {
+      const created = await request(app.getHttpServer())
+        .post("/api/upstream-models")
+        .set("Cookie", cookie)
+        .send({ providerId, ...ACME_LARGE, kind: "image", capabilities: [], contextSize: null })
+        .expect(201);
+
+      expect(created.body).toMatchObject({ kind: "image", contextSize: null });
+    });
+
+    it("refuses to change the Kind of an Upstream Model a Route uses", async () => {
+      const id = await createAcmeLarge();
+      await insertRouteTo(db, id, "smart");
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/upstream-models/${id}`)
+        .set("Cookie", cookie)
+        .send({ kind: "image" })
+        .expect(400);
+
+      expect(response.body.message).toBe(
+        "Routes use this Upstream Model, so its Kind can't change; remove them first",
+      );
+    });
+
+    it("changes the Kind of an Upstream Model no Route uses", async () => {
+      const id = await createAcmeLarge();
+
+      await request(app.getHttpServer())
+        .patch(`/api/upstream-models/${id}`)
+        .set("Cookie", cookie)
+        .send({ kind: "image" })
+        .expect(200);
+    });
+  });
+
   it("edits Capabilities and prices, and clears a price the Provider stopped publishing", async () => {
     const id = await createAcmeLarge();
 

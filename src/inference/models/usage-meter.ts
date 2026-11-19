@@ -9,6 +9,7 @@ import type {
   AttemptRecord,
   CapturedMessage,
   ErrorCaptureRecord,
+  MediaUnits,
   ServedBy,
   ServingTarget,
   UsageCaller,
@@ -68,6 +69,7 @@ export class UsageMeter {
   private openAttempt: OpenAttempt | null = null;
   private servedBy: ServedBy | null = null;
   private usage: TokenUsage | null = null;
+  private units: MediaUnits | null = null;
   private timeToFirstTokenMs: number | null = null;
   private responseBytes = 0;
   private clientRequest: ClientRequest | null = null;
@@ -143,6 +145,7 @@ export class UsageMeter {
       serviceTier,
       // Taken now, so a later price edit doesn't change this request's Cost.
       prices: pricesAtServiceTier(target.upstreamModel, serviceTier),
+      unitPrices: target.upstreamModel.unitPrices,
     };
     if (this.isStreamed) {
       this.timeToFirstTokenMs = elapsedSince(this.receivedMs);
@@ -168,6 +171,11 @@ export class UsageMeter {
       serviceTier,
       prices: pricesAtServiceTier(upstreamModel, serviceTier),
     };
+  }
+
+  /** What the answering Attempt of a media Kind counted. */
+  unitsCounted(units: MediaUnits): void {
+    this.units = units;
   }
 
   attemptFailed(failure: AttemptFailedError): void {
@@ -227,6 +235,7 @@ export class UsageMeter {
       errorCode: this.errorCode,
       servedBy: this.servedBy,
       usage: this.usage,
+      units: this.units,
       requestBytes: this.requestBytes,
       responseBytes: this.responseBytes,
       timeToFirstTokenMs: this.timeToFirstTokenMs,
