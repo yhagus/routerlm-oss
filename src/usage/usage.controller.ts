@@ -1,8 +1,9 @@
-import { Get, Query } from "@nestjs/common";
+import { Get, Param, ParseUUIDPipe, Query } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import type { UsageLogPage, UsageSummary } from "./models/usage.js";
+import type { UsageLogDetail, UsageLogPage, UsageSummary } from "./models/usage.js";
 import { ListUsageLogsQuery } from "./queries/impl/list-usage-logs.query.js";
+import { ShowUsageLogQuery } from "./queries/impl/show-usage-log.query.js";
 import { SummarizeUsageQuery } from "./queries/impl/summarize-usage.query.js";
 import {
   type UsageFilter,
@@ -11,7 +12,7 @@ import {
   usagePageQuerySchema,
 } from "./schemas/usage.schema.js";
 
-/** The Usage page: Usage Logs and their summary, filtered. Only a User's session gets in. */
+/** The Usage page: Usage Logs and their summary, filtered, and one Usage Log in detail. Only a User's session gets in. */
 @DashboardController("usage")
 export class UsageController {
   constructor(private readonly queryBus: QueryBus) {}
@@ -27,5 +28,10 @@ export class UsageController {
   @Get("totals")
   summarizeUsage(@Query({ schema: usageFilterSchema }) filter: UsageFilter): Promise<UsageSummary> {
     return this.queryBus.execute(new SummarizeUsageQuery(filter));
+  }
+
+  @Get(":id")
+  showUsageLog(@Param("id", ParseUUIDPipe) id: string): Promise<UsageLogDetail> {
+    return this.queryBus.execute(new ShowUsageLogQuery(id));
   }
 }
