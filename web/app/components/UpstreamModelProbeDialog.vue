@@ -8,7 +8,7 @@ import { formatCost, formatDuration } from "~/lib/usage";
 
 /** A finished Probe: one result per Provider Account, or the backend's refusal. */
 const props = defineProps<{
-  probe: Exclude<UpstreamModelProbe, { status: "running" }>;
+  probe: UpstreamModelProbe;
 }>();
 const isOpen = defineModel<boolean>("open", { required: true });
 

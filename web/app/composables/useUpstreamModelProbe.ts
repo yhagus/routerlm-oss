@@ -4,43 +4,59 @@ import { playgroundErrorOf, readProperty } from "~/lib/playground";
 import { probePath, type ProbeResult, type ProbeResults } from "~/lib/probe";
 import type { UpstreamModel } from "~/lib/upstream";
 
-/** One Probe at a time: running, then its results or the backend's refusal. */
+/** A finished Probe: its results, or the backend's refusal. */
 export type UpstreamModelProbe =
-  | { status: "running"; upstreamModel: UpstreamModel }
   | { status: "done"; upstreamModel: UpstreamModel; results: ProbeResult[] }
   | { status: "refused"; upstreamModel: UpstreamModel; message: string };
 
 /**
- * Runs a Probe and holds its outcome in component state only, so the results
- * are gone once the dialog closes or the page reloads.
+ * Runs Probes, several Upstream Models at once, and holds their outcomes in
+ * component state only, so the results are gone once their dialog closes or
+ * the page reloads. Finished Probes queue up in the order they finish: the
+ * dialog shows the first, and closing it shows the next.
  */
 export function useUpstreamModelProbe() {
   const { $dashboardApi } = useNuxtApp();
 
-  const probe = shallowRef<UpstreamModelProbe | null>(null);
-  const isRunning = computed(() => probe.value?.status === "running");
+  const runningIds = shallowRef<ReadonlySet<string>>(new Set());
+  const finishedProbes = shallowRef<readonly UpstreamModelProbe[]>([]);
+
+  const shownProbe = computed(() => finishedProbes.value[0] ?? null);
   const isDialogOpen = computed({
-    get: () => probe.value !== null && probe.value.status !== "running",
+    get: () => shownProbe.value !== null,
     set: (isOpen) => {
-      if (!isOpen) probe.value = null;
+      if (!isOpen) finishedProbes.value = finishedProbes.value.slice(1);
     },
   });
 
   function isProbing(upstreamModel: UpstreamModel): boolean {
-    return probe.value?.status === "running" && probe.value.upstreamModel.id === upstreamModel.id;
+    return runningIds.value.has(upstreamModel.id);
   }
 
-  async function runProbe(upstreamModel: UpstreamModel): Promise<void> {
-    if (isRunning.value) return;
-    probe.value = { status: "running", upstreamModel };
+  function setRunning(upstreamModel: UpstreamModel, isRunning: boolean): void {
+    const ids = new Set(runningIds.value);
+    if (isRunning) ids.add(upstreamModel.id);
+    else ids.delete(upstreamModel.id);
+    runningIds.value = ids;
+  }
+
+  /** Queues the outcome, replacing an unseen earlier one for the same Upstream Model. */
+  function finish(outcome: UpstreamModelProbe): void {
+    const others = finishedProbes.value.filter(
+      (probe) => probe.upstreamModel.id !== outcome.upstreamModel.id,
+    );
+    finishedProbes.value = [...others, outcome];
+  }
+
+  async function probeOnce(upstreamModel: UpstreamModel): Promise<UpstreamModelProbe> {
     try {
       const { results } = await $dashboardApi<ProbeResults>(probePath(upstreamModel), {
         method: "POST",
       });
-      probe.value = { status: "done", upstreamModel, results };
+      return { status: "done", upstreamModel, results };
     } catch (failure) {
       const refusal = playgroundErrorOf(readProperty(failure, "data"));
-      probe.value = {
+      return {
         status: "refused",
         upstreamModel,
         message:
@@ -49,5 +65,13 @@ export function useUpstreamModelProbe() {
     }
   }
 
-  return { probe, isRunning, isDialogOpen, isProbing, runProbe };
+  async function runProbe(upstreamModel: UpstreamModel): Promise<void> {
+    if (isProbing(upstreamModel)) return;
+    setRunning(upstreamModel, true);
+    const outcome = await probeOnce(upstreamModel);
+    setRunning(upstreamModel, false);
+    finish(outcome);
+  }
+
+  return { shownProbe, isDialogOpen, isProbing, runProbe };
 }

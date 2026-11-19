@@ -1,6 +1,7 @@
 // Probe (GLOSSARY "Probe"): one call to an Upstream Model with each of its
 // Provider's enabled Provider Accounts, so an operator can see which work.
 
+import type { RecordedAttemptFailure } from "~/lib/attemptFailures";
 import type { ErrorOrigin } from "~/lib/errorOrigins";
 import type { ProviderAccount, UpstreamModel } from "~/lib/upstream";
 
@@ -14,7 +15,7 @@ export interface ProbeResult {
   /** Null when no response arrived (a timeout, a connection error). */
   upstreamStatus: number | null;
   /** Why the call's last Attempt failed; null on success. */
-  failureReason: string | null;
+  failureReason: RecordedAttemptFailure | null;
   /** Null on success. */
   errorOrigin: ErrorOrigin | null;
   /** The upstream's error body, truncated and redacted; null with no error response. */
