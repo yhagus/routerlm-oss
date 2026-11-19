@@ -3447,6 +3447,20 @@ tbody tr:hover {
   width: min(100%, 420px);
 }
 
+/* The video tab's result: the player, then its download. */
+.video-result {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.video-result video {
+  width: min(100%, 640px);
+  height: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
 /* Composer */
 .composer {
   display: grid;

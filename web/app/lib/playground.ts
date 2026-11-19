@@ -9,6 +9,8 @@ export interface PlaygroundUnits {
   imagesIn?: number;
   /** Characters of text a speech request spoke. */
   characters?: number;
+  /** Seconds of video a Video Job asked for. */
+  outputSeconds?: number;
   /** The price tier the Provider names, such as `2K`. */
   tier?: string;
 }
