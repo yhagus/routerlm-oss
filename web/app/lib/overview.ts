@@ -1,11 +1,16 @@
+import { percent } from "./chart";
 import type { ErrorOrigin } from "./errorOrigins";
+import type { TimeRange } from "./usage";
 
-/** The time ranges the Overview offers, ending now. */
+/**
+ * The time ranges the Overview offers, ending now. Each is also a Usage page
+ * range, so a link from the Overview can pass its range on unchanged.
+ */
 export const OVERVIEW_RANGES = {
   "24h": "Last 24 hours",
   "7d": "Last 7 days",
   "30d": "Last 30 days",
-} as const;
+} as const satisfies Partial<Record<TimeRange, string>>;
 export type OverviewRange = keyof typeof OVERVIEW_RANGES;
 
 export function isOverviewRange(value: string): value is OverviewRange {
@@ -28,9 +33,12 @@ export interface OverviewStats {
   cost: number;
   cacheHitRate: number | null;
   errorRate: number | null;
+  /** The failed requests, with or without a recorded Error Origin. */
+  failedCount: number;
   /**
    * Every origin is always present. The origin rates share `errorRate`'s
-   * denominator, but failures with no recorded origin count only in `errorRate`.
+   * denominator, but failures with no recorded origin count only in
+   * `errorRate` and `failedCount`.
    */
   errorsByOrigin: Record<ErrorOrigin, OriginErrors>;
 }
@@ -92,4 +100,11 @@ export function bucketLabels(
     tick: tickFormat.format(startDate),
     title: `${timeTitle.format(startDate)} – ${hourTick.format(end)}`,
   };
+}
+
+const NO_DATA = "—";
+
+/** A rate as a percentage, or a dash when there was nothing to divide by. */
+export function formatRate(rate: number | null): string {
+  return rate === null ? NO_DATA : percent(rate);
 }

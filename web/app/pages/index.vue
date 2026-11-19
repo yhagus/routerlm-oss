@@ -6,18 +6,18 @@ import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS, type ErrorOrigin } from "~/lib/erro
 import {
   bucketLabels,
   formatCostTick,
+  formatRate,
   isOverviewRange,
   type Overview,
   OVERVIEW_RANGES,
   type OverviewRange,
   type OverviewStats,
 } from "~/lib/overview";
-import { formatCost, formatCount, type TimeRange } from "~/lib/usage";
+import { formatCost, formatCount } from "~/lib/usage";
 
 useHead({ title: "Overview" });
 
 const SERIES_COLOR = "var(--series-1)";
-const NO_DATA = "—";
 // Floors for the y-axis, so a quiet range isn't stretched to the full height.
 const REQUESTS_SCALE_FLOOR = 4;
 const COST_SCALE_FLOOR = 0.01;
@@ -27,12 +27,6 @@ const ORIGIN_COLORS: Record<ErrorOrigin, string> = {
   client: "var(--series-1)",
   upstream: "var(--series-2)",
   gateway: "var(--series-3)",
-};
-// The Usage page's range that covers the same window, for the origin tiles' links.
-const USAGE_RANGE_OF: Record<OverviewRange, TimeRange> = {
-  "24h": "24h",
-  "7d": "7d",
-  "30d": "30d",
 };
 
 const range = useQueryParam<OverviewRange>("range", { default: "24h", isValid: isOverviewRange });
@@ -49,10 +43,6 @@ const {
 } = useDashboardApi<Overview>("/overview", {
   query: computed(() => ({ range: range.value })),
 });
-
-function formatRate(rate: number | null): string {
-  return rate === null ? NO_DATA : percent(rate);
-}
 
 /** The stats a single-series chart plots: every one but the per-origin split. */
 type SingleStatKey = Exclude<keyof OverviewStats, "errorsByOrigin">;
@@ -143,7 +133,7 @@ const originTiles = computed(() => {
       failed: errors ? `${formatCount(errors.count)} failed` : null,
       to: {
         path: "/usage",
-        query: { errorOrigin: origin, status: "failed", range: USAGE_RANGE_OF[range.value] },
+        query: { errorOrigin: origin, status: "failed", range: range.value },
       },
     };
   });
