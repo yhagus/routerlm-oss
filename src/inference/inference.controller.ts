@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Authenticate, CurrentUser } from "@nestjs/authentication";
-import { Body, Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Param, Post, Req, Res } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
 import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
@@ -10,7 +10,10 @@ import type { ClientModelList } from "./models/client-model.js";
 import type { InferenceResult } from "./models/inference.js";
 import { RunInferenceCommand } from "./commands/impl/run-inference.command.js";
 import { RunMediaInferenceCommand } from "./commands/impl/run-media-inference.command.js";
+import { SubmitVideoJobCommand } from "./commands/impl/submit-video-job.command.js";
+import { DownloadVideoContentQuery } from "./queries/impl/download-video-content.query.js";
 import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
+import { RetrieveVideoJobQuery } from "./queries/impl/retrieve-video-job.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
 import { openAiImagesClientContract } from "./protocols/openai-images/openai-images-client-contract.js";
@@ -108,6 +111,57 @@ export class InferenceController {
       ),
     );
     return replyWith(result, response);
+  }
+
+  @Post("videos")
+  @HttpCode(200)
+  async createVideo(
+    @Body() body: unknown,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Uint8Array | Response> {
+    const result = await this.commandBus.execute(
+      new SubmitVideoJobCommand(
+        body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
+    );
+    return replyWith(result, response);
+  }
+
+  @Get("videos/:videoId")
+  retrieveVideo(
+    @Param("videoId") videoId: string,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<unknown> {
+    return this.queryBus.execute(
+      new RetrieveVideoJobQuery(
+        videoId,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response).signal,
+      ),
+    );
+  }
+
+  /** The MP4 streams through as it downloads (ADR 0028), so it gets a reply of its own. */
+  @Get("videos/:videoId/content")
+  downloadVideoContent(
+    @Param("videoId") videoId: string,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Response> {
+    return this.queryBus.execute(
+      new DownloadVideoContentQuery(
+        videoId,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response).signal,
+      ),
+    );
   }
 
   @Get("models")

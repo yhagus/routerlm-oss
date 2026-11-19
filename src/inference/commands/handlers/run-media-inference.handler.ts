@@ -77,21 +77,36 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
         ? this.resolveUpstreamModel(contract, request, target.upstreamModelId, kind)
         : this.resolveNamedModel(contract, request, caller, kind, meter);
     const createdAt = new Date();
-    const result = await this.attempts.firstAnswer(destination.paths, meter, (attemptTarget) => ({
-      sentServiceTier: null,
-      send: async (credential) => {
-        const outcome = await this.upstream.generate({
-          ...this.upstreamCallFor(contract, attemptTarget, credential),
-          request,
-          clientSignal: connection.signal,
-        });
-        meter.attemptAnswered();
-        meter.unitsCounted(outcome.units);
-        meter.attemptSucceeded();
-        return outcome.result;
-      },
-    }));
-    const response = contract.writeResponse(result, { modelName: destination.name, createdAt });
+    const { result, servedBy } = await this.attempts.firstAnswer(
+      destination.paths,
+      meter,
+      (attemptTarget) => ({
+        sentServiceTier: null,
+        send: async (credential) => {
+          const outcome = await this.upstream.generate({
+            ...this.upstreamCallFor(contract, attemptTarget, credential),
+            request,
+            clientSignal: connection.signal,
+          });
+          meter.attemptAnswered();
+          meter.unitsCounted(outcome.units);
+          meter.attemptSucceeded();
+          return {
+            result: outcome.result,
+            servedBy: {
+              providerAccountId: attemptTarget.providerAccount.id,
+              upstreamModelRowId: attemptTarget.upstreamModel.id,
+            },
+          };
+        },
+      }),
+    );
+    const response = contract.writeResponse(result, {
+      modelName: destination.name,
+      createdAt,
+      caller,
+      servedBy,
+    });
     return encodedFor(meter, JSON.stringify(response));
   }
 

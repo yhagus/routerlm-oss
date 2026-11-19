@@ -97,6 +97,11 @@ export interface SnapshotUpstreamModel {
   sizes: string[] | null;
   /** Null when no limit is known. */
   maxInputImages: number | null;
+  /** Video resolutions, such as `720P`; null when any goes. */
+  resolutions: string[] | null;
+  /** A video's shortest and longest duration in seconds; null when no limit is known. */
+  minDurationSeconds: number | null;
+  maxDurationSeconds: number | null;
   isEnabled: boolean;
   provider: SnapshotProvider;
 }
