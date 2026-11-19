@@ -37,11 +37,12 @@ const responseSchema = z.object({
     .optional(),
 });
 
-/** The request body DashScope takes. */
+/** The request body DashScope takes: the input images an edit starts from come before the prompt. */
 function requestBodyOf(request: ImageGenerationRequest, target: MediaUpstreamTarget): unknown {
+  const inputImages = request.inputImages.map((image) => ({ image }));
   return {
     model: target.upstreamModelId,
-    input: { messages: [{ role: "user", content: [{ text: request.prompt }] }] },
+    input: { messages: [{ role: "user", content: [...inputImages, { text: request.prompt }] }] },
     parameters: {
       ...(request.size && { size: providerSizeOf(request.size) }),
       n: request.n,
@@ -77,7 +78,7 @@ async function generate(
     result: { images },
     units: {
       imagesOut: images.length,
-      imagesIn: 0,
+      imagesIn: request.inputImages.length,
       ...(outputSize && { tier: sizeTierOf(outputSize) }),
     },
   };
