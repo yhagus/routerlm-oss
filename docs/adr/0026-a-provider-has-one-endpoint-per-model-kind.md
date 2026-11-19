@@ -14,3 +14,4 @@ ADR 0016 let a Provider add one image Protocol at the same base URL as its chat 
 - OpenAI and OpenAI Codex become a chat endpoint plus an image endpoint at the same base URL; nothing they do changes.
 - Each endpoint's base URL goes through the same URL checks as a Provider's base URL (ADR 0019).
 - ADR 0003 still holds: a Provider Account belongs to exactly one Provider, now meaning one credential for one host, not one base URL.
+- The seeder never adds an endpoint to an existing Provider, so an endpoint the operator deleted stays deleted, and it skips the Catalog Upstream Models of a Kind the Provider has no endpoint for. When the Catalog gives an existing Provider a new endpoint, a one-time migration adds it, as `give_alibaba_its_media_endpoints` did for Alibaba Model Studio's image, speech, transcription and video endpoints.
