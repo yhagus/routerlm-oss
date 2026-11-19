@@ -12,6 +12,8 @@ import {
   type Provider,
   type ProviderAccount,
   type UpstreamModel,
+  mainBaseUrl,
+  MODEL_KIND_LABELS,
   PROTOCOL_LABELS,
   PROTOCOL_OPTIONS,
   UPSTREAM_PROTOCOLS,
@@ -128,7 +130,11 @@ const activeFilters = computed<ActiveFilter[]>(() => [
 /** Rows the Protocol and status filters keep; the DataTable applies the search. */
 const filteredRows = computed(() =>
   rows.value.filter(({ provider, stats }) => {
-    if (protocolFilter.value.length && !protocolFilter.value.includes(provider.protocol)) {
+    const protocols = provider.endpoints.map((endpoint) => endpoint.protocol);
+    if (
+      protocolFilter.value.length &&
+      !protocolFilter.value.some((protocol) => protocols.includes(protocol))
+    ) {
       return false;
     }
     return (
@@ -148,10 +154,13 @@ const columns: DataTableColumn<ProviderRow>[] = [
     id: "provider",
     header: "Provider",
     enableHiding: false,
-    // What the search matches: name, slug or base URL.
-    accessorFn: ({ provider }) => [provider.name, provider.slug, provider.baseUrl].join("\n"),
+    // What the search matches: name, slug or any endpoint's base URL.
+    accessorFn: ({ provider }) =>
+      [provider.name, provider.slug, ...provider.endpoints.map(({ baseUrl }) => baseUrl)].join(
+        "\n",
+      ),
   },
-  { id: "protocol", header: "Protocol" },
+  { id: "protocol", header: "Endpoints" },
   { id: "status", header: "Status" },
   { id: "accounts", header: "Accounts" },
   { id: "models", header: "Models" },
@@ -304,7 +313,11 @@ function toggleProvider(provider: Provider): Promise<void> {
       </template>
       <template #cell-provider="{ row: { provider } }">
         <NuxtLink class="table-entity provider-table__entity" :to="detailPath(provider)">
-          <ProviderLogo :logo="provider.logo" :name="provider.name" :base-url="provider.baseUrl" />
+          <ProviderLogo
+            :logo="provider.logo"
+            :name="provider.name"
+            :base-url="mainBaseUrl(provider.endpoints)"
+          />
           <span class="provider-table__name">
             <strong :title="provider.name"
               >{{ provider.name }}<ChevronRight :size="13" aria-hidden="true"
@@ -312,14 +325,19 @@ function toggleProvider(provider: Provider): Promise<void> {
             <span v-if="isBlocked(provider)" class="cell-note" :title="TERMS_RISK_BLOCKED_HINT"
               >Blocked: terms risk</span
             >
-            <span class="cell-note" :title="provider.baseUrl"
-              >{{ provider.slug }} · {{ baseUrlHost(provider.baseUrl) }}</span
+            <span class="cell-note" :title="mainBaseUrl(provider.endpoints)"
+              >{{ provider.slug }} · {{ baseUrlHost(mainBaseUrl(provider.endpoints)) }}</span
             >
           </span>
         </NuxtLink>
       </template>
       <template #cell-protocol="{ row: { provider } }">
-        {{ PROTOCOL_LABELS[provider.protocol] }}
+        <span v-for="endpoint in provider.endpoints" :key="endpoint.kind" class="endpoint-cell"
+          >{{ PROTOCOL_LABELS[endpoint.protocol]
+          }}<template v-if="provider.endpoints.length > 1">
+            · {{ MODEL_KIND_LABELS[endpoint.kind] }}</template
+          ></span
+        >
         <span class="cell-note"
           >{{ provider.authStyle
           }}<template v-if="provider.isFromCatalog"> · Catalog</template></span

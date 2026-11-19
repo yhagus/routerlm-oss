@@ -4,11 +4,15 @@ import {
   ArrowUpRight,
   Braces,
   Brain,
+  Clapperboard,
   Eye,
+  Images,
   Layers,
   Pencil,
   Plus,
   Power,
+  SkipBack,
+  SkipForward,
   Trash2,
   Wrench,
 } from "@lucide/vue";
@@ -18,6 +22,12 @@ import {
   CAPABILITIES,
   CAPABILITY_LABELS,
   type Capability,
+  capabilitiesFor,
+  mainBaseUrl,
+  MODEL_KIND_LABELS,
+  MODEL_KIND_OPTIONS,
+  MODEL_KINDS,
+  type ModelKind,
   numberField,
   optionalNumber,
   type Provider,
@@ -39,6 +49,14 @@ import {
   type UpstreamModelRow,
 } from "~/lib/upstreamModelGroups";
 import { formatCount } from "~/lib/usage";
+import {
+  mainUnitPrice,
+  type MediaForm,
+  mediaFieldsFromForm,
+  mediaFormFor,
+  mediaLimitLines,
+  unitPriceLines,
+} from "~/lib/upstreamModelMedia";
 
 /**
  * Upstream Models with filters, sorting and editing. With `provider` it shows
@@ -69,6 +87,10 @@ const CAPABILITY_HINTS: Record<Capability, string> = {
   tools: "Tool calls (function calling)",
   reasoning: "Reasoning (extended thinking)",
   "structured-output": "Structured output (JSON schema)",
+  "text-to-video": "Video from a text prompt alone",
+  "first-frame": "Video from a first frame",
+  "last-frame": "Video to a last frame",
+  "reference-images": "Video guided by reference images",
 };
 
 const CAPABILITY_ICONS: Record<Capability, Component> = {
@@ -76,6 +98,10 @@ const CAPABILITY_ICONS: Record<Capability, Component> = {
   tools: Wrench,
   reasoning: Brain,
   "structured-output": Braces,
+  "text-to-video": Clapperboard,
+  "first-frame": SkipBack,
+  "last-frame": SkipForward,
+  "reference-images": Images,
 };
 
 const { $dashboardApi } = useNuxtApp();
@@ -126,6 +152,10 @@ const contextFilter = useQueryParam("context", {
 const releasedFilter = useQueryParam("released", {
   default: "",
   isValid: oneOf(RELEASE_WINDOWS),
+});
+const kindFilter = useQueryList("kind", {
+  isValid: oneOf(MODEL_KINDS),
+  order: MODEL_KINDS,
 });
 const capabilityFilter = useQueryList("capability", {
   isValid: oneOf(CAPABILITIES),
@@ -243,6 +273,7 @@ const filteredModels = computed(() => {
   return scopedModels.value.filter((model) => {
     const slug = providerById.value.get(model.providerId)?.slug ?? "";
     if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
+    if (kindFilter.value.length && !kindFilter.value.includes(model.kind)) return false;
     if (model.contextSize < minContext) return false;
     // A model without a Release Date can't be shown to fall inside the window.
     if (releasedSince !== null && (model.releaseDate ?? "") < releasedSince) return false;
@@ -360,6 +391,7 @@ function selectFilterTokens(
 
 const activeFilters = computed<ActiveFilter[]>(() => [
   ...listFilterTokens("Provider", providerFilter, providerFilterOptions.value),
+  ...listFilterTokens("Kind", kindFilter, MODEL_KIND_OPTIONS),
   ...selectFilterTokens("Context", contextFilter, contextFilterOptions),
   ...selectFilterTokens("Released", releasedFilter, releasedFilterOptions),
   ...listFilterTokens("Capability", capabilityFilter, capabilityFilterOptions),
@@ -368,6 +400,7 @@ const activeFilters = computed<ActiveFilter[]>(() => [
 
 function clearFilters(): void {
   providerFilter.value = [];
+  kindFilter.value = [];
   contextFilter.value = "";
   releasedFilter.value = "";
   capabilityFilter.value = [];
@@ -383,6 +416,7 @@ const columns: DataTableColumn<UpstreamModelRow>[] = [
     accessorFn: (row) =>
       isUpstreamModelGroup(row) ? row.members.map(searchTextOf).join("\n") : searchTextOf(row),
   },
+  { id: "kind", header: "Kind" },
   { id: "capabilities", header: "Capabilities" },
   { id: "context", header: "Context" },
   { id: "maxOutput", header: "Max output" },
@@ -478,6 +512,11 @@ function groupReleaseRange(group: UpstreamModelGroup): string {
   );
 }
 
+/** A group's Kind is its first member's: models sharing an id almost always share a Kind. */
+function rowKind(row: UpstreamModelRow): ModelKind {
+  return isUpstreamModelGroup(row) ? row.members[0].kind : row.kind;
+}
+
 function rowCapabilities(row: UpstreamModelRow): Capability[] {
   return isUpstreamModelGroup(row) ? groupCapabilities(row) : row.capabilities;
 }
@@ -525,6 +564,8 @@ interface UpstreamModelForm {
   upstreamModelId: string;
   /** The display name, or "" when it has none. */
   name: string;
+  /** Its Provider needs an endpoint for it. */
+  kind: ModelKind;
   capabilities: Capability[];
   contextSize: NumberInput;
   maxOutputTokens: NumberInput;
@@ -537,6 +578,8 @@ interface UpstreamModelForm {
   serviceTiers: ServiceTier[];
   /** Each accepted tier's prices; an empty field means the standard price. */
   tierPrices: Record<ServiceTier, TierPriceFields>;
+  /** The unit prices and limits of the media Kinds. */
+  media: MediaForm;
 }
 
 type TierPriceFields = Record<keyof Required<TierPrices>, NumberInput>;
@@ -584,6 +627,7 @@ function emptyForm(): UpstreamModelForm {
       (providerOptions.value[0]?.value ?? ""),
     upstreamModelId: "",
     name: "",
+    kind: "chat",
     capabilities: [],
     contextSize: "",
     maxOutputTokens: "",
@@ -594,6 +638,7 @@ function emptyForm(): UpstreamModelForm {
     releaseDate: "",
     serviceTiers: [],
     tierPrices: { fast: tierPriceFields(undefined), flex: tierPriceFields(undefined) },
+    media: mediaFormFor(),
   };
 }
 
@@ -602,6 +647,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
     providerId: upstreamModel.providerId,
     upstreamModelId: upstreamModel.upstreamModelId,
     name: upstreamModel.name ?? "",
+    kind: upstreamModel.kind,
     capabilities: [...upstreamModel.capabilities],
     contextSize: upstreamModel.contextSize,
     maxOutputTokens: numberField(upstreamModel.maxOutputTokens),
@@ -615,13 +661,43 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
       fast: tierPriceFields(upstreamModel.tierPrices.fast),
       flex: tierPriceFields(upstreamModel.tierPrices.flex),
     },
+    media: mediaFormFor(upstreamModel),
   };
 }
+
+/**
+ * The Kinds the form offers: those the Provider has an endpoint for, plus
+ * the model's own, so an edit never shows a blank Kind.
+ */
+const formKindOptions = computed(() => {
+  const endpointKinds = providerById.value
+    .get(form.value.providerId)
+    ?.endpoints.map((endpoint) => endpoint.kind);
+  return MODEL_KIND_OPTIONS.filter(
+    (option) => option.value === form.value.kind || endpointKinds?.includes(option.value),
+  );
+});
+const isChatForm = computed(() => form.value.kind === "chat");
+const formCapabilities = computed(() => capabilitiesFor(form.value.kind));
 
 function openDialog(next: UpstreamModelDialog): void {
   showDialog(next);
   if (next.kind === "create") form.value = emptyForm();
   if (next.kind === "edit") form.value = formFor(next.upstreamModel);
+}
+
+/** The token prices and Service Tiers only chat has; cleared for the other Kinds. */
+function chatFieldsFromForm(current: UpstreamModelForm) {
+  const isChat = current.kind === "chat";
+  return {
+    maxOutputTokens: isChat ? optionalNumber(current.maxOutputTokens) : null,
+    inputPrice: isChat ? optionalNumber(current.inputPrice) : null,
+    outputPrice: isChat ? optionalNumber(current.outputPrice) : null,
+    cacheReadPrice: isChat ? optionalNumber(current.cacheReadPrice) : null,
+    cacheWritePrice: isChat ? optionalNumber(current.cacheWritePrice) : null,
+    serviceTiers: isChat ? SERVICE_TIERS.filter((tier) => current.serviceTiers.includes(tier)) : [],
+    tierPrices: isChat ? tierPricesFromForm(current) : {},
+  };
 }
 
 async function saveUpstreamModel(): Promise<void> {
@@ -630,16 +706,15 @@ async function saveUpstreamModel(): Promise<void> {
   const fields = {
     upstreamModelId: form.value.upstreamModelId,
     name: form.value.name.trim() || null,
-    capabilities: form.value.capabilities,
+    kind: form.value.kind,
+    // Capabilities, token prices and Service Tiers of another Kind are hidden, so they are cleared.
+    capabilities: form.value.capabilities.filter((capability) =>
+      formCapabilities.value.includes(capability),
+    ),
     contextSize: optionalNumber(form.value.contextSize),
-    maxOutputTokens: optionalNumber(form.value.maxOutputTokens),
-    inputPrice: optionalNumber(form.value.inputPrice),
-    outputPrice: optionalNumber(form.value.outputPrice),
-    cacheReadPrice: optionalNumber(form.value.cacheReadPrice),
-    cacheWritePrice: optionalNumber(form.value.cacheWritePrice),
     releaseDate: form.value.releaseDate || null,
-    serviceTiers: SERVICE_TIERS.filter((tier) => form.value.serviceTiers.includes(tier)),
-    tierPrices: tierPricesFromForm(form.value),
+    ...chatFieldsFromForm(form.value),
+    ...mediaFieldsFromForm(form.value.media, form.value.kind),
   };
   const failureMessage = "Couldn't save the Upstream Model.";
   if (current.kind === "create") {
@@ -736,6 +811,16 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         />
       </div>
       <div class="data-table-filter">
+        <span class="data-table-filter__label" aria-hidden="true">Kind</span>
+        <AppMultiSelect
+          v-model="kindFilter"
+          :options="MODEL_KIND_OPTIONS"
+          label="Filter by Kind"
+          placeholder="All Kinds"
+          noun="Kinds"
+        />
+      </div>
+      <div class="data-table-filter">
         <span class="data-table-filter__label" aria-hidden="true">Context</span>
         <AppSelect
           v-model="contextFilter"
@@ -777,7 +862,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             :key="model.id"
             :logo="providerById.get(model.providerId)?.logo ?? null"
             :name="providerName(model)"
-            :base-url="providerById.get(model.providerId)?.baseUrl ?? ''"
+            :base-url="mainBaseUrl(providerById.get(model.providerId)?.endpoints ?? [])"
           />
         </span>
         <span class="model-table__name">
@@ -801,7 +886,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           v-if="!provider && providerById.get(row.providerId)"
           :logo="providerById.get(row.providerId)?.logo ?? null"
           :name="providerName(row)"
-          :base-url="providerById.get(row.providerId)?.baseUrl ?? ''"
+          :base-url="mainBaseUrl(providerById.get(row.providerId)?.endpoints ?? [])"
         />
         <span class="model-table__name">
           <span class="model-table__title">
@@ -824,6 +909,12 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         </span>
       </div>
     </template>
+    <template #cell-kind="{ row }">
+      {{ MODEL_KIND_LABELS[rowKind(row)] }}
+      <span v-if="!isUpstreamModelGroup(row) && mainUnitPrice(row)" class="cell-note">{{
+        mainUnitPrice(row)
+      }}</span>
+    </template>
     <template #cell-capabilities="{ row }">
       <TooltipProvider :delay-duration="100">
         <span
@@ -831,7 +922,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           role="img"
           :aria-label="capabilitySummary(rowCapabilities(row))"
         >
-          <Tooltip v-for="capability in CAPABILITIES" :key="capability">
+          <Tooltip v-for="capability in capabilitiesFor(rowKind(row))" :key="capability">
             <TooltipTrigger as-child>
               <span
                 class="capability-icons__item"
@@ -951,7 +1042,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     v-model:open="isDetailsOpen"
     wide
     :title="detailsModel.name ?? detailsModel.upstreamModelId"
-    :description="`${detailsModel.name === null ? 'Upstream Model' : detailsModel.upstreamModelId} at ${providerName(detailsModel)}. Prices are per million tokens.`"
+    :description="`${MODEL_KIND_LABELS[detailsModel.kind]} ${detailsModel.name === null ? 'Upstream Model' : detailsModel.upstreamModelId} at ${providerName(detailsModel)}.`"
   >
     <div class="model-details">
       <div class="model-details__status">
@@ -969,11 +1060,15 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         /></NuxtLink>
       </div>
 
-      <section class="model-details__section" aria-label="Capabilities">
+      <section
+        v-if="capabilitiesFor(detailsModel.kind).length > 0"
+        class="model-details__section"
+        aria-label="Capabilities"
+      >
         <h3>Capabilities</h3>
         <ul class="model-details__capabilities">
           <li
-            v-for="capability in CAPABILITIES"
+            v-for="capability in capabilitiesFor(detailsModel.kind)"
             :key="capability"
             :class="{ 'is-on': detailsModel.capabilities.includes(capability) }"
           >
@@ -997,7 +1092,11 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
                 <span>{{ compactTokenFormat.format(detailsModel.contextSize) }} tokens</span>
               </dd>
             </div>
-            <div>
+            <div v-for="line in mediaLimitLines(detailsModel)" :key="line.label">
+              <dt>{{ line.label }}</dt>
+              <dd class="tabular">{{ line.value }}</dd>
+            </div>
+            <div v-if="detailsModel.kind === 'chat'">
               <dt>Max output</dt>
               <dd class="tabular">
                 <template v-if="detailsModel.maxOutputTokens !== null">
@@ -1016,7 +1115,20 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           </dl>
         </section>
 
-        <section class="model-details__section">
+        <section v-if="detailsModel.kind !== 'chat'" class="model-details__section">
+          <h3>Pricing <span>USD</span></h3>
+          <dl class="model-details__list">
+            <div v-for="line in unitPriceLines(detailsModel)" :key="line.label">
+              <dt>{{ line.label }}</dt>
+              <dd class="tabular">{{ line.value }}</dd>
+            </div>
+            <div v-if="unitPriceLines(detailsModel).length === 0">
+              <dt>Prices</dt>
+              <dd>Not published</dd>
+            </div>
+          </dl>
+        </section>
+        <section v-else class="model-details__section">
           <h3>Pricing <span>USD / 1M tokens</span></h3>
           <dl class="model-details__list">
             <div>
@@ -1114,10 +1226,15 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           ><span class="field__label">Display name (optional)</span
           ><input v-model="form.name" class="text-input" placeholder="e.g. K2.8 Preview"
         /></label>
+        <div class="field">
+          <span class="field__label">Kind</span>
+          <AppSelect v-model="form.kind" :options="formKindOptions" label="Kind" />
+        </div>
       </div>
-      <fieldset class="check-group">
+      <p class="form__hint">A Provider offers the Kinds it has an endpoint for.</p>
+      <fieldset v-if="formCapabilities.length > 0" class="check-group">
         <legend class="field__label">Capabilities</legend>
-        <label v-for="capability in CAPABILITIES" :key="capability" class="check-field"
+        <label v-for="capability in formCapabilities" :key="capability" class="check-field"
           ><input v-model="form.capabilities" type="checkbox" :value="capability" />
           {{ CAPABILITY_LABELS[capability] }}</label
         >
@@ -1134,7 +1251,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             placeholder="e.g. 128k or 1m"
             required
         /></label>
-        <label class="field"
+        <label v-if="isChatForm" class="field"
           ><span class="field__label">Max output (tokens)</span
           ><NumberInput
             v-model="form.maxOutputTokens"
@@ -1144,7 +1261,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             :min="1"
             placeholder="e.g. 64k"
         /></label>
-        <label class="field"
+        <label v-if="isChatForm" class="field"
           ><span class="field__label">Input price</span
           ><NumberInput
             v-model="form.inputPrice"
@@ -1154,7 +1271,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             suffix="/ 1M tokens"
             unit-label="US dollars per million tokens"
         /></label>
-        <label class="field"
+        <label v-if="isChatForm" class="field"
           ><span class="field__label">Output price</span
           ><NumberInput
             v-model="form.outputPrice"
@@ -1164,7 +1281,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             suffix="/ 1M tokens"
             unit-label="US dollars per million tokens"
         /></label>
-        <label class="field"
+        <label v-if="isChatForm" class="field"
           ><span class="field__label">Cache read price</span
           ><NumberInput
             v-model="form.cacheReadPrice"
@@ -1174,7 +1291,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             suffix="/ 1M tokens"
             unit-label="US dollars per million tokens"
         /></label>
-        <label class="field"
+        <label v-if="isChatForm" class="field"
           ><span class="field__label">Cache write price</span
           ><NumberInput
             v-model="form.cacheWritePrice"
@@ -1189,18 +1306,19 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
           <AppDateInput v-model="form.releaseDate" label="Release date" />
         </div>
       </div>
-      <fieldset class="check-group">
+      <UpstreamModelMediaFields v-model="form.media" :kind="form.kind" />
+      <fieldset v-if="isChatForm" class="check-group">
         <legend class="field__label">Service Tiers</legend>
         <label v-for="tier in SERVICE_TIERS" :key="tier" class="check-field"
           ><input v-model="form.serviceTiers" type="checkbox" :value="tier" />
           {{ SERVICE_TIER_LABELS[tier] }}</label
         >
       </fieldset>
-      <p class="form__hint">
+      <p v-if="isChatForm" class="form__hint">
         A requested tier the model doesn't accept is dropped. A tier price left empty is the
         standard price.
       </p>
-      <div v-for="tier in form.serviceTiers" :key="tier" class="form__grid">
+      <div v-for="tier in isChatForm ? form.serviceTiers : []" :key="tier" class="form__grid">
         <label v-for="{ key, label } in TIER_PRICE_FIELDS" :key="key" class="field"
           ><span class="field__label"
             >{{ SERVICE_TIER_LABELS[tier] }} {{ label.toLowerCase() }} price</span
