@@ -15,7 +15,12 @@ import { isNotFound } from "~/lib/errors";
 import { TERMS_RISK_BLOCKED_HINT } from "~/lib/settings";
 import { isEmptyPolicy, type ParameterPolicy } from "~/lib/parameterPolicy";
 import type { ModelDetail, RouteSummary } from "~/lib/routing";
-import { type Provider, type UpstreamModel, upstreamModelLabel } from "~/lib/upstream";
+import {
+  MODEL_KIND_LABELS,
+  type Provider,
+  type UpstreamModel,
+  upstreamModelLabel,
+} from "~/lib/upstream";
 
 type ModelDialog =
   | { kind: "rename" }
@@ -52,11 +57,14 @@ useHead({ title: () => model.value?.name ?? "Model" });
 const providerNameById = computed(
   () => new Map((providers.value ?? []).map((provider) => [provider.id, provider.name])),
 );
+/** Only Upstream Models of the Model's Kind: the backend refuses a Route to another Kind. */
 const upstreamModelOptions = computed(() =>
-  (upstreamModels.value ?? []).map((upstreamModel) => ({
-    label: `${providerNameById.value.get(upstreamModel.providerId) ?? "?"} · ${upstreamModelLabel(upstreamModel)}`,
-    value: upstreamModel.id,
-  })),
+  (upstreamModels.value ?? [])
+    .filter((upstreamModel) => upstreamModel.kind === model.value?.kind)
+    .map((upstreamModel) => ({
+      label: `${providerNameById.value.get(upstreamModel.providerId) ?? "?"} · ${upstreamModelLabel(upstreamModel)}`,
+      value: upstreamModel.id,
+    })),
 );
 
 const dialog = ref<ModelDialog | null>(null);
@@ -274,6 +282,11 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
       >
         <span
           class="status-badge"
+          :title="`Routes go only to ${MODEL_KIND_LABELS[model.kind]} Upstream Models`"
+          >{{ MODEL_KIND_LABELS[model.kind] }}</span
+        >
+        <span
+          class="status-badge"
           :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
           >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
         >
@@ -402,7 +415,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
             ><span v-if="isLoadingRouteOptions || upstreamModelOptions.length > 0"
               >Requests for {{ model.name }} fail until you add one.</span
             ><span v-else
-              >Add an Upstream Model first, on the
+              >Add a {{ MODEL_KIND_LABELS[model.kind] }} Upstream Model first, on the
               <NuxtLink to="/upstream-models">Upstream Models</NuxtLink> page.</span
             >
           </EmptyState>

@@ -21,10 +21,73 @@ export const PROTOCOL_OPTIONS = UPSTREAM_PROTOCOLS.map((protocol) => ({
   value: protocol,
 }));
 
+/** What a Model or Upstream Model produces; each Kind has its own client endpoints. */
+export const MODEL_KINDS = ["chat", "image", "speech", "transcription", "video"] as const;
+export type ModelKind = (typeof MODEL_KINDS)[number];
+
+export const MODEL_KIND_LABELS: Record<ModelKind, string> = {
+  chat: "Chat",
+  image: "Image",
+  speech: "Speech",
+  transcription: "Transcription",
+  video: "Video",
+};
+
+export const MODEL_KIND_OPTIONS = MODEL_KINDS.map((kind) => ({
+  label: MODEL_KIND_LABELS[kind],
+  value: kind,
+}));
+
+/** The Model Kind each Protocol serves, as the backend's `PROTOCOL_KINDS` says. */
+export const PROTOCOL_KINDS = {
+  "openai-chat": "chat",
+  "anthropic-messages": "chat",
+  "openai-responses": "chat",
+} as const satisfies Record<UpstreamProtocol, ModelKind>;
+
+/** The Protocols an endpoint of `kind` may speak; empty while the gateway has none for it. */
+export function protocolOptionsFor(kind: string): { label: string; value: UpstreamProtocol }[] {
+  return PROTOCOL_OPTIONS.filter((option) => PROTOCOL_KINDS[option.value] === kind);
+}
+
+/** The Kinds some Protocol serves: a Provider can have an endpoint only for these. */
+export const ENDPOINT_KIND_OPTIONS = MODEL_KIND_OPTIONS.filter(
+  (option) => protocolOptionsFor(option.value).length > 0,
+);
+
+/** Where a Provider serves one Model Kind, and in which Protocol. */
+export interface ProviderEndpoint {
+  kind: ModelKind;
+  protocol: UpstreamProtocol;
+  /** What the Protocol's path is appended to. */
+  baseUrl: string;
+}
+
+/** The endpoint whose Protocol the quirks follow; undefined for a Provider without chat. */
+export function chatEndpointOf(
+  provider: Pick<Provider, "endpoints">,
+): ProviderEndpoint | undefined {
+  return provider.endpoints.find((endpoint) => endpoint.kind === "chat");
+}
+
+/** The base URL that stands for a Provider, such as for its logo: the chat endpoint's, else the first. */
+export function mainBaseUrl(endpoints: readonly { kind: string; baseUrl: string }[]): string {
+  return (endpoints.find((endpoint) => endpoint.kind === "chat") ?? endpoints[0])?.baseUrl ?? "";
+}
+
 export const AUTH_STYLES = ["bearer", "x-api-key"] as const;
 export type AuthStyle = (typeof AUTH_STYLES)[number];
 
-export const CAPABILITIES = ["vision", "tools", "reasoning", "structured-output"] as const;
+export const CAPABILITIES = [
+  "vision",
+  "tools",
+  "reasoning",
+  "structured-output",
+  "text-to-video",
+  "first-frame",
+  "last-frame",
+  "reference-images",
+] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
 export const CAPABILITY_LABELS: Record<Capability, string> = {
@@ -32,7 +95,30 @@ export const CAPABILITY_LABELS: Record<Capability, string> = {
   tools: "Tool calls",
   reasoning: "Reasoning",
   "structured-output": "Structured output",
+  "text-to-video": "Text to video",
+  "first-frame": "First frame",
+  "last-frame": "Last frame",
+  "reference-images": "Reference images",
 };
+
+/** Video Capabilities: what a video request may start from or be guided by. */
+export const VIDEO_CAPABILITIES = [
+  "text-to-video",
+  "first-frame",
+  "last-frame",
+  "reference-images",
+] as const satisfies readonly Capability[];
+
+/** The Capabilities that apply to an Upstream Model of `kind`. */
+export function capabilitiesFor(kind: ModelKind): readonly Capability[] {
+  if (kind === "video") return VIDEO_CAPABILITIES;
+  if (kind === "chat") return CAPABILITIES.filter((capability) => !isVideoCapability(capability));
+  return [];
+}
+
+function isVideoCapability(capability: Capability): boolean {
+  return VIDEO_CAPABILITIES.some((video) => video === capability);
+}
 
 export const REASONING_CONTENT_IN_HISTORY = ["all-assistant-turns", "tool-call-turns"] as const;
 
@@ -149,12 +235,12 @@ export interface Provider {
   id: string;
   slug: string;
   name: string;
-  protocol: UpstreamProtocol;
-  /** A key into the dashboard's logo set; null picks a mark by the base URL's host. */
+  /** At least one, at most one per Model Kind. */
+  endpoints: ProviderEndpoint[];
+  /** A key into the dashboard's logo set; null picks a mark by the main base URL's host. */
   logo: string | null;
   /** The gateway's use of this Provider may breach its documented terms; unusable until Settings allows it. */
   termsRisk: boolean;
-  baseUrl: string;
   authStyle: AuthStyle;
   quirks: ProviderQuirks;
   /** Null when the Provider offers no OAuth Login: its accounts hold API keys only. */
@@ -171,13 +257,21 @@ export interface Provider {
   updatedAt: string;
 }
 
-/** Prices are USD per million tokens; null when the Provider doesn't publish one. */
+/** USD per unit by the tier the Provider names, such as `2K` or `720P`. */
+export type PricesByTier = Record<string, number>;
+
+/**
+ * Token prices are USD per million tokens, unit prices USD per counted unit;
+ * null when the Provider doesn't publish one or it belongs to another Kind.
+ */
 export interface UpstreamModel {
   id: string;
   providerId: string;
   upstreamModelId: string;
   /** The display name from the Provider's docs, e.g. "K2.8 Preview"; null when it has none. */
   name: string | null;
+  /** Its Provider has an endpoint for this Kind. */
+  kind: ModelKind;
   capabilities: Capability[];
   contextSize: number;
   maxOutputTokens: number | null;
@@ -185,6 +279,19 @@ export interface UpstreamModel {
   outputPrice: number | null;
   cacheReadPrice: number | null;
   cacheWritePrice: number | null;
+  pricePerImage: number | null;
+  pricePerImageBySize: PricesByTier | null;
+  pricePerInputImage: number | null;
+  pricePerSecondByResolution: PricesByTier | null;
+  pricePerMillionCharacters: number | null;
+  pricePerAudioSecond: number | null;
+  maxInputImages: number | null;
+  minDurationSeconds: number | null;
+  maxDurationSeconds: number | null;
+  /** Video resolutions, such as `720P`; null when unknown. */
+  resolutions: string[] | null;
+  /** Image sizes, such as `1024*1024`; null when unknown. */
+  sizes: string[] | null;
   /** The Service Tiers it accepts; a requested tier it doesn't accept is dropped. */
   serviceTiers: ServiceTier[];
   /** Only the tiers that cost other than the standard prices. */

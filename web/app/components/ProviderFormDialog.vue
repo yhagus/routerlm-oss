@@ -3,7 +3,12 @@ import { apiErrorMessage } from "~/lib/api";
 import { REASONING_EFFORTS, SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/parameterPolicy";
 import { PROVIDER_LOGOS } from "~/lib/providerLogos";
 import { TERMS_RISK_HINT } from "~/lib/upstream";
-import { providerFieldsFromForm, providerFormFor, slugFromName } from "~/lib/providerForm";
+import {
+  chatProtocolOf,
+  providerFieldsFromForm,
+  providerFormFor,
+  slugFromName,
+} from "~/lib/providerForm";
 import {
   type AuthStyle,
   CREDENTIAL_KIND_LABELS,
@@ -11,8 +16,8 @@ import {
   DROPPABLE_PARAMETERS,
   OAUTH_LOGIN_FLOW_LABELS,
   OAUTH_LOGIN_FLOWS,
+  mainBaseUrl,
   type Provider,
-  PROTOCOL_OPTIONS,
   QUOTA_READER_OPTIONS,
 } from "~/lib/upstream";
 
@@ -53,10 +58,14 @@ const isSlugAuto = computed(() => !props.provider && !isSlugTyped.value);
 const isSaving = ref(false);
 const error = ref("");
 
+/** The quirks below follow the chat endpoint's Protocol; "" hides them all. */
+const chatProtocol = computed(() => chatProtocolOf(form.value));
 /** Both OpenAI Protocols take a prompt cache key; only Chat Completions has the other request fields. */
 const isOpenAiProtocol = computed(
-  () => form.value.protocol === "openai-chat" || form.value.protocol === "openai-responses",
+  () => chatProtocol.value === "openai-chat" || chatProtocol.value === "openai-responses",
 );
+/** What the logo and the quota reader fall back to: the chat endpoint's base URL, else the first. */
+const formBaseUrl = computed(() => mainBaseUrl(form.value.endpoints));
 
 watch(isOpen, (open) => {
   if (!open) return;
@@ -124,7 +133,7 @@ async function save(): Promise<void> {
     v-model:open="isOpen"
     wide
     :title="provider ? `Edit ${provider.name}` : 'Add Provider'"
-    description="The base URL is what the Protocol's path is appended to: /chat/completions for Chat Completions, /v1/messages for Messages, /responses for Responses."
+    description="One endpoint per Kind the Provider serves. Its base URL is what the Protocol's path is appended to: /chat/completions for Chat Completions, /v1/messages for Messages, /responses for Responses."
   >
     <form class="form" @submit.prevent="save" @invalid.capture="handleInvalidField">
       <div class="form__grid">
@@ -135,7 +144,7 @@ async function save(): Promise<void> {
               class="provider-mark--sm"
               :logo="form.logo || null"
               :name="form.name"
-              :base-url="form.baseUrl"
+              :base-url="formBaseUrl"
             />
             <input :value="form.name" class="text-input" required @input="handleNameInput" /> </span
         ></label>
@@ -158,20 +167,12 @@ async function save(): Promise<void> {
             : "Slug is set by hand. Clear it to follow the name again."
         }}
       </p>
-      <div class="form__grid">
-        <div class="field">
-          <span class="field__label">Protocol</span>
-          <AppSelect v-model="form.protocol" :options="PROTOCOL_OPTIONS" label="Protocol" />
-        </div>
-        <div class="field">
-          <span class="field__label">Authentication</span>
-          <AppSelect v-model="form.authStyle" :options="authStyleOptions" label="Authentication" />
-        </div>
+      <ProviderEndpointsField v-model="form.endpoints" />
+      <p class="form__hint">The quirks below follow the chat endpoint's Protocol.</p>
+      <div class="field">
+        <span class="field__label">Authentication</span>
+        <AppSelect v-model="form.authStyle" :options="authStyleOptions" label="Authentication" />
       </div>
-      <label class="field"
-        ><span class="field__label">Base URL</span
-        ><input v-model="form.baseUrl" class="text-input" type="url" required
-      /></label>
       <div class="field">
         <span class="field__label">Logo</span>
         <AppSelect
@@ -186,7 +187,7 @@ async function save(): Promise<void> {
               class="provider-mark--xs"
               :logo="option.value || null"
               :name="form.name"
-              :base-url="form.baseUrl"
+              :base-url="formBaseUrl"
             />
           </template>
         </AppSelect>
@@ -196,7 +197,7 @@ async function save(): Promise<void> {
         ><input v-model="form.termsRisk" type="checkbox" /> Terms risk</label
       >
       <p class="form__hint">{{ TERMS_RISK_HINT }}</p>
-      <div v-if="form.protocol === 'openai-chat'" class="field">
+      <div v-if="chatProtocol === 'openai-chat'" class="field">
         <span class="field__label">Reasoning content in history</span>
         <AppSelect
           v-model="form.reasoningContentInHistory"
@@ -206,17 +207,17 @@ async function save(): Promise<void> {
       </div>
       <fieldset v-if="isOpenAiProtocol" class="check-group">
         <legend class="field__label">Request fields</legend>
-        <label v-if="form.protocol === 'openai-chat'" class="check-field"
+        <label v-if="chatProtocol === 'openai-chat'" class="check-field"
           ><input v-model="form.acceptsCacheControl" type="checkbox" /> cache_control markers</label
         >
         <label class="check-field"
           ><input v-model="form.acceptsPromptCacheKey" type="checkbox" /> prompt_cache_key</label
         >
-        <label v-if="form.protocol === 'openai-chat'" class="check-field"
+        <label v-if="chatProtocol === 'openai-chat'" class="check-field"
           ><input v-model="form.usesMaxCompletionTokens" type="checkbox" />
           max_completion_tokens</label
         >
-        <template v-if="form.protocol === 'openai-responses'">
+        <template v-if="chatProtocol === 'openai-responses'">
           <label class="check-field"
             ><input v-model="form.includesEncryptedReasoning" type="checkbox" /> include encrypted
             reasoning</label
@@ -230,17 +231,17 @@ async function save(): Promise<void> {
           >
         </template>
       </fieldset>
-      <fieldset v-if="form.protocol === 'openai-responses'" class="check-group">
+      <fieldset v-if="chatProtocol === 'openai-responses'" class="check-group">
         <legend class="field__label">Dropped parameters</legend>
         <label v-for="parameter in DROPPABLE_PARAMETERS" :key="parameter" class="check-field"
           ><input v-model="form.droppedParameters" type="checkbox" :value="parameter" />
           {{ parameter }}</label
         >
       </fieldset>
-      <p v-if="form.protocol === 'openai-responses'" class="form__hint">
+      <p v-if="chatProtocol === 'openai-responses'" class="form__hint">
         Left out of every request, for a Provider that refuses them.
       </p>
-      <label v-if="form.protocol === 'anthropic-messages'" class="field"
+      <label v-if="chatProtocol === 'anthropic-messages'" class="field"
         ><span class="field__label">Cache marker limit</span
         ><NumberInput
           v-model="form.cacheMarkerLimit"
@@ -249,14 +250,14 @@ async function save(): Promise<void> {
           :min="0"
           placeholder="4"
       /></label>
-      <p v-if="form.protocol === 'anthropic-messages'" class="form__hint">
+      <p v-if="chatProtocol === 'anthropic-messages'" class="form__hint">
         How many cache markers the gateway may add to a request. 0 adds none; blank means 4.
       </p>
 
       <details class="form-advanced">
         <summary class="form-advanced__summary">Advanced</summary>
         <div class="form-advanced__body">
-          <template v-if="form.protocol === 'openai-chat'">
+          <template v-if="chatProtocol === 'openai-chat'">
             <fieldset class="check-group">
               <legend class="field__label">Reasoning as thinking</legend>
               <label class="check-field"
@@ -293,7 +294,7 @@ async function save(): Promise<void> {
               </p>
             </template>
           </template>
-          <template v-if="form.protocol === 'openai-chat'">
+          <template v-if="chatProtocol === 'openai-chat'">
             <div class="field">
               <span class="field__label">Forwarded client headers</span>
               <TagListInput
@@ -364,7 +365,7 @@ async function save(): Promise<void> {
                 v-model="form.quotaBaseUrl"
                 class="text-input"
                 type="url"
-                :placeholder="form.baseUrl || 'Same as the base URL'"
+                :placeholder="formBaseUrl || 'Same as the base URL'"
             /></label>
           </div>
           <p v-if="form.quotaReader" class="form__hint">

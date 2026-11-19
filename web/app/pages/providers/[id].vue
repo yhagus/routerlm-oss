@@ -13,6 +13,9 @@ import {
   type Provider,
   type ProviderAccount,
   type UpstreamModel,
+  chatEndpointOf,
+  mainBaseUrl,
+  MODEL_KIND_LABELS,
   PROTOCOL_LABELS,
 } from "~/lib/upstream";
 
@@ -175,12 +178,20 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
         class="provider-hero"
         :class="{ 'provider-hero--off': !provider.isEnabled || isBlocked(provider) }"
       >
-        <ProviderLogo :logo="provider.logo" :name="provider.name" :base-url="provider.baseUrl" />
+        <ProviderLogo
+          :logo="provider.logo"
+          :name="provider.name"
+          :base-url="mainBaseUrl(provider.endpoints)"
+        />
         <div class="provider-hero__title">
           <h1>{{ provider.name }}</h1>
           <p class="provider-hero__meta">
-            <span>{{ PROTOCOL_LABELS[provider.protocol] }}</span>
-            <span :title="provider.baseUrl">{{ baseUrlHost(provider.baseUrl) }}</span>
+            <span v-for="endpoint in provider.endpoints" :key="endpoint.kind">{{
+              PROTOCOL_LABELS[endpoint.protocol]
+            }}</span>
+            <span :title="mainBaseUrl(provider.endpoints)">{{
+              baseUrlHost(mainBaseUrl(provider.endpoints))
+            }}</span>
             <span>{{ provider.slug }}</span>
             <span v-if="isBlocked(provider)" :title="TERMS_RISK_BLOCKED_HINT"
               >Blocked: terms risk</span
@@ -293,16 +304,13 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
               </div>
             </div>
             <dl class="config-list">
-              <div>
-                <dt>Protocol</dt>
+              <div v-for="endpoint in provider.endpoints" :key="endpoint.kind">
+                <dt>{{ MODEL_KIND_LABELS[endpoint.kind] }} endpoint</dt>
                 <dd>
-                  {{ PROTOCOL_LABELS[provider.protocol] }}
-                  <span class="cell-note">{{ provider.protocol }}</span>
+                  {{ PROTOCOL_LABELS[endpoint.protocol] }}
+                  <span class="cell-note">{{ endpoint.protocol }}</span>
+                  <span class="config-list__url">{{ endpoint.baseUrl }}</span>
                 </dd>
-              </div>
-              <div>
-                <dt>Base URL</dt>
-                <dd class="config-list__url">{{ provider.baseUrl }}</dd>
               </div>
               <div>
                 <dt>Authentication</dt>
@@ -316,7 +324,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
                 <dt>Slug</dt>
                 <dd>{{ provider.slug }}</dd>
               </div>
-              <template v-if="provider.protocol === 'openai-chat'">
+              <template v-if="chatEndpointOf(provider)?.protocol === 'openai-chat'">
                 <div>
                   <dt>Reasoning in history</dt>
                   <dd>
@@ -332,7 +340,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
                   <dd>{{ requestFields(provider) }}</dd>
                 </div>
               </template>
-              <div v-if="provider.protocol === 'anthropic-messages'">
+              <div v-if="chatEndpointOf(provider)?.protocol === 'anthropic-messages'">
                 <dt>Cache marker limit</dt>
                 <dd class="tabular">
                   {{ provider.quirks.cacheMarkerLimit ?? 4

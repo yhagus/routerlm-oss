@@ -2701,6 +2701,38 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+.endpoint-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.endpoint-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.6fr) 32px;
+  align-items: end;
+  gap: 10px;
+}
+.endpoint-list__remove:disabled {
+  opacity: 0.4;
+}
+.endpoint-list__add {
+  justify-self: start;
+}
+@media (max-width: 760px) {
+  .endpoint-list__row {
+    grid-template-columns: 1fr 1fr 32px;
+  }
+  .endpoint-list__url {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+.endpoint-cell {
+  display: block;
+}
 .form__hint {
   margin: 0;
   color: var(--muted);
@@ -4676,6 +4708,7 @@ svg.lucide {
   color: var(--faint);
 }
 .config-list__url {
+  display: block;
   overflow-wrap: anywhere;
 }
 @media (max-width: 900px) {
