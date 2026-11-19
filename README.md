@@ -16,28 +16,28 @@
   [![Images](https://img.shields.io/badge/ghcr.io-amd64%20%7C%20arm64-blue?logo=github)](https://github.com/yhagus?tab=packages&repo_name=routerlm-oss)
   [![License](https://img.shields.io/github/license/yhagus/routerlm-oss)](LICENSE)
 
-  [🚀 Quick start](#-quick-start) • [🔌 Endpoints](#-endpoints) • [⚙️ Configuration](#️-configuration) • [🛠️ Development](#️-development)
+  [Quick start](#quick-start) • [Endpoints](#endpoints) • [Configuration](#configuration) • [Development](#development)
 
 </div>
 
 ---
 
-## 🤔 Why RouterLM?
+## Why RouterLM?
 
 Your tools speak OpenAI or Anthropic. You keep keys at Anthropic, OpenAI, DeepSeek, Moonshot, MiniMax, Alibaba and a couple of coding plans.
 
 **RouterLM sits between your tools and those providers:**
 
-- ✅ **One key per app.** Cursor, Claude Code, your CI and your internal tools each get their own `rlm_…` API Key, limited to the Models you allow. Copy, edit or rotate a key from the dashboard, and see the history of its rotations.
-- ✅ **Chat and media.** Besides chat, a Model can generate and edit images, synthesize speech, transcribe audio or run video jobs. Alibaba Model Studio serves these Kinds today.
-- ✅ **Automatic fallback.** A Model is an ordered list of Routes. A rate limit, a 5xx or a timeout moves the request to the next Route, and the failing account rests in Cooldown.
-- ✅ **Subscription plans, used to the last token.** Kimi Code and MiniMax M Plan accounts show their quota meters. RouterLM skips an exhausted account until its quota resets.
-- ✅ **Know what every request cost.** RouterLM records tokens, cache reads and writes, latency, time to first token and USD cost for each request. View them per key and per Model.
-- ✅ **Debug failures without logging prompts.** RouterLM never stores prompt or response content. It keeps only failed requests, as Error Captures with credentials redacted, for 7 days by default.
+- **One key per app.** Cursor, Claude Code, your CI and your internal tools each get their own `rlm_…` API Key, limited to the Models you allow. Copy, edit or rotate a key from the dashboard, and see the history of its rotations.
+- **Chat and media.** Besides chat, a Model can generate and edit images, synthesize speech, transcribe audio or run video jobs. Alibaba Model Studio serves these Kinds today.
+- **Automatic fallback.** A Model is an ordered list of Routes. A rate limit, a 5xx or a timeout moves the request to the next Route, and the failing account rests in Cooldown.
+- **Subscription plans, used to the last token.** Kimi Code and MiniMax M Plan accounts show their quota meters. RouterLM skips an exhausted account until its quota resets.
+- **Know what every request cost.** RouterLM records tokens, cache reads and writes, latency, time to first token and USD cost for each request. View them per key and per Model.
+- **Debug failures without logging prompts.** RouterLM never stores prompt or response content. It keeps only failed requests, as Error Captures with credentials redacted, for 7 days by default.
 
 ---
 
-## 🚀 Quick start
+## Quick start
 
 You need Docker with Compose. No clone is necessary: each release publishes the images `ghcr.io/yhagus/routerlm-backend` and `ghcr.io/yhagus/routerlm-web` (amd64 and arm64) and a `compose.yaml` that runs them.
 
@@ -87,7 +87,7 @@ The web app serves the full client docs at http://localhost:3001/docs.
 
 ---
 
-## 🔌 Endpoints
+## Endpoints
 
 One API Key calls every endpoint. A media endpoint answers only for Models of its Kind.
 
@@ -106,7 +106,7 @@ The client docs at http://localhost:3001/docs describe each format.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
@@ -129,7 +129,7 @@ clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
 
 ---
 
-## 📈 Benchmark
+## Benchmark
 
 We measured the gateway with [k6](https://k6.io) against a fake upstream, so the results show the cost of RouterLM, not the cost of a Provider.
 
@@ -152,7 +152,7 @@ Run the same test with `TOPOLOGY=cluster bun run perf:k6`. [tests/k6/README.md](
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Set environment variables in the `.env` next to `compose.yaml` (see [deploy/.env.example](deploy/.env.example)).
 
@@ -178,7 +178,7 @@ Settings a User changes in the dashboard live in the database instead. Examples 
 
 ---
 
-## 🛠️ Development
+## Development
 
 The development stack in `docker-compose.yml` builds from the source and reloads on change:
 
@@ -208,6 +208,6 @@ ROUTERLM_VERSION=local scripts/smoke-production.sh
 
 ---
 
-## 📄 License
+## License
 
 [Apache License 2.0](LICENSE). Third-party attributions are in [NOTICE](NOTICE).
