@@ -57,6 +57,8 @@ export interface UsageSummary {
   requestCount: number;
   succeededCount: number;
   failedCount: number;
+  /** The failed count per Error Origin; failed logs with no origin count in none (ADR 0031). */
+  failedByOrigin: Record<ErrorOrigin, number>;
   cancelledCount: number;
   inputTokens: number;
   outputTokens: number;
