@@ -1,3 +1,5 @@
+import type { ErrorOrigin } from "./errorOrigins";
+
 /** The time ranges the Overview offers, ending now. */
 export const OVERVIEW_RANGES = {
   "24h": "Last 24 hours",
@@ -10,6 +12,12 @@ export function isOverviewRange(value: string): value is OverviewRange {
   return Object.hasOwn(OVERVIEW_RANGES, value);
 }
 
+/** The failed requests of one Error Origin; `rate` divides them by all requests. */
+export interface OriginErrors {
+  count: number;
+  rate: number | null;
+}
+
 /**
  * Requests, Cost, cache hit rate and error rate over a bucket or the whole
  * range, as `GET /api/overview` returns them. Rates are fractions (0–1), null
@@ -20,6 +28,11 @@ export interface OverviewStats {
   cost: number;
   cacheHitRate: number | null;
   errorRate: number | null;
+  /**
+   * Every origin is always present. The origin rates share `errorRate`'s
+   * denominator, but failures with no recorded origin count only in `errorRate`.
+   */
+  errorsByOrigin: Record<ErrorOrigin, OriginErrors>;
 }
 
 export interface OverviewBucket extends OverviewStats {

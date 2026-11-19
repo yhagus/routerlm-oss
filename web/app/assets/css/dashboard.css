@@ -987,6 +987,14 @@ select:focus-visible {
   font-size: 23px;
   letter-spacing: -0.035em;
 }
+/* A stat that opens the page behind it (the Overview's error origin tiles). */
+a.executive-band__stat {
+  color: inherit;
+  text-decoration: none;
+}
+a.executive-band__stat:hover {
+  background: var(--row-hover);
+}
 .executive-band__stat em,
 .trend {
   display: inline-flex;
@@ -1904,6 +1912,22 @@ tbody tr:hover {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+}
+/* A legend entry that hides or shows its series; a hidden one fades out. */
+.chart-legend__toggle {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.chart-legend__toggle[aria-pressed="false"] {
+  color: var(--faint);
+  text-decoration: line-through;
+}
+.chart-legend__toggle[aria-pressed="false"] .chart-key {
+  opacity: 0.35;
 }
 .chart-key {
   display: inline-block;
