@@ -1,4 +1,6 @@
 // Providers, Upstream Models and Provider Accounts as the dashboard API returns them.
+// The lists copied from src/db/schemas/ must match it: scripts/check-web-mirrors.ts
+// (run by the root `bun run check`) fails when they drift.
 
 import type { ReasoningEffort, ServiceTier } from "~/lib/parameterPolicy";
 
