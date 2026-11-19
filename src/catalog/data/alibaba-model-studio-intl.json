@@ -646,7 +646,7 @@
         "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
         "retrievedOn": "2026-11-19"
       },
-      "notes": "$0.20 per 10,000 characters. Formats mp3, wav, pcm and opus. Alibaba's docs don't say whether 3.0 accepts input.instruction, and it was not checked against the live API, so the gateway refuses OpenAI's instructions with a 400 rather than send a field the model may ignore."
+      "notes": "$0.20 per 10,000 characters. Formats mp3, wav, pcm and opus. Alibaba's docs don't say whether 3.0 accepts input.instruction, and it was not checked against the live API, so the gateway accepts OpenAI's instructions but does not send them upstream."
     },
     {
       "upstreamModelId": "wan3.0-video",

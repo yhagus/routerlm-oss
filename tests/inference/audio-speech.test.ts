@@ -122,12 +122,12 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
     expect(JSON.parse(response.body.toString()).error.message).toContain("stream_format");
   });
 
-  it("refuses instructions, which qwen-audio-3.0-tts-plus is not known to honour", async () => {
-    const response = await synthesize({ ...SPEECH_REQUEST, instructions: "Speak softly" }).expect(
-      400,
-    );
+  it("accepts instructions without sending them, as qwen-audio-3.0-tts-plus is not known to honour them", async () => {
+    answerWithAudio();
 
-    expect(JSON.parse(response.body.toString()).error.message).toContain("instructions");
+    await synthesize({ ...SPEECH_REQUEST, instructions: "Speak softly" }).expect(200);
+
+    expect(JSON.stringify(synthesizerRequests()[0].body)).not.toContain("Speak softly");
   });
 
   it("sends the voice a Route's Parameter Policy forces instead of the client's", async () => {
