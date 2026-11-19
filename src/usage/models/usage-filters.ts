@@ -1,6 +1,6 @@
 import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { usageLogs } from "@/db/schemas/index.js";
+import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
 import type { UsageFilter, UsageStatus } from "../schemas/usage.schema.js";
 
 const FIRST_ERROR_STATUS = 400;
@@ -74,6 +74,14 @@ function callerCondition({ apiKeyId, isPlayground }: UsageFilter): SQL | undefin
   return isPlayground
     ? or(listedKeysCondition, playgroundCondition)
     : and(listedKeysCondition, playgroundCondition);
+}
+
+/**
+ * Failed Usage Logs of one Error Origin. Failures recorded before Error
+ * Origins existed have none, so they match no origin.
+ */
+export function failedWithOriginCondition(origin: ErrorOrigin): SQL | undefined {
+  return and(statusCondition("failed"), eq(usageLogs.errorOrigin, origin));
 }
 
 export function statusCondition(status: UsageStatus): SQL | undefined {
