@@ -3,7 +3,15 @@
 
 import type { ReasoningEffort } from "~/lib/parameterPolicy";
 
-/** What the backend sends after the answer: tokens, Cost, and who served it. */
+/** What a media Kind counted, such as images made; each Kind sets only its own. */
+export interface PlaygroundUnits {
+  imagesOut?: number;
+  imagesIn?: number;
+  /** The price tier the Provider names, such as `2K`. */
+  tier?: string;
+}
+
+/** What the backend sends after the answer: tokens or units, Cost, and who served it. */
 export interface PlaygroundSummary {
   usage: {
     inputTokens: number | null;
@@ -12,6 +20,8 @@ export interface PlaygroundSummary {
     cacheWriteTokens: number | null;
     reasoningTokens: number | null;
   };
+  /** Null for chat, which counts tokens instead. */
+  units: PlaygroundUnits | null;
   cost: number | null;
   /** The served Route; null for a direct Upstream Model test or when nothing answered. */
   route: { id: string; providerSlug: string; upstreamModelId: string } | null;
@@ -155,7 +165,7 @@ function streamEventOf(block: string): StreamEvent | null {
   return null;
 }
 
-function isPlaygroundSummary(payload: unknown): payload is PlaygroundSummary {
+export function isPlaygroundSummary(payload: unknown): payload is PlaygroundSummary {
   const usage = readProperty(payload, "usage");
   const cost = readProperty(payload, "cost");
   return typeof usage === "object" && usage !== null && (cost === null || typeof cost === "number");
@@ -198,7 +208,7 @@ export function dataUrlOf(file: File): Promise<string> {
   });
 }
 
-function readProperty(value: unknown, key: string | number): unknown {
+export function readProperty(value: unknown, key: string | number): unknown {
   if (typeof value !== "object" || value === null) {
     return undefined;
   }

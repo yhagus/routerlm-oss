@@ -6,6 +6,7 @@ export const UPSTREAM_PROTOCOLS = [
   "openai-chat",
   "anthropic-messages",
   "openai-responses",
+  "dashscope-image",
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
@@ -14,6 +15,7 @@ export const PROTOCOL_LABELS: Record<UpstreamProtocol, string> = {
   "openai-chat": "Chat Completions",
   "anthropic-messages": "Messages",
   "openai-responses": "Responses",
+  "dashscope-image": "DashScope Image",
 };
 
 export const PROTOCOL_OPTIONS = UPSTREAM_PROTOCOLS.map((protocol) => ({
@@ -43,6 +45,7 @@ export const PROTOCOL_KINDS = {
   "openai-chat": "chat",
   "anthropic-messages": "chat",
   "openai-responses": "chat",
+  "dashscope-image": "image",
 } as const satisfies Record<UpstreamProtocol, ModelKind>;
 
 /** The Protocols an endpoint of `kind` may speak; empty while the gateway has none for it. */
@@ -273,7 +276,8 @@ export interface UpstreamModel {
   /** Its Provider has an endpoint for this Kind. */
   kind: ModelKind;
   capabilities: Capability[];
-  contextSize: number;
+  /** Tokens; null when unknown or when the Kind has no context window. */
+  contextSize: number | null;
   maxOutputTokens: number | null;
   inputPrice: number | null;
   outputPrice: number | null;
