@@ -17,6 +17,7 @@ import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { AttemptFailedError, exhaustionError, gatewayErrorFor } from "../models/attempt-failure.js";
 import { exhaustedUntilOf } from "../models/quota-exhausted-error.js";
 import { type AttemptPath, type AttemptTarget, attemptTargets } from "../models/route-selection.js";
+import type { Destination } from "../models/destination.js";
 import type { SentServiceTier } from "../models/service-tier.js";
 import type { UsageMeter } from "../models/usage-meter.js";
 
@@ -55,6 +56,21 @@ export class AttemptRunner {
     private readonly providerAccountHealth: ProviderAccountHealth,
     private readonly commandBus: CommandBus,
   ) {}
+
+  /**
+   * The answer to a request to `destination`: its Probe's one Attempt, or
+   * the first answer Fallback gets over its paths.
+   */
+  answer<Answer>(
+    destination: Destination,
+    meter: UsageMeter,
+    prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
+  ): Promise<Answer> {
+    if (destination.probe) {
+      return this.probeAnswer(destination.probe.target, meter, prepare);
+    }
+    return this.firstAnswer(destination.paths, meter, prepare);
+  }
 
   /**
    * The first answer an Attempt gets. Throws the GatewayError the client is
@@ -112,6 +128,29 @@ export class AttemptRunner {
       failures,
       enabledAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
     );
+  }
+
+  /**
+   * A Probe's one Attempt (GLOSSARY "Probe"), made even when the Provider
+   * Account is in Cooldown or Exhausted. It observes the account and never
+   * changes it: a failure starts no Cooldown, marks nothing Exhausted,
+   * disables nothing and counts no refusal, and a success clears nothing.
+   * An OAuth Login answered with 401 is still refreshed and tried once more.
+   */
+  private async probeAnswer<Answer>(
+    target: AttemptTarget,
+    meter: UsageMeter,
+    prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
+  ): Promise<Answer> {
+    try {
+      return await this.attemptWithCredential(target, prepare(target), meter);
+    } catch (error) {
+      if (!(error instanceof AttemptFailedError)) {
+        throw error;
+      }
+      meter.attemptFailed(error);
+      throw gatewayErrorFor(error);
+    }
   }
 
   /**

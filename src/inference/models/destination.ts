@@ -2,8 +2,8 @@ import { mayUseModel } from "@/api-keys/models/api-key.js";
 import type { ModelKind } from "@/db/schemas/index.js";
 import type { Snapshot, SnapshotModel, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import { GatewayError } from "./gateway-error.js";
-import type { InferenceCaller } from "./inference.js";
-import type { AttemptPath } from "./route-selection.js";
+import type { InferenceCaller, ProbeTarget } from "./inference.js";
+import type { AttemptPath, AttemptTarget } from "./route-selection.js";
 
 /** What a request resolved to (spec step 3), with the paths its Attempts may take. */
 export interface Destination {
@@ -15,6 +15,14 @@ export interface Destination {
   name: string;
   /** Capable of serving the request, in the order they are tried. */
   paths: AttemptPath[];
+  /** Set for a Probe, which makes one Attempt instead of trying `paths`. */
+  probe: ProbeAttempt | null;
+}
+
+/** A Probe's one Attempt, and how long it may take. */
+export interface ProbeAttempt {
+  target: AttemptTarget;
+  totalTimeoutMs: number;
 }
 
 /**
@@ -63,6 +71,41 @@ export function upstreamModelServedHere(
     endpointKind,
   );
   return upstreamModel;
+}
+
+/**
+ * What a Probe reaches: the Upstream Model and Provider Account it names,
+ * even disabled ones. The Probe's caller refuses what it must not call.
+ */
+export function probeDestination(
+  snapshot: Snapshot,
+  { upstreamModelId, providerAccountId, totalTimeoutMs }: ProbeTarget,
+  endpointKind: ModelKind,
+): Destination {
+  const upstreamModel = snapshot.upstreamModelsById.get(upstreamModelId);
+  const providerAccount = upstreamModel?.provider.providerAccounts.find(
+    (account) => account.id === providerAccountId,
+  );
+  if (!upstreamModel || !providerAccount) {
+    throw new GatewayError(
+      "model_not_found",
+      `The Upstream Model "${upstreamModelId}" has no Provider Account "${providerAccountId}"`,
+      "client",
+    );
+  }
+  assertKindServedHere(
+    `Upstream Model "${upstreamModel.upstreamModelId}"`,
+    upstreamModel.kind,
+    endpointKind,
+  );
+  const path = { route: null, upstreamModel };
+  return {
+    model: null,
+    id: upstreamModel.id,
+    name: upstreamModel.upstreamModelId,
+    paths: [path],
+    probe: { target: { ...path, providerAccount }, totalTimeoutMs },
+  };
 }
 
 /**
