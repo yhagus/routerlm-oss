@@ -24,6 +24,7 @@ describe("The Google Gemini and OpenAI Catalog files", () => {
     });
     expect(provider.termsRisk).toBeUndefined();
     expect(provider.upstreamModels.map((model) => model.upstreamModelId)).toEqual([
+      "gemini-4-neon",
       "gemini-4-hydrogen",
       "gemini-4-carbon",
       "gemini-4-argon",
