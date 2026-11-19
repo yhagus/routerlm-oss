@@ -1,19 +1,11 @@
 <script setup lang="ts">
-import { failureReasonLabel } from "~/lib/errorCaptures";
+import { attemptOutcomeLabel } from "~/lib/errorCaptures";
 import { formatDuration, type UsageLogAttempt } from "~/lib/usage";
 
 /** A Usage Log's Attempts, in the order the gateway tried them. */
 defineProps<{
   attempts: UsageLogAttempt[];
 }>();
-
-/** How the Attempt ended: "Answered · HTTP 200", "Timed out · no response". */
-function attemptOutcome(attempt: UsageLogAttempt): string {
-  const reason = attempt.failureReason ? failureReasonLabel(attempt.failureReason) : "Answered";
-  return attempt.upstreamStatus === null
-    ? `${reason} · no response`
-    : `${reason} · HTTP ${attempt.upstreamStatus}`;
-}
 </script>
 
 <template>
@@ -43,7 +35,7 @@ function attemptOutcome(attempt: UsageLogAttempt): string {
             <span
               class="status-badge"
               :class="attempt.failureReason ? 'status-badge--bad' : 'status-badge--good'"
-              >{{ attemptOutcome(attempt) }}</span
+              >{{ attemptOutcomeLabel(attempt, "Answered") }}</span
             >
           </td>
           <td class="tabular">{{ attempt.upstreamRequestId ?? "—" }}</td>

@@ -75,14 +75,21 @@ export function failureReasonLabel(reason: string): string {
   return FAILURE_REASON_LABELS[reason] ?? reason;
 }
 
-/** Why the Attempt failed, with the upstream's status when it answered. */
+/**
+ * How an Attempt ended, with the upstream's status when it answered:
+ * "Timed out · no response", "Answered · HTTP 200". `labelWithoutReason`
+ * names the outcome when no failure reason was recorded.
+ */
 export function attemptOutcomeLabel(
-  hop: Extract<FailedHop, { kind: "gateway-to-provider-account" }>,
+  attempt: { failureReason: string | null; upstreamStatus: number | null },
+  labelWithoutReason: string,
 ): string {
-  const reason = hop.failureReason ? failureReasonLabel(hop.failureReason) : "Failed";
-  return hop.upstreamStatus === null
+  const reason = attempt.failureReason
+    ? failureReasonLabel(attempt.failureReason)
+    : labelWithoutReason;
+  return attempt.upstreamStatus === null
     ? `${reason} · no response`
-    : `${reason} · HTTP ${hop.upstreamStatus}`;
+    : `${reason} · HTTP ${attempt.upstreamStatus}`;
 }
 
 /**
