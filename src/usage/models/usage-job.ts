@@ -1,5 +1,6 @@
 import type {
   ClientProtocol,
+  ErrorOrigin,
   PricesByTier,
   GatewayErrorCode,
   RecordedAttemptFailure,
@@ -118,6 +119,11 @@ export interface AttemptRecord extends QueuedServingTarget {
   /** Null for the Attempt that answered and finished normally. */
   failureReason: RecordedAttemptFailure | null;
   durationMs: number;
+  /**
+   * The request id the Provider returned; null when it returned none or no
+   * response arrived. Missing in jobs queued before it was recorded.
+   */
+  upstreamRequestId?: string | null;
 }
 
 /** Headers and body as an Error Capture stores them: credentials redacted, body truncated. */
@@ -164,6 +170,14 @@ export interface UsageJob {
   isStreamed: boolean;
   httpStatus: number;
   errorCode: GatewayErrorCode | null;
+  /**
+   * Who caused the failure (ADR 0031); null for a successful or cancelled
+   * request. Missing in jobs queued before it was recorded.
+   */
+  errorOrigin?: ErrorOrigin | null;
+  /** The client's, as RequestSender has them (ADR 0032). Missing in jobs queued before they were recorded. */
+  userAgent?: string | null;
+  clientIp?: string | null;
   /** Null when no Attempt answered. */
   servedBy: ServedBy | null;
   /** The upstream's last usage report; null when it sent none. */

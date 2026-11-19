@@ -1,4 +1,4 @@
-import type { GatewayErrorCode } from "@/db/schemas/index.js";
+import type { ErrorOrigin, GatewayErrorCode } from "@/db/schemas/index.js";
 
 /** The HTTP status of each error contract code (spec "Error contract"). */
 export const GATEWAY_ERROR_STATUS = {
@@ -19,6 +19,10 @@ export const GATEWAY_ERROR_STATUS = {
  * An inference failure the client is told about. Its message is ours and safe
  * to send: it never carries upstream error text, keys or prompt content. The
  * client Protocol's converter writes it in that Protocol's envelope.
+ *
+ * `origin` is the Error Origin (ADR 0031): set by the code that knows the
+ * cause, because the code alone does not tell it (`invalid_request` is the
+ * client's body or the Provider's refusal).
  */
 export class GatewayError extends Error {
   readonly status: number;
@@ -26,6 +30,7 @@ export class GatewayError extends Error {
   constructor(
     readonly code: GatewayErrorCode,
     message: string,
+    readonly origin: ErrorOrigin,
   ) {
     super(message);
     this.name = "GatewayError";

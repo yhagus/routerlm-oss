@@ -10,7 +10,7 @@ import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
 import type { ClientProtocol } from "@/db/schemas/index.js";
 import { UsageProducer } from "@/usage/jobs/usage.producer.js";
 import { ClientCancelledError } from "../models/attempt-failure.js";
-import { requestBytesOf } from "@/libs/models/client-connection.js";
+import { requestBytesOf, requestSenderOf } from "@/libs/models/client-connection.js";
 import { GatewayError } from "../models/gateway-error.js";
 import { CLIENT_PROTOCOL_CONVERTERS } from "../protocols/converters.js";
 import { openAiChatClientConverter } from "../protocols/openai-chat/openai-chat-client-converter.js";
@@ -55,7 +55,12 @@ export class InferenceExceptionFilter implements ExceptionFilter {
     // RunInferenceHandler records the requests it saw; these were refused before
     // reaching it (bad API Key, unreadable or oversized body).
     if (!(exception instanceof GatewayError) && request.method === "POST") {
-      const meter = new UsageMeter({ kind: "unidentified" }, protocol, requestBytesOf(request));
+      const meter = new UsageMeter(
+        { kind: "unidentified" },
+        protocol,
+        requestBytesOf(request),
+        requestSenderOf(request),
+      );
       this.usage.enqueue(meter.finishWithError(error, envelope));
     }
     httpAdapter.reply(http.getResponse(), envelope, error.status);
@@ -77,11 +82,20 @@ function gatewayErrorOf(exception: unknown, request: IncomingMessage): GatewayEr
         isMultipart(request)
           ? "The request body could not be read as a multipart form"
           : "The request body could not be read as JSON",
+        "client",
       );
     case 401:
-      return new GatewayError("invalid_api_key", "Missing, invalid, revoked or expired API Key");
+      return new GatewayError(
+        "invalid_api_key",
+        "Missing, invalid, revoked or expired API Key",
+        "client",
+      );
     case 413:
-      return new GatewayError("request_too_large", "The request body is over the size limit");
+      return new GatewayError(
+        "request_too_large",
+        "The request body is over the size limit",
+        "client",
+      );
     default:
       return null;
   }

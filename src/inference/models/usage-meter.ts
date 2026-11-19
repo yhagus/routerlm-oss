@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
-import type { ClientProtocol, GatewayErrorCode } from "@/db/schemas/index.js";
+import type { ClientProtocol, ErrorOrigin, GatewayErrorCode } from "@/db/schemas/index.js";
 import {
   capturedBody,
   capturedHeaders,
   type RawHeaders,
 } from "@/error-captures/models/captured-content.js";
+import type { RequestSender } from "@/libs/models/client-connection.js";
 import type {
   AttemptRecord,
   CapturedMessage,
@@ -38,6 +39,7 @@ interface OpenAttempt {
   startedAt: Date;
   startedMs: number;
   hasAnswered: boolean;
+  upstreamRequestId: string | null;
 }
 
 interface ClientRequest {
@@ -65,6 +67,7 @@ export class UsageMeter {
   private modelId: string | null = null;
   private modelName: string | null = null;
   private errorCode: GatewayErrorCode | null = null;
+  private errorOrigin: ErrorOrigin | null = null;
   private readonly attempts: AttemptRecord[] = [];
   private openAttempt: OpenAttempt | null = null;
   private servedBy: ServedBy | null = null;
@@ -81,6 +84,7 @@ export class UsageMeter {
     private readonly caller: UsageCaller,
     private readonly clientProtocol: ClientProtocol,
     private readonly requestBytes: number,
+    private readonly sender: RequestSender,
   ) {}
 
   /**
@@ -109,6 +113,7 @@ export class UsageMeter {
       startedAt: new Date(),
       startedMs: performance.now(),
       hasAnswered: false,
+      upstreamRequestId: null,
     };
   }
 
@@ -129,15 +134,20 @@ export class UsageMeter {
       upstreamStatus: null,
       failureReason: "exhausted",
       durationMs: 0,
+      upstreamRequestId: null,
     });
   }
 
-  /** The upstream answered: the whole response, or a stream's first event. */
-  attemptAnswered(): void {
+  /**
+   * The upstream answered: the whole response, or a stream's first event.
+   * `upstreamRequestId` is the request id it returned, null when none.
+   */
+  attemptAnswered(upstreamRequestId: string | null): void {
     if (!this.openAttempt) {
       return;
     }
     this.openAttempt.hasAnswered = true;
+    this.openAttempt.upstreamRequestId = upstreamRequestId;
     const { target } = this.openAttempt;
     const serviceTier = this.openAttempt.sentServiceTier?.tier ?? null;
     this.servedBy = {
@@ -186,6 +196,9 @@ export class UsageMeter {
       attemptIndex: this.attempts.length,
       upstreamResponse: failure.upstreamResponse,
     });
+    // A stream that broke off keeps the request id its answer came with.
+    this.openAttempt.upstreamRequestId =
+      failure.upstreamRequestId ?? this.openAttempt.upstreamRequestId;
     const hasAnswered = this.openAttempt.hasAnswered;
     this.closeAttempt(
       failure.reason,
@@ -198,13 +211,19 @@ export class UsageMeter {
   }
 
   /** The error the client got, as a status or as a stream's error event. */
-  failedWith(errorCode: GatewayErrorCode): void {
-    this.errorCode = errorCode;
+  failedWith(error: GatewayError): void {
+    this.errorCode = error.code;
+    this.errorOrigin = error.origin;
+  }
+
+  /** The request ended in an exception outside the error contract: a gateway bug. */
+  failedInGateway(): void {
+    this.errorOrigin = "gateway";
   }
 
   /** Finishes a request answered with `error`, whose body is the client Protocol's `envelope`. */
   finishWithError(error: GatewayError, envelope: unknown): UsageJob {
-    this.failedWith(error.code);
+    this.failedWith(error);
     this.responseWritten(Buffer.byteLength(JSON.stringify(envelope)));
     return this.finish(error.status, false);
   }
@@ -233,6 +252,10 @@ export class UsageMeter {
       isStreamed: this.isStreamed,
       httpStatus,
       errorCode: this.errorCode,
+      // A client leaving is no failure of anyone's (ADR 0031).
+      errorOrigin: isCancelled ? null : this.errorOrigin,
+      userAgent: this.sender.userAgent,
+      clientIp: this.sender.clientIp,
       servedBy: this.servedBy,
       usage: this.usage,
       units: this.units,
@@ -287,13 +310,14 @@ export class UsageMeter {
     if (!this.openAttempt) {
       return;
     }
-    const { target, startedAt, startedMs } = this.openAttempt;
+    const { target, startedAt, startedMs, upstreamRequestId } = this.openAttempt;
     this.attempts.push({
       startedAt: startedAt.toISOString(),
       ...servingTargetOf(target),
       upstreamStatus,
       failureReason,
       durationMs: elapsedSince(startedMs),
+      upstreamRequestId,
     });
     this.openAttempt = null;
   }

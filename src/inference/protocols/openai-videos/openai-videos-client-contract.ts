@@ -143,6 +143,7 @@ function requestedSecondsOf(seconds: number | undefined): number {
     throw new GatewayError(
       "invalid_request",
       "Not supported: `seconds` of -1, which leaves the duration to the Provider",
+      "client",
     );
   }
   if (seconds <= 0) {
@@ -174,7 +175,7 @@ function videoFormatOf(
 }
 
 function invalid(reason: string): GatewayError {
-  return new GatewayError("invalid_request", `Invalid request: ${reason}`);
+  return new GatewayError("invalid_request", `Invalid request: ${reason}`, "client");
 }
 
 function unservableReason(

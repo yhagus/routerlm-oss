@@ -65,6 +65,9 @@ export class UsageWriter {
           isStreamed: job.isStreamed,
           httpStatus: job.httpStatus,
           errorCode: job.errorCode,
+          errorOrigin: job.errorOrigin ?? null,
+          userAgent: job.userAgent ?? null,
+          clientIp: job.clientIp ?? null,
           serviceTier: job.servedBy?.serviceTier ?? null,
           ...measurementsOf(job),
           ...unitColumnsOf(job.units ?? null),
@@ -94,13 +97,14 @@ export class UsageWriter {
             upstreamStatus: attempt.upstreamStatus,
             failureReason: attempt.failureReason,
             durationMs: attempt.durationMs,
+            upstreamRequestId: attempt.upstreamRequestId ?? null,
           })),
         );
       }
       if (job.errorCapture) {
         await transaction
           .insert(errorCaptures)
-          .values(errorCaptureRowsOf(job.usageLogId, job.errorCapture, attemptIds));
+          .values(errorCaptureRowsOf(job, job.errorCapture, attemptIds));
       }
     });
   }
@@ -112,19 +116,25 @@ export class UsageWriter {
  * capture with no Attempt: the client's request to the gateway.
  */
 function errorCaptureRowsOf(
-  usageLogId: string,
+  job: UsageJob,
   capture: ErrorCaptureRecord,
   attemptIds: string[],
 ): NewErrorCapture[] {
   const { request } = capture;
-  if (capture.failedAttempts.length === 0) {
-    return [{ usageLogId, requestHeaders: request.headers, requestBody: request.body }];
-  }
-  return capture.failedAttempts.map(({ attemptIndex, upstreamResponse }) => ({
-    usageLogId,
-    attemptId: attemptIds[attemptIndex],
+  // Each capture names who sent the request, so it is complete on its own (ADR 0032).
+  const clientRequest = {
+    usageLogId: job.usageLogId,
     requestHeaders: request.headers,
     requestBody: request.body,
+    userAgent: job.userAgent ?? null,
+    clientIp: job.clientIp ?? null,
+  };
+  if (capture.failedAttempts.length === 0) {
+    return [clientRequest];
+  }
+  return capture.failedAttempts.map(({ attemptIndex, upstreamResponse }) => ({
+    ...clientRequest,
+    attemptId: attemptIds[attemptIndex],
     responseHeaders: upstreamResponse?.headers ?? null,
     responseBody: upstreamResponse?.body ?? null,
   }));

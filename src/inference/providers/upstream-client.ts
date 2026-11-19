@@ -17,6 +17,7 @@ import {
   type UpstreamStreamParser,
   type UpstreamTarget,
 } from "../protocols/upstream-protocol-converter.js";
+import { upstreamRequestIdOf } from "../models/upstream-request-id.js";
 import { gatherStream } from "../protocols/gather-stream.js";
 import { type ServerSentEvent, ServerSentEventDecoder } from "../protocols/server-sent-events.js";
 
@@ -60,6 +61,12 @@ export interface UpstreamCall {
   timeouts: AttemptTimeouts;
   /** Aborts when the client disconnects. */
   clientSignal: AbortSignal;
+}
+
+/** A non-stream Attempt's answer, with the request id the Provider returned (null when none). */
+export interface CompletedAttempt {
+  response: InferenceResponse;
+  upstreamRequestId: string | null;
 }
 
 type Deadline = keyof AttemptTimeouts;
@@ -221,6 +228,8 @@ export class UpstreamStream {
     private firstBatch: InferenceStreamEvent[] | null,
     private readonly events: UpstreamEventReader,
     private readonly deadlines: AttemptDeadlines,
+    /** The request id the Provider returned with the stream's headers; null when none. */
+    readonly upstreamRequestId: string | null,
   ) {}
 
   /**
@@ -263,16 +272,18 @@ export class UpstreamStream {
 export class UpstreamClient {
   constructor(private readonly http: HttpClient) {}
 
-  async complete(call: UpstreamCall): Promise<InferenceResponse> {
+  async complete(call: UpstreamCall): Promise<CompletedAttempt> {
     const deadlines = new AttemptDeadlines(call.timeouts, call.clientSignal);
     deadlines.start("totalMs");
     try {
       const written = call.converter.writeRequest(call.request, call.target);
       const response = await this.send(call, written, deadlines.signal);
+      const upstreamRequestId = upstreamRequestIdOf(Object.fromEntries(response.headers.entries()));
       if (written.isAnsweredAsStream) {
-        return await gatherStream(
+        const gathered = await gatherStream(
           parseUpstreamStream(() => call.converter.startStream(), streamBodyOf(response)),
         );
+        return { response: gathered, upstreamRequestId };
       }
       const body = await response.data.text();
       // MiniMax may refuse an Exhausted Provider Account with HTTP 200 and an
@@ -285,7 +296,7 @@ export class UpstreamClient {
           { headers: Object.fromEntries(response.headers.entries()), body },
         );
       }
-      return call.converter.parseResponse(parseJsonBody(body));
+      return { response: call.converter.parseResponse(parseJsonBody(body)), upstreamRequestId };
     } catch (error) {
       throw deadlines.failureOf(error, false);
     } finally {
@@ -313,7 +324,12 @@ export class UpstreamClient {
       deadlines.start("firstTokenMs");
       const firstBatch = await events.nextBatch();
       deadlines.stop("firstTokenMs");
-      return new UpstreamStream(firstBatch, events, deadlines);
+      return new UpstreamStream(
+        firstBatch,
+        events,
+        deadlines,
+        upstreamRequestIdOf(Object.fromEntries(response.headers.entries())),
+      );
     } catch (error) {
       // Read the failure before finish(): finish() aborts with ClientCancelledError,
       // which would hide an upstream error status and stop the Fallback.

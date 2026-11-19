@@ -19,7 +19,7 @@ export type FakeReply =
       onReceived?: () => void | Promise<void>;
     }
   /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
-  | { kind: "stream"; events: string; holdOpen?: boolean }
+  | { kind: "stream"; events: string; holdOpen?: boolean; headers?: Record<string, string> }
   /**
    * Sends a stream in `pieces`, pausing between them so the gateway reads
    * each one on its own, as a stream split across network packets.
@@ -294,6 +294,7 @@ export class FakeUpstream {
         response.writeHead(200, {
           "content-type": "text/event-stream",
           [UPSTREAM_ONLY_HEADER]: "upstream-123",
+          ...reply.headers,
         });
         response.write(reply.events);
         if (!reply.holdOpen) {

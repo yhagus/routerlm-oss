@@ -28,10 +28,14 @@ export function usableModel(
 ): SnapshotModel {
   const model = snapshot.modelsByName.get(name);
   if (!model?.isEnabled) {
-    throw new GatewayError("model_not_found", `The Model "${name}" does not exist`);
+    throw new GatewayError("model_not_found", `The Model "${name}" does not exist`, "client");
   }
   if (caller.kind === "api-key" && !mayUseModel(caller.principal, model.id)) {
-    throw new GatewayError("model_not_allowed", `This API Key may not use the Model "${name}"`);
+    throw new GatewayError(
+      "model_not_allowed",
+      `This API Key may not use the Model "${name}"`,
+      "client",
+    );
   }
   return model;
 }
@@ -50,6 +54,7 @@ export function upstreamModelServedHere(
     throw new GatewayError(
       "model_not_found",
       `The Upstream Model "${upstreamModelRowId}" does not exist`,
+      "client",
     );
   }
   assertKindServedHere(
@@ -73,6 +78,7 @@ export function assertKindServedHere(
     throw new GatewayError(
       "invalid_request",
       `The ${named} has the Kind ${itsKind}, but this endpoint serves the Kind ${endpointKind}`,
+      "client",
     );
   }
 }

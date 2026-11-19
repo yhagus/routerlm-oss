@@ -47,7 +47,11 @@ function parseRequest(body: unknown): SpeechSynthesisRequest {
   refuseUnsupportedFeatures(body);
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
-    throw new GatewayError("invalid_request", `Invalid request: ${z.prettifyError(parsed.error)}`);
+    throw new GatewayError(
+      "invalid_request",
+      `Invalid request: ${z.prettifyError(parsed.error)}`,
+      "client",
+    );
   }
   const { model, input, voice, response_format, speed } = parsed.data;
   return { model, text: input, voice, format: response_format, speed: speed ?? null };
@@ -76,7 +80,7 @@ function isAudioFormat(format: string): format is AudioFormat {
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`);
+  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
 }
 
 /** A forced voice replaces the client's; the client always names one, so a default never applies. */

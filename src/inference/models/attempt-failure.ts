@@ -1,5 +1,6 @@
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import { GatewayError } from "./gateway-error.js";
+import { upstreamRequestIdOf } from "./upstream-request-id.js";
 
 /** What the upstream sent back on a failed Attempt, for Error Captures. Never sent to the client. */
 export interface UpstreamFailureResponse {
@@ -27,6 +28,11 @@ export class AttemptFailedError extends Error {
   /** The upstream's `Retry-After` header, for Cooldown; null when absent. */
   get retryAfter(): string | null {
     return this.upstreamResponse?.headers["retry-after"] ?? null;
+  }
+
+  /** The request id the Provider returned; null when it returned none or no response arrived. */
+  get upstreamRequestId(): string | null {
+    return this.upstreamResponse && upstreamRequestIdOf(this.upstreamResponse.headers);
   }
 }
 
@@ -61,7 +67,7 @@ const FAILURE_MESSAGES = {
  */
 export function gatewayErrorFor(failure: AttemptFailedError): GatewayError {
   const [code, message] = FAILURE_MESSAGES[failure.reason];
-  return new GatewayError(code, message);
+  return new GatewayError(code, message, "upstream");
 }
 
 /**
@@ -81,16 +87,20 @@ export function exhaustionError(
     const isEveryAccountSkippedFor = (reason: AttemptFailureReason): boolean =>
       cooldownCauses.length > 0 && cooldownCauses.every((cause) => cause === reason);
     if (isEveryAccountSkippedFor("rate_limited")) {
-      return new GatewayError(...FAILURE_MESSAGES.rate_limited);
+      return new GatewayError(...FAILURE_MESSAGES.rate_limited, "upstream");
     }
     if (isEveryAccountSkippedFor("exhausted")) {
-      return new GatewayError(...FAILURE_MESSAGES.exhausted);
+      return new GatewayError(...FAILURE_MESSAGES.exhausted, "upstream");
     }
-    return new GatewayError("upstream_error", "No upstream is available for this Model");
+    return new GatewayError(
+      "upstream_error",
+      "No upstream is available for this Model",
+      "upstream",
+    );
   }
   const failedTheSameWay = failures.every((failure) => failure.reason === firstFailure.reason);
   if (failedTheSameWay) {
     return gatewayErrorFor(firstFailure);
   }
-  return new GatewayError("upstream_error", "The upstream failed to answer");
+  return new GatewayError("upstream_error", "The upstream failed to answer", "upstream");
 }

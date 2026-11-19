@@ -175,6 +175,7 @@ function toolInputOf(call: ToolCallPart): Record<string, unknown> {
     throw new GatewayError(
       "invalid_request",
       `The arguments of tool call ${call.id} must be a JSON object.`,
+      "client",
     );
   }
   return input;

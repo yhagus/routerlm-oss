@@ -1,4 +1,6 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "node:http";
+import { NodeRequest } from "@nestjs/platform-node";
+import { USER_AGENT_MAX_LENGTH } from "@/db/schemas/index.js";
 import { clientDisconnectSignal } from "./event-stream-response.js";
 
 /** What the inference path needs to know about the client's HTTP exchange. */
@@ -9,6 +11,18 @@ export interface ClientConnection {
   requestBytes: number;
   /** For an Error Capture, should the request fail. */
   requestHeaders: IncomingHttpHeaders;
+  sender: RequestSender;
+}
+
+/** Which client software sent the request, and from where (ADR 0032). */
+export interface RequestSender {
+  /** Truncated to USER_AGENT_MAX_LENGTH; null when the client sent none. */
+  userAgent: string | null;
+  /**
+   * As the HTTP adapter resolves it through `TRUST_PROXY`: from
+   * `X-Forwarded-For` only for a trusted proxy, else the socket's address.
+   */
+  clientIp: string | null;
 }
 
 export function clientConnectionOf(
@@ -19,6 +33,16 @@ export function clientConnectionOf(
     signal: clientDisconnectSignal(response),
     requestBytes: requestBytesOf(request),
     requestHeaders: request.headers,
+    sender: requestSenderOf(request),
+  };
+}
+
+export function requestSenderOf(request: IncomingMessage): RequestSender {
+  const userAgent = request.headers["user-agent"];
+  return {
+    userAgent: userAgent === undefined ? null : userAgent.slice(0, USER_AGENT_MAX_LENGTH),
+    // Every request of @nestjs/platform-node's adapter is a NodeRequest.
+    clientIp: request instanceof NodeRequest ? (request.ip ?? null) : null,
   };
 }
 
