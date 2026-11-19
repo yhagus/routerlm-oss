@@ -8,12 +8,14 @@ import { clientConnectionOf } from "@/libs/models/client-connection.js";
 import { eventStreamResponse } from "@/libs/models/event-stream-response.js";
 import type { ClientModelList } from "./models/client-model.js";
 import type { InferenceResult } from "./models/inference.js";
+import type { MediaReply } from "./models/media-kind.js";
 import { RunInferenceCommand } from "./commands/impl/run-inference.command.js";
 import { RunMediaInferenceCommand } from "./commands/impl/run-media-inference.command.js";
 import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
 import { openAiImagesClientContract } from "./protocols/openai-images/openai-images-client-contract.js";
+import { openAiSpeechClientContract } from "./protocols/openai-speech/openai-speech-client-contract.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
 
 /** What Nest sends with a JSON body it serialises itself. */
@@ -98,8 +100,8 @@ export class InferenceController {
     @CurrentUser() principal: ApiKeyPrincipal,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
-  ): Promise<Uint8Array | Response> {
-    const result = await this.commandBus.execute(
+  ): Promise<Uint8Array> {
+    const reply = await this.commandBus.execute(
       new RunMediaInferenceCommand(
         openAiImagesClientContract,
         body,
@@ -107,7 +109,26 @@ export class InferenceController {
         clientConnectionOf(request, response),
       ),
     );
-    return replyWith(result, response);
+    return replyWithMedia(reply, response);
+  }
+
+  @Post("audio/speech")
+  @HttpCode(200)
+  async createSpeech(
+    @Body() body: unknown,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Uint8Array> {
+    const reply = await this.commandBus.execute(
+      new RunMediaInferenceCommand(
+        openAiSpeechClientContract,
+        body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
+    );
+    return replyWithMedia(reply, response);
   }
 
   @Get("models")
@@ -126,4 +147,9 @@ function replyWith(result: InferenceResult, response: ServerResponse): Uint8Arra
   }
   response.setHeader("Content-Type", JSON_CONTENT_TYPE);
   return result.json;
+}
+
+function replyWithMedia(reply: MediaReply, response: ServerResponse): Uint8Array {
+  response.setHeader("Content-Type", reply.contentType);
+  return reply.body;
 }

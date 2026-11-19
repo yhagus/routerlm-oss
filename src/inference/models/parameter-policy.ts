@@ -13,6 +13,7 @@ export const POLICY_PARAMETERS = [
   "reasoningEffort",
   "stopSequences",
   "serviceTier",
+  "voice",
 ] as const satisfies readonly (keyof ParameterValues)[];
 
 type PolicyParameter = (typeof POLICY_PARAMETERS)[number];
@@ -138,7 +139,7 @@ function setsParameter(policy: ParameterPolicy, parameter: PolicyParameter): boo
 }
 
 function isCapped(parameter: PolicyParameter): parameter is CappedParameter {
-  return parameter !== "stopSequences" && parameter !== "serviceTier";
+  return parameter !== "stopSequences" && parameter !== "serviceTier" && parameter !== "voice";
 }
 
 function copyRules(from: ParameterPolicy, to: ParameterPolicy, parameter: PolicyParameter): void {

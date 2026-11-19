@@ -8,7 +8,12 @@ import {
   type ImageSize,
   providerSizeOf,
 } from "../../models/image-generation.js";
-import type { MediaClientContract, MediaResponseContext } from "../../models/media-kind.js";
+import {
+  jsonReply,
+  type MediaClientContract,
+  type MediaReply,
+  type MediaResponseContext,
+} from "../../models/media-kind.js";
 import { dashScopeImageProtocol } from "../dashscope-image/dashscope-image-protocol.js";
 import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
 
@@ -103,11 +108,11 @@ function unservableReason(
   return null;
 }
 
-function writeResponse({ images }: GeneratedImages, context: MediaResponseContext): unknown {
-  return {
+function writeResponse({ images }: GeneratedImages, context: MediaResponseContext): MediaReply {
+  return jsonReply({
     created: Math.floor(context.createdAt.getTime() / 1000),
     data: images.map((image) => ({ b64_json: Buffer.from(image.bytes).toString("base64") })),
-  };
+  });
 }
 
 export const openAiImagesClientContract: MediaClientContract<

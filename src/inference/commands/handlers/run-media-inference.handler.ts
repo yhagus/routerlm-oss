@@ -1,6 +1,10 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { CLIENT_PROTOCOL_KINDS, type ModelKind } from "@/db/schemas/index.js";
-import type { SnapshotRoute, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
+import type {
+  SnapshotModel,
+  SnapshotRoute,
+  SnapshotUpstreamModel,
+} from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
@@ -12,9 +16,10 @@ import {
   usableModel,
 } from "../../models/destination.js";
 import { GatewayError } from "../../models/gateway-error.js";
-import type { InferenceCaller, InferenceResult } from "../../models/inference.js";
-import type { MediaClientContract, MediaRequest } from "../../models/media-kind.js";
-import { encodedFor, failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
+import type { InferenceCaller } from "../../models/inference.js";
+import type { MediaClientContract, MediaReply, MediaRequest } from "../../models/media-kind.js";
+import { effectiveParameterPolicy } from "../../models/parameter-policy.js";
+import { failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
 import { type AttemptTarget, endpointOf, routePath } from "../../models/route-selection.js";
 import { UsageMeter } from "../../models/usage-meter.js";
 import { upstreamAuthHeaders } from "../../protocols/converters.js";
@@ -24,8 +29,6 @@ import { DEFAULT_TIMEOUTS } from "../../providers/upstream-client.js";
 import { RunMediaInferenceCommand } from "../impl/run-media-inference.command.js";
 
 const HTTP_OK = 200;
-
-type JsonResult = Extract<InferenceResult, { kind: "response" }>;
 
 /**
  * The inference path of every media Kind: parse with the Kind's client
@@ -43,7 +46,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     private readonly usage: UsageProducer,
   ) {}
 
-  async execute(command: RunMediaInferenceCommand): Promise<JsonResult> {
+  async execute(command: RunMediaInferenceCommand): Promise<MediaReply> {
     const { contract, body, caller, connection, onUsage } = command;
     const meter = new UsageMeter(
       requestOwnerOf(caller),
@@ -56,9 +59,9 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       onUsage(job);
     };
     try {
-      const json = await this.serve(command, meter);
+      const reply = await this.serve(command, meter);
       record(meter.finish(HTTP_OK, false));
-      return { kind: "response", json };
+      return reply;
     } catch (error) {
       record(failedRequestUsage(meter, (failure) => contract.writeError(failure), error));
       throw error;
@@ -68,7 +71,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
   private async serve(
     { contract, body, caller, connection, target }: RunMediaInferenceCommand,
     meter: UsageMeter,
-  ): Promise<Uint8Array> {
+  ): Promise<MediaReply> {
     const request = contract.parseRequest(body);
     meter.requestParsed(false);
     const kind = CLIENT_PROTOCOL_KINDS[contract.protocol];
@@ -82,7 +85,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       send: async (credential) => {
         const outcome = await this.upstream.generate({
           ...this.upstreamCallFor(contract, attemptTarget, credential),
-          request,
+          request: policedRequest(contract, request, destination.model, attemptTarget.route),
           clientSignal: connection.signal,
         });
         meter.attemptAnswered();
@@ -91,8 +94,9 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
         return outcome.result;
       },
     }));
-    const response = contract.writeResponse(result, { modelName: destination.name, createdAt });
-    return encodedFor(meter, JSON.stringify(response));
+    const reply = contract.writeResponse(result, { modelName: destination.name, createdAt });
+    meter.responseWritten(reply.body.byteLength);
+    return reply;
   }
 
   /** The Model the request names, with the Routes that can serve it. */
@@ -166,6 +170,25 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       timeouts: { ...DEFAULT_TIMEOUTS, totalMs: route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs },
     };
   }
+}
+
+/**
+ * The request one Attempt sends: under the Model's Parameter Policy with the
+ * Route's override. A direct Upstream Model test has no Model, so no policy.
+ */
+function policedRequest(
+  contract: MediaClientContract<MediaRequest, unknown>,
+  request: MediaRequest,
+  model: SnapshotModel | null,
+  route: SnapshotRoute | null,
+): MediaRequest {
+  if (!model || !contract.applyParameterPolicy) {
+    return request;
+  }
+  return contract.applyParameterPolicy(
+    request,
+    effectiveParameterPolicy(model.parameterPolicy, route?.parameterPolicyOverride ?? null),
+  );
 }
 
 /** The reason no Route could serve the request, from the first Route that gives one. */

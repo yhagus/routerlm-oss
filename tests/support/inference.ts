@@ -50,6 +50,8 @@ export interface UpstreamModelLimits {
   sizes?: string[];
   /** USD per generated image, by size tier (`1K`, `2K`). */
   pricePerImageBySize?: Record<string, number>;
+  /** USD per million characters of synthesized speech. */
+  pricePerMillionCharacters?: number;
 }
 
 export interface ModelOptions extends RouteTimeouts, UpstreamModelLimits {
@@ -112,6 +114,20 @@ export async function addDashScopeImageRoute(
   );
   await app.get(SnapshotService).changed();
   return route;
+}
+
+/** As insertDashScopeImageModel, for a speech Model served by a dashscope-speech Provider. */
+export function insertDashScopeSpeechModel(
+  app: NestNodeApplication,
+  db: Database,
+  options: ModelOptions,
+): Promise<InsertedModel> {
+  return insertModel(
+    app,
+    db,
+    { protocol: "dashscope-speech", authStyle: "bearer" },
+    { ...options, kind: "speech", capabilities: [] },
+  );
 }
 
 /** As insertOpenAiChatModel, for an openai-responses Provider. */
@@ -211,6 +227,7 @@ async function insertRoute(
       maxOutputTokens: options.maxOutputTokens,
       sizes: options.sizes,
       pricePerImageBySize: options.pricePerImageBySize,
+      pricePerMillionCharacters: options.pricePerMillionCharacters,
     })
     .returning({ id: upstreamModels.id });
   const [route] = await db

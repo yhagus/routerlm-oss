@@ -15,6 +15,7 @@ export const CLIENT_PROTOCOLS = [
   "anthropic-messages",
   "openai-responses",
   "openai-images",
+  "openai-speech",
 ] as const;
 export type ClientProtocol = (typeof CLIENT_PROTOCOLS)[number];
 
@@ -24,6 +25,7 @@ export const CLIENT_PROTOCOL_KINDS = {
   "anthropic-messages": "chat",
   "openai-responses": "chat",
   "openai-images": "image",
+  "openai-speech": "speech",
 } as const satisfies Record<ClientProtocol, ModelKind>;
 
 /** The error contract's codes, as the client receives them. */

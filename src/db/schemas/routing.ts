@@ -17,10 +17,12 @@ export type ParameterValues = {
   reasoningEffort?: ReasoningEffort;
   stopSequences?: string[];
   serviceTier?: ServiceTier;
+  /** A speech request's voice, as the Provider names it. */
+  voice?: string;
 };
 
 /** The parameters with an order, which a cap can bound. */
-export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier"> & {
+export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier" | "voice"> & {
   /** Bounds an Anthropic `thinking.budget_tokens`; `reasoningEffort` bounds effort only. */
   reasoningBudgetTokens?: number;
 };
