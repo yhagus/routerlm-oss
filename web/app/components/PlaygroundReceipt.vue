@@ -52,6 +52,9 @@ const facts = computed(() => {
     if (units.imagesOut !== undefined) {
       list.push({ label: "Images out", value: formatCount(units.imagesOut) });
     }
+    if (units.characters !== undefined) {
+      list.push({ label: "Characters", value: formatCount(units.characters) });
+    }
     if (units.tier !== undefined) list.push({ label: "Tier", value: units.tier });
     list.push({ label: "Cost", value: formatCost(props.summary.cost) });
     return list;

@@ -7,6 +7,8 @@ import type { ReasoningEffort } from "~/lib/parameterPolicy";
 export interface PlaygroundUnits {
   imagesOut?: number;
   imagesIn?: number;
+  /** Characters of text a speech request spoke. */
+  characters?: number;
   /** The price tier the Provider names, such as `2K`. */
   tier?: string;
 }
