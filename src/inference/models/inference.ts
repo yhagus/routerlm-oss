@@ -35,5 +35,8 @@ export interface ProbeTarget {
   totalTimeoutMs: number;
 }
 
+/** What a request served at once is sent to; a Video Job is never a Probe. */
+export type RunInferenceTarget = InferenceTarget | ProbeTarget;
+
 /** Called with the usage job once the request has ended, however it ended. */
 export type UsageListener = (job: UsageJob) => void;

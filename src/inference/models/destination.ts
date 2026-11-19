@@ -5,22 +5,30 @@ import { GatewayError } from "./gateway-error.js";
 import type { InferenceCaller, ProbeTarget } from "./inference.js";
 import type { AttemptPath, AttemptTarget } from "./route-selection.js";
 
-/** What a request resolved to (spec step 3), with the paths its Attempts may take. */
-export interface Destination {
-  /** Null for a direct Upstream Model test: no Parameter Policy, no automatic cache breakpoints. */
+/**
+ * What a request resolved to (spec step 3), and how its Attempts are made:
+ * Fallback over its paths, or a Probe's one Attempt.
+ */
+export type Destination = FallbackDestination | ProbeDestination;
+
+interface ResolvedNames {
+  /** Null for a direct Upstream Model test or a Probe: no Parameter Policy, no automatic cache breakpoints. */
   model: SnapshotModel | null;
-  /** The Model's id, or the Upstream Model's row id for a direct test. */
+  /** The Model's id, or the Upstream Model's row id with no Model. */
   id: string;
   /** What the response names as its model. */
   name: string;
-  /** Capable of serving the request, in the order they are tried. */
-  paths: AttemptPath[];
-  /** Set for a Probe, which makes one Attempt instead of trying `paths`. */
-  probe: ProbeAttempt | null;
 }
 
-/** A Probe's one Attempt, and how long it may take. */
-export interface ProbeAttempt {
+export interface FallbackDestination extends ResolvedNames {
+  kind: "fallback";
+  /** Capable of serving the request, in the order they are tried. */
+  paths: AttemptPath[];
+}
+
+export interface ProbeDestination extends ResolvedNames {
+  kind: "probe";
+  /** The one Attempt, with no Fallback. */
   target: AttemptTarget;
   totalTimeoutMs: number;
 }
@@ -81,7 +89,7 @@ export function probeDestination(
   snapshot: Snapshot,
   { upstreamModelId, providerAccountId, totalTimeoutMs }: ProbeTarget,
   endpointKind: ModelKind,
-): Destination {
+): ProbeDestination {
   const upstreamModel = snapshot.upstreamModelsById.get(upstreamModelId);
   const providerAccount = upstreamModel?.provider.providerAccounts.find(
     (account) => account.id === providerAccountId,
@@ -98,13 +106,13 @@ export function probeDestination(
     upstreamModel.kind,
     endpointKind,
   );
-  const path = { route: null, upstreamModel };
   return {
+    kind: "probe",
     model: null,
     id: upstreamModel.id,
     name: upstreamModel.upstreamModelId,
-    paths: [path],
-    probe: { target: { ...path, providerAccount }, totalTimeoutMs },
+    target: { route: null, upstreamModel, providerAccount },
+    totalTimeoutMs,
   };
 }
 

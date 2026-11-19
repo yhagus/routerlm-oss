@@ -3,8 +3,7 @@ import type { ClientConnection } from "@/libs/models/client-connection.js";
 import type {
   InferenceCaller,
   InferenceResult,
-  InferenceTarget,
-  ProbeTarget,
+  RunInferenceTarget,
   UsageListener,
 } from "../../models/inference.js";
 import type { ClientProtocolConverter } from "../../protocols/client-protocol-converter.js";
@@ -22,7 +21,7 @@ export class RunInferenceCommand extends Command<InferenceResult> {
     readonly caller: InferenceCaller,
     readonly connection: ClientConnection,
     readonly onUsage: UsageListener = () => {},
-    readonly target: InferenceTarget | ProbeTarget = { kind: "named-model" },
+    readonly target: RunInferenceTarget = { kind: "named-model" },
   ) {
     super();
   }

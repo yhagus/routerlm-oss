@@ -73,8 +73,8 @@ export class AttemptRunner {
     meter: UsageMeter,
     prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
   ): Promise<Answer> {
-    if (destination.probe) {
-      return this.probeAnswer(destination.probe.target, meter, prepare);
+    if (destination.kind === "probe") {
+      return this.probeAnswer(destination.target, meter, prepare);
     }
     return this.firstAnswer(destination.paths, meter, prepare);
   }
