@@ -11,7 +11,7 @@ import {
 import { dashScopeSpeechProtocol } from "../dashscope-speech/dashscope-speech-protocol.js";
 import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
 
-// OpenAI's speech API, `POST /v1/audio/speech` (spec "Phase 2: speech").
+// OpenAI's speech API, `POST /v1/audio/speech`.
 
 /** OpenAI's range for `speed`; the upstream refuses what its model doesn't take. */
 const MIN_SPEED = 0.25;

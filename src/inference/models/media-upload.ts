@@ -1,10 +1,9 @@
 import type { MulterModuleOptions } from "@nestjs/platform-node";
 
-// Multipart uploads to media endpoints (spec "Implementation Decisions":
-// `@nestjs/platform-node`'s multer integration). multer keeps each file in
-// memory, never on disk (ADR 0004).
+// Multipart uploads to media endpoints, through `@nestjs/platform-node`'s
+// multer integration. multer keeps each file in memory, never on disk (ADR 0004).
 
-/** The largest file a client may upload (spec user story 35); a larger one gets a 413. */
+/** The largest file a client may upload, OpenAI's own limit; a larger one gets a 413. */
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 /** The multer options every media upload route uses. */

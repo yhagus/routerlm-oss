@@ -13,7 +13,7 @@ import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-con
 import type { TranscriptionFile } from "./openai-transcription-form.js";
 
 // OpenAI's transcription API, `POST /v1/audio/transcriptions`, a multipart
-// upload (spec "Phase 3: transcription").
+// upload.
 
 const PLAIN_TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 

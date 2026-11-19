@@ -30,7 +30,7 @@ import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-con
 import { inputImageCheck } from "../openai-images/openai-images-client-contract.js";
 
 // OpenAI's Videos API, `POST /v1/videos`, with OpenRouter's `resolution` and
-// `aspect_ratio` accepted in place of `size` (spec "Phase 4: video").
+// `aspect_ratio` accepted in place of `size`.
 
 /** DashScope's own default duration, used when the client names none. */
 const DEFAULT_SECONDS = 5;
@@ -99,7 +99,7 @@ function parseRequest(body: unknown): VideoGenerationRequest {
     prompt,
     seconds: requestedSecondsOf(seconds),
     resolution: format.resolution,
-    // The video takes its first frame's aspect ratio (spec "Sizes").
+    // The video takes its first frame's aspect ratio, so no ratio is sent.
     ratio: hasFirstFrame ? null : format.ratio,
     clientSize: size ?? null,
     media,
