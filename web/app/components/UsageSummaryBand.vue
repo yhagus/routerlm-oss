@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { compactNumber, percent } from "~/lib/chart";
+import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from "~/lib/errorOrigins";
 import { formatCost, formatCount, formatDuration, type UsageSummary } from "~/lib/usage";
 
 /**
@@ -28,6 +29,20 @@ const described = computed(() =>
 const totalTokens = computed(() =>
   props.summary ? props.summary.inputTokens + props.summary.outputTokens : null,
 );
+
+/**
+ * The failed requests split by who caused them, origins with none left out:
+ * "2 client · 5 upstream". Failures recorded without an origin are in no part.
+ */
+const failedByOriginNote = computed(() => {
+  const failedByOrigin = described.value?.failedByOrigin;
+  if (!failedByOrigin) return null;
+  const parts = ERROR_ORIGINS.filter((origin) => failedByOrigin[origin] > 0).map(
+    (origin) =>
+      `${formatCount(failedByOrigin[origin])} ${ERROR_ORIGIN_LABELS[origin].toLowerCase()}`,
+  );
+  return parts.length > 0 ? parts.join(" · ") : null;
+});
 
 const hasMedianDuration = computed(() => (props.summary?.durationMsP50 ?? null) !== null);
 
@@ -61,6 +76,9 @@ function formatTokens(count: number | null | undefined): string {
             cancelled
           </template>
         </template>
+      </p>
+      <p v-if="failedByOriginNote" class="usage-summary__note tabular">
+        Failed by origin: {{ failedByOriginNote }}
       </p>
     </div>
 

@@ -14,6 +14,8 @@ export type FailedHop =
       /** Null when no response arrived. */
       upstreamStatus: number | null;
       failureReason: string | null;
+      /** The request id the Provider returned; null when it returned none or no response arrived. */
+      upstreamRequestId: string | null;
     };
 
 /** An Error Capture as `GET /api/error-captures` lists it: no headers or bodies. */
@@ -27,6 +29,9 @@ export interface ErrorCaptureSummary {
   clientProtocol: string;
   httpStatus: number;
   errorCode: string | null;
+  /** Who sent the request and from where; null on captures recorded before they were. */
+  userAgent: string | null;
+  clientIp: string | null;
   failedHop: FailedHop;
 }
 
@@ -65,13 +70,16 @@ export function failedHopLabel(hop: FailedHop): string {
   return `Gateway → ${provider} · ${account}`;
 }
 
+/** Why an Attempt failed, in words. */
+export function failureReasonLabel(reason: string): string {
+  return FAILURE_REASON_LABELS[reason] ?? reason;
+}
+
 /** Why the Attempt failed, with the upstream's status when it answered. */
 export function attemptOutcomeLabel(
   hop: Extract<FailedHop, { kind: "gateway-to-provider-account" }>,
 ): string {
-  const reason = hop.failureReason
-    ? (FAILURE_REASON_LABELS[hop.failureReason] ?? hop.failureReason)
-    : "Failed";
+  const reason = hop.failureReason ? failureReasonLabel(hop.failureReason) : "Failed";
   return hop.upstreamStatus === null
     ? `${reason} · no response`
     : `${reason} · HTTP ${hop.upstreamStatus}`;

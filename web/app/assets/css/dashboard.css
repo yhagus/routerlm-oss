@@ -3141,6 +3141,11 @@ tbody tr:hover {
   color: var(--danger-ink);
   font-weight: 650;
 }
+/* Who caused a failed request, beside its status badge. */
+.status-badge--origin {
+  margin-left: 6px;
+  color: var(--muted);
+}
 .usage-summary__cancelled {
   color: var(--warning-ink);
   font-weight: 650;
@@ -4001,6 +4006,8 @@ tbody tr:hover {
 .capture-facts dd {
   margin: 2px 0 0;
   font-size: 12px;
+  /* A User-Agent can be long and has few spaces. */
+  overflow-wrap: anywhere;
 }
 .capture-link {
   color: var(--ink);

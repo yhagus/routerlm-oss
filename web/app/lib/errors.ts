@@ -3,13 +3,14 @@ import { createError, type NuxtError } from "#app";
 const NOT_FOUND = 404;
 
 /** The dashboard records a detail page can fail to find. */
-export type MissingResource = "Provider" | "Model" | "Error Capture";
+export type MissingResource = "Provider" | "Model" | "Error Capture" | "Usage Log";
 
 /** What the error page says about a record that isn't there. */
 const MISSING_RESOURCE_HINTS = {
   Provider: "It may have been deleted, along with its Provider Accounts and Upstream Models.",
   Model: "It may have been deleted or renamed. Clients asking for it now get an error.",
   "Error Capture": "It may have passed the retention period and been removed.",
+  "Usage Log": "Check the link: no request was recorded with this id.",
 } as const satisfies Record<MissingResource, string>;
 
 interface MissingResourceData {
