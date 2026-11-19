@@ -135,7 +135,7 @@ export function mediaFieldsFromForm(form: MediaForm, kind: ModelKind): MediaFiel
 }
 
 /** Unit prices run to eight decimals: a price per audio second is a tiny number. */
-const unitPriceFormat = new Intl.NumberFormat("en-US", {
+export const unitPriceFormat = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
   minimumFractionDigits: 0,
@@ -196,10 +196,4 @@ export function mediaLimitLines(model: UpstreamModel): DetailLine[] {
     ...listLine("Resolutions", model.resolutions),
     ...listLine("Sizes", model.sizes),
   ];
-}
-
-/** The price a table row shows for a media model: its first published unit price. */
-export function mainUnitPrice(model: UpstreamModel): string {
-  const [first] = unitPriceLines(model);
-  return first ? `${first.label}: ${first.value}` : "";
 }

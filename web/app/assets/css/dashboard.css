@@ -4326,6 +4326,37 @@ svg.lucide {
   font-size: 10.5px;
   white-space: nowrap;
 }
+/* The Price column: the amount over its unit, the same shape for every Kind. */
+.price-cell {
+  display: inline-grid;
+  justify-items: end;
+  gap: 2px;
+  white-space: nowrap;
+}
+.price-cell--detailed {
+  cursor: help;
+}
+.price-cell--detailed strong {
+  text-decoration: underline dotted var(--line);
+  text-underline-offset: 3px;
+}
+.price-cell__unit {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+.price-tooltip {
+  display: grid;
+  gap: 3px;
+  min-width: 180px;
+}
+.price-tooltip__line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.price-tooltip__line span {
+  opacity: 0.75;
+}
 .model-table__entity {
   gap: 10px;
   min-width: 0;

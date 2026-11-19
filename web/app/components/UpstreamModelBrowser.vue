@@ -50,13 +50,13 @@ import {
 } from "~/lib/upstreamModelGroups";
 import { formatCount } from "~/lib/usage";
 import {
-  mainUnitPrice,
   type MediaForm,
   mediaFieldsFromForm,
   mediaFormFor,
   mediaLimitLines,
   unitPriceLines,
 } from "~/lib/upstreamModelMedia";
+import { priceSummary } from "~/lib/upstreamModelPrice";
 
 /**
  * Upstream Models with filters, sorting and editing. With `provider` it shows
@@ -425,22 +425,15 @@ const columns: DataTableColumn<UpstreamModelRow>[] = [
   { id: "capabilities", header: "Capabilities" },
   { id: "context", header: "Context" },
   { id: "maxOutput", header: "Max output" },
-  { id: "inputPrice", header: "Input $/M" },
-  { id: "outputPrice", header: "Output $/M" },
+  { id: "price", header: "Price" },
   { id: "released", header: "Released" },
   { id: "status", header: "Status" },
   actionsColumn(),
 ];
 
-const NUMERIC_COLUMNS = new Set(["context", "maxOutput", "inputPrice", "outputPrice", "released"]);
+const NUMERIC_COLUMNS = new Set(["context", "maxOutput", "price", "released"]);
 /** Columns faded in a disabled model's row, found by id so hiding a column doesn't shift them. */
-const FADED_WHEN_OFF_COLUMNS = new Set([
-  "capabilities",
-  "context",
-  "maxOutput",
-  "inputPrice",
-  "outputPrice",
-]);
+const FADED_WHEN_OFF_COLUMNS = new Set(["capabilities", "context", "maxOutput", "price"]);
 
 function columnClass(columnId: string): Record<string, boolean> {
   return {
@@ -488,14 +481,6 @@ function formatRange<Value>(
   const min = format(range.min);
   const max = format(range.max);
   return min === max ? min : `${min}–${max}`;
-}
-
-function groupPriceRange(group: UpstreamModelGroup, price: "inputPrice" | "outputPrice"): string {
-  return formatRange(
-    group.members.map((model) => model[price]),
-    compareNumbers,
-    (value) => priceFormat.format(value),
-  );
 }
 
 function groupTokenRange(
@@ -916,9 +901,6 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     </template>
     <template #cell-kind="{ row }">
       {{ MODEL_KIND_LABELS[rowKind(row)] }}
-      <span v-if="!isUpstreamModelGroup(row) && mainUnitPrice(row)" class="cell-note">{{
-        mainUnitPrice(row)
-      }}</span>
     </template>
     <template #cell-capabilities="{ row }">
       <TooltipProvider :delay-duration="100">
@@ -964,23 +946,10 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         row.maxOutputTokens === null ? "—" : tokenFormat.format(row.maxOutputTokens)
       }}</template>
     </template>
-    <template #cell-inputPrice="{ row }">
-      <strong v-if="isUpstreamModelGroup(row)">{{ groupPriceRange(row, "inputPrice") }}</strong>
-      <template v-else>
-        <strong>{{ formatPrice(row.inputPrice) }}</strong>
-        <span v-if="row.cacheReadPrice !== null" class="cell-note" title="Cache read">{{
-          formatPrice(row.cacheReadPrice)
-        }}</span>
-      </template>
-    </template>
-    <template #cell-outputPrice="{ row }">
-      <strong v-if="isUpstreamModelGroup(row)">{{ groupPriceRange(row, "outputPrice") }}</strong>
-      <template v-else>
-        <strong>{{ formatPrice(row.outputPrice) }}</strong>
-        <span v-if="row.cacheWritePrice !== null" class="cell-note" title="Cache write">{{
-          formatPrice(row.cacheWritePrice)
-        }}</span>
-      </template>
+    <template #cell-price="{ row }">
+      <UpstreamModelPrice
+        :summary="priceSummary(isUpstreamModelGroup(row) ? row.members : [row], rowKind(row))"
+      />
     </template>
     <template #cell-released="{ row }">{{
       isUpstreamModelGroup(row) ? groupReleaseRange(row) : (row.releaseDate ?? "—")
