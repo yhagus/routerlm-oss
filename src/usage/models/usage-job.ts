@@ -5,6 +5,20 @@ import type {
 } from "@/db/schemas/index.js";
 import type { ServiceTier, TokenUsage } from "@/inference/models/internal-format.js";
 
+/**
+ * The units a media Kind counts for one request, and the size or resolution
+ * that priced them. A unit the Kind doesn't count is left out.
+ */
+export interface MediaUnits {
+  imagesOut?: number;
+  imagesIn?: number;
+  outputSeconds?: number;
+  audioSeconds?: number;
+  characters?: number;
+  /** Such as `2K` or `720P`. */
+  tier?: string;
+}
+
 /** The job that turns one inference request into its Usage Log and Attempts. */
 export const RECORD_USAGE_JOB = "record";
 
@@ -133,6 +147,8 @@ export interface UsageJob {
   servedBy: ServedBy | null;
   /** The upstream's last usage report; null when it sent none. */
   usage: TokenUsage | null;
+  /** What a media Kind counted. Null or missing for chat, which counts tokens in `usage`. */
+  units?: MediaUnits | null;
   requestBytes: number;
   responseBytes: number;
   /** Streams only: until the first event arrived from the upstream. */

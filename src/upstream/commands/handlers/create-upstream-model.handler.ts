@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
+  assertProviderServesKind,
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
   type UpstreamModel,
@@ -21,12 +22,13 @@ export class CreateUpstreamModelHandler implements ICommandHandler<CreateUpstrea
 
   async execute({ newUpstreamModel }: CreateUpstreamModelCommand): Promise<UpstreamModel> {
     const [provider] = await this.db
-      .select({ serviceTierValues: providers.serviceTierValues })
+      .select({ endpoints: providers.endpoints, serviceTierValues: providers.serviceTierValues })
       .from(providers)
       .where(eq(providers.id, newUpstreamModel.providerId));
     if (!provider) {
       throw new NotFoundException("Provider not found");
     }
+    assertProviderServesKind(newUpstreamModel.kind ?? "chat", provider.endpoints);
     assertServiceTiersFitProvider(
       {
         serviceTiers: newUpstreamModel.serviceTiers ?? [],

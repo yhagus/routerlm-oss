@@ -2,6 +2,8 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import pg from "pg";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
+import { models } from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { FakeUpstream, openAiChatFixture, UPSTREAM_ONLY_HEADER } from "../support/fake-upstream.js";
 import {
   fixtureAsServed,
@@ -387,6 +389,19 @@ describe("Chat Completions (e2e)", () => {
     const response = await chat({ ...EVERY_FEATURE_REQUEST, model: "text-only" }).expect(400);
 
     expect(response.body.error.code).toBe("no_capable_route");
+  });
+
+  it("refuses a request naming a Model of another Kind with 400 naming both Kinds", async () => {
+    await db.insert(models).values({ name: "painter", kind: "image" });
+    await app.get(SnapshotService).changed();
+
+    const response = await chat({ ...EVERY_FEATURE_REQUEST, model: "painter" }).expect(400);
+
+    expect(response.body.error.code).toBe("invalid_request");
+    expect(response.body.error.message).toBe(
+      'The Model "painter" has the Kind image, but this endpoint serves the Kind chat',
+    );
+    expect(upstream.requests).toHaveLength(0);
   });
 
   it("answers 404 model_not_found for an unknown Model", async () => {

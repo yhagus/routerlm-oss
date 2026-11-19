@@ -1,7 +1,7 @@
 import { boolean, index, integer, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "./columns.js";
 import type { ReasoningEffort, ServiceTier } from "@/inference/models/internal-format.js";
-import { upstreamModels } from "./upstream.js";
+import { MODEL_KINDS, upstreamModels } from "./upstream.js";
 
 // Routing: the Models the gateway exposes and the Routes that serve them.
 
@@ -44,6 +44,8 @@ export const models = pgTable("models", {
   id: id(),
   // What clients send as `model`.
   name: text("name").notNull().unique(),
+  // Fixed once created; its Routes all point at Upstream Models of this Kind.
+  kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
   isEnabled: boolean("is_enabled").notNull().default(true),
   parameterPolicy: jsonb("parameter_policy").$type<ParameterPolicy>().notNull().default({}),
   hasAutomaticCacheBreakpoints: boolean("has_automatic_cache_breakpoints").notNull().default(true),

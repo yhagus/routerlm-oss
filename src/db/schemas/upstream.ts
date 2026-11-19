@@ -27,7 +27,7 @@ export const UPSTREAM_PROTOCOLS = [
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
 /** What a Model or Upstream Model produces; each Kind has its own client endpoints (GLOSSARY: Model Kind). */
-export const MODEL_KINDS = ["chat"] as const;
+export const MODEL_KINDS = ["chat", "image", "speech", "transcription", "video"] as const;
 export type ModelKind = (typeof MODEL_KINDS)[number];
 
 /** The Model Kind each Protocol serves: an endpoint's Protocol must serve the endpoint's Kind. */
@@ -51,7 +51,17 @@ export interface ProviderEndpoint {
 export const AUTH_STYLES = ["bearer", "x-api-key"] as const;
 export type AuthStyle = (typeof AUTH_STYLES)[number];
 
-export const CAPABILITIES = ["vision", "tools", "reasoning", "structured-output"] as const;
+export const CAPABILITIES = [
+  "vision",
+  "tools",
+  "reasoning",
+  "structured-output",
+  // Video only: what a video request may start from or be guided by.
+  "text-to-video",
+  "first-frame",
+  "last-frame",
+  "reference-images",
+] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
 /** The quota endpoint shapes the gateway can read (ADR 0010); a Provider names one, or none. */
@@ -132,6 +142,12 @@ export interface TierPrices {
 /** USD per million tokens. Six decimals hold prices below a cent per million. */
 const pricePerMillionTokens = (name: string) =>
   numeric(name, { precision: 12, scale: 6, mode: "number" });
+
+/** USD per counted unit of a media Kind. Eight decimals hold a price per audio second. */
+const pricePerUnit = (name: string) => numeric(name, { precision: 14, scale: 8, mode: "number" });
+
+/** USD per unit, keyed by a tier the Provider names, such as an image size `2K` or a resolution `720P`. */
+export type PricesByTier = Record<string, number>;
 
 export const providers = pgTable(
   "providers",
@@ -301,6 +317,8 @@ export const upstreamModels = pgTable(
     upstreamModelId: text("upstream_model_id").notNull(),
     // The name the Provider's docs give the model; null when they give none.
     name: text("name"),
+    // Its Provider has an endpoint for this Kind; the API and the Catalog schema enforce it.
+    kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
     capabilities: text("capabilities", { enum: CAPABILITIES }).array("[]").notNull().default([]),
     contextSize: integer("context_size").notNull(),
     maxOutputTokens: integer("max_output_tokens"),
@@ -309,6 +327,25 @@ export const upstreamModels = pgTable(
     outputPrice: pricePerMillionTokens("output_price"),
     cacheReadPrice: pricePerMillionTokens("cache_read_price"),
     cacheWritePrice: pricePerMillionTokens("cache_write_price"),
+    // Unit prices of the media Kinds, null when unpublished or of another Kind.
+    // Image: per generated image, or by size tier when the price depends on it,
+    // and per input image.
+    pricePerImage: pricePerUnit("price_per_image"),
+    pricePerImageBySize: jsonb("price_per_image_by_size").$type<PricesByTier>(),
+    pricePerInputImage: pricePerUnit("price_per_input_image"),
+    // Video: per output second, by resolution.
+    pricePerSecondByResolution: jsonb("price_per_second_by_resolution").$type<PricesByTier>(),
+    // Speech: per million input characters.
+    pricePerMillionCharacters: pricePerUnit("price_per_million_characters"),
+    // Transcription: per second of input audio.
+    pricePerAudioSecond: pricePerUnit("price_per_audio_second"),
+    // Media limits, which narrow Routes as contextSize does; null means no limit known.
+    maxInputImages: integer("max_input_images"),
+    minDurationSeconds: integer("min_duration_seconds"),
+    maxDurationSeconds: integer("max_duration_seconds"),
+    // Video resolutions, such as `720P`, and image sizes, such as `1024*1024`.
+    resolutions: text("resolutions").array(),
+    sizes: text("sizes").array(),
     // The Service Tiers it accepts (ADR 0014); any other tier is dropped from its Attempts.
     serviceTiers: text("service_tiers", { enum: SERVICE_TIERS }).array().notNull().default([]),
     // Prices for a Service Tier that costs other than the standard prices above.

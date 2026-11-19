@@ -3,6 +3,7 @@ import type { IncomingHttpHeaders } from "node:http";
 import { HttpStatus, Logger } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
+import { CLIENT_PROTOCOL_KINDS, type ModelKind } from "@/db/schemas/index.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import {
   type SnapshotModel,
@@ -53,6 +54,7 @@ import {
   attemptTargets,
   canServe,
   capableRoutes,
+  endpointOf,
   routePath,
 } from "../../models/route-selection.js";
 import {
@@ -172,10 +174,11 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   ): Promise<AttemptResult> {
     const clientRequest = converter.parseRequest(body);
     meter.requestParsed(clientRequest.stream !== null);
+    const kind = CLIENT_PROTOCOL_KINDS[converter.protocol];
     const destination =
       inferenceTarget.kind === "upstream-model"
-        ? this.resolveUpstreamModel(inferenceTarget.upstreamModelId, clientRequest)
-        : this.resolveNamedModel(clientRequest, caller, meter);
+        ? this.resolveUpstreamModel(inferenceTarget.upstreamModelId, kind, clientRequest)
+        : this.resolveNamedModel(clientRequest, kind, caller, meter);
     const context: ResponseContext = {
       requestId: randomUUID().replaceAll("-", ""),
       modelName: destination.name,
@@ -239,11 +242,13 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   /** The Model the request names, with its capable Routes (spec steps 3 to 5). */
   private resolveNamedModel(
     clientRequest: InferenceRequest,
+    kind: ModelKind,
     caller: InferenceCaller,
     meter: UsageMeter,
   ): Destination {
     const model = this.resolveModel(clientRequest.model, caller);
     meter.modelResolved(model.id, model.name);
+    assertKindServedHere(`Model "${model.name}"`, model.kind, kind);
     // Routes are selected under the Model's policy (spec step 4 before 5); a
     // Route override applies only to the Attempts on its own Route.
     const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));
@@ -262,6 +267,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
    */
   private resolveUpstreamModel(
     upstreamModelRowId: string,
+    kind: ModelKind,
     clientRequest: InferenceRequest,
   ): Destination {
     const upstreamModel = this.snapshot.current.upstreamModelsById.get(upstreamModelRowId);
@@ -271,6 +277,11 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         `The Upstream Model "${upstreamModelRowId}" does not exist`,
       );
     }
+    assertKindServedHere(
+      `Upstream Model "${upstreamModel.upstreamModelId}"`,
+      upstreamModel.kind,
+      kind,
+    );
     if (!canServe(upstreamModel, clientRequest)) {
       throw new GatewayError(
         "no_capable_route",
@@ -392,11 +403,13 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     const { provider } = upstreamModel;
     const quirks = validQuirksOf(provider);
     const sentServiceTier = serviceTierSentTo(request.serviceTier, upstreamModel);
-    const endpoint = provider.endpoints.chat;
+    const endpoint = endpointOf(upstreamModel);
     const converter = endpoint && UPSTREAM_PROTOCOL_CONVERTERS[endpoint.protocol];
     if (!endpoint || !converter) {
       // canServe() already skips these Upstream Models.
-      throw new Error(`The Provider ${provider.slug} has no chat endpoint the gateway can call`);
+      throw new Error(
+        `The Provider ${provider.slug} has no ${upstreamModel.kind} endpoint the gateway can call`,
+      );
     }
     return {
       converter,
@@ -580,6 +593,19 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
 }
 
 /** Whether the upstream answered 401 to an OAuth Login, which one refresh may cure. */
+/**
+ * Refuses a Model or Upstream Model of another Kind than the client endpoint
+ * serves (GLOSSARY "Model Kind"), naming both Kinds.
+ */
+function assertKindServedHere(named: string, itsKind: ModelKind, endpointKind: ModelKind): void {
+  if (itsKind !== endpointKind) {
+    throw new GatewayError(
+      "invalid_request",
+      `The ${named} has the Kind ${itsKind}, but this endpoint serves the Kind ${endpointKind}`,
+    );
+  }
+}
+
 function isRejectedOauthLogin(
   error: unknown,
   account: SnapshotProviderAccount,

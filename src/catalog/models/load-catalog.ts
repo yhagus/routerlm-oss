@@ -7,6 +7,7 @@ import {
   type CatalogProvider,
   catalogProviderSchema,
   chatEndpointOf,
+  kindsWithoutEndpoint,
   quirksForeignToProtocol,
   serviceTierValuesForeignToProtocol,
   serviceTiersWithoutWireValue,
@@ -49,6 +50,13 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
   if (!result.success) {
     const problems = result.error.issues.map((issue) => describeIssue(json, issue));
     throw new Error(`Catalog ${fileName}: ${problems.join("; ")}`);
+  }
+
+  const unservedKinds = kindsWithoutEndpoint(result.data.upstreamModels, result.data.endpoints);
+  if (unservedKinds.length > 0) {
+    throw new Error(
+      `Catalog ${fileName}: the Provider has no endpoint for the Kind ${unservedKinds.join(", ")} of its Upstream Models`,
+    );
   }
 
   const chatProtocol = chatEndpointOf(result.data.endpoints)?.protocol;

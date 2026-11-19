@@ -70,6 +70,24 @@ describe("Providers (e2e)", () => {
       .expect(400);
   });
 
+  it("refuses an endpoint whose Protocol doesn't serve its Kind", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/providers")
+      .set("Cookie", cookie)
+      .send({
+        ...ACME,
+        endpoints: [
+          ACME.endpoints[0],
+          { kind: "image", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" },
+        ],
+      })
+      .expect(400);
+
+    expect(JSON.stringify(response.body)).toContain(
+      "The Protocol doesn't serve the endpoint's Kind",
+    );
+  });
+
   it("refuses a Provider with two endpoints of the same Kind", async () => {
     const response = await request(app.getHttpServer())
       .post("/api/providers")

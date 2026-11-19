@@ -4,7 +4,7 @@ import type { models, providers, routes, upstreamModels } from "@/db/schemas/ind
 export type Model = typeof models.$inferSelect;
 
 /** A Model in the dashboard's list, with how many Routes it has. */
-export type ModelSummary = Pick<Model, "id" | "name" | "isEnabled" | "createdAt"> & {
+export type ModelSummary = Pick<Model, "id" | "name" | "kind" | "isEnabled" | "createdAt"> & {
   routeCount: number;
 };
 

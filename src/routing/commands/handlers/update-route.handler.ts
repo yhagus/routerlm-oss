@@ -7,6 +7,7 @@ import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ModelDetail } from "../../models/model.js";
 import { findModelDetail } from "../../models/model-detail.js";
+import { assertRouteKindFits } from "../../models/route-kind.js";
 import { toRouteWriteError } from "../../models/write-errors.js";
 import { UpdateRouteCommand } from "../impl/update-route.command.js";
 
@@ -18,6 +19,10 @@ export class UpdateRouteHandler implements ICommandHandler<UpdateRouteCommand> {
   ) {}
 
   async execute({ modelId, routeId, changes }: UpdateRouteCommand): Promise<ModelDetail> {
+    if (changes.upstreamModelId !== undefined) {
+      const model = await findModelDetail(this.db, modelId);
+      await assertRouteKindFits(this.db, model, changes.upstreamModelId);
+    }
     let updated: { id: string } | undefined;
     try {
       [updated] = await this.db

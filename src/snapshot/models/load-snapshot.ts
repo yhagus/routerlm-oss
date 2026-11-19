@@ -102,6 +102,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       upstreamModelsById.set(upstreamModel.id, {
         id: upstreamModel.id,
         upstreamModelId: upstreamModel.upstreamModelId,
+        kind: upstreamModel.kind,
         capabilities: upstreamModel.capabilities,
         contextSize: upstreamModel.contextSize,
         maxOutputTokens: upstreamModel.maxOutputTokens,
@@ -122,7 +123,9 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
   for (const model of modelRows) {
     const modelRoutes = (routesByModelId.get(model.id) ?? []).flatMap((route) => {
       const upstreamModel = upstreamModelsById.get(route.upstreamModelId);
-      if (!upstreamModel) {
+      // The routing write path refuses a Route of another Kind; this keeps
+      // one that slipped past it from ever serving.
+      if (!upstreamModel || upstreamModel.kind !== model.kind) {
         return [];
       }
       return [
@@ -141,6 +144,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     modelsByName.set(model.name, {
       id: model.id,
       name: model.name,
+      kind: model.kind,
       isEnabled: model.isEnabled,
       parameterPolicy: model.parameterPolicy,
       hasAutomaticCacheBreakpoints: model.hasAutomaticCacheBreakpoints,
