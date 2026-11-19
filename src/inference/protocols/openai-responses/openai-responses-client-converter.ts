@@ -162,7 +162,11 @@ function parseRequest(body: unknown): InferenceRequest {
   refuseOutOfScopeFeatures(body);
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
-    throw new GatewayError("invalid_request", `Invalid request: ${z.prettifyError(parsed.error)}`);
+    throw new GatewayError(
+      "invalid_request",
+      `Invalid request: ${z.prettifyError(parsed.error)}`,
+      "client",
+    );
   }
   return toInferenceRequest(parsed.data);
 }
@@ -250,7 +254,7 @@ function refuseUnsupportedItem(item: { type: unknown; content: unknown; output: 
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`);
+  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
 }
 
 function toInferenceRequest(request: ClientRequest): InferenceRequest {
@@ -751,7 +755,11 @@ class ResponseEventWriter {
         if (call?.type !== "function_call" || call.toolIndex !== event.index) {
           // A done item can't be reopened. Upstreams finish one call's
           // arguments before starting the next, so this means a broken stream.
-          throw new GatewayError("upstream_error", "The upstream interleaved tool call arguments");
+          throw new GatewayError(
+            "upstream_error",
+            "The upstream interleaved tool call arguments",
+            "upstream",
+          );
         }
         call.call.arguments += event.argumentsDelta;
         return this.event("response.function_call_arguments.delta", {

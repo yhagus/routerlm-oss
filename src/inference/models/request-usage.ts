@@ -47,5 +47,6 @@ export function failedRequestUsage(
     return meter.finish(CLIENT_CLOSED_REQUEST, true);
   }
   // A bug: Nest answers 500.
+  meter.failedInGateway();
   return meter.finish(HTTP_INTERNAL_SERVER_ERROR, false);
 }

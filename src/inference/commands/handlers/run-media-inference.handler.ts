@@ -49,6 +49,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       requestOwnerOf(caller),
       contract.protocol,
       connection.requestBytes,
+      connection.sender,
     );
     meter.requestReceived(connection.requestHeaders, withMediaPlaceholders(body));
     const record = (job: UsageJob): void => {
@@ -88,7 +89,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
             request: policedRequest(contract, request, destination, attemptTarget.route),
             clientSignal: connection.signal,
           });
-          meter.attemptAnswered();
+          meter.attemptAnswered(outcome.upstreamRequestId);
           meter.unitsCounted(outcome.units);
           meter.attemptSucceeded();
           return {
@@ -130,6 +131,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       throw new GatewayError(
         "no_capable_route",
         `No Route of the Model "${model.name}" can serve ${firstReasonOf(contract, enabledRoutes, request)}`,
+        "client",
       );
     }
     return { model, id: model.id, name: model.name, paths: servingRoutes.map(routePath) };
@@ -148,6 +150,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       throw new GatewayError(
         "no_capable_route",
         `The Upstream Model "${upstreamModel.upstreamModelId}" can't serve ${reason}`,
+        "client",
       );
     }
     return {

@@ -110,7 +110,11 @@ function parseWith<Schema extends z.ZodType>(schema: Schema, body: unknown): z.o
   refuseUnsupportedFeatures(body);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    throw new GatewayError("invalid_request", `Invalid request: ${z.prettifyError(parsed.error)}`);
+    throw new GatewayError(
+      "invalid_request",
+      `Invalid request: ${z.prettifyError(parsed.error)}`,
+      "client",
+    );
   }
   return parsed.data;
 }
@@ -146,13 +150,14 @@ function imageSizeOf(size: string): ImageSize {
     throw new GatewayError(
       "invalid_request",
       `Invalid request: the size "${size}" is not written as WIDTHxHEIGHT`,
+      "client",
     );
   }
   return { width: Number(match[1]), height: Number(match[2]) };
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`);
+  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
 }
 
 function unservableReason(

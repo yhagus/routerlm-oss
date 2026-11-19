@@ -9,6 +9,7 @@ import type {
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
 } from "../models/media-kind.js";
+import { upstreamRequestIdOf } from "../models/upstream-request-id.js";
 import { UpstreamProtocolError } from "../protocols/upstream-protocol-converter.js";
 import { AttemptDeadlines, type AttemptTimeouts } from "./upstream-client.js";
 import { MediaFetcher } from "./media-fetcher.js";
@@ -23,6 +24,11 @@ export interface MediaConnection {
   clientSignal: AbortSignal;
   /** The Fallback reason of a non-2xx answer (the Protocol's `failureReasonOf`). */
   failureReasonOf(status: number, body: string): AttemptFailureReason;
+}
+
+/** A media Attempt's outcome, with the first request id the Provider returned (null when none). */
+export interface AnsweredMediaAttempt<Result> extends MediaOutcome<Result> {
+  upstreamRequestId: string | null;
 }
 
 /** Everything one media Attempt needs: what to send, where, and with which credentials. */
@@ -48,14 +54,16 @@ export class MediaUpstreamClient {
     private readonly fetcher: MediaFetcher,
   ) {}
 
-  generate<Request, Result>(
+  async generate<Request, Result>(
     call: MediaUpstreamCall<Request, Result>,
-  ): Promise<MediaOutcome<Result>> {
+  ): Promise<AnsweredMediaAttempt<Result>> {
     const failureReasonOf = (status: number, body: string): AttemptFailureReason =>
       call.protocol.failureReasonOf(status, body);
-    return this.exchange({ ...call, failureReasonOf }, (exchange) =>
-      call.protocol.generate(call.request, call.target, exchange),
+    const { answer, upstreamRequestId } = await this.exchangeNoting(
+      { ...call, failureReasonOf },
+      (exchange) => call.protocol.generate(call.request, call.target, exchange),
     );
+    return { ...answer, upstreamRequestId };
   }
 
   /**
@@ -66,20 +74,38 @@ export class MediaUpstreamClient {
     connection: MediaConnection,
     use: (exchange: MediaExchange) => Promise<Answer>,
   ): Promise<Answer> {
+    const { answer } = await this.exchangeNoting(connection, use);
+    return answer;
+  }
+
+  /** As `exchange`, noting the first request id the Provider returned (null when none). */
+  private async exchangeNoting<Answer>(
+    connection: MediaConnection,
+    use: (exchange: MediaExchange) => Promise<Answer>,
+  ): Promise<{ answer: Answer; upstreamRequestId: string | null }> {
     const deadlines = new AttemptDeadlines(connection.timeouts, connection.clientSignal);
     deadlines.start("totalMs");
+    let upstreamRequestId: string | null = null;
+    const sendNoting = async (
+      url: string,
+      request: { method: "GET" | "POST"; body?: string; headers: Record<string, string> },
+    ): Promise<unknown> => {
+      const answered = await this.send(connection, url, deadlines.signal, request);
+      upstreamRequestId ??= answered.upstreamRequestId;
+      return answered.body;
+    };
     try {
-      return await use({
+      const answer = await use({
         postJson: (url, body, headers = {}) =>
-          this.send(connection, url, deadlines.signal, {
+          sendNoting(url, {
             method: "POST",
             body: JSON.stringify(body),
             headers: { "content-type": "application/json", ...headers },
           }),
-        getJson: (url) =>
-          this.send(connection, url, deadlines.signal, { method: "GET", headers: {} }),
+        getJson: (url) => sendNoting(url, { method: "GET", headers: {} }),
         fetchMedia: (url) => this.fetcher.fetch(url, deadlines.signal),
       });
+      return { answer, upstreamRequestId };
     } catch (error) {
       throw deadlines.failureOf(error, false);
     } finally {
@@ -92,7 +118,7 @@ export class MediaUpstreamClient {
     url: string,
     signal: AbortSignal,
     request: { method: "GET" | "POST"; body?: string; headers: Record<string, string> },
-  ): Promise<unknown> {
+  ): Promise<{ body: unknown; upstreamRequestId: string | null }> {
     const response = await this.http.request<Response>(url, {
       method: request.method,
       body: request.body,
@@ -109,16 +135,17 @@ export class MediaUpstreamClient {
       redirect: "error",
     });
     const text = await response.data.text();
+    const headers = Object.fromEntries(response.headers.entries());
     if (!response.ok) {
       throw new AttemptFailedError(
         connection.failureReasonOf(response.status, text),
         response.status,
         `The upstream answered ${response.status}`,
-        { headers: Object.fromEntries(response.headers.entries()), body: text },
+        { headers, body: text },
       );
     }
     try {
-      return JSON.parse(text);
+      return { body: JSON.parse(text), upstreamRequestId: upstreamRequestIdOf(headers) };
     } catch (error) {
       throw new UpstreamProtocolError("The upstream answered with a body that is not JSON", {
         cause: error,

@@ -21,7 +21,11 @@ export class DownloadVideoContentHandler implements IQueryHandler<DownloadVideoC
       throw videoNotFound();
     }
     if (state.status !== "completed") {
-      throw new GatewayError("video_not_ready", `The video is ${state.status}, not completed`);
+      throw new GatewayError(
+        "video_not_ready",
+        `The video is ${state.status}, not completed`,
+        "client",
+      );
     }
     try {
       const video = await this.fetcher.stream(state.videoUrl, clientSignal);
@@ -35,7 +39,11 @@ export class DownloadVideoContentHandler implements IQueryHandler<DownloadVideoC
       // hears the gateway's words, never the media host's.
       throw error instanceof AttemptFailedError
         ? gatewayErrorFor(error)
-        : new GatewayError("upstream_error", "The generated video could not be fetched");
+        : new GatewayError(
+            "upstream_error",
+            "The generated video could not be fetched",
+            "upstream",
+          );
     }
   }
 }

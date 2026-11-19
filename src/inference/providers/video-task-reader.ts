@@ -83,5 +83,5 @@ export class VideoTaskReader {
 }
 
 export function videoNotFound(): GatewayError {
-  return new GatewayError("video_not_found", "No such video");
+  return new GatewayError("video_not_found", "No such video", "client");
 }

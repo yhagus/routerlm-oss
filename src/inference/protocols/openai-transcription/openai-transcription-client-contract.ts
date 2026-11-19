@@ -64,7 +64,11 @@ function parseRequest(body: unknown): TranscriptionRequest {
   refuseUnsupportedFeatures(body);
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
-    throw new GatewayError("invalid_request", `Invalid request: ${z.prettifyError(parsed.error)}`);
+    throw new GatewayError(
+      "invalid_request",
+      `Invalid request: ${z.prettifyError(parsed.error)}`,
+      "client",
+    );
   }
   const { model, file, language, response_format } = parsed.data;
   return {
@@ -113,7 +117,7 @@ function audioFileFormatOf({ contentType, fileName }: TranscriptionFile): AudioF
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`);
+  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
 }
 
 function writeResponse({ text, seconds, responseFormat }: Transcript): MediaReply {

@@ -117,7 +117,11 @@ function parseRequest(body: unknown): InferenceRequest {
   refuseOutOfScopeFeatures(body);
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
-    throw new GatewayError("invalid_request", `Invalid request: ${z.prettifyError(parsed.error)}`);
+    throw new GatewayError(
+      "invalid_request",
+      `Invalid request: ${z.prettifyError(parsed.error)}`,
+      "client",
+    );
   }
   return toInferenceRequest(parsed.data);
 }
@@ -182,7 +186,7 @@ function refuseOutOfScopeFeatures(body: unknown): void {
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`);
+  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
 }
 
 function toInferenceRequest(request: ClientRequest): InferenceRequest {

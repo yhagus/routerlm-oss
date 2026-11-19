@@ -101,6 +101,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       requestOwnerOf(caller),
       converter.protocol,
       connection.requestBytes,
+      connection.sender,
     );
     meter.requestReceived(connection.requestHeaders, body);
     const record = (job: UsageJob): void => {
@@ -178,6 +179,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       throw new GatewayError(
         "no_capable_route",
         `No Route of the Model "${model.name}" supports what this request needs`,
+        "client",
       );
     }
     return { model, id: model.id, name: model.name, paths: routes.map(routePath) };
@@ -197,6 +199,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       throw new GatewayError(
         "no_capable_route",
         `The Upstream Model "${upstreamModel.upstreamModelId}" does not support what this request needs`,
+        "client",
       );
     }
     return {
@@ -225,14 +228,14 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       clientHeaders,
     });
     if (!request.stream) {
-      const response = await this.upstream.complete(call);
-      meter.attemptAnswered();
+      const { response, upstreamRequestId } = await this.upstream.complete(call);
+      meter.attemptAnswered(upstreamRequestId);
       meter.usageReported(response.usage, response.servedTierValue);
       meter.attemptSucceeded();
       return { kind: "response", body: converter.writeResponse(response, request, context) };
     }
     const upstream = await this.upstream.openStream(call);
-    meter.attemptAnswered();
+    meter.attemptAnswered(upstream.upstreamRequestId);
     return { kind: "stream", upstream, writer: converter.startStream(request, context), target };
   }
 
@@ -322,6 +325,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
           // The writer refused what the upstream sent (interleaved tool call
           // arguments): the stream is broken, but the client still gets the
           // Protocol's error event instead of a torn connection.
+          meter.failedWith(error);
           text += converter.writeStreamError(error);
           yield encodedFor(meter, text);
           return;
@@ -332,7 +336,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         meter.attemptFailed(error);
         await this.attempts.afterFailedAttempt(error, target);
         const gatewayError = gatewayErrorFor(error);
-        meter.failedWith(gatewayError.code);
+        meter.failedWith(gatewayError);
         text += converter.writeStreamError(gatewayError);
       }
       if (text !== "") {
