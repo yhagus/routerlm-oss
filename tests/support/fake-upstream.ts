@@ -99,6 +99,17 @@ export function dashScopeImageFixture(name: string): string {
   );
 }
 
+/** A recorded dashscope-transcription exchange, named as for openAiChatFixture. */
+export function dashScopeTranscriptionFixture(name: string): string {
+  return readFileSync(
+    new URL(
+      `../../src/inference/protocols/dashscope-transcription/fixtures/${name}`,
+      import.meta.url,
+    ),
+    "utf8",
+  );
+}
+
 /** A recorded dashscope-video exchange, named as for openAiChatFixture. */
 export function dashScopeVideoFixture(name: string): string {
   return readFileSync(

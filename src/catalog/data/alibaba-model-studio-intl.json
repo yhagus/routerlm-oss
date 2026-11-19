@@ -22,6 +22,11 @@
       "kind": "video",
       "protocol": "dashscope-video",
       "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
+    },
+    {
+      "kind": "transcription",
+      "protocol": "dashscope-transcription",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
     }
   ],
   "authStyle": "bearer",
@@ -702,6 +707,25 @@
         "retrievedOn": "2026-11-19"
       },
       "notes": "Text to video only. The 3 to 15 second range is the one published for HappyHorse 1.0; 1.1 is listed with 15-second videos, and its minimum was not confirmed against the live API."
+    },
+    {
+      "upstreamModelId": "qwen-audio-3.0-asr-flash",
+      "name": "Qwen Audio 3.0 ASR Flash",
+      "releaseDate": "2026-07-30",
+      "kind": "transcription",
+      "capabilities": [],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerAudioSecond": 0.000035,
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "$0.000035 per second of audio. Alibaba's docs show the request shape only for the 3.1 ASR models, and it was not checked against the live API: the gateway assumes 3.0 takes the same one (input.messages[].content[] of input_audio with a data URI, parameters.format and parameters.language_hints) and answers with output.text and usage.duration in seconds. Confirm before relying on it."
     }
   ]
 }
