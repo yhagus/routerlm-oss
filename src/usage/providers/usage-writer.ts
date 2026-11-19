@@ -130,10 +130,11 @@ function errorCaptureRowsOf(
     clientIp: job.clientIp ?? null,
   };
   if (capture.failedAttempts.length === 0) {
-    return [clientRequest];
+    return [{ ...clientRequest, id: capture.requestCaptureId }];
   }
-  return capture.failedAttempts.map(({ attemptIndex, upstreamResponse }) => ({
+  return capture.failedAttempts.map(({ captureId, attemptIndex, upstreamResponse }) => ({
     ...clientRequest,
+    id: captureId,
     attemptId: attemptIds[attemptIndex],
     responseHeaders: upstreamResponse?.headers ?? null,
     responseBody: upstreamResponse?.body ?? null,

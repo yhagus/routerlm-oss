@@ -24,6 +24,7 @@ import {
 import {
   assertKindServedHere,
   type Destination,
+  probeDestination,
   upstreamModelServedHere,
   usableModel,
 } from "../../models/destination.js";
@@ -55,7 +56,12 @@ import {
 import { serviceTierSentTo } from "../../models/service-tier.js";
 import { forwardedClientHeadersOf } from "../../providers/forwarded-client-headers.js";
 import { UsageMeter } from "../../models/usage-meter.js";
-import type { InferenceCaller, InferenceResult, InferenceTarget } from "../../models/inference.js";
+import type {
+  InferenceCaller,
+  InferenceResult,
+  InferenceTarget,
+  ProbeTarget,
+} from "../../models/inference.js";
 import { RunInferenceCommand } from "../impl/run-inference.command.js";
 
 /** What one Attempt needs besides the request and its target. */
@@ -63,6 +69,8 @@ interface AttemptOptions {
   cacheKey: string;
   clientSignal: AbortSignal;
   clientHeaders: IncomingHttpHeaders;
+  /** Null to take the Route's, or the default. */
+  probeTimeoutMs: number | null;
   meter: UsageMeter;
 }
 
@@ -129,17 +137,13 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     converter: ClientProtocolConverter,
     body: unknown,
     caller: InferenceCaller,
-    inferenceTarget: InferenceTarget,
+    inferenceTarget: InferenceTarget | ProbeTarget,
     connection: ClientConnection,
     meter: UsageMeter,
   ): Promise<AttemptResult> {
     const clientRequest = converter.parseRequest(body);
     meter.requestParsed(clientRequest.stream !== null);
-    const kind = CLIENT_PROTOCOL_KINDS[converter.protocol];
-    const destination =
-      inferenceTarget.kind === "upstream-model"
-        ? this.resolveUpstreamModel(inferenceTarget.upstreamModelId, kind, clientRequest)
-        : this.resolveNamedModel(clientRequest, kind, caller, meter);
+    const destination = this.resolve(inferenceTarget, clientRequest, converter, caller, meter);
     const context: ResponseContext = {
       requestId: randomUUID().replaceAll("-", ""),
       modelName: destination.name,
@@ -147,7 +151,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     };
     const cacheKey = promptCacheKey(requestOwnerOf(caller), destination.id);
 
-    return await this.attempts.firstAnswer(destination.paths, meter, (target) => {
+    return await this.attempts.answer(destination, meter, (target) => {
       const request = upstreamRequestFor(clientRequest, destination.model, target);
       return {
         sentServiceTier: serviceTierSentTo(request.serviceTier, target.upstreamModel),
@@ -156,10 +160,29 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
             cacheKey,
             clientSignal: connection.signal,
             clientHeaders: connection.requestHeaders,
+            probeTimeoutMs: destination.probe?.totalTimeoutMs ?? null,
             meter,
           }),
       };
     });
+  }
+
+  private resolve(
+    inferenceTarget: InferenceTarget | ProbeTarget,
+    clientRequest: InferenceRequest,
+    converter: ClientProtocolConverter,
+    caller: InferenceCaller,
+    meter: UsageMeter,
+  ): Destination {
+    const kind = CLIENT_PROTOCOL_KINDS[converter.protocol];
+    switch (inferenceTarget.kind) {
+      case "named-model":
+        return this.resolveNamedModel(clientRequest, kind, caller, meter);
+      case "upstream-model":
+        return this.resolveUpstreamModel(inferenceTarget.upstreamModelId, kind, clientRequest);
+      case "probe":
+        return probeDestination(this.snapshot.current, inferenceTarget, kind);
+    }
   }
 
   /** The Model the request names, with its capable Routes (spec steps 3 to 5). */
@@ -182,7 +205,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         "client",
       );
     }
-    return { model, id: model.id, name: model.name, paths: routes.map(routePath) };
+    return { model, id: model.id, name: model.name, paths: routes.map(routePath), probe: null };
   }
 
   /**
@@ -207,6 +230,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       id: upstreamModel.id,
       name: upstreamModel.upstreamModelId,
       paths: [{ route: null, upstreamModel }],
+      probe: null,
     };
   }
 
@@ -220,13 +244,9 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     context: ResponseContext,
     target: AttemptTarget,
     credential: ProviderAccountCredential,
-    { cacheKey, clientSignal, clientHeaders, meter }: AttemptOptions,
+    { meter, ...callOptions }: AttemptOptions,
   ): Promise<AttemptResult> {
-    const call = this.upstreamCallFor(request, target, credential, {
-      cacheKey,
-      clientSignal,
-      clientHeaders,
-    });
+    const call = this.upstreamCallFor(request, target, credential, callOptions);
     if (!request.stream) {
       const { response, upstreamRequestId } = await this.upstream.complete(call);
       meter.attemptAnswered(upstreamRequestId);
@@ -243,11 +263,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     request: InferenceRequest,
     { route, upstreamModel }: AttemptTarget,
     credential: ProviderAccountCredential,
-    {
-      cacheKey,
-      clientSignal,
-      clientHeaders,
-    }: Pick<AttemptOptions, "cacheKey" | "clientSignal" | "clientHeaders">,
+    { cacheKey, clientSignal, clientHeaders, probeTimeoutMs }: Omit<AttemptOptions, "meter">,
   ): UpstreamCall {
     const { provider } = upstreamModel;
     const quirks = validQuirksOf(provider);
@@ -279,7 +295,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       timeouts: {
         connectMs: route?.connectTimeoutMs ?? DEFAULT_TIMEOUTS.connectMs,
         firstTokenMs: route?.firstTokenTimeoutMs ?? DEFAULT_TIMEOUTS.firstTokenMs,
-        totalMs: route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs,
+        totalMs: probeTimeoutMs ?? route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs,
       },
       clientSignal,
     };

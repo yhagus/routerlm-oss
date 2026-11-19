@@ -78,6 +78,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         quirks: storedProviderQuirksSchema.safeParse(provider.quirks),
         serviceTierValues: provider.serviceTierValues,
         isUsable: providerIsUsable(provider, allowsTermsRiskProviders.value),
+        isRefusedForTermsRisk: provider.termsRisk && !allowsTermsRiskProviders.value,
         providerAccounts: (accountsByProviderId.get(provider.id) ?? []).flatMap(
           (account): SnapshotProviderAccount[] => {
             const credential = snapshotCredentialOf(account);

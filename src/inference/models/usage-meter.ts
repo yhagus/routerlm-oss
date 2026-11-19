@@ -48,6 +48,7 @@ interface ClientRequest {
 }
 
 interface FailedAttempt {
+  captureId: string;
   attemptIndex: number;
   upstreamResponse: UpstreamFailureResponse | null;
 }
@@ -193,6 +194,7 @@ export class UsageMeter {
       return;
     }
     this.failedAttempts.push({
+      captureId: randomUUID(),
       attemptIndex: this.attempts.length,
       upstreamResponse: failure.upstreamResponse,
     });
@@ -289,12 +291,14 @@ export class UsageMeter {
       return null;
     }
     return {
+      requestCaptureId: randomUUID(),
       request: this.captured({
         headers: this.clientRequest.headers,
         // Parsed by Nest already; undefined when the request had no body.
         body: JSON.stringify(this.clientRequest.body) ?? "",
       }),
-      failedAttempts: this.failedAttempts.map(({ attemptIndex, upstreamResponse }) => ({
+      failedAttempts: this.failedAttempts.map(({ captureId, attemptIndex, upstreamResponse }) => ({
+        captureId,
         attemptIndex,
         upstreamResponse: upstreamResponse && this.captured(upstreamResponse),
       })),
