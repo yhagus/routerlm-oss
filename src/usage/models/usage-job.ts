@@ -57,6 +57,8 @@ export interface UpstreamModelUnitPrices {
   pricePerInputImage: number | null;
   /** USD per million characters of synthesized speech. */
   pricePerMillionCharacters: number | null;
+  /** USD per second of transcribed audio. */
+  pricePerAudioSecond: number | null;
 }
 
 /**

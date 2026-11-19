@@ -100,6 +100,7 @@ export function unitCostOf(
       count: units.characters ?? 0,
       price: perUnit(prices.pricePerMillionCharacters, CHARACTERS_PER_PRICE_UNIT),
     },
+    { count: units.audioSeconds ?? 0, price: prices.pricePerAudioSecond },
   ];
   let cost = 0;
   for (const { count, price } of pricedCounts) {
