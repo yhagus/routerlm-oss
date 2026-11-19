@@ -13,7 +13,7 @@ import {
   PROTOCOL_KINDS,
   UPSTREAM_PROTOCOLS,
 } from "@/db/schemas/upstream.js";
-import { ERROR_ORIGINS } from "@/db/schemas/records.js";
+import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas/records.js";
 import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
 import { AUDIO_FORMATS } from "@/inference/models/speech-synthesis.js";
 import { VIDEO_RATIOS, VIDEO_RESOLUTIONS } from "@/inference/models/video-generation.js";
@@ -40,6 +40,11 @@ const MIRRORS: Mirror[] = [
     backend: Object.entries(PROTOCOL_KINDS).map(([protocol, kind]) => `${protocol}=${kind}`),
   },
   { name: "ERROR_ORIGINS", webFile: "web/app/lib/errorOrigins.ts", backend: ERROR_ORIGINS },
+  {
+    name: "RECORDED_ATTEMPT_FAILURES",
+    webFile: "web/app/lib/attemptFailures.ts",
+    backend: RECORDED_ATTEMPT_FAILURES,
+  },
   { name: "AUDIO_FORMATS", webFile: "web/app/lib/playgroundSpeech.ts", backend: AUDIO_FORMATS },
   {
     name: "VIDEO_RESOLUTIONS",

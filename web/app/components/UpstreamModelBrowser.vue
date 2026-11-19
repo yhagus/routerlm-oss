@@ -12,8 +12,8 @@ import {
   Plus,
   Power,
   SkipBack,
-  Stethoscope,
   SkipForward,
+  Stethoscope,
   Trash2,
   Wrench,
 } from "@lucide/vue";
@@ -748,8 +748,7 @@ function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
 // Only to tell, before the click, that a Provider has no enabled Provider Account to probe with.
 const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>("/provider-accounts");
 const {
-  probe,
-  isRunning: isProbeRunning,
+  shownProbe,
   isDialogOpen: isProbeDialogOpen,
   isProbing,
   runProbe,
@@ -758,7 +757,6 @@ const {
 /** Why the row's Probe action is unavailable, shown as its tooltip; null when it is available. */
 function probeUnavailableReason(upstreamModel: UpstreamModel): string | null {
   if (isProbing(upstreamModel)) return "Probing…";
-  if (isProbeRunning.value) return "Another probe is running.";
   return probeBlockReason(upstreamModel, providerAccounts.value);
 }
 
@@ -1377,8 +1375,9 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
   </AppDialog>
 
   <UpstreamModelProbeDialog
-    v-if="probe && probe.status !== 'running'"
+    v-if="shownProbe"
+    :key="shownProbe.upstreamModel.id"
     v-model:open="isProbeDialogOpen"
-    :probe="probe"
+    :probe="shownProbe"
   />
 </template>
