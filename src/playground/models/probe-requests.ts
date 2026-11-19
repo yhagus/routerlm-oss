@@ -1,6 +1,7 @@
 import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.command.js";
 import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
 import type { InferenceCaller, ProbeTarget, UsageListener } from "@/inference/models/inference.js";
+import type { ReasoningEffort } from "@/inference/models/internal-format.js";
 import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter.js";
 import { openAiImagesClientContract } from "@/inference/protocols/openai-images/openai-images-client-contract.js";
 import { openAiSpeechClientContract } from "@/inference/protocols/openai-speech/openai-speech-client-contract.js";
@@ -21,6 +22,12 @@ import type { ProbedKind } from "./probe-plan.js";
 const CHAT_PROMPT = "Reply with the word OK.";
 /** Enough for a short answer; a reasoning model may spend them all and answer empty, which still counts. */
 const CHAT_MAX_TOKENS = 16;
+/**
+ * The lowest effort every reasoning Upstream Model accepts: some refuse
+ * `none`, others `minimal` too (see the Catalog notes). A Provider that takes
+ * reasoning as a `thinking` object gets its own name for it from its quirk.
+ */
+const CHAT_REASONING_EFFORT: ReasoningEffort = "low";
 const IMAGE_PROMPT = "A plain white square.";
 const SPEECH_TEXT = "OK.";
 /**
@@ -55,6 +62,7 @@ export function probeCommandFor(
           messages: [{ role: "user", content: CHAT_PROMPT }],
           max_tokens: CHAT_MAX_TOKENS,
           stream: false,
+          ...reasoningFor(upstreamModel),
         },
         caller,
         connection,
@@ -96,6 +104,13 @@ export function probeCommandFor(
         target,
       );
   }
+}
+
+/** The lowest reasoning effort for a reasoning Upstream Model; none asked of another. */
+function reasoningFor({ capabilities }: SnapshotUpstreamModel): {
+  reasoning_effort?: ReasoningEffort;
+} {
+  return capabilities.includes("reasoning") ? { reasoning_effort: CHAT_REASONING_EFFORT } : {};
 }
 
 /**
