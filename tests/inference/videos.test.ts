@@ -21,6 +21,8 @@ const VIDEO = new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 1, 2, 3]);
 const SYNTHESIS_PATH = "/api/v1/services/aigc/video-generation/video-synthesis";
 const TASK_ID = "0385dc79-5ff8-4d82-bcb6-6f2a8e5c1d21";
 const TASK_PATH = `/api/v1/tasks/${TASK_ID}`;
+const FRAME_URL = "https://images.example.com/first-frame.png";
+const LAST_FRAME_URL = "https://images.example.com/last-frame.png";
 const VIDEO_REQUEST = {
   model: "director",
   prompt: "A red fox runs through snow",
@@ -188,6 +190,120 @@ describe("Video Jobs on /v1/videos (e2e)", () => {
     const response = await submit({ ...VIDEO_REQUEST, model: "animator" }).expect(400);
 
     expect(response.body.error.message).toContain("text-to-video");
+  });
+
+  /** A Model whose one Route animates frames and follows references, up to `maxInputImages`. */
+  function insertAnimator(options: { maxInputImages?: number } = {}) {
+    return insertDashScopeVideoModel(app, db, {
+      modelName: "animator",
+      baseUrl: `${upstream.origin}/api/v1`,
+      capabilities: ["first-frame", "last-frame", "reference-images"],
+      ...options,
+    });
+  }
+
+  it("sends an `input_reference` as the first frame, without the ratio", async () => {
+    await insertAnimator();
+    upstream.replyTo(SYNTHESIS_PATH, accepted());
+
+    await submit({
+      ...VIDEO_REQUEST,
+      model: "animator",
+      input_reference: { image_url: FRAME_URL },
+    }).expect(200);
+
+    expect(synthesisRequests()[0].body).toEqual({
+      model: UPSTREAM_MODEL_ID,
+      input: {
+        prompt: "A red fox runs through snow",
+        media: [{ type: "first_frame", url: FRAME_URL }],
+      },
+      parameters: { resolution: "720P", duration: 5, watermark: false },
+    });
+  });
+
+  it("takes an uploaded `input_reference` file in a multipart form as the first frame", async () => {
+    await insertAnimator();
+    upstream.replyTo(SYNTHESIS_PATH, accepted());
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+
+    await request(app.getHttpServer())
+      .post("/v1/videos")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .field("model", "animator")
+      .field("prompt", "A red fox runs through snow")
+      .field("seconds", "5")
+      .field("size", "1280x720")
+      .field("seed", "42")
+      .attach("input_reference", png, { filename: "fox.png", contentType: "image/png" })
+      .expect(200);
+
+    expect(synthesisRequests()[0].body).toMatchObject({
+      input: { media: [{ type: "first_frame", url: "data:image/png;base64,iVBORw==" }] },
+      parameters: { duration: 5, seed: 42 },
+    });
+  });
+
+  it("sends OpenRouter's `frame_images` as a first and a last frame", async () => {
+    await insertAnimator();
+    upstream.replyTo(SYNTHESIS_PATH, accepted());
+
+    await submit({
+      ...VIDEO_REQUEST,
+      model: "animator",
+      frame_images: [
+        { type: "image_url", image_url: { url: LAST_FRAME_URL }, frame_type: "last_frame" },
+        { type: "image_url", image_url: { url: FRAME_URL }, frame_type: "first_frame" },
+      ],
+    }).expect(200);
+
+    expect(synthesisRequests()[0].body).toMatchObject({
+      input: {
+        media: [
+          { type: "first_frame", url: FRAME_URL },
+          { type: "last_frame", url: LAST_FRAME_URL },
+        ],
+      },
+    });
+  });
+
+  it("skips a Route that takes fewer reference images than were sent", async () => {
+    ({ modelId } = await insertAnimator({ maxInputImages: 1 }));
+    await addDashScopeVideoRoute(app, db, modelId, {
+      baseUrl: `${upstream.origin}/roomy/api/v1`,
+      providerSlug: "roomy",
+      priority: 1,
+      capabilities: ["reference-images"],
+      maxInputImages: 9,
+    });
+    upstream.replyTo(`/roomy${SYNTHESIS_PATH}`, accepted());
+
+    await submit({
+      ...VIDEO_REQUEST,
+      model: "animator",
+      input_references: [{ image_url: FRAME_URL }, { image_url: LAST_FRAME_URL }],
+    }).expect(200);
+
+    expect(upstream.requests.map((sent) => sent.path)).toEqual([`/roomy${SYNTHESIS_PATH}`]);
+    expect(upstream.lastRequest.body).toMatchObject({
+      input: {
+        media: [
+          { type: "reference_image", url: FRAME_URL },
+          { type: "reference_image", url: LAST_FRAME_URL },
+        ],
+      },
+      parameters: { ratio: "16:9" },
+    });
+  });
+
+  it("refuses a first frame to a Model whose Routes lack the first-frame Capability, naming it", async () => {
+    const response = await submit({
+      ...VIDEO_REQUEST,
+      input_reference: { image_url: FRAME_URL },
+    }).expect(400);
+
+    expect(response.body.error.message).toContain("first-frame");
+    expect(upstream.requests).toHaveLength(0);
   });
 
   it("falls back to the next Provider Account when the submit fails", async () => {

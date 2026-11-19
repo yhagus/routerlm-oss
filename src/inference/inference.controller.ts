@@ -9,11 +9,12 @@ import {
   Post,
   Req,
   Res,
+  UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { FileFieldsInterceptor } from "@nestjs/platform-node";
+import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-node";
 import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
 import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
 import { clientConnectionOf } from "@/libs/models/client-connection.js";
@@ -29,7 +30,10 @@ import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.j
 import { RetrieveVideoJobQuery } from "./queries/impl/retrieve-video-job.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
-import { MEDIA_UPLOAD_OPTIONS } from "./models/uploaded-file.js";
+import {
+  MEDIA_UPLOAD_OPTIONS,
+  type UploadedFile as UploadedMediaFile,
+} from "./models/uploaded-file.js";
 import {
   IMAGE_EDIT_FILE_FIELDS,
   type ImageEditFiles,
@@ -39,6 +43,10 @@ import {
   openAiImageEditsClientContract,
   openAiImagesClientContract,
 } from "./protocols/openai-images/openai-images-client-contract.js";
+import {
+  VIDEO_FIRST_FRAME_FIELD,
+  videoBodyOf,
+} from "./protocols/openai-videos/openai-video-form.js";
 import { openAiSpeechClientContract } from "./protocols/openai-speech/openai-speech-client-contract.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
 
@@ -177,17 +185,20 @@ export class InferenceController {
     return replyWithMedia(reply, response);
   }
 
+  /** JSON, or a multipart form with the first frame uploaded as a file. */
   @Post("videos")
   @HttpCode(200)
+  @UseInterceptors(FileInterceptor(VIDEO_FIRST_FRAME_FIELD, MEDIA_UPLOAD_OPTIONS))
   async createVideo(
     @Body() body: unknown,
+    @UploadedFile() firstFrame: UploadedMediaFile | undefined,
     @CurrentUser() principal: ApiKeyPrincipal,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
   ): Promise<Uint8Array> {
     const reply = await this.commandBus.execute(
       new SubmitVideoJobCommand(
-        body,
+        videoBodyOf(body, firstFrame),
         { kind: "api-key", principal },
         clientConnectionOf(request, response),
       ),
