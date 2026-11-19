@@ -60,7 +60,7 @@ Something an Upstream Model can do that a request may need, such as vision, tool
 _Avoid_: Feature, modality
 
 **Model Kind**:
-What an Upstream Model or a Model produces, either chat (text, reasoning and tool calls) or image. A Model's Routes all point at Upstream Models of its Kind, and it only serves requests of its Kind.
+What an Upstream Model or a Model does: chat (text, reasoning and tool calls), image (generates or edits images), video (generates a video), speech (reads text aloud), transcription (turns recorded audio into text) or realtime (a live two-way voice conversation). A Model's Routes all point at Upstream Models of its Kind, and it only serves requests of its Kind.
 _Avoid_: Modality, model type, endpoint type
 
 **Service Tier**:
@@ -76,7 +76,7 @@ The Providers and Upstream Models, with their Capabilities and prices, that ship
 _Avoid_: Master data, seed data
 
 **Protocol**:
-A wire format for inference requests and responses that a Provider or a client speaks. A Provider speaks one chat Protocol and, optionally, one image Protocol at the same base URL.
+A wire format for inference requests and responses that a Provider or a client speaks. A Provider speaks at most one Protocol per Model Kind, each at its own address, all with the same Provider Account.
 _Avoid_: Format, dialect, API type
 
 ### Routing
@@ -88,6 +88,10 @@ _Avoid_: Alias, virtual model, model mapping
 **Route**:
 One entry in a Model's ordered list, pointing at one Upstream Model that can serve it.
 _Avoid_: Target, mapping, fallback entry
+
+**Video Job**:
+One video generation a client submits and later polls for. Fallback applies only when it is submitted; afterwards it stays with the Provider Account that accepted it, until it finishes or the Provider forgets it.
+_Avoid_: Task, video request, generation
 
 **Fallback**:
 Moving a request to the next Provider Account, and then to the next Route, after the current one fails.
@@ -120,7 +124,7 @@ Tokens a Provider stores in its prompt cache, at their own price. Grouped with O
 _Avoid_: Cache creation, cache miss
 
 **Usage Log**:
-The record of one inference request's measurements: tokens, cache counts, sizes, cost and timing, and what served it as it was at that moment. Editing or deleting a Model, Route, Upstream Model, Provider Account, API Key or User afterwards never changes it. It never holds prompt or response content.
+The record of one inference request's measurements: tokens or, for Model Kinds priced otherwise, the counted units (images, seconds, characters), cache counts, sizes, cost and timing, and what served it as it was at that moment. Editing or deleting a Model, Route, Upstream Model, Provider Account, API Key or User afterwards never changes it. It never holds prompt or response content.
 _Avoid_: Request log, history
 
 **Time to First Token**:

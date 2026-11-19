@@ -13,3 +13,8 @@ The Retention Period was an environment variable, so changing it meant editing t
 - Every User can change every Setting, like every other part of the dashboard (see User in the glossary).
 - Shortening the Retention Period deletes Error Captures at the next hourly run, and that cannot be undone, so the dashboard asks for confirmation first.
 - Instances that set `ERROR_CAPTURE_RETENTION_DAYS` fall back to 7 days without a runtime warning; the CHANGELOG records the break.
+
+
+## Addendum: boolean Settings
+
+A Setting's value is an integer or a boolean, each with its own zod schema in `setting-definitions.ts`; the store's `read` is typed per key. "Allow terms-risk providers" (default off) is the first boolean. The snapshot reads it on every reload, so its endpoints call `SnapshotService.changed()`. A Provider with Terms Risk is then unusable, while its stored `isEnabled` is never changed.
