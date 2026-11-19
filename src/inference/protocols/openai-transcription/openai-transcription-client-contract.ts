@@ -9,7 +9,7 @@ import {
 import { GatewayError } from "../../models/gateway-error.js";
 import { jsonReply, type MediaClientContract, type MediaReply } from "../../models/media-kind.js";
 import { dashScopeTranscriptionProtocol } from "../dashscope-transcription/dashscope-transcription-protocol.js";
-import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
+import { writeOpenAiError } from "../openai-chat/openai-error.js";
 import type { TranscriptionFile } from "./openai-transcription-form.js";
 
 // OpenAI's transcription API, `POST /v1/audio/transcriptions`, a multipart
@@ -133,6 +133,5 @@ export const openAiTranscriptionClientContract: MediaClientContract<
   unservableReason: () => null,
   upstreamProtocols: { "dashscope-transcription": dashScopeTranscriptionProtocol },
   writeResponse,
-  // The same envelope as Chat Completions: both are OpenAI's.
-  writeError: (error) => openAiChatClientConverter.writeError(error),
+  writeError: writeOpenAiError,
 };

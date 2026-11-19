@@ -9,7 +9,7 @@ import {
   type SynthesizedSpeech,
 } from "../../models/speech-synthesis.js";
 import { dashScopeSpeechProtocol } from "../dashscope-speech/dashscope-speech-protocol.js";
-import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
+import { writeOpenAiError } from "../openai-chat/openai-error.js";
 
 // OpenAI's speech API, `POST /v1/audio/speech`.
 
@@ -103,6 +103,5 @@ export const openAiSpeechClientContract: MediaClientContract<
   upstreamProtocols: { "dashscope-speech": dashScopeSpeechProtocol },
   applyParameterPolicy,
   writeResponse,
-  // The same envelope as Chat Completions: both are OpenAI's.
-  writeError: (error) => openAiChatClientConverter.writeError(error),
+  writeError: writeOpenAiError,
 };

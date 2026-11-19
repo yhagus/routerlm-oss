@@ -26,7 +26,7 @@ import {
   videoJobOwnerOf,
 } from "../../providers/video-handles.js";
 import { dashScopeVideoProtocol } from "../dashscope-video/dashscope-video-protocol.js";
-import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
+import { writeOpenAiError } from "../openai-chat/openai-error.js";
 import { inputImageCheck } from "../openai-images/openai-images-client-contract.js";
 
 // OpenAI's Videos API, `POST /v1/videos`, with OpenRouter's `resolution` and
@@ -264,7 +264,6 @@ export function openAiVideosClientContract(
       };
       return jsonReply(videoObjectOf(handles.seal(handle), handle, { status: "queued" }));
     },
-    // The same envelope as Chat Completions: both are OpenAI's.
-    writeError: (error) => openAiChatClientConverter.writeError(error),
+    writeError: writeOpenAiError,
   };
 }
