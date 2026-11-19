@@ -50,6 +50,13 @@ export interface UpstreamModelLimits {
   sizes?: string[];
   /** USD per generated image, by size tier (`1K`, `2K`). */
   pricePerImageBySize?: Record<string, number>;
+  /** Video resolutions, such as `720P`; any resolution when not given. */
+  resolutions?: string[];
+  /** A video's shortest and longest duration in seconds; no limit when not given. */
+  minDurationSeconds?: number;
+  maxDurationSeconds?: number;
+  /** USD per second of video, by resolution (`720P`). */
+  pricePerSecondByResolution?: Record<string, number>;
   /** USD per input image of an image edit. */
   pricePerInputImage?: number;
   /** The most input images it takes; any number when not given. */
@@ -115,6 +122,42 @@ export async function addDashScopeImageRoute(
     modelId,
     { protocol: "dashscope-image", authStyle: "bearer" },
     { ...options, kind: "image", capabilities: [] },
+  );
+  await app.get(SnapshotService).changed();
+  return route;
+}
+
+/**
+ * As insertOpenAiChatModel, for a video Model served by a dashscope-video
+ * Provider that can generate from text alone. `baseUrl` is the endpoint's,
+ * such as `{fake origin}/api/v1`.
+ */
+export function insertDashScopeVideoModel(
+  app: NestNodeApplication,
+  db: Database,
+  options: ModelOptions,
+): Promise<InsertedModel> {
+  return insertModel(
+    app,
+    db,
+    { protocol: "dashscope-video", authStyle: "bearer" },
+    { capabilities: ["text-to-video"], ...options, kind: "video" },
+  );
+}
+
+/** As addOpenAiChatRoute, for a video Route to a dashscope-video Provider of its own. */
+export async function addDashScopeVideoRoute(
+  app: NestNodeApplication,
+  db: Database,
+  modelId: string,
+  options: RouteOptions,
+): Promise<Omit<InsertedModel, "modelId">> {
+  const route = await insertRoute(
+    db,
+    app.get(ProviderKeyCipher),
+    modelId,
+    { protocol: "dashscope-video", authStyle: "bearer" },
+    { capabilities: ["text-to-video"], ...options, kind: "video" },
   );
   await app.get(SnapshotService).changed();
   return route;
@@ -231,6 +274,10 @@ async function insertRoute(
       maxOutputTokens: options.maxOutputTokens,
       sizes: options.sizes,
       pricePerImageBySize: options.pricePerImageBySize,
+      resolutions: options.resolutions,
+      minDurationSeconds: options.minDurationSeconds,
+      maxDurationSeconds: options.maxDurationSeconds,
+      pricePerSecondByResolution: options.pricePerSecondByResolution,
       pricePerInputImage: options.pricePerInputImage,
       maxInputImages: options.maxInputImages,
       pricePerMillionCharacters: options.pricePerMillionCharacters,

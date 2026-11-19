@@ -5,6 +5,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Param,
   Post,
   Req,
   Res,
@@ -22,7 +23,10 @@ import type { InferenceResult } from "./models/inference.js";
 import type { MediaReply } from "./models/media-kind.js";
 import { RunInferenceCommand } from "./commands/impl/run-inference.command.js";
 import { RunMediaInferenceCommand } from "./commands/impl/run-media-inference.command.js";
+import { SubmitVideoJobCommand } from "./commands/impl/submit-video-job.command.js";
+import { DownloadVideoContentQuery } from "./queries/impl/download-video-content.query.js";
 import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
+import { RetrieveVideoJobQuery } from "./queries/impl/retrieve-video-job.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
 import { MEDIA_UPLOAD_OPTIONS } from "./models/uploaded-file.js";
@@ -171,6 +175,57 @@ export class InferenceController {
       ),
     );
     return replyWithMedia(reply, response);
+  }
+
+  @Post("videos")
+  @HttpCode(200)
+  async createVideo(
+    @Body() body: unknown,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Uint8Array> {
+    const reply = await this.commandBus.execute(
+      new SubmitVideoJobCommand(
+        body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
+    );
+    return replyWithMedia(reply, response);
+  }
+
+  @Get("videos/:videoId")
+  retrieveVideo(
+    @Param("videoId") videoId: string,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<unknown> {
+    return this.queryBus.execute(
+      new RetrieveVideoJobQuery(
+        videoId,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response).signal,
+      ),
+    );
+  }
+
+  /** The MP4 streams through as it downloads (ADR 0028), so it gets a reply of its own. */
+  @Get("videos/:videoId/content")
+  downloadVideoContent(
+    @Param("videoId") videoId: string,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Response> {
+    return this.queryBus.execute(
+      new DownloadVideoContentQuery(
+        videoId,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response).signal,
+      ),
+    );
   }
 
   @Get("models")
