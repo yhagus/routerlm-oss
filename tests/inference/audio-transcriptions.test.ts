@@ -138,6 +138,19 @@ describe("Transcription on /v1/audio/transcriptions (e2e)", () => {
     expect(upstream.requests).toHaveLength(0);
   });
 
+  it("refuses a multipart form that breaks off, saying so", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/v1/audio/transcriptions")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .set("Content-Type", "multipart/form-data; boundary=cut")
+      .send('--cut\r\nContent-Disposition: form-data; name="model"\r\n\r\nscribe')
+      .expect(400);
+
+    expect(response.body.error.message).toBe(
+      "The request body could not be read as a multipart form",
+    );
+  });
+
   it("refuses a response_format other than json or text, naming it", async () => {
     const response = await transcribe({ response_format: "srt" }).expect(400);
 

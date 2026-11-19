@@ -17,6 +17,7 @@ import { openAiChatClientConverter } from "../protocols/openai-chat/openai-chat-
 import { UsageMeter } from "../models/usage-meter.js";
 
 const INFERENCE_PATH_PREFIX = "/v1/";
+const MULTIPART_CONTENT_TYPE = "multipart/form-data";
 
 /**
  * Answers every error on `/v1/*` in the error contract (spec "Error
@@ -40,7 +41,7 @@ export class InferenceExceptionFilter implements ExceptionFilter {
     const path = request.url ?? "";
     const error =
       host.getType() === "http" && path.startsWith(INFERENCE_PATH_PREFIX)
-        ? gatewayErrorOf(exception)
+        ? gatewayErrorOf(exception, request)
         : null;
     // The adapter only exists once the app is created, after this filter is.
     const { httpAdapter } = this.adapterHost;
@@ -62,7 +63,7 @@ export class InferenceExceptionFilter implements ExceptionFilter {
 }
 
 /** The error contract's view of an exception; null for anything it doesn't cover (a bug: 500). */
-function gatewayErrorOf(exception: unknown): GatewayError | null {
+function gatewayErrorOf(exception: unknown, request: IncomingMessage): GatewayError | null {
   if (exception instanceof GatewayError) {
     return exception;
   }
@@ -71,7 +72,12 @@ function gatewayErrorOf(exception: unknown): GatewayError | null {
   }
   switch (exception.getStatus()) {
     case 400:
-      return new GatewayError("invalid_request", "The request body could not be read as JSON");
+      return new GatewayError(
+        "invalid_request",
+        isMultipart(request)
+          ? "The request body could not be read as a multipart form"
+          : "The request body could not be read as JSON",
+      );
     case 401:
       return new GatewayError("invalid_api_key", "Missing, invalid, revoked or expired API Key");
     case 413:
@@ -79,6 +85,10 @@ function gatewayErrorOf(exception: unknown): GatewayError | null {
     default:
       return null;
   }
+}
+
+function isMultipart(request: IncomingMessage): boolean {
+  return request.headers["content-type"]?.toLowerCase().startsWith(MULTIPART_CONTENT_TYPE) ?? false;
 }
 
 /** Which client Protocol a path speaks, so its errors use that Protocol's envelope. */
@@ -94,6 +104,12 @@ function clientProtocolOf(path: string): ClientProtocol {
   }
   if (path.startsWith("/v1/videos")) {
     return "openai-videos";
+  }
+  if (path.startsWith("/v1/audio/speech")) {
+    return "openai-speech";
+  }
+  if (path.startsWith("/v1/audio/transcriptions")) {
+    return "openai-transcription";
   }
   return "openai-chat";
 }

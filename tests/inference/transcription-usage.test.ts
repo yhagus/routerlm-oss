@@ -4,6 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
+import { MAX_UPLOAD_BYTES } from "@/inference/models/uploaded-file.js";
 import { dashScopeTranscriptionFixture, FakeUpstream } from "../support/fake-upstream.js";
 import { insertApiKey, insertDashScopeTranscriptionModel } from "../support/inference.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
@@ -84,6 +85,24 @@ describe("Usage Logs of transcription (e2e)", () => {
       outputTokens: null,
       timeToFirstTokenMs: null,
       isIncomplete: false,
+    });
+  });
+
+  it("records an upload refused as too large against transcription", async () => {
+    await request(app.getHttpServer())
+      .post("/v1/audio/transcriptions")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .field("model", "scribe")
+      .attach("file", Buffer.alloc(MAX_UPLOAD_BYTES + 1), {
+        filename: "long.mp3",
+        contentType: "audio/mpeg",
+      })
+      .expect(413);
+
+    expect(await writtenUsageLog(db)).toMatchObject({
+      kind: "transcription",
+      clientProtocol: "openai-transcription",
+      errorCode: "request_too_large",
     });
   });
 });
