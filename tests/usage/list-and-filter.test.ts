@@ -228,6 +228,77 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
     );
   });
 
+  it("filters on any of several Error Origins, alone and with the status filter", async () => {
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, ...smart },
+      { ...SERVED_REQUEST, createdAt, ...smart, isCancelled: true },
+      {
+        ...SERVED_REQUEST,
+        createdAt,
+        ...smart,
+        httpStatus: 400,
+        errorCode: "invalid_request",
+        errorOrigin: "client",
+      },
+      {
+        ...SERVED_REQUEST,
+        createdAt,
+        ...smart,
+        httpStatus: 502,
+        errorCode: "upstream_error",
+        errorOrigin: "upstream",
+      },
+      {
+        ...SERVED_REQUEST,
+        createdAt,
+        ...fast,
+        httpStatus: 503,
+        errorCode: "no_capable_route",
+        errorOrigin: "gateway",
+      },
+    ]);
+
+    const byOrigins = await getUsage("?errorOrigin=client,gateway").expect(200);
+    const withStatus = await getUsage("?errorOrigin=upstream&status=succeeded,cancelled").expect(
+      200,
+    );
+    const summary = await getUsage(`/totals?errorOrigin=client,gateway&modelId=${smartId}`).expect(
+      200,
+    );
+
+    expect(byOrigins.body.total).toBe(2);
+    expect(byOrigins.body.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ errorOrigin: "client" }),
+        expect.objectContaining({ errorOrigin: "gateway" }),
+      ]),
+    );
+    expect(withStatus.body.total).toBe(0);
+    expect(summary.body).toEqual(expect.objectContaining({ requestCount: 1, failedCount: 1 }));
+  });
+
+  it("refuses an unknown Error Origin", async () => {
+    await getUsage("?errorOrigin=client,provider").expect(400);
+  });
+
+  it("searches User-Agents and client IP addresses, ignoring case", async () => {
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, ...smart, userAgent: "OpenAI/Python 1.54.0" },
+      { ...SERVED_REQUEST, createdAt, ...smart, userAgent: "curl/8.7.1", clientIp: "203.0.113.7" },
+      { ...SERVED_REQUEST, createdAt, ...smart, clientIp: "198.51.100.20" },
+    ]);
+
+    const byUserAgent = await getUsage("?q=openai/PYTHON").expect(200);
+    const byClientIp = await getUsage("?q=203.0.113").expect(200);
+
+    expect(byUserAgent.body.items).toEqual([
+      expect.objectContaining({ userAgent: "OpenAI/Python 1.54.0" }),
+    ]);
+    expect(byClientIp.body.items).toEqual([expect.objectContaining({ clientIp: "203.0.113.7" })]);
+  });
+
   it("searches Model names, API Key names and error codes, ignoring case", async () => {
     const createdAt = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([

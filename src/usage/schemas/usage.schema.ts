@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ERROR_ORIGINS } from "@/db/schemas/index.js";
 import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
 
 const MAX_PAGE_SIZE = 200;
@@ -38,6 +39,8 @@ export const usageFilterSchema = z.object({
   apiKeyId: commaSeparated(z.uuid()).optional(),
   /** Any of these statuses. */
   status: commaSeparated(z.enum(USAGE_STATUSES)).optional(),
+  /** Failed with any of these Error Origins (ADR 0031). */
+  errorOrigin: commaSeparated(z.enum(ERROR_ORIGINS)).optional(),
   /** Served at any of these Service Tiers. */
   serviceTier: commaSeparated(z.enum(SERVICE_TIERS)).optional(),
   /**
@@ -46,8 +49,8 @@ export const usageFilterSchema = z.object({
    */
   isPlayground: z.stringbool().optional(),
   /**
-   * Text in the Model's name, the API Key's name or the error code (ignoring case),
-   * or the Usage Log's exact id.
+   * Text in the Model's name, the API Key's name, the error code, the User-Agent or
+   * the client IP address (ignoring case), or the Usage Log's exact id.
    */
   q: searchTextSchema.optional(),
 });

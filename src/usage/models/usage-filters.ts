@@ -13,6 +13,9 @@ export function whereFilter(filter: UsageFilter): SQL | undefined {
     filter.modelId === undefined ? undefined : inArray(usageLogs.modelId, filter.modelId),
     callerCondition(filter),
     filter.status === undefined ? undefined : or(...filter.status.map(statusCondition)),
+    filter.errorOrigin === undefined
+      ? undefined
+      : inArray(usageLogs.errorOrigin, filter.errorOrigin),
     filter.serviceTier === undefined
       ? undefined
       : inArray(usageLogs.serviceTier, filter.serviceTier),
@@ -20,10 +23,19 @@ export function whereFilter(filter: UsageFilter): SQL | undefined {
   );
 }
 
-/** The Usage Logs whose Model name, API Key name or error code contains `text`, or whose id is `text`. */
+/**
+ * The Usage Logs whose Model name, API Key name, error code, User-Agent or client IP
+ * contains `text`, or whose id is `text`.
+ */
 function searchCondition(text: string): SQL | undefined {
   const isUsageLogId = z.uuid().safeParse(text).success;
-  return or(namesOrErrorCodeContain(text), isUsageLogId ? eq(usageLogs.id, text) : undefined);
+  const pattern = containing(text);
+  return or(
+    namesOrErrorCodeContain(text),
+    ilike(usageLogs.userAgent, pattern),
+    ilike(usageLogs.clientIp, pattern),
+    isUsageLogId ? eq(usageLogs.id, text) : undefined,
+  );
 }
 
 /**
@@ -31,12 +43,17 @@ function searchCondition(text: string): SQL | undefined {
  * case. The names are the ones copied at request time (ADR 0024).
  */
 export function namesOrErrorCodeContain(text: string): SQL | undefined {
-  const pattern = `%${escapeLikeWildcards(text)}%`;
+  const pattern = containing(text);
   return or(
     ilike(usageLogs.modelName, pattern),
     ilike(usageLogs.apiKeyName, pattern),
     ilike(usageLogs.errorCode, pattern),
   );
+}
+
+/** An ILIKE pattern matching values that contain `text` literally. */
+function containing(text: string): string {
+  return `%${escapeLikeWildcards(text)}%`;
 }
 
 /** Makes `%`, `_` and `\` match themselves: `\` is Postgres's default LIKE escape. */
