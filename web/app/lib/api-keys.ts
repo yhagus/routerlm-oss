@@ -18,9 +18,28 @@ export interface ApiKeySummary {
   revokedAt: string | null;
   /** Empty means every Model. A `null` name is a Model that was deleted. */
   allowedModels: { id: string; name: string | null }[];
+  /**
+   * Whether `GET /api-keys/:id/key` can show the key again. False for a revoked
+   * key and for one created before keys were stored encrypted (ADR 0029).
+   */
+  isCopyable: boolean;
+  /** When the key was last rotated; null if never. Older rotations were not recorded. */
+  lastRotatedAt: string | null;
 }
 
-/** The create response: the only time the whole key is ever shown. */
+/** One rotation, as `GET /api-keys/:id/rotations` lists them, newest first. */
+export interface ApiKeyRotation {
+  id: string;
+  rotatedAt: string;
+  /** Null when the User who rotated it was deleted. */
+  rotatedBy: { id: string; email: string } | null;
+  /** The public key id that stopped working. */
+  previousKeyId: string;
+  /** The public key id that replaced it. */
+  newKeyId: string;
+}
+
+/** The create and rotate responses: the key itself, ready to copy. */
 export interface CreatedApiKey extends ApiKeySummary {
   key: string;
 }
@@ -36,4 +55,9 @@ export function apiKeyStatus(apiKey: ApiKeySummary, now: number): ApiKeyStatus {
 /** The ISO time a key picked to expire on `date` (`YYYY-MM-DD`) stops working: the end of that local day. */
 export function endOfLocalDay(date: string): string {
   return new Date(`${date}T23:59:59.999`).toISOString();
+}
+
+/** A date picker value (`YYYY-MM-DD`, local) for a stored expiry, or "" for none. */
+export function localDateOf(expiresAt: string | null): string {
+  return expiresAt ? new Date(expiresAt).toLocaleDateString("en-CA") : "";
 }

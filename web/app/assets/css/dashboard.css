@@ -2648,23 +2648,146 @@ tbody tr:hover {
 .status-badge--bad {
   color: var(--danger);
 }
-.model-choices {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  max-height: 180px;
-  overflow-y: auto;
-}
 .model-choices__hint {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
 }
-.model-choices__option {
+/* API Keys: an expired or revoked key's row recedes; its status still reads in full. */
+.api-key-row--off td:not(:has(.status-badge)):not(:last-child) {
+  opacity: 0.55;
+}
+.api-key-models {
+  display: block;
+  overflow: hidden;
+  max-width: 240px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.api-key-form .app-select {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+}
+.api-key-form .select-control {
+  width: 100%;
+}
+/* Last rotated: a date that opens the key's rotation history */
+.api-key-rotated {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted var(--line);
+  text-underline-offset: 3px;
+}
+.api-key-rotated:hover {
+  text-decoration-color: var(--muted);
+}
+.api-key-never {
+  color: var(--muted);
+}
+/* Rotation history: newest first, a thin rail joining each entry to the key's creation */
+.rotation-log {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rotation-log__entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  padding-bottom: 16px;
+}
+.rotation-log__entry:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 26px;
+  bottom: 2px;
+  left: 11.5px;
+  width: 1px;
+  background: var(--line);
+}
+.rotation-log__entry--origin {
+  padding-bottom: 0;
+}
+.rotation-log__mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--chip);
+  color: var(--ink-2);
+}
+.rotation-log__body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding-top: 3px;
+}
+.rotation-log__body p {
+  margin: 0;
+}
+.rotation-log__head {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
   font-size: 12px;
+}
+.rotation-log__head strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.rotation-log__head time,
+.rotation-log__by {
+  color: var(--muted);
+  font-size: 11px;
+}
+.rotation-log__keys {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  overflow-wrap: anywhere;
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+.rotation-log__old {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--line);
+}
+.rotation-log__current {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--chip);
+  color: var(--ink-2);
+  font-size: 10px;
+  font-weight: 600;
+}
+.rotation-log__state {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 18px 0;
+}
+/* A row-menu entry with a line under its label, such as why it is unavailable */
+.row-action-item {
+  display: grid;
+  gap: 2px;
+}
+.row-action-item__hint {
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.35;
+  white-space: normal;
 }
 .key-reveal {
   display: flex;

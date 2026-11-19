@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Ban, Copy, KeyRound, Plus } from "@lucide/vue";
+import { Ban, Copy, KeyRound, Pencil, Plus, RefreshCw } from "@lucide/vue";
 import { computed, ref } from "vue";
+import type { RowAction } from "~/components/RowActionsMenu.vue";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { apiErrorMessage } from "~/lib/api";
 import {
@@ -8,15 +9,12 @@ import {
   type ApiKeySummary,
   apiKeyStatus,
   type CreatedApiKey,
-  endOfLocalDay,
   type ModelChoice,
 } from "~/lib/api-keys";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { dateFormat } from "~/lib/dateFormats";
 
 useHead({ title: "API Keys" });
-
-type CreateDialog = { step: "form" } | { step: "created"; apiKey: CreatedApiKey };
 
 const STATUS_LABELS = {
   active: "Active",
@@ -42,12 +40,10 @@ const { data: modelChoices, status: modelChoicesStatus } =
 
 /** Only the first load shows placeholders; a refresh keeps the current rows until it lands. */
 const isLoadingApiKeys = computed(() => apiKeysStatus.value === "pending" && !apiKeys.value);
-// Creating before the choices arrive would silently allow every Model.
+// Saving before the choices arrive would silently allow every Model.
 const isLoadingModelChoices = computed(
   () => modelChoicesStatus.value === "pending" && !modelChoices.value,
 );
-
-const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, the earliest expiry the picker offers
 
 function formatDate(value: string | null, whenNull: string): string {
   return value ? dateFormat.format(new Date(value)) : whenNull;
@@ -91,6 +87,7 @@ const columns: DataTableColumn<ApiKeyRow>[] = [
   { id: "created", header: "Created" },
   { id: "createdBy", header: "Created by", accessorFn: (row) => row.createdBy?.email ?? "" },
   { id: "expires", header: "Expires" },
+  { id: "lastRotated", header: "Last rotated" },
   { id: "status", header: "Status" },
   actionsColumn(),
 ];
@@ -100,58 +97,57 @@ function allowedModelsLabel(apiKey: ApiKeySummary): string {
   return apiKey.allowedModels.map((model) => model.name ?? "Deleted Model").join(", ");
 }
 
-// Create
+// Rotation history
 
-const createDialog = ref<CreateDialog | null>(null);
-const newName = ref("");
-const newExpiryDate = ref("");
-const newAllowedModelIds = ref<string[]>([]);
-const isCreating = ref(false);
-const createError = ref("");
-const isCreateOpen = computed({
-  get: () => createDialog.value !== null,
+const historyOf = ref<ApiKeySummary | null>(null);
+const isHistoryOpen = computed({
+  get: () => historyOf.value !== null,
   set: (isOpen) => {
-    if (!isOpen) closeCreateDialog();
+    if (!isOpen) historyOf.value = null;
   },
 });
 
+// Create and edit
+
+const editing = ref<ApiKeySummary | undefined>(undefined);
+const isFormOpen = ref(false);
+
 function openCreateDialog(): void {
-  newName.value = "";
-  newExpiryDate.value = "";
-  newAllowedModelIds.value = [];
-  createError.value = "";
-  createDialog.value = { step: "form" };
+  editing.value = undefined;
+  isFormOpen.value = true;
 }
 
-function closeCreateDialog(): void {
-  createDialog.value = null;
+function openEditDialog(apiKey: ApiKeySummary): void {
+  editing.value = apiKey;
+  isFormOpen.value = true;
 }
 
-async function createApiKey(): Promise<void> {
-  isCreating.value = true;
-  createError.value = "";
-  try {
-    const created = await $dashboardApi<CreatedApiKey>("/api-keys", {
-      method: "POST",
-      body: {
-        name: newName.value,
-        expiresAt: newExpiryDate.value ? endOfLocalDay(newExpiryDate.value) : null,
-        allowedModelIds: newAllowedModelIds.value,
-      },
-    });
-    createDialog.value = { step: "created", apiKey: created };
-    await refresh();
-  } catch (error) {
-    createError.value = apiErrorMessage(error, "Couldn't create the API Key.");
-  } finally {
-    isCreating.value = false;
-  }
+async function handleCreated(apiKey: CreatedApiKey): Promise<void> {
+  isFormOpen.value = false;
+  revealed.value = { apiKey, verb: "created" };
+  await refresh();
 }
 
-async function copyKey(key: string): Promise<void> {
+async function handleUpdated(apiKey: ApiKeySummary): Promise<void> {
+  isFormOpen.value = false;
+  showToast(`Saved ${apiKey.name}`);
+  await refresh();
+}
+
+// The key shown right after creating or rotating it
+
+const revealed = ref<{ apiKey: CreatedApiKey; verb: "created" | "rotated" } | null>(null);
+const isRevealOpen = computed({
+  get: () => revealed.value !== null,
+  set: (isOpen) => {
+    if (!isOpen) revealed.value = null;
+  },
+});
+
+async function writeToClipboard(key: string, done: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(key);
-    showToast("API Key copied");
+    showToast(done);
   } catch {
     showToast("Couldn't copy. Select the key and copy it yourself.");
   }
@@ -161,37 +157,99 @@ function selectAll(event: FocusEvent): void {
   if (event.target instanceof HTMLInputElement) event.target.select();
 }
 
-// Revoke
+// Copy an existing key: fetched only when asked for (ADR 0029)
 
-const revoking = ref<ApiKeySummary | null>(null);
-const isRevoking = ref(false);
-const revokeError = ref("");
-const isRevokeOpen = computed({
-  get: () => revoking.value !== null,
+async function copyApiKey(apiKey: ApiKeySummary): Promise<void> {
+  try {
+    const { key } = await $dashboardApi<{ key: string }>(`/api-keys/${apiKey.id}/key`);
+    await writeToClipboard(key, `Copied ${apiKey.name}`);
+  } catch (error) {
+    showToast(apiErrorMessage(error, `Couldn't copy ${apiKey.name}.`));
+  }
+}
+
+// Rotate and revoke share one confirmation dialog
+
+type Confirmation = { kind: "rotate" | "revoke"; apiKey: ApiKeySummary };
+const confirming = ref<Confirmation | null>(null);
+const isConfirming = ref(false);
+const confirmError = ref("");
+const isConfirmOpen = computed({
+  get: () => confirming.value !== null,
   set: (isOpen) => {
-    if (!isOpen) revoking.value = null;
+    if (!isOpen) confirming.value = null;
   },
 });
 
-function startRevoke(apiKey: ApiKeySummary): void {
-  revoking.value = apiKey;
-  revokeError.value = "";
-}
+const CONFIRM_COPY = {
+  rotate: {
+    title: "Rotate API Key",
+    description: (name: string) =>
+      `${name} gets a new key, and clients still using the current one are refused at once. Its name, expiry, allowed Models and usage history stay.`,
+    action: "Rotate key",
+    failed: "Couldn't rotate the API Key.",
+  },
+  revoke: {
+    title: "Revoke API Key",
+    description: (name: string) =>
+      `Clients using ${name} are refused from now on. This can't be undone.`,
+    action: "Revoke API Key",
+    failed: "Couldn't revoke the API Key.",
+  },
+} as const;
 
-async function revokeApiKey(): Promise<void> {
-  const apiKey = revoking.value;
-  if (!apiKey) return;
-  isRevoking.value = true;
-  revokeError.value = "";
+async function confirmAction(): Promise<void> {
+  const current = confirming.value;
+  if (!current) return;
+  isConfirming.value = true;
+  confirmError.value = "";
   try {
-    await $dashboardApi(`/api-keys/${apiKey.id}/revoke`, { method: "POST" });
-    showToast(`Revoked ${apiKey.name}`);
-    revoking.value = null;
+    if (current.kind === "rotate") {
+      const rotated = await $dashboardApi<CreatedApiKey>(`/api-keys/${current.apiKey.id}/rotate`, {
+        method: "POST",
+      });
+      confirming.value = null;
+      revealed.value = { apiKey: rotated, verb: "rotated" };
+    } else {
+      await $dashboardApi(`/api-keys/${current.apiKey.id}/revoke`, { method: "POST" });
+      showToast(`Revoked ${current.apiKey.name}`);
+      confirming.value = null;
+    }
     await refresh();
   } catch (error) {
-    revokeError.value = apiErrorMessage(error, "Couldn't revoke the API Key.");
+    confirmError.value = apiErrorMessage(error, CONFIRM_COPY[current.kind].failed);
   } finally {
-    isRevoking.value = false;
+    isConfirming.value = false;
+  }
+}
+
+// Row menu: a revoked key has no actions left
+
+type ApiKeyActionId = "copy" | "edit" | "rotate" | "revoke";
+
+function actionsFor(apiKey: ApiKeyRow): RowAction<ApiKeyActionId>[] {
+  return [
+    {
+      id: "copy",
+      label: "Copy key",
+      icon: Copy,
+      isDisabled: !apiKey.isCopyable,
+      hint: apiKey.isCopyable ? undefined : "Made before keys were kept. Rotate it to copy.",
+    },
+    { id: "edit", label: "Edit", icon: Pencil },
+    { id: "rotate", label: "Rotate key", icon: RefreshCw },
+    { id: "revoke", label: "Revoke", icon: Ban, isDestructive: true },
+  ];
+}
+
+function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
+  if (id === "copy") {
+    void copyApiKey(apiKey);
+  } else if (id === "edit") {
+    openEditDialog(apiKey);
+  } else {
+    confirmError.value = "";
+    confirming.value = { kind: id, apiKey };
   }
 }
 </script>
@@ -214,6 +272,7 @@ async function revokeApiKey(): Promise<void> {
       :columns="columns"
       :rows="filteredRows"
       :get-row-id="(row) => row.id"
+      :row-class="(row) => ({ 'api-key-row--off': row.status !== 'active' })"
       :is-loading="isLoadingApiKeys"
       :error="loadError"
       :refresh="refresh"
@@ -240,13 +299,29 @@ async function revokeApiKey(): Promise<void> {
       <template #cell-keyId="{ row: apiKey }">
         <span class="tabular">rlm_{{ apiKey.keyId }}_…</span>
       </template>
-      <template #cell-allowedModels="{ row: apiKey }">{{ allowedModelsLabel(apiKey) }}</template>
+      <template #cell-allowedModels="{ row: apiKey }">
+        <span class="api-key-models" :title="allowedModelsLabel(apiKey)">{{
+          allowedModelsLabel(apiKey)
+        }}</span>
+      </template>
       <template #cell-created="{ row: apiKey }">
         <span class="tabular">{{ formatDate(apiKey.createdAt, "—") }}</span>
       </template>
       <template #cell-createdBy="{ row: apiKey }">{{ apiKey.createdBy?.email ?? "—" }}</template>
       <template #cell-expires="{ row: apiKey }">
         <span class="tabular">{{ formatDate(apiKey.expiresAt, "Never") }}</span>
+      </template>
+      <template #cell-lastRotated="{ row: apiKey }">
+        <button
+          v-if="apiKey.lastRotatedAt"
+          class="api-key-rotated tabular"
+          type="button"
+          :aria-label="`Rotation history of ${apiKey.name}, last rotated ${formatDate(apiKey.lastRotatedAt, '')}`"
+          @click="historyOf = apiKey"
+        >
+          {{ formatDate(apiKey.lastRotatedAt, "") }}
+        </button>
+        <span v-else class="api-key-never">Never</span>
       </template>
       <template #cell-status="{ row: apiKey }">
         <span
@@ -257,9 +332,12 @@ async function revokeApiKey(): Promise<void> {
       </template>
       <template #cell-actions="{ row: apiKey }">
         <div class="row-actions">
-          <button v-if="!apiKey.revokedAt" class="row-action" @click="startRevoke(apiKey)">
-            <Ban :size="14" /> Revoke
-          </button>
+          <RowActionsMenu
+            v-if="apiKey.status !== 'revoked'"
+            :label="`Actions for ${apiKey.name}`"
+            :actions="actionsFor(apiKey)"
+            @select="(id) => handleAction(apiKey, id)"
+          />
         </div>
       </template>
       <template #empty>
@@ -270,96 +348,66 @@ async function revokeApiKey(): Promise<void> {
       </template>
     </DataTable>
 
-    <AppDialog
-      v-if="createDialog?.step === 'form'"
-      v-model:open="isCreateOpen"
-      title="Create API Key"
-      description="The key is shown once, right after you create it. Only its hash is stored."
-    >
-      <form class="form" @submit.prevent="createApiKey">
-        <label class="field"
-          ><span class="field__label">Name</span
-          ><input
-            v-model="newName"
-            class="text-input"
-            type="text"
-            maxlength="100"
-            placeholder="e.g. Support bot"
-            required
-        /></label>
-        <div class="field">
-          <span class="field__label">Expires on (optional)</span>
-          <AppDateInput v-model="newExpiryDate" label="Expires on" :min="today" />
-        </div>
-        <fieldset class="field model-choices">
-          <legend class="field__label">Allowed Models</legend>
-          <p class="model-choices__hint">Leave all unticked to allow every Model.</p>
-          <label v-for="model in modelChoices" :key="model.id" class="model-choices__option"
-            ><input v-model="newAllowedModelIds" type="checkbox" :value="model.id" />{{
-              model.name
-            }}</label
-          >
-          <p v-if="isLoadingModelChoices" class="model-choices__hint">Loading Models…</p>
-          <p v-else-if="modelChoices?.length === 0" class="model-choices__hint">
-            No Models exist yet, so this key will allow every Model.
-          </p>
-        </fieldset>
-        <p v-if="createError" class="form__error" role="alert">{{ createError }}</p>
-        <div class="dialog__actions">
-          <button class="button" type="button" @click="closeCreateDialog">Cancel</button>
-          <button
-            class="button button--primary"
-            type="submit"
-            :disabled="isCreating || isLoadingModelChoices"
-          >
-            Create API Key
-          </button>
-        </div>
-      </form>
-    </AppDialog>
+    <ApiKeyRotationsDialog v-if="historyOf" v-model:open="isHistoryOpen" :api-key="historyOf" />
+
+    <ApiKeyFormDialog
+      v-model:open="isFormOpen"
+      :api-key="editing"
+      :model-choices="modelChoices ?? undefined"
+      :is-loading-model-choices="isLoadingModelChoices"
+      @created="handleCreated"
+      @updated="handleUpdated"
+    />
 
     <AppDialog
-      v-if="createDialog?.step === 'created'"
-      v-model:open="isCreateOpen"
-      :title="`${createDialog.apiKey.name} created`"
-      description="Copy the key now. It won't be shown again; if it's lost, revoke it and create another."
+      v-if="revealed"
+      v-model:open="isRevealOpen"
+      :title="`${revealed.apiKey.name} ${revealed.verb}`"
+      :description="
+        revealed.verb === 'rotated'
+          ? 'Give this key to the clients that used the old one, which no longer works. You can copy it again later from the row menu.'
+          : 'Give this key to the client application. You can copy it again later from the row menu.'
+      "
     >
       <div class="key-reveal">
         <input
-          class="text-input key-reveal__value"
+          class="text-input key-reveal__value tabular"
           type="text"
-          :value="createDialog.apiKey.key"
+          :value="revealed.apiKey.key"
           aria-label="API Key"
           readonly
           @focus="selectAll"
         />
-        <button class="button" type="button" @click="copyKey(createDialog.apiKey.key)">
+        <button
+          class="button"
+          type="button"
+          @click="writeToClipboard(revealed.apiKey.key, 'API Key copied')"
+        >
           <Copy :size="14" /> Copy
         </button>
       </div>
       <div class="dialog__actions">
-        <button class="button button--primary" type="button" @click="closeCreateDialog">
-          Done
-        </button>
+        <button class="button button--primary" type="button" @click="revealed = null">Done</button>
       </div>
     </AppDialog>
 
     <AppDialog
-      v-if="revoking"
-      v-model:open="isRevokeOpen"
-      title="Revoke API Key"
-      :description="`Clients using ${revoking.name} are refused from now on. This can't be undone.`"
+      v-if="confirming"
+      v-model:open="isConfirmOpen"
+      :title="CONFIRM_COPY[confirming.kind].title"
+      :description="CONFIRM_COPY[confirming.kind].description(confirming.apiKey.name)"
     >
-      <p v-if="revokeError" class="form__error" role="alert">{{ revokeError }}</p>
+      <p v-if="confirmError" class="form__error" role="alert">{{ confirmError }}</p>
       <div class="dialog__actions">
-        <button class="button" type="button" @click="revoking = null">Cancel</button>
+        <button class="button" type="button" @click="confirming = null">Cancel</button>
         <button
-          class="button button--danger"
+          class="button"
+          :class="confirming.kind === 'revoke' ? 'button--danger' : 'button--primary'"
           type="button"
-          :disabled="isRevoking"
-          @click="revokeApiKey"
+          :disabled="isConfirming"
+          @click="confirmAction"
         >
-          Revoke API Key
+          {{ CONFIRM_COPY[confirming.kind].action }}
         </button>
       </div>
     </AppDialog>
