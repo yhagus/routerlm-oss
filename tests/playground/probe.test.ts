@@ -43,6 +43,21 @@ const PLAN_LIMIT_REACHED: FakeReply = {
   body: { base_resp: { status_code: 2067, status_msg: "plan limit reached" } },
 };
 
+/** A chat answer that ran out of tokens with `message`. */
+function chatAnswer(message: Record<string, unknown>): FakeReply {
+  return {
+    kind: "json",
+    status: 200,
+    body: {
+      id: "chatcmpl-probe",
+      object: "chat.completion",
+      model: UPSTREAM_MODEL_ID,
+      choices: [{ index: 0, message, finish_reason: "length" }],
+      usage: { prompt_tokens: 12, completion_tokens: 16 },
+    },
+  };
+}
+
 interface ListedProviderAccount {
   id: string;
   isEnabled: boolean;
@@ -145,7 +160,7 @@ describe("Probe of an Upstream Model (e2e)", () => {
     });
   });
 
-  it("sends a short fixed chat request that asks for a few tokens and no stream", async () => {
+  it("sends a short fixed chat request that asks for a few tokens, low reasoning and no stream", async () => {
     upstream.reply(SUCCESS);
     upstream.reply(SUCCESS);
 
@@ -155,10 +170,35 @@ describe("Probe of an Upstream Model (e2e)", () => {
       model: UPSTREAM_MODEL_ID,
       messages: [{ role: "user" }],
       max_tokens: 16,
+      reasoning_effort: "low",
     });
     expect(upstream.lastRequest.body).not.toHaveProperty("stream", true);
-    expect(upstream.lastRequest.body).not.toHaveProperty("reasoning_effort");
     expect(upstream.lastRequest.body).not.toHaveProperty("service_tier");
+  });
+
+  it("asks an Upstream Model without the reasoning capability for no reasoning", async () => {
+    await changeInDatabase(() => db.update(upstreamModels).set({ capabilities: ["tools"] }));
+    upstream.reply(SUCCESS);
+    upstream.reply(SUCCESS);
+
+    await probe().expect(200);
+
+    expect(upstream.lastRequest.body).not.toHaveProperty("reasoning_effort");
+  });
+
+  it("counts a well-formed answer as a success whatever its content: empty, or reasoning only", async () => {
+    upstream.replyWithCredential(UPSTREAM_KEY, chatAnswer({ role: "assistant", content: "" }));
+    upstream.replyWithCredential(
+      BACKUP_KEY,
+      chatAnswer({ role: "assistant", content: null, reasoning_content: "The user wants OK." }),
+    );
+
+    const response = await probe().expect(200);
+
+    expect(response.body.results).toMatchObject([
+      { providerAccountId: mainAccountId, ok: true, upstreamStatus: 200 },
+      { providerAccountId: backupAccountId, ok: true, upstreamStatus: 200 },
+    ]);
   });
 
   it("skips a disabled Provider Account", async () => {

@@ -23,7 +23,7 @@ import { UsageMeter } from "../../models/usage-meter.js";
 import { upstreamAuthHeaders } from "../../protocols/converters.js";
 import { AttemptRunner } from "../../providers/attempt-runner.js";
 import { MediaUpstreamClient } from "../../providers/media-upstream-client.js";
-import { DEFAULT_TIMEOUTS } from "../../providers/upstream-client.js";
+import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "../../providers/upstream-client.js";
 import { RunMediaInferenceCommand } from "../impl/run-media-inference.command.js";
 
 const HTTP_OK = 200;
@@ -146,11 +146,11 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       );
     }
     return {
+      kind: "fallback",
       model,
       id: model.id,
       name: model.name,
       paths: servingRoutes.map(routePath),
-      probe: null,
     };
   }
 
@@ -171,11 +171,11 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       );
     }
     return {
+      kind: "fallback",
       model: null,
       id: upstreamModel.id,
       name: upstreamModel.upstreamModelId,
       paths: [{ route: null, upstreamModel }],
-      probe: null,
     };
   }
 
@@ -207,8 +207,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       },
       timeouts: {
         ...DEFAULT_TIMEOUTS,
-        totalMs:
-          destination.probe?.totalTimeoutMs ?? route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs,
+        totalMs: totalTimeoutMsOf(destination, route),
       },
     };
   }

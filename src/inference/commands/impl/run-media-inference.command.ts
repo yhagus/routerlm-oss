@@ -1,11 +1,6 @@
 import { Command } from "@nestjs/cqrs";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type {
-  InferenceCaller,
-  InferenceTarget,
-  ProbeTarget,
-  UsageListener,
-} from "../../models/inference.js";
+import type { InferenceCaller, RunInferenceTarget, UsageListener } from "../../models/inference.js";
 import type { MediaClientContract, MediaReply, MediaRequest } from "../../models/media-kind.js";
 
 /**
@@ -23,7 +18,7 @@ export class RunMediaInferenceCommand<
     readonly caller: InferenceCaller,
     readonly connection: ClientConnection,
     readonly onUsage: UsageListener = () => {},
-    readonly target: InferenceTarget | ProbeTarget = { kind: "named-model" },
+    readonly target: RunInferenceTarget = { kind: "named-model" },
   ) {
     super();
   }
