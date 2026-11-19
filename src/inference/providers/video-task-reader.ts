@@ -66,7 +66,12 @@ export class VideoTaskReader {
         (exchange) =>
           protocol.readTask(
             handle.taskId,
-            { baseUrl: endpoint.baseUrl, upstreamModelId: upstreamModel.upstreamModelId },
+            {
+              baseUrl: endpoint.baseUrl,
+              upstreamModelId: upstreamModel.upstreamModelId,
+              // Decided at submit; reading the task generates nothing.
+              isWatermarked: false,
+            },
             exchange,
           ),
       );

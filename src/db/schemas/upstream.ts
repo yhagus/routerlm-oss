@@ -23,9 +23,10 @@ export const UPSTREAM_PROTOCOLS = [
   "openai-chat",
   "anthropic-messages",
   "openai-responses",
-  // DashScope's native API (`{endpoint}/services/aigc/...`), one Protocol per Kind.
+  // DashScope's native API (`{endpoint}/services/...`), one Protocol per Kind.
   "dashscope-image",
   "dashscope-video",
+  "dashscope-speech",
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
@@ -40,6 +41,7 @@ export const PROTOCOL_KINDS = {
   "openai-responses": "chat",
   "dashscope-image": "image",
   "dashscope-video": "video",
+  "dashscope-speech": "speech",
 } as const satisfies Record<UpstreamProtocol, ModelKind>;
 
 /**

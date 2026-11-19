@@ -36,7 +36,7 @@ export class SendPlaygroundVideoJobHandler implements ICommandHandler<SendPlaygr
     if (!usage) {
       throw new Error("An answered request always reports its usage");
     }
-    const response: unknown = JSON.parse(decoder.decode(result.json));
+    const response: unknown = JSON.parse(decoder.decode(result.body));
     return { response, summary: playgroundSummaryOf(usage, this.snapshot.current) };
   }
 }

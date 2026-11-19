@@ -32,10 +32,10 @@ const taskResponseSchema = z.object({
   }),
 });
 
-/** The request body DashScope takes. `watermark` is always off: the video is the client's. */
-function requestBodyOf(request: VideoGenerationRequest, upstreamModelId: string): unknown {
+/** The request body DashScope takes. */
+function requestBodyOf(request: VideoGenerationRequest, target: MediaUpstreamTarget): unknown {
   return {
-    model: upstreamModelId,
+    model: target.upstreamModelId,
     input: {
       prompt: request.prompt,
       ...(request.media.length > 0 && {
@@ -46,7 +46,7 @@ function requestBodyOf(request: VideoGenerationRequest, upstreamModelId: string)
       resolution: request.resolution,
       ...(request.ratio !== null && { ratio: request.ratio }),
       duration: request.seconds,
-      watermark: false,
+      watermark: target.isWatermarked,
       ...(request.seed !== null && { seed: request.seed }),
     },
   };
@@ -60,7 +60,7 @@ async function generate(
   const answer = createResponseSchema.safeParse(
     await exchange.postJson(
       `${target.baseUrl}${SYNTHESIS_PATH}`,
-      requestBodyOf(request, target.upstreamModelId),
+      requestBodyOf(request, target),
       ASYNC_HEADERS,
     ),
   );

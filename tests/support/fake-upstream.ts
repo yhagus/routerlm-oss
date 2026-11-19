@@ -107,6 +107,14 @@ export function dashScopeVideoFixture(name: string): string {
   );
 }
 
+/** A recorded dashscope-speech exchange, named as for openAiChatFixture. */
+export function dashScopeSpeechFixture(name: string): string {
+  return readFileSync(
+    new URL(`../../src/inference/protocols/dashscope-speech/fixtures/${name}`, import.meta.url),
+    "utf8",
+  );
+}
+
 /** A recorded openai-responses exchange, named as for openAiChatFixture. */
 export function openAiResponsesFixture(name: string): string {
   return readFileSync(

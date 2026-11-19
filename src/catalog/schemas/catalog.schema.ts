@@ -184,6 +184,7 @@ const QUIRKS_OF_ONE_PROTOCOL = {
   ],
   "dashscope-image": [],
   "dashscope-video": [],
+  "dashscope-speech": [],
 } as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
 
 /**

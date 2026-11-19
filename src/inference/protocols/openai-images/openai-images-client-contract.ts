@@ -8,22 +8,40 @@ import {
   type ImageSize,
   providerSizeOf,
 } from "../../models/image-generation.js";
-import type { MediaClientContract, MediaResponseContext } from "../../models/media-kind.js";
+import {
+  jsonReply,
+  type MediaClientContract,
+  type MediaReply,
+  type MediaResponseContext,
+} from "../../models/media-kind.js";
 import { dashScopeImageProtocol } from "../dashscope-image/dashscope-image-protocol.js";
 import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
 
-// OpenAI's Images API, `POST /v1/images/generations` (ADR 0015).
+// OpenAI's Images API: `POST /v1/images/generations` (ADR 0015) and
+// `POST /v1/images/edits`, which adds the input images to start from.
 
 /** The most images OpenAI's Images API lets one request ask for. */
 const MAX_IMAGES_PER_REQUEST = 10;
+/** The most input images OpenAI's Images API lets one edit send. */
+export const MAX_INPUT_IMAGES_PER_EDIT = 16;
 /** DashScope's seed range. */
 const MAX_SEED = 2_147_483_647;
 const CLIENT_SIZE = /^(\d+)x(\d+)$/;
 /** The `size` that leaves the choice to the model, as if none was sent. */
 const AUTOMATIC_SIZE = "auto";
+/** A multipart form sends every field as text: `n=2`. */
+const FORM_INTEGER = /^\d+$/;
+
+/** An integer, also when a multipart form wrote it as text. */
+function integerField(schema: z.ZodInt) {
+  return z.preprocess(
+    (value) => (typeof value === "string" && FORM_INTEGER.test(value) ? Number(value) : value),
+    schema,
+  );
+}
 
 // A plain (non-strict) object: unknown fields are dropped (ADR 0002).
-const requestSchema = z.object({
+const generationSchema = z.object({
   model: z.string().min(1),
   prompt: z.string().min(1),
   n: z.int().min(1).max(MAX_IMAGES_PER_REQUEST).default(1),
@@ -33,6 +51,15 @@ const requestSchema = z.object({
   seed: z.int().min(0).max(MAX_SEED).optional(),
 });
 
+const editSchema = generationSchema.extend({
+  n: integerField(z.int().min(1).max(MAX_IMAGES_PER_REQUEST)).default(1),
+  seed: integerField(z.int().min(0).max(MAX_SEED)).optional(),
+  images: z
+    .array(z.object({ image_url: z.string().check(inputImageCheck) }))
+    .min(1, "an edit needs at least one input image")
+    .max(MAX_INPUT_IMAGES_PER_EDIT),
+});
+
 const featureRefusedSchema = z.object({
   response_format: z.unknown().optional(),
   stream: z.unknown().optional(),
@@ -40,24 +67,59 @@ const featureRefusedSchema = z.object({
   mask: z.unknown().optional(),
 });
 
-function parseRequest(body: unknown): ImageGenerationRequest {
-  refuseUnsupportedFeatures(body);
-  const parsed = requestSchema.safeParse(body);
-  if (!parsed.success) {
-    throw new GatewayError("invalid_request", `Invalid request: ${z.prettifyError(parsed.error)}`);
+/** An input image is an https (or http) URL the Provider fetches, or an image data URI. */
+function inputImageCheck(context: z.core.ParsePayload<string>): void {
+  const url = context.value;
+  if (/^https?:\/\//.test(url) || url.startsWith("data:image/")) {
+    return;
   }
-  const { model, prompt, n, size, negative_prompt, seed } = parsed.data;
+  const dataType = /^data:([^;,]*)/.exec(url)?.[1];
+  context.issues.push({
+    code: "custom",
+    input: url,
+    message:
+      dataType === undefined
+        ? "an input image must be an http(s) URL or a data URI"
+        : `an input image can't be of type "${dataType}"`,
+  });
+}
+
+function parseGenerationRequest(body: unknown): ImageGenerationRequest {
+  const { negative_prompt, seed, size, ...fields } = parseWith(generationSchema, body);
   return {
-    model,
-    prompt,
-    n,
-    size: size === undefined || size === AUTOMATIC_SIZE ? null : imageSizeOf(size),
+    ...fields,
+    size: clientSizeIn(size),
     negativePrompt: negative_prompt ?? null,
     seed: seed ?? null,
+    inputImages: [],
   };
 }
 
-/** Images go back as `b64_json` only and never stream (ADR 0015); a mask is an edit (#67). */
+function parseEditRequest(body: unknown): ImageGenerationRequest {
+  const { negative_prompt, seed, size, images, ...fields } = parseWith(editSchema, body);
+  return {
+    ...fields,
+    size: clientSizeIn(size),
+    negativePrompt: negative_prompt ?? null,
+    seed: seed ?? null,
+    inputImages: images.map(({ image_url }) => image_url),
+  };
+}
+
+function parseWith<Schema extends z.ZodType>(schema: Schema, body: unknown): z.output<Schema> {
+  refuseUnsupportedFeatures(body);
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    throw new GatewayError("invalid_request", `Invalid request: ${z.prettifyError(parsed.error)}`);
+  }
+  return parsed.data;
+}
+
+function clientSizeIn(size: string | undefined): ImageSize | null {
+  return size === undefined || size === AUTOMATIC_SIZE ? null : imageSizeOf(size);
+}
+
+/** Images go back as `b64_json` only and never stream (ADR 0015); a mask is not supported. */
 function refuseUnsupportedFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
   if (!features.success) {
@@ -67,10 +129,10 @@ function refuseUnsupportedFeatures(body: unknown): void {
   if (response_format !== undefined && response_format !== "b64_json") {
     throw unsupported("`response_format` other than `b64_json`");
   }
-  if (stream !== undefined && stream !== false) {
+  if (stream !== undefined && stream !== false && stream !== "false") {
     throw unsupported("`stream`");
   }
-  if (partial_images !== undefined && partial_images !== 0) {
+  if (partial_images !== undefined && partial_images !== 0 && partial_images !== "0") {
     throw unsupported("`partial_images`");
   }
   if (mask !== undefined) {
@@ -95,19 +157,23 @@ function unsupported(feature: string): GatewayError {
 
 function unservableReason(
   upstreamModel: SnapshotUpstreamModel,
-  { size }: ImageGenerationRequest,
+  { size, inputImages }: ImageGenerationRequest,
 ): string | null {
   if (size && upstreamModel.sizes && !upstreamModel.sizes.includes(providerSizeOf(size))) {
     return `the size ${clientSizeOf(size)}`;
   }
+  const { maxInputImages } = upstreamModel;
+  if (maxInputImages !== null && inputImages.length > maxInputImages) {
+    return `${inputImages.length} input images: it takes at most ${maxInputImages}`;
+  }
   return null;
 }
 
-function writeResponse({ images }: GeneratedImages, context: MediaResponseContext): unknown {
-  return {
+function writeResponse({ images }: GeneratedImages, context: MediaResponseContext): MediaReply {
+  return jsonReply({
     created: Math.floor(context.createdAt.getTime() / 1000),
     data: images.map((image) => ({ b64_json: Buffer.from(image.bytes).toString("base64") })),
-  };
+  });
 }
 
 export const openAiImagesClientContract: MediaClientContract<
@@ -115,10 +181,16 @@ export const openAiImagesClientContract: MediaClientContract<
   GeneratedImages
 > = {
   protocol: "openai-images",
-  parseRequest,
+  parseRequest: parseGenerationRequest,
   unservableReason,
   upstreamProtocols: { "dashscope-image": dashScopeImageProtocol },
   writeResponse,
   // The same envelope as Chat Completions: both are OpenAI's.
   writeError: (error) => openAiChatClientConverter.writeError(error),
 };
+
+/** `POST /v1/images/edits`: the same contract, with the input images the request must bring. */
+export const openAiImageEditsClientContract: MediaClientContract<
+  ImageGenerationRequest,
+  GeneratedImages
+> = { ...openAiImagesClientContract, parseRequest: parseEditRequest };

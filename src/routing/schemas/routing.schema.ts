@@ -20,6 +20,8 @@ const parameterValuesSchema = z.strictObject({
   ...capSchemas,
   stopSequences: z.array(z.string().min(1)).min(1),
   serviceTier: z.enum(SERVICE_TIERS),
+  voice: z.string().min(1),
+  watermark: z.boolean(),
 });
 const CAPPED_PARAMETERS = z.object(capSchemas).keyof().options;
 

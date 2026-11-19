@@ -37,15 +37,16 @@ const responseSchema = z.object({
     .optional(),
 });
 
-/** The request body DashScope takes. `watermark` is always off: the image is the client's. */
-function requestBodyOf(request: ImageGenerationRequest, upstreamModelId: string): unknown {
+/** The request body DashScope takes: the input images an edit starts from come before the prompt. */
+function requestBodyOf(request: ImageGenerationRequest, target: MediaUpstreamTarget): unknown {
+  const inputImages = request.inputImages.map((image) => ({ image }));
   return {
-    model: upstreamModelId,
-    input: { messages: [{ role: "user", content: [{ text: request.prompt }] }] },
+    model: target.upstreamModelId,
+    input: { messages: [{ role: "user", content: [...inputImages, { text: request.prompt }] }] },
     parameters: {
       ...(request.size && { size: providerSizeOf(request.size) }),
       n: request.n,
-      watermark: false,
+      watermark: target.isWatermarked,
       ...(request.negativePrompt !== null && { negative_prompt: request.negativePrompt }),
       ...(request.seed !== null && { seed: request.seed }),
     },
@@ -58,10 +59,7 @@ async function generate(
   exchange: MediaExchange,
 ): Promise<MediaOutcome<GeneratedImages>> {
   const answer = responseSchema.safeParse(
-    await exchange.postJson(
-      `${target.baseUrl}${GENERATION_PATH}`,
-      requestBodyOf(request, target.upstreamModelId),
-    ),
+    await exchange.postJson(`${target.baseUrl}${GENERATION_PATH}`, requestBodyOf(request, target)),
   );
   if (!answer.success) {
     throw new UpstreamProtocolError(
@@ -80,7 +78,7 @@ async function generate(
     result: { images },
     units: {
       imagesOut: images.length,
-      imagesIn: 0,
+      imagesIn: request.inputImages.length,
       ...(outputSize && { tier: sizeTierOf(outputSize) }),
     },
   };

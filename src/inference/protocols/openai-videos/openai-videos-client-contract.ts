@@ -2,7 +2,11 @@ import { z } from "zod";
 import type { UpstreamProtocol } from "@/db/schemas/index.js";
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import { GatewayError } from "../../models/gateway-error.js";
-import type { MediaClientContract, MediaResponseContext } from "../../models/media-kind.js";
+import {
+  jsonReply,
+  type MediaClientContract,
+  type MediaResponseContext,
+} from "../../models/media-kind.js";
 import {
   requiredCapabilitiesOf,
   type SubmittedVideoJob,
@@ -193,7 +197,7 @@ export function openAiVideosClientContract(
         resolution: request.resolution,
         size: request.clientSize,
       };
-      return videoObjectOf(handles.seal(handle), handle, { status: "queued" });
+      return jsonReply(videoObjectOf(handles.seal(handle), handle, { status: "queued" }));
     },
     // The same envelope as Chat Completions: both are OpenAI's.
     writeError: (error) => openAiChatClientConverter.writeError(error),

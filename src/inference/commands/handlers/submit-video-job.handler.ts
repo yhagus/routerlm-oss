@@ -1,6 +1,5 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import type { InferenceResult } from "../../models/inference.js";
-import type { MediaClientContract } from "../../models/media-kind.js";
+import type { MediaClientContract, MediaReply } from "../../models/media-kind.js";
 import type { SubmittedVideoJob, VideoGenerationRequest } from "../../models/video-generation.js";
 import { openAiVideosClientContract } from "../../protocols/openai-videos/openai-videos-client-contract.js";
 import { VideoHandles } from "../../providers/video-handles.js";
@@ -24,7 +23,7 @@ export class SubmitVideoJobHandler implements ICommandHandler<SubmitVideoJobComm
     connection,
     onUsage,
     target,
-  }: SubmitVideoJobCommand): Promise<Extract<InferenceResult, { kind: "response" }>> {
+  }: SubmitVideoJobCommand): Promise<MediaReply> {
     return this.commandBus.execute(
       new RunMediaInferenceCommand(this.contract, body, caller, connection, onUsage, target),
     );

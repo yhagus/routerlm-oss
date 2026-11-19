@@ -41,8 +41,21 @@ const served = computed(() => {
   };
 });
 
+/** A media Kind's units, or a chat answer's tokens; then Cost. */
 const facts = computed(() => {
-  const { usage } = props.summary;
+  const { usage, units } = props.summary;
+  if (units) {
+    const list: { label: string; value: string }[] = [];
+    if (units.imagesIn !== undefined) {
+      list.push({ label: "Images in", value: formatCount(units.imagesIn) });
+    }
+    if (units.imagesOut !== undefined) {
+      list.push({ label: "Images out", value: formatCount(units.imagesOut) });
+    }
+    if (units.tier !== undefined) list.push({ label: "Tier", value: units.tier });
+    list.push({ label: "Cost", value: formatCost(props.summary.cost) });
+    return list;
+  }
   const list = [
     { label: "Input", value: formatCount(usage.inputTokens) },
     { label: "Output", value: formatCount(usage.outputTokens) },

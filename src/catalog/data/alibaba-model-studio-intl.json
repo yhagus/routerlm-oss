@@ -14,6 +14,11 @@
       "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
     },
     {
+      "kind": "speech",
+      "protocol": "dashscope-speech",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
+    },
+    {
       "kind": "video",
       "protocol": "dashscope-video",
       "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
@@ -31,7 +36,7 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Singapore deployment. The compatibility page now recommends a per-workspace host (https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1) and lists dashscope-intl as the domain to migrate from; operators can change baseUrl to their workspace host. Explicit cache takes cache_control markers on OpenAI-compatible messages; its USD prices are published only as ratios of the input price (cache read 20%, cache write 125%); the cache prices come from models.dev, which matches those ratios. Prices are the lowest input-length tier. Release dates come from models.dev (https://models.dev/). Models whose source lists only https://models.dev/ were added from models.dev on 2026-11-15, leaving out deprecated and non-chat models. It includes models from other labs that Alibaba hosts (kimi-k3, glm-5.2, deepseek-v4-flash-0731). Image models are served only on DashScope's native API, so the image endpoint is https://dashscope-intl.aliyuncs.com/api/v1; operators can switch it to their workspace host too.",
+  "notes": "Singapore deployment. The compatibility page now recommends a per-workspace host (https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1) and lists dashscope-intl as the domain to migrate from; operators can change baseUrl to their workspace host. Explicit cache takes cache_control markers on OpenAI-compatible messages; its USD prices are published only as ratios of the input price (cache read 20%, cache write 125%); the cache prices come from models.dev, which matches those ratios. Prices are the lowest input-length tier. Release dates come from models.dev (https://models.dev/). Models whose source lists only https://models.dev/ were added from models.dev on 2026-11-15, leaving out deprecated and non-chat models. It includes models from other labs that Alibaba hosts (kimi-k3, glm-5.2, deepseek-v4-flash-0731). Image and speech models are served only on DashScope's native API, so their endpoints are https://dashscope-intl.aliyuncs.com/api/v1; operators can switch them to their workspace host too.",
   "upstreamModels": [
     {
       "upstreamModelId": "qwen-plus",
@@ -618,6 +623,25 @@
         "retrievedOn": "2026-11-19"
       },
       "notes": "As wan2.7-image, plus a 4K preset up to 4096*4096 for text-to-image only: image edits and image sets stay at 2K at most. Watermarks are on by default upstream; the gateway turns them off."
+    },
+    {
+      "upstreamModelId": "qwen-audio-3.0-tts-plus",
+      "name": "Qwen Audio 3.0 TTS Plus",
+      "releaseDate": "2026-07-14",
+      "kind": "speech",
+      "capabilities": [],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerMillionCharacters": 20,
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "$0.20 per 10,000 characters. Formats mp3, wav, pcm and opus. Alibaba's docs don't say whether 3.0 accepts input.instruction, and it was not checked against the live API, so the gateway refuses OpenAI's instructions with a 400 rather than send a field the model may ignore."
     },
     {
       "upstreamModelId": "wan3.0-video",

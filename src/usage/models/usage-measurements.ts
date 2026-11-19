@@ -14,6 +14,8 @@ export interface UsageMeasurements extends TokenUsage {
 }
 
 const TOKENS_PER_PRICE_UNIT = 1_000_000;
+/** Speech is priced per million characters. */
+const CHARACTERS_PER_PRICE_UNIT = 1_000_000;
 
 const NOT_REPORTED: TokenUsage = {
   inputTokens: null,
@@ -74,6 +76,11 @@ function costOf(pricedCounts: PricedCount[], wasReported: boolean): number | nul
   return cost;
 }
 
+/** A price per `per` units as a price per unit; null stays unknown. */
+function perUnit(price: number | null, per: number): number | null {
+  return price === null ? null : price / per;
+}
+
 /**
  * What a media Kind's units cost at the prices frozen when the request was
  * served (spec "Unit pricing"). Null when nothing was served, or when a
@@ -95,6 +102,10 @@ export function unitCostOf(
     { count: units.imagesOut ?? 0, price: imagePrice },
     { count: units.imagesIn ?? 0, price: prices.pricePerInputImage },
     { count: units.outputSeconds ?? 0, price: secondPriceOf(prices, units.tier) },
+    {
+      count: units.characters ?? 0,
+      price: perUnit(prices.pricePerMillionCharacters, CHARACTERS_PER_PRICE_UNIT),
+    },
   ];
   let cost = 0;
   for (const { count, price } of pricedCounts) {
