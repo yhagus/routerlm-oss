@@ -37,15 +37,15 @@ const responseSchema = z.object({
     .optional(),
 });
 
-/** The request body DashScope takes. `watermark` is always off: the image is the client's. */
-function requestBodyOf(request: ImageGenerationRequest, upstreamModelId: string): unknown {
+/** The request body DashScope takes. */
+function requestBodyOf(request: ImageGenerationRequest, target: MediaUpstreamTarget): unknown {
   return {
-    model: upstreamModelId,
+    model: target.upstreamModelId,
     input: { messages: [{ role: "user", content: [{ text: request.prompt }] }] },
     parameters: {
       ...(request.size && { size: providerSizeOf(request.size) }),
       n: request.n,
-      watermark: false,
+      watermark: target.isWatermarked,
       ...(request.negativePrompt !== null && { negative_prompt: request.negativePrompt }),
       ...(request.seed !== null && { seed: request.seed }),
     },
@@ -58,10 +58,7 @@ async function generate(
   exchange: MediaExchange,
 ): Promise<MediaOutcome<GeneratedImages>> {
   const answer = responseSchema.safeParse(
-    await exchange.postJson(
-      `${target.baseUrl}${GENERATION_PATH}`,
-      requestBodyOf(request, target.upstreamModelId),
-    ),
+    await exchange.postJson(`${target.baseUrl}${GENERATION_PATH}`, requestBodyOf(request, target)),
   );
   if (!answer.success) {
     throw new UpstreamProtocolError(
