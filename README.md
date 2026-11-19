@@ -19,7 +19,8 @@
 
 Your tools speak OpenAI or Anthropic. You keep keys at Anthropic, OpenAI, DeepSeek, Moonshot, MiniMax, Alibaba and a couple of coding plans. RouterLM sits between your tools and those providers:
 
-- **One key per app.** Cursor, Claude Code, your CI and your internal tools each get their own `rlm_…` API Key, limited to the Models you allow.
+- **One key per app.** Cursor, Claude Code, your CI and your internal tools each get their own `rlm_…` API Key, limited to the Models you allow. You can copy a key again, edit it or rotate it from the dashboard. Each key keeps a history of its rotations.
+- **Chat and media.** Besides chat, a Model can generate and edit images, synthesize speech, transcribe audio or run video jobs. Alibaba Model Studio serves these Kinds today.
 - **Automatic fallback.** A Model is an ordered list of Routes. A rate limit, a 5xx or a timeout moves the request to the next Route, and the failing account rests in Cooldown.
 - **Subscription plans, used to the last token.** Kimi Code and MiniMax M Plan accounts show their quota meters. RouterLM skips an exhausted account until its quota resets.
 - **Know what every request cost.** RouterLM records tokens, cache reads and writes, latency, time to first token and USD cost for each request. You can view them per key and per Model.
@@ -58,14 +59,14 @@ export ANTHROPIC_BASE_URL=http://localhost:3000
 export ANTHROPIC_AUTH_TOKEN=$RLM_API_KEY
 ```
 
-The web app serves the full client docs at http://localhost:3001/docs.
+The same API Key calls the media endpoints on Models of those Kinds: `/v1/images/generations`, `/v1/images/edits`, `/v1/audio/speech`, `/v1/audio/transcriptions` and `/v1/videos`. The web app serves the full client docs at http://localhost:3001/docs.
 
 > [!IMPORTANT]
-> Back up `ENCRYPTION_KEY`. RouterLM encrypts Provider Account keys with it (AES-256-GCM). Without it, nobody can read those keys.
+> Back up `ENCRYPTION_KEY`. RouterLM encrypts Provider Account keys and API Keys with it (AES-256-GCM). Without it, nobody can read the Provider Account keys, and the dashboard can no longer copy the API Keys. The API Keys still work, because RouterLM checks them against a hash.
 
 The stack publishes the gateway on port 3000 and the dashboard on 3001, over plain HTTP. Put your own reverse proxy with TLS in front of them, and set `WEB_ORIGIN` to the dashboard's public URL.
 
-Behind a reverse proxy, also set `TRUST_PROXY` (to `true`, or to the proxy's address or subnet). Dashboard login allows 10 attempts a minute per client IP, and without `TRUST_PROXY` every client appears as the proxy's IP. The gateway does not rate limit `/v1`; do that in the reverse proxy.
+Behind a reverse proxy, also set `TRUST_PROXY` (to `true`, or to the proxy's address or subnet). Dashboard login allows 10 attempts a minute per client IP, and without `TRUST_PROXY` every client appears as the proxy's IP. The gateway does not rate limit `/v1`. Set rate limits in the reverse proxy.
 
 ## Architecture
 
@@ -104,14 +105,14 @@ Set these in the `.env` next to `compose.yaml` (see [deploy/.env.example](deploy
 
 | Variable                        | Default                   | Purpose                                                      |
 | ------------------------------- | ------------------------- | ------------------------------------------------------------ |
-| `ENCRYPTION_KEY`                | required                  | Encrypts Provider Account keys. 32 bytes, base64.            |
+| `ENCRYPTION_KEY`                | required                  | Encrypts Provider Account keys and API Keys. 32 bytes, base64. |
 | `POSTGRES_PASSWORD`             | required                  | Postgres uses it only when it first creates the db volume.   |
 | `ROUTERLM_VERSION`              | the release's version     | The image version to run.                                    |
 | `WEB_ORIGIN`                    | `http://localhost:3001`   | The dashboard's public URL.                                  |
 | `SNAPSHOT_RELOAD_INTERVAL_MS`   | `30000`                   | How often each backend instance reloads its snapshot (ms).   |
 | `BACKEND_PROCESSES`             | `1`                       | Gateway processes on the backend's port. Set it to the VM's CPU count. |
 | `ALLOW_PRIVATE_UPSTREAMS`       | `false`                   | Set `true` to allow http and private Provider URLs (LAN upstreams). |
-| `TRUST_PROXY`                   | unset                     | Proxies whose `X-Forwarded-For` is trusted. Set behind a proxy. |
+| `TRUST_PROXY`                   | unset                     | Proxies whose `X-Forwarded-For` RouterLM trusts. Set it behind a proxy. |
 | `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.              |
 | `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports.                                                  |
 | `POSTGRES_USER` / `POSTGRES_DB` | `routerlm`                | Postgres uses them only when it first creates the db volume. |
