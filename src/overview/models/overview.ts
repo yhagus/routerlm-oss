@@ -28,15 +28,18 @@ export const OVERVIEW_BUCKETS = {
  *   Protocol. Null when no input tokens were reported.
  * - `errorRate` is failed requests / all requests, "failed" as the Usage
  *   page filters it (a cancelled request is not an error). Null without requests.
+ * - `failedCount` is the failed requests, with or without an Error Origin.
  * - `errorsByOrigin` splits the failed requests by Error Origin, with all
  *   three origins always present. Failures recorded without an origin count
- *   in `errorRate` only, so the origin counts can add up to less.
+ *   in `errorRate` and `failedCount` only, so the origin counts can add up
+ *   to less.
  */
 export interface OverviewStats {
   requestCount: number;
   cost: number;
   cacheHitRate: number | null;
   errorRate: number | null;
+  failedCount: number;
   errorsByOrigin: ErrorsByOrigin;
 }
 
