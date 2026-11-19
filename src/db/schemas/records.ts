@@ -32,7 +32,11 @@ export const CLIENT_PROTOCOL_KINDS = {
   "openai-transcription": "transcription",
 } as const satisfies Record<ClientProtocol, ModelKind>;
 
-/** The error contract's codes, as the client receives them. */
+/**
+ * The error contract's codes, as the client receives them. Each code needs a
+ * row in web/content/docs/9.errors.md and web/content/docs-id/9.errors.md;
+ * tests/docs/client-examples.test.ts fails on a missing one.
+ */
 export const GATEWAY_ERROR_CODES = [
   "invalid_request",
   "no_capable_route",
