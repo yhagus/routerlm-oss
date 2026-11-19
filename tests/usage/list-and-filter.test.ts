@@ -102,6 +102,26 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
     expect(secondPage.body.items).toHaveLength(1);
   });
 
+  it("shows who sent each request, from where, and the origin of its failure", async () => {
+    await db.insert(usageLogs).values({
+      ...SERVED_REQUEST,
+      createdAt: new Date("2026-11-01T10:00:00Z"),
+      httpStatus: 502,
+      errorCode: "upstream_error",
+      errorOrigin: "upstream",
+      userAgent: "OpenAI/Python 1.54.0",
+      clientIp: "203.0.113.7",
+    });
+
+    const response = await getUsage("").expect(200);
+
+    expect(response.body.items[0]).toMatchObject({
+      errorOrigin: "upstream",
+      userAgent: "OpenAI/Python 1.54.0",
+      clientIp: "203.0.113.7",
+    });
+  });
+
   it("filters by time range, Model, API Key and status", async () => {
     const inRange = new Date("2026-11-02T10:00:00Z");
     await db.insert(usageLogs).values([

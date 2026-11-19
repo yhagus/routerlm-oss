@@ -19,6 +19,12 @@ const SNAPSHOT_NAME_COLUMNS = [
   "unit_tier",
 ];
 
+/**
+ * Who sent the request, from where, and the Provider's id for it (ADR 0032):
+ * request metadata, never prompt or response content.
+ */
+const REQUEST_METADATA_COLUMNS = ["user_agent", "client_ip", "upstream_request_id"];
+
 // A column can hold prompt or response content if it takes free text or JSON.
 // Text columns restricted to an enum of codes are measurements, not content.
 function columnsThatCouldHoldContent(columns: Record<string, PgColumn>): string[] {
@@ -30,7 +36,8 @@ function columnsThatCouldHoldContent(columns: Record<string, PgColumn>): string[
       return isFreeText || isJson;
     })
     .map((column) => column.name)
-    .filter((name) => !SNAPSHOT_NAME_COLUMNS.includes(name));
+    .filter((name) => !SNAPSHOT_NAME_COLUMNS.includes(name))
+    .filter((name) => !REQUEST_METADATA_COLUMNS.includes(name));
 }
 
 describe("records schema (ADR 0004)", () => {

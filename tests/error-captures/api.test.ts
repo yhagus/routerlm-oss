@@ -82,6 +82,7 @@ describe("Error Captures API (e2e)", () => {
         providerAccountName: "Acme main",
         upstreamStatus: 500,
         failureReason: "server_error",
+        upstreamRequestId: "req_acme_42",
         durationMs: 250,
       })
       .returning({ id: attempts.id });
@@ -105,6 +106,8 @@ describe("Error Captures API (e2e)", () => {
         requestBody: "{}",
         responseHeaders: {},
         responseBody: "down",
+        userAgent: "OpenAI/Python 1.54.0",
+        clientIp: "203.0.113.7",
       },
       {
         usageLogId,
@@ -124,6 +127,8 @@ describe("Error Captures API (e2e)", () => {
         apiKeyName: "CI",
         httpStatus: 502,
         errorCode: "upstream_error",
+        userAgent: "OpenAI/Python 1.54.0",
+        clientIp: "203.0.113.7",
         failedHop: {
           kind: "gateway-to-provider-account",
           attemptId,
@@ -132,6 +137,7 @@ describe("Error Captures API (e2e)", () => {
           providerName: "Acme",
           upstreamStatus: 500,
           failureReason: "server_error",
+          upstreamRequestId: "req_acme_42",
         },
       }),
       expect.objectContaining({ failedHop: { kind: "client-to-gateway" } }),

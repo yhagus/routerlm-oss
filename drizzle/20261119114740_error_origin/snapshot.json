@@ -1,0 +1,269 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "a526679d-f17b-4080-b270-9a113ed84007",
+  "prevIds": [
+    "953c08bc-442f-4b5c-9616-f80be11c8f6c"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "upstream_request_id"
+      ],
+      "writes": [
+        "s|col|public.attempts.upstream_request_id",
+        "n|col|public.attempts.upstream_request_id",
+        "e|col|public.attempts.upstream_request_id"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "error_captures",
+        "user_agent"
+      ],
+      "writes": [
+        "s|col|public.error_captures.user_agent",
+        "n|col|public.error_captures.user_agent",
+        "e|col|public.error_captures.user_agent"
+      ],
+      "reads": [
+        "n|tbl|public.error_captures",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "error_captures",
+        "client_ip"
+      ],
+      "writes": [
+        "s|col|public.error_captures.client_ip",
+        "n|col|public.error_captures.client_ip",
+        "e|col|public.error_captures.client_ip"
+      ],
+      "reads": [
+        "n|tbl|public.error_captures",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "error_origin"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.error_origin",
+        "n|col|public.usage_logs.error_origin",
+        "e|col|public.usage_logs.error_origin"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "user_agent"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.user_agent",
+        "n|col|public.usage_logs.user_agent",
+        "e|col|public.usage_logs.user_agent"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "client_ip"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.client_ip",
+        "n|col|public.usage_logs.client_ip",
+        "e|col|public.usage_logs.client_ip"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "usage_logs",
+        "usage_logs_error_origin_created_at_idx"
+      ],
+      "writes": [
+        "s|idx|public.usage_logs_error_origin_created_at_idx",
+        "n|idx|public.usage_logs_error_origin_created_at_idx",
+        "e|idx|public.usage_logs_error_origin_created_at_idx",
+        "n|rel|public.usage_logs_error_origin_created_at_idx"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "n|col|public.usage_logs.error_origin",
+        "n|col|public.usage_logs.created_at"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "upstream_request_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "error_captures",
+        "name": "user_agent",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "error_captures",
+        "name": "client_ip",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "error_origin",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "user_agent",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "client_ip",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "usage_logs_error_origin_created_at_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "error_origin",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "created_at",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}
