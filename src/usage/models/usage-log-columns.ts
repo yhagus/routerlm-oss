@@ -1,0 +1,33 @@
+import { usageLogs } from "@/db/schemas/index.js";
+
+/** The columns of a Usage Log as the Usage page shows it: a UsageLogSummary. */
+export const usageLogSummaryColumns = {
+  id: usageLogs.id,
+  createdAt: usageLogs.createdAt,
+  modelId: usageLogs.modelId,
+  modelName: usageLogs.modelName,
+  apiKeyId: usageLogs.apiKeyId,
+  apiKeyName: usageLogs.apiKeyName,
+  isPlayground: usageLogs.isPlayground,
+  clientProtocol: usageLogs.clientProtocol,
+  isStreamed: usageLogs.isStreamed,
+  httpStatus: usageLogs.httpStatus,
+  errorCode: usageLogs.errorCode,
+  errorOrigin: usageLogs.errorOrigin,
+  userAgent: usageLogs.userAgent,
+  clientIp: usageLogs.clientIp,
+  serviceTier: usageLogs.serviceTier,
+  inputTokens: usageLogs.inputTokens,
+  outputTokens: usageLogs.outputTokens,
+  cacheReadTokens: usageLogs.cacheReadTokens,
+  cacheWriteTokens: usageLogs.cacheWriteTokens,
+  reasoningTokens: usageLogs.reasoningTokens,
+  requestBytes: usageLogs.requestBytes,
+  responseBytes: usageLogs.responseBytes,
+  cost: usageLogs.cost,
+  timeToFirstTokenMs: usageLogs.timeToFirstTokenMs,
+  durationMs: usageLogs.durationMs,
+  attemptCount: usageLogs.attemptCount,
+  isCancelled: usageLogs.isCancelled,
+  isIncomplete: usageLogs.isIncomplete,
+};

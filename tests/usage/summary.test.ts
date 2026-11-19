@@ -93,6 +93,7 @@ describe("Usage API: summary totals (e2e)", () => {
       requestCount: 5,
       succeededCount: 3,
       failedCount: 1,
+      failedByOrigin: { client: 0, upstream: 0, gateway: 0 },
       cancelledCount: 1,
       inputTokens: 400,
       outputTokens: 40,
@@ -113,6 +114,7 @@ describe("Usage API: summary totals (e2e)", () => {
       requestCount: 0,
       succeededCount: 0,
       failedCount: 0,
+      failedByOrigin: { client: 0, upstream: 0, gateway: 0 },
       cancelledCount: 0,
       inputTokens: 0,
       outputTokens: 0,
@@ -124,6 +126,38 @@ describe("Usage API: summary totals (e2e)", () => {
       timeToFirstTokenMsP50: null,
       timeToFirstTokenMsP95: null,
     });
+  });
+
+  it("splits the failed count by Error Origin over the filtered logs", async () => {
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    const clientFailure = {
+      httpStatus: 400,
+      errorCode: "invalid_request",
+      errorOrigin: "client",
+    } satisfies Partial<NewUsageLog>;
+    const upstreamFailure = {
+      httpStatus: 502,
+      errorCode: "upstream_error",
+      errorOrigin: "upstream",
+    } satisfies Partial<NewUsageLog>;
+    await db.insert(usageLogs).values([
+      { ...SERVED_REQUEST, createdAt, modelId: smartId },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, ...clientFailure },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, ...clientFailure },
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, ...upstreamFailure },
+      // Recorded before Error Origins were: failed, but of no origin.
+      { ...SERVED_REQUEST, createdAt, modelId: smartId, httpStatus: 502 },
+      { ...SERVED_REQUEST, createdAt, ...upstreamFailure },
+    ]);
+
+    const response = await getUsage(`/totals?modelId=${smartId}`).expect(200);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        failedCount: 4,
+        failedByOrigin: { client: 2, upstream: 1, gateway: 0 },
+      }),
+    );
   });
 
   it("matches the listed API Keys or the Playground when both are asked for", async () => {

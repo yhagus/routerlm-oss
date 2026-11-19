@@ -39,6 +39,12 @@ const FAILED_REQUEST: Omit<NewUsageLog, "createdAt"> = {
   cost: null,
 };
 
+const NO_ERRORS_BY_ORIGIN = {
+  client: { count: 0, rate: null },
+  upstream: { count: 0, rate: null },
+  gateway: { count: 0, rate: null },
+};
+
 /** The start of the bucket `size` wide that holds now, aligned to UTC like the Overview's buckets. */
 function currentBucketStart(sizeMs: number): number {
   return Math.floor(Date.now() / sizeMs) * sizeMs;
@@ -90,8 +96,9 @@ describe("Overview API (e2e)", () => {
       cost: 0,
       cacheHitRate: null,
       errorRate: null,
+      errorsByOrigin: NO_ERRORS_BY_ORIGIN,
     });
-    expect(response.body.buckets[20]).toEqual({
+    expect(response.body.buckets[20]).toMatchObject({
       start: new Date(threeHoursAgo).toISOString(),
       requestCount: 2,
       cost: 0.25,
@@ -100,11 +107,52 @@ describe("Overview API (e2e)", () => {
       errorRate: 0.5,
     });
     expect(response.body.buckets[23]).toMatchObject({ requestCount: 1, errorRate: 0 });
-    expect(response.body.totals).toEqual({
+    expect(response.body.totals).toMatchObject({
       requestCount: 3,
       cost: 0.5,
       cacheHitRate: 0.6,
       errorRate: 1 / 3,
+    });
+  });
+
+  it("splits failed requests by Error Origin per bucket and in the totals", async () => {
+    const currentHour = currentBucketStart(HOUR_MS);
+    const twoHoursAgo = currentHour - 2 * HOUR_MS;
+    await db.insert(usageLogs).values([
+      { ...FAILED_REQUEST, errorOrigin: "client", createdAt: new Date(twoHoursAgo) },
+      { ...FAILED_REQUEST, errorOrigin: "upstream", createdAt: new Date(twoHoursAgo) },
+      { ...FAILED_REQUEST, errorOrigin: "upstream", createdAt: new Date(twoHoursAgo) },
+      // Recorded before Error Origins existed: a failure with no origin.
+      { ...FAILED_REQUEST, errorOrigin: null, createdAt: new Date(twoHoursAgo) },
+      { ...SERVED_REQUEST, createdAt: new Date(currentHour) },
+      { ...FAILED_REQUEST, errorOrigin: "gateway", createdAt: new Date(currentHour) },
+    ]);
+
+    const response = await getOverview("24h").expect(200);
+
+    expect(response.body.buckets[0].errorsByOrigin).toEqual(NO_ERRORS_BY_ORIGIN);
+    expect(response.body.buckets[21]).toMatchObject({
+      requestCount: 4,
+      errorRate: 1,
+      errorsByOrigin: {
+        client: { count: 1, rate: 0.25 },
+        upstream: { count: 2, rate: 0.5 },
+        gateway: { count: 0, rate: 0 },
+      },
+    });
+    expect(response.body.buckets[23].errorsByOrigin).toEqual({
+      client: { count: 0, rate: 0 },
+      upstream: { count: 0, rate: 0 },
+      gateway: { count: 1, rate: 0.5 },
+    });
+    expect(response.body.totals).toMatchObject({
+      requestCount: 6,
+      errorRate: 5 / 6,
+      errorsByOrigin: {
+        client: { count: 1, rate: 1 / 6 },
+        upstream: { count: 2, rate: 2 / 6 },
+        gateway: { count: 1, rate: 1 / 6 },
+      },
     });
   });
 
@@ -142,6 +190,7 @@ describe("Overview API (e2e)", () => {
       cost: 0,
       cacheHitRate: null,
       errorRate: null,
+      errorsByOrigin: NO_ERRORS_BY_ORIGIN,
     });
   });
 
