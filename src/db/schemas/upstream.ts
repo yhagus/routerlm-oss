@@ -27,6 +27,7 @@ export const UPSTREAM_PROTOCOLS = [
   "dashscope-image",
   "dashscope-video",
   "dashscope-speech",
+  "dashscope-transcription",
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
@@ -42,6 +43,7 @@ export const PROTOCOL_KINDS = {
   "dashscope-image": "image",
   "dashscope-video": "video",
   "dashscope-speech": "speech",
+  "dashscope-transcription": "transcription",
 } as const satisfies Record<UpstreamProtocol, ModelKind>;
 
 /**

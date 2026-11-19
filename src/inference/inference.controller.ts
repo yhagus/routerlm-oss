@@ -30,10 +30,7 @@ import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.j
 import { RetrieveVideoJobQuery } from "./queries/impl/retrieve-video-job.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
-import {
-  MEDIA_UPLOAD_OPTIONS,
-  type UploadedFile as UploadedMediaFile,
-} from "./models/uploaded-file.js";
+import { MEDIA_UPLOAD_OPTIONS, type UploadedFile as MediaUpload } from "./models/uploaded-file.js";
 import {
   IMAGE_EDIT_FILE_FIELDS,
   type ImageEditFiles,
@@ -48,6 +45,11 @@ import {
   videoBodyOf,
 } from "./protocols/openai-videos/openai-video-form.js";
 import { openAiSpeechClientContract } from "./protocols/openai-speech/openai-speech-client-contract.js";
+import {
+  TRANSCRIPTION_FILE_FIELD,
+  transcriptionBodyOf,
+} from "./protocols/openai-transcription/openai-transcription-form.js";
+import { openAiTranscriptionClientContract } from "./protocols/openai-transcription/openai-transcription-client-contract.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
 
 /** What Nest sends with a JSON body it serialises itself. */
@@ -185,13 +187,35 @@ export class InferenceController {
     return replyWithMedia(reply, response);
   }
 
+  /** A multipart form uploading the audio as `file`; an upload over the size limit gets a 413. */
+  @Post("audio/transcriptions")
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor(TRANSCRIPTION_FILE_FIELD, MEDIA_UPLOAD_OPTIONS))
+  async createTranscription(
+    @Body() body: unknown,
+    @UploadedFile() file: MediaUpload | undefined,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Uint8Array> {
+    const reply = await this.commandBus.execute(
+      new RunMediaInferenceCommand(
+        openAiTranscriptionClientContract,
+        transcriptionBodyOf(body, file),
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
+    );
+    return replyWithMedia(reply, response);
+  }
+
   /** JSON, or a multipart form with the first frame uploaded as a file. */
   @Post("videos")
   @HttpCode(200)
   @UseInterceptors(FileInterceptor(VIDEO_FIRST_FRAME_FIELD, MEDIA_UPLOAD_OPTIONS))
   async createVideo(
     @Body() body: unknown,
-    @UploadedFile() firstFrame: UploadedMediaFile | undefined,
+    @UploadedFile() firstFrame: MediaUpload | undefined,
     @CurrentUser() principal: ApiKeyPrincipal,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,

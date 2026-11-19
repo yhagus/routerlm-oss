@@ -7,6 +7,7 @@ export const UPSTREAM_PROTOCOLS = [
   "anthropic-messages",
   "openai-responses",
   "dashscope-image",
+  "dashscope-video",
   "dashscope-speech",
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
@@ -17,6 +18,7 @@ export const PROTOCOL_LABELS: Record<UpstreamProtocol, string> = {
   "anthropic-messages": "Messages",
   "openai-responses": "Responses",
   "dashscope-image": "DashScope Image",
+  "dashscope-video": "DashScope Video",
   "dashscope-speech": "DashScope Speech",
 };
 
@@ -48,6 +50,7 @@ export const PROTOCOL_KINDS = {
   "anthropic-messages": "chat",
   "openai-responses": "chat",
   "dashscope-image": "image",
+  "dashscope-video": "video",
   "dashscope-speech": "speech",
 } as const satisfies Record<UpstreamProtocol, ModelKind>;
 
