@@ -66,7 +66,7 @@ const attemptHop = computed(() =>
               <h2>Failed at: {{ failedHopLabel(capture.failedHop) }}</h2>
               <p v-if="attemptHop">
                 The gateway's Attempt on this Provider Account failed:
-                {{ attemptOutcomeLabel(attemptHop) }}.
+                {{ attemptOutcomeLabel(attemptHop, "Failed") }}.
               </p>
               <p v-else>The request failed at the gateway, before any Attempt failed.</p>
             </div>

@@ -66,7 +66,11 @@ const shownSeries = computed(() =>
 
 function toggleSeries(key: string): void {
   const next = new Set(hiddenKeys.value);
-  if (!next.delete(key)) next.add(key);
+  if (next.has(key)) {
+    next.delete(key);
+  } else {
+    next.add(key);
+  }
   hiddenKeys.value = next;
 }
 
@@ -319,16 +323,19 @@ function onKey(event: KeyboardEvent) {
       <div v-if="activePoint && active !== null" class="chart-tooltip" :style="tooltipStyle">
         <span class="chart-tooltip__title">{{ activePoint.title }}</span>
         <slot name="tooltip" :index="active" :rows="tooltipRows">
-          <span v-for="row in tooltipRows" :key="row.key" class="chart-tooltip__row"
-            ><i class="chart-key chart-key--line" :style="{ background: row.color }" /><strong>{{
-              formatOrNoData(row.value)
-            }}</strong
-            ><span>{{ row.name }}</span></span
-          >
-          <span v-if="stacked && series.length > 1" class="chart-tooltip__row chart-tooltip__total"
-            ><strong>{{ formatValue(activeTotal) }}</strong
-            ><span>Total{{ unit ? ` ${unit}` : "" }}</span></span
-          >
+          <ChartTooltipRow
+            v-for="row in tooltipRows"
+            :key="row.key"
+            :color="row.color"
+            :value="formatOrNoData(row.value)"
+            :label="row.name"
+          />
+          <ChartTooltipRow
+            v-if="stacked && series.length > 1"
+            total
+            :value="formatValue(activeTotal)"
+            :label="unit ? `Total ${unit}` : 'Total'"
+          />
         </slot>
       </div>
     </div>
