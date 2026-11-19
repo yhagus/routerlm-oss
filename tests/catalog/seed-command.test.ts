@@ -293,6 +293,32 @@ describe("Seed Catalog command (e2e)", () => {
     expect(provider?.logo).toBe("example");
   });
 
+  it("adds the endpoint of a Kind the Provider has none for, keeping the endpoints it has", async () => {
+    const operatorChat = {
+      kind: "chat" as const,
+      protocol: "openai-chat" as const,
+      baseUrl: "https://workspace.example.com/v1",
+    };
+    const catalogImage = {
+      kind: "image" as const,
+      protocol: "dashscope-image" as const,
+      baseUrl: "https://api.example.com/api/v1",
+    };
+    await db
+      .update(schema.providers)
+      .set({ endpoints: [operatorChat] })
+      .where(eq(schema.providers.slug, "example"));
+
+    await commandBus.execute(
+      new SeedCatalogCommand([
+        { ...catalog[0], endpoints: [...catalog[0].endpoints, catalogImage] },
+      ]),
+    );
+
+    const provider = await db.query.providers.findFirst({ where: { slug: "example" } });
+    expect(provider?.endpoints).toEqual([operatorChat, catalogImage]);
+  });
+
   it("keeps a logo the operator chose", async () => {
     await db
       .update(schema.providers)
