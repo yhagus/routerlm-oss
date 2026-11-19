@@ -1,9 +1,24 @@
 import type {
   ClientProtocol,
+  PricesByTier,
   GatewayErrorCode,
   RecordedAttemptFailure,
 } from "@/db/schemas/index.js";
 import type { ServiceTier, TokenUsage } from "@/inference/models/internal-format.js";
+
+/**
+ * The units a media Kind counts for one request, and the size or resolution
+ * that priced them. A unit the Kind doesn't count is left out.
+ */
+export interface MediaUnits {
+  imagesOut?: number;
+  imagesIn?: number;
+  outputSeconds?: number;
+  audioSeconds?: number;
+  characters?: number;
+  /** Such as `2K` or `720P`. */
+  tier?: string;
+}
 
 /** The job that turns one inference request into its Usage Log and Attempts. */
 export const RECORD_USAGE_JOB = "record";
@@ -28,6 +43,24 @@ export interface UpstreamModelPrices {
   outputPrice: number | null;
   cacheReadPrice: number | null;
   cacheWritePrice: number | null;
+}
+
+/**
+ * An Upstream Model's unit prices when the request was made, in USD per
+ * unit; a media Kind's Cost comes from them. Each Kind adds the prices of the
+ * units it counts.
+ */
+export interface UpstreamModelUnitPrices {
+  pricePerImage: number | null;
+  /** By size tier, such as `2K`; a tier listed here wins over `pricePerImage`. */
+  pricePerImageBySize: PricesByTier | null;
+  pricePerInputImage: number | null;
+  /** By resolution, such as `720P`. Missing in jobs queued before video was priced. */
+  pricePerSecondByResolution?: PricesByTier | null;
+  /** USD per million characters of synthesized speech. */
+  pricePerMillionCharacters: number | null;
+  /** USD per second of transcribed audio. */
+  pricePerAudioSecond: number | null;
 }
 
 /**
@@ -73,6 +106,8 @@ export interface ServedBy extends QueuedServingTarget {
   serviceTier?: ServiceTier | null;
   /** The Upstream Model's prices at the Service Tier that served it. */
   prices: UpstreamModelPrices;
+  /** Missing in jobs queued before media Kinds were priced. */
+  unitPrices?: UpstreamModelUnitPrices;
 }
 
 /** One upstream call. Times are ISO strings: job data travels as JSON. */
@@ -133,6 +168,8 @@ export interface UsageJob {
   servedBy: ServedBy | null;
   /** The upstream's last usage report; null when it sent none. */
   usage: TokenUsage | null;
+  /** What a media Kind counted. Null or missing for chat, which counts tokens in `usage`. */
+  units?: MediaUnits | null;
   requestBytes: number;
   responseBytes: number;
   /** Streams only: until the first event arrived from the upstream. */

@@ -3,12 +3,14 @@ import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
 import type {
   AuthStyle,
   Capability,
+  ModelKind,
   ParameterPolicy,
   ServiceTierValues,
   TierPrices,
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
+import type { UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
 // PostgreSQL query. Disabled rows are kept, with their flags: the inference
@@ -39,13 +41,19 @@ export interface SnapshotProviderAccount {
   isEnabled: boolean;
 }
 
+/** Where, and in which Protocol, a Provider serves one Model Kind (ADR 0026). */
+export interface SnapshotEndpoint {
+  protocol: UpstreamProtocol;
+  baseUrl: string;
+}
+
 export interface SnapshotProvider {
   id: string;
   slug: string;
   /** The display name, which Attempts copy for the Error Captures list. */
   name: string;
-  protocol: UpstreamProtocol;
-  baseUrl: string;
+  /** Where the Provider serves each Model Kind; a Kind it has no endpoint for is missing. */
+  endpoints: Partial<Record<ModelKind, SnapshotEndpoint>>;
   authStyle: AuthStyle;
   /** Validated once, when the snapshot loads: read them with `validQuirksOf`. */
   quirks: z.ZodSafeParseResult<StoredProviderQuirks>;
@@ -71,8 +79,10 @@ export function validQuirksOf(provider: SnapshotProvider): StoredProviderQuirks 
 export interface SnapshotUpstreamModel {
   id: string;
   upstreamModelId: string;
+  kind: ModelKind;
   capabilities: Capability[];
-  contextSize: number;
+  /** Null for a media Kind, which has no token context. */
+  contextSize: number | null;
   maxOutputTokens: number | null;
   /** USD per million tokens; null when unpublished. */
   inputPrice: number | null;
@@ -81,6 +91,17 @@ export interface SnapshotUpstreamModel {
   cacheWritePrice: number | null;
   serviceTiers: ServiceTier[];
   tierPrices: Partial<Record<ServiceTier, TierPrices>>;
+  /** A media Kind's prices per counted unit. */
+  unitPrices: UpstreamModelUnitPrices;
+  /** Image sizes as the Provider writes them (`1024*1024`); null when any size goes. */
+  sizes: string[] | null;
+  /** Null when no limit is known. */
+  maxInputImages: number | null;
+  /** Video resolutions, such as `720P`; null when any goes. */
+  resolutions: string[] | null;
+  /** A video's shortest and longest duration in seconds; null when no limit is known. */
+  minDurationSeconds: number | null;
+  maxDurationSeconds: number | null;
   isEnabled: boolean;
   provider: SnapshotProvider;
 }
@@ -100,11 +121,12 @@ export interface SnapshotRoute {
 export interface SnapshotModel {
   id: string;
   name: string;
+  kind: ModelKind;
   isEnabled: boolean;
   parameterPolicy: ParameterPolicy;
   hasAutomaticCacheBreakpoints: boolean;
   createdAt: Date;
-  /** In the order they are tried: priority, then creation. */
+  /** In the order they are tried: priority, then creation. Only those to an Upstream Model of its Kind. */
   routes: SnapshotRoute[];
 }
 

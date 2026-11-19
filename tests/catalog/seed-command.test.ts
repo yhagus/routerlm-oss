@@ -19,14 +19,28 @@ const oauthLogin = {
   cliVersion: "1.2.3",
 };
 
+// Carried by a chat model here: the seeder copies them whatever the Kind.
+const UNIT_PRICES_AND_LIMITS = {
+  pricePerImage: 0.03,
+  pricePerImageBySize: { "1K": 0.04, "2K": 0.075 },
+  pricePerInputImage: 0.003,
+  pricePerSecondByResolution: { "720P": 0.1 },
+  pricePerMillionCharacters: 20,
+  pricePerAudioSecond: 0.000035,
+  maxInputImages: 9,
+  minDurationSeconds: 2,
+  maxDurationSeconds: 30,
+  resolutions: ["720P"],
+  sizes: ["1024*1024"],
+};
+
 const catalog: CatalogProvider[] = [
   {
     slug: "example",
     name: "Example",
     logo: "example",
     termsRisk: true,
-    protocol: "openai-chat",
-    baseUrl: "https://api.example.com/v1",
+    endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.example.com/v1" }],
     authStyle: "bearer",
     quirks: { acceptsCacheControl: true },
     oauthLogin,
@@ -55,6 +69,7 @@ const catalog: CatalogProvider[] = [
         outputPrice: null,
         cacheReadPrice: null,
         cacheWritePrice: null,
+        ...UNIT_PRICES_AND_LIMITS,
         releaseDate: "2025-09-15",
         source,
       },
@@ -104,8 +119,7 @@ describe("Seed Catalog command (e2e)", () => {
       name: "Example",
       logo: "example",
       termsRisk: true,
-      protocol: "openai-chat",
-      baseUrl: "https://api.example.com/v1",
+      endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.example.com/v1" }],
       authStyle: "bearer",
       quirks: { acceptsCacheControl: true },
       oauthLogin,
@@ -128,8 +142,10 @@ describe("Seed Catalog command (e2e)", () => {
       {
         upstreamModelId: "example-small",
         name: "Example Small",
+        kind: "chat",
         inputPrice: null,
         maxOutputTokens: null,
+        ...UNIT_PRICES_AND_LIMITS,
         releaseDate: "2025-09-15",
       },
     ]);
@@ -138,7 +154,12 @@ describe("Seed Catalog command (e2e)", () => {
   it("keeps an operator's edits and creates nothing new when run again", async () => {
     await db
       .update(schema.providers)
-      .set({ baseUrl: "https://proxy.internal/v1", isEnabled: false })
+      .set({
+        endpoints: [
+          { kind: "chat", protocol: "openai-chat", baseUrl: "https://proxy.internal/v1" },
+        ],
+        isEnabled: false,
+      })
       .where(eq(schema.providers.slug, "example"));
     await db
       .update(schema.upstreamModels)
@@ -151,7 +172,10 @@ describe("Seed Catalog command (e2e)", () => {
       where: { slug: "example" },
       with: { upstreamModels: true },
     });
-    expect(provider).toMatchObject({ baseUrl: "https://proxy.internal/v1", isEnabled: false });
+    expect(provider).toMatchObject({
+      endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://proxy.internal/v1" }],
+      isEnabled: false,
+    });
     expect(provider?.upstreamModels).toHaveLength(2);
     expect(provider?.upstreamModels).toContainEqual(
       expect.objectContaining({ upstreamModelId: "example-large", inputPrice: 2.5 }),
@@ -192,6 +216,33 @@ describe("Seed Catalog command (e2e)", () => {
       cacheReadPrice: 0.3,
       cacheWritePrice: null,
     });
+  });
+
+  it("fills missing unit prices and media limits and keeps the ones already set", async () => {
+    await db
+      .update(schema.upstreamModels)
+      .set({
+        pricePerImage: null,
+        pricePerImageBySize: null,
+        pricePerInputImage: null,
+        pricePerSecondByResolution: null,
+        pricePerMillionCharacters: null,
+        pricePerAudioSecond: null,
+        maxInputImages: null,
+        minDurationSeconds: null,
+        maxDurationSeconds: null,
+        resolutions: null,
+        sizes: ["512*512"],
+      })
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-small"));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const [model] = await db
+      .select()
+      .from(schema.upstreamModels)
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-small"));
+    expect(model).toMatchObject({ ...UNIT_PRICES_AND_LIMITS, sizes: ["512*512"] });
   });
 
   it("keeps a Release Date the operator changed", async () => {
@@ -240,6 +291,52 @@ describe("Seed Catalog command (e2e)", () => {
 
     const provider = await db.query.providers.findFirst({ where: { slug: "example" } });
     expect(provider?.logo).toBe("example");
+  });
+
+  it("keeps an endpoint the operator deleted, and skips the Upstream Models of its Kind", async () => {
+    const chatOnly = catalog[0].endpoints;
+    await db
+      .update(schema.providers)
+      .set({ endpoints: chatOnly })
+      .where(eq(schema.providers.slug, "example"));
+    const catalogImage = {
+      kind: "image" as const,
+      protocol: "dashscope-image" as const,
+      baseUrl: "https://api.example.com/api/v1",
+    };
+    const imageModel = {
+      upstreamModelId: "example-image",
+      name: "Example Image",
+      kind: "image" as const,
+      capabilities: [],
+      contextSize: null,
+      maxOutputTokens: null,
+      inputPrice: null,
+      outputPrice: null,
+      cacheReadPrice: null,
+      cacheWritePrice: null,
+      pricePerImage: 0.03,
+      releaseDate: "2026-01-01",
+      source,
+    };
+
+    await commandBus.execute(
+      new SeedCatalogCommand([
+        {
+          ...catalog[0],
+          endpoints: [...chatOnly, catalogImage],
+          upstreamModels: [...catalog[0].upstreamModels, imageModel],
+        },
+      ]),
+    );
+
+    const provider = await db.query.providers.findFirst({ where: { slug: "example" } });
+    expect(provider?.endpoints).toEqual(chatOnly);
+    const imageModels = await db
+      .select()
+      .from(schema.upstreamModels)
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-image"));
+    expect(imageModels).toEqual([]);
   });
 
   it("keeps a logo the operator chose", async () => {

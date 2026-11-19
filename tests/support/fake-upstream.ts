@@ -5,13 +5,18 @@ import { portOf } from "./port-of.js";
 
 /** What the fake upstream answers to the next request. */
 export type FakeReply =
-  /** `delayMs` holds the whole answer back, as a slow but healthy non-stream upstream. */
+  /**
+   * `delayMs` holds the whole answer back, as a slow but healthy non-stream
+   * upstream. `onReceived` runs when the request arrives, before the answer:
+   * to change the world between the gateway's call and what it does next.
+   */
   | {
       kind: "json";
       status: number;
       body: unknown;
       headers?: Record<string, string>;
       delayMs?: number;
+      onReceived?: () => void;
     }
   /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
   | { kind: "stream"; events: string; holdOpen?: boolean }
@@ -27,7 +32,9 @@ export type FakeReply =
   /** Sends a 200 and its headers, then nothing: no body, no stream event. */
   | { kind: "headers-only" }
   /** Drops the connection without answering. */
-  | { kind: "reset" };
+  | { kind: "reset" }
+  /** Raw bytes with their content type, as a media host serves a generated file. */
+  | { kind: "binary"; status: number; contentType: string; body: Uint8Array };
 
 /** A request the fake upstream received. */
 export interface ReceivedRequest {
@@ -89,6 +96,73 @@ export const TWO_THINKING_BLOCKS_STREAM = [
   "",
 ].join("\n\n");
 
+/** A recorded dashscope-image exchange, named as for openAiChatFixture. */
+export function dashScopeImageFixture(name: string): string {
+  return readFileSync(
+    new URL(`../../src/inference/protocols/dashscope-image/fixtures/${name}`, import.meta.url),
+    "utf8",
+  );
+}
+
+/** DashScope's path for a synchronous image generation. */
+export const DASHSCOPE_GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
+
+/**
+ * Queues the recorded dashscope-image answer, two images, with its image URLs
+ * pointing at the fake and their bytes queued. DashScope reports them at
+ * `outputSize`; the recording's 1024×1024 is the 1K tier.
+ */
+export function replyWithTwoDashScopeImages(
+  upstream: FakeUpstream,
+  outputSize: { width: number; height: number } = { width: 1024, height: 1024 },
+): void {
+  const answer = dashScopeImageFixture("upstream-response.json")
+    .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))
+    .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"))
+    .replace(/"output_width": \d+/, `"output_width": ${outputSize.width}`)
+    .replace(/"output_height": \d+/, `"output_height": ${outputSize.height}`);
+  upstream.replyTo(DASHSCOPE_GENERATION_PATH, {
+    kind: "json",
+    status: 200,
+    body: JSON.parse(answer),
+  });
+  const imageBytes: FakeReply = {
+    kind: "binary",
+    status: 200,
+    contentType: "image/png",
+    body: new Uint8Array([1, 2, 3]),
+  };
+  upstream.replyTo("/media/a.png", imageBytes);
+  upstream.replyTo("/media/b.png", imageBytes);
+}
+
+/** A recorded dashscope-transcription exchange, named as for openAiChatFixture. */
+export function dashScopeTranscriptionFixture(name: string): string {
+  return readFileSync(
+    new URL(
+      `../../src/inference/protocols/dashscope-transcription/fixtures/${name}`,
+      import.meta.url,
+    ),
+    "utf8",
+  );
+}
+
+/** A recorded dashscope-video exchange, named as for openAiChatFixture. */
+export function dashScopeVideoFixture(name: string): string {
+  return readFileSync(
+    new URL(`../../src/inference/protocols/dashscope-video/fixtures/${name}`, import.meta.url),
+    "utf8",
+  );
+}
+
+/** A recorded dashscope-speech exchange, named as for openAiChatFixture. */
+export function dashScopeSpeechFixture(name: string): string {
+  return readFileSync(
+    new URL(`../../src/inference/protocols/dashscope-speech/fixtures/${name}`, import.meta.url),
+    "utf8",
+  );
+}
+
 /** A recorded openai-responses exchange, named as for openAiChatFixture. */
 export function openAiResponsesFixture(name: string): string {
   return readFileSync(
@@ -132,6 +206,11 @@ export class FakeUpstream {
   /** As `baseUrl`, through the name `localhost` rather than the loopback address, so the host has to be resolved. */
   get localhostBaseUrl(): string {
     return `http://localhost:${portOf(this.server.address())}/v1`;
+  }
+
+  /** A URL on the fake for a generated file, as a Provider returns one; queue its bytes with `replyTo(path, ...)`. */
+  mediaUrl(path: string): string {
+    return `${this.origin}${path}`;
   }
 
   get lastRequest(): ReceivedRequest {
@@ -200,6 +279,7 @@ export class FakeUpstream {
     }
     switch (reply.kind) {
       case "json":
+        reply.onReceived?.();
         setTimeout(() => {
           response.writeHead(reply.status, {
             "content-type": "application/json",
@@ -236,6 +316,10 @@ export class FakeUpstream {
         return;
       case "reset":
         response.destroy();
+        return;
+      case "binary":
+        response.writeHead(reply.status, { "content-type": reply.contentType });
+        response.end(reply.body);
         return;
     }
   }

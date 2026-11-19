@@ -7,11 +7,16 @@ import { deleteAllUpstreamData } from "../support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
+const CHAT_ENDPOINT = {
+  kind: "chat",
+  protocol: "openai-chat",
+  baseUrl: "https://api.acme.example/v1",
+};
+
 const PUBLIC_PROVIDER = {
   slug: "acme",
   name: "Acme AI",
-  protocol: "openai-chat",
-  baseUrl: "https://api.acme.example/v1",
+  endpoints: [CHAT_ENDPOINT],
   authStyle: "bearer",
 };
 
@@ -76,7 +81,9 @@ describe("Provider URL policy (e2e)", () => {
     ["an IPv4-mapped loopback", "https://[::ffff:127.0.0.1]/v1"],
     ["an IPv6 unique-local address", "https://[fd00::1]/v1"],
   ])("rejects a baseUrl with %s", async (_name, baseUrl) => {
-    await createProvider({ ...PUBLIC_PROVIDER, baseUrl }).expect(400);
+    await createProvider({ ...PUBLIC_PROVIDER, endpoints: [{ ...CHAT_ENDPOINT, baseUrl }] }).expect(
+      400,
+    );
   });
 
   it("rejects a quotaBaseUrl, OAuth auth host and OAuth issuer that are not public https", async () => {
@@ -97,13 +104,13 @@ describe("Provider URL policy (e2e)", () => {
     }).expect(400);
   });
 
-  it("rejects changing a Provider's baseUrl to a private one", async () => {
+  it("rejects changing an endpoint's baseUrl to a private one", async () => {
     const created = await createProvider(PUBLIC_PROVIDER).expect(201);
 
     await request(app.getHttpServer())
       .patch(`/api/providers/${created.body.id}`)
       .set("Cookie", cookie)
-      .send({ baseUrl: "https://192.168.1.10/v1" })
+      .send({ endpoints: [{ ...CHAT_ENDPOINT, baseUrl: "https://192.168.1.10/v1" }] })
       .expect(400);
   });
 
@@ -112,7 +119,7 @@ describe("Provider URL policy (e2e)", () => {
 
     await createProvider({
       ...PUBLIC_PROVIDER,
-      baseUrl: "http://192.168.1.10:11434/v1",
+      endpoints: [{ ...CHAT_ENDPOINT, baseUrl: "http://192.168.1.10:11434/v1" }],
       quirks: { quotaBaseUrl: "http://localhost:9000" },
     }).expect(201);
   });

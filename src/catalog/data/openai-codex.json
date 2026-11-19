@@ -2,8 +2,13 @@
   "slug": "openai-codex",
   "name": "OpenAI Codex",
   "logo": "openai",
-  "protocol": "openai-responses",
-  "baseUrl": "https://chatgpt.com/backend-api/codex",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-responses",
+      "baseUrl": "https://chatgpt.com/backend-api/codex"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "acceptsPromptCacheKey": true,

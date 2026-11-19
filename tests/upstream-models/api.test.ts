@@ -38,8 +38,9 @@ describe("Upstream Models (e2e)", () => {
       .send({
         slug: "acme",
         name: "Acme AI",
-        protocol: "anthropic-messages",
-        baseUrl: "https://api.acme.example",
+        endpoints: [
+          { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example" },
+        ],
         authStyle: "x-api-key",
       })
       .expect(201);
@@ -68,8 +69,113 @@ describe("Upstream Models (e2e)", () => {
       .expect(200);
 
     expect(list.body).toEqual([
-      expect.objectContaining({ providerId, ...ACME_LARGE, isEnabled: true }),
+      expect.objectContaining({ providerId, ...ACME_LARGE, kind: "chat", isEnabled: true }),
     ]);
+  });
+
+  it("keeps the unit prices and media limits it is given, and clears one", async () => {
+    const server = app.getHttpServer();
+    const unitPricesAndLimits = {
+      pricePerImage: 0.04,
+      pricePerImageBySize: { "1K": 0.04, "2K": 0.075 },
+      pricePerInputImage: 0.003,
+      pricePerSecondByResolution: { "480P": 0.05, "1080P": 0.2 },
+      pricePerMillionCharacters: 20,
+      pricePerAudioSecond: 0.000035,
+      maxInputImages: 9,
+      minDurationSeconds: 2,
+      maxDurationSeconds: 30,
+      resolutions: ["480P", "1080P"],
+      sizes: ["1024*1024", "2048*2048"],
+    };
+    const created = await request(server)
+      .post("/api/upstream-models")
+      .set("Cookie", cookie)
+      .send({ providerId, ...ACME_LARGE, ...unitPricesAndLimits })
+      .expect(201);
+
+    const cleared = await request(server)
+      .patch(`/api/upstream-models/${created.body.id}`)
+      .set("Cookie", cookie)
+      .send({ pricePerImageBySize: null })
+      .expect(200);
+
+    expect(created.body).toMatchObject(unitPricesAndLimits);
+    expect(cleared.body).toMatchObject({ pricePerImage: 0.04, pricePerImageBySize: null });
+  });
+
+  it("refuses an Upstream Model of a Kind its Provider has no endpoint for, naming the Kind", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/upstream-models")
+      .set("Cookie", cookie)
+      .send({ providerId, ...ACME_LARGE, kind: "image" })
+      .expect(400);
+
+    expect(response.body.message).toBe("The Provider has no endpoint for the Kind image");
+  });
+
+  it("refuses to change an Upstream Model to a Kind its Provider has no endpoint for", async () => {
+    const id = await createAcmeLarge();
+
+    await request(app.getHttpServer())
+      .patch(`/api/upstream-models/${id}`)
+      .set("Cookie", cookie)
+      .send({ kind: "video" })
+      .expect(400);
+  });
+
+  describe("on a Provider with chat and image endpoints", () => {
+    beforeEach(async () => {
+      await request(app.getHttpServer())
+        .patch(`/api/providers/${providerId}`)
+        .set("Cookie", cookie)
+        .send({
+          endpoints: [
+            { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example" },
+            {
+              kind: "image",
+              protocol: "dashscope-image",
+              baseUrl: "https://media.acme.example/api/v1",
+            },
+          ],
+        })
+        .expect(200);
+    });
+
+    it("creates an image Upstream Model without a context size", async () => {
+      const created = await request(app.getHttpServer())
+        .post("/api/upstream-models")
+        .set("Cookie", cookie)
+        .send({ providerId, ...ACME_LARGE, kind: "image", capabilities: [], contextSize: null })
+        .expect(201);
+
+      expect(created.body).toMatchObject({ kind: "image", contextSize: null });
+    });
+
+    it("refuses to change the Kind of an Upstream Model a Route uses", async () => {
+      const id = await createAcmeLarge();
+      await insertRouteTo(db, id, "smart");
+
+      const response = await request(app.getHttpServer())
+        .patch(`/api/upstream-models/${id}`)
+        .set("Cookie", cookie)
+        .send({ kind: "image" })
+        .expect(400);
+
+      expect(response.body.message).toBe(
+        "Routes use this Upstream Model, so its Kind can't change; remove them first",
+      );
+    });
+
+    it("changes the Kind of an Upstream Model no Route uses", async () => {
+      const id = await createAcmeLarge();
+
+      await request(app.getHttpServer())
+        .patch(`/api/upstream-models/${id}`)
+        .set("Cookie", cookie)
+        .send({ kind: "image" })
+        .expect(200);
+    });
   });
 
   it("edits Capabilities and prices, and clears a price the Provider stopped publishing", async () => {

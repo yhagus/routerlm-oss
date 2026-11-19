@@ -16,7 +16,7 @@ import { QUOTA_READERS } from "@/db/schemas/index.js";
 // Catalog's rules, so the dashboard can't store what a Catalog file couldn't.
 
 const providerFieldsSchema = catalogProviderSchema
-  .pick({ slug: true, name: true, protocol: true, baseUrl: true, authStyle: true, quirks: true })
+  .pick({ slug: true, name: true, endpoints: true, authStyle: true, quirks: true })
   .extend({
     serviceTierValues: serviceTierValuesSchema,
     // Null shows no logo.

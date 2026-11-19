@@ -6,8 +6,8 @@ import type { Database } from "@/db/schemas/relations.js";
 import { providers } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
-  assertQuirksFitProtocol,
-  assertServiceTierValuesFitProtocol,
+  assertQuirksFitEndpoints,
+  assertServiceTierValuesFitEndpoints,
   type Provider,
 } from "../../models/provider.js";
 import { CreateProviderCommand } from "../impl/create-provider.command.js";
@@ -20,8 +20,8 @@ export class CreateProviderHandler implements ICommandHandler<CreateProviderComm
   ) {}
 
   async execute({ newProvider }: CreateProviderCommand): Promise<Provider> {
-    assertQuirksFitProtocol(newProvider.protocol, newProvider.quirks);
-    assertServiceTierValuesFitProtocol(newProvider.protocol, newProvider.serviceTierValues);
+    assertQuirksFitEndpoints(newProvider.endpoints, newProvider.quirks);
+    assertServiceTierValuesFitEndpoints(newProvider.endpoints, newProvider.serviceTierValues);
     try {
       const [created] = await this.db.insert(providers).values(newProvider).returning();
       await this.snapshot.changed();

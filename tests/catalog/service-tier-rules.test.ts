@@ -5,7 +5,7 @@ import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js
 
 // The parts of a Catalog file these tests change.
 interface CatalogFile {
-  protocol?: string;
+  endpoints: { protocol: string }[];
   serviceTierValues?: Record<string, string>;
   upstreamModels: { serviceTiers?: string[]; tierPrices?: Record<string, object> }[];
 }
@@ -54,7 +54,7 @@ describe("Catalog Service Tier rules", () => {
   it("refuses an Upstream Model that lists a tier its Provider does not map", async () => {
     await expect(
       load((provider) => {
-        provider.protocol = "openai-chat";
+        provider.endpoints[0].protocol = "openai-chat";
         provider.upstreamModels[0].serviceTiers = ["fast"];
       }),
     ).rejects.toThrow(/lists Service Tiers fast that the Provider maps to no wire value/);
@@ -63,7 +63,7 @@ describe("Catalog Service Tier rules", () => {
   it("refuses prices for a tier the Upstream Model does not list", async () => {
     await expect(
       load((provider) => {
-        provider.protocol = "openai-chat";
+        provider.endpoints[0].protocol = "openai-chat";
         provider.serviceTierValues = { fast: "priority" };
         provider.upstreamModels[0].tierPrices = { fast: { inputPrice: 1 } };
       }),

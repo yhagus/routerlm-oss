@@ -2701,6 +2701,38 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+.endpoint-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.endpoint-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.6fr) 32px;
+  align-items: end;
+  gap: 10px;
+}
+.endpoint-list__remove:disabled {
+  opacity: 0.4;
+}
+.endpoint-list__add {
+  justify-self: start;
+}
+@media (max-width: 760px) {
+  .endpoint-list__row {
+    grid-template-columns: 1fr 1fr 32px;
+  }
+  .endpoint-list__url {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+.endpoint-cell {
+  display: block;
+}
 .form__hint {
   margin: 0;
   color: var(--muted);
@@ -3383,6 +3415,52 @@ tbody tr:hover {
   background: var(--panel);
 }
 
+/* The image tab's results: each image at a readable size, with its download. */
+.image-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.image-results__item {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.image-results__item img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
+/* The speech tab's result: the player, then its download. */
+.speech-result {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.speech-result audio {
+  width: min(100%, 420px);
+}
+
+/* The video tab's result: the player, then its download. */
+.video-result {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.video-result video {
+  width: min(100%, 640px);
+  height: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
 /* Composer */
 .composer {
   display: grid;
@@ -3393,6 +3471,26 @@ tbody tr:hover {
   margin-left: 6px;
   color: var(--faint);
   font-size: 11px;
+}
+
+/* The transcription tab's composer: the chosen file, then Transcribe. */
+.transcription-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.transcription-composer__file {
+  min-width: 0;
+  margin-right: auto;
+}
+.transcription-composer__file span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Settings: one column in the rail and the sheet. */
@@ -4676,6 +4774,7 @@ svg.lucide {
   color: var(--faint);
 }
 .config-list__url {
+  display: block;
   overflow-wrap: anywhere;
 }
 @media (max-width: 900px) {

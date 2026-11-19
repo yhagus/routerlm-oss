@@ -2,8 +2,33 @@
   "slug": "alibaba-model-studio-intl",
   "name": "Alibaba Model Studio (International)",
   "logo": "alibabacloud",
-  "protocol": "openai-chat",
-  "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    },
+    {
+      "kind": "image",
+      "protocol": "dashscope-image",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
+    },
+    {
+      "kind": "speech",
+      "protocol": "dashscope-speech",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
+    },
+    {
+      "kind": "video",
+      "protocol": "dashscope-video",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
+    },
+    {
+      "kind": "transcription",
+      "protocol": "dashscope-transcription",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "acceptsCacheControl": true
@@ -16,7 +41,7 @@
     ],
     "retrievedOn": "2026-11-15"
   },
-  "notes": "Singapore deployment. The compatibility page now recommends a per-workspace host (https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1) and lists dashscope-intl as the domain to migrate from; operators can change baseUrl to their workspace host. Explicit cache takes cache_control markers on OpenAI-compatible messages; its USD prices are published only as ratios of the input price (cache read 20%, cache write 125%); the cache prices come from models.dev, which matches those ratios. Prices are the lowest input-length tier. Release dates come from models.dev (https://models.dev/). Models whose source lists only https://models.dev/ were added from models.dev on 2026-11-15, leaving out deprecated and non-chat models. It includes models from other labs that Alibaba hosts (kimi-k3, glm-5.2, deepseek-v4-flash-0731).",
+  "notes": "Singapore deployment. The compatibility page now recommends a per-workspace host (https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1) and lists dashscope-intl as the domain to migrate from; operators can change baseUrl to their workspace host. Explicit cache takes cache_control markers on OpenAI-compatible messages; its USD prices are published only as ratios of the input price (cache read 20%, cache write 125%); the cache prices come from models.dev, which matches those ratios. Prices are the lowest input-length tier. Release dates come from models.dev (https://models.dev/). Models whose source lists only https://models.dev/ were added from models.dev on 2026-11-15, leaving out deprecated and non-chat models. It includes models from other labs that Alibaba hosts (kimi-k3, glm-5.2, deepseek-v4-flash-0731). Image, speech, transcription and video models are served only on DashScope's native API, so their endpoints are https://dashscope-intl.aliyuncs.com/api/v1. Operators can switch every endpoint, chat and media, to their per-workspace host.",
   "upstreamModels": [
     {
       "upstreamModelId": "qwen-plus",
@@ -470,6 +495,291 @@
         "retrievedOn": "2026-11-15"
       },
       "notes": "No prompt caching is published, so cache prices are set to the input price."
+    },
+    {
+      "upstreamModelId": "qwen-image-3.0-pro",
+      "name": "Qwen-Image 3.0 Pro",
+      "releaseDate": "2026-07-20",
+      "kind": "image",
+      "capabilities": [],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerImage": null,
+      "pricePerImageBySize": {
+        "1K": 0.04,
+        "2K": 0.075
+      },
+      "pricePerInputImage": 0.003,
+      "maxInputImages": 3,
+      "sizes": [
+        "512*512",
+        "768*768",
+        "1024*1024",
+        "1328*1328",
+        "1536*1536",
+        "2048*2048",
+        "1536*1024",
+        "1024*1536",
+        "1792*1024",
+        "1024*1792",
+        "1664*928",
+        "928*1664",
+        "1472*1104",
+        "1104*1472",
+        "2048*1152",
+        "1152*2048"
+      ],
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/help/en/model-studio/qwen-image-api"
+        ],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "n is 1 to 6. Any size from 512*512 to 2048*2048 in area with an aspect ratio between 1:8 and 8:1 is accepted; sizes lists common presets, and operators can add others. Takes 0 to 3 input images."
+    },
+    {
+      "upstreamModelId": "wan2.7-image",
+      "name": "Wan 2.7 Image",
+      "releaseDate": "2026-04-01",
+      "kind": "image",
+      "capabilities": [],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerImage": 0.03,
+      "pricePerImageBySize": null,
+      "pricePerInputImage": null,
+      "maxInputImages": 9,
+      "sizes": [
+        "768*768",
+        "1024*1024",
+        "1328*1328",
+        "1536*1536",
+        "2048*2048",
+        "1536*1024",
+        "1024*1536",
+        "1792*1024",
+        "1024*1792",
+        "1664*928",
+        "928*1664",
+        "1472*1104",
+        "1104*1472",
+        "2048*1152",
+        "1152*2048"
+      ],
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/help/en/model-studio/wan-image-generation-and-editing-api-reference"
+        ],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "n is 1 to 4. Presets 1K and 2K, or any size from 768*768 to 2048*2048 in area with an aspect ratio between 1:8 and 8:1; sizes lists common presets, and operators can add others. Takes 0 to 9 input images."
+    },
+    {
+      "upstreamModelId": "wan2.7-image-pro",
+      "name": "Wan 2.7 Image Pro",
+      "releaseDate": "2026-04-01",
+      "kind": "image",
+      "capabilities": [],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerImage": 0.075,
+      "pricePerImageBySize": null,
+      "pricePerInputImage": null,
+      "maxInputImages": 9,
+      "sizes": [
+        "768*768",
+        "1024*1024",
+        "1328*1328",
+        "1536*1536",
+        "2048*2048",
+        "1536*1024",
+        "1024*1536",
+        "1792*1024",
+        "1024*1792",
+        "1664*928",
+        "928*1664",
+        "1472*1104",
+        "1104*1472",
+        "2048*1152",
+        "1152*2048",
+        "4096*4096",
+        "4096*2304",
+        "2304*4096"
+      ],
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/help/en/model-studio/wan-image-generation-and-editing-api-reference"
+        ],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "As wan2.7-image, plus a 4K preset up to 4096*4096 for text-to-image only: image edits and image sets stay at 2K at most. Watermarks are on by default upstream; the gateway turns them off."
+    },
+    {
+      "upstreamModelId": "qwen-audio-3.0-tts-plus",
+      "name": "Qwen Audio 3.0 TTS Plus",
+      "releaseDate": "2026-07-14",
+      "kind": "speech",
+      "capabilities": [],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerMillionCharacters": 20,
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "$0.20 per 10,000 characters. Formats mp3, wav, pcm and opus. Alibaba's docs don't say whether 3.0 accepts input.instruction, and it was not checked against the live API, so the gateway accepts OpenAI's instructions but does not send them upstream."
+    },
+    {
+      "upstreamModelId": "wan3.0-video",
+      "name": "Wan 3.0 Video",
+      "releaseDate": "2026-08-06",
+      "kind": "video",
+      "capabilities": ["text-to-video", "first-frame", "last-frame", "reference-images"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.05,
+        "720P": 0.1,
+        "1080P": 0.2
+      },
+      "maxInputImages": 10,
+      "minDurationSeconds": 2,
+      "maxDurationSeconds": 30,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/help/en/model-studio/wan3-video-generation-api-reference"
+        ],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "List prices, not the limited-time discount. Generates 2 to 30 seconds from text, a first frame (and optional last frame) or up to 10 reference images. Reference video and audio inputs are not supported by the gateway."
+    },
+    {
+      "upstreamModelId": "happyhorse-1.1-t2v",
+      "name": "HappyHorse 1.1 T2V",
+      "releaseDate": "2026-06-16",
+      "kind": "video",
+      "capabilities": ["text-to-video"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.07,
+        "720P": 0.14,
+        "1080P": 0.18
+      },
+      "maxInputImages": 0,
+      "minDurationSeconds": 3,
+      "maxDurationSeconds": 15,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/help/en/model-studio/happyhorse-text-to-video-api-reference"
+        ],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "Text to video only. The 3 to 15 second range is the one published for HappyHorse 1.0; 1.1 is listed with 15-second videos, and its minimum was not confirmed against the live API."
+    },
+    {
+      "upstreamModelId": "qwen-audio-3.0-asr-flash",
+      "name": "Qwen Audio 3.0 ASR Flash",
+      "releaseDate": "2026-07-30",
+      "kind": "transcription",
+      "capabilities": [],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerAudioSecond": 0.000035,
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "$0.000035 per second of audio. Alibaba's docs show the request shape only for the 3.1 ASR models, and it was not checked against the live API: the gateway assumes 3.0 takes the same one (input.messages[].content[] of input_audio with a data URI, parameters.format and parameters.language_hints) and answers with output.text and usage.duration in seconds. Confirm before relying on it."
+    },
+    {
+      "upstreamModelId": "happyhorse-1.1-i2v",
+      "name": "HappyHorse 1.1 I2V",
+      "releaseDate": "2026-06-16",
+      "kind": "video",
+      "capabilities": ["first-frame"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.07,
+        "720P": 0.14,
+        "1080P": 0.18
+      },
+      "maxInputImages": 1,
+      "minDurationSeconds": 3,
+      "maxDurationSeconds": 15,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "Animates exactly one first frame; the video takes the frame's aspect ratio, so no ratio is sent. The 3 to 15 second range is the one published for HappyHorse 1.0."
+    },
+    {
+      "upstreamModelId": "happyhorse-1.1-r2v",
+      "name": "HappyHorse 1.1 R2V",
+      "releaseDate": "2026-06-16",
+      "kind": "video",
+      "capabilities": ["reference-images"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.07,
+        "720P": 0.14,
+        "1080P": 0.18
+      },
+      "maxInputImages": 9,
+      "minDurationSeconds": 3,
+      "maxDurationSeconds": 15,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "Generates from 1 to 9 reference images and a prompt, which is required. The 3 to 15 second range is the one published for HappyHorse 1.0."
     }
   ]
 }

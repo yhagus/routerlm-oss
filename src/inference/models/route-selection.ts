@@ -1,5 +1,6 @@
 import type { Capability } from "@/db/schemas/index.js";
 import type {
+  SnapshotEndpoint,
   SnapshotModel,
   SnapshotProviderAccount,
   SnapshotRoute,
@@ -46,21 +47,30 @@ export function capableRoutes(model: SnapshotModel, request: InferenceRequest): 
 }
 
 /**
- * Whether the Upstream Model can serve the request: enabled along with its
- * Provider, with every Capability the request needs, a context large enough,
- * and a Protocol the gateway can translate to.
+ * Where its Provider serves the Upstream Model's Kind (ADR 0026); undefined
+ * when the Provider has no endpoint for it, and the Upstream Model can't serve.
+ */
+export function endpointOf(upstreamModel: SnapshotUpstreamModel): SnapshotEndpoint | undefined {
+  return upstreamModel.provider.endpoints[upstreamModel.kind];
+}
+
+/**
+ * Whether the Upstream Model can serve the chat request: enabled along with
+ * its Provider, with every Capability the request needs, a context large
+ * enough, and an endpoint in a Protocol the gateway can translate to.
  */
 export function canServe(upstreamModel: SnapshotUpstreamModel, request: InferenceRequest): boolean {
-  const { provider } = upstreamModel;
+  const endpoint = endpointOf(upstreamModel);
   const neededContext = estimatedPromptTokens(request) + (request.maxOutputTokens ?? 0);
   return (
     upstreamModel.isEnabled &&
-    provider.isUsable &&
-    UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol] !== undefined &&
+    upstreamModel.provider.isUsable &&
+    endpoint !== undefined &&
+    UPSTREAM_PROTOCOL_CONVERTERS[endpoint.protocol] !== undefined &&
     requiredCapabilities(request).every((capability) =>
       upstreamModel.capabilities.includes(capability),
     ) &&
-    neededContext <= upstreamModel.contextSize
+    (upstreamModel.contextSize === null || neededContext <= upstreamModel.contextSize)
   );
 }
 

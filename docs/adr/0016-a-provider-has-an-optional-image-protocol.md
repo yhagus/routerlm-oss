@@ -1,5 +1,7 @@
 # A Provider has an optional image Protocol beside its chat Protocol
 
+Status: superseded by ADR 0026
+
 ADR 0003 gives each Provider one Protocol, but OpenAI serves chat on `openai-chat` and images on the Images API, and OpenAI Codex serves chat on `openai-responses` and images on the same Images API shape (`{base}/images/generations` and `{base}/images/edits` under `chatgpt.com/backend-api/codex`), with the same credential. We decided that a Provider keeps its chat Protocol and gains an optional image Protocol (`openai-images`) at the same base URL, so one Provider Account and one OAuth Login serve both Kinds.
 
 ## Considered options

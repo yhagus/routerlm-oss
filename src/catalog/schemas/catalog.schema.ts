@@ -5,8 +5,13 @@ import {
   CAPABILITIES,
   CREDENTIAL_KINDS,
   type KimiCodeOauthLogin,
+  MODEL_KINDS,
+  type ModelKind,
   type OpenAiCodexOauthLogin,
+  type PricesByTier,
+  PROTOCOL_KINDS,
   PROTOCOLS_WITH_SERVICE_TIERS,
+  type ProviderEndpoint,
   QUOTA_READERS,
   type ServiceTierValues,
   type TierPrices,
@@ -177,19 +182,46 @@ const QUIRKS_OF_ONE_PROTOCOL = {
     "systemAsDeveloperMessage",
     "droppedParameters",
   ],
+  "dashscope-image": [],
+  "dashscope-video": [],
+  "dashscope-speech": [],
+  "dashscope-transcription": [],
 } as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
 
 /**
- * The quirk keys in `quirks` that `protocol` doesn't read, in their order.
- * A Provider must have none: such a quirk would silently do nothing.
+ * The Provider's chat endpoint: its Protocol is the one the quirks and
+ * Service Tiers apply to, and its base URL the one quota readers and sign-ins
+ * start from.
+ */
+export function chatEndpointOf(
+  endpoints: readonly ProviderEndpoint[],
+): ProviderEndpoint | undefined {
+  return endpoints.find((endpoint) => endpoint.kind === "chat");
+}
+
+/** The Kinds of the given Upstream Models that `endpoints` has no endpoint for, each once. */
+export function kindsWithoutEndpoint(
+  upstreamModels: readonly { kind?: ModelKind }[],
+  endpoints: readonly ProviderEndpoint[],
+): ModelKind[] {
+  const served = new Set(endpoints.map((endpoint) => endpoint.kind));
+  return MODEL_KINDS.filter(
+    (kind) => !served.has(kind) && upstreamModels.some((model) => (model.kind ?? "chat") === kind),
+  );
+}
+
+/**
+ * The quirk keys in `quirks` that `protocol` doesn't read, in their order;
+ * without a chat Protocol, only the quirks every Protocol reads apply. A
+ * Provider must have none: such a quirk would silently do nothing.
  */
 export function quirksForeignToProtocol(
-  protocol: UpstreamProtocol,
+  protocol: UpstreamProtocol | undefined,
   quirks: Record<string, unknown>,
 ): string[] {
   const understood: readonly string[] = [
     ...QUIRKS_OF_EVERY_PROTOCOL,
-    ...QUIRKS_OF_ONE_PROTOCOL[protocol],
+    ...(protocol === undefined ? [] : QUIRKS_OF_ONE_PROTOCOL[protocol]),
   ];
   return Object.keys(quirks).filter((key) => !understood.includes(key));
 }
@@ -199,7 +231,7 @@ export function quirksForeignToProtocol(
  * one (ADR 0014). A Provider must have none: they would silently do nothing.
  */
 export function serviceTierValuesForeignToProtocol(
-  protocol: UpstreamProtocol,
+  protocol: UpstreamProtocol | undefined,
   serviceTierValues: ServiceTierValues,
 ): ServiceTier[] {
   const sendsServiceTier = PROTOCOLS_WITH_SERVICE_TIERS.some((sending) => sending === protocol);
@@ -277,6 +309,20 @@ const sourceSchema = z.strictObject({
 /** USD per million tokens; null when the Provider doesn't publish it. */
 const priceSchema = z.number().nonnegative().nullable();
 
+/** USD per counted unit of a media Kind (an image, a second, a million characters); null when unpublished. */
+const unitPriceSchema = z.number().nonnegative().nullable();
+
+/** USD per unit by the tier the Provider names, such as `2K` or `720P`; null when unpublished. */
+const pricesByTierSchema = z
+  .record(z.string().min(1), z.number().nonnegative())
+  .nullable() satisfies z.ZodType<PricesByTier | null>;
+
+/** The sizes or resolutions a media model supports, each once; null when unknown. */
+const supportedValuesSchema = z
+  .array(z.string().min(1))
+  .refine((values) => new Set(values).size === values.length, { error: "List each value once" })
+  .nullable();
+
 /** What the Provider calls each Service Tier on the wire (ADR 0014). */
 export const serviceTierValuesSchema = z
   .strictObject({ fast: z.string().min(1), flex: z.string().min(1) })
@@ -310,12 +356,33 @@ const upstreamModelSchema = z.strictObject({
   // Catalog model has one, so the dashboard never falls back to the bare id.
   name: z.string().min(1),
   capabilities: z.array(z.enum(CAPABILITIES)),
-  contextSize: z.int().positive(),
+  /** Null for a media Kind, which has no token context. */
+  contextSize: z.int().positive().nullable(),
   maxOutputTokens: z.int().positive().nullable(),
   inputPrice: priceSchema,
   outputPrice: priceSchema,
   cacheReadPrice: priceSchema,
   cacheWritePrice: priceSchema,
+  /** Chat when left out; its Provider needs an endpoint for it. */
+  kind: z.enum(MODEL_KINDS).optional(),
+  // The unit prices and limits of the media Kinds; none when left out.
+  /** Image: per generated image, or by size tier when the price depends on the size. */
+  pricePerImage: unitPriceSchema.optional(),
+  pricePerImageBySize: pricesByTierSchema.optional(),
+  pricePerInputImage: unitPriceSchema.optional(),
+  /** Video: per output second, by resolution. */
+  pricePerSecondByResolution: pricesByTierSchema.optional(),
+  /** Speech: per million input characters. */
+  pricePerMillionCharacters: unitPriceSchema.optional(),
+  /** Transcription: per second of input audio. */
+  pricePerAudioSecond: unitPriceSchema.optional(),
+  maxInputImages: z.int().nonnegative().nullable().optional(),
+  minDurationSeconds: z.int().positive().nullable().optional(),
+  maxDurationSeconds: z.int().positive().nullable().optional(),
+  /** Video resolutions, such as `720P`. */
+  resolutions: supportedValuesSchema.optional(),
+  /** Image sizes, such as `1024*1024`. */
+  sizes: supportedValuesSchema.optional(),
   /** None when left out: the model then gets no Service Tier. */
   serviceTiers: serviceTiersSchema.optional(),
   /** Only for tiers that cost other than the standard prices. */
@@ -326,18 +393,38 @@ const upstreamModelSchema = z.strictObject({
 });
 export type CatalogUpstreamModel = z.infer<typeof upstreamModelSchema>;
 
+/** One endpoint of a Provider (ADR 0026); its Protocol must serve its Kind. */
+const providerEndpointSchema = z
+  .strictObject({
+    kind: z.enum(MODEL_KINDS),
+    protocol: z.enum(UPSTREAM_PROTOCOLS),
+    /**
+     * What the Protocol's path is appended to: `/chat/completions` for
+     * openai-chat, `/v1/messages` for anthropic-messages, `/responses` for
+     * openai-responses.
+     */
+    baseUrl: providerUrlSchema,
+  })
+  .refine(({ kind, protocol }) => PROTOCOL_KINDS[protocol] === kind, {
+    error: "The Protocol doesn't serve the endpoint's Kind",
+    path: ["protocol"],
+  }) satisfies z.ZodType<ProviderEndpoint>;
+
+/** A Provider's endpoints, at most one per Model Kind. */
+export const providerEndpointsSchema = z
+  .array(providerEndpointSchema)
+  .min(1)
+  .refine(
+    (endpoints) => new Set(endpoints.map((endpoint) => endpoint.kind)).size === endpoints.length,
+    { error: "A Provider has at most one endpoint per Kind" },
+  );
+
 export const catalogProviderSchema = z.strictObject({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
   logo: providerLogoSchema.optional(),
   termsRisk: z.boolean().optional(),
-  protocol: z.enum(UPSTREAM_PROTOCOLS),
-  /**
-   * What the Protocol's path is appended to: `/chat/completions` for
-   * openai-chat, `/v1/messages` for anthropic-messages, `/responses` for
-   * openai-responses.
-   */
-  baseUrl: providerUrlSchema,
+  endpoints: providerEndpointsSchema,
   authStyle: z.enum(AUTH_STYLES),
   /** The provider's id on models.dev, used to report Catalog Gaps. */
   modelsDevProviderId: z.string().optional(),

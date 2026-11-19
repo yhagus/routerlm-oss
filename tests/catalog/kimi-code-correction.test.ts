@@ -29,7 +29,8 @@ type OldKimiCode = {
 };
 type KimiCodeFromApi = {
   id: string;
-  baseUrl: string;
+  /** The chat endpoint's. */
+  baseUrl: string | undefined;
   contextSizes: Record<string, number>;
   quirks: Record<string, unknown>;
   quotaReader: string | null;
@@ -246,7 +247,7 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
     const providerRows: {
       id: string;
       slug: string;
-      baseUrl: string;
+      endpoints: { kind: string; baseUrl: string }[];
       quirks: Record<string, unknown>;
       quotaReader: string | null;
       oauthLogin: Record<string, unknown> | null;
@@ -258,7 +259,7 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
 
     return {
       id: kimiCode.id,
-      baseUrl: kimiCode.baseUrl,
+      baseUrl: kimiCode.endpoints.find((endpoint) => endpoint.kind === "chat")?.baseUrl,
       quirks: kimiCode.quirks,
       quotaReader: kimiCode.quotaReader,
       oauthLogin: kimiCode.oauthLogin,

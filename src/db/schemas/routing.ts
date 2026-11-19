@@ -1,7 +1,7 @@
 import { boolean, index, integer, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { createdAt, id, updatedAt } from "./columns.js";
 import type { ReasoningEffort, ServiceTier } from "@/inference/models/internal-format.js";
-import { upstreamModels } from "./upstream.js";
+import { MODEL_KINDS, upstreamModels } from "./upstream.js";
 
 // Routing: the Models the gateway exposes and the Routes that serve them.
 
@@ -17,10 +17,17 @@ export type ParameterValues = {
   reasoningEffort?: ReasoningEffort;
   stopSequences?: string[];
   serviceTier?: ServiceTier;
+  /** A speech request's voice, as the Provider names it. */
+  voice?: string;
+  /** Whether a media Provider marks what it generates; media Kinds only, off when not set. */
+  watermark?: boolean;
 };
 
 /** The parameters with an order, which a cap can bound. */
-export type ParameterCaps = Omit<ParameterValues, "stopSequences" | "serviceTier"> & {
+export type ParameterCaps = Omit<
+  ParameterValues,
+  "stopSequences" | "serviceTier" | "voice" | "watermark"
+> & {
   /** Bounds an Anthropic `thinking.budget_tokens`; `reasoningEffort` bounds effort only. */
   reasoningBudgetTokens?: number;
 };
@@ -44,6 +51,8 @@ export const models = pgTable("models", {
   id: id(),
   // What clients send as `model`.
   name: text("name").notNull().unique(),
+  // Fixed once created; its Routes all point at Upstream Models of this Kind.
+  kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
   isEnabled: boolean("is_enabled").notNull().default(true),
   parameterPolicy: jsonb("parameter_policy").$type<ParameterPolicy>().notNull().default({}),
   hasAutomaticCacheBreakpoints: boolean("has_automatic_cache_breakpoints").notNull().default(true),

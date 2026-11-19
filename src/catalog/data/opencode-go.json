@@ -2,8 +2,13 @@
   "slug": "opencode-go",
   "name": "OpenCode Go",
   "logo": "opencode",
-  "protocol": "openai-chat",
-  "baseUrl": "https://opencode.ai/inference/go/openai/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://opencode.ai/inference/go/openai/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "forwardedClientHeaders": ["user-agent", "x-opencode-session"]

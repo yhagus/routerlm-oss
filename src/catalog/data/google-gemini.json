@@ -2,8 +2,13 @@
   "slug": "google-gemini",
   "name": "Google Gemini",
   "logo": "gemini",
-  "protocol": "openai-chat",
-  "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {},
   "modelsDevProviderId": "google",

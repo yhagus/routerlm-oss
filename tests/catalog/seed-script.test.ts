@@ -68,7 +68,9 @@ describe("db:seed script (e2e)", () => {
       .from(upstreamModels)
       .where(eq(upstreamModels.providerId, kimiCode?.id ?? ""));
 
-    expect(kimiCode?.baseUrl).toBe("https://api.kimi.com/coding/v1");
+    expect(kimiCode?.endpoints).toEqual([
+      { kind: "chat", protocol: "openai-chat", baseUrl: "https://api.kimi.com/coding/v1" },
+    ]);
     expect(
       Object.fromEntries(kimiCodeModels.map((model) => [model.id, model.contextSize])),
     ).toEqual({
@@ -89,12 +91,17 @@ describe("db:seed script (e2e)", () => {
       .where(eq(upstreamModels.providerId, codex?.id ?? ""));
 
     expect(codex).toMatchObject({
-      protocol: "openai-responses",
-      baseUrl: "https://chatgpt.com/backend-api/codex",
+      endpoints: [
+        {
+          kind: "chat",
+          protocol: "openai-responses",
+          baseUrl: "https://chatgpt.com/backend-api/codex",
+        },
+      ],
       credentialKinds: ["oauth-login"],
     });
     expect(openAi).toMatchObject({
-      protocol: "openai-chat",
+      endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.openai.com/v1" }],
       credentialKinds: ["api-key", "oauth-login"],
     });
     expect(Object.fromEntries(codexModels.map((model) => [model.id, model.contextSize]))).toEqual({

@@ -1,0 +1,10 @@
+{
+  "output": {
+    "finish_reason": "stop",
+    "text": "Hello from the gateway"
+  },
+  "usage": {
+    "duration": 4
+  },
+  "request_id": "8e2b4c1d-6f3a-4d7e-b2c9-0a1f5e7d3xxx"
+}

@@ -48,8 +48,13 @@ describe("Catalog Gaps API (e2e)", () => {
       .values({
         slug: PROVIDER_SLUG,
         name: "Anthropic",
-        protocol: "anthropic-messages",
-        baseUrl: "https://api.anthropic.example",
+        endpoints: [
+          {
+            kind: "chat",
+            protocol: "anthropic-messages",
+            baseUrl: "https://api.anthropic.example",
+          },
+        ],
         authStyle: "x-api-key",
       })
       .returning({ id: providers.id });
@@ -112,8 +117,9 @@ describe("Catalog Gaps API (e2e)", () => {
     await db.insert(providers).values({
       slug: "deepseek",
       name: "DeepSeek",
-      protocol: "openai-chat",
-      baseUrl: "https://api.deepseek.example",
+      endpoints: [
+        { kind: "chat", protocol: "openai-chat", baseUrl: "https://api.deepseek.example" },
+      ],
       authStyle: "bearer",
     });
     const asModels = (ids: Array<[string, string]>) => ({

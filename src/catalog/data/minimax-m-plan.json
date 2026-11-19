@@ -3,8 +3,13 @@
   "name": "MiniMax M Plan",
   "logo": "minimax",
   "termsRisk": true,
-  "protocol": "anthropic-messages",
-  "baseUrl": "https://api.minimax.io/anthropic",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "anthropic-messages",
+      "baseUrl": "https://api.minimax.io/anthropic"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "cacheMarkerLimit": 0,

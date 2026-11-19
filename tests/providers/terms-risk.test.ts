@@ -9,8 +9,7 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const ACME = {
   slug: "acme",
   name: "Acme AI",
-  protocol: "openai-chat",
-  baseUrl: "https://api.acme.example/v1",
+  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
   authStyle: "bearer",
 };
 

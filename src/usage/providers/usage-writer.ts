@@ -2,16 +2,17 @@ import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
-import { attempts, errorCaptures, usageLogs } from "@/db/schemas/index.js";
+import { attempts, CLIENT_PROTOCOL_KINDS, errorCaptures, usageLogs } from "@/db/schemas/index.js";
 import type {
   ErrorCaptureRecord,
+  MediaUnits,
   QueuedServingTarget,
   RequestNames,
   ServingTarget,
   UsageCaller,
   UsageJob,
 } from "../models/usage-job.js";
-import { usageMeasurementsOf } from "../models/usage-measurements.js";
+import { unitCostOf, usageMeasurementsOf } from "../models/usage-measurements.js";
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
 
@@ -59,12 +60,14 @@ export class UsageWriter {
           ...snapshot.requestNames,
           modelId: job.modelId,
           ...servingTargetColumnsOf(snapshot.servedBy),
+          kind: CLIENT_PROTOCOL_KINDS[job.clientProtocol],
           clientProtocol: job.clientProtocol,
           isStreamed: job.isStreamed,
           httpStatus: job.httpStatus,
           errorCode: job.errorCode,
           serviceTier: job.servedBy?.serviceTier ?? null,
-          ...usageMeasurementsOf(job.servedBy, job.usage),
+          ...measurementsOf(job),
+          ...unitColumnsOf(job.units ?? null),
           requestBytes: job.requestBytes,
           responseBytes: job.responseBytes,
           timeToFirstTokenMs: job.timeToFirstTokenMs,
@@ -125,6 +128,30 @@ function errorCaptureRowsOf(
     responseHeaders: upstreamResponse?.headers ?? null,
     responseBody: upstreamResponse?.body ?? null,
   }));
+}
+
+/**
+ * Token counts and Cost. A media Kind counts units instead of tokens, so its
+ * Cost comes from them and its missing token counts make it no less complete.
+ */
+function measurementsOf(job: UsageJob) {
+  const measurements = usageMeasurementsOf(job.servedBy, job.usage);
+  if (!job.units) {
+    return measurements;
+  }
+  return { ...measurements, cost: unitCostOf(job.servedBy, job.units), isIncomplete: false };
+}
+
+/** The unit columns of a Usage Log: null for a unit the Kind doesn't count, and all null for chat. */
+function unitColumnsOf(units: MediaUnits | null) {
+  return {
+    imagesOut: units?.imagesOut ?? null,
+    imagesIn: units?.imagesIn ?? null,
+    outputSeconds: units?.outputSeconds ?? null,
+    audioSeconds: units?.audioSeconds ?? null,
+    characters: units?.characters ?? null,
+    unitTier: units?.tier ?? null,
+  };
 }
 
 function callerColumnsOf(caller: UsageCaller) {

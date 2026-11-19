@@ -1,0 +1,693 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "fabfeae5-0cfa-45ad-a5c9-ed03612cae06",
+  "prevIds": [
+    "681be249-5095-4b7f-bbba-686ad79cf8b4"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "kind"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.kind",
+        "n|col|public.upstream_models.kind",
+        "e|col|public.upstream_models.kind"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "price_per_image"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.price_per_image",
+        "n|col|public.upstream_models.price_per_image",
+        "e|col|public.upstream_models.price_per_image"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "price_per_image_by_size"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.price_per_image_by_size",
+        "n|col|public.upstream_models.price_per_image_by_size",
+        "e|col|public.upstream_models.price_per_image_by_size"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "price_per_input_image"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.price_per_input_image",
+        "n|col|public.upstream_models.price_per_input_image",
+        "e|col|public.upstream_models.price_per_input_image"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "price_per_second_by_resolution"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.price_per_second_by_resolution",
+        "n|col|public.upstream_models.price_per_second_by_resolution",
+        "e|col|public.upstream_models.price_per_second_by_resolution"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "price_per_million_characters"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.price_per_million_characters",
+        "n|col|public.upstream_models.price_per_million_characters",
+        "e|col|public.upstream_models.price_per_million_characters"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "price_per_audio_second"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.price_per_audio_second",
+        "n|col|public.upstream_models.price_per_audio_second",
+        "e|col|public.upstream_models.price_per_audio_second"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "max_input_images"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.max_input_images",
+        "n|col|public.upstream_models.max_input_images",
+        "e|col|public.upstream_models.max_input_images"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "min_duration_seconds"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.min_duration_seconds",
+        "n|col|public.upstream_models.min_duration_seconds",
+        "e|col|public.upstream_models.min_duration_seconds"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "max_duration_seconds"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.max_duration_seconds",
+        "n|col|public.upstream_models.max_duration_seconds",
+        "e|col|public.upstream_models.max_duration_seconds"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "resolutions"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.resolutions",
+        "n|col|public.upstream_models.resolutions",
+        "e|col|public.upstream_models.resolutions"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "sizes"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.sizes",
+        "n|col|public.upstream_models.sizes",
+        "e|col|public.upstream_models.sizes"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "models",
+        "kind"
+      ],
+      "writes": [
+        "s|col|public.models.kind",
+        "n|col|public.models.kind",
+        "e|col|public.models.kind"
+      ],
+      "reads": [
+        "n|tbl|public.models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "kind"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.kind",
+        "n|col|public.usage_logs.kind",
+        "e|col|public.usage_logs.kind"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "images_out"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.images_out",
+        "n|col|public.usage_logs.images_out",
+        "e|col|public.usage_logs.images_out"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "images_in"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.images_in",
+        "n|col|public.usage_logs.images_in",
+        "e|col|public.usage_logs.images_in"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "output_seconds"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.output_seconds",
+        "n|col|public.usage_logs.output_seconds",
+        "e|col|public.usage_logs.output_seconds"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "audio_seconds"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.audio_seconds",
+        "n|col|public.usage_logs.audio_seconds",
+        "e|col|public.usage_logs.audio_seconds"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "characters"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.characters",
+        "n|col|public.usage_logs.characters",
+        "e|col|public.usage_logs.characters"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "unit_tier"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.unit_tier",
+        "n|col|public.usage_logs.unit_tier",
+        "e|col|public.usage_logs.unit_tier"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "kind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'chat'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "price_per_image",
+        "type": "numeric(14,8)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "price_per_image_by_size",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "price_per_input_image",
+        "type": "numeric(14,8)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "price_per_second_by_resolution",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "price_per_million_characters",
+        "type": "numeric(14,8)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "price_per_audio_second",
+        "type": "numeric(14,8)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "max_input_images",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "min_duration_seconds",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "max_duration_seconds",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "resolutions",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "sizes",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "models",
+        "name": "kind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'chat'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "kind",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'chat'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "images_out",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "images_in",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "output_seconds",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "audio_seconds",
+        "type": "numeric(12,3)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "characters",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "unit_tier",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

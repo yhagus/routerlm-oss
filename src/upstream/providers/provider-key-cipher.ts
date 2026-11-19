@@ -15,6 +15,10 @@ const SEPARATOR = ".";
  * Encrypts Provider Account keys at rest with AES-256-GCM. The stored form is
  * `v1.<iv>.<auth tag>.<ciphertext>`, each part base64url; the version prefix
  * leaves room for a later change of format or encryption key.
+ *
+ * Other secrets the gateway hands out (video ids, ADR 0027) pass a `purpose`,
+ * authenticated with the ciphertext, so a value encrypted for one purpose
+ * never decrypts as another, nor as a Provider Account key.
  */
 export class ProviderKeyCipher {
   private readonly encryptionKey: Buffer;
@@ -24,11 +28,14 @@ export class ProviderKeyCipher {
     this.encryptionKey = Buffer.from(encryptionKeyBase64, "base64");
   }
 
-  encrypt(providerAccountKey: string): string {
+  encrypt(providerAccountKey: string, purpose?: string): string {
     const iv = randomBytes(IV_BYTES);
     const cipher = createCipheriv(ALGORITHM, this.encryptionKey, iv, {
       authTagLength: AUTH_TAG_BYTES,
     });
+    if (purpose !== undefined) {
+      cipher.setAAD(Buffer.from(purpose, "utf8"));
+    }
     const ciphertext = Buffer.concat([cipher.update(providerAccountKey, "utf8"), cipher.final()]);
     const encodedParts = [iv, cipher.getAuthTag(), ciphertext].map((part) =>
       part.toString("base64url"),
@@ -36,8 +43,8 @@ export class ProviderKeyCipher {
     return [FORMAT_VERSION, ...encodedParts].join(SEPARATOR);
   }
 
-  /** Throws when the value was tampered with or encrypted under another encryption key. */
-  decrypt(encryptedKey: string): string {
+  /** Throws when the value was tampered with, or encrypted under another encryption key or purpose. */
+  decrypt(encryptedKey: string, purpose?: string): string {
     const [version, iv, authTag, ciphertext] = encryptedKey.split(SEPARATOR);
     if (version !== FORMAT_VERSION || !iv || !authTag || !ciphertext) {
       throw new Error("Not an encrypted Provider Account key");
@@ -46,6 +53,9 @@ export class ProviderKeyCipher {
       authTagLength: AUTH_TAG_BYTES,
     });
     decipher.setAuthTag(Buffer.from(authTag, "base64url"));
+    if (purpose !== undefined) {
+      decipher.setAAD(Buffer.from(purpose, "utf8"));
+    }
     return Buffer.concat([
       decipher.update(Buffer.from(ciphertext, "base64url")),
       decipher.final(),

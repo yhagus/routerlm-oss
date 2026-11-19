@@ -1,6 +1,7 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
+import { upstreamModels } from "@/db/schemas/index.js";
 import { createTestApp, setUpFirstUser } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
@@ -24,11 +25,11 @@ describe("Models (e2e)", () => {
     await app.close();
   });
 
-  async function createModel(name: string): Promise<string> {
+  async function createModel(name: string, kind?: string): Promise<string> {
     const created = await request(app.getHttpServer())
       .post("/api/models")
       .set("Cookie", cookie)
-      .send({ name })
+      .send({ name, kind })
       .expect(201);
     return created.body.id;
   }
@@ -46,8 +47,9 @@ describe("Models (e2e)", () => {
       .send({
         slug: providerSlug,
         name: `${providerSlug} AI`,
-        protocol: "openai-chat",
-        baseUrl: `https://api.${providerSlug}.example`,
+        endpoints: [
+          { kind: "chat", protocol: "openai-chat", baseUrl: `https://api.${providerSlug}.example` },
+        ],
         authStyle: "bearer",
       })
       .expect(201);
@@ -198,8 +200,51 @@ describe("Models (e2e)", () => {
       .expect(200);
 
     expect(list.body).toEqual([
-      expect.objectContaining({ name: "smart", isEnabled: true, routeCount: 0 }),
+      expect.objectContaining({ name: "smart", kind: "chat", isEnabled: true, routeCount: 0 }),
     ]);
+  });
+
+  it("creates a Model of the Kind it is given", async () => {
+    const modelId = await createModel("painter", "image");
+
+    const model = await request(app.getHttpServer())
+      .get(`/api/models/${modelId}`)
+      .set("Cookie", cookie)
+      .expect(200);
+
+    expect(model.body.kind).toBe("image");
+  });
+
+  it("refuses a Route to an Upstream Model of another Kind, naming both Kinds", async () => {
+    const modelId = await createModel("painter", "image");
+    const { upstreamModelId } = await createUpstreamModel("acme", "acme-large", []);
+
+    const response = await request(app.getHttpServer())
+      .post(`/api/models/${modelId}/routes`)
+      .set("Cookie", cookie)
+      .send({ upstreamModelId })
+      .expect(400);
+
+    expect(response.body.message).toBe(
+      'The Upstream Model "acme-large" has the Kind chat, but the Model "painter" has the Kind image',
+    );
+  });
+
+  it("refuses to point a Route at an Upstream Model of another Kind", async () => {
+    const modelId = await createModel("smart");
+    const { providerId, upstreamModelId } = await createUpstreamModel("acme", "acme-large", []);
+    const routeId = await addRoute(modelId, upstreamModelId);
+    // No Protocol serves images yet, so no Provider can have an image endpoint to add one through the API.
+    const [painter] = await db
+      .insert(upstreamModels)
+      .values({ providerId, upstreamModelId: "acme-paint", kind: "image", contextSize: 1 })
+      .returning({ id: upstreamModels.id });
+
+    await request(app.getHttpServer())
+      .patch(`/api/models/${modelId}/routes/${routeId}`)
+      .set("Cookie", cookie)
+      .send({ upstreamModelId: painter.id })
+      .expect(400);
   });
 
   it("refuses a second Model with the same name, saying why", async () => {

@@ -44,8 +44,9 @@ describe("Provider Account names generated while the name is taken (e2e)", () =>
       .send({
         slug,
         name: `${slug} AI`,
-        protocol: "openai-chat",
-        baseUrl: `https://api.${slug}.example/v1`,
+        endpoints: [
+          { kind: "chat", protocol: "openai-chat", baseUrl: `https://api.${slug}.example/v1` },
+        ],
         authStyle: "bearer",
       })
       .expect(201);

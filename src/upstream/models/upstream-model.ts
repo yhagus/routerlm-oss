@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
 import {
+  kindsWithoutEndpoint,
   serviceTiersWithoutWireValue,
   tierPricesWithoutListedTier,
 } from "@/catalog/schemas/catalog.schema.js";
-import type { ServiceTierValues } from "@/db/schemas/index.js";
+import type { ModelKind, ProviderEndpoint, ServiceTierValues } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
 import {
   FOREIGN_KEY_VIOLATION,
@@ -56,5 +57,15 @@ export function assertServiceTiersFitProvider(
     throw new BadRequestException(
       `The Upstream Model prices the Service Tiers ${unlisted.join(", ")} but doesn't list them`,
     );
+  }
+}
+
+/** Refuses an Upstream Model of a Kind its Provider has no endpoint for (ADR 0026), naming the Kind. */
+export function assertProviderServesKind(
+  kind: ModelKind,
+  endpoints: readonly ProviderEndpoint[],
+): void {
+  if (kindsWithoutEndpoint([{ kind }], endpoints).length > 0) {
+    throw new BadRequestException(`The Provider has no endpoint for the Kind ${kind}`);
   }
 }

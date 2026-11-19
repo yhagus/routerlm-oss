@@ -657,6 +657,9 @@ const ERROR_TYPES = {
   upstream_rate_limited: "rate_limit_error",
   upstream_error: "api_error",
   upstream_timeout: "api_error",
+  // Video codes never reach this Protocol's endpoint, but every code needs a type.
+  video_not_found: "not_found_error",
+  video_not_ready: "invalid_request_error",
 } as const satisfies Record<GatewayErrorCode, string>;
 
 function writeError(error: GatewayError): unknown {

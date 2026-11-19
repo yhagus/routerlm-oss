@@ -3,6 +3,7 @@ import { Boxes, Plus, Power } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import type { ModelDetail, ModelSummary } from "~/lib/routing";
+import { MODEL_KIND_LABELS, MODEL_KIND_OPTIONS, type ModelKind } from "~/lib/upstream";
 
 useHead({ title: "Models" });
 
@@ -18,6 +19,7 @@ const isLoading = computed(() => modelsStatus.value === "pending" && !models.val
 
 const columns: DataTableColumn<ModelSummary>[] = [
   { id: "model", header: "Model", enableHiding: false, accessorFn: (model) => model.name },
+  { id: "kind", header: "Kind" },
   { id: "routes", header: "Routes" },
   { id: "status", header: "Status" },
   actionsColumn(),
@@ -25,11 +27,13 @@ const columns: DataTableColumn<ModelSummary>[] = [
 
 const isCreateDialogOpen = ref(false);
 const newModelName = ref("");
+const newModelKind = ref<ModelKind>("chat");
 const isSaving = ref(false);
 const dialogError = ref("");
 
 function openCreateDialog(): void {
   newModelName.value = "";
+  newModelKind.value = "chat";
   dialogError.value = "";
   isCreateDialogOpen.value = true;
 }
@@ -40,7 +44,7 @@ async function createModel(): Promise<void> {
   try {
     const created = await $dashboardApi<Pick<ModelDetail, "id" | "name">>("/models", {
       method: "POST",
-      body: { name: newModelName.value },
+      body: { name: newModelName.value, kind: newModelKind.value },
     });
     showToast(`Created ${created.name}. Add its Routes next.`);
     await navigateTo(`/models/${created.id}`);
@@ -92,6 +96,7 @@ async function toggleModel(model: ModelSummary): Promise<void> {
           <span class="key-icon"><Boxes :size="15" /></span><strong>{{ model.name }}</strong>
         </NuxtLink>
       </template>
+      <template #cell-kind="{ row: model }">{{ MODEL_KIND_LABELS[model.kind] }}</template>
       <template #cell-routes="{ row: model }">
         <span class="tabular">{{ model.routeCount }}</span>
         <span v-if="model.routeCount === 0" class="status-badge status-badge--warn">No Routes</span>
@@ -128,6 +133,14 @@ async function toggleModel(model: ModelSummary): Promise<void> {
           ><span class="field__label">Name</span
           ><input v-model="newModelName" class="text-input" autocomplete="off" required
         /></label>
+        <div class="field">
+          <span class="field__label">Kind</span>
+          <AppSelect v-model="newModelKind" :options="MODEL_KIND_OPTIONS" label="Kind" />
+        </div>
+        <p class="form__hint">
+          What the Model produces. Its Routes can only go to Upstream Models of this Kind, and it
+          can't be changed later.
+        </p>
         <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
         <div class="dialog__actions">
           <button class="button" type="button" @click="isCreateDialogOpen = false">Cancel</button>

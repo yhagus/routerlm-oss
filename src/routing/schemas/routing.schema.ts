@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
-import type { ParameterPolicy } from "@/db/schemas/index.js";
+import { MODEL_KINDS, type ParameterPolicy } from "@/db/schemas/index.js";
 import {
   REASONING_EFFORTS,
   type ReasoningEffort,
@@ -20,6 +20,8 @@ const parameterValuesSchema = z.strictObject({
   ...capSchemas,
   stopSequences: z.array(z.string().min(1)).min(1),
   serviceTier: z.enum(SERVICE_TIERS),
+  voice: z.string().min(1),
+  watermark: z.boolean(),
 });
 const CAPPED_PARAMETERS = z.object(capSchemas).keyof().options;
 
@@ -67,7 +69,9 @@ const modelFieldsSchema = z.strictObject({
   hasAutomaticCacheBreakpoints: z.boolean(),
 });
 
+/** A Model's Kind is chosen once, when it is created: its Routes depend on it. */
 export const newModelSchema = modelFieldsSchema.extend({
+  kind: z.enum(MODEL_KINDS).optional(),
   isEnabled: z.boolean().optional(),
   parameterPolicy: parameterPolicySchema.optional(),
   hasAutomaticCacheBreakpoints: z.boolean().optional(),

@@ -47,8 +47,13 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
       .values({
         slug: "plan",
         name: "Plan",
-        protocol: "anthropic-messages",
-        baseUrl: "https://api.plan.example/anthropic",
+        endpoints: [
+          {
+            kind: "chat",
+            protocol: "anthropic-messages",
+            baseUrl: "https://api.plan.example/anthropic",
+          },
+        ],
         authStyle: "bearer",
         quirks: { quotaBaseUrl: fakeUpstream.baseUrl },
         quotaReader,

@@ -4,6 +4,8 @@ import type { Database } from "@/db/schemas/relations.js";
 import { SettingsStore } from "@/settings/providers/settings-store.js";
 import {
   apiKeys,
+  type ModelKind,
+  type ProviderEndpoint,
   type CredentialKind,
   models,
   providerAccounts,
@@ -15,6 +17,7 @@ import type {
   Snapshot,
   SnapshotApiKey,
   SnapshotCredential,
+  SnapshotEndpoint,
   SnapshotModel,
   SnapshotProvider,
   SnapshotProviderAccount,
@@ -68,8 +71,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         id: provider.id,
         slug: provider.slug,
         name: provider.name,
-        protocol: provider.protocol,
-        baseUrl: provider.baseUrl,
+        endpoints: endpointsByKind(provider.endpoints),
         authStyle: provider.authStyle,
         quirks: storedProviderQuirksSchema.safeParse(provider.quirks),
         serviceTierValues: provider.serviceTierValues,
@@ -100,6 +102,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       upstreamModelsById.set(upstreamModel.id, {
         id: upstreamModel.id,
         upstreamModelId: upstreamModel.upstreamModelId,
+        kind: upstreamModel.kind,
         capabilities: upstreamModel.capabilities,
         contextSize: upstreamModel.contextSize,
         maxOutputTokens: upstreamModel.maxOutputTokens,
@@ -109,6 +112,19 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         cacheWritePrice: upstreamModel.cacheWritePrice,
         serviceTiers: upstreamModel.serviceTiers,
         tierPrices: upstreamModel.tierPrices,
+        unitPrices: {
+          pricePerImage: upstreamModel.pricePerImage,
+          pricePerImageBySize: upstreamModel.pricePerImageBySize,
+          pricePerInputImage: upstreamModel.pricePerInputImage,
+          pricePerSecondByResolution: upstreamModel.pricePerSecondByResolution,
+          pricePerMillionCharacters: upstreamModel.pricePerMillionCharacters,
+          pricePerAudioSecond: upstreamModel.pricePerAudioSecond,
+        },
+        sizes: upstreamModel.sizes,
+        maxInputImages: upstreamModel.maxInputImages,
+        resolutions: upstreamModel.resolutions,
+        minDurationSeconds: upstreamModel.minDurationSeconds,
+        maxDurationSeconds: upstreamModel.maxDurationSeconds,
         isEnabled: upstreamModel.isEnabled,
         provider,
       });
@@ -120,7 +136,9 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
   for (const model of modelRows) {
     const modelRoutes = (routesByModelId.get(model.id) ?? []).flatMap((route) => {
       const upstreamModel = upstreamModelsById.get(route.upstreamModelId);
-      if (!upstreamModel) {
+      // The routing write path refuses a Route of another Kind; this keeps
+      // one that slipped past it from ever serving.
+      if (!upstreamModel || upstreamModel.kind !== model.kind) {
         return [];
       }
       return [
@@ -139,6 +157,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     modelsByName.set(model.name, {
       id: model.id,
       name: model.name,
+      kind: model.kind,
       isEnabled: model.isEnabled,
       parameterPolicy: model.parameterPolicy,
       hasAutomaticCacheBreakpoints: model.hasAutomaticCacheBreakpoints,
@@ -162,6 +181,16 @@ function snapshotCredentialOf(account: {
     return null;
   }
   return { kind: "api-key", encryptedKey: account.encryptedKey };
+}
+
+function endpointsByKind(
+  endpoints: readonly ProviderEndpoint[],
+): Partial<Record<ModelKind, SnapshotEndpoint>> {
+  const byKind: Partial<Record<ModelKind, SnapshotEndpoint>> = {};
+  for (const { kind, protocol, baseUrl } of endpoints) {
+    byKind[kind] = { protocol, baseUrl };
+  }
+  return byKind;
 }
 
 function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {

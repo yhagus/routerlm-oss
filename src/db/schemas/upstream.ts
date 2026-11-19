@@ -23,14 +23,54 @@ export const UPSTREAM_PROTOCOLS = [
   "openai-chat",
   "anthropic-messages",
   "openai-responses",
+  // DashScope's native API (`{endpoint}/services/...`), one Protocol per Kind.
+  "dashscope-image",
+  "dashscope-video",
+  "dashscope-speech",
+  "dashscope-transcription",
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
+
+/** What a Model or Upstream Model produces; each Kind has its own client endpoints (GLOSSARY: Model Kind). */
+export const MODEL_KINDS = ["chat", "image", "speech", "transcription", "video"] as const;
+export type ModelKind = (typeof MODEL_KINDS)[number];
+
+/** The Model Kind each Protocol serves: an endpoint's Protocol must serve the endpoint's Kind. */
+export const PROTOCOL_KINDS = {
+  "openai-chat": "chat",
+  "anthropic-messages": "chat",
+  "openai-responses": "chat",
+  "dashscope-image": "image",
+  "dashscope-video": "video",
+  "dashscope-speech": "speech",
+  "dashscope-transcription": "transcription",
+} as const satisfies Record<UpstreamProtocol, ModelKind>;
+
+/**
+ * Where a Provider serves one Model Kind, and in which Protocol (ADR 0026).
+ * `baseUrl` is what the Protocol's path is appended to.
+ */
+export interface ProviderEndpoint {
+  kind: ModelKind;
+  protocol: UpstreamProtocol;
+  baseUrl: string;
+}
 
 /** How a Provider expects the Provider Account key: `Authorization: Bearer` or an `x-api-key` header. */
 export const AUTH_STYLES = ["bearer", "x-api-key"] as const;
 export type AuthStyle = (typeof AUTH_STYLES)[number];
 
-export const CAPABILITIES = ["vision", "tools", "reasoning", "structured-output"] as const;
+export const CAPABILITIES = [
+  "vision",
+  "tools",
+  "reasoning",
+  "structured-output",
+  // Video only: what a video request may start from or be guided by.
+  "text-to-video",
+  "first-frame",
+  "last-frame",
+  "reference-images",
+] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
 /** The quota endpoint shapes the gateway can read (ADR 0010); a Provider names one, or none. */
@@ -112,6 +152,12 @@ export interface TierPrices {
 const pricePerMillionTokens = (name: string) =>
   numeric(name, { precision: 12, scale: 6, mode: "number" });
 
+/** USD per counted unit of a media Kind. Eight decimals hold a price per audio second. */
+const pricePerUnit = (name: string) => numeric(name, { precision: 14, scale: 8, mode: "number" });
+
+/** USD per unit, keyed by a tier the Provider names, such as an image size `2K` or a resolution `720P`. */
+export type PricesByTier = Record<string, number>;
+
 export const providers = pgTable(
   "providers",
   {
@@ -122,8 +168,8 @@ export const providers = pgTable(
     logo: text("logo"),
     // Informational only: the gateway's use may breach the Provider's documented terms.
     termsRisk: boolean("terms_risk").notNull().default(false),
-    protocol: text("protocol", { enum: UPSTREAM_PROTOCOLS }).notNull(),
-    baseUrl: text("base_url").notNull(),
+    // At most one per Model Kind; the API and the Catalog schema enforce it.
+    endpoints: jsonb("endpoints").$type<ProviderEndpoint[]>().notNull(),
     authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),
     quirks: jsonb("quirks").$type<ProviderQuirks>().notNull().default({}),
     serviceTierValues: jsonb("service_tier_values")
@@ -146,15 +192,18 @@ export const providers = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
-    // Tier values on a Protocol that never sends a tier would do nothing, so the
-    // row can't hold them (ADR 0014).
+    // Tier values on a chat Protocol that never sends a tier would do nothing,
+    // so the row can't hold them (ADR 0014).
     check(
       "providers_service_tier_values_protocol_check",
       sql`${table.serviceTierValues} = '{}'::jsonb
-      or ${table.protocol} in (${sql.join(
-        PROTOCOLS_WITH_SERVICE_TIERS.map((protocol) => sql.raw(`'${protocol}'`)),
-        sql`, `,
-      )})`,
+      or ${sql.join(
+        PROTOCOLS_WITH_SERVICE_TIERS.map(
+          (protocol) =>
+            sql`${table.endpoints} @> ${sql.raw(`'[{"kind":"chat","protocol":"${protocol}"}]'`)}::jsonb`,
+        ),
+        sql` or `,
+      )}`,
     ),
   ],
 );
@@ -277,14 +326,36 @@ export const upstreamModels = pgTable(
     upstreamModelId: text("upstream_model_id").notNull(),
     // The name the Provider's docs give the model; null when they give none.
     name: text("name"),
+    // Its Provider has an endpoint for this Kind; the API and the Catalog schema enforce it.
+    kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
     capabilities: text("capabilities", { enum: CAPABILITIES }).array("[]").notNull().default([]),
-    contextSize: integer("context_size").notNull(),
+    // Null for a media Kind, which has no token context.
+    contextSize: integer("context_size"),
     maxOutputTokens: integer("max_output_tokens"),
     // Null when the Provider doesn't publish a price; Cost is then left empty.
     inputPrice: pricePerMillionTokens("input_price"),
     outputPrice: pricePerMillionTokens("output_price"),
     cacheReadPrice: pricePerMillionTokens("cache_read_price"),
     cacheWritePrice: pricePerMillionTokens("cache_write_price"),
+    // Unit prices of the media Kinds, null when unpublished or of another Kind.
+    // Image: per generated image, or by size tier when the price depends on it,
+    // and per input image.
+    pricePerImage: pricePerUnit("price_per_image"),
+    pricePerImageBySize: jsonb("price_per_image_by_size").$type<PricesByTier>(),
+    pricePerInputImage: pricePerUnit("price_per_input_image"),
+    // Video: per output second, by resolution.
+    pricePerSecondByResolution: jsonb("price_per_second_by_resolution").$type<PricesByTier>(),
+    // Speech: per million input characters.
+    pricePerMillionCharacters: pricePerUnit("price_per_million_characters"),
+    // Transcription: per second of input audio.
+    pricePerAudioSecond: pricePerUnit("price_per_audio_second"),
+    // Media limits, which narrow Routes as contextSize does; null means no limit known.
+    maxInputImages: integer("max_input_images"),
+    minDurationSeconds: integer("min_duration_seconds"),
+    maxDurationSeconds: integer("max_duration_seconds"),
+    // Video resolutions, such as `720P`, and image sizes, such as `1024*1024`.
+    resolutions: text("resolutions").array(),
+    sizes: text("sizes").array(),
     // The Service Tiers it accepts (ADR 0014); any other tier is dropped from its Attempts.
     serviceTiers: text("service_tiers", { enum: SERVICE_TIERS }).array().notNull().default([]),
     // Prices for a Service Tier that costs other than the standard prices above.
