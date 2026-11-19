@@ -114,7 +114,7 @@ async function copyMigrationsBeforeRename(): Promise<string> {
 
 /** The MiniMax Provider as the seeder created it before the rename, in use by one Route. */
 async function insertMiniMaxWithRoute(
-  { pool, db }: PreRenameDatabase,
+  { pool }: PreRenameDatabase,
   providerName: string,
 ): Promise<{ providerId: string; accountId: string; routeId: string }> {
   // Plain SQL: Drizzle names every column of today's schema in an insert,
@@ -141,16 +141,18 @@ async function insertMiniMaxWithRoute(
      returning id`,
     [providerId],
   );
-  const [model] = await db.insert(schema.models).values({ name: "minimax-m3" }).returning();
-  if (!model) throw new Error("the MiniMax Model was not inserted");
+  const modelId = await insertReturningId(
+    pool,
+    `insert into models (name) values ('minimax-m3') returning id`,
+    [],
+  );
+  const routeId = await insertReturningId(
+    pool,
+    `insert into routes (model_id, upstream_model_id) values ($1, $2) returning id`,
+    [modelId, upstreamModelId],
+  );
 
-  const [route] = await db
-    .insert(schema.routes)
-    .values({ modelId: model.id, upstreamModelId })
-    .returning();
-  if (!route) throw new Error("the MiniMax Route was not inserted");
-
-  return { providerId, accountId, routeId: route.id };
+  return { providerId, accountId, routeId };
 }
 
 async function insertReturningId(pool: Pool, insert: string, values: string[]): Promise<string> {

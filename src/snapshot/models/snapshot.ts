@@ -78,6 +78,7 @@ export function validQuirksOf(provider: SnapshotProvider): StoredProviderQuirks 
 export interface SnapshotUpstreamModel {
   id: string;
   upstreamModelId: string;
+  kind: ModelKind;
   capabilities: Capability[];
   contextSize: number;
   maxOutputTokens: number | null;
@@ -107,11 +108,12 @@ export interface SnapshotRoute {
 export interface SnapshotModel {
   id: string;
   name: string;
+  kind: ModelKind;
   isEnabled: boolean;
   parameterPolicy: ParameterPolicy;
   hasAutomaticCacheBreakpoints: boolean;
   createdAt: Date;
-  /** In the order they are tried: priority, then creation. */
+  /** In the order they are tried: priority, then creation. Only those to an Upstream Model of its Kind. */
   routes: SnapshotRoute[];
 }
 

@@ -19,6 +19,7 @@ export class ListClientModelsHandler implements IQueryHandler<ListClientModelsQu
         object: "model",
         created: Math.floor(model.createdAt.getTime() / 1000),
         owned_by: "routerlm",
+        kind: model.kind,
         capabilities: combinedCapabilities(model),
       }));
     return Promise.resolve({ object: "list", data });

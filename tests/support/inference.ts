@@ -6,6 +6,7 @@ import {
   apiKeys,
   type AuthStyle,
   type Capability,
+  type ModelKind,
   models,
   providerAccounts,
   providers,
@@ -38,6 +39,8 @@ export interface RouteTimeouts {
 
 /** What the Upstream Model behind a Route can take. */
 export interface UpstreamModelLimits {
+  /** Chat when not given; its Provider's one endpoint serves this Kind. */
+  kind?: ModelKind;
   capabilities?: Capability[];
   /** 128 000 when not given. */
   contextSize?: number;
@@ -140,7 +143,9 @@ async function insertRoute(
     .values({
       slug: options.providerSlug,
       name: "Acme",
-      endpoints: [{ kind: "chat", protocol: speaks.protocol, baseUrl: options.baseUrl }],
+      endpoints: [
+        { kind: options.kind ?? "chat", protocol: speaks.protocol, baseUrl: options.baseUrl },
+      ],
       authStyle: speaks.authStyle,
     })
     .returning({ id: providers.id });
@@ -158,6 +163,7 @@ async function insertRoute(
     .values({
       providerId: provider.id,
       upstreamModelId: UPSTREAM_MODEL_ID,
+      kind: options.kind,
       capabilities: options.capabilities ?? ALL_CAPABILITIES,
       contextSize: options.contextSize ?? 128_000,
       maxOutputTokens: options.maxOutputTokens,

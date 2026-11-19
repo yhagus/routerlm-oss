@@ -6,6 +6,7 @@ import type { Database } from "@/db/schemas/relations.js";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
+  assertProviderServesKind,
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
   type UpstreamModel,
@@ -28,6 +29,7 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
             serviceTiers: upstreamModels.serviceTiers,
             tierPrices: upstreamModels.tierPrices,
             serviceTierValues: providers.serviceTierValues,
+            endpoints: providers.endpoints,
           })
           .from(upstreamModels)
           .innerJoin(providers, eq(providers.id, upstreamModels.providerId))
@@ -37,6 +39,9 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
           return undefined;
         }
 
+        if (changes.kind !== undefined) {
+          assertProviderServesKind(changes.kind, stored.endpoints);
+        }
         // A PATCH may change only the tiers or only their prices, so the result is what must fit.
         assertServiceTiersFitProvider(
           {

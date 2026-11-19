@@ -125,6 +125,16 @@ describe("Route selection (e2e)", () => {
     expect(attemptedRoutes()).toEqual(["everything"]);
   });
 
+  it("never tries a Route to an Upstream Model of another Kind, even one written past the API", async () => {
+    await insertModelWithRoute("chat");
+    await addRoute("image", -1, { kind: "image" });
+    upstream.reply(SUCCESS);
+
+    await chat({ messages: [{ role: "user", content: "Hi" }] }).expect(200);
+
+    expect(attemptedRoutes()).toEqual(["chat"]);
+  });
+
   it("skips Routes whose context is too small for the prompt and the requested output", async () => {
     await insertModelWithRoute("small", { contextSize: 4_000 });
     await addRoute("large", 1, { contextSize: 128_000 });

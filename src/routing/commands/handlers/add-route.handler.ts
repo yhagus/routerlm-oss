@@ -6,6 +6,7 @@ import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ModelDetail } from "../../models/model.js";
 import { findModelDetail } from "../../models/model-detail.js";
+import { assertRouteKindFits } from "../../models/route-kind.js";
 import { toRouteWriteError } from "../../models/write-errors.js";
 import { AddRouteCommand } from "../impl/add-route.command.js";
 
@@ -18,7 +19,8 @@ export class AddRouteHandler implements ICommandHandler<AddRouteCommand> {
 
   async execute({ modelId, newRoute }: AddRouteCommand): Promise<ModelDetail> {
     // Answers 404 for an unknown Model before the insert can fail on it.
-    await findModelDetail(this.db, modelId);
+    const model = await findModelDetail(this.db, modelId);
+    await assertRouteKindFits(this.db, model, newRoute.upstreamModelId);
     const lastPriorityPlusOne = sql<number>`(
       select coalesce(max(${routes.priority}) + 1, 0) from ${routes} where ${routes.modelId} = ${modelId}
     )`;

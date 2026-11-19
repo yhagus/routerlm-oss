@@ -6,7 +6,9 @@ import {
   CREDENTIAL_KINDS,
   type KimiCodeOauthLogin,
   MODEL_KINDS,
+  type ModelKind,
   type OpenAiCodexOauthLogin,
+  type PricesByTier,
   PROTOCOL_KINDS,
   PROTOCOLS_WITH_SERVICE_TIERS,
   type ProviderEndpoint,
@@ -193,6 +195,17 @@ export function chatEndpointOf(
   return endpoints.find((endpoint) => endpoint.kind === "chat");
 }
 
+/** The Kinds of the given Upstream Models that `endpoints` has no endpoint for, each once. */
+export function kindsWithoutEndpoint(
+  upstreamModels: readonly { kind?: ModelKind }[],
+  endpoints: readonly ProviderEndpoint[],
+): ModelKind[] {
+  const served = new Set(endpoints.map((endpoint) => endpoint.kind));
+  return MODEL_KINDS.filter(
+    (kind) => !served.has(kind) && upstreamModels.some((model) => (model.kind ?? "chat") === kind),
+  );
+}
+
 /**
  * The quirk keys in `quirks` that `protocol` doesn't read, in their order;
  * without a chat Protocol, only the quirks every Protocol reads apply. A
@@ -292,6 +305,20 @@ const sourceSchema = z.strictObject({
 /** USD per million tokens; null when the Provider doesn't publish it. */
 const priceSchema = z.number().nonnegative().nullable();
 
+/** USD per counted unit of a media Kind (an image, a second, a million characters); null when unpublished. */
+const unitPriceSchema = z.number().nonnegative().nullable();
+
+/** USD per unit by the tier the Provider names, such as `2K` or `720P`; null when unpublished. */
+const pricesByTierSchema = z
+  .record(z.string().min(1), z.number().nonnegative())
+  .nullable() satisfies z.ZodType<PricesByTier | null>;
+
+/** The sizes or resolutions a media model supports, each once; null when unknown. */
+const supportedValuesSchema = z
+  .array(z.string().min(1))
+  .refine((values) => new Set(values).size === values.length, { error: "List each value once" })
+  .nullable();
+
 /** What the Provider calls each Service Tier on the wire (ADR 0014). */
 export const serviceTierValuesSchema = z
   .strictObject({ fast: z.string().min(1), flex: z.string().min(1) })
@@ -331,6 +358,26 @@ const upstreamModelSchema = z.strictObject({
   outputPrice: priceSchema,
   cacheReadPrice: priceSchema,
   cacheWritePrice: priceSchema,
+  /** Chat when left out; its Provider needs an endpoint for it. */
+  kind: z.enum(MODEL_KINDS).optional(),
+  // The unit prices and limits of the media Kinds; none when left out.
+  /** Image: per generated image, or by size tier when the price depends on the size. */
+  pricePerImage: unitPriceSchema.optional(),
+  pricePerImageBySize: pricesByTierSchema.optional(),
+  pricePerInputImage: unitPriceSchema.optional(),
+  /** Video: per output second, by resolution. */
+  pricePerSecondByResolution: pricesByTierSchema.optional(),
+  /** Speech: per million input characters. */
+  pricePerMillionCharacters: unitPriceSchema.optional(),
+  /** Transcription: per second of input audio. */
+  pricePerAudioSecond: unitPriceSchema.optional(),
+  maxInputImages: z.int().nonnegative().nullable().optional(),
+  minDurationSeconds: z.int().positive().nullable().optional(),
+  maxDurationSeconds: z.int().positive().nullable().optional(),
+  /** Video resolutions, such as `720P`. */
+  resolutions: supportedValuesSchema.optional(),
+  /** Image sizes, such as `1024*1024`. */
+  sizes: supportedValuesSchema.optional(),
   /** None when left out: the model then gets no Service Tier. */
   serviceTiers: serviceTiersSchema.optional(),
   /** Only for tiers that cost other than the standard prices. */

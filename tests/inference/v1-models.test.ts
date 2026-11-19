@@ -55,6 +55,7 @@ describe("GET /v1/models (e2e)", () => {
           object: "model",
           created: expect.any(Number),
           owned_by: "routerlm",
+          kind: "chat",
           capabilities: ALL_CAPABILITIES,
         },
       ],

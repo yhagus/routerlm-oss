@@ -1,6 +1,7 @@
 import { boolean, index, integer, jsonb, numeric, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
 import { at, createdAt, id } from "./columns.js";
+import { MODEL_KINDS, type ModelKind } from "./upstream.js";
 
 // Records, written by the worker. Usage Logs and Attempts hold measurements,
 // and a snapshot of what served them (ADR 0024): plain ids with no foreign
@@ -11,6 +12,13 @@ import { at, createdAt, id } from "./columns.js";
 
 export const CLIENT_PROTOCOLS = ["openai-chat", "anthropic-messages", "openai-responses"] as const;
 export type ClientProtocol = (typeof CLIENT_PROTOCOLS)[number];
+
+/** The Model Kind each client Protocol's endpoint serves: a Model of another Kind is refused there. */
+export const CLIENT_PROTOCOL_KINDS = {
+  "openai-chat": "chat",
+  "anthropic-messages": "chat",
+  "openai-responses": "chat",
+} as const satisfies Record<ClientProtocol, ModelKind>;
 
 /** The error contract's codes, as the client receives them. */
 export const GATEWAY_ERROR_CODES = [
@@ -68,6 +76,8 @@ export const usageLogs = pgTable(
     providerSlug: text("provider_slug"),
     providerAccountId: uuid("provider_account_id"),
     providerAccountName: text("provider_account_name"),
+    // The Kind of the client endpoint the request came to (CLIENT_PROTOCOL_KINDS).
+    kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
     clientProtocol: text("client_protocol", { enum: CLIENT_PROTOCOLS }).notNull(),
     isStreamed: boolean("is_streamed").notNull(),
     httpStatus: integer("http_status").notNull(),
@@ -78,6 +88,14 @@ export const usageLogs = pgTable(
     cacheReadTokens: integer("cache_read_tokens"),
     cacheWriteTokens: integer("cache_write_tokens"),
     reasoningTokens: integer("reasoning_tokens"),
+    // The units a media Kind counts; null for chat, and for a unit the Kind doesn't count.
+    imagesOut: integer("images_out"),
+    imagesIn: integer("images_in"),
+    outputSeconds: integer("output_seconds"),
+    audioSeconds: numeric("audio_seconds", { precision: 12, scale: 3, mode: "number" }),
+    characters: integer("characters"),
+    // The size or resolution that priced the units, such as `2K` or `720P`.
+    unitTier: text("unit_tier"),
     requestBytes: integer("request_bytes").notNull(),
     responseBytes: integer("response_bytes").notNull(),
     // The Service Tier that served the request; null for the Provider's default.

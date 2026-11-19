@@ -10,6 +10,39 @@ function fillPrice(column: AnyColumn, catalogPrice: number | null): SQL {
   return sql`coalesce(${column}, ${catalogPrice}::numeric)`;
 }
 
+/** As fillPrice, for a value of another SQL type; one parameter even for an array. */
+function fillEmpty(
+  column: AnyColumn,
+  catalogValue: unknown,
+  sqlType: "integer" | "jsonb" | "text[]",
+): SQL {
+  const value =
+    sqlType === "jsonb" && catalogValue != null ? JSON.stringify(catalogValue) : catalogValue;
+  return sql`coalesce(${column}, ${sql.param(value ?? null)}::${sql.raw(sqlType)})`;
+}
+
+/** The Upstream Model columns a seed fills when they are empty (ADR 0003). */
+const FILLED_WHEN_EMPTY: AnyColumn[] = [
+  upstreamModels.name,
+  upstreamModels.releaseDate,
+  upstreamModels.maxOutputTokens,
+  upstreamModels.inputPrice,
+  upstreamModels.outputPrice,
+  upstreamModels.cacheReadPrice,
+  upstreamModels.cacheWritePrice,
+  upstreamModels.pricePerImage,
+  upstreamModels.pricePerImageBySize,
+  upstreamModels.pricePerInputImage,
+  upstreamModels.pricePerSecondByResolution,
+  upstreamModels.pricePerMillionCharacters,
+  upstreamModels.pricePerAudioSecond,
+  upstreamModels.maxInputImages,
+  upstreamModels.minDurationSeconds,
+  upstreamModels.maxDurationSeconds,
+  upstreamModels.resolutions,
+  upstreamModels.sizes,
+];
+
 @CommandHandler(SeedCatalogCommand)
 export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
   constructor(@InjectDrizzle() private readonly db: Database) {}
@@ -69,6 +102,18 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               outputPrice: model.outputPrice,
               cacheReadPrice: model.cacheReadPrice,
               cacheWritePrice: model.cacheWritePrice,
+              kind: model.kind ?? "chat",
+              pricePerImage: model.pricePerImage ?? null,
+              pricePerImageBySize: model.pricePerImageBySize ?? null,
+              pricePerInputImage: model.pricePerInputImage ?? null,
+              pricePerSecondByResolution: model.pricePerSecondByResolution ?? null,
+              pricePerMillionCharacters: model.pricePerMillionCharacters ?? null,
+              pricePerAudioSecond: model.pricePerAudioSecond ?? null,
+              maxInputImages: model.maxInputImages ?? null,
+              minDurationSeconds: model.minDurationSeconds ?? null,
+              maxDurationSeconds: model.maxDurationSeconds ?? null,
+              resolutions: model.resolutions ?? null,
+              sizes: model.sizes ?? null,
               serviceTiers: model.serviceTiers ?? [],
               tierPrices: model.tierPrices ?? {},
               releaseDate: model.releaseDate,
@@ -81,7 +126,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         result.createdUpstreamModels += createdModels.length;
 
         // The one exception to never changing existing rows (ADR 0003): an
-        // empty name, Release Date, max output or price gets the Catalog's value, so rows seeded
+        // empty name, Release Date, max output, price or media limit gets the Catalog's value, so rows seeded
         // before the Catalog knew it catch up. A value that is already set,
         // Catalog or operator, is left alone.
         for (const model of entry.upstreamModels) {
@@ -95,20 +140,52 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               outputPrice: fillPrice(upstreamModels.outputPrice, model.outputPrice),
               cacheReadPrice: fillPrice(upstreamModels.cacheReadPrice, model.cacheReadPrice),
               cacheWritePrice: fillPrice(upstreamModels.cacheWritePrice, model.cacheWritePrice),
+              pricePerImage: fillPrice(upstreamModels.pricePerImage, model.pricePerImage ?? null),
+              pricePerImageBySize: fillEmpty(
+                upstreamModels.pricePerImageBySize,
+                model.pricePerImageBySize,
+                "jsonb",
+              ),
+              pricePerInputImage: fillPrice(
+                upstreamModels.pricePerInputImage,
+                model.pricePerInputImage ?? null,
+              ),
+              pricePerSecondByResolution: fillEmpty(
+                upstreamModels.pricePerSecondByResolution,
+                model.pricePerSecondByResolution,
+                "jsonb",
+              ),
+              pricePerMillionCharacters: fillPrice(
+                upstreamModels.pricePerMillionCharacters,
+                model.pricePerMillionCharacters ?? null,
+              ),
+              pricePerAudioSecond: fillPrice(
+                upstreamModels.pricePerAudioSecond,
+                model.pricePerAudioSecond ?? null,
+              ),
+              maxInputImages: fillEmpty(
+                upstreamModels.maxInputImages,
+                model.maxInputImages,
+                "integer",
+              ),
+              minDurationSeconds: fillEmpty(
+                upstreamModels.minDurationSeconds,
+                model.minDurationSeconds,
+                "integer",
+              ),
+              maxDurationSeconds: fillEmpty(
+                upstreamModels.maxDurationSeconds,
+                model.maxDurationSeconds,
+                "integer",
+              ),
+              resolutions: fillEmpty(upstreamModels.resolutions, model.resolutions, "text[]"),
+              sizes: fillEmpty(upstreamModels.sizes, model.sizes, "text[]"),
             })
             .where(
               and(
                 eq(upstreamModels.providerId, provider.id),
                 eq(upstreamModels.upstreamModelId, model.upstreamModelId),
-                or(
-                  isNull(upstreamModels.name),
-                  isNull(upstreamModels.releaseDate),
-                  isNull(upstreamModels.maxOutputTokens),
-                  isNull(upstreamModels.inputPrice),
-                  isNull(upstreamModels.outputPrice),
-                  isNull(upstreamModels.cacheReadPrice),
-                  isNull(upstreamModels.cacheWritePrice),
-                ),
+                or(...FILLED_WHEN_EMPTY.map((column) => isNull(column))),
               ),
             );
         }
