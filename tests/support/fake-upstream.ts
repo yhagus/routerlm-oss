@@ -5,13 +5,18 @@ import { portOf } from "./port-of.js";
 
 /** What the fake upstream answers to the next request. */
 export type FakeReply =
-  /** `delayMs` holds the whole answer back, as a slow but healthy non-stream upstream. */
+  /**
+   * `delayMs` holds the whole answer back, as a slow but healthy non-stream
+   * upstream. `onReceived` runs when the request arrives, before the answer:
+   * to change the world between the gateway's call and what it does next.
+   */
   | {
       kind: "json";
       status: number;
       body: unknown;
       headers?: Record<string, string>;
       delayMs?: number;
+      onReceived?: () => void;
     }
   /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
   | { kind: "stream"; events: string; holdOpen?: boolean }
@@ -274,6 +279,7 @@ export class FakeUpstream {
     }
     switch (reply.kind) {
       case "json":
+        reply.onReceived?.();
         setTimeout(() => {
           response.writeHead(reply.status, {
             "content-type": "application/json",

@@ -261,20 +261,16 @@ describe("Image generation on /v1/images/generations (e2e)", () => {
   });
 
   it("refuses a generated image on a private address when the deployment doesn't allow them", async () => {
+    // The generation call goes out while private upstreams are allowed; only
+    // the media fetch after it runs without that allowance.
     upstream.replyTo(GENERATION_PATH, {
       ...generated("/media/a.png", "/media/b.png"),
-      delayMs: 300,
+      onReceived: () => vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false"),
     });
     serveImages("/media/a.png", "/media/b.png");
 
-    const pending = generate().then((response) => response);
-    // The generation call itself went out while private upstreams were allowed;
-    // only the media fetch after it runs without that allowance.
-    await expect.poll(() => generationRequests().length).toBe(1);
-    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
-    const response = await pending;
+    await generate().expect(502);
 
-    expect(response.status).toBe(502);
     expect(upstream.requests.map((received) => received.path)).toEqual([GENERATION_PATH]);
   });
 });
