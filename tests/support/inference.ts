@@ -50,6 +50,10 @@ export interface UpstreamModelLimits {
   sizes?: string[];
   /** USD per generated image, by size tier (`1K`, `2K`). */
   pricePerImageBySize?: Record<string, number>;
+  /** USD per input image of an image edit. */
+  pricePerInputImage?: number;
+  /** The most input images it takes; any number when not given. */
+  maxInputImages?: number;
   /** USD per million characters of synthesized speech. */
   pricePerMillionCharacters?: number;
 }
@@ -227,6 +231,8 @@ async function insertRoute(
       maxOutputTokens: options.maxOutputTokens,
       sizes: options.sizes,
       pricePerImageBySize: options.pricePerImageBySize,
+      pricePerInputImage: options.pricePerInputImage,
+      maxInputImages: options.maxInputImages,
       pricePerMillionCharacters: options.pricePerMillionCharacters,
     })
     .returning({ id: upstreamModels.id });

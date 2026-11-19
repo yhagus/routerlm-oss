@@ -218,8 +218,12 @@ function providerName(model: UpstreamModel): string {
   return providerById.value.get(model.providerId)?.name ?? "—";
 }
 
-/** Compares two optional prices; models without a price always sort last. */
-function comparePrices(first: number | null, second: number | null, direction: 1 | -1): number {
+/** Compares two optional numbers, such as prices; models without one always sort last. */
+function compareOptionalNumbers(
+  first: number | null,
+  second: number | null,
+  direction: 1 | -1,
+): number {
   if (first === null || second === null)
     return (first === null ? 1 : 0) - (second === null ? 1 : 0);
   return (first - second) * direction;
@@ -254,13 +258,13 @@ function compareModels(first: UpstreamModel, second: UpstreamModel): number {
     case "provider":
       return providerName(first).localeCompare(providerName(second)) || byName;
     case "input-asc":
-      return comparePrices(first.inputPrice, second.inputPrice, 1) || byName;
+      return compareOptionalNumbers(first.inputPrice, second.inputPrice, 1) || byName;
     case "input-desc":
-      return comparePrices(first.inputPrice, second.inputPrice, -1) || byName;
+      return compareOptionalNumbers(first.inputPrice, second.inputPrice, -1) || byName;
     case "output-asc":
-      return comparePrices(first.outputPrice, second.outputPrice, 1) || byName;
+      return compareOptionalNumbers(first.outputPrice, second.outputPrice, 1) || byName;
     case "context-desc":
-      return second.contextSize - first.contextSize || byName;
+      return compareOptionalNumbers(first.contextSize, second.contextSize, -1) || byName;
     default:
       return byName;
   }
@@ -274,7 +278,8 @@ const filteredModels = computed(() => {
     const slug = providerById.value.get(model.providerId)?.slug ?? "";
     if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
     if (kindFilter.value.length && !kindFilter.value.includes(model.kind)) return false;
-    if (model.contextSize < minContext) return false;
+    // A model without a known context size can't be shown to reach the minimum.
+    if ((model.contextSize ?? 0) < minContext) return false;
     // A model without a Release Date can't be shown to fall inside the window.
     if (releasedSince !== null && (model.releaseDate ?? "") < releasedSince) return false;
     // A model must have every picked capability.
@@ -649,7 +654,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
     name: upstreamModel.name ?? "",
     kind: upstreamModel.kind,
     capabilities: [...upstreamModel.capabilities],
-    contextSize: upstreamModel.contextSize,
+    contextSize: numberField(upstreamModel.contextSize),
     maxOutputTokens: numberField(upstreamModel.maxOutputTokens),
     inputPrice: numberField(upstreamModel.inputPrice),
     outputPrice: numberField(upstreamModel.outputPrice),
@@ -947,7 +952,9 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       <template v-if="isUpstreamModelGroup(row)">{{
         groupTokenRange(row, "contextSize")
       }}</template>
-      <template v-else>{{ tokenFormat.format(row.contextSize) }}</template>
+      <template v-else>{{
+        row.contextSize === null ? "—" : tokenFormat.format(row.contextSize)
+      }}</template>
     </template>
     <template #cell-maxOutput="{ row }">
       <template v-if="isUpstreamModelGroup(row)">{{
@@ -1085,7 +1092,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         <section class="model-details__section">
           <h3>Limits</h3>
           <dl class="model-details__list">
-            <div>
+            <div v-if="detailsModel.contextSize !== null">
               <dt>Context window</dt>
               <dd class="tabular">
                 {{ formatNumberInput(String(detailsModel.contextSize)) }}
@@ -1249,7 +1256,6 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             tokens
             :min="1"
             placeholder="e.g. 128k or 1m"
-            required
         /></label>
         <label v-if="isChatForm" class="field"
           ><span class="field__label">Max output (tokens)</span

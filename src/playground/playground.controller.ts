@@ -1,7 +1,29 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { CurrentUser } from "@nestjs/authentication";
-import { Body, HttpCode, Param, ParseUUIDPipe, Post, Req, Res, UseFilters } from "@nestjs/common";
+import {
+  Body,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req,
+  Res,
+  UploadedFiles,
+  UseFilters,
+  UseInterceptors,
+} from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
+import { FileFieldsInterceptor } from "@nestjs/platform-node";
+import { MEDIA_UPLOAD_OPTIONS } from "@/inference/models/uploaded-file.js";
+import {
+  IMAGE_EDIT_FILE_FIELDS,
+  type ImageEditFiles,
+  imageEditBodyOf,
+} from "@/inference/protocols/openai-images/openai-image-edits-form.js";
+import {
+  openAiImageEditsClientContract,
+  openAiImagesClientContract,
+} from "@/inference/protocols/openai-images/openai-images-client-contract.js";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import { clientConnectionOf } from "@/libs/models/client-connection.js";
 import { eventStreamResponse } from "@/libs/models/event-stream-response.js";
@@ -65,9 +87,13 @@ export class PlaygroundController {
     @Res({ passthrough: true }) response: ServerResponse,
   ): Promise<PlaygroundImageGeneration> {
     return this.commandBus.execute(
-      new SendPlaygroundImageGenerationCommand(body, user, clientConnectionOf(request, response), {
-        kind: "named-model",
-      }),
+      new SendPlaygroundImageGenerationCommand(
+        openAiImagesClientContract,
+        body,
+        user,
+        clientConnectionOf(request, response),
+        { kind: "named-model" },
+      ),
     );
   }
 
@@ -82,10 +108,58 @@ export class PlaygroundController {
     @Res({ passthrough: true }) response: ServerResponse,
   ): Promise<PlaygroundImageGeneration> {
     return this.commandBus.execute(
-      new SendPlaygroundImageGenerationCommand(body, user, clientConnectionOf(request, response), {
-        kind: "upstream-model",
-        upstreamModelId,
-      }),
+      new SendPlaygroundImageGenerationCommand(
+        openAiImagesClientContract,
+        body,
+        user,
+        clientConnectionOf(request, response),
+        { kind: "upstream-model", upstreamModelId },
+      ),
+    );
+  }
+
+  /** An image edit as a client sends it to `/v1/images/edits`: JSON, or a multipart upload. */
+  @Post("images/edits")
+  @HttpCode(200)
+  @UseInterceptors(FileFieldsInterceptor([...IMAGE_EDIT_FILE_FIELDS], MEDIA_UPLOAD_OPTIONS))
+  editImage(
+    @Body() body: unknown,
+    @UploadedFiles() files: ImageEditFiles | undefined,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundImageGeneration> {
+    return this.commandBus.execute(
+      new SendPlaygroundImageGenerationCommand(
+        openAiImageEditsClientContract,
+        imageEditBodyOf(body, files),
+        user,
+        clientConnectionOf(request, response),
+        { kind: "named-model" },
+      ),
+    );
+  }
+
+  /** A direct Upstream Model test of image edits: the body's `model` is not resolved. */
+  @Post("upstream-models/:upstreamModelId/images/edits")
+  @HttpCode(200)
+  @UseInterceptors(FileFieldsInterceptor([...IMAGE_EDIT_FILE_FIELDS], MEDIA_UPLOAD_OPTIONS))
+  editImageWithUpstreamModel(
+    @Param("upstreamModelId", ParseUUIDPipe) upstreamModelId: string,
+    @Body() body: unknown,
+    @UploadedFiles() files: ImageEditFiles | undefined,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundImageGeneration> {
+    return this.commandBus.execute(
+      new SendPlaygroundImageGenerationCommand(
+        openAiImageEditsClientContract,
+        imageEditBodyOf(body, files),
+        user,
+        clientConnectionOf(request, response),
+        { kind: "upstream-model", upstreamModelId },
+      ),
     );
   }
 

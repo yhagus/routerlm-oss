@@ -1,10 +1,6 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { CLIENT_PROTOCOL_KINDS, type ModelKind } from "@/db/schemas/index.js";
-import type {
-  SnapshotModel,
-  SnapshotRoute,
-  SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot.js";
+import { CLIENT_PROTOCOL_KINDS, type ModelKind, type ParameterPolicy } from "@/db/schemas/index.js";
+import type { SnapshotRoute, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
@@ -18,7 +14,7 @@ import {
 import { GatewayError } from "../../models/gateway-error.js";
 import type { InferenceCaller } from "../../models/inference.js";
 import type { MediaClientContract, MediaReply, MediaRequest } from "../../models/media-kind.js";
-import { effectiveParameterPolicy } from "../../models/parameter-policy.js";
+import { effectiveParameterPolicy, isWatermarkedUnder } from "../../models/parameter-policy.js";
 import { failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
 import { type AttemptTarget, endpointOf, routePath } from "../../models/route-selection.js";
 import { UsageMeter } from "../../models/usage-meter.js";
@@ -84,8 +80,8 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       sentServiceTier: null,
       send: async (credential) => {
         const outcome = await this.upstream.generate({
-          ...this.upstreamCallFor(contract, attemptTarget, credential),
-          request: policedRequest(contract, request, destination.model, attemptTarget.route),
+          ...this.upstreamCallFor(contract, destination, attemptTarget, credential),
+          request: policedRequest(contract, request, destination, attemptTarget.route),
           clientSignal: connection.signal,
         });
         meter.attemptAnswered();
@@ -148,6 +144,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
 
   private upstreamCallFor(
     contract: MediaClientContract<MediaRequest, unknown>,
+    destination: Destination,
     { route, upstreamModel }: AttemptTarget,
     credential: ProviderAccountCredential,
   ) {
@@ -162,7 +159,11 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     }
     return {
       protocol,
-      target: { baseUrl: endpoint.baseUrl, upstreamModelId: upstreamModel.upstreamModelId },
+      target: {
+        baseUrl: endpoint.baseUrl,
+        upstreamModelId: upstreamModel.upstreamModelId,
+        isWatermarked: isWatermarkedOn(destination, route),
+      },
       authHeaders: {
         ...credential.identityHeaders,
         ...upstreamAuthHeaders(provider.authStyle, credential.secret),
@@ -173,22 +174,40 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
 }
 
 /**
- * The request one Attempt sends: under the Model's Parameter Policy with the
- * Route's override. A direct Upstream Model test has no Model, so no policy.
+ * The Parameter Policy one Attempt goes under: the Model's, with the Route's
+ * override. Null for a direct Upstream Model test, which has no Model.
  */
+function attemptPolicyOf(
+  destination: Destination,
+  route: SnapshotRoute | null,
+): ParameterPolicy | null {
+  if (!destination.model) {
+    return null;
+  }
+  return effectiveParameterPolicy(
+    destination.model.parameterPolicy,
+    route?.parameterPolicyOverride ?? null,
+  );
+}
+
+/** The request one Attempt sends, under its Parameter Policy. */
 function policedRequest(
   contract: MediaClientContract<MediaRequest, unknown>,
   request: MediaRequest,
-  model: SnapshotModel | null,
+  destination: Destination,
   route: SnapshotRoute | null,
 ): MediaRequest {
-  if (!model || !contract.applyParameterPolicy) {
+  const policy = attemptPolicyOf(destination, route);
+  if (!policy || !contract.applyParameterPolicy) {
     return request;
   }
-  return contract.applyParameterPolicy(
-    request,
-    effectiveParameterPolicy(model.parameterPolicy, route?.parameterPolicyOverride ?? null),
-  );
+  return contract.applyParameterPolicy(request, policy);
+}
+
+/** Whether the Route's Parameter Policy turns the watermark on; a direct test has no policy. */
+function isWatermarkedOn(destination: Destination, route: SnapshotRoute | null): boolean {
+  const policy = attemptPolicyOf(destination, route);
+  return policy !== null && isWatermarkedUnder(policy);
 }
 
 /** The reason no Route could serve the request, from the first Route that gives one. */

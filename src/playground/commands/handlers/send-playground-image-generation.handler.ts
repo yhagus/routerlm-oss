@@ -1,6 +1,5 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
-import { openAiImagesClientContract } from "@/inference/protocols/openai-images/openai-images-client-contract.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 import type { PlaygroundImageGeneration } from "../../models/playground-image-generation.js";
@@ -17,6 +16,7 @@ export class SendPlaygroundImageGenerationHandler implements ICommandHandler<Sen
   ) {}
 
   async execute({
+    contract,
     body,
     user,
     connection,
@@ -25,7 +25,7 @@ export class SendPlaygroundImageGenerationHandler implements ICommandHandler<Sen
     let usage: UsageJob | undefined;
     const result = await this.commandBus.execute(
       new RunMediaInferenceCommand(
-        openAiImagesClientContract,
+        contract,
         body,
         { kind: "playground", userId: user.id },
         connection,

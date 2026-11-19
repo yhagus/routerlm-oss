@@ -14,6 +14,7 @@ export const POLICY_PARAMETERS = [
   "stopSequences",
   "serviceTier",
   "voice",
+  "watermark",
 ] as const satisfies readonly (keyof ParameterValues)[];
 
 type PolicyParameter = (typeof POLICY_PARAMETERS)[number];
@@ -139,7 +140,20 @@ function setsParameter(policy: ParameterPolicy, parameter: PolicyParameter): boo
 }
 
 function isCapped(parameter: PolicyParameter): parameter is CappedParameter {
-  return parameter !== "stopSequences" && parameter !== "serviceTier" && parameter !== "voice";
+  return (
+    parameter !== "stopSequences" &&
+    parameter !== "serviceTier" &&
+    parameter !== "voice" &&
+    parameter !== "watermark"
+  );
+}
+
+/**
+ * Whether a media Provider should mark what it generates under this policy.
+ * A client can't ask for a watermark, so a default decides it as a forced value does.
+ */
+export function isWatermarkedUnder({ defaults, forced }: ParameterPolicy): boolean {
+  return forced?.watermark ?? defaults?.watermark ?? false;
 }
 
 function copyRules(from: ParameterPolicy, to: ParameterPolicy, parameter: PolicyParameter): void {

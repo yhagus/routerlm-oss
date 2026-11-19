@@ -1,7 +1,18 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Authenticate, CurrentUser } from "@nestjs/authentication";
-import { Body, Controller, Get, HttpCode, Post, Req, Res } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  Res,
+  UploadedFiles,
+  UseInterceptors,
+} from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import { FileFieldsInterceptor } from "@nestjs/platform-node";
 import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
 import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
 import { clientConnectionOf } from "@/libs/models/client-connection.js";
@@ -14,7 +25,16 @@ import { RunMediaInferenceCommand } from "./commands/impl/run-media-inference.co
 import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
-import { openAiImagesClientContract } from "./protocols/openai-images/openai-images-client-contract.js";
+import { MEDIA_UPLOAD_OPTIONS } from "./models/uploaded-file.js";
+import {
+  IMAGE_EDIT_FILE_FIELDS,
+  type ImageEditFiles,
+  imageEditBodyOf,
+} from "./protocols/openai-images/openai-image-edits-form.js";
+import {
+  openAiImageEditsClientContract,
+  openAiImagesClientContract,
+} from "./protocols/openai-images/openai-images-client-contract.js";
 import { openAiSpeechClientContract } from "./protocols/openai-speech/openai-speech-client-contract.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
 
@@ -124,6 +144,28 @@ export class InferenceController {
       new RunMediaInferenceCommand(
         openAiSpeechClientContract,
         body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
+    );
+    return replyWithMedia(reply, response);
+  }
+
+  /** JSON, or a multipart form with the images uploaded as files. */
+  @Post("images/edits")
+  @HttpCode(200)
+  @UseInterceptors(FileFieldsInterceptor([...IMAGE_EDIT_FILE_FIELDS], MEDIA_UPLOAD_OPTIONS))
+  async editImage(
+    @Body() body: unknown,
+    @UploadedFiles() files: ImageEditFiles | undefined,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Uint8Array> {
+    const reply = await this.commandBus.execute(
+      new RunMediaInferenceCommand(
+        openAiImageEditsClientContract,
+        imageEditBodyOf(body, files),
         { kind: "api-key", principal },
         clientConnectionOf(request, response),
       ),
