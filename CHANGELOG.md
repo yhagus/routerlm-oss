@@ -1,33 +1,81 @@
 # v5.0.0 (2026-11-19)
 
-## Upgrade
+#### Notable changes
 
-- Run `docker compose pull`, then `docker compose up -d`. The `migrate` service applies one new migration. It adds Error Origin, User-Agent and client IP columns to Usage Logs, User-Agent and client IP to Error Captures, and the Provider request id to Attempts, and fills in the Error Origin of existing failed Usage Logs.
-- **Breaking:** the `ALLOW_PRIVATE_UPSTREAMS` env variable is removed. An instance that set it refuses its LAN upstreams (Ollama, vLLM and the like) after the upgrade, until a User turns on "Allow private upstreams" in Settings (ADR 0030). Remove the variable from your `.env`.
-- **Personal data:** every Usage Log and Error Capture now records the client's User-Agent and IP address, kept as long as the Usage Logs are (ADR 0032). The IP is the one resolved through `TRUST_PROXY`. Existing rows get neither.
+**Upgrade**
+* Run `docker compose pull`, then `docker compose up -d`. The `migrate` service applies one new migration: Error Origin, User-Agent and client IP on Usage Logs, User-Agent and client IP on Error Captures, and the Provider request id on Attempts. Existing failed Usage Logs get their Error Origin filled in – [30613c8](https://github.com/yhagus/routerlm-oss/commit/30613c80690903253be67fae215369cea449b1c6)
+* **Breaking:** the `ALLOW_PRIVATE_UPSTREAMS` env variable is removed. An instance that set it refuses its LAN upstreams after the upgrade until a User turns on "Allow private upstreams" in Settings (ADR 0030). Remove the variable from your `.env` – [d36cd80](https://github.com/yhagus/routerlm-oss/commit/d36cd805aecce33a4aa3781a0a4c72a59d575442)
+* **Personal data:** every Usage Log and Error Capture records the client's User-Agent and IP address (resolved through `TRUST_PROXY`), kept as long as the Usage Logs are (ADR 0032). Existing rows get neither – [6218868](https://github.com/yhagus/routerlm-oss/commit/62188684eaba1259d32891b46920391bc3ec7fd2)
 
-## Error Origin
+**Error Origin**
+* Every failed request records its Error Origin: Client, Upstream or Gateway. Successful, cancelled and Fallback-recovered requests have none (ADR 0031). Client error codes and messages are unchanged – [6218868](https://github.com/yhagus/routerlm-oss/commit/62188684eaba1259d32891b46920391bc3ec7fd2), [9ad63e5](https://github.com/yhagus/routerlm-oss/commit/9ad63e5712280074d43d0bbd6026e9d681301757)
+* The Overview shows Client, Upstream and Gateway tiles beside the total error rate, each linking to the Usage page filtered to that origin, and stacks the error-rate chart by origin – [c212953](https://github.com/yhagus/routerlm-oss/commit/c2129532b74299709fc1e7b86dbe26a4fb8f1dac), [514f210](https://github.com/yhagus/routerlm-oss/commit/514f21033b1ffc873de9e0283e9152d0181f64a6), [95948ff](https://github.com/yhagus/routerlm-oss/commit/95948ffe3e6ac130f3ef97a00e10ab7777f73bb2)
+* The Usage page filters by Error Origin, shows it next to the error code and splits its failed count by origin – [ab62f08](https://github.com/yhagus/routerlm-oss/commit/ab62f08ee62117ed9cb3d1dc1de5720bcee27d2d), [cf92b04](https://github.com/yhagus/routerlm-oss/commit/cf92b04d6ae4e004c8de07fb252cd24ebdbe8155), [f41b6f7](https://github.com/yhagus/routerlm-oss/commit/f41b6f7b171a9bce2d194146aa3fde3a6c140c73)
 
-- Every failed request records its Error Origin: Client (a bad API Key, an unreadable body, an unknown Model), Upstream (the Provider failed or refused, or every Provider Account was in Cooldown) or Gateway (a fault in the gateway itself). Successful, cancelled and Fallback-recovered requests have none (ADR 0031). The error codes and messages clients receive are unchanged.
-- The Overview shows a Client, an Upstream and a Gateway tile beside the total error rate, each with its rate and failed count. Clicking a tile opens the Usage page filtered to that origin and time range.
-- The error-rate chart is stacked by origin, with a legend to hide each origin and a tooltip listing each origin's rate and count.
-- The Usage page filters by Error Origin, shows it next to the error code, and splits its failed count by origin.
+**Usage Logs**
+* A Usage Log has a detail page with its User-Agent, IP and Attempts, each with the request id its Provider returned (`GET /api/usage/:id`) – [1fd6b2a](https://github.com/yhagus/routerlm-oss/commit/1fd6b2ac381b288df5ad94552124df671e9436b1), [51315a1](https://github.com/yhagus/routerlm-oss/commit/51315a1ffde88e73a9a6ca5451d76925829bef17)
+* The Usage search also matches User-Agents and IP addresses – [ab62f08](https://github.com/yhagus/routerlm-oss/commit/ab62f08ee62117ed9cb3d1dc1de5720bcee27d2d)
+* The Error Capture view shows the User-Agent, IP and Provider request id – [fdad791](https://github.com/yhagus/routerlm-oss/commit/fdad7912e5fc173789ca805818967d29b8f6c496)
 
-## Usage Logs
+**Settings**
+* "Allow private upstreams" lets Provider URLs point at private hosts over plain http, changed from the dashboard while the gateway runs – [d36cd80](https://github.com/yhagus/routerlm-oss/commit/d36cd805aecce33a4aa3781a0a4c72a59d575442)
 
-- A Usage Log has a detail page, opened from its row: its Error Origin, User-Agent, IP, tokens and Cost, and its Attempts with the request id each Provider returned.
-- The Usage page search also matches User-Agents and IP addresses.
-- The Error Capture view shows the User-Agent, the IP and the Provider request id of its failed Attempt, and links to its Usage Log.
-- The dashboard API adds `GET /api/usage/:id`, an `errorOrigin` filter on `/api/usage` and `/api/usage/totals`, `failedByOrigin` on the totals, and `errorsByOrigin` and `failedCount` on each Overview bucket and the totals.
+#### Features
+* `demo`
+  * [d1c78eb](https://github.com/yhagus/routerlm-oss/commit/d1c78eb2868f1bdb6d366e639648e7a4be609a15) feat(demo): record error origin, user-agent and client ip on demo traffic
+* `overview`
+  * [514f210](https://github.com/yhagus/routerlm-oss/commit/514f21033b1ffc873de9e0283e9152d0181f64a6) feat(overview): count failed requests and share the per-origin predicate
+  * [c212953](https://github.com/yhagus/routerlm-oss/commit/c2129532b74299709fc1e7b86dbe26a4fb8f1dac) feat(overview): split failed requests by error origin
+* `settings`
+  * [d36cd80](https://github.com/yhagus/routerlm-oss/commit/d36cd805aecce33a4aa3781a0a4c72a59d575442) feat(settings): allow private upstreams from a runtime setting (**breaking**)
+* `usage`
+  * [6218868](https://github.com/yhagus/routerlm-oss/commit/62188684eaba1259d32891b46920391bc3ec7fd2) feat(usage): record error origin, client user-agent, ip and provider request id
+  * [1fd6b2a](https://github.com/yhagus/routerlm-oss/commit/1fd6b2ac381b288df5ad94552124df671e9436b1) feat(usage): add usage log detail route with its attempts
+  * [cf92b04](https://github.com/yhagus/routerlm-oss/commit/cf92b04d6ae4e004c8de07fb252cd24ebdbe8155) feat(usage): split the summary's failed count by error origin
+  * [ab62f08](https://github.com/yhagus/routerlm-oss/commit/ab62f08ee62117ed9cb3d1dc1de5720bcee27d2d) feat(usage): filter usage logs by error origin and search user-agent and ip
+  * [30613c8](https://github.com/yhagus/routerlm-oss/commit/30613c80690903253be67fae215369cea449b1c6) feat(usage): add error origin, client user-agent and ip columns
+* `web`
+  * [f41b6f7](https://github.com/yhagus/routerlm-oss/commit/f41b6f7b171a9bce2d194146aa3fde3a6c140c73) feat(web): filter and badge usage logs by error origin
+  * [fdad791](https://github.com/yhagus/routerlm-oss/commit/fdad7912e5fc173789ca805818967d29b8f6c496) feat(web): show user-agent, ip and provider request id on error captures
+  * [51315a1](https://github.com/yhagus/routerlm-oss/commit/51315a1ffde88e73a9a6ca5451d76925829bef17) feat(web): add the usage log detail view with its attempts
+  * [780cc70](https://github.com/yhagus/routerlm-oss/commit/780cc705a0e300778fe1652d7e4c874adb477c71) feat(web): mirror error origin, user-agent and ip in usage and capture types
+  * [95948ff](https://github.com/yhagus/routerlm-oss/commit/95948ffe3e6ac130f3ef97a00e10ab7777f73bb2) feat(web): show overview error rates by origin
 
-## Settings
+#### Bug fixes
+* `inference`
+  * [9ad63e5](https://github.com/yhagus/routerlm-oss/commit/9ad63e5712280074d43d0bbd6026e9d681301757) fix(inference): close the attempt of a refused stream as interrupted
 
-- "Allow private upstreams" lets Provider URLs point at private hosts and plain http, changed from the dashboard while the gateway runs. It takes effect at the next snapshot reload.
+#### Refactors
+* `inference`
+  * [c979b90](https://github.com/yhagus/routerlm-oss/commit/c979b90ea471ca2a2933ca7b5562fc45c37ead33) refactor(inference): read upstream response headers once and name the media request
+* `usage`
+  * [0d9a59c](https://github.com/yhagus/routerlm-oss/commit/0d9a59c0cb594a546939ac11612687c21c899eb7) refactor(usage): build per-origin breakdowns from one helper and predicate
+* `web`
+  * [fca03ba](https://github.com/yhagus/routerlm-oss/commit/fca03bafa28a4202fd7f7a3d15b9b35f69acf690) refactor(web): share overview tooltip rows and read failedCount
+  * [20465d3](https://github.com/yhagus/routerlm-oss/commit/20465d3d0caa2da249184f9b8d5e7bb48a82a3f4) refactor(web): share one attempt outcome label helper
 
-## Other
+#### Docs
+* `adr`
+  * [e729279](https://github.com/yhagus/routerlm-oss/commit/e729279a2774e8520d6a1a4592963a4aa290e6a2) docs(adr): define error origin and record client user-agent and ip
+* `readme`
+  * [dae8801](https://github.com/yhagus/routerlm-oss/commit/dae88012ed2713a9685d6b5b5060faa9e0c81bc3) docs(readme): drop emoji from headings, nav and bullets
+  * [8ed6d75](https://github.com/yhagus/routerlm-oss/commit/8ed6d75bf7a320d6ad198cf066056cce0f0b3295) docs(readme): restyle with a centered header, sections and endpoints table
+  * [3750dd9](https://github.com/yhagus/routerlm-oss/commit/3750dd9c235c3a1f11a4809ff97bb356f057c023) docs(readme): cover media models, api key management and encryption
 
-- A stream the gateway stops because the upstream interleaved tool call arguments is recorded as an Upstream failure, and its Attempt as interrupted.
-- The NOTICE file no longer carries the 9router attribution.
+#### Tests
+* `usage`
+  * [53813f6](https://github.com/yhagus/routerlm-oss/commit/53813f6f2151cd8915b004321fe6327c7ace6fcf) test(usage): read attempt request ids from the usage detail API
+
+#### Chores
+* `claude`
+  * [a41f56b](https://github.com/yhagus/routerlm-oss/commit/a41f56bf5097b7afbec0eb0a8946cb7cab4940ea) chore(claude): add a skill to run the dashboard on demo data
+* `license`
+  * [eafd431](https://github.com/yhagus/routerlm-oss/commit/eafd4318418c90ecc179b7d83ca2b5c7539af4a8) chore(license): drop 9router attribution from notice
+* `scripts`
+  * [6fb9e50](https://github.com/yhagus/routerlm-oss/commit/6fb9e5041d799b6f2fd9515faa834200db85bee7) chore(scripts): fail on web copies of backend constants missing a mirror
+  * [3dfd792](https://github.com/yhagus/routerlm-oss/commit/3dfd79280eda4443e2f1db424d70fd2afc75e2cd) chore(scripts): check the web copy of error origins
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v4.0.0...v5.0.0
 
 # v4.0.0 (2026-11-19)
 
