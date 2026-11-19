@@ -3,6 +3,7 @@ import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
 import type {
   AuthStyle,
   Capability,
+  ModelKind,
   ParameterPolicy,
   ServiceTierValues,
   TierPrices,
@@ -39,13 +40,19 @@ export interface SnapshotProviderAccount {
   isEnabled: boolean;
 }
 
+/** Where, and in which Protocol, a Provider serves one Model Kind (ADR 0026). */
+export interface SnapshotEndpoint {
+  protocol: UpstreamProtocol;
+  baseUrl: string;
+}
+
 export interface SnapshotProvider {
   id: string;
   slug: string;
   /** The display name, which Attempts copy for the Error Captures list. */
   name: string;
-  protocol: UpstreamProtocol;
-  baseUrl: string;
+  /** Where the Provider serves each Model Kind; a Kind it has no endpoint for is missing. */
+  endpoints: Partial<Record<ModelKind, SnapshotEndpoint>>;
   authStyle: AuthStyle;
   /** Validated once, when the snapshot loads: read them with `validQuirksOf`. */
   quirks: z.ZodSafeParseResult<StoredProviderQuirks>;

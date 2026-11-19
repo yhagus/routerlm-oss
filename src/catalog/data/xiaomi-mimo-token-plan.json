@@ -3,8 +3,13 @@
   "name": "Xiaomi MiMo Token Plan",
   "logo": "xiaomimimo",
   "termsRisk": true,
-  "protocol": "openai-chat",
-  "baseUrl": "https://token-plan-sgp.xiaomimimo.com/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://token-plan-sgp.xiaomimimo.com/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {},
   "modelsDevProviderId": "xiaomi-token-plan-sgp",

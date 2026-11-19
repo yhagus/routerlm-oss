@@ -1,0 +1,117 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "681be249-5095-4b7f-bbba-686ad79cf8b4",
+  "prevIds": [
+    "043f61c2-f9b3-4721-81a2-2a052273bf69"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "endpoints"
+      ],
+      "writes": [
+        "s|col|public.providers.endpoints",
+        "n|col|public.providers.endpoints",
+        "e|col|public.providers.endpoints"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "protocol"
+      ],
+      "writes": [
+        "s|col|public.providers.protocol",
+        "n|col|public.providers.protocol",
+        "e|col|public.providers.protocol"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "drop_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "base_url"
+      ],
+      "writes": [
+        "s|col|public.providers.base_url",
+        "n|col|public.providers.base_url",
+        "e|col|public.providers.base_url"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "alter_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "providers"
+      ],
+      "writes": [
+        "s|ck|public.providers.providers_service_tier_values_protocol_check"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public",
+        "n|col|public.providers.service_tier_values",
+        "n|col|public.providers.endpoints",
+        "e|col|public.providers.service_tier_values"
+      ],
+      "sqlHash": "965ef3c16b17f6b9"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "endpoints",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"providers\",\"protocol\"]"
+    },
+    {
+      "op": "drop",
+      "key": "columns\u0000[\"public\",\"providers\",\"base_url\"]"
+    },
+    {
+      "op": "alter",
+      "key": "checks\u0000[\"public\",\"providers\",\"providers_service_tier_values_protocol_check\"]",
+      "set": {
+        "value": "\"service_tier_values\" = '{}'::jsonb\n      or \"endpoints\" @> '[{\"kind\":\"chat\",\"protocol\":\"openai-chat\"}]'::jsonb or \"endpoints\" @> '[{\"kind\":\"chat\",\"protocol\":\"openai-responses\"}]'::jsonb"
+      }
+    }
+  ]
+}

@@ -46,8 +46,9 @@ describe("Models (e2e)", () => {
       .send({
         slug: providerSlug,
         name: `${providerSlug} AI`,
-        protocol: "openai-chat",
-        baseUrl: `https://api.${providerSlug}.example`,
+        endpoints: [
+          { kind: "chat", protocol: "openai-chat", baseUrl: `https://api.${providerSlug}.example` },
+        ],
         authStyle: "bearer",
       })
       .expect(201);

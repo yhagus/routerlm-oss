@@ -2,9 +2,11 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { z } from "zod";
+import type { UpstreamProtocol } from "@/db/schemas/index.js";
 import {
   type CatalogProvider,
   catalogProviderSchema,
+  chatEndpointOf,
   quirksForeignToProtocol,
   serviceTierValuesForeignToProtocol,
   serviceTiersWithoutWireValue,
@@ -49,18 +51,19 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
     throw new Error(`Catalog ${fileName}: ${problems.join("; ")}`);
   }
 
-  const foreignQuirks = quirksForeignToProtocol(result.data.protocol, result.data.quirks);
+  const chatProtocol = chatEndpointOf(result.data.endpoints)?.protocol;
+  const foreignQuirks = quirksForeignToProtocol(chatProtocol, result.data.quirks);
   if (foreignQuirks.length > 0) {
     throw new Error(
-      `Catalog ${fileName}: quirks ${foreignQuirks.join(", ")} don't apply to ${result.data.protocol}`,
+      `Catalog ${fileName}: quirks ${foreignQuirks.join(", ")} don't apply to ${describeChatProtocol(chatProtocol)}`,
     );
   }
 
   const serviceTierValues = result.data.serviceTierValues ?? {};
-  const foreignTiers = serviceTierValuesForeignToProtocol(result.data.protocol, serviceTierValues);
+  const foreignTiers = serviceTierValuesForeignToProtocol(chatProtocol, serviceTierValues);
   if (foreignTiers.length > 0) {
     throw new Error(
-      `Catalog ${fileName}: Service Tiers ${foreignTiers.join(", ")} don't apply to ${result.data.protocol}`,
+      `Catalog ${fileName}: Service Tiers ${foreignTiers.join(", ")} don't apply to ${describeChatProtocol(chatProtocol)}`,
     );
   }
   for (const model of result.data.upstreamModels) {
@@ -108,4 +111,8 @@ function readUpstreamModelId(json: unknown, index: number): string | undefined {
   if (typeof model !== "object" || model === null || !("upstreamModelId" in model))
     return undefined;
   return typeof model.upstreamModelId === "string" ? model.upstreamModelId : undefined;
+}
+
+function describeChatProtocol(protocol: UpstreamProtocol | undefined): string {
+  return protocol ?? "a Provider without a chat endpoint";
 }

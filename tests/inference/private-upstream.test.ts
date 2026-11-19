@@ -69,7 +69,7 @@ describe("Private upstreams at connect time (e2e)", () => {
     vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
     await db
       .update(providers)
-      .set({ baseUrl: upstream.baseUrl })
+      .set({ endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: upstream.baseUrl }] })
       .where(eq(providers.id, providerId));
     await app.get(SnapshotService).changed();
     upstream.reply(SUCCESS);

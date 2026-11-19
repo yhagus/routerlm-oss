@@ -4,6 +4,8 @@ import type { Database } from "@/db/schemas/relations.js";
 import { SettingsStore } from "@/settings/providers/settings-store.js";
 import {
   apiKeys,
+  type ModelKind,
+  type ProviderEndpoint,
   type CredentialKind,
   models,
   providerAccounts,
@@ -15,6 +17,7 @@ import type {
   Snapshot,
   SnapshotApiKey,
   SnapshotCredential,
+  SnapshotEndpoint,
   SnapshotModel,
   SnapshotProvider,
   SnapshotProviderAccount,
@@ -68,8 +71,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         id: provider.id,
         slug: provider.slug,
         name: provider.name,
-        protocol: provider.protocol,
-        baseUrl: provider.baseUrl,
+        endpoints: endpointsByKind(provider.endpoints),
         authStyle: provider.authStyle,
         quirks: storedProviderQuirksSchema.safeParse(provider.quirks),
         serviceTierValues: provider.serviceTierValues,
@@ -162,6 +164,16 @@ function snapshotCredentialOf(account: {
     return null;
   }
   return { kind: "api-key", encryptedKey: account.encryptedKey };
+}
+
+function endpointsByKind(
+  endpoints: readonly ProviderEndpoint[],
+): Partial<Record<ModelKind, SnapshotEndpoint>> {
+  const byKind: Partial<Record<ModelKind, SnapshotEndpoint>> = {};
+  for (const { kind, protocol, baseUrl } of endpoints) {
+    byKind[kind] = { protocol, baseUrl };
+  }
+  return byKind;
 }
 
 function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {

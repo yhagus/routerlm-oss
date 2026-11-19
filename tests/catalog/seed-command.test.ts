@@ -25,8 +25,7 @@ const catalog: CatalogProvider[] = [
     name: "Example",
     logo: "example",
     termsRisk: true,
-    protocol: "openai-chat",
-    baseUrl: "https://api.example.com/v1",
+    endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.example.com/v1" }],
     authStyle: "bearer",
     quirks: { acceptsCacheControl: true },
     oauthLogin,
@@ -104,8 +103,7 @@ describe("Seed Catalog command (e2e)", () => {
       name: "Example",
       logo: "example",
       termsRisk: true,
-      protocol: "openai-chat",
-      baseUrl: "https://api.example.com/v1",
+      endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.example.com/v1" }],
       authStyle: "bearer",
       quirks: { acceptsCacheControl: true },
       oauthLogin,
@@ -138,7 +136,12 @@ describe("Seed Catalog command (e2e)", () => {
   it("keeps an operator's edits and creates nothing new when run again", async () => {
     await db
       .update(schema.providers)
-      .set({ baseUrl: "https://proxy.internal/v1", isEnabled: false })
+      .set({
+        endpoints: [
+          { kind: "chat", protocol: "openai-chat", baseUrl: "https://proxy.internal/v1" },
+        ],
+        isEnabled: false,
+      })
       .where(eq(schema.providers.slug, "example"));
     await db
       .update(schema.upstreamModels)
@@ -151,7 +154,10 @@ describe("Seed Catalog command (e2e)", () => {
       where: { slug: "example" },
       with: { upstreamModels: true },
     });
-    expect(provider).toMatchObject({ baseUrl: "https://proxy.internal/v1", isEnabled: false });
+    expect(provider).toMatchObject({
+      endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://proxy.internal/v1" }],
+      isEnabled: false,
+    });
     expect(provider?.upstreamModels).toHaveLength(2);
     expect(provider?.upstreamModels).toContainEqual(
       expect.objectContaining({ upstreamModelId: "example-large", inputPrice: 2.5 }),

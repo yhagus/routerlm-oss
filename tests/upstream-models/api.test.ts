@@ -38,8 +38,9 @@ describe("Upstream Models (e2e)", () => {
       .send({
         slug: "acme",
         name: "Acme AI",
-        protocol: "anthropic-messages",
-        baseUrl: "https://api.acme.example",
+        endpoints: [
+          { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example" },
+        ],
         authStyle: "x-api-key",
       })
       .expect(201);

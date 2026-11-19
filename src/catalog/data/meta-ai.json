@@ -3,8 +3,13 @@
   "name": "Meta AI",
   "logo": "meta",
   "termsRisk": true,
-  "protocol": "openai-responses",
-  "baseUrl": "https://api.meta.ai/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-responses",
+      "baseUrl": "https://api.meta.ai/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "includesEncryptedReasoning": true

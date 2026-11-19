@@ -392,16 +392,17 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     const { provider } = upstreamModel;
     const quirks = validQuirksOf(provider);
     const sentServiceTier = serviceTierSentTo(request.serviceTier, upstreamModel);
-    const converter = UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol];
-    if (!converter) {
+    const endpoint = provider.endpoints.chat;
+    const converter = endpoint && UPSTREAM_PROTOCOL_CONVERTERS[endpoint.protocol];
+    if (!endpoint || !converter) {
       // canServe() already skips these Upstream Models.
-      throw new Error(`No converter for the upstream Protocol ${provider.protocol}`);
+      throw new Error(`The Provider ${provider.slug} has no chat endpoint the gateway can call`);
     }
     return {
       converter,
       request,
       target: {
-        baseUrl: provider.baseUrl,
+        baseUrl: endpoint.baseUrl,
         upstreamModelId: upstreamModel.upstreamModelId,
         quirks,
         maxOutputTokens: upstreamModel.maxOutputTokens ?? undefined,
@@ -678,7 +679,10 @@ function withCacheBreakpointsFor(
   request: InferenceRequest,
 ): InferenceRequest {
   const { provider } = upstreamModel;
-  if (!model.hasAutomaticCacheBreakpoints || provider.protocol !== "anthropic-messages") {
+  if (
+    !model.hasAutomaticCacheBreakpoints ||
+    provider.endpoints.chat?.protocol !== "anthropic-messages"
+  ) {
     return request;
   }
   const { cacheMarkerLimit } = validQuirksOf(provider);

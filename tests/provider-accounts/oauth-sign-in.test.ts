@@ -107,8 +107,7 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
       .set("Cookie", cookie)
       .send({
         name: "Kimi Code",
-        protocol: "openai-chat",
-        baseUrl: authHost.baseUrl,
+        endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: authHost.baseUrl }],
         authStyle: "bearer",
         ...fields,
       })

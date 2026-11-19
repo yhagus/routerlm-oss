@@ -81,8 +81,8 @@ describe("Service Tier rules migration (e2e)", () => {
   });
 
   it("makes the database refuse what the rules refuse", async () => {
-    await migrateToLatest();
     const anthropic = await insertProvider("a", "anthropic-messages", {});
+    await migrateToLatest();
 
     await expect(
       pool.query(`update providers set service_tier_values = '{"fast":"priority"}' where id = $1`, [

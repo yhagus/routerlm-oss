@@ -12,8 +12,13 @@ describe("The Xiaomi MiMo Token Plan Catalog file", () => {
     const provider = await shipped();
 
     expect(provider).toMatchObject({
-      protocol: "openai-chat",
-      baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
+      endpoints: [
+        {
+          kind: "chat",
+          protocol: "openai-chat",
+          baseUrl: "https://token-plan-sgp.xiaomimimo.com/v1",
+        },
+      ],
       authStyle: "bearer",
       logo: "xiaomimimo",
       termsRisk: true,

@@ -2,6 +2,7 @@ import { Logger } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
+import { chatEndpointOf } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
 import { SECOND_MS } from "@/libs/models/duration.js";
@@ -63,7 +64,7 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       return { status: "expired" };
     }
     const [provider] = await this.db
-      .select({ baseUrl: providers.baseUrl, oauthLogin: providers.oauthLogin })
+      .select({ endpoints: providers.endpoints, oauthLogin: providers.oauthLogin })
       .from(providers)
       .where(eq(providers.id, signIn.providerId));
     if (!provider?.oauthLogin) {
@@ -82,7 +83,7 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     });
     switch (poll.kind) {
       case "granted":
-        return this.keepLogin(signIn, provider.baseUrl, poll.tokens);
+        return this.keepLogin(signIn, chatEndpointOf(provider.endpoints)?.baseUrl, poll.tokens);
       case "pending":
         return { status: "pending" };
       case "slow-down":
@@ -129,11 +130,11 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
    */
   private async keepLogin(
     signIn: StoredOauthSignIn,
-    baseUrl: string,
+    chatBaseUrl: string | undefined,
     tokens: OauthTokens,
   ): Promise<StoredOauthSignIn["outcome"]> {
     try {
-      return await this.storeLogin(signIn, baseUrl, tokens);
+      return await this.storeLogin(signIn, chatBaseUrl, tokens);
     } catch (error) {
       this.logger.error(
         `A sign-in was approved, but its OAuth Login could not be kept: ${failureOf(error)}`,
@@ -144,13 +145,13 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
 
   private async storeLogin(
     signIn: StoredOauthSignIn,
-    baseUrl: string,
+    chatBaseUrl: string | undefined,
     tokens: OauthTokens,
   ): Promise<StoredOauthSignIn["outcome"]> {
     if (signIn.providerAccountId === undefined) {
       return {
         status: "completed",
-        providerAccountId: await this.createProviderAccount(signIn, baseUrl, tokens),
+        providerAccountId: await this.createProviderAccount(signIn, chatBaseUrl, tokens),
       };
     }
     if (!(await this.replaceLogin(signIn.providerAccountId, signIn, tokens))) {
@@ -197,12 +198,13 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
   /** The Provider Account that holds the granted OAuth Login. Returns its id. */
   private async createProviderAccount(
     signIn: StoredOauthSignIn,
-    baseUrl: string,
+    chatBaseUrl: string | undefined,
     tokens: OauthTokens,
   ): Promise<string> {
     const grantedAt = new Date();
     const name =
-      (await this.signedInName(baseUrl, tokens)) ?? (await this.generateName(signIn.providerId));
+      (await this.signedInName(chatBaseUrl, tokens)) ??
+      (await this.generateName(signIn.providerId));
     const [created] = await this.db
       .insert(providerAccounts)
       .values({
@@ -231,12 +233,19 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
    * Who signed in, as the Provider tells: OpenAI Codex in the id_token it
    * granted, Kimi Code in its profile. Null when it doesn't.
    */
-  private async signedInName(baseUrl: string, tokens: OauthTokens): Promise<string | null> {
+  private async signedInName(
+    chatBaseUrl: string | undefined,
+    tokens: OauthTokens,
+  ): Promise<string | null> {
     const { codexAccount } = tokens;
     if (codexAccount !== undefined) {
       return accountName(codexAccount.email, codexAccount.planType);
     }
-    const profile = await this.oauthLoginClient.readKimiCodeProfile(baseUrl, tokens.accessToken);
+    if (chatBaseUrl === undefined) return null;
+    const profile = await this.oauthLoginClient.readKimiCodeProfile(
+      chatBaseUrl,
+      tokens.accessToken,
+    );
     return accountName(profile?.nickname?.trim() || profile?.email, profile?.levelName);
   }
 

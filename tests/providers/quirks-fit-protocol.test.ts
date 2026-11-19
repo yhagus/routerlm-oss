@@ -6,12 +6,15 @@ import { deleteAllUpstreamData } from "../support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
+const ANTHROPIC_ENDPOINTS = [
+  { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example/v1" },
+];
+
 // acceptsCacheControl is openai-chat only.
 const ACME = {
   slug: "acme",
   name: "Acme AI",
-  protocol: "openai-chat",
-  baseUrl: "https://api.acme.example/v1",
+  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
   authStyle: "bearer",
   quirks: { acceptsCacheControl: true },
 };
@@ -72,7 +75,7 @@ describe("A Provider's quirks fit its Protocol (e2e)", () => {
   it("refuses a Protocol the stored quirks don't fit", async () => {
     const id = await createAcme();
 
-    const refused = await updateProvider(id, { protocol: "anthropic-messages" }).expect(400);
+    const refused = await updateProvider(id, { endpoints: ANTHROPIC_ENDPOINTS }).expect(400);
 
     expect(refused.body.message).toContain("acceptsCacheControl");
   });
@@ -81,7 +84,7 @@ describe("A Provider's quirks fit its Protocol (e2e)", () => {
     const id = await createAcme();
 
     const refused = await updateProvider(id, {
-      protocol: "anthropic-messages",
+      endpoints: ANTHROPIC_ENDPOINTS,
       quirks: { forwardedClientHeaders: ["user-agent"] },
     }).expect(400);
 
@@ -105,10 +108,10 @@ describe("A Provider's quirks fit its Protocol (e2e)", () => {
       quotaBaseUrl: "https://quota.acme.example",
     };
 
-    const updated = await updateProvider(id, { protocol: "anthropic-messages", quirks }).expect(
+    const updated = await updateProvider(id, { endpoints: ANTHROPIC_ENDPOINTS, quirks }).expect(
       200,
     );
 
-    expect(updated.body).toMatchObject({ protocol: "anthropic-messages", quirks });
+    expect(updated.body).toMatchObject({ endpoints: ANTHROPIC_ENDPOINTS, quirks });
   });
 });

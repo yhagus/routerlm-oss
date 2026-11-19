@@ -2,8 +2,13 @@
   "slug": "deepseek",
   "name": "DeepSeek",
   "logo": "deepseek",
-  "protocol": "openai-chat",
-  "baseUrl": "https://api.deepseek.com",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.deepseek.com"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "reasoningContentInHistory": "all-assistant-turns"
