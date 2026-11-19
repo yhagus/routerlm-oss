@@ -1,3 +1,34 @@
+# v5.0.0 (2026-11-19)
+
+## Upgrade
+
+- Run `docker compose pull`, then `docker compose up -d`. The `migrate` service applies one new migration. It adds Error Origin, User-Agent and client IP columns to Usage Logs, User-Agent and client IP to Error Captures, and the Provider request id to Attempts, and fills in the Error Origin of existing failed Usage Logs.
+- **Breaking:** the `ALLOW_PRIVATE_UPSTREAMS` env variable is removed. An instance that set it refuses its LAN upstreams (Ollama, vLLM and the like) after the upgrade, until a User turns on "Allow private upstreams" in Settings (ADR 0030). Remove the variable from your `.env`.
+- **Personal data:** every Usage Log and Error Capture now records the client's User-Agent and IP address, kept as long as the Usage Logs are (ADR 0032). The IP is the one resolved through `TRUST_PROXY`. Existing rows get neither.
+
+## Error Origin
+
+- Every failed request records its Error Origin: Client (a bad API Key, an unreadable body, an unknown Model), Upstream (the Provider failed or refused, or every Provider Account was in Cooldown) or Gateway (a fault in the gateway itself). Successful, cancelled and Fallback-recovered requests have none (ADR 0031). The error codes and messages clients receive are unchanged.
+- The Overview shows a Client, an Upstream and a Gateway tile beside the total error rate, each with its rate and failed count. Clicking a tile opens the Usage page filtered to that origin and time range.
+- The error-rate chart is stacked by origin, with a legend to hide each origin and a tooltip listing each origin's rate and count.
+- The Usage page filters by Error Origin, shows it next to the error code, and splits its failed count by origin.
+
+## Usage Logs
+
+- A Usage Log has a detail page, opened from its row: its Error Origin, User-Agent, IP, tokens and Cost, and its Attempts with the request id each Provider returned.
+- The Usage page search also matches User-Agents and IP addresses.
+- The Error Capture view shows the User-Agent, the IP and the Provider request id of its failed Attempt, and links to its Usage Log.
+- The dashboard API adds `GET /api/usage/:id`, an `errorOrigin` filter on `/api/usage` and `/api/usage/totals`, `failedByOrigin` on the totals, and `errorsByOrigin` and `failedCount` on each Overview bucket and the totals.
+
+## Settings
+
+- "Allow private upstreams" lets Provider URLs point at private hosts and plain http, changed from the dashboard while the gateway runs. It takes effect at the next snapshot reload.
+
+## Other
+
+- A stream the gateway stops because the upstream interleaved tool call arguments is recorded as an Upstream failure, and its Attempt as interrupted.
+- The NOTICE file no longer carries the 9router attribution.
+
 # v4.0.0 (2026-11-19)
 
 ## Upgrade
