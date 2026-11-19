@@ -11,6 +11,8 @@ export interface PlaygroundUnits {
   characters?: number;
   /** Seconds of video a Video Job asked for. */
   outputSeconds?: number;
+  /** Seconds of audio a transcription request heard. */
+  audioSeconds?: number;
   /** The price tier the Provider names, such as `2K`. */
   tier?: string;
 }

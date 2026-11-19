@@ -9,6 +9,7 @@ export const UPSTREAM_PROTOCOLS = [
   "dashscope-image",
   "dashscope-video",
   "dashscope-speech",
+  "dashscope-transcription",
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
@@ -20,6 +21,7 @@ export const PROTOCOL_LABELS: Record<UpstreamProtocol, string> = {
   "dashscope-image": "DashScope Image",
   "dashscope-video": "DashScope Video",
   "dashscope-speech": "DashScope Speech",
+  "dashscope-transcription": "DashScope Transcription",
 };
 
 export const PROTOCOL_OPTIONS = UPSTREAM_PROTOCOLS.map((protocol) => ({
@@ -52,6 +54,7 @@ export const PROTOCOL_KINDS = {
   "dashscope-image": "image",
   "dashscope-video": "video",
   "dashscope-speech": "speech",
+  "dashscope-transcription": "transcription",
 } as const satisfies Record<UpstreamProtocol, ModelKind>;
 
 /** The Protocols an endpoint of `kind` may speak; empty while the gateway has none for it. */
