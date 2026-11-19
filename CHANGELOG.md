@@ -1,3 +1,42 @@
+# v4.0.0 (2026-11-19)
+
+## Upgrade
+
+- Run `docker compose pull`, then `docker compose up -d`. The `migrate` service applies six new migrations. They turn each Provider's Protocol and base URL into its chat endpoint, give Models and Upstream Models a Kind, add Alibaba Model Studio's image, speech, transcription and video endpoints, and add API Key encryption and rotation history.
+- **Breaking:** the dashboard API describes a Provider by `endpoints`, a list with at most one `{ kind, protocol, baseUrl }` per Model Kind, instead of one `protocol` and `baseUrl`. Scripts that create or edit Providers through `/api/providers` must send `endpoints`. Catalog files use the same shape.
+- **Behaviour change:** new API Keys are stored encrypted with `ENCRYPTION_KEY`, as well as hashed, so the dashboard can copy them again (ADR 0029). Keys created before this release can't be copied until they are rotated. Revoking a key drops its encrypted copy.
+
+## Image, speech, transcription and video models
+
+- A Model and an Upstream Model have a Kind: chat, image, speech, transcription or video. Media Kinds are priced per unit (per image, per 1M characters, per audio second, per second of video) instead of per token.
+- New endpoints, served through Alibaba Model Studio's DashScope Protocols: `/v1/images/generations` and `/v1/images/edits`, `/v1/audio/speech`, `/v1/audio/transcriptions`, and `/v1/videos` to submit a job, poll it and download the result. A video id is an encrypted handle to the upstream task, so any instance can answer a poll (ADR 0027), and media bytes are relayed rather than handing out upstream URLs (ADR 0028).
+- A Parameter Policy can force the watermark on media requests.
+- The Playground generates and edits images, synthesizes speech, transcribes audio and runs video jobs.
+- Error Captures replace media bytes with placeholders.
+
+## API Keys
+
+- Each key's "…" menu copies the full key, edits its name, expiry and allowed Models, rotates it and revokes it. Rotating keeps the key's settings and usage history and refuses the old key at once.
+- A Last rotated column opens each key's rotation history: when, by whom, and which key replaced which.
+- Allowed Models is picked from a menu, and the form says plainly when a key allows every Model, including ones added later.
+
+## Providers
+
+- A Provider has one endpoint per Model Kind, each with its own Protocol and base URL, all served by the same Provider Account (ADR 0026).
+- New Upstream Models: Gemini 4 Neon; GPT-6.2 Sol and Astra on OpenAI Codex; Qwen Image and Wan 2.7 image models, Wan 3.0 Video and HappyHorse 1.1 (text, image and reference to video), Qwen Audio 3.0 TTS Plus and Qwen Audio 3.0 ASR Flash on Alibaba Model Studio.
+
+## Dashboard
+
+- The Providers list and a Provider's page show its endpoints on one line, as an icon per Model Kind with the Protocol in a tooltip.
+- Upstream Models show one Price column for every Kind: the amount over its unit, with every price line, such as cache or per-resolution prices, on hover.
+- The endpoint fields in the Provider form no longer overlap, and stack on narrow screens.
+
+## Other
+
+- An Upstream Model's Kind can't change while Routes use it.
+- A video download that fails to start answers 502.
+- Images up to 1536×1536 are priced at the 1K tier.
+
 # v3.3.0 (2026-11-18)
 
 ## Upgrade
