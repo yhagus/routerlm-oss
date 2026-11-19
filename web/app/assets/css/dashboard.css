@@ -3437,6 +3437,16 @@ tbody tr:hover {
   background: var(--panel-2);
 }
 
+/* The speech tab's result: the player, then its download. */
+.speech-result {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.speech-result audio {
+  width: min(100%, 420px);
+}
+
 /* Composer */
 .composer {
   display: grid;
