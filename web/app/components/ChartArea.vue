@@ -25,6 +25,8 @@ const props = withDefaults(
     /** The least the y-axis reaches, so small values don't fill the whole height. */
     scaleFloor?: number;
     unit?: string;
+    /** Legend entries become buttons that hide or show their series. */
+    toggleable?: boolean;
   }>(),
   {
     height: 232,
@@ -33,8 +35,18 @@ const props = withDefaults(
     formatTick: compactNumber,
     scaleFloor: 1,
     unit: "",
+    toggleable: false,
   },
 );
+
+interface TooltipRow extends ChartSeries {
+  value: number | null;
+}
+
+defineSlots<{
+  /** Replaces the tooltip's rows under its title; `rows` are the shown series, top band first. */
+  tooltip?: (props: { index: number; rows: TooltipRow[] }) => unknown;
+}>();
 
 const NO_DATA = "No data";
 
@@ -43,19 +55,33 @@ const PAD = { top: 10, right: 10, bottom: 26, left: 46 };
 const root = ref<HTMLElement | null>(null);
 const width = useElementWidth(root);
 const active = ref<number | null>(null);
+const hiddenKeys = ref<ReadonlySet<string>>(new Set());
+
+/** The series not hidden from the legend, each with its position in `series` and in point values. */
+const shownSeries = computed(() =>
+  props.series.flatMap((series, index) =>
+    hiddenKeys.value.has(series.key) ? [] : [{ ...series, index }],
+  ),
+);
+
+function toggleSeries(key: string): void {
+  const next = new Set(hiddenKeys.value);
+  if (!next.delete(key)) next.add(key);
+  hiddenKeys.value = next;
+}
 
 const innerWidth = computed(() => Math.max(1, width.value - PAD.left - PAD.right));
 const innerHeight = computed(() => props.height - PAD.top - PAD.bottom);
 
 /** Cumulative tops per series (stacked) or raw values (unstacked). */
 const tops = computed(() =>
-  props.series.map((_, seriesIndex) =>
+  shownSeries.value.map((series, position) =>
     props.points.map((point) =>
       props.stacked
-        ? point.values
-            .slice(0, seriesIndex + 1)
-            .reduce<number>((sum, value) => sum + (value ?? 0), 0)
-        : (point.values[seriesIndex] ?? null),
+        ? shownSeries.value
+            .slice(0, position + 1)
+            .reduce<number>((sum, below) => sum + (point.values[below.index] ?? 0), 0)
+        : (point.values[series.index] ?? null),
     ),
   ),
 );
@@ -107,10 +133,10 @@ function areaPath(run: PlottedValue[], base: (number | null)[] | undefined): str
 }
 
 const shapes = computed(() =>
-  props.series.map((series, seriesIndex) => {
-    const seriesTops = tops.value[seriesIndex] ?? [];
+  shownSeries.value.map((series, position) => {
+    const seriesTops = tops.value[position] ?? [];
     const runs = runsOf(seriesTops);
-    const base = props.stacked && seriesIndex > 0 ? tops.value[seriesIndex - 1] : undefined;
+    const base = props.stacked && position > 0 ? tops.value[position - 1] : undefined;
     return {
       key: series.key,
       color: series.color,
@@ -150,17 +176,17 @@ const activePoint = computed(() => (active.value === null ? null : props.points[
 const tooltipRows = computed(() => {
   const point = activePoint.value;
   if (!point) return [];
-  const rows = props.series.map((series, index) => ({
-    ...series,
-    value: point.values[index] ?? null,
+  const rows: TooltipRow[] = shownSeries.value.map((series) => ({
+    key: series.key,
+    name: series.name,
+    color: series.color,
+    value: point.values[series.index] ?? null,
   }));
   // Stacked bands read top-down, so list them in the same order.
   return props.stacked ? rows.reverse() : rows;
 });
 const activeTotal = computed(() =>
-  activePoint.value
-    ? activePoint.value.values.reduce<number>((sum, value) => sum + (value ?? 0), 0)
-    : 0,
+  tooltipRows.value.reduce<number>((sum, row) => sum + (row.value ?? 0), 0),
 );
 const tooltipStyle = computed(() => {
   if (active.value === null) return {};
@@ -191,11 +217,22 @@ function onKey(event: KeyboardEvent) {
 <template>
   <div class="chart">
     <div v-if="series.length > 1" class="chart-legend">
-      <span v-for="item in series" :key="item.key" class="chart-legend__item"
-        ><i class="chart-key chart-key--line" :style="{ background: item.color }" />{{
-          item.name
-        }}</span
-      >
+      <template v-for="item in series" :key="item.key">
+        <button
+          v-if="toggleable"
+          type="button"
+          class="chart-legend__item chart-legend__toggle"
+          :aria-pressed="!hiddenKeys.has(item.key)"
+          @click="toggleSeries(item.key)"
+        >
+          <i class="chart-key chart-key--line" :style="{ background: item.color }" />{{ item.name }}
+        </button>
+        <span v-else class="chart-legend__item"
+          ><i class="chart-key chart-key--line" :style="{ background: item.color }" />{{
+            item.name
+          }}</span
+        >
+      </template>
     </div>
     <div
       ref="root"
@@ -279,18 +316,20 @@ function onKey(event: KeyboardEvent) {
           />
         </g>
       </svg>
-      <div v-if="activePoint" class="chart-tooltip" :style="tooltipStyle">
+      <div v-if="activePoint && active !== null" class="chart-tooltip" :style="tooltipStyle">
         <span class="chart-tooltip__title">{{ activePoint.title }}</span>
-        <span v-for="row in tooltipRows" :key="row.key" class="chart-tooltip__row"
-          ><i class="chart-key chart-key--line" :style="{ background: row.color }" /><strong>{{
-            formatOrNoData(row.value)
-          }}</strong
-          ><span>{{ row.name }}</span></span
-        >
-        <span v-if="stacked && series.length > 1" class="chart-tooltip__row chart-tooltip__total"
-          ><strong>{{ formatValue(activeTotal) }}</strong
-          ><span>Total{{ unit ? ` ${unit}` : "" }}</span></span
-        >
+        <slot name="tooltip" :index="active" :rows="tooltipRows">
+          <span v-for="row in tooltipRows" :key="row.key" class="chart-tooltip__row"
+            ><i class="chart-key chart-key--line" :style="{ background: row.color }" /><strong>{{
+              formatOrNoData(row.value)
+            }}</strong
+            ><span>{{ row.name }}</span></span
+          >
+          <span v-if="stacked && series.length > 1" class="chart-tooltip__row chart-tooltip__total"
+            ><strong>{{ formatValue(activeTotal) }}</strong
+            ><span>Total{{ unit ? ` ${unit}` : "" }}</span></span
+          >
+        </slot>
       </div>
     </div>
     <table class="sr-only">
