@@ -12,18 +12,16 @@ describe("The Alibaba Model Studio (International) Catalog file's image models",
   it("serves images from DashScope's native API next to the OpenAI-compatible chat endpoint", async () => {
     const { endpoints } = await shipped();
 
-    expect(endpoints).toEqual([
-      {
-        kind: "chat",
-        protocol: "openai-chat",
-        baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
-      },
-      {
-        kind: "image",
-        protocol: "dashscope-image",
-        baseUrl: "https://dashscope-intl.aliyuncs.com/api/v1",
-      },
-    ]);
+    expect(endpoints).toContainEqual({
+      kind: "chat",
+      protocol: "openai-chat",
+      baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+    });
+    expect(endpoints).toContainEqual({
+      kind: "image",
+      protocol: "dashscope-image",
+      baseUrl: "https://dashscope-intl.aliyuncs.com/api/v1",
+    });
   });
 
   it("ships the image models at Alibaba's Singapore list prices, with their input limits and Release Dates", async () => {

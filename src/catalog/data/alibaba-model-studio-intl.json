@@ -12,6 +12,11 @@
       "kind": "image",
       "protocol": "dashscope-image",
       "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
+    },
+    {
+      "kind": "video",
+      "protocol": "dashscope-video",
+      "baseUrl": "https://dashscope-intl.aliyuncs.com/api/v1"
     }
   ],
   "authStyle": "bearer",
@@ -613,6 +618,66 @@
         "retrievedOn": "2026-11-19"
       },
       "notes": "As wan2.7-image, plus a 4K preset up to 4096*4096 for text-to-image only: image edits and image sets stay at 2K at most. Watermarks are on by default upstream; the gateway turns them off."
+    },
+    {
+      "upstreamModelId": "wan3.0-video",
+      "name": "Wan 3.0 Video",
+      "releaseDate": "2026-08-06",
+      "kind": "video",
+      "capabilities": ["text-to-video", "first-frame", "last-frame", "reference-images"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.05,
+        "720P": 0.1,
+        "1080P": 0.2
+      },
+      "maxInputImages": 10,
+      "minDurationSeconds": 2,
+      "maxDurationSeconds": 30,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/help/en/model-studio/wan3-video-generation-api-reference"
+        ],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "List prices, not the limited-time discount. Generates 2 to 30 seconds from text, a first frame (and optional last frame) or up to 10 reference images. Reference video and audio inputs are not supported by the gateway."
+    },
+    {
+      "upstreamModelId": "happyhorse-1.1-t2v",
+      "name": "HappyHorse 1.1 T2V",
+      "releaseDate": "2026-06-16",
+      "kind": "video",
+      "capabilities": ["text-to-video"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.07,
+        "720P": 0.14,
+        "1080P": 0.18
+      },
+      "maxInputImages": 0,
+      "minDurationSeconds": 3,
+      "maxDurationSeconds": 15,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/help/en/model-studio/happyhorse-text-to-video-api-reference"
+        ],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "Text to video only. The 3 to 15 second range is the one published for HappyHorse 1.0; 1.1 is listed with 15-second videos, and its minimum was not confirmed against the live API."
     }
   ]
 }
