@@ -6,6 +6,7 @@ import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { dashScopeSpeechFixture, FakeUpstream } from "../support/fake-upstream.js";
 import {
+  addProviderAccount,
   insertApiKey,
   insertDashScopeImageModel,
   insertDashScopeSpeechModel,
@@ -23,6 +24,7 @@ const SPEECH_REQUEST = {
   voice: "Cherry",
   response_format: "wav",
 };
+const BACKUP_KEY = "sk-backup-speech-key";
 const AUDIO = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4]);
 
 describe("Speech on /v1/audio/speech (e2e)", () => {
@@ -31,6 +33,7 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
   let upstream: FakeUpstream;
   let apiKey: string;
   let routeId: string;
+  let providerId: string;
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -40,7 +43,7 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
   beforeEach(async () => {
     upstream.reset();
     await deleteAllUpstreamData(db);
-    ({ routeId } = await insertDashScopeSpeechModel(app, db, {
+    ({ routeId, providerId } = await insertDashScopeSpeechModel(app, db, {
       modelName: "narrator",
       baseUrl: `${upstream.origin}/api/v1`,
     }));
@@ -107,6 +110,20 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
     await synthesize({ ...SPEECH_REQUEST, speed: 1.5 }).expect(200);
 
     expect(synthesizerRequests()[0].body).toMatchObject({ input: { rate: 1.5 } });
+  });
+
+  it("falls back to the next Provider Account when the upstream call fails", async () => {
+    await addProviderAccount(app, db, providerId, { key: BACKUP_KEY, priority: 1 });
+    upstream.replyTo(SYNTHESIZER_PATH, { kind: "json", status: 503, body: { code: "Overloaded" } });
+    answerWithAudio();
+
+    const response = await synthesize().expect(200);
+
+    expect(new Uint8Array(response.body)).toEqual(AUDIO);
+    expect(synthesizerRequests().map((sent) => sent.headers.authorization)).toEqual([
+      `Bearer ${UPSTREAM_KEY}`,
+      `Bearer ${BACKUP_KEY}`,
+    ]);
   });
 
   it("refuses a response_format DashScope can't produce, naming it", async () => {
