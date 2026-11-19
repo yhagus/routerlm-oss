@@ -9,7 +9,7 @@ import type {
 import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
 import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
 
-// DashScope's native video API (spec "Phase 4: video"): an asynchronous
+// DashScope's native video API: an asynchronous
 // create that answers with a task id, then `GET /tasks/{id}` until the task
 // has a video URL, which the gateway relays (ADR 0028).
 

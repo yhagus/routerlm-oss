@@ -14,6 +14,7 @@ import {
 import { GatewayError } from "../../models/gateway-error.js";
 import type { InferenceCaller } from "../../models/inference.js";
 import type { MediaClientContract, MediaReply, MediaRequest } from "../../models/media-kind.js";
+import { withMediaPlaceholders } from "../../models/media-placeholders.js";
 import { effectiveParameterPolicy, isWatermarkedUnder } from "../../models/parameter-policy.js";
 import { failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
 import { type AttemptTarget, endpointOf, routePath } from "../../models/route-selection.js";
@@ -49,7 +50,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       contract.protocol,
       connection.requestBytes,
     );
-    meter.requestReceived(connection.requestHeaders, body);
+    meter.requestReceived(connection.requestHeaders, withMediaPlaceholders(body));
     const record = (job: UsageJob): void => {
       this.usage.enqueue(job);
       onUsage(job);

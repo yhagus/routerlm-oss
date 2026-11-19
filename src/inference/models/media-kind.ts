@@ -9,7 +9,7 @@ import type { MediaUnits } from "@/usage/models/usage-job.js";
 import type { GatewayError } from "./gateway-error.js";
 import type { InferenceCaller } from "./inference.js";
 
-// The seam every media Kind plugs into (spec "Kind-aware inference pipeline").
+// The seam every media Kind plugs into.
 // A Kind brings a client contract, which reads the OpenAI-shaped request into
 // the Kind's own internal request and writes its internal result back, and
 // one upstream Protocol per Provider API that serves the Kind. The Attempt and
@@ -60,7 +60,7 @@ export interface MediaUpstreamTarget {
   upstreamModelId: string;
   /**
    * Whether the Provider marks what it generates. Off unless the Route's
-   * Parameter Policy turns it on (spec "DashScope Protocols").
+   * Parameter Policy turns it on.
    */
   isWatermarked: boolean;
 }

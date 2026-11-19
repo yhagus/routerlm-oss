@@ -74,7 +74,7 @@ export interface VideoUpstreamProtocol extends MediaUpstreamProtocol<
   ): Promise<VideoTaskState>;
 }
 
-/** The Capability each input image needs (spec "Video Capabilities"). */
+/** The Capability each input image needs: an Upstream Model without it can't take that image. */
 const CAPABILITY_OF_MEDIA_ROLE = {
   first_frame: "first-frame",
   last_frame: "last-frame",

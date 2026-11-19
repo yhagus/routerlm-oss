@@ -4,11 +4,12 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
+import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
 import { dashScopeTranscriptionFixture, FakeUpstream } from "../support/fake-upstream.js";
 import { insertApiKey, insertDashScopeTranscriptionModel } from "../support/inference.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
+import { writtenUsageLog } from "../support/usage-logs.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
@@ -19,8 +20,6 @@ const { createTestApp } = await import("../support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 
-const WORKER_WRITE_TIMEOUT_MS = 5_000;
-const POLL_INTERVAL_MS = 50;
 const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
 
 describe("Usage Logs of transcription (e2e)", () => {
@@ -59,18 +58,6 @@ describe("Usage Logs of transcription (e2e)", () => {
     await app.close();
   });
 
-  async function writtenUsageLog() {
-    const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
-    while (Date.now() < deadline) {
-      const [usageLog] = await db.select().from(usageLogs);
-      if (usageLog) {
-        return usageLog;
-      }
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-    throw new Error("The worker wrote no Usage Log");
-  }
-
   it("records the audio seconds DashScope billed and their Cost at the price per second", async () => {
     // The recorded answer bills 4 seconds of audio.
     upstream.replyTo(GENERATION_PATH, {
@@ -89,7 +76,7 @@ describe("Usage Logs of transcription (e2e)", () => {
       })
       .expect(200);
 
-    expect(await writtenUsageLog()).toMatchObject({
+    expect(await writtenUsageLog(db)).toMatchObject({
       kind: "transcription",
       clientProtocol: "openai-transcription",
       audioSeconds: 4,
@@ -98,6 +85,24 @@ describe("Usage Logs of transcription (e2e)", () => {
       outputTokens: null,
       timeToFirstTokenMs: null,
       isIncomplete: false,
+    });
+  });
+
+  it("records an upload refused as too large against transcription", async () => {
+    await request(app.getHttpServer())
+      .post("/v1/audio/transcriptions")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .field("model", "scribe")
+      .attach("file", Buffer.alloc(MAX_UPLOAD_BYTES + 1), {
+        filename: "long.mp3",
+        contentType: "audio/mpeg",
+      })
+      .expect(413);
+
+    expect(await writtenUsageLog(db)).toMatchObject({
+      kind: "transcription",
+      clientProtocol: "openai-transcription",
+      errorCode: "request_too_large",
     });
   });
 });

@@ -9,7 +9,7 @@ import type {
 import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
 import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
 
-// DashScope's native speech recognition API (spec "Phase 3: transcription"):
+// DashScope's native speech recognition API:
 // one synchronous call with the audio inline as a data URI. The request and
 // response shapes follow Alibaba's docs for the 3.1 models; see the Catalog
 // notes of qwen-audio-3.0-asr-flash.

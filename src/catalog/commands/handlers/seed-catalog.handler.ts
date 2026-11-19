@@ -86,24 +86,19 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             .set({ logo: entry.logo })
             .where(and(eq(providers.id, provider.id), isNull(providers.logo)));
         }
-        // So is an endpoint for a Kind the Provider has none for: a Kind the
-        // Catalog gained since the Provider was seeded, whose models need it.
+        // Endpoints are never added to an existing Provider: an operator may
+        // have deleted one (ADR 0026). A model of a Kind with no endpoint
+        // could not be served, so it is not seeded either.
         const servedKinds = new Set(provider.endpoints.map((endpoint) => endpoint.kind));
-        const missingEndpoints = entry.endpoints.filter(
-          (endpoint) => !servedKinds.has(endpoint.kind),
+        const servableModels = entry.upstreamModels.filter((model) =>
+          servedKinds.has(model.kind ?? "chat"),
         );
-        if (missingEndpoints.length > 0) {
-          await tx
-            .update(providers)
-            .set({ endpoints: [...provider.endpoints, ...missingEndpoints] })
-            .where(eq(providers.id, provider.id));
-        }
-        if (entry.upstreamModels.length === 0) continue;
+        if (servableModels.length === 0) continue;
 
         const createdModels = await tx
           .insert(upstreamModels)
           .values(
-            entry.upstreamModels.map((model) => ({
+            servableModels.map((model) => ({
               providerId: provider.id,
               upstreamModelId: model.upstreamModelId,
               name: model.name,
@@ -141,7 +136,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         // empty name, Release Date, max output, price or media limit gets the Catalog's value, so rows seeded
         // before the Catalog knew it catch up. A value that is already set,
         // Catalog or operator, is left alone.
-        for (const model of entry.upstreamModels) {
+        for (const model of servableModels) {
           await tx
             .update(upstreamModels)
             .set({

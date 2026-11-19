@@ -36,16 +36,20 @@ export function clientSizeOf({ width, height }: ImageSize): string {
   return `${width}x${height}`;
 }
 
-/** Alibaba's image price tiers, by the most pixels an image of the tier has. */
+/**
+ * Alibaba's image price tiers, by the most pixels an image of the tier has.
+ * 1K reaches 1536×1536 (about 2.36 MP), so the models' standard sizes, such
+ * as qwen's 1328×1328, are priced as 1K; anything above 2048×2048 is 4K.
+ */
 const SIZE_TIERS = [
-  { tier: "1K", maxPixels: 1024 * 1024 },
+  { tier: "1K", maxPixels: 1536 * 1536 },
   { tier: "2K", maxPixels: 2048 * 2048 },
-  { tier: "4K", maxPixels: 4096 * 4096 },
 ] as const;
+const LARGEST_TIER = "4K";
 
 /** The price tier of an image of this size: the smallest tier it fits in, by area. */
 export function sizeTierOf({ width, height }: ImageSize): string {
   const pixels = width * height;
   const fitting = SIZE_TIERS.find(({ maxPixels }) => pixels <= maxPixels);
-  return (fitting ?? SIZE_TIERS[SIZE_TIERS.length - 1]).tier;
+  return fitting?.tier ?? LARGEST_TIER;
 }

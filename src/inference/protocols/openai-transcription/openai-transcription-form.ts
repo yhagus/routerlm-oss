@@ -1,4 +1,4 @@
-import { dataUriOf, type UploadedFile } from "../../models/uploaded-file.js";
+import { dataUriOf, type MediaUpload } from "../../models/media-upload.js";
 
 // A multipart `/v1/audio/transcriptions` request, read into the body the
 // transcription client contract parses.
@@ -15,7 +15,7 @@ export interface TranscriptionFile {
 }
 
 /** The form's fields, with the uploaded audio as `file`; without an upload, `file` is left out. */
-export function transcriptionBodyOf(body: unknown, file: UploadedFile | undefined): unknown {
+export function transcriptionBodyOf(body: unknown, file: MediaUpload | undefined): unknown {
   if (!file) {
     return body;
   }

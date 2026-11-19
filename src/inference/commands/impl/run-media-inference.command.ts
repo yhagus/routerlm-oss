@@ -5,8 +5,7 @@ import type { MediaClientContract, MediaReply, MediaRequest } from "../../models
 
 /**
  * Serves a request of a media Kind through the Kind's client contract, with
- * the same Attempts, Fallback and usage job as chat (spec "Kind-aware
- * inference pipeline"). `onUsage` sees the job too; `target` is the Model
+ * the same Attempts, Fallback and usage job as chat. `onUsage` sees the job too; `target` is the Model
  * the body names unless a direct Upstream Model test says otherwise.
  */
 export class RunMediaInferenceCommand<

@@ -9,9 +9,9 @@ import {
   type SynthesizedSpeech,
 } from "../../models/speech-synthesis.js";
 import { dashScopeSpeechProtocol } from "../dashscope-speech/dashscope-speech-protocol.js";
-import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
+import { writeOpenAiError } from "../openai-chat/openai-error.js";
 
-// OpenAI's speech API, `POST /v1/audio/speech` (spec "Phase 2: speech").
+// OpenAI's speech API, `POST /v1/audio/speech`.
 
 /** OpenAI's range for `speed`; the upstream refuses what its model doesn't take. */
 const MIN_SPEED = 0.25;
@@ -27,7 +27,9 @@ const CONTENT_TYPES = {
   opus: "audio/opus",
 } as const satisfies Record<AudioFormat, string>;
 
-// A plain (non-strict) object: unknown fields are dropped (ADR 0002).
+// A plain (non-strict) object: unknown fields are dropped (ADR 0002). That
+// includes `instructions`, accepted but not sent: nobody has confirmed that
+// qwen-audio-3.0-tts-plus honours DashScope's `instruction` (see its Catalog notes).
 const requestSchema = z.object({
   model: z.string().min(1),
   input: z.string().min(1),
@@ -39,7 +41,6 @@ const requestSchema = z.object({
 const featureRefusedSchema = z.object({
   response_format: z.unknown().optional(),
   stream_format: z.unknown().optional(),
-  instructions: z.unknown().optional(),
 });
 
 function parseRequest(body: unknown): SpeechSynthesisRequest {
@@ -54,24 +55,19 @@ function parseRequest(body: unknown): SpeechSynthesisRequest {
 
 /**
  * A format the Provider can't produce is refused rather than converted, and
- * speech doesn't stream yet. `instructions` is refused because nobody has
- * confirmed that qwen-audio-3.0-tts-plus honours DashScope's `instruction`
- * (see its Catalog notes).
+ * speech doesn't stream yet.
  */
 function refuseUnsupportedFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
   if (!features.success) {
     return; // Malformed: the full schema explains it.
   }
-  const { response_format, stream_format, instructions } = features.data;
+  const { response_format, stream_format } = features.data;
   if (typeof response_format === "string" && !isAudioFormat(response_format)) {
     throw unsupported(`the response_format "${response_format}"`);
   }
   if (stream_format !== undefined && stream_format !== "audio") {
     throw unsupported("`stream_format` other than `audio`");
-  }
-  if (instructions !== undefined) {
-    throw unsupported("`instructions`");
   }
 }
 
@@ -107,6 +103,5 @@ export const openAiSpeechClientContract: MediaClientContract<
   upstreamProtocols: { "dashscope-speech": dashScopeSpeechProtocol },
   applyParameterPolicy,
   writeResponse,
-  // The same envelope as Chat Completions: both are OpenAI's.
-  writeError: (error) => openAiChatClientConverter.writeError(error),
+  writeError: writeOpenAiError,
 };

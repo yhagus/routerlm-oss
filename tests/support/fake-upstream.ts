@@ -5,13 +5,18 @@ import { portOf } from "./port-of.js";
 
 /** What the fake upstream answers to the next request. */
 export type FakeReply =
-  /** `delayMs` holds the whole answer back, as a slow but healthy non-stream upstream. */
+  /**
+   * `delayMs` holds the whole answer back, as a slow but healthy non-stream
+   * upstream. `onReceived` runs when the request arrives, before the answer:
+   * to change the world between the gateway's call and what it does next.
+   */
   | {
       kind: "json";
       status: number;
       body: unknown;
       headers?: Record<string, string>;
       delayMs?: number;
+      onReceived?: () => void;
     }
   /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
   | { kind: "stream"; events: string; holdOpen?: boolean }
@@ -97,6 +102,38 @@ export function dashScopeImageFixture(name: string): string {
     new URL(`../../src/inference/protocols/dashscope-image/fixtures/${name}`, import.meta.url),
     "utf8",
   );
+}
+
+/** DashScope's path for a synchronous image generation. */
+export const DASHSCOPE_GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
+
+/**
+ * Queues the recorded dashscope-image answer, two images, with its image URLs
+ * pointing at the fake and their bytes queued. DashScope reports them at
+ * `outputSize`; the recording's 1024×1024 is the 1K tier.
+ */
+export function replyWithTwoDashScopeImages(
+  upstream: FakeUpstream,
+  outputSize: { width: number; height: number } = { width: 1024, height: 1024 },
+): void {
+  const answer = dashScopeImageFixture("upstream-response.json")
+    .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))
+    .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"))
+    .replace(/"output_width": \d+/, `"output_width": ${outputSize.width}`)
+    .replace(/"output_height": \d+/, `"output_height": ${outputSize.height}`);
+  upstream.replyTo(DASHSCOPE_GENERATION_PATH, {
+    kind: "json",
+    status: 200,
+    body: JSON.parse(answer),
+  });
+  const imageBytes: FakeReply = {
+    kind: "binary",
+    status: 200,
+    contentType: "image/png",
+    body: new Uint8Array([1, 2, 3]),
+  };
+  upstream.replyTo("/media/a.png", imageBytes);
+  upstream.replyTo("/media/b.png", imageBytes);
 }
 
 /** A recorded dashscope-transcription exchange, named as for openAiChatFixture. */
@@ -242,6 +279,7 @@ export class FakeUpstream {
     }
     switch (reply.kind) {
       case "json":
+        reply.onReceived?.();
         setTimeout(() => {
           response.writeHead(reply.status, {
             "content-type": "application/json",

@@ -14,7 +14,7 @@ import type {
 import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
 import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
 
-// DashScope's native image API (spec "Phase 1: image"): one synchronous call
+// DashScope's native image API: one synchronous call
 // that answers with URLs of the generated images, which the gateway fetches.
 
 const GENERATION_PATH = "/services/aigc/multimodal-generation/generation";

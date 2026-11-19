@@ -1,4 +1,4 @@
-import { dataUriOf, type UploadedFile } from "../../models/uploaded-file.js";
+import { dataUriOf, type MediaUpload } from "../../models/media-upload.js";
 
 // A multipart `/v1/videos` request, as the OpenAI SDK sends one with a first
 // frame, read into the JSON body the videos client contract parses.
@@ -11,7 +11,7 @@ export const VIDEO_FIRST_FRAME_FIELD = "input_reference";
  * `input_reference.image_url` data URI. A request without a file passes
  * through unchanged.
  */
-export function videoBodyOf(body: unknown, firstFrame: UploadedFile | undefined): unknown {
+export function videoBodyOf(body: unknown, firstFrame: MediaUpload | undefined): unknown {
   if (!firstFrame) {
     return body;
   }

@@ -1,9 +1,8 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
 import type { PlaygroundImageGeneration } from "../../models/playground-image-generation.js";
-import { playgroundSummaryOf } from "../../models/playground-summary.js";
+import { PlaygroundUsage } from "../../models/playground-usage.js";
 import { SendPlaygroundImageGenerationCommand } from "../impl/send-playground-image-generation.command.js";
 
 const decoder = new TextDecoder();
@@ -22,23 +21,18 @@ export class SendPlaygroundImageGenerationHandler implements ICommandHandler<Sen
     connection,
     target,
   }: SendPlaygroundImageGenerationCommand): Promise<PlaygroundImageGeneration> {
-    let usage: UsageJob | undefined;
+    const usage = new PlaygroundUsage();
     const result = await this.commandBus.execute(
       new RunMediaInferenceCommand(
         contract,
         body,
         { kind: "playground", userId: user.id },
         connection,
-        (job) => {
-          usage = job;
-        },
+        usage.record,
         target,
       ),
     );
-    if (!usage) {
-      throw new Error("An answered request always reports its usage");
-    }
     const response: unknown = JSON.parse(decoder.decode(result.body));
-    return { response, summary: playgroundSummaryOf(usage, this.snapshot.current) };
+    return { response, summary: usage.summaryAt(this.snapshot.current) };
   }
 }

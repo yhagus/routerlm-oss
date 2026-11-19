@@ -1,4 +1,4 @@
-import { dataUriOf, type UploadedFile } from "../../models/uploaded-file.js";
+import { dataUriOf, type MediaUpload } from "../../models/media-upload.js";
 
 // A multipart `/v1/images/edits` request, read into the JSON body the edits
 // client contract parses, so that both forms are validated alike.
@@ -12,7 +12,7 @@ export const IMAGE_EDIT_FILE_FIELDS = [
 
 /** What multer read from the file fields; undefined for a JSON request. */
 export type ImageEditFiles = Partial<
-  Record<(typeof IMAGE_EDIT_FILE_FIELDS)[number]["name"], UploadedFile[]>
+  Record<(typeof IMAGE_EDIT_FILE_FIELDS)[number]["name"], MediaUpload[]>
 >;
 
 /**

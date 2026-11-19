@@ -1,5 +1,7 @@
 # Model Kind separates image models from chat models
 
+Status: accepted, superseded in part by ADR 0026: there are now five Model Kinds, `chat`, `image`, `speech`, `transcription` and `video`, each with its own client endpoints, and a Provider serves each Kind through its own endpoint. The rule that a Model's Routes share one Kind and each client endpoint accepts only its Kind holds for all five.
+
 Image generation models (such as `gpt-image-2`) cannot serve a chat request, and chat models cannot serve an image request. We decided that every Upstream Model has a Model Kind, `chat` or `image`, that all Routes of a Model point at Upstream Models of one Kind, and that each client endpoint accepts only Models of its Kind. Clients ask for images through the OpenAI Images API (`/v1/images/generations` and `/v1/images/edits`).
 
 ## Considered options

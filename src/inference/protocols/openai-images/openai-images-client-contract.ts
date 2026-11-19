@@ -15,7 +15,7 @@ import {
   type MediaResponseContext,
 } from "../../models/media-kind.js";
 import { dashScopeImageProtocol } from "../dashscope-image/dashscope-image-protocol.js";
-import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
+import { writeOpenAiError } from "../openai-chat/openai-error.js";
 
 // OpenAI's Images API: `POST /v1/images/generations` (ADR 0015) and
 // `POST /v1/images/edits`, which adds the input images to start from.
@@ -185,8 +185,7 @@ export const openAiImagesClientContract: MediaClientContract<
   unservableReason,
   upstreamProtocols: { "dashscope-image": dashScopeImageProtocol },
   writeResponse,
-  // The same envelope as Chat Completions: both are OpenAI's.
-  writeError: (error) => openAiChatClientConverter.writeError(error),
+  writeError: writeOpenAiError,
 };
 
 /** `POST /v1/images/edits`: the same contract, with the input images the request must bring. */

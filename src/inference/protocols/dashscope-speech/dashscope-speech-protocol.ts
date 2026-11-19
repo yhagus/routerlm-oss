@@ -9,7 +9,7 @@ import type { SpeechSynthesisRequest, SynthesizedSpeech } from "../../models/spe
 import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
 import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
 
-// DashScope's native speech synthesis API (spec "Phase 2: speech"): one
+// DashScope's native speech synthesis API: one
 // synchronous call that answers with the URL of the audio, which the gateway
 // fetches.
 

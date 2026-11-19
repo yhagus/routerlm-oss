@@ -293,30 +293,50 @@ describe("Seed Catalog command (e2e)", () => {
     expect(provider?.logo).toBe("example");
   });
 
-  it("adds the endpoint of a Kind the Provider has none for, keeping the endpoints it has", async () => {
-    const operatorChat = {
-      kind: "chat" as const,
-      protocol: "openai-chat" as const,
-      baseUrl: "https://workspace.example.com/v1",
-    };
+  it("keeps an endpoint the operator deleted, and skips the Upstream Models of its Kind", async () => {
+    const chatOnly = catalog[0].endpoints;
+    await db
+      .update(schema.providers)
+      .set({ endpoints: chatOnly })
+      .where(eq(schema.providers.slug, "example"));
     const catalogImage = {
       kind: "image" as const,
       protocol: "dashscope-image" as const,
       baseUrl: "https://api.example.com/api/v1",
     };
-    await db
-      .update(schema.providers)
-      .set({ endpoints: [operatorChat] })
-      .where(eq(schema.providers.slug, "example"));
+    const imageModel = {
+      upstreamModelId: "example-image",
+      name: "Example Image",
+      kind: "image" as const,
+      capabilities: [],
+      contextSize: null,
+      maxOutputTokens: null,
+      inputPrice: null,
+      outputPrice: null,
+      cacheReadPrice: null,
+      cacheWritePrice: null,
+      pricePerImage: 0.03,
+      releaseDate: "2026-01-01",
+      source,
+    };
 
     await commandBus.execute(
       new SeedCatalogCommand([
-        { ...catalog[0], endpoints: [...catalog[0].endpoints, catalogImage] },
+        {
+          ...catalog[0],
+          endpoints: [...chatOnly, catalogImage],
+          upstreamModels: [...catalog[0].upstreamModels, imageModel],
+        },
       ]),
     );
 
     const provider = await db.query.providers.findFirst({ where: { slug: "example" } });
-    expect(provider?.endpoints).toEqual([operatorChat, catalogImage]);
+    expect(provider?.endpoints).toEqual(chatOnly);
+    const imageModels = await db
+      .select()
+      .from(schema.upstreamModels)
+      .where(eq(schema.upstreamModels.upstreamModelId, "example-image"));
+    expect(imageModels).toEqual([]);
   });
 
   it("keeps a logo the operator chose", async () => {

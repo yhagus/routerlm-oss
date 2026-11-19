@@ -30,7 +30,7 @@ import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.j
 import { RetrieveVideoJobQuery } from "./queries/impl/retrieve-video-job.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
-import { MEDIA_UPLOAD_OPTIONS, type UploadedFile as MediaUpload } from "./models/uploaded-file.js";
+import { MEDIA_UPLOAD_OPTIONS, type MediaUpload } from "./models/media-upload.js";
 import {
   IMAGE_EDIT_FILE_FIELDS,
   type ImageEditFiles,

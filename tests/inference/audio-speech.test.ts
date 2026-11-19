@@ -6,6 +6,7 @@ import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { dashScopeSpeechFixture, FakeUpstream } from "../support/fake-upstream.js";
 import {
+  addProviderAccount,
   insertApiKey,
   insertDashScopeImageModel,
   insertDashScopeSpeechModel,
@@ -23,6 +24,7 @@ const SPEECH_REQUEST = {
   voice: "Cherry",
   response_format: "wav",
 };
+const BACKUP_KEY = "sk-backup-speech-key";
 const AUDIO = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4]);
 
 describe("Speech on /v1/audio/speech (e2e)", () => {
@@ -31,6 +33,7 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
   let upstream: FakeUpstream;
   let apiKey: string;
   let routeId: string;
+  let providerId: string;
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -40,7 +43,7 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
   beforeEach(async () => {
     upstream.reset();
     await deleteAllUpstreamData(db);
-    ({ routeId } = await insertDashScopeSpeechModel(app, db, {
+    ({ routeId, providerId } = await insertDashScopeSpeechModel(app, db, {
       modelName: "narrator",
       baseUrl: `${upstream.origin}/api/v1`,
     }));
@@ -109,6 +112,20 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
     expect(synthesizerRequests()[0].body).toMatchObject({ input: { rate: 1.5 } });
   });
 
+  it("falls back to the next Provider Account when the upstream call fails", async () => {
+    await addProviderAccount(app, db, providerId, { key: BACKUP_KEY, priority: 1 });
+    upstream.replyTo(SYNTHESIZER_PATH, { kind: "json", status: 503, body: { code: "Overloaded" } });
+    answerWithAudio();
+
+    const response = await synthesize().expect(200);
+
+    expect(new Uint8Array(response.body)).toEqual(AUDIO);
+    expect(synthesizerRequests().map((sent) => sent.headers.authorization)).toEqual([
+      `Bearer ${UPSTREAM_KEY}`,
+      `Bearer ${BACKUP_KEY}`,
+    ]);
+  });
+
   it("refuses a response_format DashScope can't produce, naming it", async () => {
     const response = await synthesize({ ...SPEECH_REQUEST, response_format: "flac" }).expect(400);
 
@@ -122,12 +139,12 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
     expect(JSON.parse(response.body.toString()).error.message).toContain("stream_format");
   });
 
-  it("refuses instructions, which qwen-audio-3.0-tts-plus is not known to honour", async () => {
-    const response = await synthesize({ ...SPEECH_REQUEST, instructions: "Speak softly" }).expect(
-      400,
-    );
+  it("accepts instructions without sending them, as qwen-audio-3.0-tts-plus is not known to honour them", async () => {
+    answerWithAudio();
 
-    expect(JSON.parse(response.body.toString()).error.message).toContain("instructions");
+    await synthesize({ ...SPEECH_REQUEST, instructions: "Speak softly" }).expect(200);
+
+    expect(JSON.stringify(synthesizerRequests()[0].body)).not.toContain("Speak softly");
   });
 
   it("sends the voice a Route's Parameter Policy forces instead of the client's", async () => {

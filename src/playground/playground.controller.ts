@@ -16,10 +16,7 @@ import {
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-node";
-import {
-  MEDIA_UPLOAD_OPTIONS,
-  type UploadedFile as MediaUpload,
-} from "@/inference/models/uploaded-file.js";
+import { MEDIA_UPLOAD_OPTIONS, type MediaUpload } from "@/inference/models/media-upload.js";
 import {
   TRANSCRIPTION_FILE_FIELD,
   transcriptionBodyOf,

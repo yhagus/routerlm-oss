@@ -378,6 +378,18 @@ describe("Video Jobs on /v1/videos (e2e)", () => {
     expect(new Uint8Array(response.body)).toEqual(VIDEO);
   });
 
+  it("answers 502 in the gateway's words when the video host can't be reached", async () => {
+    const videoId = await submitted();
+    upstream.replyTo(TASK_PATH, taskSucceeded("/media/video.mp4"));
+    upstream.replyTo("/media/video.mp4", { kind: "reset" });
+
+    const response = await download(videoId).expect(502);
+
+    const body = response.body.toString();
+    expect(body).toContain("upstream_error");
+    expect(body).not.toContain("127.0.0.1");
+  });
+
   it("refuses the content of a job that isn't completed with a 409", async () => {
     const videoId = await submitted();
     upstream.replyTo(TASK_PATH, taskIn("RUNNING"));
