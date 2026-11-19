@@ -112,6 +112,13 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         cacheWritePrice: upstreamModel.cacheWritePrice,
         serviceTiers: upstreamModel.serviceTiers,
         tierPrices: upstreamModel.tierPrices,
+        unitPrices: {
+          pricePerImage: upstreamModel.pricePerImage,
+          pricePerImageBySize: upstreamModel.pricePerImageBySize,
+          pricePerInputImage: upstreamModel.pricePerInputImage,
+        },
+        sizes: upstreamModel.sizes,
+        maxInputImages: upstreamModel.maxInputImages,
         isEnabled: upstreamModel.isEnabled,
         provider,
       });

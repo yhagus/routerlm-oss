@@ -10,7 +10,12 @@ import { MODEL_KINDS, type ModelKind } from "./upstream.js";
 // column here would break ADR 0004; tests/usage/records-schema.test.ts fails
 // if one is added. Error Captures are the one exception.
 
-export const CLIENT_PROTOCOLS = ["openai-chat", "anthropic-messages", "openai-responses"] as const;
+export const CLIENT_PROTOCOLS = [
+  "openai-chat",
+  "anthropic-messages",
+  "openai-responses",
+  "openai-images",
+] as const;
 export type ClientProtocol = (typeof CLIENT_PROTOCOLS)[number];
 
 /** The Model Kind each client Protocol's endpoint serves: a Model of another Kind is refused there. */
@@ -18,6 +23,7 @@ export const CLIENT_PROTOCOL_KINDS = {
   "openai-chat": "chat",
   "anthropic-messages": "chat",
   "openai-responses": "chat",
+  "openai-images": "image",
 } as const satisfies Record<ClientProtocol, ModelKind>;
 
 /** The error contract's codes, as the client receives them. */

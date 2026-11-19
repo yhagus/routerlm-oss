@@ -1,7 +1,7 @@
 import type { TokenUsage } from "@/inference/models/internal-format.js";
 import type { Snapshot, SnapshotRoute } from "@/snapshot/models/snapshot.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
-import { usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
+import type { MediaUnits, UsageJob } from "@/usage/models/usage-job.js";
+import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
 
 /**
  * What the Playground shows after each response (spec "Playground"). It goes
@@ -9,6 +9,8 @@ import { usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
  */
 export interface PlaygroundSummary {
   usage: TokenUsage;
+  /** What a media Kind counted (images, tier); null for chat. */
+  units: MediaUnits | null;
   /** USD, from the Upstream Model's prices at request time; null when unknown. */
   cost: number | null;
   /**
@@ -23,13 +25,16 @@ export interface PlaygroundSummary {
 
 /** The summary of a finished Playground request, named from the current snapshot. */
 export function playgroundSummaryOf(job: UsageJob, snapshot: Snapshot): PlaygroundSummary {
-  const { inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, reasoningTokens, cost } =
-    usageMeasurementsOf(job.servedBy, job.usage);
+  const measurements = usageMeasurementsOf(job.servedBy, job.usage);
+  const { inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, reasoningTokens } =
+    measurements;
   const usage = { inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, reasoningTokens };
+  const units = job.units ?? null;
+  const cost = units ? unitCostOf(job.servedBy, units) : measurements.cost;
   const { servedBy } = job;
   const upstreamModel = servedBy && snapshot.upstreamModelsById.get(servedBy.upstreamModelId);
   if (!servedBy || !upstreamModel) {
-    return { usage, cost, route: null, upstreamModel: null, providerAccount: null };
+    return { usage, units, cost, route: null, upstreamModel: null, providerAccount: null };
   }
   const { provider } = upstreamModel;
   const route = servedBy.routeId ? findRoute(snapshot, job.modelId, servedBy.routeId) : undefined;
@@ -38,6 +43,7 @@ export function playgroundSummaryOf(job: UsageJob, snapshot: Snapshot): Playgrou
   );
   return {
     usage,
+    units,
     cost,
     route: route
       ? {

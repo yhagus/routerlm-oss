@@ -10,6 +10,7 @@ import type {
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
+import type { UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
 // PostgreSQL query. Disabled rows are kept, with their flags: the inference
@@ -80,7 +81,8 @@ export interface SnapshotUpstreamModel {
   upstreamModelId: string;
   kind: ModelKind;
   capabilities: Capability[];
-  contextSize: number;
+  /** Null for a media Kind, which has no token context. */
+  contextSize: number | null;
   maxOutputTokens: number | null;
   /** USD per million tokens; null when unpublished. */
   inputPrice: number | null;
@@ -89,6 +91,12 @@ export interface SnapshotUpstreamModel {
   cacheWritePrice: number | null;
   serviceTiers: ServiceTier[];
   tierPrices: Partial<Record<ServiceTier, TierPrices>>;
+  /** A media Kind's prices per counted unit. */
+  unitPrices: UpstreamModelUnitPrices;
+  /** Image sizes as the Provider writes them (`1024*1024`); null when any size goes. */
+  sizes: string[] | null;
+  /** Null when no limit is known. */
+  maxInputImages: number | null;
   isEnabled: boolean;
   provider: SnapshotProvider;
 }

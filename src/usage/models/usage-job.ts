@@ -1,5 +1,6 @@
 import type {
   ClientProtocol,
+  PricesByTier,
   GatewayErrorCode,
   RecordedAttemptFailure,
 } from "@/db/schemas/index.js";
@@ -45,6 +46,18 @@ export interface UpstreamModelPrices {
 }
 
 /**
+ * An Upstream Model's unit prices when the request was made, in USD per
+ * unit; a media Kind's Cost comes from them. Each Kind adds the prices of the
+ * units it counts.
+ */
+export interface UpstreamModelUnitPrices {
+  pricePerImage: number | null;
+  /** By size tier, such as `2K`; a tier listed here wins over `pricePerImage`. */
+  pricePerImageBySize: PricesByTier | null;
+  pricePerInputImage: number | null;
+}
+
+/**
  * What an Attempt tried, and so what served a request: the ids and the names
  * its records copy at request time (ADR 0024).
  */
@@ -87,6 +100,8 @@ export interface ServedBy extends QueuedServingTarget {
   serviceTier?: ServiceTier | null;
   /** The Upstream Model's prices at the Service Tier that served it. */
   prices: UpstreamModelPrices;
+  /** Missing in jobs queued before media Kinds were priced. */
+  unitPrices?: UpstreamModelUnitPrices;
 }
 
 /** One upstream call. Times are ISO strings: job data travels as JSON. */

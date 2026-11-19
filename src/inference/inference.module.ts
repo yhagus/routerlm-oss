@@ -11,6 +11,8 @@ import { InferenceExceptionFilter } from "./filters/inference-exception.filter.j
 import { INFERENCE_API_PREFIX, InferenceController } from "./inference.controller.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
 import { AttemptRunner } from "./providers/attempt-runner.js";
+import { MediaFetcher } from "./providers/media-fetcher.js";
+import { MediaUpstreamClient } from "./providers/media-upstream-client.js";
 import { UpstreamClient } from "./providers/upstream-client.js";
 
 /** The client-facing `/v1/*` API: inference and the Model list. */
@@ -31,6 +33,8 @@ import { UpstreamClient } from "./providers/upstream-client.js";
     ...QueryHandlers,
     UpstreamClient,
     AttemptRunner,
+    MediaFetcher,
+    MediaUpstreamClient,
     { provide: APP_FILTER, useClass: InferenceExceptionFilter },
   ],
 })

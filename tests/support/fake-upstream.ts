@@ -27,7 +27,9 @@ export type FakeReply =
   /** Sends a 200 and its headers, then nothing: no body, no stream event. */
   | { kind: "headers-only" }
   /** Drops the connection without answering. */
-  | { kind: "reset" };
+  | { kind: "reset" }
+  /** Raw bytes with their content type, as a media host serves a generated file. */
+  | { kind: "binary"; status: number; contentType: string; body: Uint8Array };
 
 /** A request the fake upstream received. */
 export interface ReceivedRequest {
@@ -89,6 +91,14 @@ export const TWO_THINKING_BLOCKS_STREAM = [
   "",
 ].join("\n\n");
 
+/** A recorded dashscope-image exchange, named as for openAiChatFixture. */
+export function dashScopeImageFixture(name: string): string {
+  return readFileSync(
+    new URL(`../../src/inference/protocols/dashscope-image/fixtures/${name}`, import.meta.url),
+    "utf8",
+  );
+}
+
 /** A recorded openai-responses exchange, named as for openAiChatFixture. */
 export function openAiResponsesFixture(name: string): string {
   return readFileSync(
@@ -132,6 +142,11 @@ export class FakeUpstream {
   /** As `baseUrl`, through the name `localhost` rather than the loopback address, so the host has to be resolved. */
   get localhostBaseUrl(): string {
     return `http://localhost:${portOf(this.server.address())}/v1`;
+  }
+
+  /** A URL on the fake for a generated file, as a Provider returns one; queue its bytes with `replyTo(path, ...)`. */
+  mediaUrl(path: string): string {
+    return `${this.origin}${path}`;
   }
 
   get lastRequest(): ReceivedRequest {
@@ -236,6 +251,10 @@ export class FakeUpstream {
         return;
       case "reset":
         response.destroy();
+        return;
+      case "binary":
+        response.writeHead(reply.status, { "content-type": reply.contentType });
+        response.end(reply.body);
         return;
     }
   }

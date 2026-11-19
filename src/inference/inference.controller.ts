@@ -9,9 +9,11 @@ import { eventStreamResponse } from "@/libs/models/event-stream-response.js";
 import type { ClientModelList } from "./models/client-model.js";
 import type { InferenceResult } from "./models/inference.js";
 import { RunInferenceCommand } from "./commands/impl/run-inference.command.js";
+import { RunMediaInferenceCommand } from "./commands/impl/run-media-inference.command.js";
 import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
 import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
 import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
+import { openAiImagesClientContract } from "./protocols/openai-images/openai-images-client-contract.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
 
 /** What Nest sends with a JSON body it serialises itself. */
@@ -81,6 +83,25 @@ export class InferenceController {
     const result = await this.commandBus.execute(
       new RunInferenceCommand(
         openAiResponsesClientConverter,
+        body,
+        { kind: "api-key", principal },
+        clientConnectionOf(request, response),
+      ),
+    );
+    return replyWith(result, response);
+  }
+
+  @Post("images/generations")
+  @HttpCode(200)
+  async createImage(
+    @Body() body: unknown,
+    @CurrentUser() principal: ApiKeyPrincipal,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Uint8Array | Response> {
+    const result = await this.commandBus.execute(
+      new RunMediaInferenceCommand(
+        openAiImagesClientContract,
         body,
         { kind: "api-key", principal },
         clientConnectionOf(request, response),

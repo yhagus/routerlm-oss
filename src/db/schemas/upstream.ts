@@ -23,6 +23,8 @@ export const UPSTREAM_PROTOCOLS = [
   "openai-chat",
   "anthropic-messages",
   "openai-responses",
+  // DashScope's native API (`{endpoint}/services/aigc/...`), one Protocol per Kind.
+  "dashscope-image",
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
@@ -35,6 +37,7 @@ export const PROTOCOL_KINDS = {
   "openai-chat": "chat",
   "anthropic-messages": "chat",
   "openai-responses": "chat",
+  "dashscope-image": "image",
 } as const satisfies Record<UpstreamProtocol, ModelKind>;
 
 /**
@@ -320,7 +323,8 @@ export const upstreamModels = pgTable(
     // Its Provider has an endpoint for this Kind; the API and the Catalog schema enforce it.
     kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
     capabilities: text("capabilities", { enum: CAPABILITIES }).array("[]").notNull().default([]),
-    contextSize: integer("context_size").notNull(),
+    // Null for a media Kind, which has no token context.
+    contextSize: integer("context_size"),
     maxOutputTokens: integer("max_output_tokens"),
     // Null when the Provider doesn't publish a price; Cost is then left empty.
     inputPrice: pricePerMillionTokens("input_price"),

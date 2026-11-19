@@ -46,6 +46,10 @@ export interface UpstreamModelLimits {
   contextSize?: number;
   /** None when not given. */
   maxOutputTokens?: number;
+  /** Image sizes as the Provider writes them (`1024*1024`); any size when not given. */
+  sizes?: string[];
+  /** USD per generated image, by size tier (`1K`, `2K`). */
+  pricePerImageBySize?: Record<string, number>;
 }
 
 export interface ModelOptions extends RouteTimeouts, UpstreamModelLimits {
@@ -75,6 +79,41 @@ export function insertAnthropicMessagesModel(
   return insertModel(app, db, { protocol: "anthropic-messages", authStyle: "x-api-key" }, options);
 }
 
+/**
+ * As insertOpenAiChatModel, for an image Model served by a dashscope-image
+ * Provider. `baseUrl` is the endpoint's, such as `{fake origin}/api/v1`.
+ */
+export function insertDashScopeImageModel(
+  app: NestNodeApplication,
+  db: Database,
+  options: ModelOptions,
+): Promise<InsertedModel> {
+  return insertModel(
+    app,
+    db,
+    { protocol: "dashscope-image", authStyle: "bearer" },
+    { ...options, kind: "image", capabilities: [] },
+  );
+}
+
+/** As addOpenAiChatRoute, for an image Route to a dashscope-image Provider of its own. */
+export async function addDashScopeImageRoute(
+  app: NestNodeApplication,
+  db: Database,
+  modelId: string,
+  options: RouteOptions,
+): Promise<Omit<InsertedModel, "modelId">> {
+  const route = await insertRoute(
+    db,
+    app.get(ProviderKeyCipher),
+    modelId,
+    { protocol: "dashscope-image", authStyle: "bearer" },
+    { ...options, kind: "image", capabilities: [] },
+  );
+  await app.get(SnapshotService).changed();
+  return route;
+}
+
 /** As insertOpenAiChatModel, for an openai-responses Provider. */
 export function insertOpenAiResponsesModel(
   app: NestNodeApplication,
@@ -92,7 +131,7 @@ async function insertModel(
 ): Promise<InsertedModel> {
   const [model] = await db
     .insert(models)
-    .values({ name: options.modelName })
+    .values({ name: options.modelName, kind: options.kind })
     .returning({ id: models.id });
   const route = await insertRoute(db, app.get(ProviderKeyCipher), model.id, speaks, {
     ...options,
@@ -165,8 +204,13 @@ async function insertRoute(
       upstreamModelId: UPSTREAM_MODEL_ID,
       kind: options.kind,
       capabilities: options.capabilities ?? ALL_CAPABILITIES,
-      contextSize: options.contextSize ?? 128_000,
+      contextSize:
+        options.kind === undefined || options.kind === "chat"
+          ? (options.contextSize ?? 128_000)
+          : null,
       maxOutputTokens: options.maxOutputTokens,
+      sizes: options.sizes,
+      pricePerImageBySize: options.pricePerImageBySize,
     })
     .returning({ id: upstreamModels.id });
   const [route] = await db

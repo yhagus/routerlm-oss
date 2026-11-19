@@ -12,7 +12,7 @@ import type {
   UsageCaller,
   UsageJob,
 } from "../models/usage-job.js";
-import { usageMeasurementsOf } from "../models/usage-measurements.js";
+import { unitCostOf, usageMeasurementsOf } from "../models/usage-measurements.js";
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
 
@@ -66,7 +66,7 @@ export class UsageWriter {
           httpStatus: job.httpStatus,
           errorCode: job.errorCode,
           serviceTier: job.servedBy?.serviceTier ?? null,
-          ...usageMeasurementsOf(job.servedBy, job.usage),
+          ...measurementsOf(job),
           ...unitColumnsOf(job.units ?? null),
           requestBytes: job.requestBytes,
           responseBytes: job.responseBytes,
@@ -128,6 +128,18 @@ function errorCaptureRowsOf(
     responseHeaders: upstreamResponse?.headers ?? null,
     responseBody: upstreamResponse?.body ?? null,
   }));
+}
+
+/**
+ * Token counts and Cost. A media Kind counts units instead of tokens, so its
+ * Cost comes from them and its missing token counts make it no less complete.
+ */
+function measurementsOf(job: UsageJob) {
+  const measurements = usageMeasurementsOf(job.servedBy, job.usage);
+  if (!job.units) {
+    return measurements;
+  }
+  return { ...measurements, cost: unitCostOf(job.servedBy, job.units), isIncomplete: false };
 }
 
 /** The unit columns of a Usage Log: null for a unit the Kind doesn't count, and all null for chat. */

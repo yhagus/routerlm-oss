@@ -1,5 +1,5 @@
 import type { TokenUsage } from "@/inference/models/internal-format.js";
-import type { ServedBy, UpstreamModelPrices } from "./usage-job.js";
+import type { MediaUnits, ServedBy, UpstreamModelPrices } from "./usage-job.js";
 
 /** The token counts, Cost and incomplete flag a Usage Log stores. */
 export interface UsageMeasurements extends TokenUsage {
@@ -65,6 +65,40 @@ function costOf(pricedCounts: PricedCount[], wasReported: boolean): number | nul
       return null;
     }
     cost += (tokens * pricePerMillion) / TOKENS_PER_PRICE_UNIT;
+  }
+  return cost;
+}
+
+/**
+ * What a media Kind's units cost at the prices frozen when the request was
+ * served (spec "Unit pricing"). Null when nothing was served, or when a
+ * counted unit has no price: a unit priced by tier needs that tier's price
+ * or the flat one.
+ */
+export function unitCostOf(
+  servedBy: Pick<ServedBy, "unitPrices"> | null,
+  units: MediaUnits,
+): number | null {
+  const prices = servedBy?.unitPrices;
+  if (!prices) {
+    return null;
+  }
+  const imagePrice =
+    (units.tier === undefined ? undefined : prices.pricePerImageBySize?.[units.tier]) ??
+    prices.pricePerImage;
+  const pricedCounts = [
+    { count: units.imagesOut ?? 0, price: imagePrice },
+    { count: units.imagesIn ?? 0, price: prices.pricePerInputImage },
+  ];
+  let cost = 0;
+  for (const { count, price } of pricedCounts) {
+    if (count === 0) {
+      continue;
+    }
+    if (price === null) {
+      return null;
+    }
+    cost += count * price;
   }
   return cost;
 }

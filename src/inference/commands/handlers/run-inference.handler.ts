@@ -30,7 +30,8 @@ import {
 import { GatewayError } from "../../models/gateway-error.js";
 import type { InferenceRequest } from "../../models/internal-format.js";
 import { applyParameterPolicy, effectiveParameterPolicy } from "../../models/parameter-policy.js";
-import { type PromptCacheKeyOwner, promptCacheKey } from "../../models/prompt-cache-key.js";
+import { promptCacheKey } from "../../models/prompt-cache-key.js";
+import { encodedFor, failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
 import type {
   ClientProtocolConverter,
   ClientStreamWriter,
@@ -71,11 +72,6 @@ type AttemptResult =
   | { kind: "stream"; upstream: UpstreamStream; writer: ClientStreamWriter; target: AttemptTarget };
 
 const HTTP_OK = 200;
-const HTTP_INTERNAL_SERVER_ERROR = 500;
-/** Recorded when the client left before any response; nginx's "client closed request". */
-const CLIENT_CLOSED_REQUEST = 499;
-
-const encoder = new TextEncoder();
 
 /**
  * The inference path (spec "Inference path" steps 2 to 8) for any client
@@ -123,7 +119,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       record(meter.finish(HTTP_OK, false));
       return { kind: "response", json };
     } catch (error) {
-      record(failedRequestUsage(meter, converter, error));
+      record(failedRequestUsage(meter, (failure) => converter.writeError(failure), error));
       throw error;
     }
   }
@@ -347,40 +343,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       record(meter.finish(HTTP_OK, clientSignal.aborted));
     }
   }
-}
-
-/** The API Key or User a request is made for, as its Usage Log and prompt cache key name it. */
-function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
-  return caller.kind === "api-key"
-    ? {
-        kind: "api-key",
-        apiKeyId: caller.principal.apiKeyId,
-        apiKeyName: caller.principal.apiKeyName,
-      }
-    : { kind: "playground", userId: caller.userId };
-}
-
-/** `text` encoded once, counted as sent: the client gets exactly these bytes. */
-function encodedFor(meter: UsageMeter, text: string): Uint8Array {
-  const bytes = encoder.encode(text);
-  meter.responseWritten(bytes.byteLength);
-  return bytes;
-}
-
-/** The usage job of a request that ended in an exception instead of a response. */
-function failedRequestUsage(
-  meter: UsageMeter,
-  converter: ClientProtocolConverter,
-  error: unknown,
-): UsageJob {
-  if (error instanceof GatewayError) {
-    return meter.finishWithError(error, converter.writeError(error));
-  }
-  if (error instanceof ClientCancelledError) {
-    return meter.finish(CLIENT_CLOSED_REQUEST, true);
-  }
-  // A bug: Nest answers 500.
-  return meter.finish(HTTP_INTERNAL_SERVER_ERROR, false);
 }
 
 /**

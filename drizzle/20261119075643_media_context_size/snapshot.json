@@ -1,0 +1,38 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "561b8887-ddb5-42b2-a9ae-3b9a3aa04d15",
+  "prevIds": [
+    "fabfeae5-0cfa-45ad-a5c9-ed03612cae06"
+  ],
+  "footprints": [
+    {
+      "statementType": "alter_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "context_size"
+      ],
+      "writes": [
+        "s|colprop|public.upstream_models.context_size.notNull"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public",
+        "n|col|public.upstream_models.context_size"
+      ],
+      "sqlHash": "c2bf6dc4db1fade7"
+    }
+  ],
+  "deltas": [
+    {
+      "op": "alter",
+      "key": "columns\u0000[\"public\",\"upstream_models\",\"context_size\"]",
+      "set": {
+        "notNull": false
+      }
+    }
+  ]
+}
