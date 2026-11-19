@@ -3415,6 +3415,28 @@ tbody tr:hover {
   background: var(--panel);
 }
 
+/* The image tab's results: each image at a readable size, with its download. */
+.image-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.image-results__item {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.image-results__item img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+
 /* Composer */
 .composer {
   display: grid;
