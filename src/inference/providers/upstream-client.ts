@@ -278,7 +278,8 @@ export class UpstreamClient {
     try {
       const written = call.converter.writeRequest(call.request, call.target);
       const response = await this.send(call, written, deadlines.signal);
-      const upstreamRequestId = upstreamRequestIdOf(Object.fromEntries(response.headers.entries()));
+      const headers = Object.fromEntries(response.headers.entries());
+      const upstreamRequestId = upstreamRequestIdOf(headers);
       if (written.isAnsweredAsStream) {
         const gathered = await gatherStream(
           parseUpstreamStream(() => call.converter.startStream(), streamBodyOf(response)),
@@ -293,7 +294,7 @@ export class UpstreamClient {
           "exhausted",
           response.status,
           `The upstream answered ${response.status} with an Exhausted error code`,
-          { headers: Object.fromEntries(response.headers.entries()), body },
+          { headers, body },
         );
       }
       return { response: call.converter.parseResponse(parseJsonBody(body)), upstreamRequestId };
