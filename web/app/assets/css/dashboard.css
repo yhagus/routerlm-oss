@@ -2832,6 +2832,48 @@ tbody tr:hover {
   justify-content: center;
 }
 
+/* Probe results: one entry per Provider Account, hairlines between them */
+.probe-results {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.probe-result {
+  display: grid;
+  gap: 4px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.probe-result:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.probe-result p {
+  margin: 0;
+}
+.probe-result__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+.probe-result__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.probe-result__error {
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
 /* Longer forms: Providers, Upstream Models, Provider Accounts */
 .dialog--wide {
   width: min(620px, calc(100vw - 32px));
@@ -5144,6 +5186,17 @@ svg.lucide {
 }
 .icon-action--danger:hover {
   color: var(--danger);
+}
+.icon-action[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
+.icon-action[aria-disabled="true"]:hover {
+  background: transparent;
+  color: var(--muted);
+}
+.icon-action[aria-busy="true"] {
+  opacity: 1;
 }
 @media (max-width: 1120px) {
   .executive-band--providers {
