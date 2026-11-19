@@ -16,6 +16,8 @@ export const MEDIA_UPLOAD_OPTIONS = {
 export interface UploadedFile {
   /** The content type the client gave the part. */
   mimetype: string;
+  /** The file name the client gave the part. */
+  originalname: string;
   buffer: Buffer;
 }
 
