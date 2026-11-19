@@ -174,12 +174,14 @@ export function openAiResponsesFixture(name: string): string {
 /**
  * A local HTTP server standing in for a Provider, so no test calls a real
  * one. Queue replies with `reply()`; each request takes the next one. A reply
- * queued with `replyTo()` goes only to a request for its path.
+ * queued with `replyTo()` goes only to a request for its path, and one queued
+ * with `replyWithCredential()` only to a request sending that key.
  */
 export class FakeUpstream {
   readonly requests: ReceivedRequest[] = [];
   private readonly replies: FakeReply[] = [];
   private readonly repliesByPath = new Map<string, FakeReply[]>();
+  private readonly repliesByCredential = new Map<string, FakeReply[]>();
   private readonly openResponses = new Set<ServerResponse>();
   private disconnectWaiters: Array<() => void> = [];
 
@@ -235,6 +237,17 @@ export class FakeUpstream {
     this.repliesByPath.set(path, replies);
   }
 
+  /**
+   * Queues a reply for the next request sending `credential`, as a bearer
+   * token or an `x-api-key`: to answer each Provider Account its own way
+   * when they are called at once.
+   */
+  replyWithCredential(credential: string, reply: FakeReply): void {
+    const replies = this.repliesByCredential.get(credential) ?? [];
+    replies.push(reply);
+    this.repliesByCredential.set(credential, replies);
+  }
+
   /** Resolves when the gateway closes a connection the fake upstream was still answering. */
   waitForDisconnect(): Promise<void> {
     return new Promise((resolve) => this.disconnectWaiters.push(resolve));
@@ -244,6 +257,7 @@ export class FakeUpstream {
     this.requests.length = 0;
     this.replies.length = 0;
     this.repliesByPath.clear();
+    this.repliesByCredential.clear();
     this.closeOpenResponses();
   }
 
@@ -272,7 +286,10 @@ export class FakeUpstream {
       }
     });
 
-    const reply = this.repliesByPath.get(request.url ?? "")?.shift() ?? this.replies.shift();
+    const reply =
+      this.repliesByPath.get(request.url ?? "")?.shift() ??
+      this.repliesByCredential.get(credentialOf(request))?.shift() ??
+      this.replies.shift();
     if (!reply) {
       response.writeHead(500).end("The fake upstream has no reply queued");
       return;
@@ -352,4 +369,13 @@ async function writeInPieces(
     response.write(piece);
     await new Promise((resolve) => setTimeout(resolve, PAUSE_BETWEEN_PIECES_MS));
   }
+}
+
+/** The key a request sends, as a bearer token or an `x-api-key`; empty when it sends none. */
+function credentialOf(request: IncomingMessage): string {
+  const apiKey = request.headers["x-api-key"];
+  if (typeof apiKey === "string") {
+    return apiKey;
+  }
+  return request.headers.authorization?.replace(/^Bearer /, "") ?? "";
 }

@@ -47,6 +47,8 @@ import type { PlaygroundSpeech } from "./models/playground-speech.js";
 import { SendPlaygroundTranscriptionCommand } from "./commands/impl/send-playground-transcription.command.js";
 import type { PlaygroundTranscription } from "./models/playground-transcription.js";
 import type { PlaygroundVideoJob } from "./models/playground-video-job.js";
+import { ProbeUpstreamModelCommand } from "./commands/impl/probe-upstream-model.command.js";
+import type { ProbeResults } from "./models/probe-result.js";
 
 /** The Playground's endpoints: a signed-in User's session, never an API Key. */
 @DashboardController("playground")
@@ -320,6 +322,20 @@ export class PlaygroundController {
         clientConnectionOf(request, response),
         { kind: "upstream-model", upstreamModelId },
       ),
+    );
+  }
+
+  /** A Probe: the Upstream Model checked once with each enabled Provider Account; no body. */
+  @Post("upstream-models/:upstreamModelId/probe")
+  @HttpCode(200)
+  probeUpstreamModel(
+    @Param("upstreamModelId", ParseUUIDPipe) upstreamModelId: string,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<ProbeResults> {
+    return this.commandBus.execute(
+      new ProbeUpstreamModelCommand(upstreamModelId, user, clientConnectionOf(request, response)),
     );
   }
 }

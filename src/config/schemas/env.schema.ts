@@ -29,6 +29,9 @@ export const envSchema = z.object({
   SNAPSHOT_RELOAD_INTERVAL_MS: z.coerce.number().int().positive().default(30_000),
   // How long one Quota Meter reading may take before it counts as failed.
   QUOTA_READER_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
+  // How long one Probe call may take (GLOSSARY "Probe"); an image one gets longer.
+  PROBE_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  PROBE_IMAGE_TIMEOUT_MS: z.coerce.number().int().positive().default(90_000),
   // Where Catalog Gaps are read from: every provider's models, as one JSON document.
   MODELS_DEV_API_URL: z.url().default("https://models.dev/api.json"),
   // How long reading models.dev may take before the Catalog Gaps report comes back empty.
