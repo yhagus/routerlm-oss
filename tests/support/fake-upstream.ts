@@ -103,13 +103,19 @@ export function dashScopeImageFixture(name: string): string {
 export const DASHSCOPE_GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
 
 /**
- * Queues the recorded dashscope-image answer, two 1024×1024 images (the 1K
- * tier), with its image URLs pointing at the fake and their bytes queued.
+ * Queues the recorded dashscope-image answer, two images, with its image URLs
+ * pointing at the fake and their bytes queued. DashScope reports them at
+ * `outputSize`; the recording's 1024×1024 is the 1K tier.
  */
-export function replyWithTwoDashScopeImages(upstream: FakeUpstream): void {
+export function replyWithTwoDashScopeImages(
+  upstream: FakeUpstream,
+  outputSize: { width: number; height: number } = { width: 1024, height: 1024 },
+): void {
   const answer = dashScopeImageFixture("upstream-response.json")
     .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))
-    .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"));
+    .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"))
+    .replace(/"output_width": \d+/, `"output_width": ${outputSize.width}`)
+    .replace(/"output_height": \d+/, `"output_height": ${outputSize.height}`);
   upstream.replyTo(DASHSCOPE_GENERATION_PATH, {
     kind: "json",
     status: 200,

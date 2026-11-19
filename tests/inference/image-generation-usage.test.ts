@@ -78,6 +78,18 @@ describe("Usage Logs of image generation (e2e)", () => {
     });
   });
 
+  it("prices qwen's standard 1328×1328 at the 1K tier", async () => {
+    replyWithTwoDashScopeImages(upstream, { width: 1328, height: 1328 });
+
+    await request(app.getHttpServer())
+      .post("/v1/images/generations")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .send({ model: "painter", prompt: "A red fox in snow", n: 2 })
+      .expect(200);
+
+    expect(await writtenUsageLog(db)).toMatchObject({ unitTier: "1K", cost: 0.08 });
+  });
+
   it("records the input images of an edit, and prices them into its Cost", async () => {
     replyWithTwoDashScopeImages(upstream);
 
