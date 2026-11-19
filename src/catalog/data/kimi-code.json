@@ -3,8 +3,13 @@
   "name": "Kimi Code",
   "logo": "kimi",
   "termsRisk": true,
-  "protocol": "openai-chat",
-  "baseUrl": "https://api.kimi.com/coding/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.kimi.com/coding/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "reasoningContentInHistory": "tool-call-turns",

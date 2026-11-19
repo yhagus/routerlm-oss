@@ -5,8 +5,11 @@ import {
   CAPABILITIES,
   CREDENTIAL_KINDS,
   type KimiCodeOauthLogin,
+  MODEL_KINDS,
   type OpenAiCodexOauthLogin,
+  PROTOCOL_KINDS,
   PROTOCOLS_WITH_SERVICE_TIERS,
+  type ProviderEndpoint,
   QUOTA_READERS,
   type ServiceTierValues,
   type TierPrices,
@@ -180,16 +183,28 @@ const QUIRKS_OF_ONE_PROTOCOL = {
 } as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
 
 /**
- * The quirk keys in `quirks` that `protocol` doesn't read, in their order.
- * A Provider must have none: such a quirk would silently do nothing.
+ * The Provider's chat endpoint: its Protocol is the one the quirks and
+ * Service Tiers apply to, and its base URL the one quota readers and sign-ins
+ * start from.
+ */
+export function chatEndpointOf(
+  endpoints: readonly ProviderEndpoint[],
+): ProviderEndpoint | undefined {
+  return endpoints.find((endpoint) => endpoint.kind === "chat");
+}
+
+/**
+ * The quirk keys in `quirks` that `protocol` doesn't read, in their order;
+ * without a chat Protocol, only the quirks every Protocol reads apply. A
+ * Provider must have none: such a quirk would silently do nothing.
  */
 export function quirksForeignToProtocol(
-  protocol: UpstreamProtocol,
+  protocol: UpstreamProtocol | undefined,
   quirks: Record<string, unknown>,
 ): string[] {
   const understood: readonly string[] = [
     ...QUIRKS_OF_EVERY_PROTOCOL,
-    ...QUIRKS_OF_ONE_PROTOCOL[protocol],
+    ...(protocol === undefined ? [] : QUIRKS_OF_ONE_PROTOCOL[protocol]),
   ];
   return Object.keys(quirks).filter((key) => !understood.includes(key));
 }
@@ -199,7 +214,7 @@ export function quirksForeignToProtocol(
  * one (ADR 0014). A Provider must have none: they would silently do nothing.
  */
 export function serviceTierValuesForeignToProtocol(
-  protocol: UpstreamProtocol,
+  protocol: UpstreamProtocol | undefined,
   serviceTierValues: ServiceTierValues,
 ): ServiceTier[] {
   const sendsServiceTier = PROTOCOLS_WITH_SERVICE_TIERS.some((sending) => sending === protocol);
@@ -326,18 +341,38 @@ const upstreamModelSchema = z.strictObject({
 });
 export type CatalogUpstreamModel = z.infer<typeof upstreamModelSchema>;
 
+/** One endpoint of a Provider (ADR 0026); its Protocol must serve its Kind. */
+const providerEndpointSchema = z
+  .strictObject({
+    kind: z.enum(MODEL_KINDS),
+    protocol: z.enum(UPSTREAM_PROTOCOLS),
+    /**
+     * What the Protocol's path is appended to: `/chat/completions` for
+     * openai-chat, `/v1/messages` for anthropic-messages, `/responses` for
+     * openai-responses.
+     */
+    baseUrl: providerUrlSchema,
+  })
+  .refine(({ kind, protocol }) => PROTOCOL_KINDS[protocol] === kind, {
+    error: "The Protocol doesn't serve the endpoint's Kind",
+    path: ["protocol"],
+  }) satisfies z.ZodType<ProviderEndpoint>;
+
+/** A Provider's endpoints, at most one per Model Kind. */
+export const providerEndpointsSchema = z
+  .array(providerEndpointSchema)
+  .min(1)
+  .refine(
+    (endpoints) => new Set(endpoints.map((endpoint) => endpoint.kind)).size === endpoints.length,
+    { error: "A Provider has at most one endpoint per Kind" },
+  );
+
 export const catalogProviderSchema = z.strictObject({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
   logo: providerLogoSchema.optional(),
   termsRisk: z.boolean().optional(),
-  protocol: z.enum(UPSTREAM_PROTOCOLS),
-  /**
-   * What the Protocol's path is appended to: `/chat/completions` for
-   * openai-chat, `/v1/messages` for anthropic-messages, `/responses` for
-   * openai-responses.
-   */
-  baseUrl: providerUrlSchema,
+  endpoints: providerEndpointsSchema,
   authStyle: z.enum(AUTH_STYLES),
   /** The provider's id on models.dev, used to report Catalog Gaps. */
   modelsDevProviderId: z.string().optional(),

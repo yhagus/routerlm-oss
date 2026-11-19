@@ -2,8 +2,13 @@
   "slug": "commandcode",
   "name": "Command Code",
   "logo": "commandcode",
-  "protocol": "openai-chat",
-  "baseUrl": "https://api.commandcode.ai/provider/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.commandcode.ai/provider/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {},
   "source": {

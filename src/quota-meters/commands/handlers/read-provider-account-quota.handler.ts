@@ -2,9 +2,10 @@ import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, type AnyColumn, eq, notInArray, type SQL, sql } from "drizzle-orm";
-import { providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
+import { chatEndpointOf, providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import {
+  type ProviderEndpoint,
   type QuotaReaderName,
   providerAccounts,
   providers,
@@ -55,7 +56,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       .select({
         continueWhenExhausted: providerAccounts.continueWhenExhausted,
         quotaReader: providers.quotaReader,
-        providerBaseUrl: providers.baseUrl,
+        providerEndpoints: providers.endpoints,
         providerQuirks: providers.quirks,
       })
       .from(providerAccounts)
@@ -69,7 +70,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     }
 
     const outcome = await this.read(providerAccountId, account.quotaReader, {
-      baseUrl: account.providerBaseUrl,
+      endpoints: account.providerEndpoints,
       quirks: account.providerQuirks,
     });
     if (outcome.kind === "failed") {
@@ -114,9 +115,13 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
   private async read(
     providerAccountId: string,
     readerName: QuotaReaderName,
-    provider: { baseUrl: string; quirks: unknown },
+    provider: { endpoints: ProviderEndpoint[]; quirks: unknown },
   ): Promise<ReadingOutcome> {
     try {
+      const chatEndpoint = chatEndpointOf(provider.endpoints);
+      if (chatEndpoint === undefined) {
+        throw new Error("The Provider has no chat endpoint to read the quota from");
+      }
       const { quotaBaseUrl } = providerQuirksSchema.parse(provider.quirks);
       // An OAuth Login about to run out is refreshed first, as before an Attempt.
       const credential = await this.queryBus.execute(
@@ -124,7 +129,7 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       );
       const meters = await this.readers
         .readerFor(readerName)
-        .read(credential, { baseUrl: provider.baseUrl, quotaBaseUrl });
+        .read(credential, { baseUrl: chatEndpoint.baseUrl, quotaBaseUrl });
       return { kind: "read", meters };
     } catch (error) {
       return { kind: "failed", error: error instanceof Error ? error.message : String(error) };

@@ -2,8 +2,13 @@
   "slug": "openai",
   "name": "OpenAI",
   "logo": "openai",
-  "protocol": "openai-chat",
-  "baseUrl": "https://api.openai.com/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.openai.com/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {
     "usesMaxCompletionTokens": true,

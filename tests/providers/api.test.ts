@@ -10,8 +10,7 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const ACME = {
   slug: "acme",
   name: "Acme AI",
-  protocol: "openai-chat",
-  baseUrl: "https://api.acme.example/v1",
+  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
   authStyle: "bearer",
   quirks: { acceptsCacheControl: true },
 };
@@ -62,7 +61,7 @@ describe("Providers (e2e)", () => {
     await request(server)
       .post("/api/providers")
       .set("Cookie", cookie)
-      .send({ ...ACME, protocol: "openai-responses" })
+      .send({ ...ACME, endpoints: [{ ...ACME.endpoints[0], protocol: "acme-chat" }] })
       .expect(400);
     await request(server)
       .post("/api/providers")
@@ -71,18 +70,39 @@ describe("Providers (e2e)", () => {
       .expect(400);
   });
 
-  it("edits and disables a Provider", async () => {
+  it("refuses a Provider with two endpoints of the same Kind", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/providers")
+      .set("Cookie", cookie)
+      .send({
+        ...ACME,
+        endpoints: [
+          ACME.endpoints[0],
+          { kind: "chat", protocol: "openai-responses", baseUrl: "https://api.acme.example/v1" },
+        ],
+      })
+      .expect(400);
+
+    expect(JSON.stringify(response.body)).toContain("at most one endpoint per Kind");
+  });
+
+  it("edits a Provider's endpoints and disables it", async () => {
     const id = await createAcme();
+    const euEndpoint = {
+      kind: "chat",
+      protocol: "openai-chat",
+      baseUrl: "https://eu.acme.example/v1",
+    };
 
     const updated = await request(app.getHttpServer())
       .patch(`/api/providers/${id}`)
       .set("Cookie", cookie)
-      .send({ baseUrl: "https://eu.acme.example/v1", isEnabled: false })
+      .send({ endpoints: [euEndpoint], isEnabled: false })
       .expect(200);
 
     expect(updated.body).toMatchObject({
       slug: ACME.slug,
-      baseUrl: "https://eu.acme.example/v1",
+      endpoints: [euEndpoint],
       quirks: ACME.quirks,
       isEnabled: false,
     });

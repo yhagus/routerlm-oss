@@ -33,8 +33,9 @@ describe("Upstream Model Service Tier rules (e2e)", () => {
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
     const base = {
-      protocol: "openai-chat",
-      baseUrl: "https://api.acme.example/v1",
+      endpoints: [
+        { kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" },
+      ],
       authStyle: "bearer",
     };
     tieredProviderId = (

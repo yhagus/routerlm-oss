@@ -2,8 +2,13 @@
   "slug": "xiaomi-mimo",
   "name": "Xiaomi MiMo",
   "logo": "xiaomimimo",
-  "protocol": "openai-chat",
-  "baseUrl": "https://api.xiaomimimo.com/v1",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.xiaomimimo.com/v1"
+    }
+  ],
   "authStyle": "bearer",
   "quirks": {},
   "modelsDevProviderId": "xiaomi",

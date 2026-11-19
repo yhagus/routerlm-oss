@@ -13,8 +13,8 @@ import {
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { serviceTiersWithoutWireValue } from "@/catalog/schemas/catalog.schema.js";
 import {
-  assertQuirksFitProtocol,
-  assertServiceTierValuesFitProtocol,
+  assertQuirksFitEndpoints,
+  assertServiceTierValuesFitEndpoints,
   type Provider,
 } from "../../models/provider.js";
 import { UpdateProviderCommand } from "../impl/update-provider.command.js";
@@ -39,10 +39,11 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
         throw new NotFoundException("Provider not found");
       }
 
-      // A PATCH may change only the Protocol or only the quirks, so the result is what must fit.
-      assertQuirksFitProtocol(changes.protocol ?? stored.protocol, changes.quirks ?? stored.quirks);
+      // A PATCH may change only the endpoints or only the quirks, so the result is what must fit.
+      const endpoints = changes.endpoints ?? stored.endpoints;
+      assertQuirksFitEndpoints(endpoints, changes.quirks ?? stored.quirks);
       const serviceTierValues = changes.serviceTierValues ?? stored.serviceTierValues;
-      assertServiceTierValuesFitProtocol(changes.protocol ?? stored.protocol, serviceTierValues);
+      assertServiceTierValuesFitEndpoints(endpoints, serviceTierValues);
       if (changes.serviceTierValues !== undefined) {
         await refuseWhileModelsListUnmappedTiers(tx, providerId, serviceTierValues);
       }

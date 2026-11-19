@@ -13,8 +13,7 @@ const CHECKED_AT = new Date("2026-11-16T08:00:00Z");
 const ACME = {
   slug: "acme",
   name: "Acme AI",
-  protocol: "openai-chat",
-  baseUrl: "https://api.acme.example/v1",
+  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
   authStyle: "bearer",
   quotaReader: "kimi-code",
 };

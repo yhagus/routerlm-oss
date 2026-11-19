@@ -6,11 +6,17 @@ import { deleteAllUpstreamData } from "../support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
+const ANTHROPIC_ENDPOINTS = [
+  { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example/v1" },
+];
+const RESPONSES_ENDPOINTS = [
+  { kind: "chat", protocol: "openai-responses", baseUrl: "https://api.acme.example/v1" },
+];
+
 const ACME = {
   slug: "acme",
   name: "Acme AI",
-  protocol: "openai-chat",
-  baseUrl: "https://api.acme.example/v1",
+  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
   authStyle: "bearer",
 };
 const TIER_VALUES = { fast: "priority", flex: "flex" };
@@ -43,7 +49,7 @@ describe("Provider Service Tier rules (e2e)", () => {
     const responses = await post("/api/providers", {
       ...ACME,
       slug: "acme-responses",
-      protocol: "openai-responses",
+      endpoints: RESPONSES_ENDPOINTS,
       serviceTierValues: TIER_VALUES,
     });
 
@@ -54,7 +60,7 @@ describe("Provider Service Tier rules (e2e)", () => {
   it("refuses Service Tiers on a Protocol that never sends one, naming them", async () => {
     const created = await post("/api/providers", {
       ...ACME,
-      protocol: "anthropic-messages",
+      endpoints: ANTHROPIC_ENDPOINTS,
       authStyle: "x-api-key",
       serviceTierValues: { fast: "priority" },
     }).expect(400);
@@ -70,11 +76,11 @@ describe("Provider Service Tier rules (e2e)", () => {
     }).expect(201);
 
     await patch(`/api/providers/${body.id}`, {
-      protocol: "anthropic-messages",
+      endpoints: ANTHROPIC_ENDPOINTS,
       quirks: {},
     }).expect(400);
     await patch(`/api/providers/${body.id}`, {
-      protocol: "anthropic-messages",
+      endpoints: ANTHROPIC_ENDPOINTS,
       quirks: {},
       serviceTierValues: {},
     }).expect(200);

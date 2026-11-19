@@ -37,8 +37,7 @@ describe("Provider Account keys at rest (e2e)", () => {
       .send({
         slug: "acme",
         name: "Acme AI",
-        protocol: "openai-chat",
-        baseUrl: upstream.baseUrl,
+        endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: upstream.baseUrl }],
         authStyle: "bearer",
       })
       .expect(201);

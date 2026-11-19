@@ -68,9 +68,10 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
       .values({
         slug: `plan-${quotaReader ?? "none"}`,
         name: "Plan",
-        protocol: "anthropic-messages",
         // Where the Kimi Code reader asks; the MiniMax M Plan one asks the quirk's URL.
-        baseUrl: fakeUpstream.baseUrl,
+        endpoints: [
+          { kind: "chat", protocol: "anthropic-messages", baseUrl: fakeUpstream.baseUrl },
+        ],
         authStyle: "bearer",
         quirks: { quotaBaseUrl: fakeUpstream.baseUrl },
         quotaReader,

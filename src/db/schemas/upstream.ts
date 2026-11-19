@@ -26,6 +26,27 @@ export const UPSTREAM_PROTOCOLS = [
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
+/** What a Model or Upstream Model produces; each Kind has its own client endpoints (GLOSSARY: Model Kind). */
+export const MODEL_KINDS = ["chat"] as const;
+export type ModelKind = (typeof MODEL_KINDS)[number];
+
+/** The Model Kind each Protocol serves: an endpoint's Protocol must serve the endpoint's Kind. */
+export const PROTOCOL_KINDS = {
+  "openai-chat": "chat",
+  "anthropic-messages": "chat",
+  "openai-responses": "chat",
+} as const satisfies Record<UpstreamProtocol, ModelKind>;
+
+/**
+ * Where a Provider serves one Model Kind, and in which Protocol (ADR 0026).
+ * `baseUrl` is what the Protocol's path is appended to.
+ */
+export interface ProviderEndpoint {
+  kind: ModelKind;
+  protocol: UpstreamProtocol;
+  baseUrl: string;
+}
+
 /** How a Provider expects the Provider Account key: `Authorization: Bearer` or an `x-api-key` header. */
 export const AUTH_STYLES = ["bearer", "x-api-key"] as const;
 export type AuthStyle = (typeof AUTH_STYLES)[number];
@@ -122,8 +143,8 @@ export const providers = pgTable(
     logo: text("logo"),
     // Informational only: the gateway's use may breach the Provider's documented terms.
     termsRisk: boolean("terms_risk").notNull().default(false),
-    protocol: text("protocol", { enum: UPSTREAM_PROTOCOLS }).notNull(),
-    baseUrl: text("base_url").notNull(),
+    // At most one per Model Kind; the API and the Catalog schema enforce it.
+    endpoints: jsonb("endpoints").$type<ProviderEndpoint[]>().notNull(),
     authStyle: text("auth_style", { enum: AUTH_STYLES }).notNull(),
     quirks: jsonb("quirks").$type<ProviderQuirks>().notNull().default({}),
     serviceTierValues: jsonb("service_tier_values")
@@ -146,15 +167,18 @@ export const providers = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
-    // Tier values on a Protocol that never sends a tier would do nothing, so the
-    // row can't hold them (ADR 0014).
+    // Tier values on a chat Protocol that never sends a tier would do nothing,
+    // so the row can't hold them (ADR 0014).
     check(
       "providers_service_tier_values_protocol_check",
       sql`${table.serviceTierValues} = '{}'::jsonb
-      or ${table.protocol} in (${sql.join(
-        PROTOCOLS_WITH_SERVICE_TIERS.map((protocol) => sql.raw(`'${protocol}'`)),
-        sql`, `,
-      )})`,
+      or ${sql.join(
+        PROTOCOLS_WITH_SERVICE_TIERS.map(
+          (protocol) =>
+            sql`${table.endpoints} @> ${sql.raw(`'[{"kind":"chat","protocol":"${protocol}"}]'`)}::jsonb`,
+        ),
+        sql` or `,
+      )}`,
     ),
   ],
 );

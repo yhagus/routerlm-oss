@@ -12,8 +12,13 @@ describe("The Google Gemini and OpenAI Catalog files", () => {
     const provider = await shipped("google-gemini");
 
     expect(provider).toMatchObject({
-      protocol: "openai-chat",
-      baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+      endpoints: [
+        {
+          kind: "chat",
+          protocol: "openai-chat",
+          baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+        },
+      ],
       authStyle: "bearer",
       logo: "gemini",
     });

@@ -86,8 +86,9 @@ try {
         .values({
           slug,
           name: slug,
-          protocol: speaks.protocol,
-          baseUrl: `${upstreamOrigin}${path}/v1`,
+          endpoints: [
+            { kind: "chat", protocol: speaks.protocol, baseUrl: `${upstreamOrigin}${path}/v1` },
+          ],
           authStyle: speaks.authStyle,
         })
         .returning({ id: providers.id });

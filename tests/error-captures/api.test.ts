@@ -45,8 +45,7 @@ describe("Error Captures API (e2e)", () => {
       .values({
         slug: "acme",
         name: "Acme",
-        protocol: "openai-chat",
-        baseUrl: "https://acme.test/v1",
+        endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://acme.test/v1" }],
         authStyle: "bearer",
       })
       .returning({ id: providers.id });

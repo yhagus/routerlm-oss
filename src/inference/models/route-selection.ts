@@ -48,15 +48,16 @@ export function capableRoutes(model: SnapshotModel, request: InferenceRequest): 
 /**
  * Whether the Upstream Model can serve the request: enabled along with its
  * Provider, with every Capability the request needs, a context large enough,
- * and a Protocol the gateway can translate to.
+ * and a chat endpoint in a Protocol the gateway can translate to.
  */
 export function canServe(upstreamModel: SnapshotUpstreamModel, request: InferenceRequest): boolean {
-  const { provider } = upstreamModel;
+  const chatEndpoint = upstreamModel.provider.endpoints.chat;
   const neededContext = estimatedPromptTokens(request) + (request.maxOutputTokens ?? 0);
   return (
     upstreamModel.isEnabled &&
-    provider.isUsable &&
-    UPSTREAM_PROTOCOL_CONVERTERS[provider.protocol] !== undefined &&
+    upstreamModel.provider.isUsable &&
+    chatEndpoint !== undefined &&
+    UPSTREAM_PROTOCOL_CONVERTERS[chatEndpoint.protocol] !== undefined &&
     requiredCapabilities(request).every((capability) =>
       upstreamModel.capabilities.includes(capability),
     ) &&

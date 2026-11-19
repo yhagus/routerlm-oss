@@ -140,8 +140,7 @@ async function insertRoute(
     .values({
       slug: options.providerSlug,
       name: "Acme",
-      protocol: speaks.protocol,
-      baseUrl: options.baseUrl,
+      endpoints: [{ kind: "chat", protocol: speaks.protocol, baseUrl: options.baseUrl }],
       authStyle: speaks.authStyle,
     })
     .returning({ id: providers.id });

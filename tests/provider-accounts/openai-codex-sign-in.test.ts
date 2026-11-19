@@ -86,8 +86,7 @@ describe("Signing in to OpenAI Codex as the Codex CLI (e2e)", () => {
       .send({
         slug: "openai-codex",
         name: "OpenAI Codex",
-        protocol: "openai-responses",
-        baseUrl: openAi.baseUrl,
+        endpoints: [{ kind: "chat", protocol: "openai-responses", baseUrl: openAi.baseUrl }],
         authStyle: "bearer",
         credentialKinds: ["oauth-login"],
         oauthLogin: {

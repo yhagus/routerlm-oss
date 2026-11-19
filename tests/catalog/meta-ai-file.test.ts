@@ -12,8 +12,9 @@ describe("The Meta AI Catalog file", () => {
     const provider = await shipped();
 
     expect(provider).toMatchObject({
-      protocol: "openai-responses",
-      baseUrl: "https://api.meta.ai/v1",
+      endpoints: [
+        { kind: "chat", protocol: "openai-responses", baseUrl: "https://api.meta.ai/v1" },
+      ],
       authStyle: "bearer",
       logo: "meta",
       termsRisk: true,
