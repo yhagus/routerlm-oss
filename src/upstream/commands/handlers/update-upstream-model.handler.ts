@@ -1,9 +1,9 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { providers, upstreamModels } from "@/db/schemas/index.js";
+import { providers, routes, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
   assertProviderServesKind,
@@ -26,6 +26,7 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
       updated = await this.db.transaction(async (tx) => {
         const [stored] = await tx
           .select({
+            kind: upstreamModels.kind,
             serviceTiers: upstreamModels.serviceTiers,
             tierPrices: upstreamModels.tierPrices,
             serviceTierValues: providers.serviceTierValues,
@@ -39,8 +40,19 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
           return undefined;
         }
 
-        if (changes.kind !== undefined) {
+        if (changes.kind !== undefined && changes.kind !== stored.kind) {
           assertProviderServesKind(changes.kind, stored.endpoints);
+          // Every Route of a Model points at an Upstream Model of the Model's Kind (ADR 0015).
+          const [usedByRoute] = await tx
+            .select({ id: routes.id })
+            .from(routes)
+            .where(eq(routes.upstreamModelId, upstreamModelId))
+            .limit(1);
+          if (usedByRoute) {
+            throw new BadRequestException(
+              "Routes use this Upstream Model, so its Kind can't change; remove them first",
+            );
+          }
         }
         // A PATCH may change only the tiers or only their prices, so the result is what must fit.
         assertServiceTiersFitProvider(
