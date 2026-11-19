@@ -17,6 +17,8 @@ export interface ImageGenerationRequest extends MediaRequest {
   size: ImageSize | null;
   negativePrompt: string | null;
   seed: number | null;
+  /** The images an edit starts from, as https URLs or data URIs; empty for a generation. */
+  inputImages: string[];
 }
 
 /** The generated images, fetched from where the upstream left them (ADR 0028). */

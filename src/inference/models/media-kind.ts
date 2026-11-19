@@ -34,6 +34,11 @@ export interface MediaUpstreamTarget {
   baseUrl: string;
   /** The model name as the Provider spells it. */
   upstreamModelId: string;
+  /**
+   * Whether the Provider marks what it generates. Off unless the Route's
+   * Parameter Policy turns it on (spec "DashScope Protocols").
+   */
+  isWatermarked: boolean;
 }
 
 /**

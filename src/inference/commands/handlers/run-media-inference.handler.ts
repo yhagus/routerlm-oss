@@ -14,6 +14,7 @@ import {
 import { GatewayError } from "../../models/gateway-error.js";
 import type { InferenceCaller, InferenceResult } from "../../models/inference.js";
 import type { MediaClientContract, MediaRequest } from "../../models/media-kind.js";
+import { effectiveParameterPolicy, isWatermarkedUnder } from "../../models/parameter-policy.js";
 import { encodedFor, failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
 import { type AttemptTarget, endpointOf, routePath } from "../../models/route-selection.js";
 import { UsageMeter } from "../../models/usage-meter.js";
@@ -81,7 +82,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       sentServiceTier: null,
       send: async (credential) => {
         const outcome = await this.upstream.generate({
-          ...this.upstreamCallFor(contract, attemptTarget, credential),
+          ...this.upstreamCallFor(contract, destination, attemptTarget, credential),
           request,
           clientSignal: connection.signal,
         });
@@ -144,6 +145,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
 
   private upstreamCallFor(
     contract: MediaClientContract<MediaRequest, unknown>,
+    destination: Destination,
     { route, upstreamModel }: AttemptTarget,
     credential: ProviderAccountCredential,
   ) {
@@ -158,7 +160,11 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     }
     return {
       protocol,
-      target: { baseUrl: endpoint.baseUrl, upstreamModelId: upstreamModel.upstreamModelId },
+      target: {
+        baseUrl: endpoint.baseUrl,
+        upstreamModelId: upstreamModel.upstreamModelId,
+        isWatermarked: isWatermarkedOn(destination, route),
+      },
       authHeaders: {
         ...credential.identityHeaders,
         ...upstreamAuthHeaders(provider.authStyle, credential.secret),
@@ -166,6 +172,18 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       timeouts: { ...DEFAULT_TIMEOUTS, totalMs: route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs },
     };
   }
+}
+
+/** Whether the Route's Parameter Policy turns the watermark on; a direct test has no policy. */
+function isWatermarkedOn(destination: Destination, route: SnapshotRoute | null): boolean {
+  if (!destination.model) {
+    return false;
+  }
+  const policy = effectiveParameterPolicy(
+    destination.model.parameterPolicy,
+    route?.parameterPolicyOverride ?? null,
+  );
+  return isWatermarkedUnder(policy);
 }
 
 /** The reason no Route could serve the request, from the first Route that gives one. */

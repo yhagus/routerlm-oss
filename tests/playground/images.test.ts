@@ -95,4 +95,38 @@ describe("Playground image generation (e2e)", () => {
       .send({ model: "painter", prompt: "A red fox in snow" })
       .expect(401);
   });
+
+  it("edits uploaded images with a Model, counting the input images in the summary", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/playground/images/edits")
+      .set("Cookie", adaCookie)
+      .field("model", "painter")
+      .field("prompt", "Make the fox blue")
+      .attach("image[]", Buffer.from(IMAGE), { filename: "fox.png", contentType: "image/png" })
+      .expect(200);
+
+    expect(response.body.response.data).toHaveLength(2);
+    expect(response.body.summary).toMatchObject({
+      units: { imagesOut: 2, imagesIn: 1 },
+      route: { id: routeId },
+    });
+  });
+
+  it("edits images with an Upstream Model directly, without a Route", async () => {
+    const response = await request(app.getHttpServer())
+      .post(`/api/playground/upstream-models/${upstreamModelRowId}/images/edits`)
+      .set("Cookie", adaCookie)
+      .send({
+        model: UPSTREAM_MODEL_ID,
+        prompt: "Make the fox blue",
+        images: [{ image_url: "https://images.example.com/fox.png" }],
+      })
+      .expect(200);
+
+    expect(response.body.summary).toMatchObject({
+      units: { imagesIn: 1 },
+      route: null,
+      upstreamModel: { id: upstreamModelRowId },
+    });
+  });
 });

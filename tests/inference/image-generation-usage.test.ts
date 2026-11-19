@@ -48,6 +48,7 @@ describe("Usage Logs of image generation (e2e)", () => {
       modelName: "painter",
       baseUrl: `${upstream.origin}/api/v1`,
       pricePerImageBySize: { "1K": 0.04, "2K": 0.075 },
+      pricePerInputImage: 0.003,
     });
     ({ key: apiKey } = await insertApiKey(app, db));
   });
@@ -71,8 +72,8 @@ describe("Usage Logs of image generation (e2e)", () => {
     throw new Error("The worker wrote no Usage Log");
   }
 
-  it("records the images generated, their size tier and their Cost at that tier's price", async () => {
-    // DashScope reports the 1024×1024 it generated: the 1K tier.
+  /** DashScope reports the 1024×1024 it generated: the 1K tier. */
+  function answerWithTwoImages(): void {
     const answer = dashScopeImageFixture("upstream-response.json")
       .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))
       .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"));
@@ -85,6 +86,10 @@ describe("Usage Logs of image generation (e2e)", () => {
         body: new Uint8Array([1, 2, 3]),
       });
     }
+  }
+
+  it("records the images generated, their size tier and their Cost at that tier's price", async () => {
+    answerWithTwoImages();
 
     await request(app.getHttpServer())
       .post("/v1/images/generations")
@@ -103,5 +108,25 @@ describe("Usage Logs of image generation (e2e)", () => {
       timeToFirstTokenMs: null,
       isIncomplete: false,
     });
+  });
+
+  it("records the input images of an edit, and prices them into its Cost", async () => {
+    answerWithTwoImages();
+
+    await request(app.getHttpServer())
+      .post("/v1/images/edits")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .send({
+        model: "painter",
+        prompt: "Swap the cat for the fox",
+        images: [
+          { image_url: "https://images.example.com/fox.png" },
+          { image_url: "https://images.example.com/cat.png" },
+        ],
+      })
+      .expect(200);
+
+    // Two 1K images at $0.04, two input images at $0.003.
+    expect(await writtenUsageLog()).toMatchObject({ imagesOut: 2, imagesIn: 2, cost: 0.086 });
   });
 });
