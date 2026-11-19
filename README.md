@@ -210,4 +210,4 @@ ROUTERLM_VERSION=local scripts/smoke-production.sh
 
 ## License
 
-[Apache License 2.0](LICENSE). Third-party attributions are in [NOTICE](NOTICE).
+[Apache License 2.0](LICENSE).
