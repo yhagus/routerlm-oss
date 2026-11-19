@@ -19,12 +19,15 @@ const summaryColumns = {
   clientProtocol: usageLogs.clientProtocol,
   httpStatus: usageLogs.httpStatus,
   errorCode: usageLogs.errorCode,
+  userAgent: errorCaptures.userAgent,
+  clientIp: errorCaptures.clientIp,
   attemptId: attempts.id,
   providerAccountId: attempts.providerAccountId,
   providerAccountName: attempts.providerAccountName,
   providerName: attempts.providerName,
   upstreamStatus: attempts.upstreamStatus,
   failureReason: attempts.failureReason,
+  upstreamRequestId: attempts.upstreamRequestId,
 };
 
 /**
@@ -48,6 +51,7 @@ interface SummaryRow extends Omit<ErrorCaptureSummary, "failedHop"> {
   providerName: string | null;
   upstreamStatus: number | null;
   failureReason: RecordedAttemptFailure | null;
+  upstreamRequestId: string | null;
 }
 
 export function summaryOf(row: SummaryRow): ErrorCaptureSummary {
@@ -61,6 +65,8 @@ export function summaryOf(row: SummaryRow): ErrorCaptureSummary {
     clientProtocol: row.clientProtocol,
     httpStatus: row.httpStatus,
     errorCode: row.errorCode,
+    userAgent: row.userAgent,
+    clientIp: row.clientIp,
     failedHop: failedHopOf(row),
   };
 }
@@ -77,5 +83,6 @@ function failedHopOf(row: SummaryRow): FailedHop {
     providerName: row.providerName,
     upstreamStatus: row.upstreamStatus,
     failureReason: row.failureReason,
+    upstreamRequestId: row.upstreamRequestId,
   };
 }

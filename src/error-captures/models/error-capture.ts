@@ -20,6 +20,8 @@ export type FailedHop =
       /** Null when no response arrived. */
       upstreamStatus: number | null;
       failureReason: RecordedAttemptFailure | null;
+      /** The request id the Provider returned; null when it returned none or no response arrived. */
+      upstreamRequestId: string | null;
     };
 
 /** An Error Capture as the list shows it: its request's outcome, but no content. */
@@ -33,6 +35,9 @@ export interface ErrorCaptureSummary {
   clientProtocol: ClientProtocol;
   httpStatus: number;
   errorCode: GatewayErrorCode | null;
+  /** Who sent the request and from where (ADR 0032); null on captures recorded before they were. */
+  userAgent: string | null;
+  clientIp: string | null;
   failedHop: FailedHop;
 }
 

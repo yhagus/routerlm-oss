@@ -72,6 +72,16 @@ export type AttemptFailureReason = (typeof ATTEMPT_FAILURE_REASONS)[number];
 export const RECORDED_ATTEMPT_FAILURES = [...ATTEMPT_FAILURE_REASONS, "cancelled"] as const;
 export type RecordedAttemptFailure = (typeof RECORDED_ATTEMPT_FAILURES)[number];
 
+/**
+ * Who caused a failed request: the client, a Provider, or the gateway itself
+ * (GLOSSARY "Error Origin", ADR 0031). Null for successful and cancelled requests.
+ */
+export const ERROR_ORIGINS = ["client", "upstream", "gateway"] as const;
+export type ErrorOrigin = (typeof ERROR_ORIGINS)[number];
+
+/** A longer User-Agent is truncated to this many characters before it is recorded (ADR 0032). */
+export const USER_AGENT_MAX_LENGTH = 512;
+
 export const usageLogs = pgTable(
   "usage_logs",
   {
@@ -102,6 +112,11 @@ export const usageLogs = pgTable(
     isStreamed: boolean("is_streamed").notNull(),
     httpStatus: integer("http_status").notNull(),
     errorCode: text("error_code", { enum: GATEWAY_ERROR_CODES }),
+    errorOrigin: text("error_origin", { enum: ERROR_ORIGINS }),
+    // Who sent the request and from where (ADR 0032); null on rows recorded
+    // before they were. The IP is the one resolved through TRUST_PROXY.
+    userAgent: text("user_agent"),
+    clientIp: text("client_ip"),
     // Null when the upstream didn't report the count; isIncomplete is then set.
     inputTokens: integer("input_tokens"),
     outputTokens: integer("output_tokens"),
@@ -133,6 +148,8 @@ export const usageLogs = pgTable(
     index("usage_logs_api_key_id_created_at_idx").on(table.apiKeyId, table.createdAt),
     index("usage_logs_model_id_created_at_idx").on(table.modelId, table.createdAt),
     index("usage_logs_upstream_model_id_created_at_idx").on(table.upstreamModelId, table.createdAt),
+    // The Usage page filters, and the Overview counts, failed requests by origin.
+    index("usage_logs_error_origin_created_at_idx").on(table.errorOrigin, table.createdAt),
   ],
 );
 
@@ -161,6 +178,9 @@ export const attempts = pgTable(
     upstreamStatus: integer("upstream_status"),
     // Null for the Attempt that succeeded.
     failureReason: text("failure_reason", { enum: RECORDED_ATTEMPT_FAILURES }),
+    // The request id the Provider returned, for its support; null when it
+    // returned none or no response arrived.
+    upstreamRequestId: text("upstream_request_id"),
     durationMs: integer("duration_ms").notNull(),
   },
   (table) => [index("attempts_usage_log_id_idx").on(table.usageLogId)],
@@ -182,6 +202,9 @@ export const errorCaptures = pgTable(
     requestBody: text("request_body").notNull(),
     responseHeaders: jsonb("response_headers").$type<Record<string, string>>(),
     responseBody: text("response_body"),
+    // Copied from the Usage Log, so a capture is complete on its own (ADR 0032).
+    userAgent: text("user_agent"),
+    clientIp: text("client_ip"),
   },
   (table) => [
     // The retention job deletes by age.

@@ -1,4 +1,4 @@
-import type { ClientProtocol, GatewayErrorCode } from "@/db/schemas/index.js";
+import type { ClientProtocol, ErrorOrigin, GatewayErrorCode } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
 
 /**
@@ -18,6 +18,11 @@ export interface UsageLogSummary {
   isStreamed: boolean;
   httpStatus: number;
   errorCode: GatewayErrorCode | null;
+  /** Who caused the failure (ADR 0031); null for a successful or cancelled request. */
+  errorOrigin: ErrorOrigin | null;
+  /** Who sent the request and from where (ADR 0032); null on rows recorded before they were. */
+  userAgent: string | null;
+  clientIp: string | null;
   /** The Service Tier that served the request; null for the Provider's default. */
   serviceTier: ServiceTier | null;
   inputTokens: number | null;
