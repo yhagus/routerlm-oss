@@ -5,6 +5,7 @@ import type { Database } from "@/db/schemas/relations.js";
 import { usageLogs } from "@/db/schemas/index.js";
 import type { UsageLogPage } from "../../models/usage.js";
 import { whereFilter } from "../../models/usage-filters.js";
+import { usageLogSummaryColumns } from "../../models/usage-log-columns.js";
 import { ListUsageLogsQuery } from "../impl/list-usage-logs.query.js";
 
 /**
@@ -19,36 +20,7 @@ export class ListUsageLogsHandler implements IQueryHandler<ListUsageLogsQuery> {
     const where = whereFilter(pageQuery);
     const [items, [{ total }]] = await Promise.all([
       this.db
-        .select({
-          id: usageLogs.id,
-          createdAt: usageLogs.createdAt,
-          modelId: usageLogs.modelId,
-          modelName: usageLogs.modelName,
-          apiKeyId: usageLogs.apiKeyId,
-          apiKeyName: usageLogs.apiKeyName,
-          isPlayground: usageLogs.isPlayground,
-          clientProtocol: usageLogs.clientProtocol,
-          isStreamed: usageLogs.isStreamed,
-          httpStatus: usageLogs.httpStatus,
-          errorCode: usageLogs.errorCode,
-          errorOrigin: usageLogs.errorOrigin,
-          userAgent: usageLogs.userAgent,
-          clientIp: usageLogs.clientIp,
-          serviceTier: usageLogs.serviceTier,
-          inputTokens: usageLogs.inputTokens,
-          outputTokens: usageLogs.outputTokens,
-          cacheReadTokens: usageLogs.cacheReadTokens,
-          cacheWriteTokens: usageLogs.cacheWriteTokens,
-          reasoningTokens: usageLogs.reasoningTokens,
-          requestBytes: usageLogs.requestBytes,
-          responseBytes: usageLogs.responseBytes,
-          cost: usageLogs.cost,
-          timeToFirstTokenMs: usageLogs.timeToFirstTokenMs,
-          durationMs: usageLogs.durationMs,
-          attemptCount: usageLogs.attemptCount,
-          isCancelled: usageLogs.isCancelled,
-          isIncomplete: usageLogs.isIncomplete,
-        })
+        .select(usageLogSummaryColumns)
         .from(usageLogs)
         .where(where)
         .orderBy(desc(usageLogs.createdAt), desc(usageLogs.id))

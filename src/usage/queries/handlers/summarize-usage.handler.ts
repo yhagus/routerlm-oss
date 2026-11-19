@@ -1,9 +1,9 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { count, type SQL, sql } from "drizzle-orm";
+import { and, count, eq, type SQL, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
+import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
 import type { UsageSummary } from "../../models/usage.js";
 import { statusCondition, whereFilter } from "../../models/usage-filters.js";
 import type { UsageStatus } from "../../schemas/usage.schema.js";
@@ -23,6 +23,11 @@ export class SummarizeUsageHandler implements IQueryHandler<SummarizeUsageQuery>
         requestCount: count(),
         succeededCount: countWithStatus("succeeded"),
         failedCount: countWithStatus("failed"),
+        failedByOrigin: {
+          client: countFailedWithOrigin("client"),
+          upstream: countFailedWithOrigin("upstream"),
+          gateway: countFailedWithOrigin("gateway"),
+        },
         cancelledCount: countWithStatus("cancelled"),
         inputTokens: summed(usageLogs.inputTokens),
         outputTokens: summed(usageLogs.outputTokens),
@@ -42,6 +47,14 @@ export class SummarizeUsageHandler implements IQueryHandler<SummarizeUsageQuery>
 
 function countWithStatus(status: UsageStatus): SQL<number> {
   return sql<number>`count(*) filter (where ${statusCondition(status)})`.mapWith(Number);
+}
+
+/** Failed logs recorded before Error Origins were have none, so they count in no origin. */
+function countFailedWithOrigin(origin: ErrorOrigin): SQL<number> {
+  return sql<number>`count(*) filter (where ${and(
+    statusCondition("failed"),
+    eq(usageLogs.errorOrigin, origin),
+  )})`.mapWith(Number);
 }
 
 /** The sum of a nullable column; nulls (unreported, unknown) count as 0. */
