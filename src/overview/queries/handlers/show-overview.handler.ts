@@ -1,13 +1,14 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, count, gte, lt, type SQL, sql } from "drizzle-orm";
+import { and, count, eq, gte, lt, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
+import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
 import { statusCondition } from "@/usage/models/usage-filters.js";
 import {
   OVERVIEW_BUCKETS,
   type Overview,
   type OverviewBucket,
+  type OriginErrors,
   type OverviewStats,
 } from "../../models/overview.js";
 import { ShowOverviewQuery } from "../impl/show-overview.query.js";
@@ -19,6 +20,11 @@ const EMPTY_STATS: OverviewStats = {
   cost: 0,
   cacheHitRate: null,
   errorRate: null,
+  errorsByOrigin: {
+    client: { count: 0, rate: null },
+    upstream: { count: 0, rate: null },
+    gateway: { count: 0, rate: null },
+  },
 };
 
 /**
@@ -79,7 +85,24 @@ function statsColumns() {
       sql`sum(${totalInputTokens})`,
     ),
     errorRate: ratio(sql`count(*) filter (where ${statusCondition("failed")})`, sql`count(*)`),
+    errorsByOrigin: {
+      client: originErrorsColumn("client"),
+      upstream: originErrorsColumn("upstream"),
+      gateway: originErrorsColumn("gateway"),
+    },
   };
+}
+
+/**
+ * What OriginErrors aggregates over a group of Usage Logs, as one JSON object:
+ * a Drizzle selection nests only one level deep.
+ */
+function originErrorsColumn(origin: ErrorOrigin): SQL<OriginErrors> {
+  const failedWithOrigin = sql`count(*) filter (where ${eq(usageLogs.errorOrigin, origin)})`;
+  return sql<OriginErrors>`json_build_object(
+    'count', ${failedWithOrigin},
+    'rate', ${ratio(failedWithOrigin, sql`count(*)`)}
+  )`;
 }
 
 /** `part / whole` as a float, or null when `whole` is 0 or null. */
