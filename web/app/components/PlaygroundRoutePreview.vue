@@ -38,6 +38,7 @@ const usableCount = computed(() => routes.value.filter(({ blocker }) => !blocker
 function formatValue(name: keyof ParameterValues, values: ParameterValues): string {
   const value = values[name];
   if (Array.isArray(value)) return value.map((stop) => JSON.stringify(stop)).join(", ");
+  if (typeof value === "boolean") return value ? "On" : "Off";
   const isTokenCount = name === "maxOutputTokens" || name === "reasoningBudgetTokens";
   if (isTokenCount && typeof value === "number") return formatCount(value);
   return String(value);

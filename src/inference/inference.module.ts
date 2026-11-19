@@ -14,6 +14,8 @@ import { AttemptRunner } from "./providers/attempt-runner.js";
 import { MediaFetcher } from "./providers/media-fetcher.js";
 import { MediaUpstreamClient } from "./providers/media-upstream-client.js";
 import { UpstreamClient } from "./providers/upstream-client.js";
+import { VideoHandles } from "./providers/video-handles.js";
+import { VideoTaskReader } from "./providers/video-task-reader.js";
 
 /** The client-facing `/v1/*` API: inference and the Model list. */
 @Module({
@@ -35,6 +37,8 @@ import { UpstreamClient } from "./providers/upstream-client.js";
     AttemptRunner,
     MediaFetcher,
     MediaUpstreamClient,
+    VideoHandles,
+    VideoTaskReader,
     { provide: APP_FILTER, useClass: InferenceExceptionFilter },
   ],
 })

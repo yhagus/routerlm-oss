@@ -1,5 +1,10 @@
 import type { TokenUsage } from "@/inference/models/internal-format.js";
-import type { MediaUnits, ServedBy, UpstreamModelPrices } from "./usage-job.js";
+import type {
+  MediaUnits,
+  ServedBy,
+  UpstreamModelPrices,
+  UpstreamModelUnitPrices,
+} from "./usage-job.js";
 
 /** The token counts, Cost and incomplete flag a Usage Log stores. */
 export interface UsageMeasurements extends TokenUsage {
@@ -96,6 +101,7 @@ export function unitCostOf(
   const pricedCounts = [
     { count: units.imagesOut ?? 0, price: imagePrice },
     { count: units.imagesIn ?? 0, price: prices.pricePerInputImage },
+    { count: units.outputSeconds ?? 0, price: secondPriceOf(prices, units.tier) },
     {
       count: units.characters ?? 0,
       price: perUnit(prices.pricePerMillionCharacters, CHARACTERS_PER_PRICE_UNIT),
@@ -113,4 +119,12 @@ export function unitCostOf(
     cost += count * price;
   }
   return cost;
+}
+
+/** A second of video at the tier (its resolution); null when that resolution has no price. */
+function secondPriceOf(prices: UpstreamModelUnitPrices, tier: string | undefined): number | null {
+  if (tier === undefined) {
+    return null;
+  }
+  return prices.pricePerSecondByResolution?.[tier] ?? null;
 }

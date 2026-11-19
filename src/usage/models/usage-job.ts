@@ -55,6 +55,8 @@ export interface UpstreamModelUnitPrices {
   /** By size tier, such as `2K`; a tier listed here wins over `pricePerImage`. */
   pricePerImageBySize: PricesByTier | null;
   pricePerInputImage: number | null;
+  /** By resolution, such as `720P`. Missing in jobs queued before video was priced. */
+  pricePerSecondByResolution?: PricesByTier | null;
   /** USD per million characters of synthesized speech. */
   pricePerMillionCharacters: number | null;
   /** USD per second of transcribed audio. */

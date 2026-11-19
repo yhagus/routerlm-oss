@@ -92,5 +92,8 @@ function clientProtocolOf(path: string): ClientProtocol {
   if (path.startsWith("/v1/images")) {
     return "openai-images";
   }
+  if (path.startsWith("/v1/videos")) {
+    return "openai-videos";
+  }
   return "openai-chat";
 }

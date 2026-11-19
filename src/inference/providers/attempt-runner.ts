@@ -209,9 +209,10 @@ export class AttemptRunner {
 
   /**
    * An API key comes from the snapshot, as ever. An OAuth Login is read where
-   * it is stored, and refreshed first when it is about to run out.
+   * it is stored, and refreshed first when it is about to run out. Also used
+   * by a Video Job's poll, which makes its one call outside the Fallback loop.
    */
-  private credentialOf(account: SnapshotProviderAccount): Promise<ProviderAccountCredential> {
+  credentialOf(account: SnapshotProviderAccount): Promise<ProviderAccountCredential> {
     if (account.credential.kind === "api-key") {
       return Promise.resolve(
         apiKeyCredential(this.cipher.decrypt(account.credential.encryptedKey)),

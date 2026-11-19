@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { CurrentUser } from "@nestjs/authentication";
 import {
   Body,
+  Get,
   HttpCode,
   Param,
   ParseUUIDPipe,
@@ -13,7 +14,7 @@ import {
   UseFilters,
   UseInterceptors,
 } from "@nestjs/common";
-import { CommandBus } from "@nestjs/cqrs";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-node";
 import {
   MEDIA_UPLOAD_OPTIONS,
@@ -32,6 +33,8 @@ import {
   openAiImageEditsClientContract,
   openAiImagesClientContract,
 } from "@/inference/protocols/openai-images/openai-images-client-contract.js";
+import { DownloadVideoContentQuery } from "@/inference/queries/impl/download-video-content.query.js";
+import { RetrieveVideoJobQuery } from "@/inference/queries/impl/retrieve-video-job.query.js";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import { clientConnectionOf } from "@/libs/models/client-connection.js";
 import { eventStreamResponse } from "@/libs/models/event-stream-response.js";
@@ -41,16 +44,21 @@ import { type PlaygroundRequest, playgroundRequestSchema } from "./schemas/playg
 import { SendPlaygroundChatCompletionCommand } from "./commands/impl/send-playground-chat-completion.command.js";
 import { SendPlaygroundImageGenerationCommand } from "./commands/impl/send-playground-image-generation.command.js";
 import { SendPlaygroundSpeechCommand } from "./commands/impl/send-playground-speech.command.js";
+import { SendPlaygroundVideoJobCommand } from "./commands/impl/send-playground-video-job.command.js";
 import type { PlaygroundImageGeneration } from "./models/playground-image-generation.js";
 import type { PlaygroundSpeech } from "./models/playground-speech.js";
 import { SendPlaygroundTranscriptionCommand } from "./commands/impl/send-playground-transcription.command.js";
 import type { PlaygroundTranscription } from "./models/playground-transcription.js";
+import type { PlaygroundVideoJob } from "./models/playground-video-job.js";
 
 /** The Playground's endpoints: a signed-in User's session, never an API Key. */
 @DashboardController("playground")
 @UseFilters(PlaygroundExceptionFilter)
 export class PlaygroundController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @Post("chat/completions")
   @HttpCode(200)
@@ -204,6 +212,74 @@ export class PlaygroundController {
         kind: "upstream-model",
         upstreamModelId,
       }),
+    );
+  }
+
+  /** A Video Job as a client submits it to `POST /v1/videos`; the answer adds a summary. */
+  @Post("videos")
+  @HttpCode(200)
+  submitVideoJob(
+    @Body() body: unknown,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundVideoJob> {
+    return this.commandBus.execute(
+      new SendPlaygroundVideoJobCommand(body, user, clientConnectionOf(request, response), {
+        kind: "named-model",
+      }),
+    );
+  }
+
+  /** A direct Upstream Model test of a Video Job: the body's `model` is not resolved. */
+  @Post("upstream-models/:upstreamModelId/videos")
+  @HttpCode(200)
+  submitVideoJobToUpstreamModel(
+    @Param("upstreamModelId", ParseUUIDPipe) upstreamModelId: string,
+    @Body() body: unknown,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundVideoJob> {
+    return this.commandBus.execute(
+      new SendPlaygroundVideoJobCommand(body, user, clientConnectionOf(request, response), {
+        kind: "upstream-model",
+        upstreamModelId,
+      }),
+    );
+  }
+
+  /** A Video Job the User submitted here, from a Model or an Upstream Model, with its current status. */
+  @Get("videos/:videoId")
+  retrieveVideoJob(
+    @Param("videoId") videoId: string,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<unknown> {
+    return this.queryBus.execute(
+      new RetrieveVideoJobQuery(
+        videoId,
+        { kind: "playground", userId: user.id },
+        clientConnectionOf(request, response).signal,
+      ),
+    );
+  }
+
+  /** The MP4 of a completed Video Job the User submitted here, streamed. */
+  @Get("videos/:videoId/content")
+  downloadVideoContent(
+    @Param("videoId") videoId: string,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<Response> {
+    return this.queryBus.execute(
+      new DownloadVideoContentQuery(
+        videoId,
+        { kind: "playground", userId: user.id },
+        clientConnectionOf(request, response).signal,
+      ),
     );
   }
 

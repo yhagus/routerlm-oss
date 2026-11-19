@@ -7,6 +7,7 @@ import type {
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import type { MediaUnits } from "@/usage/models/usage-job.js";
 import type { GatewayError } from "./gateway-error.js";
+import type { InferenceCaller } from "./inference.js";
 
 // The seam every media Kind plugs into (spec "Kind-aware inference pipeline").
 // A Kind brings a client contract, which reads the OpenAI-shaped request into
@@ -31,6 +32,10 @@ export interface MediaResponseContext {
   /** Our Model name, never the Upstream Model id. */
   modelName: string;
   createdAt: Date;
+  /** Who sent the request. */
+  caller: InferenceCaller;
+  /** Where the Attempt that answered went: a Video Job's later polls go to the same place (ADR 0027). */
+  servedBy: { providerAccountId: string; upstreamModelRowId: string };
 }
 
 /** A successful response as the client receives it: JSON, plain text or a media file's bytes. */
@@ -66,8 +71,13 @@ export interface MediaUpstreamTarget {
  * AttemptFailedError (or ClientCancelledError) when it fails.
  */
 export interface MediaExchange {
-  /** POSTs `body` as JSON with the Provider Account's credential; resolves to the parsed 2xx body. */
-  postJson(url: string, body: unknown): Promise<unknown>;
+  /**
+   * POSTs `body` as JSON with the Provider Account's credential, plus any
+   * `headers` the Protocol needs; resolves to the parsed 2xx body.
+   */
+  postJson(url: string, body: unknown, headers?: Record<string, string>): Promise<unknown>;
+  /** GETs `url` with the Provider Account's credential; resolves to the parsed 2xx body. */
+  getJson(url: string): Promise<unknown>;
   /** Downloads a file the upstream generated, without the credential (ADR 0028). */
   fetchMedia(url: string): Promise<FetchedMedia>;
 }

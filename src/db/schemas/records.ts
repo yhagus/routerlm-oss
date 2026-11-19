@@ -15,6 +15,7 @@ export const CLIENT_PROTOCOLS = [
   "anthropic-messages",
   "openai-responses",
   "openai-images",
+  "openai-videos",
   "openai-speech",
   "openai-transcription",
 ] as const;
@@ -26,6 +27,7 @@ export const CLIENT_PROTOCOL_KINDS = {
   "anthropic-messages": "chat",
   "openai-responses": "chat",
   "openai-images": "image",
+  "openai-videos": "video",
   "openai-speech": "speech",
   "openai-transcription": "transcription",
 } as const satisfies Record<ClientProtocol, ModelKind>;
@@ -41,6 +43,10 @@ export const GATEWAY_ERROR_CODES = [
   "upstream_rate_limited",
   "upstream_error",
   "upstream_timeout",
+  // A video id the gateway didn't issue to this caller, or whose job is gone.
+  "video_not_found",
+  // A Video Job's content asked for before it completed.
+  "video_not_ready",
 ] as const;
 export type GatewayErrorCode = (typeof GATEWAY_ERROR_CODES)[number];
 

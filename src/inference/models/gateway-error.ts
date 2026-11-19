@@ -11,6 +11,8 @@ export const GATEWAY_ERROR_STATUS = {
   upstream_rate_limited: 429,
   upstream_error: 502,
   upstream_timeout: 504,
+  video_not_found: 404,
+  video_not_ready: 409,
 } as const satisfies Record<GatewayErrorCode, number>;
 
 /**
