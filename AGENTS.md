@@ -32,6 +32,8 @@ Before implementing any capability in the backend (config, database, caching, qu
 
 State the lookup result in the plan, and in any subagent brief: either "first-party: `@nestjs/<name>`" or "none found, implementing natively". Community Nest wrappers the docs don't mention get no preference.
 
+The HTTP platform is `@nestjs/platform-node`, not `@nestjs/platform-express`: take file uploads (`FileInterceptor` and its built-in multer) from it.
+
 Context7's index can lag behind the live docs. If a Context7 result conflicts with the installed version or looks outdated, fetch the docs.nestjs.com page directly and trust that. Check published versions with `npm view <package> version`.
 
 If a first-party package lacks a feature or has a bug, do not switch to a standalone implementation silently. Ask the user first, then record the reason in an ADR. Background: `docs/adr/0001-prefer-nestjs-first-party-packages.md`.
