@@ -10,6 +10,7 @@ import { CommandHandlers } from "./commands/handlers/index.js";
 import { InferenceExceptionFilter } from "./filters/inference-exception.filter.js";
 import { INFERENCE_API_PREFIX, InferenceController } from "./inference.controller.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
+import { AttemptRunner } from "./providers/attempt-runner.js";
 import { UpstreamClient } from "./providers/upstream-client.js";
 
 /** The client-facing `/v1/*` API: inference and the Model list. */
@@ -29,6 +30,7 @@ import { UpstreamClient } from "./providers/upstream-client.js";
     ...CommandHandlers,
     ...QueryHandlers,
     UpstreamClient,
+    AttemptRunner,
     { provide: APP_FILTER, useClass: InferenceExceptionFilter },
   ],
 })
