@@ -1,12 +1,7 @@
 import { Command } from "@nestjs/cqrs";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type {
-  InferenceCaller,
-  InferenceResult,
-  InferenceTarget,
-  UsageListener,
-} from "../../models/inference.js";
-import type { MediaClientContract, MediaRequest } from "../../models/media-kind.js";
+import type { InferenceCaller, InferenceTarget, UsageListener } from "../../models/inference.js";
+import type { MediaClientContract, MediaReply, MediaRequest } from "../../models/media-kind.js";
 
 /**
  * Serves a request of a media Kind through the Kind's client contract, with
@@ -17,7 +12,7 @@ import type { MediaClientContract, MediaRequest } from "../../models/media-kind.
 export class RunMediaInferenceCommand<
   Request extends MediaRequest = MediaRequest,
   Result = unknown,
-> extends Command<Extract<InferenceResult, { kind: "response" }>> {
+> extends Command<MediaReply> {
   constructor(
     readonly contract: MediaClientContract<Request, Result>,
     readonly body: unknown,

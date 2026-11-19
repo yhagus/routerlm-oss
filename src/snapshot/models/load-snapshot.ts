@@ -116,6 +116,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
           pricePerImage: upstreamModel.pricePerImage,
           pricePerImageBySize: upstreamModel.pricePerImageBySize,
           pricePerInputImage: upstreamModel.pricePerInputImage,
+          pricePerMillionCharacters: upstreamModel.pricePerMillionCharacters,
         },
         sizes: upstreamModel.sizes,
         maxInputImages: upstreamModel.maxInputImages,

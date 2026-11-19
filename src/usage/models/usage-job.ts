@@ -55,6 +55,8 @@ export interface UpstreamModelUnitPrices {
   /** By size tier, such as `2K`; a tier listed here wins over `pricePerImage`. */
   pricePerImageBySize: PricesByTier | null;
   pricePerInputImage: number | null;
+  /** USD per million characters of synthesized speech. */
+  pricePerMillionCharacters: number | null;
 }
 
 /**

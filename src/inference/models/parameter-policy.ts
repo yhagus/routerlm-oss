@@ -13,6 +13,7 @@ export const POLICY_PARAMETERS = [
   "reasoningEffort",
   "stopSequences",
   "serviceTier",
+  "voice",
   "watermark",
 ] as const satisfies readonly (keyof ParameterValues)[];
 
@@ -139,7 +140,12 @@ function setsParameter(policy: ParameterPolicy, parameter: PolicyParameter): boo
 }
 
 function isCapped(parameter: PolicyParameter): parameter is CappedParameter {
-  return parameter !== "stopSequences" && parameter !== "serviceTier" && parameter !== "watermark";
+  return (
+    parameter !== "stopSequences" &&
+    parameter !== "serviceTier" &&
+    parameter !== "voice" &&
+    parameter !== "watermark"
+  );
 }
 
 /**

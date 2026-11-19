@@ -1,0 +1,15 @@
+{
+  "output": {
+    "finish_reason": "stop",
+    "audio": {
+      "data": "",
+      "expires_at": 1795392000,
+      "id": "audio_2f7e1c4a-8b0d-4e2b-9a43-1c6f0a7d0xxx",
+      "url": "https://dashscope-result-sgp.oss-ap-southeast-1.aliyuncs.com/1d/speech.mp3?Expires=1795392000&Signature=abc"
+    }
+  },
+  "usage": {
+    "characters": 22
+  },
+  "request_id": "5c1d7b0e-2a4f-4f7c-9e1b-3d8a6f2c0xxx"
+}

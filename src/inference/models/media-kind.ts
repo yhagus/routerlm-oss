@@ -1,4 +1,9 @@
-import type { AttemptFailureReason, ClientProtocol, UpstreamProtocol } from "@/db/schemas/index.js";
+import type {
+  AttemptFailureReason,
+  ClientProtocol,
+  ParameterPolicy,
+  UpstreamProtocol,
+} from "@/db/schemas/index.js";
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import type { MediaUnits } from "@/usage/models/usage-job.js";
 import type { GatewayError } from "./gateway-error.js";
@@ -26,6 +31,20 @@ export interface MediaResponseContext {
   /** Our Model name, never the Upstream Model id. */
   modelName: string;
   createdAt: Date;
+}
+
+/** A successful response as the client receives it: JSON, plain text or a media file's bytes. */
+export interface MediaReply {
+  contentType: string;
+  body: Uint8Array;
+}
+
+const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+const encoder = new TextEncoder();
+
+/** The reply of an endpoint that answers in JSON. */
+export function jsonReply(json: unknown): MediaReply {
+  return { contentType: JSON_CONTENT_TYPE, body: encoder.encode(JSON.stringify(json)) };
 }
 
 /** Which Upstream Model, at which endpoint, an Attempt calls. */
@@ -90,8 +109,13 @@ export interface MediaClientContract<Request extends MediaRequest, Result> {
   readonly upstreamProtocols: Partial<
     Record<UpstreamProtocol, MediaUpstreamProtocol<Request, Result>>
   >;
-  /** The JSON body of a successful response. */
-  writeResponse(result: Result, context: MediaResponseContext): unknown;
+  /**
+   * The request one Route sends under its effective Parameter Policy. Left
+   * out by a Kind whose requests carry no parameter a policy sets.
+   */
+  applyParameterPolicy?(request: Request, policy: ParameterPolicy): Request;
+  /** A successful response, in whatever content type the endpoint answers with. */
+  writeResponse(result: Result, context: MediaResponseContext): MediaReply;
   /** The JSON body of an error response, in the endpoint's envelope. */
   writeError(error: GatewayError): unknown;
 }

@@ -32,7 +32,9 @@ import { PlaygroundExceptionFilter } from "./filters/playground-exception.filter
 import { type PlaygroundRequest, playgroundRequestSchema } from "./schemas/playground.schema.js";
 import { SendPlaygroundChatCompletionCommand } from "./commands/impl/send-playground-chat-completion.command.js";
 import { SendPlaygroundImageGenerationCommand } from "./commands/impl/send-playground-image-generation.command.js";
+import { SendPlaygroundSpeechCommand } from "./commands/impl/send-playground-speech.command.js";
 import type { PlaygroundImageGeneration } from "./models/playground-image-generation.js";
+import type { PlaygroundSpeech } from "./models/playground-speech.js";
 
 /** The Playground's endpoints: a signed-in User's session, never an API Key. */
 @DashboardController("playground")
@@ -158,6 +160,40 @@ export class PlaygroundController {
         clientConnectionOf(request, response),
         { kind: "upstream-model", upstreamModelId },
       ),
+    );
+  }
+
+  /** A speech request as a client sends it to `/v1/audio/speech`; the answer adds a summary. */
+  @Post("audio/speech")
+  @HttpCode(200)
+  synthesizeSpeech(
+    @Body() body: unknown,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundSpeech> {
+    return this.commandBus.execute(
+      new SendPlaygroundSpeechCommand(body, user, clientConnectionOf(request, response), {
+        kind: "named-model",
+      }),
+    );
+  }
+
+  /** A direct Upstream Model test of speech: the body's `model` is not resolved. */
+  @Post("upstream-models/:upstreamModelId/audio/speech")
+  @HttpCode(200)
+  synthesizeSpeechWithUpstreamModel(
+    @Param("upstreamModelId", ParseUUIDPipe) upstreamModelId: string,
+    @Body() body: unknown,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundSpeech> {
+    return this.commandBus.execute(
+      new SendPlaygroundSpeechCommand(body, user, clientConnectionOf(request, response), {
+        kind: "upstream-model",
+        upstreamModelId,
+      }),
     );
   }
 }
