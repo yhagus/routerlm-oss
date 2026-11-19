@@ -99,6 +99,32 @@ export function dashScopeImageFixture(name: string): string {
   );
 }
 
+/** DashScope's path for a synchronous image generation. */
+export const DASHSCOPE_GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
+
+/**
+ * Queues the recorded dashscope-image answer, two 1024×1024 images (the 1K
+ * tier), with its image URLs pointing at the fake and their bytes queued.
+ */
+export function replyWithTwoDashScopeImages(upstream: FakeUpstream): void {
+  const answer = dashScopeImageFixture("upstream-response.json")
+    .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))
+    .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"));
+  upstream.replyTo(DASHSCOPE_GENERATION_PATH, {
+    kind: "json",
+    status: 200,
+    body: JSON.parse(answer),
+  });
+  const imageBytes: FakeReply = {
+    kind: "binary",
+    status: 200,
+    contentType: "image/png",
+    body: new Uint8Array([1, 2, 3]),
+  };
+  upstream.replyTo("/media/a.png", imageBytes);
+  upstream.replyTo("/media/b.png", imageBytes);
+}
+
 /** A recorded dashscope-transcription exchange, named as for openAiChatFixture. */
 export function dashScopeTranscriptionFixture(name: string): string {
   return readFileSync(

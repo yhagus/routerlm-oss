@@ -4,11 +4,11 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
 import { dashScopeSpeechFixture, FakeUpstream } from "../support/fake-upstream.js";
 import { insertApiKey, insertDashScopeSpeechModel } from "../support/inference.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
+import { writtenUsageLog } from "../support/usage-logs.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
@@ -19,8 +19,6 @@ const { createTestApp } = await import("../support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 
-const WORKER_WRITE_TIMEOUT_MS = 5_000;
-const POLL_INTERVAL_MS = 50;
 const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";
 
 describe("Usage Logs of speech (e2e)", () => {
@@ -59,18 +57,6 @@ describe("Usage Logs of speech (e2e)", () => {
     await app.close();
   });
 
-  async function writtenUsageLog() {
-    const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
-    while (Date.now() < deadline) {
-      const [usageLog] = await db.select().from(usageLogs);
-      if (usageLog) {
-        return usageLog;
-      }
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-    throw new Error("The worker wrote no Usage Log");
-  }
-
   it("records the characters DashScope counted and their Cost at the price per million", async () => {
     // DashScope counts the 22 characters of "Hello from the gateway".
     const answer = dashScopeSpeechFixture("upstream-response.json").replace(
@@ -91,7 +77,7 @@ describe("Usage Logs of speech (e2e)", () => {
       .send({ model: "narrator", input: "Hello from the gateway", voice: "Cherry" })
       .expect(200);
 
-    expect(await writtenUsageLog()).toMatchObject({
+    expect(await writtenUsageLog(db)).toMatchObject({
       kind: "speech",
       clientProtocol: "openai-speech",
       characters: 22,

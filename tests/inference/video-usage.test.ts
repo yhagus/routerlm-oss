@@ -4,11 +4,11 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
 import { dashScopeVideoFixture, FakeUpstream } from "../support/fake-upstream.js";
 import { insertApiKey, insertDashScopeVideoModel } from "../support/inference.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
+import { writtenUsageLogs } from "../support/usage-logs.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
@@ -19,8 +19,6 @@ const { createTestApp } = await import("../support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 
-const WORKER_WRITE_TIMEOUT_MS = 5_000;
-const POLL_INTERVAL_MS = 50;
 const SYNTHESIS_PATH = "/api/v1/services/aigc/video-generation/video-synthesis";
 const TASK_PATH = "/api/v1/tasks/0385dc79-5ff8-4d82-bcb6-6f2a8e5c1d21";
 
@@ -60,18 +58,6 @@ describe("Usage Logs of Video Jobs (e2e)", () => {
     await app.close();
   });
 
-  async function writtenUsageLogs() {
-    const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
-    while (Date.now() < deadline) {
-      const written = await db.select().from(usageLogs);
-      if (written.length > 0) {
-        return written;
-      }
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-    throw new Error("The worker wrote no Usage Log");
-  }
-
   it("writes one Usage Log at submit, costed at the requested seconds and resolution, and none for polls", async () => {
     upstream.replyTo(SYNTHESIS_PATH, {
       kind: "json",
@@ -95,7 +81,7 @@ describe("Usage Logs of Video Jobs (e2e)", () => {
       .expect(200);
     await untilUsageQueueIsDrained(usageQueue);
 
-    expect(await writtenUsageLogs()).toEqual([
+    expect(await writtenUsageLogs(db)).toEqual([
       expect.objectContaining({
         kind: "video",
         clientProtocol: "openai-videos",

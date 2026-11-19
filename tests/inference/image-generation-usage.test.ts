@@ -4,11 +4,11 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
-import { dashScopeImageFixture, FakeUpstream } from "../support/fake-upstream.js";
+import { FakeUpstream, replyWithTwoDashScopeImages } from "../support/fake-upstream.js";
 import { insertApiKey, insertDashScopeImageModel } from "../support/inference.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
+import { writtenUsageLog } from "../support/usage-logs.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
@@ -18,10 +18,6 @@ process.env.REDIS_URL = redisUrl.toString();
 const { createTestApp } = await import("../support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
-
-const WORKER_WRITE_TIMEOUT_MS = 5_000;
-const POLL_INTERVAL_MS = 50;
-const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
 
 describe("Usage Logs of image generation (e2e)", () => {
   let app: NestNodeApplication;
@@ -60,36 +56,8 @@ describe("Usage Logs of image generation (e2e)", () => {
     await app.close();
   });
 
-  async function writtenUsageLog() {
-    const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
-    while (Date.now() < deadline) {
-      const [usageLog] = await db.select().from(usageLogs);
-      if (usageLog) {
-        return usageLog;
-      }
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-    throw new Error("The worker wrote no Usage Log");
-  }
-
-  /** DashScope reports the 1024×1024 it generated: the 1K tier. */
-  function answerWithTwoImages(): void {
-    const answer = dashScopeImageFixture("upstream-response.json")
-      .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))
-      .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"));
-    upstream.replyTo(GENERATION_PATH, { kind: "json", status: 200, body: JSON.parse(answer) });
-    for (const path of ["/media/a.png", "/media/b.png"]) {
-      upstream.replyTo(path, {
-        kind: "binary",
-        status: 200,
-        contentType: "image/png",
-        body: new Uint8Array([1, 2, 3]),
-      });
-    }
-  }
-
   it("records the images generated, their size tier and their Cost at that tier's price", async () => {
-    answerWithTwoImages();
+    replyWithTwoDashScopeImages(upstream);
 
     await request(app.getHttpServer())
       .post("/v1/images/generations")
@@ -97,7 +65,7 @@ describe("Usage Logs of image generation (e2e)", () => {
       .send({ model: "painter", prompt: "A red fox in snow", n: 2 })
       .expect(200);
 
-    expect(await writtenUsageLog()).toMatchObject({
+    expect(await writtenUsageLog(db)).toMatchObject({
       kind: "image",
       clientProtocol: "openai-images",
       imagesOut: 2,
@@ -111,7 +79,7 @@ describe("Usage Logs of image generation (e2e)", () => {
   });
 
   it("records the input images of an edit, and prices them into its Cost", async () => {
-    answerWithTwoImages();
+    replyWithTwoDashScopeImages(upstream);
 
     await request(app.getHttpServer())
       .post("/v1/images/edits")
@@ -127,6 +95,6 @@ describe("Usage Logs of image generation (e2e)", () => {
       .expect(200);
 
     // Two 1K images at $0.04, two input images at $0.003.
-    expect(await writtenUsageLog()).toMatchObject({ imagesOut: 2, imagesIn: 2, cost: 0.086 });
+    expect(await writtenUsageLog(db)).toMatchObject({ imagesOut: 2, imagesIn: 2, cost: 0.086 });
   });
 });
