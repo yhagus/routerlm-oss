@@ -12,6 +12,10 @@ Default vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, 
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
+### Releases
+
+A release is a CHANGELOG section in a fixed format, a version bump and a tag. See `docs/agents/releasing.md`.
+
 ## Checks
 
 Before reporting work done, run `bun run check` (lint, format, types; and `cd web && bun run check` for web changes, which needs the root `bun install` first for the type-aware linter), plus `bun run test:docker` for backend changes.
