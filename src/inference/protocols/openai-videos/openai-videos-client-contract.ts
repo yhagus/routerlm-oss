@@ -13,6 +13,7 @@ import {
   VIDEO_RATIOS,
   VIDEO_RESOLUTIONS,
   type VideoGenerationRequest,
+  type VideoMediaInput,
   type VideoRatio,
   type VideoResolution,
   type VideoTaskState,
@@ -26,6 +27,7 @@ import {
 } from "../../providers/video-handles.js";
 import { dashScopeVideoProtocol } from "../dashscope-video/dashscope-video-protocol.js";
 import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
+import { inputImageCheck } from "../openai-images/openai-images-client-contract.js";
 
 // OpenAI's Videos API, `POST /v1/videos`, with OpenRouter's `resolution` and
 // `aspect_ratio` accepted in place of `size` (spec "Phase 4: video").
@@ -41,6 +43,14 @@ const MAX_SEED = 2_147_483_647;
 const CLIENT_SIZE = /^(\d+)x(\d+)$/;
 const SECONDS = /^-?\d+$/;
 
+/** An image URL as a string (OpenAI) or nested as `{url}` (OpenRouter): an http(s) URL or a data URI. */
+const imageUrlSchema = z
+  .union([z.string(), z.object({ url: z.string() }).transform(({ url }) => url)])
+  .pipe(z.string().check(inputImageCheck));
+
+/** OpenRouter's content-part `type`; only images are taken. */
+const imagePartTypeSchema = z.literal("image_url").optional();
+
 // A plain (non-strict) object: unknown fields are dropped (ADR 0002).
 const requestSchema = z.object({
   model: z.string().min(1),
@@ -53,8 +63,27 @@ const requestSchema = z.object({
     .pipe(z.enum(VIDEO_RESOLUTIONS))
     .optional(),
   aspect_ratio: z.enum(VIDEO_RATIOS).optional(),
-  seed: z.int().min(0).max(MAX_SEED).optional(),
+  // A string in a multipart form.
+  seed: z
+    .union([z.int(), z.string().regex(SECONDS).transform(Number)])
+    .pipe(z.int().min(0).max(MAX_SEED))
+    .optional(),
+  /** OpenAI's first frame. */
+  input_reference: z.object({ image_url: imageUrlSchema }).optional(),
+  frame_images: z
+    .array(
+      z.object({
+        type: imagePartTypeSchema,
+        frame_type: z.enum(["first_frame", "last_frame"]),
+        image_url: imageUrlSchema,
+      }),
+    )
+    .optional(),
+  input_references: z
+    .array(z.object({ type: imagePartTypeSchema, image_url: imageUrlSchema }))
+    .optional(),
 });
+type ParsedVideoRequest = z.infer<typeof requestSchema>;
 
 function parseRequest(body: unknown): VideoGenerationRequest {
   const parsed = requestSchema.safeParse(body);
@@ -62,16 +91,48 @@ function parseRequest(body: unknown): VideoGenerationRequest {
     throw invalid(z.prettifyError(parsed.error));
   }
   const { model, prompt, seconds, size, resolution, aspect_ratio, seed } = parsed.data;
+  const media = mediaOf(parsed.data);
+  const format = videoFormatOf(size, resolution, aspect_ratio);
+  const hasFirstFrame = media.some(({ role }) => role === "first_frame");
   return {
     model,
     prompt,
     seconds: requestedSecondsOf(seconds),
-    ...videoFormatOf(size, resolution, aspect_ratio),
+    resolution: format.resolution,
+    // The video takes its first frame's aspect ratio (spec "Sizes").
+    ratio: hasFirstFrame ? null : format.ratio,
     clientSize: size ?? null,
-    // Text to video only for now; image inputs are parsed here too once accepted (#74).
-    media: [],
+    media,
     seed: seed ?? null,
   };
+}
+
+/** The input images in DashScope's order: the frames, then the references. */
+function mediaOf({
+  input_reference,
+  frame_images = [],
+  input_references = [],
+}: ParsedVideoRequest): VideoMediaInput[] {
+  const firstFrames = frame_images.filter(({ frame_type }) => frame_type === "first_frame");
+  const lastFrames = frame_images.filter(({ frame_type }) => frame_type === "last_frame");
+  const firstFrameUrls = [
+    ...(input_reference ? [input_reference.image_url] : []),
+    ...firstFrames.map(({ image_url }) => image_url),
+  ];
+  if (firstFrameUrls.length > 1) {
+    throw invalid("send one first frame, in either `input_reference` or `frame_images`");
+  }
+  if (lastFrames.length > 1) {
+    throw invalid("send at most one last frame");
+  }
+  return [
+    ...firstFrameUrls.map((url): VideoMediaInput => ({ role: "first_frame", url })),
+    ...lastFrames.map(({ image_url }): VideoMediaInput => ({ role: "last_frame", url: image_url })),
+    ...input_references.map(({ image_url }): VideoMediaInput => ({
+      role: "reference_image",
+      url: image_url,
+    })),
+  ];
 }
 
 function requestedSecondsOf(seconds: number | undefined): number {
@@ -125,6 +186,10 @@ function unservableReason(
   );
   if (missingCapability !== undefined) {
     return `a request that needs the Capability ${missingCapability}`;
+  }
+  const { maxInputImages } = upstreamModel;
+  if (maxInputImages !== null && request.media.length > maxInputImages) {
+    return `${request.media.length} input images: it takes at most ${maxInputImages}`;
   }
   if (upstreamModel.resolutions && !upstreamModel.resolutions.includes(request.resolution)) {
     return `the resolution ${request.resolution}`;

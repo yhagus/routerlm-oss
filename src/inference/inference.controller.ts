@@ -40,6 +40,10 @@ import {
   openAiImageEditsClientContract,
   openAiImagesClientContract,
 } from "./protocols/openai-images/openai-images-client-contract.js";
+import {
+  VIDEO_FIRST_FRAME_FIELD,
+  videoBodyOf,
+} from "./protocols/openai-videos/openai-video-form.js";
 import { openAiSpeechClientContract } from "./protocols/openai-speech/openai-speech-client-contract.js";
 import {
   TRANSCRIPTION_FILE_FIELD,
@@ -205,17 +209,20 @@ export class InferenceController {
     return replyWithMedia(reply, response);
   }
 
+  /** JSON, or a multipart form with the first frame uploaded as a file. */
   @Post("videos")
   @HttpCode(200)
+  @UseInterceptors(FileInterceptor(VIDEO_FIRST_FRAME_FIELD, MEDIA_UPLOAD_OPTIONS))
   async createVideo(
     @Body() body: unknown,
+    @UploadedFile() firstFrame: MediaUpload | undefined,
     @CurrentUser() principal: ApiKeyPrincipal,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
   ): Promise<Uint8Array> {
     const reply = await this.commandBus.execute(
       new SubmitVideoJobCommand(
-        body,
+        videoBodyOf(body, firstFrame),
         { kind: "api-key", principal },
         clientConnectionOf(request, response),
       ),

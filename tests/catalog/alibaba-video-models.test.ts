@@ -19,7 +19,7 @@ describe("The Alibaba Model Studio (International) Catalog file's video models",
     });
   });
 
-  it("ships the video models at Alibaba's Singapore list prices per second, with their Capabilities and durations", async () => {
+  it("ships the video models at Alibaba's Singapore list prices per second, with their Capabilities, durations and input-image limits", async () => {
     const { upstreamModels } = await shipped();
     const videoModels = upstreamModels.filter((model) => model.kind === "video");
 
@@ -52,6 +52,26 @@ describe("The Alibaba Model Studio (International) Catalog file's video models",
         minDurationSeconds: 3,
         maxDurationSeconds: 15,
         maxInputImages: 0,
+        resolutions: ["480P", "720P", "1080P"],
+        releaseDate: "2026-06-16",
+      },
+      {
+        upstreamModelId: "happyhorse-1.1-i2v",
+        capabilities: ["first-frame"],
+        pricePerSecondByResolution: { "480P": 0.07, "720P": 0.14, "1080P": 0.18 },
+        minDurationSeconds: 3,
+        maxDurationSeconds: 15,
+        maxInputImages: 1,
+        resolutions: ["480P", "720P", "1080P"],
+        releaseDate: "2026-06-16",
+      },
+      {
+        upstreamModelId: "happyhorse-1.1-r2v",
+        capabilities: ["reference-images"],
+        pricePerSecondByResolution: { "480P": 0.07, "720P": 0.14, "1080P": 0.18 },
+        minDurationSeconds: 3,
+        maxDurationSeconds: 15,
+        maxInputImages: 9,
         resolutions: ["480P", "720P", "1080P"],
         releaseDate: "2026-06-16",
       },

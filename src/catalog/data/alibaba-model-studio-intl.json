@@ -726,6 +726,60 @@
         "retrievedOn": "2026-11-19"
       },
       "notes": "$0.000035 per second of audio. Alibaba's docs show the request shape only for the 3.1 ASR models, and it was not checked against the live API: the gateway assumes 3.0 takes the same one (input.messages[].content[] of input_audio with a data URI, parameters.format and parameters.language_hints) and answers with output.text and usage.duration in seconds. Confirm before relying on it."
+    },
+    {
+      "upstreamModelId": "happyhorse-1.1-i2v",
+      "name": "HappyHorse 1.1 I2V",
+      "releaseDate": "2026-06-16",
+      "kind": "video",
+      "capabilities": ["first-frame"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.07,
+        "720P": 0.14,
+        "1080P": 0.18
+      },
+      "maxInputImages": 1,
+      "minDurationSeconds": 3,
+      "maxDurationSeconds": 15,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "Animates exactly one first frame; the video takes the frame's aspect ratio, so no ratio is sent. The 3 to 15 second range is the one published for HappyHorse 1.0."
+    },
+    {
+      "upstreamModelId": "happyhorse-1.1-r2v",
+      "name": "HappyHorse 1.1 R2V",
+      "releaseDate": "2026-06-16",
+      "kind": "video",
+      "capabilities": ["reference-images"],
+      "contextSize": null,
+      "maxOutputTokens": null,
+      "inputPrice": null,
+      "outputPrice": null,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "pricePerSecondByResolution": {
+        "480P": 0.07,
+        "720P": 0.14,
+        "1080P": 0.18
+      },
+      "maxInputImages": 9,
+      "minDurationSeconds": 3,
+      "maxDurationSeconds": 15,
+      "resolutions": ["480P", "720P", "1080P"],
+      "source": {
+        "urls": ["https://www.alibabacloud.com/help/en/model-studio/model-pricing"],
+        "retrievedOn": "2026-11-19"
+      },
+      "notes": "Generates from 1 to 9 reference images and a prompt, which is required. The 3 to 15 second range is the one published for HappyHorse 1.0."
     }
   ]
 }

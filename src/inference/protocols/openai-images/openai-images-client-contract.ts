@@ -68,7 +68,7 @@ const featureRefusedSchema = z.object({
 });
 
 /** An input image is an https (or http) URL the Provider fetches, or an image data URI. */
-function inputImageCheck(context: z.core.ParsePayload<string>): void {
+export function inputImageCheck(context: z.core.ParsePayload<string>): void {
   const url = context.value;
   if (/^https?:\/\//.test(url) || url.startsWith("data:image/")) {
     return;
