@@ -31,7 +31,11 @@ export class DownloadVideoContentHandler implements IQueryHandler<DownloadVideoC
         headers: { "content-type": VIDEO_CONTENT_TYPE },
       });
     } catch (error) {
-      throw error instanceof AttemptFailedError ? gatewayErrorFor(error) : error;
+      // A network failure, a refused redirect or a private host: the client
+      // hears the gateway's words, never the media host's.
+      throw error instanceof AttemptFailedError
+        ? gatewayErrorFor(error)
+        : new GatewayError("upstream_error", "The generated video could not be fetched");
     }
   }
 }
