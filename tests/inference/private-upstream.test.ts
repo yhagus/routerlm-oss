@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { providers } from "@/db/schemas/index.js";
 import { insertApiKey, insertOpenAiChatModel, setProviderQuirks } from "../support/inference.js";
 import { addOauthLoginAccount, offerOauthLogin } from "../support/kimi-oauth.js";
+import { allowPrivateUpstreams } from "../support/private-upstreams.js";
 import { createTestApp } from "../support/test-app.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
@@ -31,16 +32,13 @@ describe("Private upstreams at connect time (e2e)", () => {
 
   beforeEach(async () => {
     upstream.reset();
+    await allowPrivateUpstreams(app, true);
     await deleteAllUpstreamData(db);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: "smart",
       baseUrl: upstream.localhostBaseUrl,
     }));
     ({ key: apiKey } = await insertApiKey(app, db));
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
   });
 
   afterAll(async () => {
@@ -56,7 +54,7 @@ describe("Private upstreams at connect time (e2e)", () => {
   }
 
   it("refuses a hostname that resolves to loopback, without sending the credential", async () => {
-    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    await allowPrivateUpstreams(app, false);
     upstream.reply(SUCCESS);
 
     const response = await chat().expect(502);
@@ -66,7 +64,7 @@ describe("Private upstreams at connect time (e2e)", () => {
   });
 
   it("refuses a stored plain http URL for a loopback address literal", async () => {
-    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    await allowPrivateUpstreams(app, false);
     await db
       .update(providers)
       .set({ endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: upstream.baseUrl }] })
@@ -81,7 +79,7 @@ describe("Private upstreams at connect time (e2e)", () => {
   });
 
   it("refuses to refresh an OAuth Login at an auth host that resolves to loopback", async () => {
-    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    await allowPrivateUpstreams(app, false);
     await offerOauthLogin(db, providerId, upstream.localhostBaseUrl.replace(/\/v1$/, ""));
     await addOauthLoginAccount(app, db, providerId, { lifetimeSeconds: 60, ageSeconds: 120 });
     upstream.reply(SUCCESS);
@@ -91,7 +89,7 @@ describe("Private upstreams at connect time (e2e)", () => {
     expect(upstream.requests).toHaveLength(0);
   });
 
-  it("connects to the same hostname when the deployment allows private upstreams", async () => {
+  it("connects to the same hostname when the Setting allows private upstreams", async () => {
     upstream.reply(SUCCESS);
 
     await chat().expect(200);

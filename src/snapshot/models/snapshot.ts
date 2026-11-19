@@ -136,10 +136,13 @@ export interface Snapshot {
   modelsByName: ReadonlyMap<string, SnapshotModel>;
   /** By row id, including those no Route uses: a direct Upstream Model test reaches them all. */
   upstreamModelsById: ReadonlyMap<string, SnapshotUpstreamModel>;
+  /** The Allow private upstreams Setting (ADR 0019). */
+  allowsPrivateUpstreams: boolean;
 }
 
 export const EMPTY_SNAPSHOT: Snapshot = {
   apiKeysByKeyId: new Map(),
   modelsByName: new Map(),
   upstreamModelsById: new Map(),
+  allowsPrivateUpstreams: false,
 };

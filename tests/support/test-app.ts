@@ -8,6 +8,7 @@ import request from "supertest";
 import { AppModule } from "@/app.module.js";
 import { configureApp, createNodeAdapter } from "@/configure-app.js";
 import type { Database } from "@/db/schemas/relations.js";
+import { allowPrivateUpstreams } from "./private-upstreams.js";
 import { truncateTables } from "./truncate.js";
 
 // The production cost (logN 17) takes ~128 MiB and a noticeable time per hash.
@@ -21,8 +22,13 @@ export interface TestApp {
 /**
  * Boots the whole AppModule with cheap password hashing, against the e2e
  * database or, when given, against `database` (whose connection the caller closes).
+ * Private upstreams are allowed unless `allowsPrivateUpstreams` is false, so
+ * the fake upstream on localhost is reachable.
  */
-export async function createTestApp(database?: Database): Promise<TestApp> {
+export async function createTestApp(
+  database?: Database,
+  { allowsPrivateUpstreams = true }: { allowsPrivateUpstreams?: boolean } = {},
+): Promise<TestApp> {
   const moduleBuilder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(PasswordHasher)
     .useValue(CHEAP_PASSWORD_HASHER);
@@ -31,6 +37,7 @@ export async function createTestApp(database?: Database): Promise<TestApp> {
   const app = moduleFixture.createNestApplication<NestNodeApplication>(createNodeAdapter());
   configureApp(app);
   await app.init();
+  if (allowsPrivateUpstreams) await allowPrivateUpstreams(app, true);
   return { app, db: app.get<Database>(getDrizzleToken()) };
 }
 

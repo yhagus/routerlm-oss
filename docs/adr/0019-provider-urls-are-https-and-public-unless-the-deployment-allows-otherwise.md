@@ -1,5 +1,7 @@
 # Provider URLs are https and public unless the deployment allows otherwise
 
+Status: accepted, but ADR 0030 replaces its env variable with a Setting
+
 `baseUrl`, `quotaBaseUrl` and the `oauthLogin` hosts and issuer accepted any `z.url()`, and the dashboard accepts a `baseUrl` for a new Provider (ADR 0003). The gateway sends a Provider Account's credential to that host and stores the response in Error Captures, so a hijacked session could aim credentials at an attacker's host or read internal services through the gateway. Every User is an equal operator (see the glossary), so this is not a permission split between Users. It limits what a stolen session can reach. We decided:
 
 - These URLs must be `https` and must not point at `localhost`, loopback, private or link-local addresses. The write schema enforces it, so every dashboard path and the Catalog files are covered.

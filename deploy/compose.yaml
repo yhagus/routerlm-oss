@@ -35,7 +35,6 @@ x-app-env: &app-env
   TRUST_PROXY: ${TRUST_PROXY:-}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env to the output of `openssl rand -base64 32`}
   SNAPSHOT_RELOAD_INTERVAL_MS: ${SNAPSHOT_RELOAD_INTERVAL_MS:-30000}
-  ALLOW_PRIVATE_UPSTREAMS: ${ALLOW_PRIVATE_UPSTREAMS:-false}
 
 # The release workflow replaces "latest" with the release's version in the
 # compose.yaml it attaches to a GitHub Release.

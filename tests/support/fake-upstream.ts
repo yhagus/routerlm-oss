@@ -7,8 +7,8 @@ import { portOf } from "./port-of.js";
 export type FakeReply =
   /**
    * `delayMs` holds the whole answer back, as a slow but healthy non-stream
-   * upstream. `onReceived` runs when the request arrives, before the answer:
-   * to change the world between the gateway's call and what it does next.
+   * upstream. `onReceived` runs when the request arrives, and the answer waits
+   * for it: to change the world between the gateway's call and what it does next.
    */
   | {
       kind: "json";
@@ -16,7 +16,7 @@ export type FakeReply =
       body: unknown;
       headers?: Record<string, string>;
       delayMs?: number;
-      onReceived?: () => void;
+      onReceived?: () => void | Promise<void>;
     }
   /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
   | { kind: "stream"; events: string; holdOpen?: boolean }
@@ -279,15 +279,16 @@ export class FakeUpstream {
     }
     switch (reply.kind) {
       case "json":
-        reply.onReceived?.();
-        setTimeout(() => {
-          response.writeHead(reply.status, {
-            "content-type": "application/json",
-            [UPSTREAM_ONLY_HEADER]: "upstream-123",
-            ...reply.headers,
-          });
-          response.end(JSON.stringify(reply.body));
-        }, reply.delayMs ?? 0);
+        void Promise.resolve(reply.onReceived?.()).then(() => {
+          setTimeout(() => {
+            response.writeHead(reply.status, {
+              "content-type": "application/json",
+              [UPSTREAM_ONLY_HEADER]: "upstream-123",
+              ...reply.headers,
+            });
+            response.end(JSON.stringify(reply.body));
+          }, reply.delayMs ?? 0);
+        });
         return;
       case "stream":
         response.writeHead(200, {

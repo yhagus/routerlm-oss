@@ -13,6 +13,7 @@ import {
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
 } from "../support/inference.js";
+import { allowPrivateUpstreams } from "../support/private-upstreams.js";
 import { createTestApp } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
@@ -47,8 +48,8 @@ describe("Image generation on /v1/images/generations (e2e)", () => {
     ({ key: apiKey } = await insertApiKey(app, db));
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
+  afterEach(async () => {
+    await allowPrivateUpstreams(app, true);
   });
 
   afterAll(async () => {
@@ -260,12 +261,12 @@ describe("Image generation on /v1/images/generations (e2e)", () => {
     expect(generationRequests()).toHaveLength(1);
   });
 
-  it("refuses a generated image on a private address when the deployment doesn't allow them", async () => {
+  it("refuses a generated image on a private address when the Setting doesn't allow them", async () => {
     // The generation call goes out while private upstreams are allowed; only
     // the media fetch after it runs without that allowance.
     upstream.replyTo(GENERATION_PATH, {
       ...generated("/media/a.png", "/media/b.png"),
-      onReceived: () => vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false"),
+      onReceived: () => allowPrivateUpstreams(app, false),
     });
     serveImages("/media/a.png", "/media/b.png");
 

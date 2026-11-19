@@ -1,8 +1,8 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { providers, upstreamModels } from "@/db/schemas/index.js";
+import { providers, settings, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { type FakeReply, FakeUpstream } from "../support/fake-upstream.js";
 import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
@@ -53,7 +53,7 @@ describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () =
     upstream.reset();
     upstream.reply(COMPLETION);
     await deleteAllUpstreamData(db);
-    await db.execute(sql`truncate table settings`);
+    await db.delete(settings).where(eq(settings.key, "allowTermsRiskProviders"));
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: "smart",

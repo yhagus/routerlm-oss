@@ -15,6 +15,7 @@ import {
 // when the app module is first imported.
 process.env.QUOTA_READER_TIMEOUT_MS = "300";
 const fakeUpstream = await FakeUpstream.start();
+const { allowPrivateUpstreams } = await import("../support/private-upstreams.js");
 const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
 const { deleteAllUpstreamData } = await import("../support/upstream.js");
 
@@ -223,13 +224,13 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     expect(await listedAccount(providerAccountId)).toMatchObject({ isEnabled: true });
   });
 
-  it("records an error without connecting when the quota endpoint is private and the deployment does not allow it", async () => {
+  it("records an error without connecting when the quota endpoint is private and the Setting does not allow it", async () => {
     const providerAccountId = await createAccount("minimax-m-plan");
-    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    await allowPrivateUpstreams(app, false);
     fakeUpstream.reply(remainsReply());
 
     const failed = await readNow(providerAccountId).expect(200);
-    vi.unstubAllEnvs();
+    await allowPrivateUpstreams(app, true);
 
     expect(failed.body.quotaError).toEqual(
       expect.stringMatching(/loopback, private or link-local/),

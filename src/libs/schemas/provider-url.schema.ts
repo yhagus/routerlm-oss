@@ -1,6 +1,6 @@
 import { isIPv4, isIPv6 } from "node:net";
 import { z } from "zod";
-import { envSchema } from "@/config/schemas/env.schema.js";
+import { allowsPrivateUpstreams } from "../models/private-upstreams-policy.js";
 import { bareHostname } from "../models/url.js";
 
 /** A network by its first two octets and prefix length; every prefix is at most 16 bits. */
@@ -59,15 +59,6 @@ function hasPrivateHost(url: URL): boolean {
   return (isIPv4(host) || isIPv6(host)) && isPrivateAddress(host);
 }
 
-/**
- * Read on every parse, from the process environment, because the schemas that
- * use it are module constants. The deploy-time variable is not a Setting, so a
- * hijacked session cannot turn the rule off (ADR 0019).
- */
-export function allowsPrivateUpstreams(): boolean {
-  return envSchema.shape.ALLOW_PRIVATE_UPSTREAMS.parse(process.env.ALLOW_PRIVATE_UPSTREAMS);
-}
-
 /** Whether the URL is https and its host is not a `localhost` or a private address literal. */
 export function isPublicHttpsUrl(url: URL): boolean {
   return url.protocol === "https:" && !hasPrivateHost(url);
@@ -75,11 +66,11 @@ export function isPublicHttpsUrl(url: URL): boolean {
 
 /**
  * A URL the gateway sends a credential to: https and not a loopback, private
- * or link-local literal, unless `ALLOW_PRIVATE_UPSTREAMS` lifts both rules.
+ * or link-local literal, unless the Allow private upstreams Setting lifts both rules.
  */
 export const providerUrlSchema = z.url().check(
   z.refine((value) => allowsPrivateUpstreams() || isPublicHttpsUrl(new URL(value)), {
     error:
-      "Must be an https URL that is not localhost, loopback, private or link-local (set ALLOW_PRIVATE_UPSTREAMS=true to allow them)",
+      "Must be an https URL that is not localhost, loopback, private or link-local (turn on Allow private upstreams in Settings to allow them)",
   }),
 );

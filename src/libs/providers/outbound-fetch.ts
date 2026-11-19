@@ -1,17 +1,14 @@
 import { lookup } from "node:dns/promises";
 import { Injectable } from "@nestjs/common";
+import { allowsPrivateUpstreams } from "../models/private-upstreams-policy.js";
 import { bareHostname } from "../models/url.js";
-import {
-  allowsPrivateUpstreams,
-  isPrivateAddress,
-  isPublicHttpsUrl,
-} from "../schemas/provider-url.schema.js";
+import { isPrivateAddress, isPublicHttpsUrl } from "../schemas/provider-url.schema.js";
 
 /** Thrown before any connection is made, so no credential leaves the gateway. */
 export class PrivateUpstreamError extends Error {
   constructor(hostname: string, reason: string) {
     super(
-      `Refused to connect to ${hostname}: ${reason} (set ALLOW_PRIVATE_UPSTREAMS=true to allow it)`,
+      `Refused to connect to ${hostname}: ${reason} (turn on Allow private upstreams in Settings to allow it)`,
     );
   }
 }
@@ -22,7 +19,7 @@ function urlOf(input: Parameters<typeof fetch>[0]): URL {
 
 /**
  * The `fetch` of every client that sends a Provider's credential. Unless the
- * deployment allows private upstreams (ADR 0019) it refuses a URL that is not
+ * Allow private upstreams Setting is on (ADR 0019) it refuses a URL that is not
  * https or whose host is a private literal, which a stored URL can be after the
  * policy tightened, and a host that resolves privately. A public-looking name that resolves privately, or that
  * changes later (DNS rebinding), is caught here and not by the write-time schema.

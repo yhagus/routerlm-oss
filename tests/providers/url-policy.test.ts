@@ -2,6 +2,7 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
 import type { Database } from "@/db/schemas/relations.js";
+import { allowPrivateUpstreams } from "../support/private-upstreams.js";
 import { createTestApp, setUpFirstUser } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
@@ -44,13 +45,9 @@ describe("Provider URL policy (e2e)", () => {
   });
 
   beforeEach(async () => {
-    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "false");
+    await allowPrivateUpstreams(app, false);
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
   });
 
   afterAll(async () => {
@@ -114,8 +111,8 @@ describe("Provider URL policy (e2e)", () => {
       .expect(400);
   });
 
-  it("accepts the same URLs when the deployment allows private upstreams", async () => {
-    vi.stubEnv("ALLOW_PRIVATE_UPSTREAMS", "true");
+  it("accepts the same URLs when the Setting allows private upstreams", async () => {
+    await allowPrivateUpstreams(app, true);
 
     await createProvider({
       ...PUBLIC_PROVIDER,

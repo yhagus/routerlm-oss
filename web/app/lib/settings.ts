@@ -22,6 +22,15 @@ export interface TermsRiskProvidersSetting {
 
 export const TERMS_RISK_PROVIDERS_PATH = "/settings/terms-risk-providers";
 
+/** Whether Provider URLs may be http or point at private hosts (ADR 0030), as the dashboard API returns it. */
+export interface PrivateUpstreamsSetting {
+  allowed: boolean;
+  defaultAllowed: boolean;
+  isDefault: boolean;
+}
+
+export const PRIVATE_UPSTREAMS_PATH = "/settings/private-upstreams";
+
 /** Tooltip for the "Blocked: terms risk" note. */
 export const TERMS_RISK_BLOCKED_HINT =
   'Turn on "Allow terms-risk providers" in Settings to use this Provider.';

@@ -11,6 +11,7 @@ import { SchedulerRegistry } from "@nestjs/schedule";
 import type { Redis } from "ioredis";
 import type { Env } from "@/config/schemas/env.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
+import { publishPrivateUpstreamsAllowed } from "@/libs/models/private-upstreams-policy.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { loadSnapshot } from "../models/load-snapshot.js";
 import { EMPTY_SNAPSHOT, type Snapshot } from "../models/snapshot.js";
@@ -28,7 +29,9 @@ const MAX_RETRY_DELAY_MS = 5000;
  * a dashboard write calls `changed()`, which reloads this instance and tells
  * the others through Redis pub/sub. Every instance also reloads on a fixed
  * interval, which bounds how long a lost message or a failed reload can leave
- * a revoked API Key or a disabled Provider in use (ADR 0020).
+ * a revoked API Key or a disabled Provider in use (ADR 0020). Each reload also
+ * publishes the Allow private upstreams Setting to the synchronous Provider URL
+ * checks of this process.
  */
 @Injectable()
 export class SnapshotService implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -113,8 +116,11 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     const reloaded = this.lastReload.then(async () => {
       try {
         this.snapshot = await loadSnapshot(this.db);
+        publishPrivateUpstreamsAllowed(this.snapshot.allowsPrivateUpstreams);
         return true;
       } catch (error) {
+        // Allow private upstreams keeps its last value, like the rest of the
+        // snapshot: a database blip must not cut off working LAN upstreams.
         this.logger.error(`Snapshot reload failed; keeping the previous one: ${String(error)}`);
         return false;
       }

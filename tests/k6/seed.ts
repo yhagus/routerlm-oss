@@ -8,6 +8,7 @@ import {
   providerAccounts,
   providers,
   routes,
+  settings,
   type UpstreamProtocol,
   upstreamModels,
 } from "@/db/schemas/index.js";
@@ -22,6 +23,8 @@ import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 //   raw-*       /instant  answers at once: the gateway alone
 //   fault-*     /fault/*  one Route to an upstream that misbehaves
 //   failover-*  /fault/*  that same fault first, then a healthy /paced Route
+// The fake upstream is plain http on the Compose network, so the seed also
+// turns on the Allow private upstreams Setting (ADR 0019).
 
 const API_KEY_PATTERN = /^rlm_([0-9a-f]{16})_[A-Za-z0-9_-]{43}$/;
 
@@ -179,6 +182,8 @@ try {
       );
       await addRoute(modelId, backup, 1);
     }
+
+    await tx.insert(settings).values({ key: "allowPrivateUpstreams", value: true });
 
     await tx.insert(apiKeys).values({
       name: "k6",

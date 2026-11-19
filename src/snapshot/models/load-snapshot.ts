@@ -35,6 +35,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     modelRows,
     routeRows,
     allowsTermsRiskProviders,
+    allowsPrivateUpstreams,
   ] = await Promise.all([
     db
       .select({
@@ -57,6 +58,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
     // Not injected: SettingsModule imports SnapshotModule to call changed().
     new SettingsStore(db).read("allowTermsRiskProviders"),
+    new SettingsStore(db).read("allowPrivateUpstreams"),
   ]);
 
   const apiKeysByKeyId = new Map<string, SnapshotApiKey>(
@@ -166,7 +168,12 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     });
   }
 
-  return { apiKeysByKeyId, modelsByName, upstreamModelsById };
+  return {
+    apiKeysByKeyId,
+    modelsByName,
+    upstreamModelsById,
+    allowsPrivateUpstreams: allowsPrivateUpstreams.value,
+  };
 }
 
 /** Null for an API key account without a key, which no Route can use. */

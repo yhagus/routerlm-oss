@@ -4,6 +4,7 @@ import { z } from "zod";
 export const SETTING_DEFINITIONS = {
   errorCaptureRetentionDays: { default: 7, min: 1, max: 365 },
   allowTermsRiskProviders: { default: false },
+  allowPrivateUpstreams: { default: false },
 } as const;
 
 const { min: retentionMin, max: retentionMax } = SETTING_DEFINITIONS.errorCaptureRetentionDays;
@@ -12,6 +13,7 @@ const { min: retentionMin, max: retentionMax } = SETTING_DEFINITIONS.errorCaptur
 const SETTING_VALUE_SCHEMAS = {
   errorCaptureRetentionDays: z.int().min(retentionMin).max(retentionMax),
   allowTermsRiskProviders: z.boolean(),
+  allowPrivateUpstreams: z.boolean(),
 } as const satisfies Record<keyof typeof SETTING_DEFINITIONS, z.ZodType>;
 
 export type SettingKey = keyof typeof SETTING_DEFINITIONS;

@@ -6,6 +6,8 @@ import {
   type ErrorCaptureImpact,
   type ErrorCaptureRetention,
   formatDays,
+  PRIVATE_UPSTREAMS_PATH,
+  type PrivateUpstreamsSetting,
   TERMS_RISK_PROVIDERS_PATH,
   type TermsRiskProvidersSetting,
 } from "~/lib/settings";
@@ -89,6 +91,47 @@ function handleTermsRiskToggle(event: Event): void {
   event.target.checked = termsRisk.value.allowed;
   if (allowed) isAllowConfirmOpen.value = true;
   else void putTermsRiskAllowed(false);
+}
+
+const {
+  data: privateUpstreams,
+  error: privateUpstreamsLoadError,
+  status: privateUpstreamsStatus,
+  refresh: refreshPrivateUpstreams,
+} = useDashboardApi<PrivateUpstreamsSetting>(PRIVATE_UPSTREAMS_PATH, {
+  key: PRIVATE_UPSTREAMS_PATH,
+});
+const isPrivateUpstreamsLoading = computed(
+  () => privateUpstreamsStatus.value === "pending" && !privateUpstreams.value,
+);
+const isPrivateUpstreamsBusy = ref(false);
+const privateUpstreamsError = ref("");
+const isPrivateConfirmOpen = ref(false);
+
+async function putPrivateUpstreamsAllowed(allowed: boolean): Promise<void> {
+  isPrivateUpstreamsBusy.value = true;
+  privateUpstreamsError.value = "";
+  try {
+    privateUpstreams.value = await $dashboardApi<PrivateUpstreamsSetting>(PRIVATE_UPSTREAMS_PATH, {
+      method: "PUT",
+      body: { allowed },
+    });
+    showToast(allowed ? "Private upstreams allowed" : "Private upstreams blocked");
+  } catch (error) {
+    privateUpstreamsError.value = apiErrorMessage(error, "Couldn't update the setting.");
+  } finally {
+    isPrivateUpstreamsBusy.value = false;
+    isPrivateConfirmOpen.value = false;
+  }
+}
+
+/** Turning on asks first; the switch only moves once the saved value changes. */
+function handlePrivateUpstreamsToggle(event: Event): void {
+  if (!(event.target instanceof HTMLInputElement) || !privateUpstreams.value) return;
+  const allowed = event.target.checked;
+  event.target.checked = privateUpstreams.value.allowed;
+  if (allowed) isPrivateConfirmOpen.value = true;
+  else void putPrivateUpstreamsAllowed(false);
 }
 
 const isBusy = ref(false);
@@ -267,6 +310,62 @@ async function confirmShortening(): Promise<void> {
         <p v-if="termsRiskError" class="form__error" role="alert">{{ termsRiskError }}</p>
       </div>
     </section>
+
+    <section class="panel settings-panel" aria-labelledby="private-upstreams-heading">
+      <div class="panel-heading">
+        <div>
+          <h2 id="private-upstreams-heading">Private upstreams</h2>
+          <p>Whether Providers can point at http URLs and private hosts.</p>
+        </div>
+      </div>
+
+      <AppSpinner v-if="isPrivateUpstreamsLoading" label="Loading setting" />
+      <div v-else-if="privateUpstreamsLoadError || !privateUpstreams" class="settings-panel__body">
+        <p class="form__error" role="alert">Couldn't load the setting.</p>
+        <button class="button" type="button" @click="() => refreshPrivateUpstreams()">
+          Try again
+        </button>
+      </div>
+      <div v-else class="settings-panel__body">
+        <label class="check-field">
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="privateUpstreams.allowed"
+            :disabled="isPrivateUpstreamsBusy"
+            @change="handlePrivateUpstreamsToggle"
+          />
+          Allow private upstreams
+        </label>
+        <p class="model-choices__hint">
+          Turn this on to use an upstream on your own network, such as Ollama or vLLM. While it is
+          off, a Provider URL must be https and must not point at localhost or a loopback, private
+          or link-local address. The gateway checks this when a URL is saved and again when it
+          connects.
+        </p>
+        <p v-if="privateUpstreamsError" class="form__error" role="alert">
+          {{ privateUpstreamsError }}
+        </p>
+      </div>
+    </section>
+
+    <AppDialog
+      v-model:open="isPrivateConfirmOpen"
+      title="Allow private upstreams?"
+      description="The gateway will send Provider Account keys to http URLs and to hosts on your network. Anyone who signs in to the dashboard can then reach those hosts through a Provider."
+    >
+      <div class="dialog__actions">
+        <button class="button" type="button" @click="isPrivateConfirmOpen = false">Cancel</button>
+        <button
+          class="button button--danger"
+          type="button"
+          :disabled="isPrivateUpstreamsBusy"
+          @click="putPrivateUpstreamsAllowed(true)"
+        >
+          Allow
+        </button>
+      </div>
+    </AppDialog>
 
     <AppDialog
       v-model:open="isAllowConfirmOpen"

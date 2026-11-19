@@ -33,7 +33,10 @@ describe("GET /health (e2e)", () => {
 
     beforeAll(async () => {
       unreachablePool = new Pool({ connectionString: UNREACHABLE_DATABASE_URL });
-      ({ app } = await createTestApp(drizzle({ client: unreachablePool, relations })));
+      // No Setting can be saved to a database that never answers.
+      ({ app } = await createTestApp(drizzle({ client: unreachablePool, relations }), {
+        allowsPrivateUpstreams: false,
+      }));
     });
 
     afterAll(async () => {

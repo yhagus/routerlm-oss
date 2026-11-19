@@ -1,7 +1,7 @@
 import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDrizzleToken } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
 import { errorCaptures, settings, usageLogs } from "@/db/schemas/index.js";
@@ -73,7 +73,7 @@ describe("Error Capture retention (e2e)", () => {
   }
 
   beforeEach(async () => {
-    await db.delete(settings);
+    await db.delete(settings).where(eq(settings.key, "errorCaptureRetentionDays"));
   });
 
   it("deletes the captures older than the default 7 days and keeps the rest", async () => {
