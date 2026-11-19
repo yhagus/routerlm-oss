@@ -2,6 +2,7 @@
 import { TriangleAlert } from "@lucide/vue";
 import { computed } from "vue";
 import {
+  mainBaseUrl,
   type Provider,
   type ProviderAccount,
   type UpstreamModel,
@@ -76,7 +77,7 @@ function credentialNote(account: ProviderAccount): string {
             class="provider-mark--sm"
             :logo="provider.logo"
             :name="provider.name"
-            :base-url="provider.baseUrl"
+            :base-url="mainBaseUrl(provider.endpoints)"
           />
           <span class="route-list__body">
             <strong>{{ upstreamModelLabel(upstreamModel) }}</strong>

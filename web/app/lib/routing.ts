@@ -1,13 +1,15 @@
 // Models and their Routes as the dashboard API returns them.
 
 import type { ParameterPolicy } from "~/lib/parameterPolicy";
-import type { Capability } from "~/lib/upstream";
+import type { Capability, ModelKind } from "~/lib/upstream";
 
 /** A Model in the Models list. */
 export interface ModelSummary {
   id: string;
   /** What clients send as `model`. */
   name: string;
+  /** Chosen at creation; its Routes go only to Upstream Models of this Kind. */
+  kind: ModelKind;
   isEnabled: boolean;
   routeCount: number;
   createdAt: string;
@@ -36,6 +38,7 @@ export interface RouteSummary {
 export interface ModelDetail {
   id: string;
   name: string;
+  kind: ModelKind;
   isEnabled: boolean;
   parameterPolicy: ParameterPolicy;
   hasAutomaticCacheBreakpoints: boolean;

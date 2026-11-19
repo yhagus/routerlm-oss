@@ -14,6 +14,7 @@ import {
   OAUTH_LOGIN_FLOWS,
   type OpenAiCodexOauthLogin,
   type Provider,
+  type ProviderEndpoint,
   type ProviderOauthLogin,
   type ProviderQuirks,
   QUOTA_READERS,
@@ -23,6 +24,35 @@ import {
 
 type FlowFields<Login> = Omit<Login, "flow">;
 
+/** One endpoint row as the inputs hold it; `key` only tells the rows apart while editing. */
+export interface EndpointForm {
+  key: number;
+  kind: string;
+  protocol: string;
+  baseUrl: string;
+}
+
+/** As the API takes it: the backend checks the Kind and Protocol values. */
+export type EndpointFields = Omit<EndpointForm, "key">;
+
+let nextEndpointKey = 0;
+
+/** An endpoint row, empty or prefilled from a Provider's endpoint. */
+export function endpointFormFor(endpoint?: ProviderEndpoint): EndpointForm {
+  nextEndpointKey += 1;
+  return {
+    key: nextEndpointKey,
+    kind: endpoint?.kind ?? "",
+    protocol: endpoint?.protocol ?? "",
+    baseUrl: endpoint?.baseUrl ?? "",
+  };
+}
+
+/** The Protocol the quirks follow: the chat endpoint's, "" without one. */
+export function chatProtocolOf(form: Pick<ProviderForm, "endpoints">): string {
+  return form.endpoints.find((endpoint) => endpoint.kind === "chat")?.protocol ?? "";
+}
+
 /** Field values as the inputs hold them: "" for an empty select or text field. */
 export interface ProviderForm {
   slug: string;
@@ -30,8 +60,8 @@ export interface ProviderForm {
   /** "" picks a mark by the base URL's host. */
   logo: string;
   termsRisk: boolean;
-  protocol: string;
-  baseUrl: string;
+  /** At least one; the backend refuses two for one Kind. */
+  endpoints: EndpointForm[];
   authStyle: string;
   reasoningContentInHistory: string;
   acceptsCacheControl: boolean;
@@ -66,8 +96,7 @@ export interface ProviderFields {
   name: string;
   logo: string | null;
   termsRisk: boolean;
-  protocol: string;
-  baseUrl: string;
+  endpoints: EndpointFields[];
   authStyle: string;
   quirks: ProviderQuirks;
   quotaReader: QuotaReader | null;
@@ -118,8 +147,9 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
     name: provider?.name ?? "",
     logo: provider?.logo ?? "",
     termsRisk: provider?.termsRisk ?? false,
-    protocol: provider?.protocol ?? "openai-chat",
-    baseUrl: provider?.baseUrl ?? "",
+    endpoints: provider
+      ? provider.endpoints.map((endpoint) => endpointFormFor(endpoint))
+      : [{ ...endpointFormFor(), kind: "chat", protocol: "openai-chat" }],
     authStyle: provider?.authStyle ?? "bearer",
     reasoningContentInHistory: quirks.reasoningContentInHistory ?? "",
     acceptsCacheControl: quirks.acceptsCacheControl ?? false,
@@ -167,8 +197,7 @@ export function providerFieldsFromForm(form: ProviderForm): ProviderFields {
     name: form.name,
     logo: form.logo === "" ? null : form.logo,
     termsRisk: form.termsRisk,
-    protocol: form.protocol,
-    baseUrl: form.baseUrl,
+    endpoints: form.endpoints.map(({ kind, protocol, baseUrl }) => ({ kind, protocol, baseUrl })),
     authStyle: form.authStyle,
     quirks: quirksFromForm(form),
     quotaReader: QUOTA_READERS.find((reader) => reader === form.quotaReader) ?? null,
@@ -196,17 +225,19 @@ function serviceTierValuesFromForm(form: ProviderForm): Partial<Record<ServiceTi
 }
 
 /**
- * Only the quirks that are set, and only those the form's Protocol reads:
- * the backend refuses the other Protocol's quirks, so switching Protocol drops them.
+ * Only the quirks that are set, and only those the chat endpoint's Protocol
+ * reads: the backend refuses the other Protocol's quirks, so switching
+ * Protocol drops them.
  */
 function quirksFromForm(form: ProviderForm): ProviderQuirks {
   return { ...protocolQuirks(form), ...sharedQuirks(form) };
 }
 
 function protocolQuirks(form: ProviderForm): ProviderQuirks {
-  if (form.protocol === "anthropic-messages") return anthropicMessagesQuirks(form);
-  if (form.protocol === "openai-chat") return openaiChatQuirks(form);
-  if (form.protocol === "openai-responses") return openaiResponsesQuirks(form);
+  const protocol = chatProtocolOf(form);
+  if (protocol === "anthropic-messages") return anthropicMessagesQuirks(form);
+  if (protocol === "openai-chat") return openaiChatQuirks(form);
+  if (protocol === "openai-responses") return openaiResponsesQuirks(form);
   return {};
 }
 
