@@ -4,7 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { MAX_UPLOAD_BYTES } from "@/inference/models/uploaded-file.js";
+import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
 import { dashScopeTranscriptionFixture, FakeUpstream } from "../support/fake-upstream.js";
 import { insertApiKey, insertDashScopeTranscriptionModel } from "../support/inference.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";

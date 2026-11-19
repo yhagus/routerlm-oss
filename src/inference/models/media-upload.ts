@@ -13,7 +13,7 @@ export const MEDIA_UPLOAD_OPTIONS = {
 } satisfies MulterModuleOptions;
 
 /** A file a client uploaded, as multer's memory storage holds it. */
-export interface UploadedFile {
+export interface MediaUpload {
   /** The content type the client gave the part. */
   mimetype: string;
   /** The file name the client gave the part. */
@@ -22,6 +22,6 @@ export interface UploadedFile {
 }
 
 /** The file as a data URI, how an upstream takes inline media. */
-export function dataUriOf({ mimetype, buffer }: UploadedFile): string {
+export function dataUriOf({ mimetype, buffer }: MediaUpload): string {
   return `data:${mimetype};base64,${buffer.toString("base64")}`;
 }

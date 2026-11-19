@@ -1,7 +1,7 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { MAX_UPLOAD_BYTES } from "@/inference/models/uploaded-file.js";
+import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
 import { dashScopeTranscriptionFixture, FakeUpstream } from "../support/fake-upstream.js";
 import {
   addProviderAccount,
