@@ -13,7 +13,13 @@ export interface AllowedModel {
   name: string | null;
 }
 
-/** An API Key as the dashboard lists it: never the key itself, nor its hash. */
+/**
+ * Authenticates the encrypted copy of an API Key, so it never decrypts as a
+ * Provider Account key or any other secret ProviderKeyCipher holds.
+ */
+export const API_KEY_CIPHER_PURPOSE = "api-key";
+
+/** An API Key as the dashboard lists it: never the key itself, its hash, nor its ciphertext. */
 export interface ApiKeySummary {
   id: string;
   name: string;
@@ -27,9 +33,23 @@ export interface ApiKeySummary {
   revokedAt: Date | null;
   /** Empty means every Model. */
   allowedModels: AllowedModel[];
+  /** Whether the whole key can be shown again: false for revoked keys and keys made before keys were kept. */
+  isCopyable: boolean;
+  /** Null when the key was never rotated (or only before rotations were recorded). */
+  lastRotatedAt: Date | null;
 }
 
-/** A just-created API Key: the only response that ever carries the whole key. */
+/** One rotation of an API Key: which public key id stopped working and which replaced it. */
+export interface ApiKeyRotation {
+  id: string;
+  rotatedAt: Date;
+  /** Null when the User who rotated it was deleted. */
+  rotatedBy: { id: string; email: string } | null;
+  previousKeyId: string;
+  newKeyId: string;
+}
+
+/** A just-created or just-rotated API Key, with the whole key. */
 export interface CreatedApiKey extends ApiKeySummary {
   key: string;
 }

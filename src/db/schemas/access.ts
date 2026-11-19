@@ -41,8 +41,12 @@ export const apiKeys = pgTable("api_keys", {
   name: text("name").notNull(),
   // The public id from ApiKeyProvider.generate(), the part findKey() looks up.
   keyId: text("key_id").notNull().unique(),
-  // SHA-256 of the whole key. The key itself is shown once and never stored.
+  // SHA-256 of the whole key, what sign-in compares against.
   hash: text("hash").notNull(),
+  // The whole key, encrypted (ProviderKeyCipher, purpose "api-key"), only so
+  // the dashboard can show it again. Null for keys created before keys were
+  // kept, and for revoked keys.
+  encryptedKey: text("encrypted_key"),
   createdById: uuid("created_by_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: createdAt(),
   // Null means the key never expires.
@@ -52,3 +56,23 @@ export const apiKeys = pgTable("api_keys", {
   // deleting a Model never widens a restricted key to "all Models".
   allowedModelIds: uuid("allowed_model_ids").array("[]").notNull().default([]),
 });
+
+// One row per rotation of an API Key, newest last. Rotations before this table
+// existed were never recorded.
+export const apiKeyRotations = pgTable(
+  "api_key_rotations",
+  {
+    id: id(),
+    apiKeyId: uuid("api_key_id")
+      .notNull()
+      .references(() => apiKeys.id, { onDelete: "cascade" }),
+    rotatedAt: at("rotated_at").notNull().defaultNow(),
+    rotatedById: uuid("rotated_by_id").references(() => users.id, { onDelete: "set null" }),
+    // Public key ids: the one that stopped working and the one that replaced it.
+    previousKeyId: text("previous_key_id").notNull(),
+    newKeyId: text("new_key_id").notNull(),
+  },
+  (table) => [
+    index("api_key_rotations_api_key_id_rotated_at_idx").on(table.apiKeyId, table.rotatedAt),
+  ],
+);

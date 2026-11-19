@@ -1,8 +1,8 @@
 import { Command } from "@nestjs/cqrs";
 import type { CreatedApiKey } from "../../models/api-key.js";
-import type { NewApiKey } from "../../schemas/new-api-key.schema.js";
+import type { NewApiKey } from "../../schemas/api-key.schema.js";
 
-/** Creates a key and returns it whole, the only time it is ever shown. Only its hash is stored. */
+/** Creates a key and returns it whole. Its hash signs clients in; its encrypted copy lets it be shown again. */
 export class CreateApiKeyCommand extends Command<CreatedApiKey> {
   constructor(
     readonly newKey: NewApiKey,

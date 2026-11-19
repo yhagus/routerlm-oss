@@ -39,6 +39,7 @@ import {
 } from "../../models/demo-traffic.js";
 import { DemoApiKeyGenerator } from "../../providers/demo-api-key-generator.js";
 import { SeedDemoCommand, type SeedDemoResult } from "../impl/seed-demo.command.js";
+import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key.js";
 
 // Every app table; Drizzle's migration journal lives in its own schema and stays.
 const APP_TABLES: PgTable[] = [
@@ -217,10 +218,17 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
         callers.push({ source: { kind: "playground", userId }, caller });
         continue;
       }
-      const { id: keyId, hash } = this.apiKeyGenerator.generate();
+      const { key, id: keyId, hash } = this.apiKeyGenerator.generate();
       const [created] = await this.db
         .insert(apiKeys)
-        .values({ name: caller.apiKeyName, keyId, hash, createdById: userId })
+        .values({
+          name: caller.apiKeyName,
+          keyId,
+          hash,
+          // Kept like any created key, so a demo key can be copied too (ADR 0029).
+          encryptedKey: this.keyCipher.encrypt(key, API_KEY_CIPHER_PURPOSE),
+          createdById: userId,
+        })
         .returning({ id: apiKeys.id });
       callers.push({
         source: { kind: "api-key", apiKeyId: created.id, apiKeyName: caller.apiKeyName },

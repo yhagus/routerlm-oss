@@ -52,6 +52,8 @@ describe("API Keys (e2e)", () => {
         expiresAt: "2999-01-01T00:00:00.000Z",
         revokedAt: null,
         allowedModels: [{ id: model.id, name: "smart" }],
+        isCopyable: true,
+        lastRotatedAt: null,
       },
     ]);
   });

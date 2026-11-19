@@ -14,6 +14,15 @@ export const relations = defineRelations(schema, (r) => ({
   },
   apiKeys: {
     createdBy: r.one.users({ from: r.apiKeys.createdById, to: r.users.id }),
+    rotations: r.many.apiKeyRotations(),
+  },
+  apiKeyRotations: {
+    apiKey: r.one.apiKeys({
+      from: r.apiKeyRotations.apiKeyId,
+      to: r.apiKeys.id,
+      optional: false,
+    }),
+    rotatedBy: r.one.users({ from: r.apiKeyRotations.rotatedById, to: r.users.id }),
   },
   providers: {
     providerAccounts: r.many.providerAccounts(),

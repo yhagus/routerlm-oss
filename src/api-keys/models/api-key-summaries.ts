@@ -1,10 +1,18 @@
-import { desc, eq, inArray, type SQL } from "drizzle-orm";
+import { desc, eq, inArray, max, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys, models, users } from "@/db/schemas/index.js";
+import { apiKeyRotations, apiKeys, models, users } from "@/db/schemas/index.js";
 import type { ApiKeySummary } from "./api-key.js";
 
 /** API Key summaries, newest first, optionally narrowed by `where`. */
 export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<ApiKeySummary[]> {
+  const lastRotations = db
+    .select({
+      apiKeyId: apiKeyRotations.apiKeyId,
+      lastRotatedAt: max(apiKeyRotations.rotatedAt).as("last_rotated_at"),
+    })
+    .from(apiKeyRotations)
+    .groupBy(apiKeyRotations.apiKeyId)
+    .as("last_rotations");
   const rows = await db
     .select({
       id: apiKeys.id,
@@ -16,9 +24,12 @@ export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<
       expiresAt: apiKeys.expiresAt,
       revokedAt: apiKeys.revokedAt,
       allowedModelIds: apiKeys.allowedModelIds,
+      isCopyable: sql<boolean>`${apiKeys.encryptedKey} is not null`,
+      lastRotatedAt: lastRotations.lastRotatedAt,
     })
     .from(apiKeys)
     .leftJoin(users, eq(apiKeys.createdById, users.id))
+    .leftJoin(lastRotations, eq(lastRotations.apiKeyId, apiKeys.id))
     .where(where)
     .orderBy(desc(apiKeys.createdAt));
   const modelNames = await findModelNames(
