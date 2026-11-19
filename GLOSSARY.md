@@ -124,7 +124,7 @@ Tokens a Provider stores in its prompt cache, at their own price. Grouped with O
 _Avoid_: Cache creation, cache miss
 
 **Usage Log**:
-The record of one inference request's measurements: tokens or, for Model Kinds priced otherwise, the counted units (images, seconds, characters), cache counts, sizes, cost and timing, and what served it as it was at that moment. Editing or deleting a Model, Route, Upstream Model, Provider Account, API Key or User afterwards never changes it. It never holds prompt or response content.
+The record of one inference request's measurements: tokens or, for Model Kinds priced otherwise, the counted units (images, seconds, characters), cache counts, sizes, cost and timing, who sent it and from where (User-Agent and IP address), and what served it as it was at that moment. Editing or deleting a Model, Route, Upstream Model, Provider Account, API Key or User afterwards never changes it. It never holds prompt or response content.
 _Avoid_: Request log, history
 
 **Time to First Token**:
@@ -138,6 +138,10 @@ _Avoid_: TPS, throughput, tokens per second
 **Finish Reason**:
 Why a successful response stopped, in the gateway's own words whatever the Provider called it: it finished, it hit the output limit, it called a tool, or the Provider filtered it.
 _Avoid_: Stop reason, end reason
+
+**Error Origin**:
+Whose side caused a failed request: the Client (the gateway refused the request), an Upstream (a Provider failed or refused it), or the Gateway (a fault in the gateway itself). A cancelled request has none.
+_Avoid_: Error source, error side, fault, blame
 
 **Error Capture**:
 The stored headers and body of a failed request or failed Attempt, kept for a limited time so an operator can see why it failed.
