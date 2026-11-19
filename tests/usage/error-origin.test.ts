@@ -35,6 +35,18 @@ const SUCCESS: FakeReply = {
 };
 const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
 
+/** One openai-chat stream chunk that carries a single tool call delta. */
+function toolCallChunk(toolCall: object): string {
+  const chunk = {
+    id: "chatcmpl-upstream-1",
+    object: "chat.completion.chunk",
+    created: 1794700000,
+    model: "upstream-model",
+    choices: [{ index: 0, delta: { tool_calls: [toolCall] }, finish_reason: null }],
+  };
+  return `data: ${JSON.stringify(chunk)}\n\n`;
+}
+
 interface UsageLogItem {
   id: string;
   httpStatus: number;
@@ -232,6 +244,33 @@ describe("Error Origin, client and Provider request id of recorded requests (e2e
       errorCode: "upstream_error",
       errorOrigin: "upstream",
     });
+  });
+
+  it("records a Messages stream the gateway refused mid-way as an upstream error whose Attempt broke off", async () => {
+    // Arguments for call 0 after call 1 began can't be written as Messages
+    // content blocks, so the gateway ends the stream with an error event.
+    upstream.reply({
+      kind: "stream",
+      events:
+        toolCallChunk({ index: 0, id: "call_a", type: "function", function: { name: "a" } }) +
+        toolCallChunk({ index: 1, id: "call_b", type: "function", function: { name: "b" } }) +
+        toolCallChunk({ index: 0, function: { arguments: "{}" } }) +
+        "data: [DONE]\n\n",
+    });
+
+    await request(gateway.app.getHttpServer())
+      .post("/v1/messages")
+      .set("x-api-key", gateway.apiKey)
+      .send({ ...CHAT_REQUEST, max_tokens: 256, stream: true })
+      .expect(200);
+
+    expect(await newestUsageLog(gateway)).toMatchObject({
+      errorCode: "upstream_error",
+      errorOrigin: "upstream",
+    });
+    expect(await newestUsageLogAttempts(gateway)).toMatchObject([
+      { failureReason: "stream_interrupted" },
+    ]);
   });
 
   it("records no Error Origin for a successful request", async () => {

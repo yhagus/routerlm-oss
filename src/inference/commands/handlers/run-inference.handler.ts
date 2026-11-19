@@ -325,6 +325,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
           // The writer refused what the upstream sent (interleaved tool call
           // arguments): the stream is broken, but the client still gets the
           // Protocol's error event instead of a torn connection.
+          meter.attemptInterrupted();
           meter.failedWith(error);
           text += converter.writeStreamError(error);
           yield encodedFor(meter, text);

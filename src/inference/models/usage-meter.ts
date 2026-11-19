@@ -206,6 +206,11 @@ export class UsageMeter {
     );
   }
 
+  /** The gateway refused what the answering Attempt streamed, so its stream broke off. */
+  attemptInterrupted(): void {
+    this.closeAttempt("stream_interrupted", ANSWERED_UPSTREAM_STATUS);
+  }
+
   attemptSucceeded(): void {
     this.closeAttempt(null, ANSWERED_UPSTREAM_STATUS);
   }
