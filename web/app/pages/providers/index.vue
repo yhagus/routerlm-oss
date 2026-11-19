@@ -13,8 +13,6 @@ import {
   type ProviderAccount,
   type UpstreamModel,
   mainBaseUrl,
-  MODEL_KIND_LABELS,
-  PROTOCOL_LABELS,
   PROTOCOL_OPTIONS,
   UPSTREAM_PROTOCOLS,
 } from "~/lib/upstream";
@@ -332,12 +330,7 @@ function toggleProvider(provider: Provider): Promise<void> {
         </NuxtLink>
       </template>
       <template #cell-protocol="{ row: { provider } }">
-        <span v-for="endpoint in provider.endpoints" :key="endpoint.kind" class="endpoint-cell"
-          >{{ PROTOCOL_LABELS[endpoint.protocol]
-          }}<template v-if="provider.endpoints.length > 1">
-            · {{ MODEL_KIND_LABELS[endpoint.kind] }}</template
-          ></span
-        >
+        <ProviderEndpointSummary :endpoints="provider.endpoints" />
         <span class="cell-note"
           >{{ provider.authStyle
           }}<template v-if="provider.isFromCatalog"> · Catalog</template></span

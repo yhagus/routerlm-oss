@@ -52,31 +52,37 @@ function handleRemove(endpoint: EndpointForm): void {
 <template>
   <fieldset class="endpoint-list">
     <legend class="field__label">Endpoints</legend>
+    <div class="endpoint-list__head" aria-hidden="true">
+      <span class="field__label">Kind</span>
+      <span class="field__label">Protocol</span>
+      <span class="field__label">Base URL</span>
+    </div>
     <div v-for="endpoint in endpoints" :key="endpoint.key" class="endpoint-list__row">
-      <div class="field">
-        <span class="field__label">Kind</span>
-        <AppSelect
-          :model-value="endpoint.kind"
-          :options="ENDPOINT_KIND_OPTIONS"
-          label="Endpoint Kind"
-          placeholder="Pick a Kind"
-          @update:model-value="handleKindChange(endpoint, $event)"
-        />
-      </div>
-      <div class="field">
-        <span class="field__label">Protocol</span>
-        <AppSelect
-          v-model="endpoint.protocol"
-          :options="protocolOptionsFor(endpoint.kind)"
-          :label="`${kindLabel(endpoint.kind)} Protocol`"
-          placeholder="Pick a Protocol"
-          empty-text="No Protocol serves this Kind yet"
-        />
-      </div>
-      <label class="field endpoint-list__url"
-        ><span class="field__label">Base URL</span
-        ><input v-model="endpoint.baseUrl" class="text-input" type="url" required
-      /></label>
+      <AppSelect
+        class="endpoint-list__kind"
+        :model-value="endpoint.kind"
+        :options="ENDPOINT_KIND_OPTIONS"
+        label="Endpoint Kind"
+        placeholder="Pick a Kind"
+        @update:model-value="handleKindChange(endpoint, $event)"
+      />
+      <AppSelect
+        class="endpoint-list__protocol"
+        v-model="endpoint.protocol"
+        :options="protocolOptionsFor(endpoint.kind)"
+        :label="`${kindLabel(endpoint.kind)} Protocol`"
+        placeholder="Pick a Protocol"
+        empty-text="No Protocol serves this Kind yet"
+      />
+      <input
+        v-model="endpoint.baseUrl"
+        class="text-input endpoint-list__url"
+        type="url"
+        required
+        :aria-label="`${kindLabel(endpoint.kind)} base URL`"
+        placeholder="https://"
+        :title="endpoint.baseUrl"
+      />
       <button
         class="icon-button endpoint-list__remove"
         type="button"

@@ -186,13 +186,13 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
         <div class="provider-hero__title">
           <h1>{{ provider.name }}</h1>
           <p class="provider-hero__meta">
-            <span v-for="endpoint in provider.endpoints" :key="endpoint.kind">{{
-              PROTOCOL_LABELS[endpoint.protocol]
-            }}</span>
+            <span class="provider-hero__endpoints"
+              ><ProviderEndpointSummary :endpoints="provider.endpoints"
+            /></span>
             <span :title="mainBaseUrl(provider.endpoints)">{{
               baseUrlHost(mainBaseUrl(provider.endpoints))
             }}</span>
-            <span>{{ provider.slug }}</span>
+            <span class="provider-hero__slug">{{ provider.slug }}</span>
             <span v-if="isBlocked(provider)" :title="TERMS_RISK_BLOCKED_HINT"
               >Blocked: terms risk</span
             >

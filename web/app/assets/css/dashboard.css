@@ -2703,35 +2703,93 @@ tbody tr:hover {
 }
 .endpoint-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   border: 0;
   min-width: 0;
 }
+.endpoint-list > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+}
+/* Kind, Protocol, Base URL and remove share one column grid with their header. */
+.endpoint-list__head,
 .endpoint-list__row {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.6fr) 32px;
-  align-items: end;
-  gap: 10px;
+  grid-template-columns: 132px minmax(0, 1fr) minmax(0, 1.5fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+.endpoint-list__head {
+  margin-bottom: -2px;
+}
+.endpoint-list__head .field__label {
+  color: var(--faint);
+}
+.endpoint-list .app-select {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+}
+.endpoint-list .select-control {
+  width: 100%;
+  min-width: 0;
+}
+.endpoint-list__url {
+  min-width: 0;
+  width: 100%;
+  text-overflow: ellipsis;
 }
 .endpoint-list__remove:disabled {
   opacity: 0.4;
 }
 .endpoint-list__add {
   justify-self: start;
+  margin-top: 2px;
 }
-@media (max-width: 760px) {
+/* Narrow: Kind and Protocol share a line, the base URL takes the next. Each
+   endpoint becomes a small block, so the column header no longer applies. */
+@media (max-width: 560px) {
+  .endpoint-list__head {
+    display: none;
+  }
   .endpoint-list__row {
-    grid-template-columns: 1fr 1fr 32px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) 32px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line-soft);
   }
   .endpoint-list__url {
     grid-column: 1 / -1;
     grid-row: 2;
   }
 }
-.endpoint-cell {
-  display: block;
+/* A Provider's endpoints on one line: one icon chip per Kind, named in a tooltip. */
+.endpoint-summary {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  vertical-align: middle;
+}
+.endpoint-summary__kind {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--chip);
+  color: var(--ink-2);
+}
+.endpoint-tooltip {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+}
+.endpoint-tooltip__host {
+  opacity: 0.7;
 }
 .form__hint {
   margin: 0;
@@ -4660,10 +4718,42 @@ svg.lucide {
   color: var(--muted);
   font-size: 12px;
 }
-.provider-hero__meta span + span::before {
+.provider-hero__meta {
+  align-items: center;
+}
+.provider-hero__meta > span {
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.provider-hero__meta > span + span::before {
   content: "·";
   margin: 0 7px;
   color: var(--faint);
+}
+/* Phone: the name may take two lines, and the meta stacks without separators;
+   the slug drops out here because the Configuration tab lists it. */
+@media (max-width: 560px) {
+  .provider-hero__title h1 {
+    display: -webkit-box;
+    font-size: 22px;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .provider-hero__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  .provider-hero__meta > span + span::before {
+    content: none;
+  }
+  .provider-hero__slug {
+    display: none;
+  }
 }
 .provider-hero__actions {
   display: flex;
