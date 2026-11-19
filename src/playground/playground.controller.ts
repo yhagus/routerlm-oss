@@ -9,13 +9,21 @@ import {
   Post,
   Req,
   Res,
+  UploadedFile,
   UploadedFiles,
   UseFilters,
   UseInterceptors,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { FileFieldsInterceptor } from "@nestjs/platform-node";
-import { MEDIA_UPLOAD_OPTIONS } from "@/inference/models/uploaded-file.js";
+import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-node";
+import {
+  MEDIA_UPLOAD_OPTIONS,
+  type UploadedFile as MediaUpload,
+} from "@/inference/models/uploaded-file.js";
+import {
+  TRANSCRIPTION_FILE_FIELD,
+  transcriptionBodyOf,
+} from "@/inference/protocols/openai-transcription/openai-transcription-form.js";
 import {
   IMAGE_EDIT_FILE_FIELDS,
   type ImageEditFiles,
@@ -39,6 +47,8 @@ import { SendPlaygroundSpeechCommand } from "./commands/impl/send-playground-spe
 import { SendPlaygroundVideoJobCommand } from "./commands/impl/send-playground-video-job.command.js";
 import type { PlaygroundImageGeneration } from "./models/playground-image-generation.js";
 import type { PlaygroundSpeech } from "./models/playground-speech.js";
+import { SendPlaygroundTranscriptionCommand } from "./commands/impl/send-playground-transcription.command.js";
+import type { PlaygroundTranscription } from "./models/playground-transcription.js";
 import type { PlaygroundVideoJob } from "./models/playground-video-job.js";
 
 /** The Playground's endpoints: a signed-in User's session, never an API Key. */
@@ -269,6 +279,49 @@ export class PlaygroundController {
         videoId,
         { kind: "playground", userId: user.id },
         clientConnectionOf(request, response).signal,
+      ),
+    );
+  }
+
+  /** A transcription upload as a client sends it to `/v1/audio/transcriptions`; the answer adds a summary. */
+  @Post("audio/transcriptions")
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor(TRANSCRIPTION_FILE_FIELD, MEDIA_UPLOAD_OPTIONS))
+  transcribeAudio(
+    @Body() body: unknown,
+    @UploadedFile() file: MediaUpload | undefined,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundTranscription> {
+    return this.commandBus.execute(
+      new SendPlaygroundTranscriptionCommand(
+        transcriptionBodyOf(body, file),
+        user,
+        clientConnectionOf(request, response),
+        { kind: "named-model" },
+      ),
+    );
+  }
+
+  /** A direct Upstream Model test of transcription: the body's `model` is not resolved. */
+  @Post("upstream-models/:upstreamModelId/audio/transcriptions")
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor(TRANSCRIPTION_FILE_FIELD, MEDIA_UPLOAD_OPTIONS))
+  transcribeAudioWithUpstreamModel(
+    @Param("upstreamModelId", ParseUUIDPipe) upstreamModelId: string,
+    @Body() body: unknown,
+    @UploadedFile() file: MediaUpload | undefined,
+    @CurrentUser() user: User,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<PlaygroundTranscription> {
+    return this.commandBus.execute(
+      new SendPlaygroundTranscriptionCommand(
+        transcriptionBodyOf(body, file),
+        user,
+        clientConnectionOf(request, response),
+        { kind: "upstream-model", upstreamModelId },
       ),
     );
   }
