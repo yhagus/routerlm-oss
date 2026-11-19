@@ -12,14 +12,16 @@ import {
   timeRangeStart,
   type UsageLogPage,
   type UsageLogSummary,
-  type UsageStatus,
+  USAGE_STATUS_BADGES,
+  USAGE_STATUS_LABELS,
   usageStatusOf,
   type UsageSummary,
   USAGE_STATUSES,
 } from "~/lib/usage";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
-import { DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
+import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
 import { dateTimeFormat } from "~/lib/dateFormats";
+import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from "~/lib/errorOrigins";
 import { SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/parameterPolicy";
 
 useHead({ title: "Usage" });
@@ -29,16 +31,6 @@ const PLAYGROUND = "playground";
 /** Characters of an id shown for a Model or API Key that a link names but no longer exists. */
 const SHORT_ID_LENGTH = 8;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const STATUS_LABELS = {
-  succeeded: "Succeeded",
-  failed: "Failed",
-  cancelled: "Cancelled",
-} as const satisfies Record<UsageStatus, string>;
-const STATUS_BADGES = {
-  succeeded: "status-badge--good",
-  failed: "status-badge--bad",
-  cancelled: "status-badge--warn",
-} as const satisfies Record<UsageStatus, string>;
 
 /** Model and API Key ids are UUIDs; the backend rejects anything else. */
 function isUuid(value: string): value is string {
@@ -51,8 +43,9 @@ function isApiKeyChoice(value: string): value is string {
 
 // Filters
 
-// Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled&serviceTier=fast) so a refresh or a link keeps
-// them. Model, API Key, status and tier are comma-separated lists; a log matches any pick. The DataTable
+// Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled&errorOrigin=client&serviceTier=fast) so a
+// refresh or a link (the Overview's origin tiles) keeps them. Model, API Key, status, origin and tier are
+// comma-separated lists; a log matches any pick. The DataTable
 // holds the search (?q=) and page (?page=) the same way; this page reads them for its requests.
 const timeRange = useQueryParam<TimeRange>("range", { default: "24h", isValid: isTimeRange });
 const modelFilter = useQueryList("model", { isValid: isUuid });
@@ -60,6 +53,10 @@ const apiKeyFilter = useQueryList("key", { isValid: isApiKeyChoice, order: [PLAY
 const statusFilter = useQueryList("status", {
   isValid: oneOf(USAGE_STATUSES),
   order: USAGE_STATUSES,
+});
+const errorOriginFilter = useQueryList("errorOrigin", {
+  isValid: oneOf(ERROR_ORIGINS),
+  order: ERROR_ORIGINS,
 });
 const serviceTierFilter = useQueryList("serviceTier", {
   isValid: oneOf(SERVICE_TIERS),
@@ -82,6 +79,7 @@ function clearFilters(): void {
   modelFilter.value = [];
   apiKeyFilter.value = [];
   statusFilter.value = [];
+  errorOriginFilter.value = [];
   serviceTierFilter.value = [];
 }
 
@@ -122,7 +120,11 @@ const apiKeyOptions = computed(() => {
   ];
   return [...known, ...missingOptions(apiKeyFilter.value, known)];
 });
-const statusOptions = USAGE_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] }));
+const statusOptions = USAGE_STATUSES.map((value) => ({ value, label: USAGE_STATUS_LABELS[value] }));
+const errorOriginOptions = ERROR_ORIGINS.map((value) => ({
+  value,
+  label: ERROR_ORIGIN_LABELS[value],
+}));
 const serviceTierOptions = SERVICE_TIERS.map((value) => ({
   value,
   label: SERVICE_TIER_LABELS[value],
@@ -132,6 +134,7 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...listFilterTokens("Model", modelFilter, modelOptions.value),
   ...listFilterTokens("API Key", apiKeyFilter, apiKeyOptions.value),
   ...listFilterTokens("Status", statusFilter, statusOptions),
+  ...listFilterTokens("Error Origin", errorOriginFilter, errorOriginOptions),
   ...listFilterTokens("Tier", serviceTierFilter, serviceTierOptions),
 ]);
 
@@ -147,6 +150,7 @@ const filterQuery = computed(() => ({
   apiKeyId: listParam(apiKeyFilter.value.filter((value) => value !== PLAYGROUND)),
   isPlayground: apiKeyFilter.value.includes(PLAYGROUND) ? true : undefined,
   status: listParam(statusFilter.value),
+  errorOrigin: listParam(errorOriginFilter.value),
   serviceTier: listParam(serviceTierFilter.value),
   q: search.value.trim() || undefined,
 }));
@@ -199,6 +203,7 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: "timeToFirstToken", header: "First token" },
   { id: "duration", header: "Duration" },
   { id: "attempts", header: "Attempts" },
+  actionsColumn(),
 ];
 
 /**
@@ -222,7 +227,7 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
     <DataTable
       table-id="usage"
       label="Usage Logs"
-      search-placeholder="Search model, key, error or ID"
+      search-placeholder="Search model, key, error, ID, user-agent or IP"
       :columns="columns"
       :rows="usagePage?.items ?? []"
       :row-count="usagePage?.total ?? 0"
@@ -273,6 +278,16 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
           />
         </div>
         <div class="data-table-filter">
+          <span class="data-table-filter__label" aria-hidden="true">Error Origin</span>
+          <AppMultiSelect
+            v-model="errorOriginFilter"
+            :options="errorOriginOptions"
+            label="Filter by Error Origin"
+            placeholder="Any origin"
+            noun="origins"
+          />
+        </div>
+        <div class="data-table-filter">
           <span class="data-table-filter__label" aria-hidden="true">Tier</span>
           <AppMultiSelect
             v-model="serviceTierFilter"
@@ -297,8 +312,11 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
         }}
       </template>
       <template #cell-status="{ row: log }">
-        <span class="status-badge" :class="STATUS_BADGES[usageStatusOf(log)]">
-          {{ STATUS_LABELS[usageStatusOf(log)] }} · {{ log.errorCode ?? log.httpStatus }}
+        <span class="status-badge" :class="USAGE_STATUS_BADGES[usageStatusOf(log)]">
+          {{ USAGE_STATUS_LABELS[usageStatusOf(log)] }} · {{ log.errorCode ?? log.httpStatus }}
+        </span>
+        <span v-if="log.errorOrigin" class="status-badge status-badge--origin">
+          {{ ERROR_ORIGIN_LABELS[log.errorOrigin] }} error
         </span>
         <span v-if="log.isIncomplete" class="cell-note">Incomplete usage</span>
         <NuxtLink
@@ -334,6 +352,9 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
       </template>
       <template #cell-attempts="{ row: log }">
         <span class="tabular">{{ log.attemptCount }}</span>
+      </template>
+      <template #cell-actions="{ row: log }">
+        <NuxtLink class="row-action" :to="`/usage/${log.id}`">View</NuxtLink>
       </template>
       <template #empty>
         <EmptyState :icon="SearchX">
