@@ -32,6 +32,17 @@ interface StoredLogin extends OauthLoginLifetime {
   accountId: string | null;
 }
 
+/** What reading a credential may do to its Provider Account. */
+export interface CredentialReadOptions {
+  /**
+   * Whether an OAuth Login the auth host refuses to refresh disables the
+   * account. False for a Probe, which observes the account and never changes it.
+   */
+  disablesRefusedLogin: boolean;
+}
+
+const DISABLES_REFUSED_LOGIN: CredentialReadOptions = { disablesRefusedLogin: true };
+
 type StoredCredential =
   | { kind: "api-key"; key: string }
   | { kind: "oauth-login"; login: StoredLogin };
@@ -60,7 +71,10 @@ export class ProviderAccountCredentials {
    * CredentialUnavailableError when a login that has run out can't be renewed
    * for now.
    */
-  async credentialOf(providerAccountId: string): Promise<ProviderAccountCredential> {
+  async credentialOf(
+    providerAccountId: string,
+    options: CredentialReadOptions = DISABLES_REFUSED_LOGIN,
+  ): Promise<ProviderAccountCredential> {
     const stored = await this.read(providerAccountId);
     if (stored.kind === "api-key") {
       return apiKeyCredential(stored.key);
@@ -70,8 +84,10 @@ export class ProviderAccountCredentials {
       return loginCredential(login);
     }
     try {
-      return await this.refreshed(providerAccountId, (current) =>
-        needsRefresh(current, new Date()),
+      return await this.refreshed(
+        providerAccountId,
+        (current) => needsRefresh(current, new Date()),
+        options,
       );
     } catch (error) {
       if (error instanceof CredentialUnavailableError && login.expiresAt > new Date()) {
@@ -93,8 +109,13 @@ export class ProviderAccountCredentials {
   credentialAfterRejection(
     providerAccountId: string,
     rejected: ProviderAccountCredential,
+    options: CredentialReadOptions = DISABLES_REFUSED_LOGIN,
   ): Promise<ProviderAccountCredential> {
-    return this.refreshed(providerAccountId, (current) => current.accessToken === rejected.secret);
+    return this.refreshed(
+      providerAccountId,
+      (current) => current.accessToken === rejected.secret,
+      options,
+    );
   }
 
   /**
@@ -105,6 +126,7 @@ export class ProviderAccountCredentials {
   private refreshed(
     providerAccountId: string,
     isStale: (login: StoredLogin) => boolean,
+    options: CredentialReadOptions,
   ): Promise<ProviderAccountCredential> {
     return this.refreshLock.run(providerAccountId, async () => {
       const stored = await this.read(providerAccountId);
@@ -114,12 +136,16 @@ export class ProviderAccountCredentials {
       if (!isStale(stored.login)) {
         return loginCredential(stored.login);
       }
-      return loginCredential(await this.refresh(providerAccountId, stored.login));
+      return loginCredential(await this.refresh(providerAccountId, stored.login, options));
     });
   }
 
   /** Asks the auth host for new tokens and stores them in place of the old ones. */
-  private async refresh(providerAccountId: string, login: StoredLogin): Promise<StoredLogin> {
+  private async refresh(
+    providerAccountId: string,
+    login: StoredLogin,
+    { disablesRefusedLogin }: CredentialReadOptions,
+  ): Promise<StoredLogin> {
     // Before the request, so the stored expiry is never later than the real one.
     const grantedAt = new Date();
     const refresh = await this.oauthLoginClient.refreshTokens(login.endpoint, login.refreshToken);
@@ -140,11 +166,13 @@ export class ProviderAccountCredentials {
         };
       }
       case "refused":
-        await this.health.disable(
-          providerAccountId,
-          SIGN_IN_AGAIN_REASON,
-          `unauthorized: the auth host refused to refresh the OAuth Login (${refresh.reason})`,
-        );
+        if (disablesRefusedLogin) {
+          await this.health.disable(
+            providerAccountId,
+            SIGN_IN_AGAIN_REASON,
+            `unauthorized: the auth host refused to refresh the OAuth Login (${refresh.reason})`,
+          );
+        }
         throw new OauthLoginRefusedError(
           `The auth host refused to refresh the OAuth Login (${refresh.reason})`,
         );

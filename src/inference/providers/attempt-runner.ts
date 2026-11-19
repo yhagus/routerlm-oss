@@ -11,7 +11,10 @@ import {
   type ProviderAccountCredential,
 } from "@/upstream/models/provider-account-credential.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
-import { ProviderAccountCredentials } from "@/upstream/providers/provider-account-credentials.js";
+import {
+  type CredentialReadOptions,
+  ProviderAccountCredentials,
+} from "@/upstream/providers/provider-account-credentials.js";
 import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { AttemptFailedError, exhaustionError, gatewayErrorFor } from "../models/attempt-failure.js";
@@ -26,6 +29,10 @@ export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
 /** ADR 0023: this many 403s in a row, with no success between, disable the Provider Account. */
 const DISABLING_REFUSAL_COUNT = 3;
+
+const DISABLES_REFUSED_LOGIN: CredentialReadOptions = { disablesRefusedLogin: true };
+/** A Probe observes its Provider Account and never changes it (GLOSSARY "Probe"). */
+const LEAVES_REFUSED_LOGIN_ENABLED: CredentialReadOptions = { disablesRefusedLogin: false };
 
 /**
  * One Attempt as a Kind makes it: the Service Tier it asks for (null for a
@@ -108,7 +115,12 @@ export class AttemptRunner {
         break;
       }
       try {
-        const answer = await this.attemptWithCredential(target, prepare(target), meter);
+        const answer = await this.attemptWithCredential(
+          target,
+          prepare(target),
+          meter,
+          DISABLES_REFUSED_LOGIN,
+        );
         void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
         return answer;
       } catch (error) {
@@ -143,7 +155,12 @@ export class AttemptRunner {
     prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
   ): Promise<Answer> {
     try {
-      return await this.attemptWithCredential(target, prepare(target), meter);
+      return await this.attemptWithCredential(
+        target,
+        prepare(target),
+        meter,
+        LEAVES_REFUSED_LOGIN_ENABLED,
+      );
     } catch (error) {
       if (!(error instanceof AttemptFailedError)) {
         throw error;
@@ -221,10 +238,11 @@ export class AttemptRunner {
     target: AttemptTarget,
     attempt: PreparedAttempt<Answer>,
     meter: UsageMeter,
+    credentialOptions: CredentialReadOptions,
   ): Promise<Answer> {
     const account = target.providerAccount;
     meter.attemptStarted(target, attempt.sentServiceTier);
-    const credential = await this.credentialOf(account);
+    const credential = await this.credentialOf(account, credentialOptions);
     meter.credentialUsed(credential.secret);
     try {
       return await attempt.send(credential);
@@ -239,7 +257,7 @@ export class AttemptRunner {
       meter.attemptFailed(error);
       meter.attemptStarted(target, attempt.sentServiceTier);
       const renewed = await asAttemptFailure(() =>
-        this.credentials.credentialAfterRejection(account.id, credential),
+        this.credentials.credentialAfterRejection(account.id, credential, credentialOptions),
       );
       meter.credentialUsed(renewed.secret);
       return await attempt.send(renewed);
@@ -251,13 +269,16 @@ export class AttemptRunner {
    * it is stored, and refreshed first when it is about to run out. Also used
    * by a Video Job's poll, which makes its one call outside the Fallback loop.
    */
-  credentialOf(account: SnapshotProviderAccount): Promise<ProviderAccountCredential> {
+  credentialOf(
+    account: SnapshotProviderAccount,
+    options: CredentialReadOptions = DISABLES_REFUSED_LOGIN,
+  ): Promise<ProviderAccountCredential> {
     if (account.credential.kind === "api-key") {
       return Promise.resolve(
         apiKeyCredential(this.cipher.decrypt(account.credential.encryptedKey)),
       );
     }
-    return asAttemptFailure(() => this.credentials.credentialOf(account.id));
+    return asAttemptFailure(() => this.credentials.credentialOf(account.id, options));
   }
 
   /**
