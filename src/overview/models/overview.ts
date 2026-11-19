@@ -1,3 +1,5 @@
+import type { ErrorOrigin } from "@/db/schemas/index.js";
+
 const HOUR_SECONDS = 3600;
 const DAY_SECONDS = 24 * HOUR_SECONDS;
 
@@ -26,13 +28,29 @@ export const OVERVIEW_BUCKETS = {
  *   Protocol. Null when no input tokens were reported.
  * - `errorRate` is failed requests / all requests, "failed" as the Usage
  *   page filters it (a cancelled request is not an error). Null without requests.
+ * - `errorsByOrigin` splits the failed requests by Error Origin, with all
+ *   three origins always present. Failures recorded without an origin count
+ *   in `errorRate` only, so the origin counts can add up to less.
  */
 export interface OverviewStats {
   requestCount: number;
   cost: number;
   cacheHitRate: number | null;
   errorRate: number | null;
+  errorsByOrigin: ErrorsByOrigin;
 }
+
+/**
+ * The failed requests of one Error Origin. `rate` is over all requests, not
+ * just the failed ones, so the three rates add up to at most `errorRate`.
+ * Null without requests.
+ */
+export interface OriginErrors {
+  count: number;
+  rate: number | null;
+}
+
+export type ErrorsByOrigin = Record<ErrorOrigin, OriginErrors>;
 
 export interface OverviewBucket extends OverviewStats {
   /** Inclusive; the bucket ends `bucketSeconds` later. */
