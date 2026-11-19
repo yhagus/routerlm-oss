@@ -2,6 +2,7 @@ import { getQueueToken } from "@nestjs/bullmq";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
+import { isNotNull } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { errorCaptures } from "@/db/schemas/index.js";
@@ -80,5 +81,26 @@ describe("Error Captures of failed media requests (e2e)", () => {
     expect(capture.requestBody).toContain("<image/png, 2 KB>");
     expect(capture.requestBody).not.toContain("data:");
     expect(capture.requestBody).not.toContain(FOX_PNG.toString("base64").slice(0, 64));
+  });
+
+  it("keeps DashScope's request_id in the failed Attempt's capture", async () => {
+    upstream.replyTo(DASHSCOPE_GENERATION_PATH, {
+      kind: "json",
+      status: 500,
+      body: { code: "InternalError", message: "boom", request_id: "dashscope-request-42" },
+    });
+
+    await request(app.getHttpServer())
+      .post("/v1/images/generations")
+      .set("Authorization", `Bearer ${apiKey}`)
+      .send({ model: "painter", prompt: PROMPT })
+      .expect(502);
+    await writtenUsageLog(db);
+
+    const [capture] = await db
+      .select({ responseBody: errorCaptures.responseBody })
+      .from(errorCaptures)
+      .where(isNotNull(errorCaptures.attemptId));
+    expect(capture.responseBody).toContain("dashscope-request-42");
   });
 });
