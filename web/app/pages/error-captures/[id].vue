@@ -95,8 +95,24 @@ const attemptHop = computed(() =>
               <dd>{{ capture.clientProtocol }}</dd>
             </div>
             <div>
+              <dt>User-Agent</dt>
+              <dd>{{ capture.userAgent ?? "—" }}</dd>
+            </div>
+            <div>
+              <dt>IP</dt>
+              <dd class="tabular">{{ capture.clientIp ?? "—" }}</dd>
+            </div>
+            <div v-if="attemptHop">
+              <dt>Provider request id</dt>
+              <dd class="tabular">{{ attemptHop.upstreamRequestId ?? "—" }}</dd>
+            </div>
+            <div>
               <dt>Usage Log</dt>
               <dd>
+                <NuxtLink class="capture-link" :to="`/usage/${capture.usageLogId}`"
+                  >This request</NuxtLink
+                >
+                ·
                 <NuxtLink
                   class="capture-link"
                   :to="`/error-captures?usageLogId=${capture.usageLogId}`"
