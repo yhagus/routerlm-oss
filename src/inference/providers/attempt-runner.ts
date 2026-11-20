@@ -51,6 +51,16 @@ export interface PreparedAttempt<Answer> {
  * Cooldown, until one Attempt answers; keeps each account's health, Cooldown
  * and Exhausted state as Attempts fail. What an Attempt sends and how its
  * answer is read is the Kind's business, in `prepare`.
+ *
+ * Every routing side effect an Attempt can have, and where it happens. A path
+ * that must leave routing state alone (a Probe, `probeAnswer`) avoids all of them:
+ * - refusal counter reset on success: the Fallback loop in `firstAnswer`;
+ * - disable on 401: `afterFailedAttempt`;
+ * - Cooldown and Exhausted: `afterFailedAttempt`;
+ * - 403 refusal counter, then Cooldown or disable (ADR 0023): `afterForbiddenAttempt`;
+ * - quota read: `readQuota`;
+ * - disable of an OAuth Login whose refresh is refused: credential reading in
+ *   `ProviderAccountCredentials`, unless `CredentialReadOptions.disablesRefusedLogin` is off.
  */
 @Injectable()
 export class AttemptRunner {
