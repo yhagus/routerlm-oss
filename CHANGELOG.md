@@ -1,3 +1,64 @@
+# v5.1.0 (2026-11-20)
+
+#### Notable changes
+
+**Upgrade**
+* Nothing to do: no migration. Two optional env variables bound a Probe's wait, `PROBE_TIMEOUT_MS` (default 30000) and `PROBE_IMAGE_TIMEOUT_MS` (default 90000) – [005b555](https://github.com/yhagus/routerlm-oss/commit/005b555b01bcdfd966904ad4267beef5e6400f03)
+
+**Error Captures**
+* The Error Captures page has a time range and filters for where it failed (Client → gateway or Gateway → Provider), Provider Account, failure reason, what the client got (Recovered or Failed), Model, API Key and Error Origin, all kept in the URL (`GET /api/error-captures` takes the same filters) – [bf28653](https://github.com/yhagus/routerlm-oss/commit/bf28653acd6cbb0f448edde2036e1ca50ea72fa6), [800f308](https://github.com/yhagus/routerlm-oss/commit/800f308bd91153672ff95695331791f1d227564a)
+* The Error Captures search also matches the User-Agent, client IP and the request id the Provider returned – [bf28653](https://github.com/yhagus/routerlm-oss/commit/bf28653acd6cbb0f448edde2036e1ca50ea72fa6)
+
+**Playground**
+* Probe an Upstream Model from its table row with each Provider Account, as a single Attempt without routing side effects; a refused OAuth sign-in stays enabled – [005b555](https://github.com/yhagus/routerlm-oss/commit/005b555b01bcdfd966904ad4267beef5e6400f03), [2846715](https://github.com/yhagus/routerlm-oss/commit/2846715fae105966c680b7b19e8fff54d6c29eb8), [0ca4835](https://github.com/yhagus/routerlm-oss/commit/0ca483571b314a83da6bd1e6e2c81578c8d33e71), [a9d2fb4](https://github.com/yhagus/routerlm-oss/commit/a9d2fb4437649fa59fd09168fe0d2a1bfdab6a3b)
+* Several Upstream Models can be probed at once, and a reasoning model is probed at low effort – [3c66872](https://github.com/yhagus/routerlm-oss/commit/3c6687210ab1e1ef7e819b3eab7a8e4b8ce71f85), [fb389f4](https://github.com/yhagus/routerlm-oss/commit/fb389f45c8a50664d44b23f20e6812e73a5257c8)
+
+#### Features
+* `error-captures`
+  * [bf28653](https://github.com/yhagus/routerlm-oss/commit/bf28653acd6cbb0f448edde2036e1ca50ea72fa6) feat(error-captures): filter captures by range, hop, account, reason and outcome
+* `inference`
+  * [005b555](https://github.com/yhagus/routerlm-oss/commit/005b555b01bcdfd966904ad4267beef5e6400f03) feat(inference): add a single-attempt probe path without routing side effects
+* `playground`
+  * [2846715](https://github.com/yhagus/routerlm-oss/commit/2846715fae105966c680b7b19e8fff54d6c29eb8) feat(playground): probe an upstream model with each provider account
+* `web`
+  * [800f308](https://github.com/yhagus/routerlm-oss/commit/800f308bd91153672ff95695331791f1d227564a) feat(web): add time range and filters to the error captures page
+  * [0ca4835](https://github.com/yhagus/routerlm-oss/commit/0ca483571b314a83da6bd1e6e2c81578c8d33e71) feat(web): probe an upstream model from its table row
+
+#### Bug fixes
+* `inference`
+  * [a9d2fb4](https://github.com/yhagus/routerlm-oss/commit/a9d2fb4437649fa59fd09168fe0d2a1bfdab6a3b) fix(inference): keep a probe from disabling a refused oauth login
+* `playground`
+  * [fb389f4](https://github.com/yhagus/routerlm-oss/commit/fb389f45c8a50664d44b23f20e6812e73a5257c8) fix(playground): ask a reasoning model for low effort in a chat probe
+* `web`
+  * [3c66872](https://github.com/yhagus/routerlm-oss/commit/3c6687210ab1e1ef7e819b3eab7a8e4b8ce71f85) fix(web): let several upstream models probe at once and type failure reasons
+
+#### Refactors
+* `inference`
+  * [cbfa600](https://github.com/yhagus/routerlm-oss/commit/cbfa600ee9a6821d45b77181f48af9de0a89b6a6) refactor(inference): make a probe destination its own union member
+
+#### Docs
+* `agents`
+  * [5f9e5e7](https://github.com/yhagus/routerlm-oss/commit/5f9e5e740d547a32571bf7f19407f87faf2ab879) docs(agents): document the release steps and changelog format
+* `changelog`
+  * [7f7c82e](https://github.com/yhagus/routerlm-oss/commit/7f7c82e8901a1787f661e4ababf189b8a3bffa53) docs(changelog): rewrite v5.0.0 in the module-grouped format
+* `glossary`
+  * [0d24002](https://github.com/yhagus/routerlm-oss/commit/0d24002f600fe1af7bb60bac8d7f860fb65fe54a) docs(glossary): add probe
+* `inference`
+  * [107709a](https://github.com/yhagus/routerlm-oss/commit/107709aa09a2f1e6ddb1a3a8b93d2f1ab198325c) docs(inference): list every routing side effect of an attempt
+
+#### Chores
+* `agents`
+  * [6a5773b](https://github.com/yhagus/routerlm-oss/commit/6a5773bafc48fd08a9de30adb521ece3d888fbaa) chore(agents): let every implementer edit the web mirror check
+* `format`
+  * [9c2993d](https://github.com/yhagus/routerlm-oss/commit/9c2993d8f377b811179bb5e03e7613dab190b65b) chore(format): add oxfmt config for backend and web
+* `git`
+  * [28891a4](https://github.com/yhagus/routerlm-oss/commit/28891a41ae1f5dded3cce887b10596dd6a9ede38) chore(git): ignore the codegraph index
+* `scripts`
+  * [8f47a23](https://github.com/yhagus/routerlm-oss/commit/8f47a2335493b279aa94badfa44ca2d3decbf05d) chore(scripts): keep the test summary last in test:docker output
+  * [92b3a14](https://github.com/yhagus/routerlm-oss/commit/92b3a141e1e903b253583bf7b40de4ee585bc528) chore(scripts): generate release notes grouped by type and module
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v5.0.0...v5.1.0
+
 # v5.0.0 (2026-11-19)
 
 #### Notable changes
