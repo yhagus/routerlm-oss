@@ -7,3 +7,6 @@ coverage/
 .DS_Store
 .claude/worktrees/
 tests/docs/.docs-examples/
+
+# CodeGraph index
+.codegraph/
