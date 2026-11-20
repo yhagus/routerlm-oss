@@ -1,0 +1,458 @@
+{
+  "slug": "alibaba-token-plan",
+  "name": "Alibaba Token Plan",
+  "logo": "alibabacloud",
+  "termsRisk": true,
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {},
+  "modelsDevProviderId": "alibaba-token-plan",
+  "credentialKinds": ["api-key"],
+  "source": {
+    "urls": [
+      "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+      "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+      "https://www.alibabacloud.com/help/en/model-studio/token-plan-faq",
+      "https://www.alibabacloud.com/help/en/model-studio/token-plan-usage-quota",
+      "https://www.alibabacloud.com/help/en/model-studio/more-tools",
+      "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
+    ],
+    "retrievedOn": "2026-11-20"
+  },
+  "notes": "Alibaba Model Studio's subscription (Personal and Team Edition), Singapore only. It bills Credits from a monthly quota and has no per-token prices; each model carries the list prices of its pay-as-you-go equivalent (Singapore where Alibaba sells it there), so Cost is what a request would cost there. Takes a Token Plan API key (sk-sp-...), which is not interchangeable with a Model Studio pay-as-you-go key (sk-...) or a Coding Plan key; Personal and Team keys are separate too. The Team overview says Team Edition has its own base URL shown in My Subscriptions; an operator whose console shows another host edits the base URL. Only chat models are shipped: the plan lists image, video and speech models, but the FAQ says they \"cannot be called directly through the text model Base URL\" and no media endpoint is documented. Left out: auto (picks an underlying model per request, so it has no prices or limits of its own) and qwen4-max-preview (Token Plan only, retired after 2026-11-25). The docs don't say whether explicit cache takes cache_control markers, so the quirk is off. Quota exhaustion answers 429 insufficient_quota and is not billed pay-as-you-go; there is no usage endpoint, so the Provider has no quota reader. Terms risk: the docs limit the plan to interactive use in AI coding and agent tools, name \"automated scripts or application backends\" as not permitted, and say violations may lead to subscription suspension or API key revocation.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "qwen4-max",
+      "name": "Qwen4 Max",
+      "releaseDate": "2026-11-16",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.5,
+      "outputPrice": 4.5,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": 1.875,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/qwen4-max",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/press-room/alibaba-unveils-qwen4-max"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go prices, with the 5-minute explicit cache as the cache write. The output limit is the non-thinking one; thinking mode allows 262,144."
+    },
+    {
+      "upstreamModelId": "qwen3.8-max",
+      "name": "Qwen3.8 Max",
+      "releaseDate": "2026-08-03",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2,
+      "outputPrice": 6,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.8-max on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "qwen3.8-flash",
+      "name": "Qwen3.8 Flash",
+      "releaseDate": "2026-08-26",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.47,
+      "cacheReadPrice": 0.016,
+      "cacheWritePrice": 0.2,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.8-flash on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "qwen3.7-max",
+      "name": "Qwen3.7 Max",
+      "releaseDate": "2026-05-21",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2.5,
+      "outputPrice": 7.5,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 3.125,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.7-max on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "qwen3.7-plus",
+      "name": "Qwen3.7 Plus",
+      "releaseDate": "2026-06-02",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.4,
+      "outputPrice": 1.6,
+      "cacheReadPrice": 0.08,
+      "cacheWritePrice": 0.5,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.7-plus on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "qwen3.6-plus",
+      "name": "Qwen3.6 Plus",
+      "releaseDate": "2026-04-02",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.5,
+      "outputPrice": 3,
+      "cacheReadPrice": 0.05,
+      "cacheWritePrice": 0.625,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "Team Edition only; a Personal Edition key gets 403 AccessDenied.Unpurchased. Context size, output limit, capabilities and prices are those of qwen3.6-plus on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "qwen3.6-flash",
+      "name": "Qwen3.6 Flash",
+      "releaseDate": "2026-04-27",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.25,
+      "outputPrice": 1.5,
+      "cacheReadPrice": 0.025,
+      "cacheWritePrice": 0.3125,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.6-flash on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "releaseDate": "2026-09-10",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8; off-peak is half); Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "deepseek-v4.1-flash-1017",
+      "name": "DeepSeek V4.1 Flash 1017",
+      "releaseDate": "2026-10-17",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8; off-peak is half); Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
+      "releaseDate": "2026-04-24",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 2.4,
+      "outputPrice": 4.8,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go prices; Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "deepseek-v4-pro-0813",
+      "name": "DeepSeek V4 Pro 0813",
+      "releaseDate": "2026-08-13",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 1.32,
+      "outputPrice": 3.96,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8; off-peak is half); Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "deepseek-v4-flash-0731",
+      "name": "DeepSeek V4 Flash 0731",
+      "releaseDate": "2026-07-31",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.44,
+      "outputPrice": 1.32,
+      "cacheReadPrice": 0.088,
+      "cacheWritePrice": 0.44,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of deepseek-v4-flash-0731 on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "kimi-k2.7-code",
+      "name": "Kimi K2.7 Code",
+      "releaseDate": "2026-06-12",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.95,
+      "outputPrice": 4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "Team Edition only; a Personal Edition key gets 403 AccessDenied.Unpurchased. Prices are its Singapore pay-as-you-go prices; Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "kimi-k2.6",
+      "name": "Kimi K2.6",
+      "releaseDate": "2026-04-20",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.95,
+      "outputPrice": 4,
+      "cacheReadPrice": 0.16,
+      "cacheWritePrice": 0.95,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "Team Edition only; a Personal Edition key gets 403 AccessDenied.Unpurchased. Alibaba sells it pay-as-you-go only in China (Beijing), so prices are Moonshot's list prices, as in the Moonshot Catalog file. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "kimi-k2.5",
+      "name": "Kimi K2.5",
+      "releaseDate": "2026-01-27",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 98304,
+      "inputPrice": 0.574,
+      "outputPrice": 3.011,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "Team Edition only; a Personal Edition key gets 403 AccessDenied.Unpurchased. Alibaba sells it pay-as-you-go in its Global deployment (Frankfurt, Virginia, Tokyo) but not Singapore; prices are the Global ones, with no cache-hit price published. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "glm-5.3",
+      "name": "GLM-5.3",
+      "releaseDate": "2026-08-14",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go prices; Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "glm-5.2",
+      "name": "GLM-5.2",
+      "releaseDate": "2026-06-13",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.28,
+      "cacheWritePrice": 0,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of glm-5.2 on Alibaba Model Studio (International)."
+    },
+    {
+      "upstreamModelId": "glm-5.1",
+      "name": "GLM-5.1",
+      "releaseDate": "2026-04-07",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 202752,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "Team Edition only; a Personal Edition key gets 403 AccessDenied.Unpurchased. Prices are its Singapore pay-as-you-go prices; Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "glm-5",
+      "name": "GLM-5",
+      "releaseDate": "2026-02-12",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 202752,
+      "maxOutputTokens": 16384,
+      "inputPrice": 1,
+      "outputPrice": 3.2,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "Team Edition only; a Personal Edition key gets 403 AccessDenied.Unpurchased. Alibaba sells it pay-as-you-go only in China (Beijing), so prices are Z.ai's list prices from models.dev. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    },
+    {
+      "upstreamModelId": "MiniMax-M2.5",
+      "name": "MiniMax-M2.5",
+      "releaseDate": "2026-02-12",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 196608,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": 0.375,
+      "source": {
+        "urls": [
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-20"
+      },
+      "notes": "Team Edition only; a Personal Edition key gets 403 AccessDenied.Unpurchased. Alibaba sells it pay-as-you-go only in China (Beijing), so prices are MiniMax's list prices from models.dev. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+    }
+  ]
+}

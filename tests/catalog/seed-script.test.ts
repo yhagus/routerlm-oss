@@ -42,6 +42,7 @@ describe("db:seed script (e2e)", () => {
       const seeded = await db.select({ slug: providers.slug }).from(providers);
       expect(seeded.map((provider) => provider.slug).sort()).toEqual([
         "alibaba-model-studio-intl",
+        "alibaba-token-plan",
         "anthropic",
         "commandcode",
         "deepseek",

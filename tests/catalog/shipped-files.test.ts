@@ -16,7 +16,7 @@ describe("Catalog files shipped with the gateway", () => {
       }))
       .filter(({ hasLogo, foreignQuirks }) => !hasLogo || foreignQuirks.length > 0);
 
-    expect(catalog).toHaveLength(15);
+    expect(catalog).toHaveLength(16);
     expect(misfits).toEqual([]);
   });
 });

@@ -56,6 +56,7 @@ describe("The Google Gemini and OpenAI Catalog files", () => {
 
     expect(modelsDevIds).toEqual({
       "alibaba-model-studio-intl": "alibaba",
+      "alibaba-token-plan": "alibaba-token-plan",
       anthropic: "anthropic",
       commandcode: undefined,
       deepseek: "deepseek",
