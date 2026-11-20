@@ -23,23 +23,9 @@ import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib
 import { dateTimeFormat } from "~/lib/dateFormats";
 import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from "~/lib/errorOrigins";
 import { SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/parameterPolicy";
+import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from "~/lib/queryFilters";
 
 useHead({ title: "Usage" });
-
-/** The API Key filter's choice for the Playground's requests, which have no API Key. */
-const PLAYGROUND = "playground";
-/** Characters of an id shown for a Model or API Key that a link names but no longer exists. */
-const SHORT_ID_LENGTH = 8;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Model and API Key ids are UUIDs; the backend rejects anything else. */
-function isUuid(value: string): value is string {
-  return UUID_PATTERN.test(value);
-}
-
-function isApiKeyChoice(value: string): value is string {
-  return value === PLAYGROUND || isUuid(value);
-}
 
 // Filters
 
@@ -97,18 +83,6 @@ const timeRangeOptions = Object.entries(TIME_RANGES).map(([value, { label }]) =>
   value,
   label,
 }));
-interface FilterOption {
-  value: string;
-  label: string;
-}
-
-/** A link can name a Model or API Key since deleted: show it so it can be unchecked. */
-function missingOptions(picked: readonly string[], known: readonly FilterOption[]): FilterOption[] {
-  return picked
-    .filter((id) => !known.some((option) => option.value === id))
-    .map((id) => ({ value: id, label: `${id.slice(0, SHORT_ID_LENGTH)} (not found)` }));
-}
-
 const modelOptions = computed(() => {
   const known = (modelChoices.value ?? []).map((model) => ({ value: model.id, label: model.name }));
   return [...known, ...missingOptions(modelFilter.value, known)];
@@ -137,11 +111,6 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...listFilterTokens("Error Origin", errorOriginFilter, errorOriginOptions),
   ...listFilterTokens("Tier", serviceTierFilter, serviceTierOptions),
 ]);
-
-/** The picks as one comma-separated param, or none: the backend rejects an empty list. */
-function listParam(values: readonly string[]): string | undefined {
-  return values.length > 0 ? values.join(",") : undefined;
-}
 
 // With API Keys and the Playground both picked, the backend matches either.
 const filterQuery = computed(() => ({

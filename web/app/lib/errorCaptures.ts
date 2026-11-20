@@ -44,6 +44,24 @@ export interface ErrorCaptureDetail extends ErrorCaptureSummary {
   responseBody: string | null;
 }
 
+/** Which hop a capture failed at, as the backend's `FAILED_HOPS` says. */
+export const FAILED_HOPS = ["client-to-gateway", "gateway-to-provider-account"] as const;
+export type FailedHopKind = (typeof FAILED_HOPS)[number];
+
+export const FAILED_HOP_LABELS: Record<FailedHopKind, string> = {
+  "client-to-gateway": "Client → gateway",
+  "gateway-to-provider-account": "Gateway → Provider",
+};
+
+/** How the client's request ended despite the capture, as the backend's `CAPTURE_OUTCOMES` says. */
+export const CAPTURE_OUTCOMES = ["recovered", "failed"] as const;
+export type CaptureOutcome = (typeof CAPTURE_OUTCOMES)[number];
+
+export const CAPTURE_OUTCOME_LABELS: Record<CaptureOutcome, string> = {
+  recovered: "Recovered",
+  failed: "Failed",
+};
+
 export interface ErrorCapturePage {
   items: ErrorCaptureSummary[];
   total: number;
@@ -60,6 +78,7 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   bad_request: "Bad request",
   stream_interrupted: "Stream interrupted",
   exhausted: "Exhausted",
+  cancelled: "Cancelled",
 };
 
 /** What failed, in words: "Client → gateway", or "Gateway → <Provider> · <Provider Account>". */
