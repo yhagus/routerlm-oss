@@ -52,7 +52,7 @@ export function namesOrErrorCodeContain(text: string): SQL | undefined {
 }
 
 /** An ILIKE pattern matching values that contain `text` literally. */
-function containing(text: string): string {
+export function containing(text: string): string {
   return `%${escapeLikeWildcards(text)}%`;
 }
 
@@ -65,7 +65,10 @@ function escapeLikeWildcards(text: string): string {
  * Who sent the request. The Usage page's API Key filter offers the Playground beside the
  * real keys, so picking both means either: listed keys OR the Playground.
  */
-function callerCondition({ apiKeyId, isPlayground }: UsageFilter): SQL | undefined {
+export function callerCondition({
+  apiKeyId,
+  isPlayground,
+}: Pick<UsageFilter, "apiKeyId" | "isPlayground">): SQL | undefined {
   const listedKeysCondition =
     apiKeyId === undefined ? undefined : inArray(usageLogs.apiKeyId, apiKeyId);
   if (isPlayground === undefined) return listedKeysCondition;

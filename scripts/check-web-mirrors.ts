@@ -14,6 +14,10 @@ import {
   UPSTREAM_PROTOCOLS,
 } from "@/db/schemas/upstream.js";
 import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas/records.js";
+import {
+  CAPTURE_OUTCOMES,
+  FAILED_HOPS,
+} from "@/error-captures/schemas/error-capture-page-query.schema.js";
 import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
 import { AUDIO_FORMATS } from "@/inference/models/speech-synthesis.js";
 import { VIDEO_RATIOS, VIDEO_RESOLUTIONS } from "@/inference/models/video-generation.js";
@@ -45,6 +49,8 @@ const MIRRORS: Mirror[] = [
     webFile: "web/app/lib/attemptFailures.ts",
     backend: RECORDED_ATTEMPT_FAILURES,
   },
+  { name: "FAILED_HOPS", webFile: "web/app/lib/errorCaptures.ts", backend: FAILED_HOPS },
+  { name: "CAPTURE_OUTCOMES", webFile: "web/app/lib/errorCaptures.ts", backend: CAPTURE_OUTCOMES },
   { name: "AUDIO_FORMATS", webFile: "web/app/lib/playgroundSpeech.ts", backend: AUDIO_FORMATS },
   {
     name: "VIDEO_RESOLUTIONS",

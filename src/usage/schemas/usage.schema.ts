@@ -10,10 +10,11 @@ const MAX_SEARCH_LENGTH = 200;
 export const USAGE_STATUSES = ["succeeded", "failed", "cancelled"] as const;
 export type UsageStatus = (typeof USAGE_STATUSES)[number];
 
-const instant = z.iso.datetime({ offset: true }).pipe(z.coerce.date());
+/** An ISO instant with its UTC offset, as a Date. */
+export const instant = z.iso.datetime({ offset: true }).pipe(z.coerce.date());
 
 /** One query param holding a comma-separated list, each element checked by `element`. */
-function commaSeparated<Element extends z.ZodType<unknown, string>>(element: Element) {
+export function commaSeparated<Element extends z.ZodType<unknown, string>>(element: Element) {
   return z
     .string()
     .transform((list) => list.split(","))

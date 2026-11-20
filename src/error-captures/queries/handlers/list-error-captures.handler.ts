@@ -1,10 +1,10 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, count, desc, eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { errorCaptures, usageLogs } from "@/db/schemas/index.js";
-import { namesOrErrorCodeContain } from "@/usage/models/usage-filters.js";
+import { attempts, errorCaptures, usageLogs } from "@/db/schemas/index.js";
 import type { ErrorCapturePage } from "../../models/error-capture.js";
+import { whereErrorCaptureFilter } from "../../models/error-capture-filters.js";
 import { selectSummaryRows, summaryOf } from "../../models/error-capture-summaries.js";
 import { ListErrorCapturesQuery } from "../impl/list-error-captures.query.js";
 
@@ -13,12 +13,7 @@ export class ListErrorCapturesHandler implements IQueryHandler<ListErrorCaptures
   constructor(@InjectDrizzle() private readonly db: Database) {}
 
   async execute({ pageQuery }: ListErrorCapturesQuery): Promise<ErrorCapturePage> {
-    const where = and(
-      pageQuery.usageLogId === undefined
-        ? undefined
-        : eq(errorCaptures.usageLogId, pageQuery.usageLogId),
-      pageQuery.q === undefined ? undefined : namesOrErrorCodeContain(pageQuery.q),
-    );
+    const where = whereErrorCaptureFilter(pageQuery);
     const [rows, [{ total }]] = await Promise.all([
       selectSummaryRows(this.db)
         .where(where)
@@ -29,6 +24,7 @@ export class ListErrorCapturesHandler implements IQueryHandler<ListErrorCaptures
         .select({ total: count() })
         .from(errorCaptures)
         .innerJoin(usageLogs, eq(usageLogs.id, errorCaptures.usageLogId))
+        .leftJoin(attempts, eq(attempts.id, errorCaptures.attemptId))
         .where(where),
     ]);
     return {
