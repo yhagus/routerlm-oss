@@ -1,0 +1,4 @@
+# Files every stack implementer may write, one repo-relative path per line.
+# Read by ~/.claude/hooks/guard-implementer-scope.mjs.
+# A web mirror of a backend list needs its entry here (bun run check fails without it).
+scripts/check-web-mirrors.ts
