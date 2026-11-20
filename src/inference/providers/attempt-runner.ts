@@ -11,12 +11,16 @@ import {
   type ProviderAccountCredential,
 } from "@/upstream/models/provider-account-credential.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
-import { ProviderAccountCredentials } from "@/upstream/providers/provider-account-credentials.js";
+import {
+  type CredentialReadOptions,
+  ProviderAccountCredentials,
+} from "@/upstream/providers/provider-account-credentials.js";
 import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { AttemptFailedError, exhaustionError, gatewayErrorFor } from "../models/attempt-failure.js";
 import { exhaustedUntilOf } from "../models/quota-exhausted-error.js";
 import { type AttemptPath, type AttemptTarget, attemptTargets } from "../models/route-selection.js";
+import type { Destination } from "../models/destination.js";
 import type { SentServiceTier } from "../models/service-tier.js";
 import type { UsageMeter } from "../models/usage-meter.js";
 
@@ -25,6 +29,10 @@ export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
 /** ADR 0023: this many 403s in a row, with no success between, disable the Provider Account. */
 const DISABLING_REFUSAL_COUNT = 3;
+
+const DISABLES_REFUSED_LOGIN: CredentialReadOptions = { disablesRefusedLogin: true };
+/** A Probe observes its Provider Account and never changes it (GLOSSARY "Probe"). */
+const LEAVES_REFUSED_LOGIN_ENABLED: CredentialReadOptions = { disablesRefusedLogin: false };
 
 /**
  * One Attempt as a Kind makes it: the Service Tier it asks for (null for a
@@ -43,6 +51,16 @@ export interface PreparedAttempt<Answer> {
  * Cooldown, until one Attempt answers; keeps each account's health, Cooldown
  * and Exhausted state as Attempts fail. What an Attempt sends and how its
  * answer is read is the Kind's business, in `prepare`.
+ *
+ * Every routing side effect an Attempt can have, and where it happens. A path
+ * that must leave routing state alone (a Probe, `probeAnswer`) avoids all of them:
+ * - refusal counter reset on success: the Fallback loop in `firstAnswer`;
+ * - disable on 401: `afterFailedAttempt`;
+ * - Cooldown and Exhausted: `afterFailedAttempt`;
+ * - 403 refusal counter, then Cooldown or disable (ADR 0023): `afterForbiddenAttempt`;
+ * - quota read: `readQuota`;
+ * - disable of an OAuth Login whose refresh is refused: credential reading in
+ *   `ProviderAccountCredentials`, unless `CredentialReadOptions.disablesRefusedLogin` is off.
  */
 @Injectable()
 export class AttemptRunner {
@@ -55,6 +73,21 @@ export class AttemptRunner {
     private readonly providerAccountHealth: ProviderAccountHealth,
     private readonly commandBus: CommandBus,
   ) {}
+
+  /**
+   * The answer to a request to `destination`: its Probe's one Attempt, or
+   * the first answer Fallback gets over its paths.
+   */
+  answer<Answer>(
+    destination: Destination,
+    meter: UsageMeter,
+    prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
+  ): Promise<Answer> {
+    if (destination.kind === "probe") {
+      return this.probeAnswer(destination.target, meter, prepare);
+    }
+    return this.firstAnswer(destination.paths, meter, prepare);
+  }
 
   /**
    * The first answer an Attempt gets. Throws the GatewayError the client is
@@ -92,7 +125,12 @@ export class AttemptRunner {
         break;
       }
       try {
-        const answer = await this.attemptWithCredential(target, prepare(target), meter);
+        const answer = await this.attemptWithCredential(
+          target,
+          prepare(target),
+          meter,
+          DISABLES_REFUSED_LOGIN,
+        );
         void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
         return answer;
       } catch (error) {
@@ -112,6 +150,34 @@ export class AttemptRunner {
       failures,
       enabledAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
     );
+  }
+
+  /**
+   * A Probe's one Attempt (GLOSSARY "Probe"), made even when the Provider
+   * Account is in Cooldown or Exhausted. It observes the account and never
+   * changes it: a failure starts no Cooldown, marks nothing Exhausted,
+   * disables nothing and counts no refusal, and a success clears nothing.
+   * An OAuth Login answered with 401 is still refreshed and tried once more.
+   */
+  private async probeAnswer<Answer>(
+    target: AttemptTarget,
+    meter: UsageMeter,
+    prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
+  ): Promise<Answer> {
+    try {
+      return await this.attemptWithCredential(
+        target,
+        prepare(target),
+        meter,
+        LEAVES_REFUSED_LOGIN_ENABLED,
+      );
+    } catch (error) {
+      if (!(error instanceof AttemptFailedError)) {
+        throw error;
+      }
+      meter.attemptFailed(error);
+      throw gatewayErrorFor(error);
+    }
   }
 
   /**
@@ -182,10 +248,11 @@ export class AttemptRunner {
     target: AttemptTarget,
     attempt: PreparedAttempt<Answer>,
     meter: UsageMeter,
+    credentialOptions: CredentialReadOptions,
   ): Promise<Answer> {
     const account = target.providerAccount;
     meter.attemptStarted(target, attempt.sentServiceTier);
-    const credential = await this.credentialOf(account);
+    const credential = await this.credentialOf(account, credentialOptions);
     meter.credentialUsed(credential.secret);
     try {
       return await attempt.send(credential);
@@ -200,7 +267,7 @@ export class AttemptRunner {
       meter.attemptFailed(error);
       meter.attemptStarted(target, attempt.sentServiceTier);
       const renewed = await asAttemptFailure(() =>
-        this.credentials.credentialAfterRejection(account.id, credential),
+        this.credentials.credentialAfterRejection(account.id, credential, credentialOptions),
       );
       meter.credentialUsed(renewed.secret);
       return await attempt.send(renewed);
@@ -212,13 +279,16 @@ export class AttemptRunner {
    * it is stored, and refreshed first when it is about to run out. Also used
    * by a Video Job's poll, which makes its one call outside the Fallback loop.
    */
-  credentialOf(account: SnapshotProviderAccount): Promise<ProviderAccountCredential> {
+  credentialOf(
+    account: SnapshotProviderAccount,
+    options: CredentialReadOptions = DISABLES_REFUSED_LOGIN,
+  ): Promise<ProviderAccountCredential> {
     if (account.credential.kind === "api-key") {
       return Promise.resolve(
         apiKeyCredential(this.cipher.decrypt(account.credential.encryptedKey)),
       );
     }
-    return asAttemptFailure(() => this.credentials.credentialOf(account.id));
+    return asAttemptFailure(() => this.credentials.credentialOf(account.id, options));
   }
 
   /**

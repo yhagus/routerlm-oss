@@ -8,6 +8,7 @@ import { UsageProducer } from "@/usage/jobs/usage.producer.js";
 import {
   assertKindServedHere,
   type Destination,
+  probeDestination,
   upstreamModelServedHere,
   usableModel,
 } from "../../models/destination.js";
@@ -22,7 +23,7 @@ import { UsageMeter } from "../../models/usage-meter.js";
 import { upstreamAuthHeaders } from "../../protocols/converters.js";
 import { AttemptRunner } from "../../providers/attempt-runner.js";
 import { MediaUpstreamClient } from "../../providers/media-upstream-client.js";
-import { DEFAULT_TIMEOUTS } from "../../providers/upstream-client.js";
+import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "../../providers/upstream-client.js";
 import { RunMediaInferenceCommand } from "../impl/run-media-inference.command.js";
 
 const HTTP_OK = 200;
@@ -66,20 +67,14 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     }
   }
 
-  private async serve(
-    { contract, body, caller, connection, target }: RunMediaInferenceCommand,
-    meter: UsageMeter,
-  ): Promise<MediaReply> {
+  private async serve(command: RunMediaInferenceCommand, meter: UsageMeter): Promise<MediaReply> {
+    const { contract, body, caller, connection } = command;
     const request = contract.parseRequest(body);
     meter.requestParsed(false);
-    const kind = CLIENT_PROTOCOL_KINDS[contract.protocol];
-    const destination =
-      target.kind === "upstream-model"
-        ? this.resolveUpstreamModel(contract, request, target.upstreamModelId, kind)
-        : this.resolveNamedModel(contract, request, caller, kind, meter);
+    const destination = this.resolve(command, request, meter);
     const createdAt = new Date();
-    const { result, servedBy } = await this.attempts.firstAnswer(
-      destination.paths,
+    const { result, servedBy } = await this.attempts.answer(
+      destination,
       meter,
       (attemptTarget) => ({
         sentServiceTier: null,
@@ -112,6 +107,22 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     return reply;
   }
 
+  private resolve(
+    { contract, caller, target }: RunMediaInferenceCommand,
+    request: MediaRequest,
+    meter: UsageMeter,
+  ): Destination {
+    const kind = CLIENT_PROTOCOL_KINDS[contract.protocol];
+    switch (target.kind) {
+      case "named-model":
+        return this.resolveNamedModel(contract, request, caller, kind, meter);
+      case "upstream-model":
+        return this.resolveUpstreamModel(contract, request, target.upstreamModelId, kind);
+      case "probe":
+        return probeDestination(this.snapshot.current, target, kind);
+    }
+  }
+
   /** The Model the request names, with the Routes that can serve it. */
   private resolveNamedModel(
     contract: MediaClientContract<MediaRequest, unknown>,
@@ -134,7 +145,13 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
         "client",
       );
     }
-    return { model, id: model.id, name: model.name, paths: servingRoutes.map(routePath) };
+    return {
+      kind: "fallback",
+      model,
+      id: model.id,
+      name: model.name,
+      paths: servingRoutes.map(routePath),
+    };
   }
 
   /** The Upstream Model of a direct Upstream Model test, if it can serve the request. */
@@ -154,6 +171,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       );
     }
     return {
+      kind: "fallback",
       model: null,
       id: upstreamModel.id,
       name: upstreamModel.upstreamModelId,
@@ -187,7 +205,10 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
         ...credential.identityHeaders,
         ...upstreamAuthHeaders(provider.authStyle, credential.secret),
       },
-      timeouts: { ...DEFAULT_TIMEOUTS, totalMs: route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs },
+      timeouts: {
+        ...DEFAULT_TIMEOUTS,
+        totalMs: totalTimeoutMsOf(destination, route),
+      },
     };
   }
 }

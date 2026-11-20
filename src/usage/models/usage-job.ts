@@ -134,6 +134,11 @@ export interface CapturedMessage {
 
 /** One failed Attempt's part of an Error Capture. */
 export interface FailedAttemptCapture {
+  /**
+   * The Error Capture's row id, chosen by the backend so a Probe can name it
+   * before the worker writes it. Missing in jobs queued before it was chosen.
+   */
+  captureId?: string;
   /** Its index in `UsageJob.attempts`. */
   attemptIndex: number;
   /** Null when no response arrived (a timeout, a dropped connection, a stream cut short). */
@@ -147,6 +152,8 @@ export interface FailedAttemptCapture {
  * itself.
  */
 export interface ErrorCaptureRecord {
+  /** As FailedAttemptCapture's, for the capture of the client request when no Attempt failed. */
+  requestCaptureId?: string;
   request: CapturedMessage;
   failedAttempts: FailedAttemptCapture[];
 }

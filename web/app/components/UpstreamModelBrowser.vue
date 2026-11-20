@@ -13,6 +13,7 @@ import {
   Power,
   SkipBack,
   SkipForward,
+  Stethoscope,
   Trash2,
   Wrench,
 } from "@lucide/vue";
@@ -31,6 +32,7 @@ import {
   numberField,
   optionalNumber,
   type Provider,
+  type ProviderAccount,
   type TierPrices,
   type UpstreamModel,
   upstreamModelLabel,
@@ -57,6 +59,7 @@ import {
   unitPriceLines,
 } from "~/lib/upstreamModelMedia";
 import { priceSummary } from "~/lib/upstreamModelPrice";
+import { probeBlockReason } from "~/lib/probe";
 
 /**
  * Upstream Models with filters, sorting and editing. With `provider` it shows
@@ -742,6 +745,26 @@ function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
   return toggleRow(upstreamModel, upstreamModelLabel(upstreamModel));
 }
 
+// Only to tell, before the click, that a Provider has no enabled Provider Account to probe with.
+const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>("/provider-accounts");
+const {
+  shownProbe,
+  isDialogOpen: isProbeDialogOpen,
+  isProbing,
+  runProbe,
+} = useUpstreamModelProbe();
+
+/** Why the row's Probe action is unavailable, shown as its tooltip; null when it is available. */
+function probeUnavailableReason(upstreamModel: UpstreamModel): string | null {
+  if (isProbing(upstreamModel)) return "Probing…";
+  return probeBlockReason(upstreamModel, providerAccounts.value);
+}
+
+function handleProbeClick(upstreamModel: UpstreamModel): void {
+  if (probeUnavailableReason(upstreamModel) !== null) return;
+  void runProbe(upstreamModel);
+}
+
 /** The model the details dialog shows, read fresh from the list so a toggle shows at once. */
 const detailsModel = computed(() => {
   const current = dialog.value;
@@ -965,6 +988,19 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     </template>
     <template #cell-actions="{ row }">
       <div v-if="!isUpstreamModelGroup(row)" class="row-actions provider-table__actions">
+        <!-- aria-disabled, not disabled: a disabled button shows no tooltip, and the tooltip says why. -->
+        <button
+          class="icon-action"
+          type="button"
+          :aria-label="`Probe ${upstreamModelLabel(row)}`"
+          :aria-disabled="probeUnavailableReason(row) !== null"
+          :aria-busy="isProbing(row)"
+          :title="probeUnavailableReason(row) ?? 'Probe each Provider Account'"
+          @click="handleProbeClick(row)"
+        >
+          <span v-if="isProbing(row)" class="spinner" aria-hidden="true" />
+          <Stethoscope v-else :size="14" />
+        </button>
         <button
           class="icon-action"
           type="button"
@@ -1337,4 +1373,11 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       </button>
     </div>
   </AppDialog>
+
+  <UpstreamModelProbeDialog
+    v-if="shownProbe"
+    :key="shownProbe.upstreamModel.id"
+    v-model:open="isProbeDialogOpen"
+    :probe="shownProbe"
+  />
 </template>

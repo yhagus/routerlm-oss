@@ -162,3 +162,7 @@ _Avoid_: Chat, tester, sandbox
 **Direct Upstream Model test**:
 A Playground request sent to one Upstream Model with no Model in between. It uses the Provider's enabled Provider Accounts with the same Fallback a Route gets, checks Capabilities, and applies no Parameter Policy. Its Usage Log has no Model and no Route.
 _Avoid_: Raw test, upstream test
+
+**Probe**:
+A one-click check that one Upstream Model answers a fixed minimal request with each of its Provider's enabled Provider Accounts, giving one result per Provider Account. It tells whether the address, the credential and the model name work, not how well the model answers. It ignores Cooldown and Exhausted, never starts or clears either, and its results are not kept, though its Usage Logs and Error Captures are.
+_Avoid_: Health check, ping, connection test

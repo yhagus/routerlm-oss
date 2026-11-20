@@ -1,3 +1,4 @@
+import { ProbeUpstreamModelHandler } from "./probe-upstream-model.handler.js";
 import { SendPlaygroundChatCompletionHandler } from "./send-playground-chat-completion.handler.js";
 import { SendPlaygroundImageGenerationHandler } from "./send-playground-image-generation.handler.js";
 import { SendPlaygroundVideoJobHandler } from "./send-playground-video-job.handler.js";
@@ -10,4 +11,5 @@ export const CommandHandlers = [
   SendPlaygroundVideoJobHandler,
   SendPlaygroundSpeechHandler,
   SendPlaygroundTranscriptionHandler,
+  ProbeUpstreamModelHandler,
 ];

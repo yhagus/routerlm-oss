@@ -23,5 +23,20 @@ export type InferenceTarget =
   | { kind: "named-model" }
   | { kind: "upstream-model"; upstreamModelId: string };
 
+/**
+ * A Probe's call (GLOSSARY "Probe"): one Attempt to an Upstream Model with
+ * one Provider Account, whatever is disabled or in Cooldown, with no Fallback
+ * and no effect on the account. Ends with a timeout after `totalTimeoutMs`.
+ */
+export interface ProbeTarget {
+  kind: "probe";
+  upstreamModelId: string;
+  providerAccountId: string;
+  totalTimeoutMs: number;
+}
+
+/** What a request served at once is sent to; a Video Job is never a Probe. */
+export type RunInferenceTarget = InferenceTarget | ProbeTarget;
+
 /** Called with the usage job once the request has ended, however it ended. */
 export type UsageListener = (job: UsageJob) => void;

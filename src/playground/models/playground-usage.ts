@@ -7,16 +7,21 @@ import { type PlaygroundSummary, playgroundSummaryOf } from "./playground-summar
  * `onUsage` callback, to summarize once the request has answered.
  */
 export class PlaygroundUsage {
-  private job: UsageJob | undefined;
+  private reportedJob: UsageJob | undefined;
 
   readonly record = (job: UsageJob): void => {
-    this.job = job;
+    this.reportedJob = job;
   };
 
-  summaryAt(snapshot: Snapshot): PlaygroundSummary {
-    if (!this.job) {
+  /** The reported job; a request reports it however it ends. */
+  get job(): UsageJob {
+    if (!this.reportedJob) {
       throw new Error("An answered request always reports its usage");
     }
+    return this.reportedJob;
+  }
+
+  summaryAt(snapshot: Snapshot): PlaygroundSummary {
     return playgroundSummaryOf(this.job, snapshot);
   }
 }

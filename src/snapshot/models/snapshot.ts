@@ -60,6 +60,8 @@ export interface SnapshotProvider {
   serviceTierValues: ServiceTierValues;
   /** Enabled, and allowed by the terms-risk Setting when the Provider has a Terms Risk. */
   isUsable: boolean;
+  /** A Terms Risk Provider while the terms-risk Setting is off: not even a Probe may call it. */
+  isRefusedForTermsRisk: boolean;
   /** Lowest priority first. */
   providerAccounts: SnapshotProviderAccount[];
 }

@@ -17,6 +17,8 @@ import {
   type UpstreamStreamParser,
   type UpstreamTarget,
 } from "../protocols/upstream-protocol-converter.js";
+import type { Destination } from "../models/destination.js";
+import type { SnapshotRoute } from "@/snapshot/models/snapshot.js";
 import { upstreamRequestIdOf } from "../models/upstream-request-id.js";
 import { gatherStream } from "../protocols/gather-stream.js";
 import { type ServerSentEvent, ServerSentEventDecoder } from "../protocols/server-sent-events.js";
@@ -27,6 +29,14 @@ export const DEFAULT_TIMEOUTS: AttemptTimeouts = {
   firstTokenMs: 60_000,
   totalMs: 600_000,
 };
+
+/** How long an Attempt on `route` may take in all: a Probe's own limit, else the Route's, else the default. */
+export function totalTimeoutMsOf(destination: Destination, route: SnapshotRoute | null): number {
+  if (destination.kind === "probe") {
+    return destination.totalTimeoutMs;
+  }
+  return route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs;
+}
 
 /**
  * fetch exposes neither the TCP/TLS connection nor the moment the request is

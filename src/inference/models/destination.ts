@@ -2,19 +2,35 @@ import { mayUseModel } from "@/api-keys/models/api-key.js";
 import type { ModelKind } from "@/db/schemas/index.js";
 import type { Snapshot, SnapshotModel, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import { GatewayError } from "./gateway-error.js";
-import type { InferenceCaller } from "./inference.js";
-import type { AttemptPath } from "./route-selection.js";
+import type { InferenceCaller, ProbeTarget } from "./inference.js";
+import type { AttemptPath, AttemptTarget } from "./route-selection.js";
 
-/** What a request resolved to (spec step 3), with the paths its Attempts may take. */
-export interface Destination {
-  /** Null for a direct Upstream Model test: no Parameter Policy, no automatic cache breakpoints. */
+/**
+ * What a request resolved to (spec step 3), and how its Attempts are made:
+ * Fallback over its paths, or a Probe's one Attempt.
+ */
+export type Destination = FallbackDestination | ProbeDestination;
+
+interface ResolvedNames {
+  /** Null for a direct Upstream Model test or a Probe: no Parameter Policy, no automatic cache breakpoints. */
   model: SnapshotModel | null;
-  /** The Model's id, or the Upstream Model's row id for a direct test. */
+  /** The Model's id, or the Upstream Model's row id with no Model. */
   id: string;
   /** What the response names as its model. */
   name: string;
+}
+
+export interface FallbackDestination extends ResolvedNames {
+  kind: "fallback";
   /** Capable of serving the request, in the order they are tried. */
   paths: AttemptPath[];
+}
+
+export interface ProbeDestination extends ResolvedNames {
+  kind: "probe";
+  /** The one Attempt, with no Fallback. */
+  target: AttemptTarget;
+  totalTimeoutMs: number;
 }
 
 /**
@@ -63,6 +79,41 @@ export function upstreamModelServedHere(
     endpointKind,
   );
   return upstreamModel;
+}
+
+/**
+ * What a Probe reaches: the Upstream Model and Provider Account it names,
+ * even disabled ones. The Probe's caller refuses what it must not call.
+ */
+export function probeDestination(
+  snapshot: Snapshot,
+  { upstreamModelId, providerAccountId, totalTimeoutMs }: ProbeTarget,
+  endpointKind: ModelKind,
+): ProbeDestination {
+  const upstreamModel = snapshot.upstreamModelsById.get(upstreamModelId);
+  const providerAccount = upstreamModel?.provider.providerAccounts.find(
+    (account) => account.id === providerAccountId,
+  );
+  if (!upstreamModel || !providerAccount) {
+    throw new GatewayError(
+      "model_not_found",
+      `The Upstream Model "${upstreamModelId}" has no Provider Account "${providerAccountId}"`,
+      "client",
+    );
+  }
+  assertKindServedHere(
+    `Upstream Model "${upstreamModel.upstreamModelId}"`,
+    upstreamModel.kind,
+    endpointKind,
+  );
+  return {
+    kind: "probe",
+    model: null,
+    id: upstreamModel.id,
+    name: upstreamModel.upstreamModelId,
+    target: { route: null, upstreamModel, providerAccount },
+    totalTimeoutMs,
+  };
 }
 
 /**

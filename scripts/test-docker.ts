@@ -57,10 +57,26 @@ function runTests(): number {
 // Ctrl-C reaches the test run too; outliving it lets the teardown below run.
 process.on("SIGINT", () => {});
 
+/**
+ * Removes the test stack quietly, printing Compose's output only when it fails,
+ * so the test summary stays the last thing a truncated log shows.
+ */
+function tearDown(): void {
+  const result = spawnSync("docker", [...COMPOSE, "down", "--volumes", "--remove-orphans"], {
+    env: COMPOSE_ENV,
+    encoding: "utf8",
+  });
+  if (result.status !== 0) {
+    process.stderr.write(result.stdout + result.stderr);
+    console.error("test:docker: could not remove the test services.");
+  }
+}
+
 let exitCode = 1;
 try {
   exitCode = runTests();
 } finally {
-  run("docker", [...COMPOSE, "down", "--volumes", "--remove-orphans"], COMPOSE_ENV);
+  tearDown();
 }
+console.log(`test:docker: tests ${exitCode === 0 ? "passed" : `failed (exit ${exitCode})`}.`);
 process.exit(exitCode);
