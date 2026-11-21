@@ -1,0 +1,120 @@
+import { Authenticate, CurrentUser } from "@nestjs/authentication";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseFilters,
+} from "@nestjs/common";
+import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import type { IntegrationPrincipal } from "@/integrations/models/integration.js";
+import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth.js";
+import { CreateCustomerApiKeyCommand } from "./commands/impl/create-customer-api-key.command.js";
+import { RevokeCustomerApiKeyCommand } from "./commands/impl/revoke-customer-api-key.command.js";
+import { RotateCustomerApiKeyCommand } from "./commands/impl/rotate-customer-api-key.command.js";
+import { UpdateCustomerApiKeyCommand } from "./commands/impl/update-customer-api-key.command.js";
+import { ControlPlaneExceptionFilter } from "./filters/control-plane-exception.filter.js";
+import {
+  type ApiKeyJson,
+  apiKeyJsonOf,
+  type IssuedKeyJson,
+  issuedKeyJsonOf,
+  type ListKeysResponseJson,
+  listKeysResponseJsonOf,
+} from "./models/proto-json.js";
+import { GetCustomerApiKeyQuery } from "./queries/impl/get-customer-api-key.query.js";
+import { ListCustomerApiKeysQuery } from "./queries/impl/list-customer-api-keys.query.js";
+import {
+  type CustomerApiKeyChanges,
+  customerApiKeyChangesSchema,
+  type CustomerApiKeyPageQuery,
+  customerApiKeyPageQuerySchema,
+  type NewCustomerApiKey,
+  newCustomerApiKeySchema,
+} from "./schemas/customer-api-key.schema.js";
+
+/** Where the HTTP adapter of the control plane lives (ADR 0033). */
+export const CONTROL_PLANE_HTTP_PREFIX = "integration/v1";
+
+/**
+ * The control plane's HTTP/JSON adapter (control_plane.proto). Only an
+ * Integration Secret gets in: never a User's session nor an API Key. Each
+ * route calls the command or query a gRPC adapter calls too.
+ */
+@Controller(CONTROL_PLANE_HTTP_PREFIX)
+@Authenticate({ providers: [IntegrationSecretAuth] })
+@UseFilters(ControlPlaneExceptionFilter)
+export class ControlPlaneController {
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @Post("keys")
+  async createKey(
+    @CurrentUser() integration: IntegrationPrincipal,
+    @Body({ schema: newCustomerApiKeySchema }) newKey: NewCustomerApiKey,
+  ): Promise<IssuedKeyJson> {
+    const issued = await this.commandBus.execute(
+      new CreateCustomerApiKeyCommand(integration, newKey),
+    );
+    return issuedKeyJsonOf(issued);
+  }
+
+  @Get("keys")
+  async listKeys(
+    @CurrentUser() integration: IntegrationPrincipal,
+    @Query({ schema: customerApiKeyPageQuerySchema }) page: CustomerApiKeyPageQuery,
+  ): Promise<ListKeysResponseJson> {
+    const keys = await this.queryBus.execute(new ListCustomerApiKeysQuery(integration, page));
+    return listKeysResponseJsonOf(keys);
+  }
+
+  // Ids are not parsed as uuids here: a malformed one is NOT_FOUND, as over gRPC.
+  @Get("keys/:id")
+  async getKey(
+    @CurrentUser() integration: IntegrationPrincipal,
+    @Param("id") id: string,
+  ): Promise<ApiKeyJson> {
+    const apiKey = await this.queryBus.execute(new GetCustomerApiKeyQuery(integration, id));
+    return apiKeyJsonOf(apiKey);
+  }
+
+  /** The fields present in the body are the update mask; one sent as null is cleared. */
+  @Patch("keys/:id")
+  async updateKey(
+    @CurrentUser() integration: IntegrationPrincipal,
+    @Param("id") id: string,
+    @Body({ schema: customerApiKeyChangesSchema }) changes: CustomerApiKeyChanges,
+  ): Promise<ApiKeyJson> {
+    const apiKey = await this.commandBus.execute(
+      new UpdateCustomerApiKeyCommand(integration, id, changes),
+    );
+    return apiKeyJsonOf(apiKey);
+  }
+
+  @Post("keys/:id/rotate")
+  @HttpCode(HttpStatus.OK)
+  async rotateKey(
+    @CurrentUser() integration: IntegrationPrincipal,
+    @Param("id") id: string,
+  ): Promise<IssuedKeyJson> {
+    const issued = await this.commandBus.execute(new RotateCustomerApiKeyCommand(integration, id));
+    return issuedKeyJsonOf(issued);
+  }
+
+  @Post("keys/:id/revoke")
+  @HttpCode(HttpStatus.OK)
+  async revokeKey(
+    @CurrentUser() integration: IntegrationPrincipal,
+    @Param("id") id: string,
+  ): Promise<ApiKeyJson> {
+    const apiKey = await this.commandBus.execute(new RevokeCustomerApiKeyCommand(integration, id));
+    return apiKeyJsonOf(apiKey);
+  }
+}

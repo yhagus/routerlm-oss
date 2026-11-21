@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 
-const MAX_NAME_LENGTH = 100;
+export const MAX_NAME_LENGTH = 100;
 const MAX_ALLOWED_MODELS = 500;
 
-// Null means the key never expires.
-const expiresAtSchema = z.iso
+/** Null means the key never expires. */
+export const expiresAtSchema = z.iso
   .datetime({ offset: true })
   .pipe(z.coerce.date())
   .refine((expiresAt) => expiresAt.getTime() > Date.now(), {
@@ -13,8 +13,8 @@ const expiresAtSchema = z.iso
   })
   .nullable();
 
-// Empty means every Model.
-const allowedModelIdsSchema = z
+/** Empty means every Model. */
+export const allowedModelIdsSchema = z
   .array(z.uuid())
   .max(MAX_ALLOWED_MODELS)
   .transform((ids) => [...new Set(ids)]);
