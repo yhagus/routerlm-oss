@@ -37,6 +37,21 @@ export type EndpointFields = Omit<EndpointForm, "key">;
 
 let nextEndpointKey = 0;
 
+/** One fixed header row as the inputs hold it; `key` only tells the rows apart while editing. */
+export interface FixedHeaderForm {
+  key: number;
+  name: string;
+  value: string;
+}
+
+let nextFixedHeaderKey = 0;
+
+/** A fixed header row, empty or prefilled from a Provider's quirk. */
+export function fixedHeaderFormFor(name = "", value = ""): FixedHeaderForm {
+  nextFixedHeaderKey += 1;
+  return { key: nextFixedHeaderKey, name, value };
+}
+
 /** An endpoint row, empty or prefilled from a Provider's endpoint. */
 export function endpointFormFor(endpoint?: ProviderEndpoint): EndpointForm {
   nextEndpointKey += 1;
@@ -78,6 +93,8 @@ export interface ProviderForm {
   systemAsDeveloperMessage: boolean;
   droppedParameters: DroppableParameter[];
   forwardedClientHeaders: string[];
+  /** Rows missing a name or a value are left out on save. */
+  fixedHeaders: FixedHeaderForm[];
   /** As typed; digits-only codes are sent as numbers. */
   exhaustedErrorCodes: string[];
   quotaReader: string;
@@ -167,6 +184,9 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
     systemAsDeveloperMessage: quirks.systemAsDeveloperMessage ?? false,
     droppedParameters: [...(quirks.droppedParameters ?? [])],
     forwardedClientHeaders: [...(quirks.forwardedClientHeaders ?? [])],
+    fixedHeaders: Object.entries(quirks.fixedHeaders ?? {}).map(([name, value]) =>
+      fixedHeaderFormFor(name, value),
+    ),
     exhaustedErrorCodes: (quirks.exhaustedErrorCodes ?? []).map(String),
     quotaReader: provider?.quotaReader ?? "",
     quotaBaseUrl: quirks.quotaBaseUrl ?? "",
@@ -270,6 +290,8 @@ function openaiChatQuirks(form: ProviderForm): ProviderQuirks {
   if (form.forwardedClientHeaders.length > 0) {
     quirks.forwardedClientHeaders = [...form.forwardedClientHeaders];
   }
+  const fixedHeaders = fixedHeadersFromRows(form.fixedHeaders);
+  if (Object.keys(fixedHeaders).length > 0) quirks.fixedHeaders = fixedHeaders;
   if (form.hasReasoningAsThinking) {
     const efforts = emptyEfforts();
     for (const effort of REASONING_EFFORTS) efforts[effort] = form.thinkingEfforts[effort].trim();
@@ -279,6 +301,17 @@ function openaiChatQuirks(form: ProviderForm): ProviderQuirks {
         : { efforts, upstreamModelsWithoutEffort: [...form.upstreamModelsWithoutEffort] };
   }
   return quirks;
+}
+
+/** Header names are case-insensitive, and the backend takes them lowercase only. */
+function fixedHeadersFromRows(rows: FixedHeaderForm[]): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const row of rows) {
+    const name = row.name.trim().toLowerCase();
+    const value = row.value.trim();
+    if (name !== "" && value !== "") headers[name] = value;
+  }
+  return headers;
 }
 
 /** Quirks every Protocol reads: what makes a Provider Account Exhausted, and where its quota is read. */

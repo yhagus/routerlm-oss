@@ -28,9 +28,10 @@ import {
 // Field names match the `providers` and `upstream_models` columns.
 
 /**
- * Request headers a Provider's `forwardedClientHeaders` may not name: the
- * credentials the gateway sets itself, and the headers describing the
- * connection or the body it writes, which would break the upstream request.
+ * Request headers a Provider's `forwardedClientHeaders` and `fixedHeaders`
+ * may not name: the credentials the gateway sets itself, and the headers
+ * describing the connection or the body it writes, which would break the
+ * upstream request.
  */
 const UNFORWARDABLE_CLIENT_HEADERS = [
   "authorization",
@@ -51,12 +52,16 @@ const UNFORWARDABLE_CLIENT_HEADERS = [
   "upgrade",
 ];
 
-/** A lowercase header name the gateway may pass from the client's request to the Provider. */
-const forwardableClientHeaderSchema = z
+/**
+ * A lowercase header name a quirk may add to the request to the Provider,
+ * copied from the client's request or fixed by the Catalog.
+ */
+const quirkHeaderNameSchema = z
   .string()
   .regex(/^[a-z0-9-]+$/, { error: "Use a lowercase header name: letters, digits and hyphens" })
   .refine((name) => !UNFORWARDABLE_CLIENT_HEADERS.includes(name), {
-    error: "This header carries a credential or describes the connection, and is never forwarded",
+    error:
+      "This header carries a credential or describes the connection, and only the gateway sets it",
   });
 
 /**
@@ -131,7 +136,15 @@ export const providerQuirksSchema = z.strictObject({
    * them; a header the client left out is not sent. The Provider Account's
    * credential always overrides them.
    */
-  forwardedClientHeaders: z.array(forwardableClientHeaderSchema).optional(),
+  forwardedClientHeaders: z.array(quirkHeaderNameSchema).optional(),
+  /**
+   * openai-chat only. Request headers, by lowercase name, sent with every
+   * request to the Provider, for a Provider that needs them to answer in the
+   * shape the adapter reads. They override the client's forwarded headers of
+   * the same name, since the adapter depends on them; the Provider Account's
+   * credential always overrides them.
+   */
+  fixedHeaders: z.record(quirkHeaderNameSchema, z.string().min(1)).optional(),
   /**
    * The error codes with which the Provider refuses a Provider Account whose
    * plan quota ran out, making it Exhausted instead of putting it in
@@ -172,6 +185,7 @@ const QUIRKS_OF_ONE_PROTOCOL = {
     "acceptsPromptCacheKey",
     "usesMaxCompletionTokens",
     "forwardedClientHeaders",
+    "fixedHeaders",
   ],
   "anthropic-messages": ["cacheMarkerLimit"],
   "openai-responses": [

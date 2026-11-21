@@ -307,6 +307,10 @@ async function save(): Promise<void> {
               Request headers passed on to the Provider when the client sent them, such as
               user-agent. Credentials and connection headers are rejected on save.
             </p>
+            <ProviderFixedHeadersField v-model="form.fixedHeaders" />
+            <p class="form__hint">
+              Sent on every request to this Provider. The credential always wins.
+            </p>
           </template>
           <template v-if="isOpenAiProtocol">
             <fieldset class="check-group">

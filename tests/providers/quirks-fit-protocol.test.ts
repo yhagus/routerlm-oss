@@ -100,6 +100,26 @@ describe("A Provider's quirks fit its Protocol (e2e)", () => {
     },
   );
 
+  it("refuses fixedHeaders on a Protocol that doesn't read them", async () => {
+    const id = await createAcme();
+
+    const refused = await updateProvider(id, {
+      endpoints: ANTHROPIC_ENDPOINTS,
+      quirks: { fixedHeaders: { "x-response-format": "openai" } },
+    }).expect(400);
+
+    expect(refused.body.message).toContain("fixedHeaders");
+  });
+
+  it.each(["authorization", "x-api-key", "content-type"])(
+    "refuses a fixed %s header",
+    async (header) => {
+      const id = await createAcme();
+
+      await updateProvider(id, { quirks: { fixedHeaders: { [header]: "value" } } }).expect(400);
+    },
+  );
+
   it("takes a new Protocol with its own quirks and the ones every Protocol reads", async () => {
     const id = await createAcme();
     const quirks = {

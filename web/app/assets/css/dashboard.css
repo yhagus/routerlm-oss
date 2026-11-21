@@ -2948,6 +2948,34 @@ tbody tr:hover {
   justify-self: start;
   margin-top: 2px;
 }
+.header-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.header-list > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+}
+.header-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+.header-list__input {
+  min-width: 0;
+  width: 100%;
+}
+.header-list__add {
+  justify-self: start;
+  margin-top: 2px;
+}
 /* Narrow: Kind and Protocol share a line, the base URL takes the next. Each
    endpoint becomes a small block, so the column header no longer applies. */
 @media (max-width: 560px) {

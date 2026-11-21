@@ -44,6 +44,7 @@ describe("db:seed script (e2e)", () => {
         "alibaba-model-studio-intl",
         "alibaba-token-plan",
         "anthropic",
+        "clinepass",
         "commandcode",
         "deepseek",
         "google-gemini",

@@ -171,6 +171,8 @@ export interface ProviderQuirks {
   droppedParameters?: DroppableParameter[];
   /** openai-chat only. Lowercase names of client request headers passed on to the Provider when the client sent them. */
   forwardedClientHeaders?: string[];
+  /** openai-chat only. Headers by lowercase name, sent on every request to the Provider; the credential always wins. */
+  fixedHeaders?: Record<string, string>;
   /** The error codes that make a Provider Account Exhausted: numbers or names. */
   exhaustedErrorCodes?: (string | number)[];
   /** Where the quota reader asks, when that is another host than the base URL. */

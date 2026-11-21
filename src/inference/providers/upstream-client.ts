@@ -62,8 +62,9 @@ export interface UpstreamCall {
   target: UpstreamTarget;
   /**
    * The Provider Account's credential, from `upstreamAuthHeaders`, with the
-   * identity an OAuth Login presents. They override the converter's headers
-   * and the gateway's own User-Agent.
+   * identity an OAuth Login presents. They override every other header: the
+   * Provider's `fixedHeaders`, the converter's, the forwarded client headers
+   * and the gateway's own User-Agent, in that order of precedence.
    */
   authHeaders: Record<string, string>;
   /** The client's own headers the Provider's `forwardedClientHeaders` quirk asks for; they never override the credential. */
@@ -362,6 +363,7 @@ export class UpstreamClient {
         "user-agent": GATEWAY_USER_AGENT,
         ...call.forwardedHeaders,
         ...written.headers,
+        ...call.target.quirks.fixedHeaders,
         ...call.authHeaders,
       },
       responseType: "response",
