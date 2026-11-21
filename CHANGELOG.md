@@ -1,3 +1,118 @@
+# v6.0.0 (2026-11-22)
+
+#### Notable changes
+
+**Upgrade**
+* Run the 3 new migrations (`20261121100451_integrations`, `20261121103442_usage_log_transaction_id`, `20261121163726_integration_last_used`). They add the `integrations` and `integration_rotations` tables and Integration, Customer, Spend Limit and Request Rate columns on `api_keys`, `usage_logs` and `attempts`. Adding the identity `sequence` and `transaction_id` columns to `usage_logs` rewrites that table, so allow time on a large one; `transaction_id` uses `xid8` and `pg_current_xact_id()`, which need PostgreSQL 13 or newer – [13730fb](https://github.com/yhagus/routerlm-oss/commit/13730fb512319155dbd2dc77a72199a443e65097), [6f018fb](https://github.com/yhagus/routerlm-oss/commit/6f018fb4265b2fde9f54b8e59a6f14758a923a8b), [c3e1bc7](https://github.com/yhagus/routerlm-oss/commit/c3e1bc71f68c3d3587097624eeefc64cbfb66e3a)
+* New optional env variable `CONTROL_PLANE_PORT` (unset by default): when set, the worker serves the control plane over gRPC on that port, in plaintext h2c with no TLS. `deploy/compose.yaml` publishes no port for it; keep it on a private network or behind a TLS proxy, never on the internet – [797f7ce](https://github.com/yhagus/routerlm-oss/commit/797f7cef74cd4f3bbfa63d464c5ea2dfa2a1ad29), [c67287c](https://github.com/yhagus/routerlm-oss/commit/c67287c86ce08a9d89e83d07f39e8976bca3cbad)
+* New personal data kept: an Integration's Customer id (its own id for the buyer, nothing else about the Customer) and the Integration's name are stored on API Keys, Usage Logs and Error Captures – [13730fb](https://github.com/yhagus/routerlm-oss/commit/13730fb512319155dbd2dc77a72199a443e65097), [13a73b3](https://github.com/yhagus/routerlm-oss/commit/13a73b30a22e6bea8ddba6be78d341424c27c3df)
+* No breaking changes: existing API Keys have no Spend Limit or Request Rate, so they behave as before. The major version marks the size of the Integrations feature.
+
+**Integrations**
+* An Integration is an outside application that issues API Keys to its Customers, sets their Spend Limit and Request Rate, and pulls Usage Logs. The dashboard has an Integrations page to create, edit (name and allowed Models), disable, enable and delete one (deleting revokes its API Keys) – [13730fb](https://github.com/yhagus/routerlm-oss/commit/13730fb512319155dbd2dc77a72199a443e65097), [32b05d9](https://github.com/yhagus/routerlm-oss/commit/32b05d96f915dad2b614c07e8d051e2a3e93735a), [759a295](https://github.com/yhagus/routerlm-oss/commit/759a29503ac6e95ec45bc1d8fb3f8f83eaa7e3c8), [04b2e82](https://github.com/yhagus/routerlm-oss/commit/04b2e82406ac9df43349feec22d9fba0596768ba), [373016e](https://github.com/yhagus/routerlm-oss/commit/373016ee7ddc0cc9f408eedbe0092b58a0c432b1), [9370e34](https://github.com/yhagus/routerlm-oss/commit/9370e3489272a19062fc2a6d9329e08bd6657414)
+* An Integration Secret (`rlmi_…`) is shown once, can be rotated, and records when it was last used; a new Integration detail page shows its rotations, Customers and Models – [fe00b74](https://github.com/yhagus/routerlm-oss/commit/fe00b74aa01cbbba5ecb91dcd3c76a9560a850da), [c3e1bc7](https://github.com/yhagus/routerlm-oss/commit/c3e1bc71f68c3d3587097624eeefc64cbfb66e3a), [818e521](https://github.com/yhagus/routerlm-oss/commit/818e5216095fde129deaa7c50d54a8a6e8e08f14), [f993fb7](https://github.com/yhagus/routerlm-oss/commit/f993fb7fee3b82f8abc7179e67c0879b6d932e57), [37647f9](https://github.com/yhagus/routerlm-oss/commit/37647f9d977b47624bfb32956ca15cb35f36468c)
+
+**Control plane**
+* An Integration issues and manages its Customers' API Keys over HTTP/JSON under `/integration/v1`, authenticated with its Integration Secret as a Bearer token – [c0646f5](https://github.com/yhagus/routerlm-oss/commit/c0646f53cd67709dc1e3af14a6486bf9025fab5f)
+* It lists the Models it may sell and pulls Usage Logs after a cursor – [763cdbb](https://github.com/yhagus/routerlm-oss/commit/763cdbbe22abf590be4e94b38c61f09defa68ca5)
+* The same operations are served over gRPC by the worker when `CONTROL_PLANE_PORT` is set – [797f7ce](https://github.com/yhagus/routerlm-oss/commit/797f7cef74cd4f3bbfa63d464c5ea2dfa2a1ad29)
+
+**API Keys**
+* A key can carry a Spend Limit (at most 10 decimal places); once reached, new requests are refused with `spend_limit_reached`, checked against Postgres before refusing – [901cab2](https://github.com/yhagus/routerlm-oss/commit/901cab2aafb6a6ca81e7483c8c27d5e065281d4d), [c33f504](https://github.com/yhagus/routerlm-oss/commit/c33f5045c1a34719b1b5694b0543c653be7db6df), [37aab3b](https://github.com/yhagus/routerlm-oss/commit/37aab3b4ce34087bc46c479f15a8a6e19394f2f1)
+* A key can carry a Request Rate; requests past it are refused with `request_rate_exceeded` only while the key is over its rate – [8960f8d](https://github.com/yhagus/routerlm-oss/commit/8960f8dab821259da52e571417047ad8b3712098), [8d8c484](https://github.com/yhagus/routerlm-oss/commit/8d8c48428dc535f35105273756c659ac04b82661)
+* Keys show their owner and limits and can be filtered by Integration and Customer; Customer keys are served by inference and record their Integration – [200bd63](https://github.com/yhagus/routerlm-oss/commit/200bd631e40cc2b49a808748b2f80cfd2e57a615), [743cdae](https://github.com/yhagus/routerlm-oss/commit/743cdae4753956bab6a7a8cb4739cddd4beda965), [dc309b7](https://github.com/yhagus/routerlm-oss/commit/dc309b76684bf0dd855d729125ae76e2c5d585b5)
+
+**Usage Logs and Error Captures**
+* Usage Logs and Error Captures return and show the Integration and Customer, and can be filtered by them, including a deleted Integration – [13a73b3](https://github.com/yhagus/routerlm-oss/commit/13a73b30a22e6bea8ddba6be78d341424c27c3df), [6cf0bc3](https://github.com/yhagus/routerlm-oss/commit/6cf0bc3ebb03bcf9d612ecade8229418842bbf43), [e67b2bd](https://github.com/yhagus/routerlm-oss/commit/e67b2bdaa7cf3d66f87777b57b1781a3e3b91c92)
+* Each Usage Log records the transaction that wrote it, so pulls by cursor miss none – [6f018fb](https://github.com/yhagus/routerlm-oss/commit/6f018fb4265b2fde9f54b8e59a6f14758a923a8b)
+
+**Catalog**
+* New Alibaba Token Plan Provider – [caf5005](https://github.com/yhagus/routerlm-oss/commit/caf5005e289ec6c4e757ee0fc43a3d5fd3489f0f)
+
+#### Features
+* `api-keys`
+  * [8960f8d](https://github.com/yhagus/routerlm-oss/commit/8960f8dab821259da52e571417047ad8b3712098) feat(api-keys): refuse requests past an api key's request rate
+  * [901cab2](https://github.com/yhagus/routerlm-oss/commit/901cab2aafb6a6ca81e7483c8c27d5e065281d4d) feat(api-keys): enforce spend limits counted by the usage worker
+  * [200bd63](https://github.com/yhagus/routerlm-oss/commit/200bd631e40cc2b49a808748b2f80cfd2e57a615) feat(api-keys): show and filter keys by integration and customer
+* `catalog`
+  * [caf5005](https://github.com/yhagus/routerlm-oss/commit/caf5005e289ec6c4e757ee0fc43a3d5fd3489f0f) feat(catalog): add alibaba token plan provider
+* `control-plane`
+  * [797f7ce](https://github.com/yhagus/routerlm-oss/commit/797f7cef74cd4f3bbfa63d464c5ea2dfa2a1ad29) feat(control-plane): serve the control plane over grpc in the worker
+  * [763cdbb](https://github.com/yhagus/routerlm-oss/commit/763cdbbe22abf590be4e94b38c61f09defa68ca5) feat(control-plane): list models and pull usage logs after a cursor
+  * [c0646f5](https://github.com/yhagus/routerlm-oss/commit/c0646f53cd67709dc1e3af14a6486bf9025fab5f) feat(control-plane): issue and manage customer api keys over http
+* `inference`
+  * [dc309b7](https://github.com/yhagus/routerlm-oss/commit/dc309b76684bf0dd855d729125ae76e2c5d585b5) feat(inference): serve customer keys and record their integration
+* `integrations`
+  * [818e521](https://github.com/yhagus/routerlm-oss/commit/818e5216095fde129deaa7c50d54a8a6e8e08f14) feat(integrations): add detail, rotations, customers and models reads
+  * [c3e1bc7](https://github.com/yhagus/routerlm-oss/commit/c3e1bc71f68c3d3587097624eeefc64cbfb66e3a) feat(integrations): record when an integration secret was last used
+  * [373016e](https://github.com/yhagus/routerlm-oss/commit/373016ee7ddc0cc9f408eedbe0092b58a0c432b1) feat(integrations): delete an integration, revoking its api keys
+  * [04b2e82](https://github.com/yhagus/routerlm-oss/commit/04b2e82406ac9df43349feec22d9fba0596768ba) feat(integrations): disable and enable an integration
+  * [fe00b74](https://github.com/yhagus/routerlm-oss/commit/fe00b74aa01cbbba5ecb91dcd3c76a9560a850da) feat(integrations): rotate an integration secret
+  * [759a295](https://github.com/yhagus/routerlm-oss/commit/759a29503ac6e95ec45bc1d8fb3f8f83eaa7e3c8) feat(integrations): edit an integration's name and allowed models
+  * [32b05d9](https://github.com/yhagus/routerlm-oss/commit/32b05d96f915dad2b614c07e8d051e2a3e93735a) feat(integrations): create and list integrations from the dashboard
+  * [13730fb](https://github.com/yhagus/routerlm-oss/commit/13730fb512319155dbd2dc77a72199a443e65097) feat(integrations): add integrations schema, key limits and usage snapshots
+* `usage`
+  * [13a73b3](https://github.com/yhagus/routerlm-oss/commit/13a73b30a22e6bea8ddba6be78d341424c27c3df) feat(usage): return integration and customer on usage logs and captures
+  * [6f018fb](https://github.com/yhagus/routerlm-oss/commit/6f018fb4265b2fde9f54b8e59a6f14758a923a8b) feat(usage): record the transaction that wrote each usage log
+* `web`
+  * [f993fb7](https://github.com/yhagus/routerlm-oss/commit/f993fb7fee3b82f8abc7179e67c0879b6d932e57) feat(web): add integration detail page
+  * [e67b2bd](https://github.com/yhagus/routerlm-oss/commit/e67b2bdaa7cf3d66f87777b57b1781a3e3b91c92) feat(web): name a deleted integration filter pick from its records
+  * [6cf0bc3](https://github.com/yhagus/routerlm-oss/commit/6cf0bc3ebb03bcf9d612ecade8229418842bbf43) feat(web): show integration and customer on usage and error captures
+  * [743cdae](https://github.com/yhagus/routerlm-oss/commit/743cdae4753956bab6a7a8cb4739cddd4beda965) feat(web): show key owners and limits, filter records by owner
+  * [9370e34](https://github.com/yhagus/routerlm-oss/commit/9370e3489272a19062fc2a6d9329e08bd6657414) feat(web): add integrations page to manage integrations
+
+#### Bug fixes
+* `api-keys`
+  * [c33f504](https://github.com/yhagus/routerlm-oss/commit/c33f5045c1a34719b1b5694b0543c653be7db6df) fix(api-keys): refuse a spend limit with more than 10 decimal places
+* `inference`
+  * [8d8c484](https://github.com/yhagus/routerlm-oss/commit/8d8c48428dc535f35105273756c659ac04b82661) fix(inference): refuse a key only while it is over its request rate
+* `spend-limits`
+  * [37aab3b](https://github.com/yhagus/routerlm-oss/commit/37aab3b4ce34087bc46c479f15a8a6e19394f2f1) fix(spend-limits): confirm a reached flag against postgres before refusing
+
+#### Refactors
+* `api-keys`
+  * [5200a0c](https://github.com/yhagus/routerlm-oss/commit/5200a0ce798eefc69d032baaddbe25b5b3659272) refactor(api-keys): export the spend limit and request rate bounds
+* `libs`
+  * [7eab54b](https://github.com/yhagus/routerlm-oss/commit/7eab54bf87099bc5d5895d099419deae9d1ddffe) refactor(libs): move the allowed model lookups out of api-keys
+* `snapshot`
+  * [bbf9586](https://github.com/yhagus/routerlm-oss/commit/bbf9586c32e8fd9910531cc20d9fba02faa565e6) refactor(snapshot): share the check that a route can serve
+* `web`
+  * [328e03c](https://github.com/yhagus/routerlm-oss/commit/328e03cc574d462b651fb55b4ce1ede3a10ce756) refactor(web): mirror the api key limit bounds from the backend
+  * [c4c85e4](https://github.com/yhagus/routerlm-oss/commit/c4c85e4cf4227ce180fca468b7b00b5829de3b00) refactor(web): give shared api key and integration styles neutral names
+
+#### Docs
+* `adr`
+  * [37ee36b](https://github.com/yhagus/routerlm-oss/commit/37ee36bf3566504606fe1894b2c30e0d5ca53496) docs(adr): say where a single feature's test helpers live
+  * [9e5a17a](https://github.com/yhagus/routerlm-oss/commit/9e5a17ad1b7241ab006e830e6d8ad2df64d01715) docs(adr): record the control plane choices the spec left open
+  * [159f823](https://github.com/yhagus/routerlm-oss/commit/159f8239f534e3a0940b1088ef7ec597a963fcdd) docs(adr): record integrations control plane decisions
+* `deploy`
+  * [c67287c](https://github.com/yhagus/routerlm-oss/commit/c67287c86ce08a9d89e83d07f39e8976bca3cbad) docs(deploy): describe CONTROL_PLANE_PORT and the grpc port's exposure
+* `web`
+  * [5c2bffd](https://github.com/yhagus/routerlm-oss/commit/5c2bffd78e12e22cb36b2965392a39783d5f6937) docs(web): add the Integration control plane page
+  * [147b471](https://github.com/yhagus/routerlm-oss/commit/147b4716ba925f8ec3a021a2b4b92b7ba3bd13ee) docs(web): document the request_rate_exceeded error
+  * [753fdf6](https://github.com/yhagus/routerlm-oss/commit/753fdf6420c736f24485ddde8f176dadff145158) docs(web): document the spend_limit_reached error
+
+#### Tests
+* `api-keys`
+  * [450ee9d](https://github.com/yhagus/routerlm-oss/commit/450ee9d6a392c3ffe120e44f1d2e8109f45cf38d) test(api-keys): expect request rate in key summaries
+  * [aff0ce9](https://github.com/yhagus/routerlm-oss/commit/aff0ce9a7438173fcfb5f9ca2e06101c10dd7185) test(api-keys): expect spend limit and spent in key summaries
+* `docs`
+  * [73392d7](https://github.com/yhagus/routerlm-oss/commit/73392d78ebe5771e99f28e5a570dd6de71c7fad2) test(docs): run the control plane examples against a real Integration
+* `general`
+  * [e4e5535](https://github.com/yhagus/routerlm-oss/commit/e4e5535e43ae073db7a6bdc22968ed7144fe1c2d) test: keep redis key names out of feature tests
+* `quota-meters`
+  * [2ed2e8b](https://github.com/yhagus/routerlm-oss/commit/2ed2e8b92c226a27712148b78c11b3f6a628a01b) test(quota-meters): turn on private upstreams in the schedule test
+
+#### Build and CI
+* `web`
+  * [3851d9b](https://github.com/yhagus/routerlm-oss/commit/3851d9b1a6a44e3d8dc177e754252e7be610d1a8) build(web): run the mirror check in the web check
+
+#### Chores
+* `web`
+  * [37647f9](https://github.com/yhagus/routerlm-oss/commit/37647f9d977b47624bfb32956ca15cb35f36468c) style(web): trim the integration detail header and panels
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v5.1.0...v6.0.0
+
 # v5.1.0 (2026-11-20)
 
 #### Notable changes
