@@ -41,6 +41,10 @@ export interface ApiKeySummary {
   integration: { id: string; name: string } | null;
   /** The Customer an Integration issued the key to; kept after the Integration is deleted. */
   customerId: string | null;
+  /** USD. Null means no Spend Limit. */
+  spendLimit: number | null;
+  /** USD of Cost counted against the Spend Limit, whether the key has one or not. */
+  spent: number;
 }
 
 /** One rotation of an API Key: which public key id stopped working and which replaced it. */
@@ -78,6 +82,8 @@ export interface ApiKeyPrincipal {
   allowedModelIds: string[];
   /** Null for a key a User created. */
   customer: KeyCustomer | null;
+  /** USD, as loaded with the snapshot. Null means no Spend Limit, and none is checked. */
+  spendLimit: number | null;
 }
 
 /**

@@ -56,6 +56,8 @@ describe("API Keys (e2e)", () => {
         lastRotatedAt: null,
         integration: null,
         customerId: null,
+        spendLimit: null,
+        spent: 0,
       },
     ]);
   });

@@ -4,6 +4,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
 import { ControlPlaneError } from "../../models/control-plane-error.js";
 import type { CustomerApiKey } from "../../models/customer-api-key.js";
 import {
@@ -20,6 +21,7 @@ export class UpdateCustomerApiKeyHandler implements ICommandHandler<UpdateCustom
   constructor(
     @InjectDrizzle() private readonly db: Database,
     private readonly snapshot: SnapshotService,
+    private readonly spendLimitFlags: SpendLimitFlags,
   ) {}
 
   async execute({
@@ -46,6 +48,10 @@ export class UpdateCustomerApiKeyHandler implements ICommandHandler<UpdateCustom
       .returning({ id: apiKeys.id });
     if (updated.length === 0) {
       throw new ControlPlaneError("FAILED_PRECONDITION", REVOKED_MESSAGE);
+    }
+    if (changes.spendLimit !== undefined) {
+      // So a raised limit serves the key at once, and a lowered one stops it.
+      await this.spendLimitFlags.recompute(id);
     }
     // Everything here but the name is what inference reads from the snapshot.
     await this.snapshot.changed();

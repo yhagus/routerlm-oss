@@ -5,6 +5,8 @@ export const GATEWAY_ERROR_STATUS = {
   invalid_request: 400,
   no_capable_route: 400,
   invalid_api_key: 401,
+  // 402, not 429: SDKs retry a 429 on their own (ADR 0034).
+  spend_limit_reached: 402,
   model_not_allowed: 403,
   model_not_found: 404,
   request_too_large: 413,

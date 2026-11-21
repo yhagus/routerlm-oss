@@ -659,6 +659,7 @@ const ERROR_TYPES = {
   invalid_request: "invalid_request_error",
   no_capable_route: "invalid_request_error",
   invalid_api_key: "authentication_error",
+  spend_limit_reached: "billing_error",
   model_not_allowed: "permission_error",
   model_not_found: "not_found_error",
   request_too_large: "request_too_large",

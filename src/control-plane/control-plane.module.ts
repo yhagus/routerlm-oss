@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ApiKeysModule } from "@/api-keys/api-keys.module.js";
 import { IntegrationsModule } from "@/integrations/integrations.module.js";
 import { SnapshotModule } from "@/snapshot/snapshot.module.js";
+import { SpendLimitsModule } from "@/spend-limits/spend-limits.module.js";
 import { CommandHandlers } from "./commands/handlers/index.js";
 import { ControlPlaneController } from "./control-plane.controller.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
@@ -12,7 +13,7 @@ import { QueryHandlers } from "./queries/handlers/index.js";
  * ControlPlaneError, which each adapter maps (models/control-plane-error.ts).
  */
 @Module({
-  imports: [ApiKeysModule, IntegrationsModule, SnapshotModule],
+  imports: [ApiKeysModule, IntegrationsModule, SnapshotModule, SpendLimitsModule],
   controllers: [ControlPlaneController],
   providers: [...CommandHandlers, ...QueryHandlers],
 })

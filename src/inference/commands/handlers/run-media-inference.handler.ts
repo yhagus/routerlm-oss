@@ -22,6 +22,7 @@ import { type AttemptTarget, endpointOf, routePath } from "../../models/route-se
 import { UsageMeter } from "../../models/usage-meter.js";
 import { upstreamAuthHeaders } from "../../protocols/converters.js";
 import { AttemptRunner } from "../../providers/attempt-runner.js";
+import { CallerLimits } from "../../providers/caller-limits.js";
 import { MediaUpstreamClient } from "../../providers/media-upstream-client.js";
 import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "../../providers/upstream-client.js";
 import { RunMediaInferenceCommand } from "../impl/run-media-inference.command.js";
@@ -42,6 +43,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     private readonly attempts: AttemptRunner,
     private readonly upstream: MediaUpstreamClient,
     private readonly usage: UsageProducer,
+    private readonly callerLimits: CallerLimits,
   ) {}
 
   async execute(command: RunMediaInferenceCommand): Promise<MediaReply> {
@@ -69,6 +71,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
 
   private async serve(command: RunMediaInferenceCommand, meter: UsageMeter): Promise<MediaReply> {
     const { contract, body, caller, connection } = command;
+    await this.callerLimits.assertWithinLimits(caller);
     const request = contract.parseRequest(body);
     meter.requestParsed(false);
     const destination = this.resolve(command, request, meter);

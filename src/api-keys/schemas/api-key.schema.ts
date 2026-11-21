@@ -4,6 +4,8 @@ import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.sche
 export const MAX_NAME_LENGTH = 100;
 export const MAX_CUSTOMER_ID_LENGTH = 200;
 const MAX_ALLOWED_MODELS = 500;
+// api_keys.spend_limit is numeric(18, 10): eight digits before the point.
+const MAX_SPEND_LIMIT_USD = 99_999_999;
 
 /** Null means the key never expires. */
 export const expiresAtSchema = z.iso
@@ -20,16 +22,21 @@ export const allowedModelIdsSchema = z
   .max(MAX_ALLOWED_MODELS)
   .transform((ids) => [...new Set(ids)]);
 
+/** USD. Null means no Spend Limit. */
+export const spendLimitSchema = z.number().min(0).max(MAX_SPEND_LIMIT_USD).nullable();
+
 const apiKeyFieldsSchema = z.object({
   name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
   expiresAt: expiresAtSchema,
   allowedModelIds: allowedModelIdsSchema,
+  spendLimit: spendLimitSchema,
 });
 
-/** Name, optional expiry and optional allowed Models of a new API Key. */
+/** Name, and optional expiry, allowed Models and Spend Limit of a new API Key. */
 export const newApiKeySchema = apiKeyFieldsSchema.extend({
   expiresAt: expiresAtSchema.default(null),
   allowedModelIds: allowedModelIdsSchema.default([]),
+  spendLimit: spendLimitSchema.default(null),
 });
 export type NewApiKey = z.infer<typeof newApiKeySchema>;
 
