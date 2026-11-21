@@ -310,7 +310,7 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
       :columns="columns"
       :rows="filteredRows"
       :get-row-id="(row) => row.id"
-      :row-class="(row) => ({ 'api-key-row--off': row.status !== 'active' })"
+      :row-class="(row) => ({ 'row--receded': row.status !== 'active' })"
       :is-loading="isLoadingApiKeys"
       :error="loadError"
       :refresh="refresh"
@@ -353,7 +353,7 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
         <span class="tabular">{{ requestRateLabel(apiKey) }}</span>
       </template>
       <template #cell-allowedModels="{ row: apiKey }">
-        <span class="api-key-models" :title="allowedModelsLabel(apiKey)">{{
+        <span class="models-summary" :title="allowedModelsLabel(apiKey)">{{
           allowedModelsLabel(apiKey)
         }}</span>
       </template>
@@ -374,7 +374,7 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
         >
           {{ formatDate(apiKey.lastRotatedAt, "") }}
         </button>
-        <span v-else class="api-key-never">Never</span>
+        <span v-else class="value-never">Never</span>
       </template>
       <template #cell-status="{ row: apiKey }">
         <span

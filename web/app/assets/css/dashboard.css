@@ -2677,23 +2677,23 @@ tbody tr:hover {
   color: var(--muted);
   font-size: 12px;
 }
-/* API Keys: an expired or revoked key's row recedes; its status still reads in full. */
-.api-key-row--off td:not(:has(.status-badge)):not(:last-child) {
+/* API Keys and Integrations: a row that is no longer in use recedes; its status still reads in full. */
+.row--receded td:not(:has(.status-badge)):not(:last-child) {
   opacity: 0.55;
 }
-.api-key-models {
+.models-summary {
   display: block;
   overflow: hidden;
   max-width: 240px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.api-key-form .app-select {
+.form--full-width-selects .app-select {
   flex: none;
   width: 100%;
   min-width: 0;
 }
-.api-key-form .select-control {
+.form--full-width-selects .select-control {
   width: 100%;
 }
 /* Last rotated: a date that opens the key's rotation history */
@@ -2710,7 +2710,7 @@ tbody tr:hover {
 .api-key-rotated:hover {
   text-decoration-color: var(--muted);
 }
-.api-key-never {
+.value-never {
   color: var(--muted);
 }
 /* Rotation history: newest first, a thin rail joining each entry to the key's creation */

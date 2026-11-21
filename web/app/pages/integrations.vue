@@ -218,7 +218,7 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
       :columns="columns"
       :rows="rows"
       :get-row-id="(row) => row.id"
-      :row-class="(row) => ({ 'api-key-row--off': row.status === 'disabled' })"
+      :row-class="(row) => ({ 'row--receded': row.status === 'disabled' })"
       :is-loading="isLoadingIntegrations"
       :error="loadError"
       :refresh="refresh"
@@ -229,7 +229,7 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
         </div>
       </template>
       <template #cell-allowedModels="{ row: integration }">
-        <span class="api-key-models" :title="allowedModelsLabel(integration)">{{
+        <span class="models-summary" :title="allowedModelsLabel(integration)">{{
           allowedModelsLabel(integration)
         }}</span>
       </template>
@@ -243,7 +243,7 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
         <span v-if="integration.lastRotatedAt" class="tabular">{{
           formatDate(integration.lastRotatedAt)
         }}</span>
-        <span v-else class="api-key-never">Never</span>
+        <span v-else class="value-never">Never</span>
       </template>
       <template #cell-status="{ row: integration }">
         <span
