@@ -61,6 +61,8 @@ export const GATEWAY_ERROR_CODES = [
   "video_not_found",
   // A Video Job's content asked for before it completed.
   "video_not_ready",
+  // The API Key has spent its Spend Limit (ADR 0034).
+  "spend_limit_reached",
 ] as const;
 export type GatewayErrorCode = (typeof GATEWAY_ERROR_CODES)[number];
 

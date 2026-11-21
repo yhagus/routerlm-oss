@@ -1,8 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
+import { eq, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { attempts, CLIENT_PROTOCOL_KINDS, errorCaptures, usageLogs } from "@/db/schemas/index.js";
+import {
+  apiKeys,
+  attempts,
+  CLIENT_PROTOCOL_KINDS,
+  errorCaptures,
+  usageLogs,
+} from "@/db/schemas/index.js";
+import {
+  hasReachedSpendLimit,
+  type KeySpend,
+  SpendLimitFlags,
+} from "@/spend-limits/providers/spend-limit-flags.js";
 import type {
   ErrorCaptureRecord,
   MediaUnits,
@@ -16,6 +28,7 @@ import type {
 import { unitCostOf, usageMeasurementsOf } from "../models/usage-measurements.js";
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
+type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 /** A ServingTarget as the writer stores it: a field the job lacked is null. */
 type StoredServingTarget = { [Field in keyof ServingTarget]: ServingTarget[Field] | null };
@@ -44,16 +57,21 @@ const NOT_SERVED: StoredServingTarget = {
 /** Writes a request's Usage Log, its Attempts and its Error Captures, in the worker. */
 @Injectable()
 export class UsageWriter {
-  constructor(@InjectDrizzle() private readonly db: Database) {}
+  constructor(
+    @InjectDrizzle() private readonly db: Database,
+    private readonly spendLimitFlags: SpendLimitFlags,
+  ) {}
 
   /**
-   * Idempotent: a retried job finds its Usage Log already written and stops.
+   * Idempotent: a retried job finds its Usage Log already written and stops,
+   * so its Cost is added to the API Key's spent once (ADR 0035).
    * Ids are written as the job has them, even when an operator has deleted
    * that row since: they stay what served the request (ADR 0024).
    */
   async writeUsage(job: UsageJob): Promise<void> {
     const snapshot = snapshotOf(job);
-    await this.db.transaction(async (transaction) => {
+    const measurements = measurementsOf(job);
+    const keySpend = await this.db.transaction(async (transaction) => {
       const written = await transaction
         .insert(usageLogs)
         .values({
@@ -73,7 +91,7 @@ export class UsageWriter {
           userAgent: job.userAgent ?? null,
           clientIp: job.clientIp ?? null,
           serviceTier: job.servedBy?.serviceTier ?? null,
-          ...measurementsOf(job),
+          ...measurements,
           ...unitColumnsOf(job.units ?? null),
           requestBytes: job.requestBytes,
           responseBytes: job.responseBytes,
@@ -85,7 +103,7 @@ export class UsageWriter {
         .onConflictDoNothing({ target: usageLogs.id })
         .returning({ id: usageLogs.id });
       if (written.length === 0) {
-        return;
+        return null;
       }
       // Chosen here so the Error Captures can point at their Attempts.
       const attemptIds = job.attempts.map(() => randomUUID());
@@ -111,8 +129,35 @@ export class UsageWriter {
           .insert(errorCaptures)
           .values(errorCaptureRowsOf(job, job.errorCapture, attemptIds));
       }
+      return job.caller.kind === "api-key"
+        ? addToSpent(transaction, job.caller.apiKeyId, measurements.cost)
+        : null;
     });
+    // Written after the commit, so the flag never shows spend that rolled back.
+    if (job.caller.kind === "api-key" && keySpend && keySpend.spendLimit !== null) {
+      await this.spendLimitFlags.write(job.caller.apiKeyId, hasReachedSpendLimit(keySpend));
+    }
   }
+}
+
+/**
+ * Adds a request's Cost to its API Key's spent. Returns the key's spend
+ * after it, or null when nothing was added: an unknown or zero Cost, or a key deleted since.
+ */
+async function addToSpent(
+  transaction: Transaction,
+  apiKeyId: string,
+  cost: number | null,
+): Promise<KeySpend | null> {
+  if (cost === null || cost === 0) {
+    return null;
+  }
+  const [keySpend] = await transaction
+    .update(apiKeys)
+    .set({ spent: sql`${apiKeys.spent} + ${cost}` })
+    .where(eq(apiKeys.id, apiKeyId))
+    .returning({ spent: apiKeys.spent, spendLimit: apiKeys.spendLimit });
+  return keySpend ?? null;
 }
 
 /**

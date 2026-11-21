@@ -47,6 +47,7 @@ import {
   routePath,
 } from "../../models/route-selection.js";
 import { AttemptRunner } from "../../providers/attempt-runner.js";
+import { CallerLimits } from "../../providers/caller-limits.js";
 import {
   DEFAULT_TIMEOUTS,
   type UpstreamCall,
@@ -94,6 +95,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     private readonly upstream: UpstreamClient,
     private readonly attempts: AttemptRunner,
     private readonly usage: UsageProducer,
+    private readonly callerLimits: CallerLimits,
   ) {}
 
   async execute({
@@ -140,6 +142,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     connection: ClientConnection,
     meter: UsageMeter,
   ): Promise<AttemptResult> {
+    await this.callerLimits.assertWithinLimits(caller);
     const clientRequest = converter.parseRequest(body);
     meter.requestParsed(clientRequest.stream !== null);
     const destination = this.resolve(inferenceTarget, clientRequest, converter, caller, meter);

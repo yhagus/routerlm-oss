@@ -3,6 +3,7 @@ import { APP_FILTER } from "@nestjs/core";
 import { HttpClientModule } from "@nestjs/http-client";
 import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
 import { SnapshotModule } from "@/snapshot/snapshot.module.js";
+import { SpendLimitsModule } from "@/spend-limits/spend-limits.module.js";
 import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageModule } from "@/usage/usage.module.js";
 import { ApiKeyHeaderMiddleware } from "./middleware/api-key-header.middleware.js";
@@ -11,6 +12,7 @@ import { InferenceExceptionFilter } from "./filters/inference-exception.filter.j
 import { INFERENCE_API_PREFIX, InferenceController } from "./inference.controller.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
 import { AttemptRunner } from "./providers/attempt-runner.js";
+import { CallerLimits } from "./providers/caller-limits.js";
 import { MediaFetcher } from "./providers/media-fetcher.js";
 import { MediaUpstreamClient } from "./providers/media-upstream-client.js";
 import { UpstreamClient } from "./providers/upstream-client.js";
@@ -26,6 +28,7 @@ import { VideoTaskReader } from "./providers/video-task-reader.js";
       useFactory: (outbound: OutboundFetch) => ({ retry: false, fetch: outbound.fetch }),
     }),
     SnapshotModule,
+    SpendLimitsModule,
     UpstreamModule,
     UsageModule,
   ],
@@ -35,6 +38,7 @@ import { VideoTaskReader } from "./providers/video-task-reader.js";
     ...QueryHandlers,
     UpstreamClient,
     AttemptRunner,
+    CallerLimits,
     MediaFetcher,
     MediaUpstreamClient,
     VideoHandles,

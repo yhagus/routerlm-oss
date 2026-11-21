@@ -4,11 +4,10 @@ import {
   expiresAtSchema,
   MAX_CUSTOMER_ID_LENGTH,
   MAX_NAME_LENGTH,
+  spendLimitSchema,
 } from "@/api-keys/schemas/api-key.schema.js";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 
-// api_keys.spend_limit is numeric(18, 10): eight digits before the point.
-const MAX_SPEND_LIMIT_USD = 99_999_999;
 // Requests per minute; an int32 in control_plane.proto.
 const MAX_REQUEST_RATE = 2_147_483_647;
 const DEFAULT_PAGE_SIZE = 50;
@@ -16,8 +15,6 @@ const MAX_PAGE_SIZE = 100;
 
 const customerIdSchema = z.string().trim().min(1).max(MAX_CUSTOMER_ID_LENGTH);
 const nameSchema = z.string().trim().min(1).max(MAX_NAME_LENGTH);
-// Null means no Spend Limit.
-const spendLimitSchema = z.number().min(0).max(MAX_SPEND_LIMIT_USD).nullable();
 // Null means no limit.
 const requestRateSchema = z.number().int().min(1).max(MAX_REQUEST_RATE).nullable();
 

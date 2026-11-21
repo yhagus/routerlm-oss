@@ -19,6 +19,7 @@ import {
 } from "@/quota-meters/jobs/quota-reading-schedule.js";
 import { QuotaMetersModule } from "@/quota-meters/quota-meters.module.js";
 import { SettingsModule } from "@/settings/settings.module.js";
+import { SpendLimitsModule } from "@/spend-limits/spend-limits.module.js";
 import { OauthSignInPollingProcessor } from "@/upstream/jobs/oauth-sign-in-polling.js";
 import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageWriter } from "@/usage/providers/usage-writer.js";
@@ -54,6 +55,8 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     // which also holds what polling for a sign-in needs.
     QuotaMetersModule,
     SettingsModule,
+    // The usage writer flags API Keys that reached their Spend Limit.
+    SpendLimitsModule,
     UpstreamModule,
   ],
   providers: [
