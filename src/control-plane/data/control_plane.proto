@@ -147,13 +147,26 @@ message Model {
   string name = 2;
   // chat, image, speech, transcription or video.
   string kind = 3;
-  // Such as vision, tools, reasoning, structured-output.
+  // What at least one of its usable Routes can do: vision, tools, reasoning, structured-output.
   repeated string capabilities = 4;
-  // USD per million tokens, from the first Route's Upstream Model. Unset when unpublished.
+  // The prices of the Upstream Model its first usable Route serves it with, in
+  // USD; each unset when unpublished, and all unset when no Route can serve it.
+  // Per million tokens:
   optional double input_price = 5;
   optional double output_price = 6;
   optional double cache_read_price = 7;
   optional double cache_write_price = 8;
+  // Per generated image, or by size tier (such as `1K`) when the price depends on it.
+  optional double price_per_image = 9;
+  map<string, double> price_per_image_by_size = 10;
+  // Per input image of an image edit.
+  optional double price_per_input_image = 11;
+  // Per second of video, by resolution (such as `720P`).
+  map<string, double> price_per_second_by_resolution = 12;
+  // Per million characters of synthesized speech.
+  optional double price_per_million_characters = 13;
+  // Per second of transcribed audio.
+  optional double price_per_audio_second = 14;
 }
 
 message ListModelsResponse {
@@ -168,30 +181,39 @@ message ListUsageLogsRequest {
 }
 
 // One request made with one of the Integration's API Keys. Never its Provider,
-// Provider Account, Route or Upstream Model.
+// Provider Account, Route or Upstream Model, nor the client's User-Agent or IP.
 message UsageLog {
   string id = 1;
+  // When the gateway received the request.
   google.protobuf.Timestamp received_at = 2;
   string api_key_id = 3;
-  string api_key_name = 4;
+  // The key's name at request time.
+  optional string api_key_name = 4;
   string customer_id = 5;
-  string model_name = 6;
+  // Unset when the request was refused before its Model was known.
+  optional string model_name = 6;
+  // chat, image, speech, transcription or video.
   string kind = 7;
+  // The client endpoint's Protocol, such as openai-chat or anthropic-messages.
   string client_protocol = 8;
   bool streamed = 9;
   int32 http_status = 10;
+  // The gateway's error code and who caused the failure (client, upstream or
+  // gateway); unset for a successful or cancelled request.
   optional string error_code = 11;
   optional string error_origin = 12;
-  optional int64 input_tokens = 13;
-  optional int64 output_tokens = 14;
-  optional int64 cache_read_tokens = 15;
-  optional int64 cache_write_tokens = 16;
-  optional int64 reasoning_tokens = 17;
+  // Unset when not reported; `incomplete` is then set.
+  optional int32 input_tokens = 13;
+  optional int32 output_tokens = 14;
+  optional int32 cache_read_tokens = 15;
+  optional int32 cache_write_tokens = 16;
+  optional int32 reasoning_tokens = 17;
+  // The units a media Kind counts; unset for a unit its Kind doesn't count.
   optional int32 images_out = 18;
   optional int32 images_in = 19;
-  optional double output_seconds = 20;
+  optional int32 output_seconds = 20;
   optional double audio_seconds = 21;
-  optional int64 characters = 22;
+  optional int32 characters = 22;
   // USD. Unset when unknown.
   optional double cost = 23;
   optional int32 time_to_first_token_ms = 24;
@@ -201,7 +223,9 @@ message UsageLog {
 }
 
 message ListUsageLogsResponse {
-  // Oldest first, in commit order: a Usage Log written late is never skipped.
+  // Oldest first, by the transaction that wrote them. Only Usage Logs
+  // whose transaction is older than every one still running are returned, so
+  // one committed late is never skipped.
   repeated UsageLog usage_logs = 1;
   // Pass as `after` for the next page; the same cursor when there was nothing new.
   string next_cursor = 2;
