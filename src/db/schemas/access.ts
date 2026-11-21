@@ -61,6 +61,9 @@ export const integrations = pgTable("integrations", {
   createdAt: createdAt(),
   // Null while active. A disabled Integration's secret and API Keys stop working.
   disabledAt: at("disabled_at"),
+  // When its secret last signed a control plane call in; null if never. Written
+  // at most once a minute, so it can lag the latest call by up to a minute.
+  lastUsedAt: at("last_used_at"),
 });
 
 // One row per rotation of an Integration Secret, newest last, shaped like api_key_rotations.

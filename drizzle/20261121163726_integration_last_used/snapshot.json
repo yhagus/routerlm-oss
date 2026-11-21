@@ -1,0 +1,115 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "f61f6e3f-6dcb-4732-88ff-06b79d5ec39f",
+  "prevIds": [
+    "fde7d847-952c-4209-9b18-8e64b0163f38"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "integrations",
+        "last_used_at"
+      ],
+      "writes": [
+        "s|col|public.integrations.last_used_at",
+        "n|col|public.integrations.last_used_at",
+        "e|col|public.integrations.last_used_at"
+      ],
+      "reads": [
+        "n|tbl|public.integrations",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "usage_logs",
+        "usage_logs_integration_id_customer_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.usage_logs_integration_id_customer_id_idx",
+        "n|idx|public.usage_logs_integration_id_customer_id_idx",
+        "e|idx|public.usage_logs_integration_id_customer_id_idx",
+        "n|rel|public.usage_logs_integration_id_customer_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "n|col|public.usage_logs.integration_id",
+        "n|col|public.usage_logs.customer_id",
+        "n|col|public.usage_logs.created_at",
+        "n|col|public.usage_logs.cost"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "last_used_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "usage_logs_integration_id_customer_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "integration_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "customer_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "created_at",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "cost",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    }
+  ]
+}

@@ -194,6 +194,15 @@ export const usageLogs = pgTable(
       table.transactionId,
       table.sequence,
     ),
+    // The Integration page's Customer rollup groups an Integration's logs by
+    // Customer from this index alone. Drizzle has no INCLUDE, so the summed and
+    // compared columns trail as key columns.
+    index("usage_logs_integration_id_customer_id_idx").on(
+      table.integrationId,
+      table.customerId,
+      table.createdAt,
+      table.cost,
+    ),
   ],
 );
 

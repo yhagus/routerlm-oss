@@ -1,0 +1,2 @@
+ALTER TABLE "integrations" ADD COLUMN "last_used_at" timestamp with time zone;--> statement-breakpoint
+CREATE INDEX "usage_logs_integration_id_customer_id_idx" ON "usage_logs" ("integration_id","customer_id","created_at","cost");

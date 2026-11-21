@@ -6,6 +6,7 @@ import { httpControlPlaneClient } from "../support/control-plane-client.js";
 import { createIntegration } from "../support/integrations.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
 import { type ControlPlaneTransport, describeKeyScenarios } from "./key-scenarios.js";
+import { describeLastUsedScenarios } from "./last-used-scenarios.js";
 import { describeModelScenarios } from "./model-scenarios.js";
 import { describeUsageScenarios } from "./usage-scenarios.js";
 
@@ -17,6 +18,7 @@ const HTTP_TRANSPORT: ControlPlaneTransport = {
 describeKeyScenarios(HTTP_TRANSPORT);
 describeModelScenarios(HTTP_TRANSPORT);
 describeUsageScenarios(HTTP_TRANSPORT);
+describeLastUsedScenarios(HTTP_TRANSPORT);
 
 // What only the HTTP adapter has: statuses, the error body and the cookie.
 describe("Control plane HTTP adapter (e2e)", () => {

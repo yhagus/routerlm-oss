@@ -16,6 +16,7 @@ process.env.REDIS_URL = redisUrl.toString();
 const { portOf } = await import("../support/port-of.js");
 const { grpcControlPlaneClient } = await import("../support/grpc-control-plane-client.js");
 const { describeKeyScenarios } = await import("./key-scenarios.js");
+const { describeLastUsedScenarios } = await import("./last-used-scenarios.js");
 const { describeModelScenarios } = await import("./model-scenarios.js");
 const { describeUsageScenarios } = await import("./usage-scenarios.js");
 
@@ -72,3 +73,4 @@ const GRPC_TRANSPORT: ControlPlaneTransport = {
 describeKeyScenarios(GRPC_TRANSPORT);
 describeModelScenarios(GRPC_TRANSPORT);
 describeUsageScenarios(GRPC_TRANSPORT);
+describeLastUsedScenarios(GRPC_TRANSPORT);

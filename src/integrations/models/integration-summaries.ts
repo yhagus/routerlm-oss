@@ -28,6 +28,7 @@ export async function selectIntegrationSummaries(
       disabledAt: integrations.disabledAt,
       allowedModelIds: integrations.allowedModelIds,
       lastRotatedAt: lastRotations.lastRotatedAt,
+      lastUsedAt: integrations.lastUsedAt,
     })
     .from(integrations)
     .leftJoin(users, eq(integrations.createdById, users.id))
