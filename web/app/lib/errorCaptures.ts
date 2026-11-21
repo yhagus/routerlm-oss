@@ -1,3 +1,5 @@
+import type { RecordedIntegration } from "~/lib/integrations";
+
 /**
  * What failed: the client's request to the gateway, or one
  * Attempt from the gateway to a Provider Account. Names are null once that
@@ -19,7 +21,7 @@ export type FailedHop =
     };
 
 /** An Error Capture as `GET /api/error-captures` lists it: no headers or bodies. */
-export interface ErrorCaptureSummary {
+export interface ErrorCaptureSummary extends RecordedIntegration {
   id: string;
   createdAt: string;
   usageLogId: string;

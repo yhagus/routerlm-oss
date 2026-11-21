@@ -173,6 +173,8 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: "time", header: "Time", enableHiding: false },
   { id: "model", header: "Model" },
   { id: "apiKey", header: "API Key" },
+  { id: "integration", header: "Integration" },
+  { id: "customer", header: "Customer" },
   { id: "status", header: "Status" },
   { id: "serviceTier", header: "Tier" },
   { id: "inputTokens", header: "Input" },
@@ -296,6 +298,8 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
             : (log.apiKeyName ?? (log.apiKeyId ? "Deleted API Key" : "—"))
         }}
       </template>
+      <template #cell-integration="{ row: log }">{{ log.integrationName ?? "—" }}</template>
+      <template #cell-customer="{ row: log }">{{ log.customerId ?? "—" }}</template>
       <template #cell-status="{ row: log }">
         <span class="status-badge" :class="USAGE_STATUS_BADGES[usageStatusOf(log)]">
           {{ USAGE_STATUS_LABELS[usageStatusOf(log)] }} · {{ log.errorCode ?? log.httpStatus }}

@@ -1,8 +1,9 @@
 import type { ErrorOrigin } from "~/lib/errorOrigins";
+import type { RecordedIntegration } from "~/lib/integrations";
 import type { ServiceTier } from "~/lib/parameterPolicy";
 
 /** A Usage Log as `GET /api/usage` lists it. Names are null once the Model or API Key is deleted. */
-export interface UsageLogSummary {
+export interface UsageLogSummary extends RecordedIntegration {
   id: string;
   createdAt: string;
   modelId: string | null;
