@@ -9,6 +9,11 @@ export const DOCS_ID_DIRECTORY = new URL("../../web/content/docs-id/", import.me
 export const DOCS_BASE_URL = "https://gateway.example.com";
 export const DOCS_MODEL_NAME = "my-model";
 export const DOCS_API_KEY_VARIABLE = "ROUTERLM_API_KEY";
+/** The control plane examples' placeholders, from the Integrations page. */
+export const DOCS_CONTROL_PLANE_URL = `${DOCS_BASE_URL}/integration/v1/`;
+export const DOCS_INTEGRATION_SECRET_VARIABLE = "ROUTERLM_INTEGRATION_SECRET";
+export const DOCS_API_KEY_RECORD_ID = "0f8e2b6a-3c1d-4e5f-9a7b-6c4d2e1f0a9b";
+export const DOCS_CUSTOMER_ID = "customer-42";
 
 export interface DocsPage {
   fileName: string;

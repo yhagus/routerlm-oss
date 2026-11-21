@@ -9,22 +9,31 @@ import {
   type CodeBlock,
   codeBlocksOf,
   type DocsPage,
+  DOCS_API_KEY_RECORD_ID,
   DOCS_API_KEY_VARIABLE,
   DOCS_BASE_URL,
+  DOCS_CONTROL_PLANE_URL,
+  DOCS_CUSTOMER_ID,
+  DOCS_INTEGRATION_SECRET_VARIABLE,
   DOCS_MODEL_NAME,
   parseCurl,
   proseOf,
   readDocsPages,
 } from "../support/docs-examples.js";
+import { httpControlPlaneClient } from "../support/control-plane-client.js";
 import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
 import { insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
+import { createIntegration } from "../support/integrations.js";
 import { portOf } from "../support/port-of.js";
-import { createTestApp } from "../support/test-app.js";
+import { createTestApp, setUpFirstUser } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
 const pages = readDocsPages();
 const codeBlocks = pages.flatMap(codeBlocksOf);
 const curlExamples = codeBlocks.filter((block) => block.language === "bash");
+const isControlPlaneExample = (block: CodeBlock) => block.code.includes(DOCS_CONTROL_PLANE_URL);
+const inferenceCurlExamples = curlExamples.filter((block) => !isControlPlaneExample(block));
+const controlPlaneCurlExamples = curlExamples.filter(isControlPlaneExample);
 const sdkExamples = codeBlocks.filter((block) => block.language === "ts");
 
 /**
@@ -35,6 +44,7 @@ const sdkExamples = codeBlocks.filter((block) => block.language === "ts");
 const SDK_OWNERS = ["OpenAI", "Anthropic"];
 /** The Model name the errors page uses to show a `model_not_found` envelope. */
 const UNKNOWN_MODEL_NAME = "unknown-model";
+const OPERATOR = { email: "operator@example.com", password: "operator's password" };
 
 /** SDK snippets are written here so they import the SDKs from this repo's node_modules. */
 // One folder per test process, so a run in the same checkout never deletes another run's snippets.
@@ -92,11 +102,12 @@ describe("Client documentation (e2e)", () => {
   });
 
   it("has curl and SDK examples to run", () => {
-    expect(curlExamples.length).toBeGreaterThan(0);
+    expect(inferenceCurlExamples.length).toBeGreaterThan(0);
+    expect(controlPlaneCurlExamples.length).toBeGreaterThan(0);
     expect(sdkExamples.length).toBeGreaterThan(0);
   });
 
-  it.each(curlExamples.map((block) => [nameOf(block), block] as const))(
+  it.each(inferenceCurlExamples.map((block) => [nameOf(block), block] as const))(
     "%s works as written",
     async (_name, block) => {
       replyFor(upstream, block);
@@ -114,6 +125,46 @@ describe("Client documentation (e2e)", () => {
       expect(text).not.toMatch(/event: error|"error":\{/);
     },
   );
+
+  describe("control plane examples", () => {
+    let integrationSecret: string;
+    let apiKeyRecordId: string;
+
+    // Each example gets a fresh API Key, since revoking one breaks the examples after it.
+    beforeEach(async () => {
+      const cookie = await setUpFirstUser(app, OPERATOR);
+      ({ secret: integrationSecret } = await createIntegration(app, cookie));
+      const issued = await httpControlPlaneClient(app).createKey(integrationSecret, {
+        customerId: DOCS_CUSTOMER_ID,
+      });
+      if (!issued.ok) throw new Error(`createKey failed with ${issued.code}`);
+      apiKeyRecordId = issued.body.apiKey.id;
+    });
+
+    it.each(controlPlaneCurlExamples.map((block) => [nameOf(block), block] as const))(
+      "%s works as written",
+      async (_name, block) => {
+        const curl = parseCurl(block.code, {
+          [DOCS_INTEGRATION_SECRET_VARIABLE]: integrationSecret,
+        });
+        const url = curl.url
+          .replace(DOCS_BASE_URL, gatewayUrl)
+          .replace(DOCS_API_KEY_RECORD_ID, apiKeyRecordId);
+
+        const response = await fetch(url, {
+          method: curl.method,
+          headers: curl.headers,
+          body: curl.body,
+        });
+
+        expect({
+          ok: response.ok,
+          status: response.status,
+          text: await response.text(),
+        }).toMatchObject({ ok: true });
+      },
+    );
+  });
 
   it.each(sdkExamples.map((block) => [nameOf(block), block] as const))(
     "%s works as written",
