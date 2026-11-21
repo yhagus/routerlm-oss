@@ -1,4 +1,14 @@
-import { boolean, index, integer, jsonb, numeric, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  boolean,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  text,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
 import { at, createdAt, id } from "./columns.js";
 import { MODEL_KINDS, type ModelKind } from "./upstream.js";
@@ -94,6 +104,15 @@ export const usageLogs = pgTable(
     // email is never copied, so it does not outlive their account.
     apiKeyId: uuid("api_key_id"),
     apiKeyName: text("api_key_name"),
+    // The Integration that issued the API Key and the Customer it names, copied
+    // at request time like the key's name; null for a key no Integration issued.
+    integrationId: uuid("integration_id"),
+    integrationName: text("integration_name"),
+    customerId: text("customer_id"),
+    // Assigned on insert, so it follows commit order closely enough for an
+    // Integration to pull its Usage Logs after a cursor; created_at is the
+    // request time and rows commit late. A JS number holds it exactly up to 2^53.
+    sequence: bigint("sequence", { mode: "number" }).notNull().generatedAlwaysAsIdentity(),
     userId: uuid("user_id"),
     isPlayground: boolean("is_playground").notNull().default(false),
     modelId: uuid("model_id"),
@@ -150,6 +169,8 @@ export const usageLogs = pgTable(
     index("usage_logs_upstream_model_id_created_at_idx").on(table.upstreamModelId, table.createdAt),
     // The Usage page filters, and the Overview counts, failed requests by origin.
     index("usage_logs_error_origin_created_at_idx").on(table.errorOrigin, table.createdAt),
+    // An Integration's usage pull: its logs after a sequence.
+    index("usage_logs_integration_id_sequence_idx").on(table.integrationId, table.sequence),
   ],
 );
 
@@ -162,11 +183,13 @@ export const attempts = pgTable(
       .references(() => usageLogs.id, { onDelete: "cascade" }),
     // Orders the Attempts of one request.
     startedAt: at("started_at").notNull(),
-    // The Usage Log's Model and API Key, and the target this Attempt tried,
-    // copied as the Usage Log copies them, plus the Provider's display name
-    // for the Error Captures list.
+    // The Usage Log's Model, API Key, Integration and Customer, and the target
+    // this Attempt tried, copied as the Usage Log copies them, plus the
+    // Provider's display name for the Error Captures list.
     modelName: text("model_name"),
     apiKeyName: text("api_key_name"),
+    integrationName: text("integration_name"),
+    customerId: text("customer_id"),
     routeId: uuid("route_id"),
     upstreamModelId: uuid("upstream_model_id"),
     upstreamModelName: text("upstream_model_name"),

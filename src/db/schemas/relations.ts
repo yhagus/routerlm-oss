@@ -12,8 +12,22 @@ export const relations = defineRelations(schema, (r) => ({
   sessions: {
     user: r.one.users({ from: r.sessions.userId, to: r.users.id, optional: false }),
   },
+  integrations: {
+    createdBy: r.one.users({ from: r.integrations.createdById, to: r.users.id }),
+    rotations: r.many.integrationRotations(),
+    apiKeys: r.many.apiKeys(),
+  },
+  integrationRotations: {
+    integration: r.one.integrations({
+      from: r.integrationRotations.integrationId,
+      to: r.integrations.id,
+      optional: false,
+    }),
+    rotatedBy: r.one.users({ from: r.integrationRotations.rotatedById, to: r.users.id }),
+  },
   apiKeys: {
     createdBy: r.one.users({ from: r.apiKeys.createdById, to: r.users.id }),
+    integration: r.one.integrations({ from: r.apiKeys.integrationId, to: r.integrations.id }),
     rotations: r.many.apiKeyRotations(),
   },
   apiKeyRotations: {
