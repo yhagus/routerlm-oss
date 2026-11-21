@@ -4,19 +4,16 @@ import {
   expiresAtSchema,
   MAX_CUSTOMER_ID_LENGTH,
   MAX_NAME_LENGTH,
+  requestRateSchema,
   spendLimitSchema,
 } from "@/api-keys/schemas/api-key.schema.js";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 
-// Requests per minute; an int32 in control_plane.proto.
-const MAX_REQUEST_RATE = 2_147_483_647;
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
 
 const customerIdSchema = z.string().trim().min(1).max(MAX_CUSTOMER_ID_LENGTH);
 const nameSchema = z.string().trim().min(1).max(MAX_NAME_LENGTH);
-// Null means no limit.
-const requestRateSchema = z.number().int().min(1).max(MAX_REQUEST_RATE).nullable();
 
 /** A new API Key for one of the Integration's Customers (CreateKeyRequest). */
 export const newCustomerApiKeySchema = z.object({

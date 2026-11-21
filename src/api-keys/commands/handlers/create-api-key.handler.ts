@@ -34,6 +34,7 @@ export class CreateApiKeyHandler implements ICommandHandler<CreateApiKeyCommand>
         expiresAt: newKey.expiresAt,
         allowedModelIds: newKey.allowedModelIds,
         spendLimit: newKey.spendLimit,
+        requestRate: newKey.requestRate,
       })
       .returning({ id: apiKeys.id });
     await this.snapshot.changed();

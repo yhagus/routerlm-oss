@@ -40,7 +40,7 @@ export class UpdateApiKeyHandler implements ICommandHandler<UpdateApiKeyCommand>
       // So a raised or cleared limit serves the key at once, and a lowered one stops it.
       await this.spendLimitFlags.recompute(id);
     }
-    // Name, allowed Models and Spend Limit are part of what sign-in reads from the snapshot.
+    // Name, allowed Models, Spend Limit and Request Rate are what sign-in reads from the snapshot.
     await this.snapshot.changed();
     const [summary] = await selectApiKeySummaries(this.db, eq(apiKeys.id, id));
     return summary;

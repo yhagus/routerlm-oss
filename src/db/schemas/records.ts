@@ -65,6 +65,8 @@ export const GATEWAY_ERROR_CODES = [
   "video_not_ready",
   // The API Key has spent its Spend Limit (ADR 0034).
   "spend_limit_reached",
+  // The API Key sent more requests this minute than its Request Rate allows.
+  "request_rate_exceeded",
 ] as const;
 export type GatewayErrorCode = (typeof GATEWAY_ERROR_CODES)[number];
 
