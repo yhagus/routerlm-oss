@@ -5,9 +5,9 @@ export const MAX_NAME_LENGTH = 100;
 export const MAX_CUSTOMER_ID_LENGTH = 200;
 const MAX_ALLOWED_MODELS = 500;
 // api_keys.spend_limit is numeric(18, 10): eight digits before the point.
-const MAX_SPEND_LIMIT_USD = 99_999_999;
+export const MAX_SPEND_LIMIT_USD = 99_999_999;
 // Requests per minute; an int32 in control_plane.proto.
-const MAX_REQUEST_RATE = 2_147_483_647;
+export const MAX_REQUEST_RATE = 2_147_483_647;
 
 /** Null means the key never expires. */
 export const expiresAtSchema = z.iso
