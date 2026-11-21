@@ -7,8 +7,9 @@ import type { InferenceCaller } from "../models/inference.js";
 
 const REQUEST_RATE_THROTTLER = "request-rate";
 const REQUEST_RATE_WINDOW = minutes(1);
-// As ThrottlerGuard does by default: a key past its rate waits out one window.
-const REQUEST_RATE_BLOCK = REQUEST_RATE_WINDOW;
+// No block past the window: a key is refused only while it is over its rate
+// in the current window, not for a further window after it went over.
+const NO_BLOCK = 0;
 
 /**
  * The limits an API Key sets on its own requests (ADR 0034), checked before
@@ -52,12 +53,12 @@ export class CallerLimits {
       return false;
     }
     // The rate is part of the key so a changed Request Rate starts a fresh
-    // count at once, instead of after a block set under the old one.
+    // count at once, instead of after the window counted under the old one.
     const { isBlocked } = await this.throttlerStorage.increment(
       `${apiKeyId}:${requestRate}`,
       REQUEST_RATE_WINDOW,
       requestRate,
-      REQUEST_RATE_BLOCK,
+      NO_BLOCK,
       REQUEST_RATE_THROTTLER,
     );
     return isBlocked;

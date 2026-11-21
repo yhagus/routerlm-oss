@@ -1,5 +1,5 @@
 import { desc, eq, max, type SQL } from "drizzle-orm";
-import { findModelNames } from "@/api-keys/models/api-key-summaries.js";
+import { findModelNames } from "@/libs/models/allowed-models.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { integrationRotations, integrations, users } from "@/db/schemas/index.js";
 import type { IntegrationSummary } from "./integration.js";

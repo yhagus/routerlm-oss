@@ -13,3 +13,18 @@ export async function assertModelsExist(db: Database, modelIds: string[]): Promi
     throw new BadRequestException("Unknown Model in allowedModelIds");
   }
 }
+
+/** The names of the Models that still exist among `modelIds`, by id. */
+export async function findModelNames(
+  db: Database,
+  modelIds: string[],
+): Promise<Map<string, string>> {
+  if (modelIds.length === 0) {
+    return new Map();
+  }
+  const found = await db
+    .select({ id: models.id, name: models.name })
+    .from(models)
+    .where(inArray(models.id, [...new Set(modelIds)]));
+  return new Map(found.map((model) => [model.id, model.name]));
+}

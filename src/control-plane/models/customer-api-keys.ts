@@ -1,6 +1,6 @@
 import { and, desc, eq, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { assertModelsExist } from "@/api-keys/models/assert-models-exist.js";
+import { assertModelsExist } from "@/libs/models/allowed-models.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys } from "@/db/schemas/index.js";
 import type { IntegrationPrincipal } from "@/integrations/models/integration.js";

@@ -1,7 +1,7 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import { assertModelsExist } from "@/api-keys/models/assert-models-exist.js";
+import { assertModelsExist } from "@/libs/models/allowed-models.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { integrations } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";

@@ -11,6 +11,8 @@ const MILLISECONDS_PER_SECOND = 1000;
 
 // Counts a hit in one atomic step so replicas share the count. Once the limit
 // is passed the key is blocked for the block duration and stops counting.
+// With no block duration nothing outlives the window: every hit past the
+// limit is refused until the window ends and its count expires.
 // Returns {hits, milliseconds until the window ends, milliseconds blocked}.
 const INCREMENT_SCRIPT = `
 local blockedFor = redis.call('PTTL', KEYS[2])
@@ -23,8 +25,12 @@ if hits == 1 then
 end
 local windowLeft = redis.call('PTTL', KEYS[1])
 if hits > tonumber(ARGV[2]) then
-  redis.call('SET', KEYS[2], 1, 'PX', ARGV[3])
-  blockedFor = tonumber(ARGV[3])
+  if tonumber(ARGV[3]) > 0 then
+    redis.call('SET', KEYS[2], 1, 'PX', ARGV[3])
+    blockedFor = tonumber(ARGV[3])
+  else
+    blockedFor = windowLeft
+  end
 end
 return {hits, windowLeft, blockedFor}`;
 

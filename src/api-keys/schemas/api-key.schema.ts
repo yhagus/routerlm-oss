@@ -5,9 +5,19 @@ export const MAX_NAME_LENGTH = 100;
 export const MAX_CUSTOMER_ID_LENGTH = 200;
 const MAX_ALLOWED_MODELS = 500;
 // api_keys.spend_limit is numeric(18, 10): eight digits before the point.
-const MAX_SPEND_LIMIT_USD = 99_999_999;
+export const MAX_SPEND_LIMIT_USD = 99_999_999;
+// ...and ten after it: more would be rounded on save, so they are refused.
+const SPEND_LIMIT_DECIMALS = 10;
 // Requests per minute; an int32 in control_plane.proto.
-const MAX_REQUEST_RATE = 2_147_483_647;
+export const MAX_REQUEST_RATE = 2_147_483_647;
+
+/**
+ * Whether the amount, written as briefly as JS writes it, has at most
+ * SPEND_LIMIT_DECIMALS decimal places: rounding to them gives back the same number.
+ */
+function hasAtMostSpendLimitDecimals(amount: number): boolean {
+  return Number(amount.toFixed(SPEND_LIMIT_DECIMALS)) === amount;
+}
 
 /** Null means the key never expires. */
 export const expiresAtSchema = z.iso
@@ -24,8 +34,15 @@ export const allowedModelIdsSchema = z
   .max(MAX_ALLOWED_MODELS)
   .transform((ids) => [...new Set(ids)]);
 
-/** USD. Null means no Spend Limit. */
-export const spendLimitSchema = z.number().min(0).max(MAX_SPEND_LIMIT_USD).nullable();
+/** USD, to SPEND_LIMIT_DECIMALS places at most. Null means no Spend Limit. */
+export const spendLimitSchema = z
+  .number()
+  .min(0)
+  .max(MAX_SPEND_LIMIT_USD)
+  .refine(hasAtMostSpendLimitDecimals, {
+    error: `A Spend Limit has at most ${SPEND_LIMIT_DECIMALS} decimal places`,
+  })
+  .nullable();
 
 /** Requests per minute. Null means no Request Rate. */
 export const requestRateSchema = z.number().int().min(1).max(MAX_REQUEST_RATE).nullable();

@@ -1,7 +1,7 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { mayUseModel } from "@/api-keys/models/api-key.js";
 import { CAPABILITIES, type Capability } from "@/db/schemas/index.js";
-import type { SnapshotModel } from "@/snapshot/models/snapshot.js";
+import { isRouteUsable, type SnapshotModel } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ClientModel, ClientModelList } from "../../models/client-model.js";
 import { ListClientModelsQuery } from "../impl/list-client-models.query.js";
@@ -28,10 +28,8 @@ export class ListClientModelsHandler implements IQueryHandler<ListClientModelsQu
 
 function combinedCapabilities(model: SnapshotModel): Capability[] {
   const offered = new Set<Capability>();
-  for (const { isEnabled, upstreamModel } of model.routes) {
-    if (isEnabled && upstreamModel.isEnabled && upstreamModel.provider.isUsable) {
-      upstreamModel.capabilities.forEach((capability) => offered.add(capability));
-    }
+  for (const route of model.routes.filter(isRouteUsable)) {
+    route.upstreamModel.capabilities.forEach((capability) => offered.add(capability));
   }
   // In the Catalog's order, not the order Routes happen to list them.
   return CAPABILITIES.filter((capability) => offered.has(capability));

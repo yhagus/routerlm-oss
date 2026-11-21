@@ -1,6 +1,10 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { CLIENT_PROTOCOL_KINDS, type ModelKind, type ParameterPolicy } from "@/db/schemas/index.js";
-import type { SnapshotRoute, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
+import {
+  isUpstreamModelUsable,
+  type SnapshotRoute,
+  type SnapshotUpstreamModel,
+} from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
@@ -280,8 +284,7 @@ function unservableReasonOf(
 ): string | null {
   const endpoint = endpointOf(upstreamModel);
   if (
-    !upstreamModel.isEnabled ||
-    !upstreamModel.provider.isUsable ||
+    !isUpstreamModelUsable(upstreamModel) ||
     endpoint === undefined ||
     contract.upstreamProtocols[endpoint.protocol] === undefined
   ) {

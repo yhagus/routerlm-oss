@@ -31,6 +31,14 @@ export interface ErrorCaptureSummary {
   usageLogId: string;
   modelName: string | null;
   apiKeyName: string | null;
+  /**
+   * The Integration that issued the API Key and the Customer it names, as
+   * copied at request time, so they outlive the Integration; null for a key no
+   * Integration issued.
+   */
+  integrationId: string | null;
+  integrationName: string | null;
+  customerId: string | null;
   isPlayground: boolean;
   clientProtocol: ClientProtocol;
   httpStatus: number;

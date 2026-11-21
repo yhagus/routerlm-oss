@@ -7,6 +7,7 @@ import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
 import { createApiKey } from "../support/api-keys.js";
 import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
 import { insertOpenAiChatModel } from "../support/inference.js";
@@ -166,6 +167,15 @@ describe("Spend Limit of an API Key (e2e)", () => {
     await db.update(apiKeys).set({ spent: 5 }).where(eq(apiKeys.id, id));
 
     await chat(key).expect(402);
+  });
+
+  it("serves a key under its Spend Limit even when a stale flag says it reached it", async () => {
+    const { id, key } = await controlPlane().issueKey(1);
+    // As a flag left over from before the limit was raised, by a write that raced the raise.
+    await app.get(SpendLimitFlags).write(id, true);
+
+    upstreamAnswers();
+    await chat(key).expect(200);
   });
 
   it("counts a retried usage job's Cost once", async () => {

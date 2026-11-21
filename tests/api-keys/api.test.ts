@@ -133,4 +133,21 @@ describe("API Keys (e2e)", () => {
       .send({ name: "CI", allowedModelIds: ["00000000-0000-4000-8000-000000000000"] })
       .expect(400);
   });
+
+  it("takes a Spend Limit to 10 decimal places, as stored, and refuses one it would round", async () => {
+    const create = (spendLimit: number) =>
+      request(app.getHttpServer())
+        .post("/api/api-keys")
+        .set("Cookie", adaCookie)
+        .send({ name: "CI", spendLimit });
+
+    await create(0.1234567891).expect(201);
+    await create(0.12345678912).expect(400);
+
+    const list = await request(app.getHttpServer())
+      .get("/api/api-keys")
+      .set("Cookie", adaCookie)
+      .expect(200);
+    expect(list.body).toEqual([expect.objectContaining({ spendLimit: 0.1234567891 })]);
+  });
 });

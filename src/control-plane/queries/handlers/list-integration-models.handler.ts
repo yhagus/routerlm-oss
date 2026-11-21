@@ -1,9 +1,10 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { CAPABILITIES, type Capability } from "@/db/schemas/index.js";
-import type {
-  SnapshotModel,
-  SnapshotRoute,
-  SnapshotUpstreamModel,
+import {
+  isRouteUsable,
+  type SnapshotModel,
+  type SnapshotRoute,
+  type SnapshotUpstreamModel,
 } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { IntegrationModel, ModelPrices } from "../../models/integration-model.js";
@@ -26,7 +27,7 @@ export class ListIntegrationModelsHandler implements IQueryHandler<ListIntegrati
 
 function integrationModelOf(model: SnapshotModel): IntegrationModel {
   // Routes come in the order the gateway tries them.
-  const servingRoutes = model.routes.filter(canServe);
+  const servingRoutes = model.routes.filter(isRouteUsable);
   const firstUpstreamModel = servingRoutes.at(0)?.upstreamModel;
   return {
     id: model.id,
@@ -35,10 +36,6 @@ function integrationModelOf(model: SnapshotModel): IntegrationModel {
     capabilities: combinedCapabilities(servingRoutes),
     prices: firstUpstreamModel === undefined ? null : pricesOf(firstUpstreamModel),
   };
-}
-
-function canServe({ isEnabled, upstreamModel }: SnapshotRoute): boolean {
-  return isEnabled && upstreamModel.isEnabled && upstreamModel.provider.isUsable;
 }
 
 function combinedCapabilities(servingRoutes: SnapshotRoute[]): Capability[] {
