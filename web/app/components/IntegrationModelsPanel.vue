@@ -1,0 +1,90 @@
+<script setup lang="ts">
+import { Boxes, CloudOff } from "@lucide/vue";
+import {
+  type IntegrationModel,
+  type IntegrationSummary,
+  integrationModelPriceLines,
+} from "~/lib/integrations";
+import { CAPABILITY_LABELS, MODEL_KIND_LABELS } from "~/lib/upstream";
+
+/** The Models the Integration may sell, priced as its control plane lists them. */
+const props = defineProps<{ integration: IntegrationSummary }>();
+
+const {
+  data: modelList,
+  error: loadError,
+  status,
+} = useDashboardApi<{ models: IntegrationModel[] }>(
+  () => `/integrations/${props.integration.id}/models`,
+  // Editing the allowed Models changes the list.
+  { watch: [() => props.integration.allowedModels] },
+);
+
+const isLoading = computed(() => status.value === "pending" && !modelList.value);
+const sellsEveryModel = computed(() => props.integration.allowedModels.length === 0);
+
+const rows = computed(() =>
+  (modelList.value?.models ?? []).map((model) => ({
+    model,
+    capabilities: model.capabilities.map((capability) => CAPABILITY_LABELS[capability]).join(", "),
+    priceLines: integrationModelPriceLines(model),
+  })),
+);
+</script>
+
+<template>
+  <section class="panel table-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Models</h2>
+        <p v-if="sellsEveryModel">
+          No allowed Models are set, so the Integration may sell every Model, including ones added
+          later.
+        </p>
+        <p v-else>The allowed Models: its Customers' API Keys may use only these.</p>
+      </div>
+    </div>
+    <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
+      <strong>Couldn't load the Models.</strong
+      ><span>Check that the backend is running, then reload the page.</span>
+    </EmptyState>
+    <div v-else-if="isLoading" class="loading-panel" aria-busy="true"><AppSpinner /></div>
+    <EmptyState v-else-if="rows.length === 0" :icon="Boxes">
+      <strong>No Models to sell.</strong><span>Its allowed Models may all have been deleted.</span>
+    </EmptyState>
+    <div v-else class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Kind</th>
+            <th>Capabilities</th>
+            <th>Prices</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="{ model, capabilities, priceLines } in rows" :key="model.id">
+            <td>
+              <NuxtLink class="table-entity" :to="`/models/${model.id}`">
+                <span class="key-icon"><Boxes :size="15" /></span><strong>{{ model.name }}</strong>
+              </NuxtLink>
+            </td>
+            <td>{{ MODEL_KIND_LABELS[model.kind] }}</td>
+            <td>
+              <template v-if="capabilities">{{ capabilities }}</template>
+              <span v-else class="value-never">None</span>
+            </td>
+            <td>
+              <template v-if="priceLines.length">
+                <span v-for="line in priceLines" :key="line.label" class="price-line tabular"
+                  >{{ line.label }} <strong>{{ line.value }}</strong></span
+                >
+              </template>
+              <span v-else class="value-never">Not set</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</template>

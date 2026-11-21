@@ -6,6 +6,7 @@ import {
   formatCost,
   formatCount,
   formatDuration,
+  hasErrorCaptures,
   isTimeRange,
   TIME_RANGES,
   type TimeRange,
@@ -187,14 +188,6 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: "attempts", header: "Attempts" },
   actionsColumn(),
 ];
-
-/**
- * Failed requests from a known caller have Error Captures; a request refused
- * for its API Key never does. Captures expire, so the list may be empty.
- */
-function hasErrorCaptures(log: UsageLogSummary): boolean {
-  return usageStatusOf(log) === "failed" && (log.apiKeyId !== null || log.isPlayground);
-}
 </script>
 
 <template>

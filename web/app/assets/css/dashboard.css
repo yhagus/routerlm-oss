@@ -5000,6 +5000,25 @@ svg.lucide {
 .provider-hero__actions .status-badge {
   margin-right: 6px;
 }
+/* Integration detail: reuses the Provider hero */
+.integration-overview__tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.secret-history {
+  padding: 0 21px 21px;
+}
+.price-line {
+  display: block;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.price-line strong {
+  color: var(--ink);
+  font-weight: 600;
+}
 .provider-hero__alert {
   display: flex;
   align-items: center;

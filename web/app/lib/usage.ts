@@ -114,6 +114,14 @@ export function usageStatusOf(log: UsageLogSummary): UsageStatus {
   return "succeeded";
 }
 
+/**
+ * Failed requests from a known caller have Error Captures; a request refused
+ * for its API Key never does. Captures expire, so the list may be empty.
+ */
+export function hasErrorCaptures(log: UsageLogSummary): boolean {
+  return usageStatusOf(log) === "failed" && (log.apiKeyId !== null || log.isPlayground);
+}
+
 const HOUR_MS = 60 * 60 * 1000;
 
 /** The time ranges the Usage page offers, as how far back they reach. Null reaches back forever. */

@@ -1,23 +1,21 @@
 <script setup lang="ts">
-import { Blocks, CirclePause, CirclePlay, Pencil, Plus, RefreshCw, Trash2 } from "@lucide/vue";
+import { Blocks, CirclePause, CirclePlay, Eye, Pencil, Plus, RefreshCw, Trash2 } from "@lucide/vue";
+import type { IntegrationConfirmation } from "~/components/IntegrationConfirmDialog.vue";
 import type { RowAction } from "~/components/RowActionsMenu.vue";
 import { apiErrorMessage } from "~/lib/api";
 import type { ModelChoice } from "~/lib/api-keys";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { dateFormat } from "~/lib/dateFormats";
 import {
+  allowedModelsLabel,
   type CreatedIntegration,
+  INTEGRATION_STATUS_LABELS,
   type IntegrationStatus,
   type IntegrationSummary,
   integrationStatus,
 } from "~/lib/integrations";
 
 useHead({ title: "Integrations" });
-
-const STATUS_LABELS = {
-  enabled: "Enabled",
-  disabled: "Disabled",
-} as const satisfies Record<IntegrationStatus, string>;
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
@@ -63,11 +61,6 @@ const columns: DataTableColumn<IntegrationRow>[] = [
   { id: "status", header: "Status" },
   actionsColumn(),
 ];
-
-function allowedModelsLabel(integration: IntegrationSummary): string {
-  if (integration.allowedModels.length === 0) return "All Models";
-  return integration.allowedModels.map((model) => model.name ?? "Deleted Model").join(", ");
-}
 
 // Create and edit
 
@@ -116,63 +109,21 @@ async function setEnabled(integration: IntegrationSummary, isEnabled: boolean): 
 
 // Rotate and delete share one confirmation dialog
 
-type Confirmation = { kind: "rotate" | "delete"; integration: IntegrationSummary };
-const confirming = ref<Confirmation | null>(null);
-const isConfirming = ref(false);
-const confirmError = ref("");
-const isConfirmOpen = computed({
-  get: () => confirming.value !== null,
-  set: (isOpen) => {
-    if (!isOpen) confirming.value = null;
-  },
-});
+const confirming = ref<IntegrationConfirmation | null>(null);
 
-const CONFIRM_COPY = {
-  rotate: {
-    title: "Rotate Integration Secret",
-    description: (name: string) =>
-      `${name} gets a new Integration Secret, and the current one is refused at once. Its API Keys keep working.`,
-    action: "Rotate secret",
-    failed: "Couldn't rotate the Integration Secret.",
-  },
-  delete: {
-    title: "Delete Integration",
-    description: (name: string) =>
-      `${name} is deleted for good and all its API Keys are revoked, so its Customers are refused at once. This can't be undone; disable it instead to suspend it.`,
-    action: "Delete Integration",
-    failed: "Couldn't delete the Integration.",
-  },
-} as const;
+async function handleRotated(integration: CreatedIntegration): Promise<void> {
+  revealed.value = { integration, verb: "rotated" };
+  await refresh();
+}
 
-async function confirmAction(): Promise<void> {
-  const current = confirming.value;
-  if (!current) return;
-  isConfirming.value = true;
-  confirmError.value = "";
-  try {
-    if (current.kind === "rotate") {
-      const rotated = await $dashboardApi<CreatedIntegration>(
-        `/integrations/${current.integration.id}/rotate`,
-        { method: "POST" },
-      );
-      confirming.value = null;
-      revealed.value = { integration: rotated, verb: "rotated" };
-    } else {
-      await $dashboardApi(`/integrations/${current.integration.id}`, { method: "DELETE" });
-      showToast(`Deleted ${current.integration.name}`);
-      confirming.value = null;
-    }
-    await refresh();
-  } catch (error) {
-    confirmError.value = apiErrorMessage(error, CONFIRM_COPY[current.kind].failed);
-  } finally {
-    isConfirming.value = false;
-  }
+async function handleDeleted(integration: IntegrationSummary): Promise<void> {
+  showToast(`Deleted ${integration.name}`);
+  await refresh();
 }
 
 // Row menu
 
-type IntegrationActionId = "edit" | "rotate" | "disable" | "enable" | "delete";
+type IntegrationActionId = "detail" | "edit" | "rotate" | "disable" | "enable" | "delete";
 
 function actionsFor(integration: IntegrationRow): RowAction<IntegrationActionId>[] {
   const toggle: RowAction<IntegrationActionId> =
@@ -180,6 +131,7 @@ function actionsFor(integration: IntegrationRow): RowAction<IntegrationActionId>
       ? { id: "disable", label: "Disable", icon: CirclePause }
       : { id: "enable", label: "Enable", icon: CirclePlay };
   return [
+    { id: "detail", label: "Detail", icon: Eye },
     { id: "edit", label: "Edit", icon: Pencil },
     { id: "rotate", label: "Rotate secret", icon: RefreshCw },
     toggle,
@@ -188,13 +140,14 @@ function actionsFor(integration: IntegrationRow): RowAction<IntegrationActionId>
 }
 
 function handleAction(integration: IntegrationRow, id: IntegrationActionId): void {
-  if (id === "edit") {
+  if (id === "detail") {
+    void navigateTo(`/integrations/${integration.id}`);
+  } else if (id === "edit") {
     editing.value = integration;
     isFormOpen.value = true;
   } else if (id === "disable" || id === "enable") {
     void setEnabled(integration, id === "enable");
   } else {
-    confirmError.value = "";
     confirming.value = { kind: id, integration };
   }
 }
@@ -224,9 +177,9 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
       :refresh="refresh"
     >
       <template #cell-name="{ row: integration }">
-        <div class="table-entity">
+        <NuxtLink class="table-entity" :to="`/integrations/${integration.id}`">
           <span class="key-icon"><Blocks :size="15" /></span><strong>{{ integration.name }}</strong>
-        </div>
+        </NuxtLink>
       </template>
       <template #cell-allowedModels="{ row: integration }">
         <span class="models-summary" :title="allowedModelsLabel(integration)">{{
@@ -249,7 +202,7 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
         <span
           class="status-badge"
           :class="integration.status === 'enabled' ? 'status-badge--good' : 'status-badge--bad'"
-          >{{ STATUS_LABELS[integration.status] }}</span
+          >{{ INTEGRATION_STATUS_LABELS[integration.status] }}</span
         >
       </template>
       <template #cell-actions="{ row: integration }">
@@ -287,25 +240,10 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
       :verb="revealed.verb"
     />
 
-    <AppDialog
-      v-if="confirming"
-      v-model:open="isConfirmOpen"
-      :title="CONFIRM_COPY[confirming.kind].title"
-      :description="CONFIRM_COPY[confirming.kind].description(confirming.integration.name)"
-    >
-      <p v-if="confirmError" class="form__error" role="alert">{{ confirmError }}</p>
-      <div class="dialog__actions">
-        <button class="button" type="button" @click="confirming = null">Cancel</button>
-        <button
-          class="button"
-          :class="confirming.kind === 'delete' ? 'button--danger' : 'button--primary'"
-          type="button"
-          :disabled="isConfirming"
-          @click="confirmAction"
-        >
-          {{ CONFIRM_COPY[confirming.kind].action }}
-        </button>
-      </div>
-    </AppDialog>
+    <IntegrationConfirmDialog
+      v-model:confirmation="confirming"
+      @rotated="handleRotated"
+      @deleted="handleDeleted"
+    />
   </div>
 </template>

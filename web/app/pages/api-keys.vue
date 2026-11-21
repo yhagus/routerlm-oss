@@ -5,27 +5,25 @@ import type { RowAction } from "~/components/RowActionsMenu.vue";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { apiErrorMessage } from "~/lib/api";
 import {
+  API_KEY_CONFIRM_COPY,
+  API_KEY_STATUS_LABELS,
   type ApiKeyStatus,
   type ApiKeySummary,
   apiKeyStatus,
   type CreatedApiKey,
   isIntegrationOwned,
   type ModelChoice,
+  requestRateLabel,
+  spendLimitLabel,
 } from "~/lib/api-keys";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { dateFormat } from "~/lib/dateFormats";
-import { formatCost, formatCount } from "~/lib/usage";
 
 useHead({ title: "API Keys" });
 
-const STATUS_LABELS = {
-  active: "Active",
-  expired: "Expired",
-  revoked: "Revoked",
-} as const satisfies Record<ApiKeyStatus, string>;
 const API_KEY_STATUSES = ["active", "expired", "revoked"] as const satisfies ApiKeyStatus[];
 const statusFilterOptions = API_KEY_STATUSES.map((status) => ({
-  label: STATUS_LABELS[status],
+  label: API_KEY_STATUS_LABELS[status],
   value: status,
 }));
 
@@ -118,15 +116,6 @@ function allowedModelsLabel(apiKey: ApiKeySummary): string {
   return apiKey.allowedModels.map((model) => model.name ?? "Deleted Model").join(", ");
 }
 
-function spendLimitLabel(apiKey: ApiKeySummary): string {
-  const limit = apiKey.spendLimit === null ? "no limit" : formatCost(apiKey.spendLimit);
-  return `${formatCost(apiKey.spent)} of ${limit}`;
-}
-
-function requestRateLabel(apiKey: ApiKeySummary): string {
-  return apiKey.requestRate === null ? "No limit" : `${formatCount(apiKey.requestRate)} / min`;
-}
-
 // Rotation history
 
 const historyOf = ref<ApiKeySummary | null>(null);
@@ -211,23 +200,6 @@ const isConfirmOpen = computed({
   },
 });
 
-const CONFIRM_COPY = {
-  rotate: {
-    title: "Rotate API Key",
-    description: (name: string) =>
-      `${name} gets a new key, and clients still using the current one are refused at once. Its name, expiry, allowed Models and usage history stay.`,
-    action: "Rotate key",
-    failed: "Couldn't rotate the API Key.",
-  },
-  revoke: {
-    title: "Revoke API Key",
-    description: (name: string) =>
-      `Clients using ${name} are refused from now on. This can't be undone.`,
-    action: "Revoke API Key",
-    failed: "Couldn't revoke the API Key.",
-  },
-} as const;
-
 async function confirmAction(): Promise<void> {
   const current = confirming.value;
   if (!current) return;
@@ -247,7 +219,7 @@ async function confirmAction(): Promise<void> {
     }
     await refresh();
   } catch (error) {
-    confirmError.value = apiErrorMessage(error, CONFIRM_COPY[current.kind].failed);
+    confirmError.value = apiErrorMessage(error, API_KEY_CONFIRM_COPY[current.kind].failed);
   } finally {
     isConfirming.value = false;
   }
@@ -380,7 +352,7 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
         <span
           class="status-badge"
           :class="apiKey.status === 'active' ? 'status-badge--good' : 'status-badge--bad'"
-          >{{ STATUS_LABELS[apiKey.status] }}</span
+          >{{ API_KEY_STATUS_LABELS[apiKey.status] }}</span
         >
       </template>
       <template #cell-actions="{ row: apiKey }">
@@ -447,8 +419,8 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
     <AppDialog
       v-if="confirming"
       v-model:open="isConfirmOpen"
-      :title="CONFIRM_COPY[confirming.kind].title"
-      :description="CONFIRM_COPY[confirming.kind].description(confirming.apiKey.name)"
+      :title="API_KEY_CONFIRM_COPY[confirming.kind].title"
+      :description="API_KEY_CONFIRM_COPY[confirming.kind].description(confirming.apiKey.name)"
     >
       <p v-if="confirmError" class="form__error" role="alert">{{ confirmError }}</p>
       <div class="dialog__actions">
@@ -460,7 +432,7 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
           :disabled="isConfirming"
           @click="confirmAction"
         >
-          {{ CONFIRM_COPY[confirming.kind].action }}
+          {{ API_KEY_CONFIRM_COPY[confirming.kind].action }}
         </button>
       </div>
     </AppDialog>
