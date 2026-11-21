@@ -11,11 +11,11 @@ import {
   insertOpenAiChatModel,
   UPSTREAM_KEY,
 } from "../support/inference.js";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { LOCAL_COPY_MAX_AGE_MS } from "@/upstream/providers/cooldown-store.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { createTestApp, setUpFirstUser } from "../support/test-app.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
+import { endCooldownElsewhere, startCooldownElsewhere } from "../support/redis-state.js";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
@@ -173,9 +173,7 @@ describe("Fallback (e2e)", () => {
     await chat().expect(200);
     const endsAt = Date.now() + 60_000;
 
-    await app
-      .get(RedisConnection)
-      .client.set(`routerlm:cooldown:${primaryAccountId}`, `${endsAt}:rate_limited`, "PX", 60_000);
+    await startCooldownElsewhere(app, primaryAccountId, endsAt);
     await sleep(LOCAL_COPY_MAX_AGE_MS);
     await chat().expect(200);
 
@@ -343,7 +341,7 @@ describe("Fallback (e2e)", () => {
   // Stands in for waiting out the Cooldown, which doubles with each failure.
   /** Ends the Cooldown in Redis, as another process would, and waits until this one sees it. */
   async function endCooldown(providerAccountId: string): Promise<void> {
-    await app.get(RedisConnection).client.del(`routerlm:cooldown:${providerAccountId}`);
+    await endCooldownElsewhere(app, providerAccountId);
     await sleep(LOCAL_COPY_MAX_AGE_MS);
   }
 

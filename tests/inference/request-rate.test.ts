@@ -13,6 +13,7 @@ import { createIntegration } from "../support/integrations.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 import { writtenUsageLogs } from "../support/usage-logs.js";
 import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
+import { forgetThrottleCounts } from "../support/redis-state.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
@@ -136,13 +137,12 @@ describe("Request Rate of an API Key (e2e)", () => {
   });
 
   it("serves the key again as soon as the window it went over in ends", async () => {
-    const { id, key } = await controlPlane().issueKey(1);
+    const { key } = await controlPlane().issueKey(1);
     await chat(key).expect(200);
     await chat(key).expect(429);
 
-    // Ends the minute's window early: its count is the throttler's key for the
-    // key and rate (ADR 0021), which expires when the window does.
-    await app.get(RedisConnection).client.del(`routerlm:throttle:request-rate:${id}:1`);
+    // Ends the minute's window early, as if it had run out.
+    await forgetThrottleCounts(app);
 
     await chat(key).expect(200);
   });

@@ -6,7 +6,8 @@ import { RedisConnection } from "@/redis/providers/redis-connection.js";
 // The package does not export its record type.
 type ThrottlerStorageRecord = Awaited<ReturnType<ThrottlerStorage["increment"]>>;
 
-const KEY_PREFIX = "routerlm:throttle:";
+/** Every hit count lives under this prefix; tests/support/redis-state.ts relies on it. */
+export const THROTTLE_KEY_PREFIX = "routerlm:throttle:";
 const MILLISECONDS_PER_SECOND = 1000;
 
 // Counts a hit in one atomic step so replicas share the count. Once the limit
@@ -60,7 +61,7 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
     blockDuration: number,
     throttlerName: string,
   ): Promise<ThrottlerStorageRecord> {
-    const hitsKey = `${KEY_PREFIX}${throttlerName}:${key}`;
+    const hitsKey = `${THROTTLE_KEY_PREFIX}${throttlerName}:${key}`;
     try {
       const reply = await this.redis.client.eval(
         INCREMENT_SCRIPT,

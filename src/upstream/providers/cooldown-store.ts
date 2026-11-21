@@ -4,7 +4,7 @@ import { ATTEMPT_FAILURE_REASONS, type AttemptFailureReason } from "@/db/schemas
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { cooldownDurationMs } from "../models/cooldown.js";
 
-const COOLDOWN_KEY_PREFIX = "routerlm:cooldown:";
+export const COOLDOWN_KEY_PREFIX = "routerlm:cooldown:";
 const FAILURE_STREAK_KEY_PREFIX = "routerlm:cooldown-streak:";
 // A Provider Account that has not failed for this long after its Cooldown
 // ended starts again from the shortest Cooldown.
@@ -13,7 +13,7 @@ const REFUSAL_COUNT_KEY_PREFIX = "routerlm:refusal-count:";
 // Consecutive 403s are counted across Cooldowns; a count left untouched this
 // long is stale rather than consecutive.
 const REFUSAL_COUNT_MEMORY_MS = 60 * 60_000;
-const COOLDOWN_VALUE_SEPARATOR = ":";
+export const COOLDOWN_VALUE_SEPARATOR = ":";
 /**
  * How old the inference path's local copy of a Provider Account's state may
  * be. Another backend process's Cooldown reaches this one within this long.

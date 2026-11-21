@@ -3,6 +3,7 @@ import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+import { forgetThrottleCounts } from "../support/redis-state.js";
 
 const FIRST_USER = { email: "ada@example.com", password: "correct horse battery" };
 
@@ -81,9 +82,7 @@ async function attemptLogins(app: NestNodeApplication, forwardedFor: string, cou
 }
 
 async function forgetLoginAttempts(app: NestNodeApplication): Promise<void> {
-  const { client } = app.get(RedisConnection);
-  const keys = await client.keys("routerlm:throttle:*");
-  if (keys.length > 0) await client.del(...keys);
+  await forgetThrottleCounts(app);
 }
 
 describe("Authentication: login throttling behind a trusted proxy (e2e)", () => {
