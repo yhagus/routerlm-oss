@@ -58,6 +58,7 @@ describe("API Keys (e2e)", () => {
         customerId: null,
         spendLimit: null,
         spent: 0,
+        requestRate: null,
       },
     ]);
   });
