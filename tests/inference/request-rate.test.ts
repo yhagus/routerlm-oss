@@ -135,6 +135,18 @@ describe("Request Rate of an API Key (e2e)", () => {
     }
   });
 
+  it("serves the key again as soon as the window it went over in ends", async () => {
+    const { id, key } = await controlPlane().issueKey(1);
+    await chat(key).expect(200);
+    await chat(key).expect(429);
+
+    // Ends the minute's window early: its count is the throttler's key for the
+    // key and rate (ADR 0021), which expires when the window does.
+    await app.get(RedisConnection).client.del(`routerlm:throttle:request-rate:${id}:1`);
+
+    await chat(key).expect(200);
+  });
+
   it("serves the key again as soon as the Integration raises its Request Rate", async () => {
     const { id, key } = await controlPlane().issueKey(1);
     await chat(key).expect(200);
