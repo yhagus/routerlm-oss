@@ -14,6 +14,7 @@ import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { FakeUpstream } from "../support/fake-upstream.js";
 import { USAGES_PATH, usagesReply } from "../support/kimi-code-usages.js";
 import { remainsAtPercentReply } from "../support/minimax-m-plan-remains.js";
+import { allowPrivateUpstreams } from "../support/private-upstreams.js";
 import { deleteAllUpstreamData } from "../support/upstream.js";
 
 // Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
@@ -41,6 +42,9 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
   beforeAll(async () => {
     worker = await Test.createTestingModule({ imports: [WorkerModule] }).compile();
     await worker.init();
+    // The fake upstream listens on localhost, so this file turns the Setting on
+    // itself rather than rely on another file having left it on.
+    await allowPrivateUpstreams(worker, true);
     db = worker.get<Database>(getDrizzleToken());
     queue = worker.get<Queue>(getQueueToken(QUOTA_METERS_QUEUE));
     queueEvents = new QueueEvents(QUOTA_METERS_QUEUE, { connection: { url: redisUrl.toString() } });
