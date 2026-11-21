@@ -10,11 +10,7 @@ import {
   errorCaptures,
   usageLogs,
 } from "@/db/schemas/index.js";
-import {
-  hasReachedSpendLimit,
-  type KeySpend,
-  SpendLimitFlags,
-} from "@/spend-limits/providers/spend-limit-flags.js";
+import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
 import type {
   ErrorCaptureRecord,
   MediaUnits,
@@ -71,7 +67,7 @@ export class UsageWriter {
   async writeUsage(job: UsageJob): Promise<void> {
     const snapshot = snapshotOf(job);
     const measurements = measurementsOf(job);
-    const keySpend = await this.db.transaction(async (transaction) => {
+    const hasSpentAgainstLimit = await this.db.transaction(async (transaction) => {
       const written = await transaction
         .insert(usageLogs)
         .values({
@@ -103,7 +99,7 @@ export class UsageWriter {
         .onConflictDoNothing({ target: usageLogs.id })
         .returning({ id: usageLogs.id });
       if (written.length === 0) {
-        return null;
+        return false;
       }
       // Chosen here so the Error Captures can point at their Attempts.
       const attemptIds = job.attempts.map(() => randomUUID());
@@ -131,33 +127,35 @@ export class UsageWriter {
       }
       return job.caller.kind === "api-key"
         ? addToSpent(transaction, job.caller.apiKeyId, measurements.cost)
-        : null;
+        : false;
     });
-    // Written after the commit, so the flag never shows spend that rolled back.
-    if (job.caller.kind === "api-key" && keySpend && keySpend.spendLimit !== null) {
-      await this.spendLimitFlags.write(job.caller.apiKeyId, hasReachedSpendLimit(keySpend));
+    // Recomputed after the commit, so the flag never shows spend that rolled
+    // back, and from a fresh read, so it never undoes a Spend Limit raised
+    // while the transaction ran.
+    if (job.caller.kind === "api-key" && hasSpentAgainstLimit) {
+      await this.spendLimitFlags.recompute(job.caller.apiKeyId);
     }
   }
 }
 
 /**
- * Adds a request's Cost to its API Key's spent. Returns the key's spend
- * after it, or null when nothing was added: an unknown or zero Cost, or a key deleted since.
+ * Adds a request's Cost to its API Key's spent. Returns whether it added to a
+ * key with a Spend Limit: not for an unknown or zero Cost, or a key deleted since.
  */
 async function addToSpent(
   transaction: Transaction,
   apiKeyId: string,
   cost: number | null,
-): Promise<KeySpend | null> {
+): Promise<boolean> {
   if (cost === null || cost === 0) {
-    return null;
+    return false;
   }
   const [keySpend] = await transaction
     .update(apiKeys)
     .set({ spent: sql`${apiKeys.spent} + ${cost}` })
     .where(eq(apiKeys.id, apiKeyId))
-    .returning({ spent: apiKeys.spent, spendLimit: apiKeys.spendLimit });
-  return keySpend ?? null;
+    .returning({ spendLimit: apiKeys.spendLimit });
+  return keySpend !== undefined && keySpend.spendLimit !== null;
 }
 
 /**

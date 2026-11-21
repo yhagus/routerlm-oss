@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Redis } from "ioredis";
 import { apiKeys } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
@@ -12,17 +12,6 @@ const NOT_REACHED = "0";
 // Bounds how long a flag can stay wrong when a write after it was lost
 // (Redis down); a missing flag only costs one Postgres read.
 const FLAG_TTL_SECONDS = 600;
-
-/** What an API Key has spent and may spend, in USD. A null limit means no Spend Limit. */
-export interface KeySpend {
-  spent: number;
-  spendLimit: number | null;
-}
-
-/** Whether the key may serve no more requests: it has a Spend Limit and has spent it. */
-export function hasReachedSpendLimit({ spent, spendLimit }: KeySpend): boolean {
-  return spendLimit !== null && spent >= spendLimit;
-}
 
 /**
  * Each API Key's "limit reached" flag in Redis (ADR 0035). Postgres holds
@@ -42,25 +31,29 @@ export class SpendLimitFlags {
   }
 
   /**
-   * Whether the key has reached its Spend Limit. Without a flag (Redis lost
-   * it, never had it, or can't be reached), Postgres answers and the flag is
-   * written back: a key over its limit is never let through for lack of one.
+   * Whether the key has reached its Spend Limit. A "not reached" flag answers
+   * alone. Otherwise Postgres answers and the flag is written back: without a
+   * flag (Redis lost it, never had it, or can't be reached) so a key over its
+   * limit is never let through for lack of one, and on a "reached" flag so a
+   * stale one never keeps refusing a key whose limit was raised. Refusing
+   * costs a Postgres read; protecting money is worth it (ADR 0035).
    */
   async isReached(apiKeyId: string): Promise<boolean> {
-    const flag = await this.readFlag(apiKeyId);
-    if (flag === REACHED || flag === NOT_REACHED) {
-      return flag === REACHED;
+    if ((await this.readFlag(apiKeyId)) === NOT_REACHED) {
+      return false;
     }
     return this.recompute(apiKeyId);
   }
 
   /** Writes the key's flag from what Postgres holds now, after its Spend Limit changed. Returns it. */
   async recompute(apiKeyId: string): Promise<boolean> {
+    // Compared in Postgres: numeric(18, 10) holds more digits than a JS number.
+    // A null Spend Limit compares as null: no limit to reach.
     const [spend] = await this.db
-      .select({ spent: apiKeys.spent, spendLimit: apiKeys.spendLimit })
+      .select({ isReached: sql<boolean | null>`${apiKeys.spent} >= ${apiKeys.spendLimit}` })
       .from(apiKeys)
       .where(eq(apiKeys.id, apiKeyId));
-    const isReached = spend ? hasReachedSpendLimit(spend) : false;
+    const isReached = spend?.isReached === true;
     await this.write(apiKeyId, isReached);
     return isReached;
   }
