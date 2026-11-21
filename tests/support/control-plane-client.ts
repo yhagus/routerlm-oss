@@ -5,6 +5,8 @@ import type {
   ApiKeyJson,
   IssuedKeyJson,
   ListKeysResponseJson,
+  ListModelsResponseJson,
+  ListUsageLogsResponseJson,
 } from "@/control-plane/models/proto-json.js";
 
 /** A control plane answer: the response message in proto3 JSON, or the error's code. */
@@ -32,6 +34,11 @@ export interface ControlPlaneClient {
     secret: string,
     query?: { customerId?: string; pageSize?: number; pageToken?: string },
   ): Promise<ControlPlaneOutcome<ListKeysResponseJson>>;
+  listModels(secret: string): Promise<ControlPlaneOutcome<ListModelsResponseJson>>;
+  listUsageLogs(
+    secret: string,
+    query?: { after?: string; pageSize?: number },
+  ): Promise<ControlPlaneOutcome<ListUsageLogsResponseJson>>;
 }
 
 const PREFIX = "/integration/v1";
@@ -61,5 +68,8 @@ export function httpControlPlaneClient(app: NestNodeApplication): ControlPlaneCl
     getKey: (secret, id) => send(request(server).get(`${PREFIX}/keys/${id}`), secret),
     listKeys: (secret, query = {}) =>
       send(request(server).get(`${PREFIX}/keys`).query(query), secret),
+    listModels: (secret) => send(request(server).get(`${PREFIX}/models`), secret),
+    listUsageLogs: (secret, query = {}) =>
+      send(request(server).get(`${PREFIX}/usage-logs`).query(query), secret),
   };
 }

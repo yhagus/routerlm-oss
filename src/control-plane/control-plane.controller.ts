@@ -25,10 +25,16 @@ import {
   type IssuedKeyJson,
   issuedKeyJsonOf,
   type ListKeysResponseJson,
+  type ListModelsResponseJson,
+  type ListUsageLogsResponseJson,
   listKeysResponseJsonOf,
+  listModelsResponseJsonOf,
+  listUsageLogsResponseJsonOf,
 } from "./models/proto-json.js";
 import { GetCustomerApiKeyQuery } from "./queries/impl/get-customer-api-key.query.js";
 import { ListCustomerApiKeysQuery } from "./queries/impl/list-customer-api-keys.query.js";
+import { ListIntegrationModelsQuery } from "./queries/impl/list-integration-models.query.js";
+import { ListIntegrationUsageLogsQuery } from "./queries/impl/list-integration-usage-logs.query.js";
 import {
   type CustomerApiKeyChanges,
   customerApiKeyChangesSchema,
@@ -37,6 +43,7 @@ import {
   type NewCustomerApiKey,
   newCustomerApiKeySchema,
 } from "./schemas/customer-api-key.schema.js";
+import { type UsageLogPageQuery, usageLogPageQuerySchema } from "./schemas/usage-log.schema.js";
 
 /** Where the HTTP adapter of the control plane lives (ADR 0033). */
 export const CONTROL_PLANE_HTTP_PREFIX = "integration/v1";
@@ -116,5 +123,24 @@ export class ControlPlaneController {
   ): Promise<ApiKeyJson> {
     const apiKey = await this.commandBus.execute(new RevokeCustomerApiKeyCommand(integration, id));
     return apiKeyJsonOf(apiKey);
+  }
+
+  @Get("models")
+  async listModels(
+    @CurrentUser() integration: IntegrationPrincipal,
+  ): Promise<ListModelsResponseJson> {
+    const models = await this.queryBus.execute(new ListIntegrationModelsQuery(integration));
+    return listModelsResponseJsonOf(models);
+  }
+
+  @Get("usage-logs")
+  async listUsageLogs(
+    @CurrentUser() integration: IntegrationPrincipal,
+    @Query({ schema: usageLogPageQuerySchema }) page: UsageLogPageQuery,
+  ): Promise<ListUsageLogsResponseJson> {
+    const usageLogs = await this.queryBus.execute(
+      new ListIntegrationUsageLogsQuery(integration, page),
+    );
+    return listUsageLogsResponseJsonOf(usageLogs);
   }
 }
