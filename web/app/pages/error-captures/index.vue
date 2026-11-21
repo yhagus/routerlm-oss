@@ -32,8 +32,9 @@ const usageLogId = computed(() =>
 
 // Filters
 
-// Held in the URL (?range=7d&failedAt=…&account=…&failureReason=…&outcome=…&model=…&key=…&errorOrigin=…)
-// so a refresh or a link keeps them; each list matches any of its picks. The range defaults to all time
+// Held in the URL (?range=7d&failedAt=…&account=…&failureReason=…&outcome=…&model=…&key=…&errorOrigin=…
+// &integration=…&customer=…) so a refresh or a link keeps them; each list matches any of its picks, and
+// the Customer id matches exactly. The range defaults to all time
 // so a Usage Log's link shows its captures however old. The DataTable holds the search (?q=) and
 // page (?page=) the same way; this page reads them for its request.
 const timeRange = useQueryParam<TimeRange>("range", { default: "all", isValid: isTimeRange });
@@ -56,6 +57,13 @@ const errorOriginFilter = useQueryList("errorOrigin", {
   isValid: oneOf(ERROR_ORIGINS),
   order: ERROR_ORIGINS,
 });
+const {
+  integrationFilter,
+  customerFilter,
+  integrationOptions,
+  ownerFilterTokens,
+  clearOwnerFilters,
+} = useOwnerFilters();
 const search = useQuerySearch();
 const page = useQueryPage();
 // Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
@@ -77,6 +85,7 @@ function clearFilters(): void {
   modelFilter.value = [];
   apiKeyFilter.value = [];
   errorOriginFilter.value = [];
+  clearOwnerFilters();
 }
 
 // The DataTable returns to page 1 when the search or a filter token changes; the time range and the
@@ -137,6 +146,7 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...listFilterTokens("Model", modelFilter, modelOptions.value),
   ...listFilterTokens("API Key", apiKeyFilter, apiKeyOptions.value),
   ...listFilterTokens("Error Origin", errorOriginFilter, errorOriginOptions),
+  ...ownerFilterTokens.value,
 ]);
 
 /** Whether an empty list means nothing matched, rather than nothing was captured. */
@@ -164,6 +174,8 @@ const {
     apiKeyId: listParam(apiKeyFilter.value.filter((value) => value !== PLAYGROUND)),
     isPlayground: apiKeyFilter.value.includes(PLAYGROUND) ? true : undefined,
     errorOrigin: listParam(errorOriginFilter.value),
+    integrationId: listParam(integrationFilter.value),
+    customerId: customerFilter.value || undefined,
     q: search.value.trim() || undefined,
     page: page.value,
     pageSize: DATA_TABLE_PAGE_SIZE,
@@ -299,6 +311,11 @@ const columns: DataTableColumn<ErrorCaptureSummary>[] = [
             noun="origins"
           />
         </div>
+        <OwnerFilterFields
+          v-model:integration-ids="integrationFilter"
+          v-model:customer-id="customerFilter"
+          :integration-options="integrationOptions"
+        />
       </template>
       <template #cell-time="{ row: capture }">
         <span class="tabular">{{ dateTimeFormat.format(new Date(capture.createdAt)) }}</span>

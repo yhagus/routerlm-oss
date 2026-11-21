@@ -30,8 +30,8 @@ useHead({ title: "Usage" });
 // Filters
 
 // Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled&errorOrigin=client&serviceTier=fast) so a
-// refresh or a link (the Overview's origin tiles) keeps them. Model, API Key, status, origin and tier are
-// comma-separated lists; a log matches any pick. The DataTable
+// refresh or a link (the Overview's origin tiles) keeps them. Model, API Key, status, origin, tier and
+// Integration are comma-separated lists; a log matches any pick. The Customer id matches exactly. The DataTable
 // holds the search (?q=) and page (?page=) the same way; this page reads them for its requests.
 const timeRange = useQueryParam<TimeRange>("range", { default: "24h", isValid: isTimeRange });
 const modelFilter = useQueryList("model", { isValid: isUuid });
@@ -48,6 +48,13 @@ const serviceTierFilter = useQueryList("serviceTier", {
   isValid: oneOf(SERVICE_TIERS),
   order: SERVICE_TIERS,
 });
+const {
+  integrationFilter,
+  customerFilter,
+  integrationOptions,
+  ownerFilterTokens,
+  clearOwnerFilters,
+} = useOwnerFilters();
 const search = useQuerySearch();
 const page = useQueryPage();
 // Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
@@ -67,6 +74,7 @@ function clearFilters(): void {
   statusFilter.value = [];
   errorOriginFilter.value = [];
   serviceTierFilter.value = [];
+  clearOwnerFilters();
 }
 
 // The DataTable returns to page 1 when the search or a filter token changes; the time range has no
@@ -110,6 +118,7 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...listFilterTokens("Status", statusFilter, statusOptions),
   ...listFilterTokens("Error Origin", errorOriginFilter, errorOriginOptions),
   ...listFilterTokens("Tier", serviceTierFilter, serviceTierOptions),
+  ...ownerFilterTokens.value,
 ]);
 
 // With API Keys and the Playground both picked, the backend matches either.
@@ -121,6 +130,8 @@ const filterQuery = computed(() => ({
   status: listParam(statusFilter.value),
   errorOrigin: listParam(errorOriginFilter.value),
   serviceTier: listParam(serviceTierFilter.value),
+  integrationId: listParam(integrationFilter.value),
+  customerId: customerFilter.value || undefined,
   q: search.value.trim() || undefined,
 }));
 
@@ -266,6 +277,11 @@ function hasErrorCaptures(log: UsageLogSummary): boolean {
             noun="tiers"
           />
         </div>
+        <OwnerFilterFields
+          v-model:integration-ids="integrationFilter"
+          v-model:customer-id="customerFilter"
+          :integration-options="integrationOptions"
+        />
       </template>
       <template #cell-time="{ row: log }">
         <span class="tabular">{{ dateTimeFormat.format(new Date(log.createdAt)) }}</span>
