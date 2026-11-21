@@ -54,17 +54,38 @@ export interface CreatedApiKey extends ApiKeySummary {
   key: string;
 }
 
+/** The Integration that issued an API Key, and the Customer it issued it to. */
+export interface KeyCustomer {
+  integrationId: string;
+  /** As named when the snapshot was loaded, for the request's Usage Log. */
+  integrationName: string;
+  /** The Integration's allowed Models, the ceiling of its keys'. Empty means every Model. */
+  integrationAllowedModelIds: string[];
+  customerId: string;
+}
+
 /** Who a request signed in with an API Key acts as. */
 export interface ApiKeyPrincipal {
   /** The `api_keys` row id (not the public key id), as Usage Logs reference it. */
   apiKeyId: string;
   /** As named when the snapshot was loaded, for the request's Usage Log. */
   apiKeyName: string;
-  /** Empty means every Model. */
+  /** Empty means every Model (within the Integration's, for a Customer's key). */
   allowedModelIds: string[];
+  /** Null for a key a User created. */
+  customer: KeyCustomer | null;
 }
 
-/** Whether a client signed in with this API Key may call the Model. */
+/**
+ * Whether a client signed in with this API Key may call the Model: within the
+ * key's allowed Models and, for a Customer's key, its Integration's too.
+ */
 export function mayUseModel(principal: ApiKeyPrincipal, modelId: string): boolean {
-  return principal.allowedModelIds.length === 0 || principal.allowedModelIds.includes(modelId);
+  const ceiling = principal.customer?.integrationAllowedModelIds ?? [];
+  return allowsModel(principal.allowedModelIds, modelId) && allowsModel(ceiling, modelId);
+}
+
+/** Whether an allowed-Models list lets the Model through; empty lets every Model through. */
+function allowsModel(allowedModelIds: string[], modelId: string): boolean {
+  return allowedModelIds.length === 0 || allowedModelIds.includes(modelId);
 }

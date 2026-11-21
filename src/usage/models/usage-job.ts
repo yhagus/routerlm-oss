@@ -34,9 +34,18 @@ export type UsageCaller =
       apiKeyId: string;
       /** Always set now; optional only for jobs queued before Usage Logs copied names (ADR 0024). */
       apiKeyName?: string;
+      /** Set for a key an Integration issued; missing for a User's key and in older jobs. */
+      customer?: UsageCustomer;
     }
   | { kind: "playground"; userId: string }
   | { kind: "unidentified" };
+
+/** The Integration and Customer a request's API Key names, as its Usage Log copies them. */
+export interface UsageCustomer {
+  integrationId: string;
+  integrationName: string;
+  customerId: string;
+}
 
 /** An Upstream Model's prices when the request was made, in USD per million tokens. */
 export interface UpstreamModelPrices {

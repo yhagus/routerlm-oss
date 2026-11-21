@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import type { KeyCustomer } from "@/api-keys/models/api-key.js";
 import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
 import type {
   AuthStyle,
@@ -22,8 +23,14 @@ export interface SnapshotApiKey {
   name: string;
   hash: string;
   expiresAt: Date | null;
-  /** Empty means every Model. */
+  /** Empty means every Model (within the Integration's, for a Customer's key). */
   allowedModelIds: string[];
+  /** Null for a key a User created. */
+  customer: KeyCustomer | null;
+  /** USD. Null means no Spend Limit. */
+  spendLimit: number | null;
+  /** Requests per minute. Null means no limit. */
+  requestRate: number | null;
 }
 
 /** Which credential a Provider Account holds, and what of it the inference path keeps in memory. */
@@ -133,7 +140,7 @@ export interface SnapshotModel {
 }
 
 export interface Snapshot {
-  /** Live (unrevoked) API Keys by their public key id. */
+  /** Live API Keys by their public key id: neither revoked nor issued by a disabled Integration. */
   apiKeysByKeyId: ReadonlyMap<string, SnapshotApiKey>;
   modelsByName: ReadonlyMap<string, SnapshotModel>;
   /** By row id, including those no Route uses: a direct Upstream Model test reaches them all. */
