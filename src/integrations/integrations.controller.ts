@@ -1,9 +1,20 @@
 import { CurrentUser } from "@nestjs/authentication";
-import { Body, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
+import {
+  Body,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import type { User } from "@/users/models/user.js";
 import { CreateIntegrationCommand } from "./commands/impl/create-integration.command.js";
+import { DeleteIntegrationCommand } from "./commands/impl/delete-integration.command.js";
 import { DisableIntegrationCommand } from "./commands/impl/disable-integration.command.js";
 import { EnableIntegrationCommand } from "./commands/impl/enable-integration.command.js";
 import { RotateIntegrationSecretCommand } from "./commands/impl/rotate-integration-secret.command.js";
@@ -66,5 +77,12 @@ export class IntegrationsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   enableIntegration(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
     return this.commandBus.execute(new EnableIntegrationCommand(id));
+  }
+
+  /** Deletes the Integration for good, revoking every API Key it issued. Disable it to suspend instead. */
+  @Delete(":id")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteIntegration(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
+    return this.commandBus.execute(new DeleteIntegrationCommand(id));
   }
 }
