@@ -1,0 +1,29 @@
+import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
+import { InjectDrizzle } from "@nestjs/drizzle";
+import { eq, sql } from "drizzle-orm";
+import type { Database } from "@/db/schemas/relations.js";
+import { integrations } from "@/db/schemas/index.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { integrationNotFound } from "../../models/integration-not-found.js";
+import { DisableIntegrationCommand } from "../impl/disable-integration.command.js";
+
+@CommandHandler(DisableIntegrationCommand)
+export class DisableIntegrationHandler implements ICommandHandler<DisableIntegrationCommand> {
+  constructor(
+    @InjectDrizzle() private readonly db: Database,
+    private readonly snapshot: SnapshotService,
+  ) {}
+
+  async execute({ id }: DisableIntegrationCommand): Promise<void> {
+    const disabled = await this.db
+      .update(integrations)
+      .set({ disabledAt: sql`coalesce(${integrations.disabledAt}, now())` })
+      .where(eq(integrations.id, id))
+      .returning({ id: integrations.id });
+    if (disabled.length === 0) {
+      throw integrationNotFound();
+    }
+    // Its API Keys sign in from the snapshot, which must drop them.
+    await this.snapshot.changed();
+  }
+}

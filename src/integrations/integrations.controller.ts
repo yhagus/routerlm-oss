@@ -1,9 +1,11 @@
 import { CurrentUser } from "@nestjs/authentication";
-import { Body, Get, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
+import { Body, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import type { User } from "@/users/models/user.js";
 import { CreateIntegrationCommand } from "./commands/impl/create-integration.command.js";
+import { DisableIntegrationCommand } from "./commands/impl/disable-integration.command.js";
+import { EnableIntegrationCommand } from "./commands/impl/enable-integration.command.js";
 import { RotateIntegrationSecretCommand } from "./commands/impl/rotate-integration-secret.command.js";
 import { UpdateIntegrationCommand } from "./commands/impl/update-integration.command.js";
 import type { CreatedIntegration, IntegrationSummary } from "./models/integration.js";
@@ -52,5 +54,17 @@ export class IntegrationsController {
     @CurrentUser() rotator: User,
   ): Promise<CreatedIntegration> {
     return this.commandBus.execute(new RotateIntegrationSecretCommand(id, rotator.id));
+  }
+
+  @Post(":id/disable")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  disableIntegration(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
+    return this.commandBus.execute(new DisableIntegrationCommand(id));
+  }
+
+  @Post(":id/enable")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  enableIntegration(@Param("id", ParseUUIDPipe) id: string): Promise<void> {
+    return this.commandBus.execute(new EnableIntegrationCommand(id));
   }
 }
