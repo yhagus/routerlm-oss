@@ -13,6 +13,19 @@ export function formatPageNumber(pageNumber: number): string {
 }
 
 /**
+ * The page files are numbered (1.authentication.md, ..., 10.integrations.md).
+ * Their stems keep that number, compared as a number: as text, 10 sorts before 2.
+ */
+function pageNumberOf(stem: string): number {
+  const fileName = stem.split("/").at(-1) ?? "";
+  return Number.parseInt(fileName, 10);
+}
+
+function byReadingOrder(first: { stem: string }, second: { stem: string }): number {
+  return pageNumberOf(first.stem) - pageNumberOf(second.stem);
+}
+
+/**
  * The current language's pages in reading order, and where the reader is
  * among them. The layout, the page and the pager share one query.
  */
@@ -28,15 +41,14 @@ export function useDocsContents(): {
   const route = useRoute();
   const { locale, collection } = useDocsLocale();
 
-  // The page files are numbered (1.authentication.md, ...), so their stems sort in reading order.
   const { data, status } = useAsyncData(
     () => `docs-contents-${locale.value}`,
-    () => queryCollection(collection.value).order("stem", "ASC").select("title", "path").all(),
+    () => queryCollection(collection.value).select("title", "path", "stem").all(),
     { lazy: true },
   );
 
   const pages = computed(() =>
-    (data.value ?? []).map((page, index) => ({
+    (data.value ?? []).toSorted(byReadingOrder).map((page, index) => ({
       path: page.path,
       title: page.title,
       number: index + 1,
