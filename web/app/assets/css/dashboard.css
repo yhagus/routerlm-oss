@@ -5003,12 +5003,21 @@ svg.lucide {
 /* Integration detail: reuses the Provider hero */
 .integration-overview__tools {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 12px;
 }
 .secret-history {
-  padding: 0 21px 21px;
+  padding: 18px 21px 21px;
+}
+/* One line above a table panel's rows, in place of a heading the tab already gives. */
+.panel-note {
+  margin: 0;
+  padding: 12px 21px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--muted);
+  font-size: 11px;
 }
 .price-line {
   display: block;

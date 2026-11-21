@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { ArrowLeft, CloudOff, Pencil, Power, RefreshCw, Trash2 } from "@lucide/vue";
+import {
+  ArrowLeft,
+  CirclePause,
+  CirclePlay,
+  CloudOff,
+  Pencil,
+  RefreshCw,
+  Trash2,
+} from "@lucide/vue";
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "reka-ui";
 import type { IntegrationConfirmation } from "~/components/IntegrationConfirmDialog.vue";
+import type { RowAction } from "~/components/RowActionsMenu.vue";
 import { apiErrorMessage } from "~/lib/api";
 import type { ModelChoice } from "~/lib/api-keys";
 import { dateFormat } from "~/lib/dateFormats";
@@ -39,9 +48,6 @@ const isLoadingModelChoices = computed(
 useHead({ title: () => integration.value?.name ?? "Integration" });
 
 const status = computed(() => (integration.value ? integrationStatus(integration.value) : null));
-const totalKeyCount = computed(() =>
-  integration.value ? integration.value.activeKeyCount + integration.value.revokedKeyCount : 0,
-);
 
 /** The open tab lives in `?tab=` so a link can open it directly. */
 const activeTab = useQueryParam<Tab>("tab", { default: "overview", isValid: oneOf(TABS) });
@@ -104,6 +110,23 @@ async function handleRotated(integrationWithSecret: CreatedIntegration): Promise
   await refresh();
 }
 
+// The less frequent actions sit behind one "…" button beside Edit.
+
+type MoreActionId = "rotate" | "toggle" | "delete";
+
+const moreActions = computed<RowAction<MoreActionId>[]>(() => [
+  { id: "rotate", label: "Rotate secret", icon: RefreshCw },
+  status.value === "enabled"
+    ? { id: "toggle", label: "Disable", icon: CirclePause }
+    : { id: "toggle", label: "Enable", icon: CirclePlay },
+  { id: "delete", label: "Delete", icon: Trash2, isDestructive: true },
+]);
+
+function handleMoreAction(id: MoreActionId): void {
+  if (id === "toggle") void toggleEnabled();
+  else openConfirm(id);
+}
+
 async function handleDeleted(deleted: IntegrationSummary): Promise<void> {
   showToast(`Deleted ${deleted.name}`);
   await navigateTo("/integrations");
@@ -144,31 +167,18 @@ async function handleDeleted(deleted: IntegrationSummary): Promise<void> {
           <h1>{{ integration.name }}</h1>
           <p class="provider-hero__meta">
             <span class="tabular" title="The public id inside its Integration Secret"
-              >rlmi_{{ integration.keyId }}_…</span
+              >rlmi_{{ integration.keyId }}</span
             >
             <span
-              >Created <span class="tabular">{{ formatDate(integration.createdAt) }}</span> by
-              {{ integration.createdBy?.email ?? "—" }}</span
-            >
-            <span
-              >Last rotated
-              <span v-if="integration.lastRotatedAt" class="tabular">{{
-                formatDate(integration.lastRotatedAt)
-              }}</span
-              ><span v-else>Never</span></span
+              >Created <span class="tabular">{{ formatDate(integration.createdAt) }}</span></span
             >
             <span
               >Last used
               <span v-if="integration.lastUsedAt" class="tabular">{{
                 formatDate(integration.lastUsedAt)
               }}</span
-              ><span v-else>Never</span></span
+              ><span v-else>never</span></span
             >
-          </p>
-          <p class="provider-hero__meta tabular">
-            <span>{{ formatCount(integration.activeKeyCount) }} active API Keys</span>
-            <span>{{ formatCount(integration.revokedKeyCount) }} revoked</span>
-            <span>{{ formatCount(integration.customerCount) }} Customers</span>
           </p>
         </div>
         <div class="provider-hero__actions">
@@ -180,21 +190,11 @@ async function handleDeleted(deleted: IntegrationSummary): Promise<void> {
           <button class="button" type="button" @click="isFormOpen = true">
             <Pencil :size="14" /> Edit
           </button>
-          <button class="button" type="button" @click="openConfirm('rotate')">
-            <RefreshCw :size="14" /> Rotate secret
-          </button>
-          <button class="button" type="button" @click="toggleEnabled">
-            <Power :size="14" /> {{ status === "enabled" ? "Disable" : "Enable" }}
-          </button>
-          <button
-            class="icon-action icon-action--danger"
-            type="button"
-            :aria-label="`Delete ${integration.name}`"
-            title="Delete"
-            @click="openConfirm('delete')"
-          >
-            <Trash2 :size="15" />
-          </button>
+          <RowActionsMenu
+            :label="`More actions for ${integration.name}`"
+            :actions="moreActions"
+            @select="handleMoreAction"
+          />
         </div>
       </section>
 
@@ -203,9 +203,7 @@ async function handleDeleted(deleted: IntegrationSummary): Promise<void> {
           <TabsTrigger class="tabs__trigger" value="overview">Overview</TabsTrigger>
           <TabsTrigger class="tabs__trigger" value="api-keys">
             API Keys
-            <span class="tabs__count tabular"
-              >{{ formatCount(integration.activeKeyCount) }}/{{ formatCount(totalKeyCount) }}</span
-            >
+            <span class="tabs__count tabular">{{ formatCount(integration.activeKeyCount) }}</span>
           </TabsTrigger>
           <TabsTrigger class="tabs__trigger" value="customers">
             Customers

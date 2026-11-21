@@ -44,8 +44,14 @@ async function refresh(): Promise<void> {
       label="Time range"
       @update:model-value="pickRange"
     />
-    <button class="button button--quiet" type="button" @click="refresh()">
-      <RefreshCw :size="14" /> Refresh
+    <button
+      class="icon-action"
+      type="button"
+      aria-label="Refresh totals"
+      title="Refresh"
+      @click="refresh()"
+    >
+      <RefreshCw :size="15" />
     </button>
   </div>
   <section v-if="loadError" class="panel">

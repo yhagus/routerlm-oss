@@ -25,15 +25,6 @@ function formatTime(value: string): string {
 
 <template>
   <section class="panel">
-    <div class="panel-heading">
-      <div>
-        <h2>Secret history</h2>
-        <p>
-          Each rotation replaced the Integration Secret; the one it replaced stopped working at
-          once.
-        </p>
-      </div>
-    </div>
     <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
       <strong>Couldn't load the rotation history.</strong
       ><span>Check that the backend is running, then reload the page.</span>

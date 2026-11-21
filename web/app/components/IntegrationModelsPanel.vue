@@ -34,23 +34,21 @@ const rows = computed(() =>
 
 <template>
   <section class="panel table-panel">
-    <div class="panel-heading">
-      <div>
-        <h2>Models</h2>
-        <p v-if="sellsEveryModel">
-          No allowed Models are set, so the Integration may sell every Model, including ones added
-          later.
-        </p>
-        <p v-else>The allowed Models: its Customers' API Keys may use only these.</p>
-      </div>
-    </div>
+    <p v-if="sellsEveryModel && rows.length > 0" class="panel-note">
+      No allowed Models are set, so it may sell every Model, including ones added later.
+    </p>
     <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
       <strong>Couldn't load the Models.</strong
       ><span>Check that the backend is running, then reload the page.</span>
     </EmptyState>
     <div v-else-if="isLoading" class="loading-panel" aria-busy="true"><AppSpinner /></div>
     <EmptyState v-else-if="rows.length === 0" :icon="Boxes">
-      <strong>No Models to sell.</strong><span>Its allowed Models may all have been deleted.</span>
+      <strong>No Models to sell.</strong
+      ><span>{{
+        sellsEveryModel
+          ? "The Catalog has no enabled Models yet."
+          : "Its allowed Models were deleted or disabled."
+      }}</span>
     </EmptyState>
     <div v-else class="table-wrap">
       <table>
