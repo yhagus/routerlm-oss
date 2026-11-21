@@ -14,6 +14,26 @@ _Avoid_: Account, admin, operator account
 A credential the gateway issues to a client application so it can call the inference endpoints.
 _Avoid_: Token, client key, app key
 
+**Integration**:
+An outside business application, such as a SaaS that resells inference, that an operator connects to the gateway so it can issue API Keys to its own Customers and read their usage. One gateway can serve many Integrations, and each sees only what is its own. API Keys a User creates in the dashboard belong to no Integration.
+_Avoid_: Tenant, app, partner, client
+
+**Customer**:
+A buyer of one Integration, known to the gateway only by the id that Integration gives it and only as the owner named on API Keys and their records. The gateway keeps nothing else about a Customer: no profile, balance or plan. A Customer never logs in to the dashboard.
+_Avoid_: Tenant, end user, account
+
+**Integration Secret**:
+The credential an Integration presents to manage its API Keys and read its usage. It is shown once when issued and can be rotated or revoked. It never calls the inference endpoints.
+_Avoid_: Integration key, service token, client secret
+
+**Spend Limit**:
+The most Cost an API Key may run up, set by the Integration that owns it. Once reached, new requests are refused; requests already running may finish and go slightly past it. A Customer's money or balance is never kept by the gateway, only this limit and what the key has spent against it.
+_Avoid_: Balance, credit, budget, quota
+
+**Request Rate**:
+The most requests per minute an API Key may send, set by the Integration that owns it, or by a User for a key that belongs to no Integration. Requests past it are refused until the minute frees up. Unrelated to a Provider Account's Quota Meters.
+_Avoid_: Rate limit, RPM, throttle
+
 ### Upstream
 
 **Provider**:
