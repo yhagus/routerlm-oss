@@ -1,0 +1,1045 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "bbebf5de-7237-434d-b2d8-82ef58002596",
+  "prevIds": [
+    "a526679d-f17b-4080-b270-9a113ed84007"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "integration_rotations"
+      ],
+      "writes": [
+        "s|tbl|public.integration_rotations",
+        "n|tbl|public.integration_rotations",
+        "e|tbl|public.integration_rotations",
+        "n|rel|public.integration_rotations",
+        "n|type|public.integration_rotations",
+        "n|rel|public.integration_rotations_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "integrations"
+      ],
+      "writes": [
+        "s|tbl|public.integrations",
+        "n|tbl|public.integrations",
+        "e|tbl|public.integrations",
+        "n|rel|public.integrations",
+        "n|type|public.integrations",
+        "n|rel|public.integrations_pkey",
+        "n|rel|public.integrations_key_id_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "api_keys",
+        "integration_id"
+      ],
+      "writes": [
+        "s|col|public.api_keys.integration_id",
+        "n|col|public.api_keys.integration_id",
+        "e|col|public.api_keys.integration_id"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "api_keys",
+        "customer_id"
+      ],
+      "writes": [
+        "s|col|public.api_keys.customer_id",
+        "n|col|public.api_keys.customer_id",
+        "e|col|public.api_keys.customer_id"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "api_keys",
+        "spend_limit"
+      ],
+      "writes": [
+        "s|col|public.api_keys.spend_limit",
+        "n|col|public.api_keys.spend_limit",
+        "e|col|public.api_keys.spend_limit"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "api_keys",
+        "spent"
+      ],
+      "writes": [
+        "s|col|public.api_keys.spent",
+        "n|col|public.api_keys.spent",
+        "e|col|public.api_keys.spent"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "api_keys",
+        "request_rate"
+      ],
+      "writes": [
+        "s|col|public.api_keys.request_rate",
+        "n|col|public.api_keys.request_rate",
+        "e|col|public.api_keys.request_rate"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "integration_name"
+      ],
+      "writes": [
+        "s|col|public.attempts.integration_name",
+        "n|col|public.attempts.integration_name",
+        "e|col|public.attempts.integration_name"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "attempts",
+        "customer_id"
+      ],
+      "writes": [
+        "s|col|public.attempts.customer_id",
+        "n|col|public.attempts.customer_id",
+        "e|col|public.attempts.customer_id"
+      ],
+      "reads": [
+        "n|tbl|public.attempts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "integration_id"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.integration_id",
+        "n|col|public.usage_logs.integration_id",
+        "e|col|public.usage_logs.integration_id"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "integration_name"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.integration_name",
+        "n|col|public.usage_logs.integration_name",
+        "e|col|public.usage_logs.integration_name"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "customer_id"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.customer_id",
+        "n|col|public.usage_logs.customer_id",
+        "e|col|public.usage_logs.customer_id"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "sequence"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.sequence",
+        "n|col|public.usage_logs.sequence",
+        "e|col|public.usage_logs.sequence"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "api_keys",
+        "api_keys_integration_id_customer_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.api_keys_integration_id_customer_id_idx",
+        "n|idx|public.api_keys_integration_id_customer_id_idx",
+        "e|idx|public.api_keys_integration_id_customer_id_idx",
+        "n|rel|public.api_keys_integration_id_customer_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public",
+        "n|col|public.api_keys.integration_id",
+        "n|col|public.api_keys.customer_id"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "integration_rotations",
+        "integration_rotations_integration_id_rotated_at_idx"
+      ],
+      "writes": [
+        "s|idx|public.integration_rotations_integration_id_rotated_at_idx",
+        "n|idx|public.integration_rotations_integration_id_rotated_at_idx",
+        "e|idx|public.integration_rotations_integration_id_rotated_at_idx",
+        "n|rel|public.integration_rotations_integration_id_rotated_at_idx"
+      ],
+      "reads": [
+        "n|tbl|public.integration_rotations",
+        "n|sch|public",
+        "n|col|public.integration_rotations.integration_id",
+        "n|col|public.integration_rotations.rotated_at"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "usage_logs",
+        "usage_logs_integration_id_sequence_idx"
+      ],
+      "writes": [
+        "s|idx|public.usage_logs_integration_id_sequence_idx",
+        "n|idx|public.usage_logs_integration_id_sequence_idx",
+        "e|idx|public.usage_logs_integration_id_sequence_idx",
+        "n|rel|public.usage_logs_integration_id_sequence_idx"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "n|col|public.usage_logs.integration_id",
+        "n|col|public.usage_logs.sequence"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "api_keys"
+      ],
+      "writes": [
+        "s|fk|public.api_keys.api_keys_integration_id_integrations_id_fkey",
+        "n|fk|public.api_keys.api_keys_integration_id_integrations_id_fkey",
+        "e|fk|public.api_keys.api_keys_integration_id_integrations_id_fkey",
+        "n|con|public.api_keys.api_keys_integration_id_integrations_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public",
+        "n|tbl|public.integrations",
+        "n|sch|public",
+        "n|col|public.api_keys.integration_id",
+        "n|col|public.integrations.id",
+        "e|uniqueness|public.integrations.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "integration_rotations"
+      ],
+      "writes": [
+        "s|fk|public.integration_rotations.integration_rotations_integration_id_integrations_id_fkey",
+        "n|fk|public.integration_rotations.integration_rotations_integration_id_integrations_id_fkey",
+        "e|fk|public.integration_rotations.integration_rotations_integration_id_integrations_id_fkey",
+        "n|con|public.integration_rotations.integration_rotations_integration_id_integrations_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.integration_rotations",
+        "n|sch|public",
+        "n|tbl|public.integrations",
+        "n|sch|public",
+        "n|col|public.integration_rotations.integration_id",
+        "n|col|public.integrations.id",
+        "e|uniqueness|public.integrations.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "integration_rotations"
+      ],
+      "writes": [
+        "s|fk|public.integration_rotations.integration_rotations_rotated_by_id_users_id_fkey",
+        "n|fk|public.integration_rotations.integration_rotations_rotated_by_id_users_id_fkey",
+        "e|fk|public.integration_rotations.integration_rotations_rotated_by_id_users_id_fkey",
+        "n|con|public.integration_rotations.integration_rotations_rotated_by_id_users_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.integration_rotations",
+        "n|sch|public",
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|col|public.integration_rotations.rotated_by_id",
+        "n|col|public.users.id",
+        "e|uniqueness|public.users.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "integrations"
+      ],
+      "writes": [
+        "s|fk|public.integrations.integrations_created_by_id_users_id_fkey",
+        "n|fk|public.integrations.integrations_created_by_id_users_id_fkey",
+        "e|fk|public.integrations.integrations_created_by_id_users_id_fkey",
+        "n|con|public.integrations.integrations_created_by_id_users_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.integrations",
+        "n|sch|public",
+        "n|tbl|public.users",
+        "n|sch|public",
+        "n|col|public.integrations.created_by_id",
+        "n|col|public.users.id",
+        "e|uniqueness|public.users.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "integration_rotations",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "integrations",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "integration_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "customer_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "spend_limit",
+        "type": "numeric(18,10)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "spent",
+        "type": "numeric(18,10)",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "'0'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "request_rate",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "integration_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "rotated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "rotated_by_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "previous_key_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "new_key_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "key_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "hash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "allowed_model_ids",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "created_by_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "disabled_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "integration_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "attempts",
+        "name": "customer_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "integration_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "integration_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "customer_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "sequence",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": {
+          "type": "always",
+          "name": "usage_logs_sequence_seq",
+          "increment": "1",
+          "startWith": "1",
+          "minValue": "1",
+          "maxValue": "9223372036854775807",
+          "cache": 1,
+          "cycle": false
+        },
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "api_keys_integration_id_customer_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "integration_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "customer_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "integration_rotations_integration_id_rotated_at_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "integration_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "rotated_at",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "usage_logs_integration_id_sequence_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "integration_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sequence",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "api_keys_integration_id_integrations_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "integration_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "integrations",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "integration_rotations_integration_id_integrations_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "integration_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "integrations",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "integration_rotations_rotated_by_id_users_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "rotated_by_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "users",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "integrations_created_by_id_users_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "created_by_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "users",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "SET NULL",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integration_rotations",
+        "name": "integration_rotations_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "integrations_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "integrations_key_id_key",
+        "nameExplicit": false,
+        "columns": [
+          "key_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    }
+  ]
+}

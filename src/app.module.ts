@@ -5,6 +5,7 @@ import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { APP_PIPE } from "@nestjs/core";
 import { ApiKeysModule } from "@/api-keys/api-keys.module.js";
+import { IntegrationsModule } from "@/integrations/integrations.module.js";
 import { AppController } from "@/app.controller.js";
 import { AuthModule } from "@/auth/auth.module.js";
 import { CatalogGapsModule } from "@/catalog/catalog-gaps.module.js";
@@ -40,6 +41,7 @@ import { UsageModule } from "@/usage/usage.module.js";
     AuthModule,
     QueueModule,
     ApiKeysModule,
+    IntegrationsModule,
     UpstreamModule,
     RoutingModule,
     InferenceModule,

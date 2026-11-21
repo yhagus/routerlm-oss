@@ -43,7 +43,11 @@ export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<
   }));
 }
 
-async function findModelNames(db: Database, modelIds: string[]): Promise<Map<string, string>> {
+/** The names of the Models that still exist among `modelIds`, by id. */
+export async function findModelNames(
+  db: Database,
+  modelIds: string[],
+): Promise<Map<string, string>> {
   if (modelIds.length === 0) {
     return new Map();
   }
