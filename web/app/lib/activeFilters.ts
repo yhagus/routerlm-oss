@@ -45,3 +45,18 @@ export function searchFilterTokens(search: WritableComputedRef<string>): ActiveF
     },
   ];
 }
+
+/** One token for a filter typed as text, such as a Customer id, or none while it is empty. */
+export function textFilterTokens(group: string, text: WritableComputedRef<string>): ActiveFilter[] {
+  if (text.value === "") return [];
+  return [
+    {
+      key: group,
+      group,
+      label: text.value,
+      remove: () => {
+        text.value = "";
+      },
+    },
+  ];
+}

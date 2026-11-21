@@ -9,10 +9,12 @@ import {
   type ApiKeySummary,
   apiKeyStatus,
   type CreatedApiKey,
+  isIntegrationOwned,
   type ModelChoice,
 } from "~/lib/api-keys";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { dateFormat } from "~/lib/dateFormats";
+import { formatCost, formatCount } from "~/lib/usage";
 
 useHead({ title: "API Keys" });
 
@@ -58,32 +60,51 @@ const rows = computed<ApiKeyRow[]>(() =>
   (apiKeys.value ?? []).map((apiKey) => ({ ...apiKey, status: apiKeyStatus(apiKey, Date.now()) })),
 );
 
-// Held in the URL (?status=…) so a refresh or a link keeps it. The DataTable
-// holds the search and page the same way.
+// Held in the URL (?status=…&integration=…&customer=…) so a refresh or a link
+// keeps them. The DataTable holds the search and page the same way.
 const statusFilter = useQueryList("status", {
   isValid: oneOf(API_KEY_STATUSES),
   order: API_KEY_STATUSES,
 });
+const {
+  integrationFilter,
+  customerFilter,
+  integrationOptions,
+  ownerFilterTokens,
+  clearOwnerFilters,
+} = useOwnerFilters();
 
-const activeFilters = computed<ActiveFilter[]>(() =>
-  listFilterTokens("Status", statusFilter, statusFilterOptions),
-);
+const activeFilters = computed<ActiveFilter[]>(() => [
+  ...listFilterTokens("Status", statusFilter, statusFilterOptions),
+  ...ownerFilterTokens.value,
+]);
 
-/** Rows the status filter keeps; the DataTable applies the search. */
-const filteredRows = computed(() =>
-  statusFilter.value.length === 0
-    ? rows.value
-    : rows.value.filter((row) => statusFilter.value.includes(row.status)),
-);
+function matchesFilters(row: ApiKeyRow): boolean {
+  const statuses = statusFilter.value;
+  const integrationIds = integrationFilter.value;
+  if (statuses.length > 0 && !statuses.includes(row.status)) return false;
+  if (integrationIds.length > 0 && !integrationIds.includes(row.integration?.id ?? "")) {
+    return false;
+  }
+  return customerFilter.value === "" || row.customerId === customerFilter.value;
+}
+
+/** Rows the filters keep; the DataTable applies the search. */
+const filteredRows = computed(() => rows.value.filter(matchesFilters));
 
 function clearFilters(): void {
   statusFilter.value = [];
+  clearOwnerFilters();
 }
 
 const columns: DataTableColumn<ApiKeyRow>[] = [
   { id: "name", header: "Name", enableHiding: false, accessorFn: (row) => row.name },
   { id: "keyId", header: "Key id", accessorFn: (row) => `rlm_${row.keyId}` },
+  { id: "integration", header: "Integration", accessorFn: (row) => row.integration?.name ?? "" },
+  { id: "customer", header: "Customer", accessorFn: (row) => row.customerId ?? "" },
   { id: "allowedModels", header: "Allowed Models", accessorFn: allowedModelsLabel },
+  { id: "spendLimit", header: "Spend Limit" },
+  { id: "requestRate", header: "Request Rate" },
   { id: "created", header: "Created" },
   { id: "createdBy", header: "Created by", accessorFn: (row) => row.createdBy?.email ?? "" },
   { id: "expires", header: "Expires" },
@@ -95,6 +116,15 @@ const columns: DataTableColumn<ApiKeyRow>[] = [
 function allowedModelsLabel(apiKey: ApiKeySummary): string {
   if (apiKey.allowedModels.length === 0) return "All Models";
   return apiKey.allowedModels.map((model) => model.name ?? "Deleted Model").join(", ");
+}
+
+function spendLimitLabel(apiKey: ApiKeySummary): string {
+  const limit = apiKey.spendLimit === null ? "no limit" : formatCost(apiKey.spendLimit);
+  return `${formatCost(apiKey.spent)} of ${limit}`;
+}
+
+function requestRateLabel(apiKey: ApiKeySummary): string {
+  return apiKey.requestRate === null ? "No limit" : `${formatCount(apiKey.requestRate)} / min`;
 }
 
 // Rotation history
@@ -223,11 +253,19 @@ async function confirmAction(): Promise<void> {
   }
 }
 
-// Row menu: a revoked key has no actions left
+// Row menu: a revoked key has no actions left, and an Integration's key only revoke.
 
 type ApiKeyActionId = "copy" | "edit" | "rotate" | "revoke";
 
+const REVOKE_ACTION: RowAction<ApiKeyActionId> = {
+  id: "revoke",
+  label: "Revoke",
+  icon: Ban,
+  isDestructive: true,
+};
+
 function actionsFor(apiKey: ApiKeyRow): RowAction<ApiKeyActionId>[] {
+  if (isIntegrationOwned(apiKey)) return [REVOKE_ACTION];
   return [
     {
       id: "copy",
@@ -238,7 +276,7 @@ function actionsFor(apiKey: ApiKeyRow): RowAction<ApiKeyActionId>[] {
     },
     { id: "edit", label: "Edit", icon: Pencil },
     { id: "rotate", label: "Rotate key", icon: RefreshCw },
-    { id: "revoke", label: "Revoke", icon: Ban, isDestructive: true },
+    REVOKE_ACTION,
   ];
 }
 
@@ -268,7 +306,7 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
     <DataTable
       table-id="api-keys"
       label="API Keys"
-      search-placeholder="Search name, key id, Model or creator"
+      search-placeholder="Search name, key id, Integration, Customer, Model or creator"
       :columns="columns"
       :rows="filteredRows"
       :get-row-id="(row) => row.id"
@@ -290,6 +328,11 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
             noun="statuses"
           />
         </div>
+        <OwnerFilterFields
+          v-model:integration-ids="integrationFilter"
+          v-model:customer-id="customerFilter"
+          :integration-options="integrationOptions"
+        />
       </template>
       <template #cell-name="{ row: apiKey }">
         <div class="table-entity">
@@ -298,6 +341,16 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
       </template>
       <template #cell-keyId="{ row: apiKey }">
         <span class="tabular">rlm_{{ apiKey.keyId }}_…</span>
+      </template>
+      <template #cell-integration="{ row: apiKey }">{{ apiKey.integration?.name ?? "—" }}</template>
+      <template #cell-customer="{ row: apiKey }">
+        <span class="tabular">{{ apiKey.customerId ?? "—" }}</span>
+      </template>
+      <template #cell-spendLimit="{ row: apiKey }">
+        <span class="tabular">{{ spendLimitLabel(apiKey) }}</span>
+      </template>
+      <template #cell-requestRate="{ row: apiKey }">
+        <span class="tabular">{{ requestRateLabel(apiKey) }}</span>
       </template>
       <template #cell-allowedModels="{ row: apiKey }">
         <span class="api-key-models" :title="allowedModelsLabel(apiKey)">{{

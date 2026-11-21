@@ -25,6 +25,16 @@ export interface ApiKeySummary {
   isCopyable: boolean;
   /** When the key was last rotated; null if never. Older rotations were not recorded. */
   lastRotatedAt: string | null;
+  /** The Integration that issued the key; null for a key a User created. */
+  integration: { id: string; name: string } | null;
+  /** The id its Integration gives the Customer; null for a key a User created. */
+  customerId: string | null;
+  /** USD. Null means no Spend Limit. */
+  spendLimit: number | null;
+  /** USD of Cost counted against the Spend Limit so far. */
+  spent: number;
+  /** Requests per minute. Null means no Request Rate. */
+  requestRate: number | null;
 }
 
 /** One rotation, as `GET /api-keys/:id/rotations` lists them, newest first. */
@@ -42,6 +52,14 @@ export interface ApiKeyRotation {
 /** The create and rotate responses: the key itself, ready to copy. */
 export interface CreatedApiKey extends ApiKeySummary {
   key: string;
+}
+
+/**
+ * An Integration's key belongs to what that Integration sold its Customer: the
+ * dashboard may only revoke it, and the backend refuses edits and rotations.
+ */
+export function isIntegrationOwned(apiKey: ApiKeySummary): boolean {
+  return apiKey.integration !== null;
 }
 
 export type ApiKeyStatus = "active" | "expired" | "revoked";
