@@ -8,7 +8,7 @@ import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
 import type { ApiKeySummary } from "../../models/api-key.js";
 import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
-import { assertModelsExist } from "../../models/assert-models-exist.js";
+import { assertModelsExist } from "@/libs/models/allowed-models.js";
 import { assertUserOwnsKey, findUnrevokedApiKey } from "../../models/find-unrevoked-api-key.js";
 import { UpdateApiKeyCommand } from "../impl/update-api-key.command.js";
 

@@ -7,7 +7,7 @@ import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { ApiKeyAuth } from "../../providers/api-key-auth.js";
 import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "../../models/api-key.js";
-import { assertModelsExist } from "../../models/assert-models-exist.js";
+import { assertModelsExist } from "@/libs/models/allowed-models.js";
 import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
 import { CreateApiKeyCommand } from "../impl/create-api-key.command.js";
 

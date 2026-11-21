@@ -1,6 +1,7 @@
-import { desc, eq, inArray, max, type SQL, sql } from "drizzle-orm";
+import { desc, eq, max, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { apiKeyRotations, apiKeys, integrations, models, users } from "@/db/schemas/index.js";
+import { apiKeyRotations, apiKeys, integrations, users } from "@/db/schemas/index.js";
+import { findModelNames } from "@/libs/models/allowed-models.js";
 import type { ApiKeySummary } from "./api-key.js";
 
 /** API Key summaries, newest first, optionally narrowed by `where`. */
@@ -52,19 +53,4 @@ export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<
       allowedModels: allowedModelIds.map((id) => ({ id, name: modelNames.get(id) ?? null })),
     }),
   );
-}
-
-/** The names of the Models that still exist among `modelIds`, by id. */
-export async function findModelNames(
-  db: Database,
-  modelIds: string[],
-): Promise<Map<string, string>> {
-  if (modelIds.length === 0) {
-    return new Map();
-  }
-  const found = await db
-    .select({ id: models.id, name: models.name })
-    .from(models)
-    .where(inArray(models.id, [...new Set(modelIds)]));
-  return new Map(found.map((model) => [model.id, model.name]));
 }
