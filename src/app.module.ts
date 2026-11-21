@@ -8,6 +8,7 @@ import { ApiKeysModule } from "@/api-keys/api-keys.module.js";
 import { IntegrationsModule } from "@/integrations/integrations.module.js";
 import { AppController } from "@/app.controller.js";
 import { AuthModule } from "@/auth/auth.module.js";
+import { ControlPlaneModule } from "@/control-plane/control-plane.module.js";
 import { CatalogGapsModule } from "@/catalog/catalog-gaps.module.js";
 import { type Env, envSchema } from "@/config/schemas/env.schema.js";
 import { relations } from "@/db/schemas/relations.js";
@@ -42,6 +43,7 @@ import { UsageModule } from "@/usage/usage.module.js";
     QueueModule,
     ApiKeysModule,
     IntegrationsModule,
+    ControlPlaneModule,
     UpstreamModule,
     RoutingModule,
     InferenceModule,

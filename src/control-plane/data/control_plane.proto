@@ -1,0 +1,208 @@
+// The control plane contract (ADR 0033): how an Integration manages the API
+// Keys of its Customers, lists the Models it may sell and pulls its Usage Logs.
+// This file is the source of truth for both adapters:
+//
+// - HTTP/JSON on the gateway's own port under /integration/v1, with bodies in
+//   proto3's JSON mapping (lowerCamelCase names, 64-bit integers as strings,
+//   Timestamps as RFC 3339 strings, unset optional fields left out).
+// - gRPC, served by the queue worker when CONTROL_PLANE_PORT is set.
+//
+// Every call authenticates with the Integration Secret: the HTTP header
+// `Authorization: Bearer rlmi_…`, or the gRPC `authorization` metadata with
+// the same value. Every operation sees only the calling Integration's API Keys
+// and Usage Logs.
+//
+// Errors map one-to-one between the transports. Over HTTP the body is
+// `{"code": "<gRPC code name>", "message": "…"}`:
+//
+//   UNAUTHENTICATED      401  missing, wrong, rotated-away or disabled-Integration secret
+//   INVALID_ARGUMENT     400  a malformed request, a missing Customer id, a Model outside the ceiling
+//   NOT_FOUND            404  no such API Key, including another Integration's and the operators'
+//   FAILED_PRECONDITION  409  updating or rotating a revoked API Key
+syntax = "proto3";
+
+package routerlm.integration.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+service ControlPlane {
+  // POST /integration/v1/keys, body: the request. Answers 201.
+  rpc CreateKey(CreateKeyRequest) returns (IssuedKey);
+  // PATCH /integration/v1/keys/{id}, body: `key`. Over HTTP the update mask is
+  // the set of fields present in the body; a field sent as null is cleared.
+  rpc UpdateKey(UpdateKeyRequest) returns (ApiKey);
+  // POST /integration/v1/keys/{id}/rotate
+  rpc RotateKey(RotateKeyRequest) returns (IssuedKey);
+  // POST /integration/v1/keys/{id}/revoke. Revoking a revoked key changes nothing.
+  rpc RevokeKey(RevokeKeyRequest) returns (ApiKey);
+  // GET /integration/v1/keys/{id}
+  rpc GetKey(GetKeyRequest) returns (ApiKey);
+  // GET /integration/v1/keys?customerId=&pageSize=&pageToken=
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse);
+  // GET /integration/v1/models
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+  // GET /integration/v1/usage-logs?after=&pageSize=
+  rpc ListUsageLogs(ListUsageLogsRequest) returns (ListUsageLogsResponse);
+}
+
+// An API Key the Integration issued to one of its Customers. Never the key itself.
+message ApiKey {
+  // The key's id, as every other operation names it.
+  string id = 1;
+  // The public id inside the key (`rlm_<keyId>_<secret>`), to tell keys apart.
+  string key_id = 2;
+  string name = 3;
+  // Set when the key was created; never changes.
+  string customer_id = 4;
+  google.protobuf.Timestamp created_at = 5;
+  // Unset: the key never expires.
+  google.protobuf.Timestamp expires_at = 6;
+  // Unset while the key works.
+  google.protobuf.Timestamp revoked_at = 7;
+  // Model ids. Empty means every Model the Integration may sell.
+  repeated string allowed_model_ids = 8;
+  // USD. Unset means no Spend Limit.
+  optional double spend_limit = 9;
+  // USD of Cost counted against the Spend Limit.
+  double spent = 10;
+  // Requests per minute. Unset means no limit.
+  optional int32 request_rate = 11;
+}
+
+// What a key is set up with: on create, and as the body of an update.
+message KeySettings {
+  string name = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  repeated string allowed_model_ids = 3;
+  optional double spend_limit = 4;
+  optional int32 request_rate = 5;
+}
+
+// A key just created or rotated, with the whole key. The only time it is returned.
+message IssuedKey {
+  ApiKey api_key = 1;
+  // `rlm_<keyId>_<secret>`, for the Integration to hand to its Customer.
+  string key = 2;
+}
+
+message CreateKeyRequest {
+  // Required: the id the Integration gives its Customer.
+  string customer_id = 1;
+  // Defaults to the Customer id.
+  string name = 2;
+  // In the future. Unset: the key never expires.
+  google.protobuf.Timestamp expires_at = 3;
+  // Model ids within the Integration's allowed Models. Empty means every one of them.
+  repeated string allowed_model_ids = 4;
+  // USD, at least 0. Unset means no Spend Limit.
+  optional double spend_limit = 5;
+  // Requests per minute, at least 1. Unset means no limit.
+  optional int32 request_rate = 6;
+}
+
+message UpdateKeyRequest {
+  string id = 1;
+  KeySettings key = 2;
+  // Which fields of `key` to change; at least one. A listed field left unset is
+  // cleared (expiry, Spend Limit, Request Rate) or emptied (allowed Models).
+  // The Customer id is not among them: it never changes.
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+message RotateKeyRequest {
+  string id = 1;
+}
+
+message RevokeKeyRequest {
+  string id = 1;
+}
+
+message GetKeyRequest {
+  string id = 1;
+}
+
+message ListKeysRequest {
+  // Only this Customer's keys.
+  string customer_id = 1;
+  // 1 to 100; 50 when unset.
+  int32 page_size = 2;
+  // The previous page's `next_page_token`; unset for the first page.
+  string page_token = 3;
+}
+
+message ListKeysResponse {
+  // Newest first, revoked keys included.
+  repeated ApiKey keys = 1;
+  // Unset on the last page.
+  string next_page_token = 2;
+}
+
+message ListModelsRequest {}
+
+// A Model the Integration may sell. Never its Provider, Provider Account,
+// Route or Upstream Model.
+message Model {
+  string id = 1;
+  string name = 2;
+  // chat, image, speech, transcription or video.
+  string kind = 3;
+  // Such as vision, tools, reasoning, structured-output.
+  repeated string capabilities = 4;
+  // USD per million tokens, from the first Route's Upstream Model. Unset when unpublished.
+  optional double input_price = 5;
+  optional double output_price = 6;
+  optional double cache_read_price = 7;
+  optional double cache_write_price = 8;
+}
+
+message ListModelsResponse {
+  repeated Model models = 1;
+}
+
+message ListUsageLogsRequest {
+  // The previous page's `next_cursor`; unset for the oldest Usage Log.
+  string after = 1;
+  // 1 to 1000; 100 when unset.
+  int32 page_size = 2;
+}
+
+// One request made with one of the Integration's API Keys. Never its Provider,
+// Provider Account, Route or Upstream Model.
+message UsageLog {
+  string id = 1;
+  google.protobuf.Timestamp received_at = 2;
+  string api_key_id = 3;
+  string api_key_name = 4;
+  string customer_id = 5;
+  string model_name = 6;
+  string kind = 7;
+  string client_protocol = 8;
+  bool streamed = 9;
+  int32 http_status = 10;
+  optional string error_code = 11;
+  optional string error_origin = 12;
+  optional int64 input_tokens = 13;
+  optional int64 output_tokens = 14;
+  optional int64 cache_read_tokens = 15;
+  optional int64 cache_write_tokens = 16;
+  optional int64 reasoning_tokens = 17;
+  optional int32 images_out = 18;
+  optional int32 images_in = 19;
+  optional double output_seconds = 20;
+  optional double audio_seconds = 21;
+  optional int64 characters = 22;
+  // USD. Unset when unknown.
+  optional double cost = 23;
+  optional int32 time_to_first_token_ms = 24;
+  int32 duration_ms = 25;
+  bool cancelled = 26;
+  bool incomplete = 27;
+}
+
+message ListUsageLogsResponse {
+  // Oldest first, in commit order: a Usage Log written late is never skipped.
+  repeated UsageLog usage_logs = 1;
+  // Pass as `after` for the next page; the same cursor when there was nothing new.
+  string next_cursor = 2;
+}

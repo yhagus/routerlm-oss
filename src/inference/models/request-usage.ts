@@ -15,13 +15,22 @@ const encoder = new TextEncoder();
 
 /** The API Key or User a request is made for, as its Usage Log and prompt cache key name it. */
 export function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
-  return caller.kind === "api-key"
-    ? {
-        kind: "api-key",
-        apiKeyId: caller.principal.apiKeyId,
-        apiKeyName: caller.principal.apiKeyName,
-      }
-    : { kind: "playground", userId: caller.userId };
+  if (caller.kind !== "api-key") {
+    return { kind: "playground", userId: caller.userId };
+  }
+  const { apiKeyId, apiKeyName, customer } = caller.principal;
+  return {
+    kind: "api-key",
+    apiKeyId,
+    apiKeyName,
+    ...(customer && {
+      customer: {
+        integrationId: customer.integrationId,
+        integrationName: customer.integrationName,
+        customerId: customer.customerId,
+      },
+    }),
+  };
 }
 
 /** `text` encoded once, counted as sent: the client gets exactly these bytes. */

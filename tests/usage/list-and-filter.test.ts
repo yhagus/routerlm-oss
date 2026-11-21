@@ -165,6 +165,29 @@ describe("Usage API: listing and filtering Usage Logs (e2e)", () => {
     expect(cancelled.body.items).toEqual([expect.objectContaining({ isCancelled: true })]);
   });
 
+  it("filters by Integration and by Customer id", async () => {
+    const acmeId = "11111111-1111-4111-8111-111111111111";
+    const globexId = "22222222-2222-4222-8222-222222222222";
+    const createdAt = new Date("2026-11-02T10:00:00Z");
+    const [acmeCustomer, , globexCustomer] = await db
+      .insert(usageLogs)
+      .values([
+        { ...SERVED_REQUEST, createdAt, ...smart, integrationId: acmeId, customerId: "cus_1" },
+        { ...SERVED_REQUEST, createdAt, ...smart, integrationId: acmeId, customerId: "cus_2" },
+        { ...SERVED_REQUEST, createdAt, ...smart, integrationId: globexId, customerId: "cus_1" },
+        { ...SERVED_REQUEST, createdAt, ...smart, ...ci },
+      ])
+      .returning({ id: usageLogs.id });
+
+    const byCustomer = await getUsage("?customerId=cus_1").expect(200);
+    const byBoth = await getUsage(`?integrationId=${acmeId}&customerId=cus_1`).expect(200);
+
+    expect(byCustomer.body.items.map((item: { id: string }) => item.id).sort()).toEqual(
+      [acmeCustomer.id, globexCustomer.id].sort(),
+    );
+    expect(byBoth.body.items).toEqual([expect.objectContaining({ id: acmeCustomer.id })]);
+  });
+
   it("filters on Playground requests", async () => {
     const [{ id: adaId }] = await db.select({ id: users.id }).from(users);
     const createdAt = new Date("2026-11-02T10:00:00Z");

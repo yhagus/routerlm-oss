@@ -1,4 +1,4 @@
-import { asc, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull, or } from "drizzle-orm";
 import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { SettingsStore } from "@/settings/providers/settings-store.js";
@@ -7,6 +7,7 @@ import {
   type ModelKind,
   type ProviderEndpoint,
   type CredentialKind,
+  integrations,
   models,
   providerAccounts,
   providers,
@@ -45,9 +46,22 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         hash: apiKeys.hash,
         expiresAt: apiKeys.expiresAt,
         allowedModelIds: apiKeys.allowedModelIds,
+        spendLimit: apiKeys.spendLimit,
+        requestRate: apiKeys.requestRate,
+        customerId: apiKeys.customerId,
+        integrationId: integrations.id,
+        integrationName: integrations.name,
+        integrationAllowedModelIds: integrations.allowedModelIds,
       })
       .from(apiKeys)
-      .where(isNull(apiKeys.revokedAt)),
+      .leftJoin(integrations, eq(apiKeys.integrationId, integrations.id))
+      // A disabled Integration's keys are left out, so they read as unknown keys.
+      .where(
+        and(
+          isNull(apiKeys.revokedAt),
+          or(isNull(apiKeys.integrationId), isNull(integrations.disabledAt)),
+        ),
+      ),
     db.select().from(providers),
     db
       .select()
@@ -62,7 +76,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
   ]);
 
   const apiKeysByKeyId = new Map<string, SnapshotApiKey>(
-    keyRows.map(({ keyId, ...key }) => [keyId, key]),
+    keyRows.map((row) => [row.keyId, snapshotApiKeyOf(row)]),
   );
 
   const accountsByProviderId = groupBy(accountRows, (account) => account.providerId);
@@ -174,6 +188,35 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     modelsByName,
     upstreamModelsById,
     allowsPrivateUpstreams: allowsPrivateUpstreams.value,
+  };
+}
+
+function snapshotApiKeyOf(row: {
+  id: string;
+  name: string;
+  hash: string;
+  expiresAt: Date | null;
+  allowedModelIds: string[];
+  spendLimit: number | null;
+  requestRate: number | null;
+  customerId: string | null;
+  integrationId: string | null;
+  integrationName: string | null;
+  integrationAllowedModelIds: string[] | null;
+}): SnapshotApiKey {
+  const { customerId, integrationId, integrationName, integrationAllowedModelIds, ...key } = row;
+  const isIssuedByIntegration =
+    integrationId !== null && integrationName !== null && customerId !== null;
+  return {
+    ...key,
+    customer: isIssuedByIntegration
+      ? {
+          integrationId,
+          integrationName,
+          integrationAllowedModelIds: integrationAllowedModelIds ?? [],
+          customerId,
+        }
+      : null,
   };
 }
 

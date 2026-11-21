@@ -1,4 +1,4 @@
-import { ApiKeyProvider, type ApiKeyRecord } from "@nestjs/authentication";
+import { ApiKeyProvider, type ApiKeyRecord, AuthenticationRegistry } from "@nestjs/authentication";
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, isNull } from "drizzle-orm";
@@ -12,15 +12,22 @@ import type { IntegrationPrincipal } from "../models/integration.js";
  */
 export const INTEGRATION_SECRET_PREFIX = "rlmi";
 
+// Tried after SessionAuth (0) and ApiKeyAuth (1).
+const INTEGRATION_SECRET_AUTH_ORDER = 2;
+
 /**
  * Signs Integrations in with `Authorization: Bearer rlmi_…`, and generates
- * their secrets. It is not registered in the AuthenticationRegistry chain, so
- * no route accepts a secret unless it names this provider in `@Authenticate`.
+ * their secrets. Registered in the chain only so `@Authenticate` can name it:
+ * every route names its providers, and only the control plane names this one.
  */
 @Injectable()
 export class IntegrationSecretAuth extends ApiKeyProvider<IntegrationPrincipal> {
-  constructor(@InjectDrizzle() private readonly db: Database) {
+  constructor(
+    @InjectDrizzle() private readonly db: Database,
+    registry: AuthenticationRegistry,
+  ) {
     super({ prefix: INTEGRATION_SECRET_PREFIX });
+    registry.registerProvider(this, { order: INTEGRATION_SECRET_AUTH_ORDER });
   }
 
   // Read from PostgreSQL rather than the snapshot: the control plane is not the

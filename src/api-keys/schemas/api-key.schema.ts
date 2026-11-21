@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 
-const MAX_NAME_LENGTH = 100;
+export const MAX_NAME_LENGTH = 100;
+export const MAX_CUSTOMER_ID_LENGTH = 200;
 const MAX_ALLOWED_MODELS = 500;
 
-// Null means the key never expires.
-const expiresAtSchema = z.iso
+/** Null means the key never expires. */
+export const expiresAtSchema = z.iso
   .datetime({ offset: true })
   .pipe(z.coerce.date())
   .refine((expiresAt) => expiresAt.getTime() > Date.now(), {
@@ -13,8 +14,8 @@ const expiresAtSchema = z.iso
   })
   .nullable();
 
-// Empty means every Model.
-const allowedModelIdsSchema = z
+/** Empty means every Model. */
+export const allowedModelIdsSchema = z
   .array(z.uuid())
   .max(MAX_ALLOWED_MODELS)
   .transform((ids) => [...new Set(ids)]);
@@ -37,3 +38,12 @@ export const apiKeyChangesSchema = apiKeyFieldsSchema
   .partial()
   .refine(hasAnyField, nothingToChange);
 export type ApiKeyChanges = z.infer<typeof apiKeyChangesSchema>;
+
+/** Which API Keys the dashboard lists. Every filter is optional. */
+export const apiKeyListQuerySchema = z.object({
+  /** Only the keys this Integration issued. */
+  integrationId: z.uuid().optional(),
+  /** Only the keys issued to this Customer id, exactly. */
+  customerId: z.string().trim().min(1).max(MAX_CUSTOMER_ID_LENGTH).optional(),
+});
+export type ApiKeyListQuery = z.infer<typeof apiKeyListQuerySchema>;

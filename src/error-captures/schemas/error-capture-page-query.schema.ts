@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas/index.js";
-import { commaSeparated, instant, searchTextSchema } from "@/usage/schemas/usage.schema.js";
+import {
+  commaSeparated,
+  customerIdFilterSchema,
+  instant,
+  searchTextSchema,
+} from "@/usage/schemas/usage.schema.js";
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
@@ -23,6 +28,10 @@ export const errorCapturePageQuerySchema = z.object({
   to: instant.optional(),
   /** Requests for any of these Models. */
   modelId: commaSeparated(z.uuid()).optional(),
+  /** Requests with the API Keys of any of these Integrations. */
+  integrationId: commaSeparated(z.uuid()).optional(),
+  /** Requests with the API Keys of this Customer id, exactly (it may hold commas). */
+  customerId: customerIdFilterSchema.optional(),
   /** Requests with any of these API Keys; with `isPlayground: true`, these or the Playground. */
   apiKeyId: commaSeparated(z.uuid()).optional(),
   /**

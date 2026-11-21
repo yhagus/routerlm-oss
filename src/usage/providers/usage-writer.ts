@@ -10,6 +10,7 @@ import type {
   RequestNames,
   ServingTarget,
   UsageCaller,
+  UsageCustomer,
   UsageJob,
 } from "../models/usage-job.js";
 import { unitCostOf, usageMeasurementsOf } from "../models/usage-measurements.js";
@@ -22,6 +23,8 @@ type StoredServingTarget = { [Field in keyof ServingTarget]: ServingTarget[Field
 /** What a request's records copy from its job (ADR 0024). */
 interface JobSnapshot {
   requestNames: RequestNames;
+  /** The Integration's name and the Customer id, both null for a key no Integration issued. */
+  customerNames: { integrationName: string | null; customerId: string | null };
   /** All null when no Attempt answered. */
   servedBy: StoredServingTarget;
   /** In the order of the job's Attempts. */
@@ -58,6 +61,7 @@ export class UsageWriter {
           createdAt: new Date(job.receivedAt),
           ...callerColumnsOf(job.caller),
           ...snapshot.requestNames,
+          ...snapshot.customerNames,
           modelId: job.modelId,
           ...servingTargetColumnsOf(snapshot.servedBy),
           kind: CLIENT_PROTOCOL_KINDS[job.clientProtocol],
@@ -92,6 +96,7 @@ export class UsageWriter {
             usageLogId: job.usageLogId,
             startedAt: new Date(attempt.startedAt),
             ...snapshot.requestNames,
+            ...snapshot.customerNames,
             ...servingTargetColumnsOf(snapshot.attemptTargets[index]),
             providerName: snapshot.attemptTargets[index].providerName,
             upstreamStatus: attempt.upstreamStatus,
@@ -168,7 +173,11 @@ function unitColumnsOf(units: MediaUnits | null) {
 function callerColumnsOf(caller: UsageCaller) {
   switch (caller.kind) {
     case "api-key":
-      return { apiKeyId: caller.apiKeyId, isPlayground: false };
+      return {
+        apiKeyId: caller.apiKeyId,
+        integrationId: caller.customer?.integrationId ?? null,
+        isPlayground: false,
+      };
     case "playground":
       return { userId: caller.userId, isPlayground: true };
     case "unidentified":
@@ -198,6 +207,10 @@ function snapshotOf(job: UsageJob): JobSnapshot {
       modelName: job.modelName ?? null,
       apiKeyName: job.caller.kind === "api-key" ? (job.caller.apiKeyName ?? null) : null,
     },
+    customerNames: {
+      integrationName: customerOf(job.caller)?.integrationName ?? null,
+      customerId: customerOf(job.caller)?.customerId ?? null,
+    },
     servedBy: job.servedBy ? storedTargetOf(job.servedBy) : NOT_SERVED,
     attemptTargets: job.attempts.map(storedTargetOf),
   };
@@ -213,4 +226,8 @@ function servingTargetColumnsOf(target: StoredServingTarget) {
     providerAccountId: target.providerAccountId,
     providerAccountName: target.providerAccountName,
   };
+}
+
+function customerOf(caller: UsageCaller): UsageCustomer | undefined {
+  return caller.kind === "api-key" ? caller.customer : undefined;
 }

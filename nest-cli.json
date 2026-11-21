@@ -4,6 +4,6 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "assets": ["catalog/data/*.json"]
+    "assets": ["catalog/data/*.json", "control-plane/data/*.proto"]
   }
 }
