@@ -1,6 +1,11 @@
 import { mayUseModel } from "@/api-keys/models/api-key.js";
 import type { ModelKind } from "@/db/schemas/index.js";
-import type { Snapshot, SnapshotModel, SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
+import {
+  isUpstreamModelUsable,
+  type Snapshot,
+  type SnapshotModel,
+  type SnapshotUpstreamModel,
+} from "@/snapshot/models/snapshot.js";
 import { GatewayError } from "./gateway-error.js";
 import type { InferenceCaller, ProbeTarget } from "./inference.js";
 import type { AttemptPath, AttemptTarget } from "./route-selection.js";
@@ -66,7 +71,7 @@ export function upstreamModelServedHere(
   endpointKind: ModelKind,
 ): SnapshotUpstreamModel {
   const upstreamModel = snapshot.upstreamModelsById.get(upstreamModelRowId);
-  if (!upstreamModel?.isEnabled || !upstreamModel.provider.isUsable) {
+  if (upstreamModel === undefined || !isUpstreamModelUsable(upstreamModel)) {
     throw new GatewayError(
       "model_not_found",
       `The Upstream Model "${upstreamModelRowId}" does not exist`,

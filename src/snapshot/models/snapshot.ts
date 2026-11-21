@@ -127,6 +127,16 @@ export interface SnapshotRoute {
   upstreamModel: SnapshotUpstreamModel;
 }
 
+/** Whether the Upstream Model is enabled along with its Provider, which must also be usable. */
+export function isUpstreamModelUsable(upstreamModel: SnapshotUpstreamModel): boolean {
+  return upstreamModel.isEnabled && upstreamModel.provider.isUsable;
+}
+
+/** Whether the Route is enabled all the way to its Provider, so it can serve its Model. */
+export function isRouteUsable(route: SnapshotRoute): boolean {
+  return route.isEnabled && isUpstreamModelUsable(route.upstreamModel);
+}
+
 export interface SnapshotModel {
   id: string;
   name: string;

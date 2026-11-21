@@ -1,10 +1,11 @@
 import type { Capability } from "@/db/schemas/index.js";
-import type {
-  SnapshotEndpoint,
-  SnapshotModel,
-  SnapshotProviderAccount,
-  SnapshotRoute,
-  SnapshotUpstreamModel,
+import {
+  isUpstreamModelUsable,
+  type SnapshotEndpoint,
+  type SnapshotModel,
+  type SnapshotProviderAccount,
+  type SnapshotRoute,
+  type SnapshotUpstreamModel,
 } from "@/snapshot/models/snapshot.js";
 import type { InferenceRequest } from "./internal-format.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS } from "../protocols/converters.js";
@@ -63,8 +64,7 @@ export function canServe(upstreamModel: SnapshotUpstreamModel, request: Inferenc
   const endpoint = endpointOf(upstreamModel);
   const neededContext = estimatedPromptTokens(request) + (request.maxOutputTokens ?? 0);
   return (
-    upstreamModel.isEnabled &&
-    upstreamModel.provider.isUsable &&
+    isUpstreamModelUsable(upstreamModel) &&
     endpoint !== undefined &&
     UPSTREAM_PROTOCOL_CONVERTERS[endpoint.protocol] !== undefined &&
     requiredCapabilities(request).every((capability) =>
