@@ -9,8 +9,10 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
+import type { ListModelsResponseJson } from "@/control-plane/models/proto-json.js";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import type { User } from "@/users/models/user.js";
 import { CreateIntegrationCommand } from "./commands/impl/create-integration.command.js";
@@ -19,8 +21,22 @@ import { DisableIntegrationCommand } from "./commands/impl/disable-integration.c
 import { EnableIntegrationCommand } from "./commands/impl/enable-integration.command.js";
 import { RotateIntegrationSecretCommand } from "./commands/impl/rotate-integration-secret.command.js";
 import { UpdateIntegrationCommand } from "./commands/impl/update-integration.command.js";
-import type { CreatedIntegration, IntegrationSummary } from "./models/integration.js";
+import type {
+  CreatedIntegration,
+  IntegrationCustomerPage,
+  IntegrationDetail,
+  IntegrationRotation,
+  IntegrationSummary,
+} from "./models/integration.js";
+import { GetIntegrationQuery } from "./queries/impl/get-integration.query.js";
+import { ListIntegrationCustomersQuery } from "./queries/impl/list-integration-customers.query.js";
+import { ListIntegrationOfferedModelsQuery } from "./queries/impl/list-integration-offered-models.query.js";
+import { ListIntegrationRotationsQuery } from "./queries/impl/list-integration-rotations.query.js";
 import { ListIntegrationsQuery } from "./queries/impl/list-integrations.query.js";
+import {
+  type IntegrationCustomersQuery,
+  integrationCustomersQuerySchema,
+} from "./schemas/integration-customers-query.schema.js";
 import {
   type IntegrationChanges,
   integrationChangesSchema,
@@ -39,6 +55,32 @@ export class IntegrationsController {
   @Get()
   listIntegrations(): Promise<IntegrationSummary[]> {
     return this.queryBus.execute(new ListIntegrationsQuery());
+  }
+
+  @Get(":id")
+  getIntegration(@Param("id", ParseUUIDPipe) id: string): Promise<IntegrationDetail> {
+    return this.queryBus.execute(new GetIntegrationQuery(id));
+  }
+
+  /** Every rotation of the Integration Secret, newest first. */
+  @Get(":id/rotations")
+  listIntegrationRotations(@Param("id", ParseUUIDPipe) id: string): Promise<IntegrationRotation[]> {
+    return this.queryBus.execute(new ListIntegrationRotationsQuery(id));
+  }
+
+  /** The Customers named on its API Keys, rolled up over all time, most recently active first. */
+  @Get(":id/customers")
+  listIntegrationCustomers(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query({ schema: integrationCustomersQuerySchema }) pageQuery: IntegrationCustomersQuery,
+  ): Promise<IntegrationCustomerPage> {
+    return this.queryBus.execute(new ListIntegrationCustomersQuery(id, pageQuery));
+  }
+
+  /** The Models it may sell, exactly as its control plane's ListModels answers it. */
+  @Get(":id/models")
+  listIntegrationModels(@Param("id", ParseUUIDPipe) id: string): Promise<ListModelsResponseJson> {
+    return this.queryBus.execute(new ListIntegrationOfferedModelsQuery(id));
   }
 
   @Post()

@@ -57,6 +57,11 @@ export function containing(text: string): string {
   return `%${escapeLikeWildcards(text)}%`;
 }
 
+/** A LIKE pattern matching values that start with `text` literally. */
+export function startingWith(text: string): string {
+  return `${escapeLikeWildcards(text)}%`;
+}
+
 /** Makes `%`, `_` and `\` match themselves: `\` is Postgres's default LIKE escape. */
 function escapeLikeWildcards(text: string): string {
   return text.replace(/[\\%_]/g, (wildcard) => `\\${wildcard}`);
