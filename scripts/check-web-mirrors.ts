@@ -1,7 +1,8 @@
 // Fails when a list the dashboard (web/) copies from the backend has drifted
 // from the backend's own. web/ is a separate app and can't import src/, so it
 // keeps hand-written copies; this check is what keeps them honest. Run by
-// `bun run check`. To mirror another list, add it to MIRRORS below.
+// `bun run check` at the root and in web/. To mirror another list, add it to
+// MIRRORS below.
 //
 // A web constant whose doc comment says it copies "the backend's `NAME`" must
 // have a MIRRORS entry: the check fails on a marked copy nobody compares.

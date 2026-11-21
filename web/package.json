@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "check": "bun run lint && bun run format:check && bun run typecheck",
+    "check": "bun run lint && bun run format:check && bun run typecheck && bun run check:mirrors",
+    "check:mirrors": "cd .. && bun scripts/check-web-mirrors.ts",
     "dev": "nuxt dev",
     "format": "oxfmt app server nuxt.config.ts content.config.ts",
     "format:check": "oxfmt --check app server nuxt.config.ts content.config.ts",
