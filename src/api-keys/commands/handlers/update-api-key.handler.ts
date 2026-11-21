@@ -8,7 +8,7 @@ import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { ApiKeySummary } from "../../models/api-key.js";
 import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
 import { assertModelsExist } from "../../models/assert-models-exist.js";
-import { findUnrevokedApiKey } from "../../models/find-unrevoked-api-key.js";
+import { assertUserOwnsKey, findUnrevokedApiKey } from "../../models/find-unrevoked-api-key.js";
 import { UpdateApiKeyCommand } from "../impl/update-api-key.command.js";
 
 const REVOKED_MESSAGE = "A revoked API Key can't be changed.";
@@ -21,7 +21,7 @@ export class UpdateApiKeyHandler implements ICommandHandler<UpdateApiKeyCommand>
   ) {}
 
   async execute({ id, changes }: UpdateApiKeyCommand): Promise<ApiKeySummary> {
-    await findUnrevokedApiKey(this.db, id, REVOKED_MESSAGE);
+    assertUserOwnsKey(await findUnrevokedApiKey(this.db, id, REVOKED_MESSAGE));
     if (changes.allowedModelIds) {
       await assertModelsExist(this.db, changes.allowedModelIds);
     }

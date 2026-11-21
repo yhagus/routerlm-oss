@@ -2,6 +2,7 @@ import { z } from "zod";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 
 export const MAX_NAME_LENGTH = 100;
+export const MAX_CUSTOMER_ID_LENGTH = 200;
 const MAX_ALLOWED_MODELS = 500;
 
 /** Null means the key never expires. */
@@ -37,3 +38,12 @@ export const apiKeyChangesSchema = apiKeyFieldsSchema
   .partial()
   .refine(hasAnyField, nothingToChange);
 export type ApiKeyChanges = z.infer<typeof apiKeyChangesSchema>;
+
+/** Which API Keys the dashboard lists. Every filter is optional. */
+export const apiKeyListQuerySchema = z.object({
+  /** Only the keys this Integration issued. */
+  integrationId: z.uuid().optional(),
+  /** Only the keys issued to this Customer id, exactly. */
+  customerId: z.string().trim().min(1).max(MAX_CUSTOMER_ID_LENGTH).optional(),
+});
+export type ApiKeyListQuery = z.infer<typeof apiKeyListQuerySchema>;

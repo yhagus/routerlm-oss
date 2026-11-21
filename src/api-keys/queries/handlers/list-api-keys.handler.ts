@@ -1,6 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
+import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
+import { apiKeys } from "@/db/schemas/index.js";
 import type { ApiKeySummary } from "../../models/api-key.js";
 import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
 import { ListApiKeysQuery } from "../impl/list-api-keys.query.js";
@@ -9,7 +11,15 @@ import { ListApiKeysQuery } from "../impl/list-api-keys.query.js";
 export class ListApiKeysHandler implements IQueryHandler<ListApiKeysQuery> {
   constructor(@InjectDrizzle() private readonly db: Database) {}
 
-  execute(): Promise<ApiKeySummary[]> {
-    return selectApiKeySummaries(this.db);
+  execute({ filter }: ListApiKeysQuery): Promise<ApiKeySummary[]> {
+    return selectApiKeySummaries(
+      this.db,
+      and(
+        filter.integrationId === undefined
+          ? undefined
+          : eq(apiKeys.integrationId, filter.integrationId),
+        filter.customerId === undefined ? undefined : eq(apiKeys.customerId, filter.customerId),
+      ),
+    );
   }
 }

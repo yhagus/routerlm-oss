@@ -168,6 +168,17 @@ describe("Error Captures API: filtering the list (e2e)", () => {
     );
   });
 
+  it("filters by Integration and by Customer id", async () => {
+    const acmeId = "11111111-1111-4111-8111-111111111111";
+    const acmeCustomer = await capture({
+      usageLog: { integrationId: acmeId, customerId: "cus_1" },
+    });
+    await capture({ usageLog: { integrationId: acmeId, customerId: "cus_2" } });
+    await capture({ usageLog: { apiKeyId: ciKeyId, apiKeyName: "CI" } });
+
+    expect(await listedIds(`integrationId=${acmeId}&customerId=cus_1`)).toEqual([acmeCustomer]);
+  });
+
   it("filters by Error Origin", async () => {
     const client = await capture({ usageLog: { errorOrigin: "client", httpStatus: 400 } });
     const gateway = await capture({ usageLog: { errorOrigin: "gateway", httpStatus: 500 } });

@@ -1,5 +1,15 @@
 import { CurrentUser } from "@nestjs/authentication";
-import { Body, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from "@nestjs/common";
+import {
+  Body,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
 import type { User } from "@/users/models/user.js";
@@ -20,6 +30,8 @@ import { RevealApiKeyQuery } from "./queries/impl/reveal-api-key.query.js";
 import {
   type ApiKeyChanges,
   apiKeyChangesSchema,
+  type ApiKeyListQuery,
+  apiKeyListQuerySchema,
   type NewApiKey,
   newApiKeySchema,
 } from "./schemas/api-key.schema.js";
@@ -32,9 +44,12 @@ export class ApiKeysController {
     private readonly queryBus: QueryBus,
   ) {}
 
+  /** Optionally only one Integration's keys, or one Customer's. */
   @Get()
-  listApiKeys(): Promise<ApiKeySummary[]> {
-    return this.queryBus.execute(new ListApiKeysQuery());
+  listApiKeys(
+    @Query({ schema: apiKeyListQuerySchema }) filter: ApiKeyListQuery,
+  ): Promise<ApiKeySummary[]> {
+    return this.queryBus.execute(new ListApiKeysQuery(filter));
   }
 
   /** The Models a new key can be restricted to. */
@@ -57,6 +72,7 @@ export class ApiKeysController {
     return this.queryBus.execute(new RevealApiKeyQuery(id));
   }
 
+  /** Refused with 409 for a key an Integration issued. */
   @Patch(":id")
   updateApiKey(
     @Param("id", ParseUUIDPipe) id: string,
@@ -65,7 +81,8 @@ export class ApiKeysController {
     return this.commandBus.execute(new UpdateApiKeyCommand(id, changes));
   }
 
-  // 201 like POST /api-keys: both answer with a newly made key.
+  // 201 like POST /api-keys: both answer with a newly made key. Refused with
+  // 409 for a key an Integration issued.
   @Post(":id/rotate")
   rotateApiKey(
     @Param("id", ParseUUIDPipe) id: string,

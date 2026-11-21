@@ -2,11 +2,11 @@ import { z } from "zod";
 import {
   allowedModelIdsSchema,
   expiresAtSchema,
+  MAX_CUSTOMER_ID_LENGTH,
   MAX_NAME_LENGTH,
 } from "@/api-keys/schemas/api-key.schema.js";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 
-const MAX_CUSTOMER_ID_LENGTH = 200;
 // api_keys.spend_limit is numeric(18, 10): eight digits before the point.
 const MAX_SPEND_LIMIT_USD = 99_999_999;
 // Requests per minute; an int32 in control_plane.proto.

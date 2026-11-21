@@ -3,6 +3,7 @@ import { attempts, errorCaptures, usageLogs } from "@/db/schemas/index.js";
 import {
   callerCondition,
   containing,
+  customerCondition,
   namesOrErrorCodeContain,
 } from "@/usage/models/usage-filters.js";
 import type {
@@ -24,6 +25,7 @@ export function whereErrorCaptureFilter(query: ErrorCapturePageQuery): SQL | und
     query.to === undefined ? undefined : lt(errorCaptures.createdAt, query.to),
     query.modelId === undefined ? undefined : inArray(usageLogs.modelId, query.modelId),
     callerCondition(query),
+    customerCondition(query),
     query.errorOrigin === undefined ? undefined : inArray(usageLogs.errorOrigin, query.errorOrigin),
     query.failedAt === undefined ? undefined : or(...query.failedAt.map(failedAtCondition)),
     query.providerAccountId === undefined

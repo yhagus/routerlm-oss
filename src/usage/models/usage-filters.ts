@@ -12,6 +12,7 @@ export function whereFilter(filter: UsageFilter): SQL | undefined {
     filter.to === undefined ? undefined : lt(usageLogs.createdAt, filter.to),
     filter.modelId === undefined ? undefined : inArray(usageLogs.modelId, filter.modelId),
     callerCondition(filter),
+    customerCondition(filter),
     filter.status === undefined ? undefined : or(...filter.status.map(statusCondition)),
     filter.errorOrigin === undefined
       ? undefined
@@ -77,6 +78,17 @@ export function callerCondition({
   return isPlayground
     ? or(listedKeysCondition, playgroundCondition)
     : and(listedKeysCondition, playgroundCondition);
+}
+
+/** The Usage Logs of these Integrations' or this Customer's API Keys, copied at request time. */
+export function customerCondition({
+  integrationId,
+  customerId,
+}: Pick<UsageFilter, "integrationId" | "customerId">): SQL | undefined {
+  return and(
+    integrationId === undefined ? undefined : inArray(usageLogs.integrationId, integrationId),
+    customerId === undefined ? undefined : eq(usageLogs.customerId, customerId),
+  );
 }
 
 /**

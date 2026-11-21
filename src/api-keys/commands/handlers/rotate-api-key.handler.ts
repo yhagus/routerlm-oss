@@ -9,7 +9,7 @@ import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import { ApiKeyAuth } from "../../providers/api-key-auth.js";
 import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "../../models/api-key.js";
 import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
-import { findUnrevokedApiKey } from "../../models/find-unrevoked-api-key.js";
+import { assertUserOwnsKey, findUnrevokedApiKey } from "../../models/find-unrevoked-api-key.js";
 import { RotateApiKeyCommand } from "../impl/rotate-api-key.command.js";
 
 const REVOKED_MESSAGE = "A revoked API Key can't be rotated.";
@@ -24,7 +24,7 @@ export class RotateApiKeyHandler implements ICommandHandler<RotateApiKeyCommand>
   ) {}
 
   async execute({ id, rotatedById }: RotateApiKeyCommand): Promise<CreatedApiKey> {
-    await findUnrevokedApiKey(this.db, id, REVOKED_MESSAGE);
+    assertUserOwnsKey(await findUnrevokedApiKey(this.db, id, REVOKED_MESSAGE));
     const { key, id: keyId, hash } = this.apiKeyAuth.generate();
     await this.db.transaction(async (tx) => {
       // Locked and guarded again on revokedAt: a key revoked since the check must

@@ -28,6 +28,11 @@ export const searchTextSchema = z
   .max(MAX_SEARCH_LENGTH)
   .transform((text) => (text === "" ? undefined : text));
 
+const MAX_CUSTOMER_ID_LENGTH = 200;
+
+/** A Customer id to filter on: as an Integration gave it. */
+export const customerIdFilterSchema = z.string().trim().min(1).max(MAX_CUSTOMER_ID_LENGTH);
+
 /** Which Usage Logs to list or total. Every filter is optional. */
 export const usageFilterSchema = z.object({
   /** Received at or after. */
@@ -36,6 +41,10 @@ export const usageFilterSchema = z.object({
   to: instant.optional(),
   /** Any of these Models. */
   modelId: commaSeparated(z.uuid()).optional(),
+  /** Requests with the API Keys of any of these Integrations. */
+  integrationId: commaSeparated(z.uuid()).optional(),
+  /** Requests with the API Keys of this Customer id, exactly (it may hold commas). */
+  customerId: customerIdFilterSchema.optional(),
   /** Any of these API Keys; with `isPlayground: true`, these or the Playground. */
   apiKeyId: commaSeparated(z.uuid()).optional(),
   /** Any of these statuses. */

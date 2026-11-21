@@ -54,6 +54,8 @@ describe("API Keys (e2e)", () => {
         allowedModels: [{ id: model.id, name: "smart" }],
         isCopyable: true,
         lastRotatedAt: null,
+        integration: null,
+        customerId: null,
       },
     ]);
   });

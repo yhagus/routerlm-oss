@@ -37,6 +37,10 @@ export interface ApiKeySummary {
   isCopyable: boolean;
   /** Null when the key was never rotated (or only before rotations were recorded). */
   lastRotatedAt: Date | null;
+  /** The Integration that issued the key; null for a User's key, or once the Integration is deleted. */
+  integration: { id: string; name: string } | null;
+  /** The Customer an Integration issued the key to; kept after the Integration is deleted. */
+  customerId: string | null;
 }
 
 /** One rotation of an API Key: which public key id stopped working and which replaced it. */
