@@ -45,6 +45,8 @@ export interface ApiKeySummary {
   spendLimit: number | null;
   /** USD of Cost counted against the Spend Limit, whether the key has one or not. */
   spent: number;
+  /** Requests per minute. Null means no Request Rate. */
+  requestRate: number | null;
 }
 
 /** One rotation of an API Key: which public key id stopped working and which replaced it. */
@@ -84,6 +86,8 @@ export interface ApiKeyPrincipal {
   customer: KeyCustomer | null;
   /** USD, as loaded with the snapshot. Null means no Spend Limit, and none is checked. */
   spendLimit: number | null;
+  /** Requests per minute, as loaded with the snapshot. Null means no Request Rate. */
+  requestRate: number | null;
 }
 
 /**

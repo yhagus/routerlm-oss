@@ -10,6 +10,8 @@ export const GATEWAY_ERROR_STATUS = {
   model_not_allowed: 403,
   model_not_found: 404,
   request_too_large: 413,
+  // 429 so SDKs back off and retry on their own, unlike spend_limit_reached.
+  request_rate_exceeded: 429,
   upstream_rate_limited: 429,
   upstream_error: 502,
   upstream_timeout: 504,
