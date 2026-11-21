@@ -90,6 +90,16 @@ const attemptHop = computed(() =>
               <dt>API Key</dt>
               <dd>{{ capture.isPlayground ? "Playground" : (capture.apiKeyName ?? "—") }}</dd>
             </div>
+            <template v-if="capture.integrationId">
+              <div>
+                <dt>Integration</dt>
+                <dd>{{ capture.integrationName ?? "—" }}</dd>
+              </div>
+              <div>
+                <dt>Customer</dt>
+                <dd>{{ capture.customerId ?? "—" }}</dd>
+              </div>
+            </template>
             <div>
               <dt>Protocol</dt>
               <dd>{{ capture.clientProtocol }}</dd>

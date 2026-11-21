@@ -13,6 +13,7 @@ import {
   PROTOCOL_KINDS,
   UPSTREAM_PROTOCOLS,
 } from "@/db/schemas/upstream.js";
+import { MAX_REQUEST_RATE, MAX_SPEND_LIMIT_USD } from "@/api-keys/schemas/api-key.schema.js";
 import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas/records.js";
 import {
   CAPTURE_OUTCOMES,
@@ -63,6 +64,16 @@ const MIRRORS: Mirror[] = [
     backendName: "MAX_UPLOAD_BYTES",
     webFile: "web/app/lib/playgroundTranscription.ts",
     backend: [String(MAX_UPLOAD_BYTES)],
+  },
+  {
+    name: "MAX_SPEND_LIMIT_USD",
+    webFile: "web/app/lib/api-keys.ts",
+    backend: [String(MAX_SPEND_LIMIT_USD)],
+  },
+  {
+    name: "MAX_REQUEST_RATE",
+    webFile: "web/app/lib/api-keys.ts",
+    backend: [String(MAX_REQUEST_RATE)],
   },
 ];
 

@@ -63,7 +63,7 @@ const {
   integrationOptions,
   ownerFilterTokens,
   clearOwnerFilters,
-} = useOwnerFilters();
+} = useOwnerFilters(() => capturePage.value?.items ?? []);
 const search = useQuerySearch();
 const page = useQueryPage();
 // Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
@@ -201,6 +201,8 @@ const columns: DataTableColumn<ErrorCaptureSummary>[] = [
   { id: "failedAt", header: "Failed at" },
   { id: "model", header: "Model" },
   { id: "apiKey", header: "API Key" },
+  { id: "integration", header: "Integration" },
+  { id: "customer", header: "Customer" },
   { id: "clientGot", header: "Client got" },
   actionsColumn(),
 ];
@@ -327,6 +329,8 @@ const columns: DataTableColumn<ErrorCaptureSummary>[] = [
       <template #cell-apiKey="{ row: capture }">
         {{ capture.isPlayground ? "Playground" : (capture.apiKeyName ?? "—") }}
       </template>
+      <template #cell-integration="{ row: capture }">{{ capture.integrationName ?? "—" }}</template>
+      <template #cell-customer="{ row: capture }">{{ capture.customerId ?? "—" }}</template>
       <template #cell-clientGot="{ row: capture }">
         <span :class="['status-badge', clientOutcome(capture).badgeClass]">{{
           clientOutcome(capture).label

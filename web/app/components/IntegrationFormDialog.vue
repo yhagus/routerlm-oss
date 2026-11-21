@@ -118,7 +118,7 @@ async function submit(): Promise<void> {
         : 'One Integration per outside application, so each can be limited, rotated or disabled alone.'
     "
   >
-    <form class="form api-key-form" @submit.prevent="submit">
+    <form class="form form--full-width-selects" @submit.prevent="submit">
       <label class="field"
         ><span class="field__label">Name</span
         ><input

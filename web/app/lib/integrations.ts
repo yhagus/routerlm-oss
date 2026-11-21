@@ -25,3 +25,14 @@ export type IntegrationStatus = "enabled" | "disabled";
 export function integrationStatus(integration: IntegrationSummary): IntegrationStatus {
   return integration.disabledAt ? "disabled" : "enabled";
 }
+
+/**
+ * The Integration that issued a request's API Key and the Customer it names, as
+ * a Usage Log or Error Capture copied them at request time, so they outlive the
+ * Integration. All null for a key no Integration issued.
+ */
+export interface RecordedIntegration {
+  integrationId: string | null;
+  integrationName: string | null;
+  customerId: string | null;
+}

@@ -79,6 +79,16 @@ const apiKeyLabel = computed(() => {
             </p>
           </header>
           <dl class="capture-facts">
+            <template v-if="usageLog.integrationId">
+              <div>
+                <dt>Integration</dt>
+                <dd>{{ usageLog.integrationName ?? "—" }}</dd>
+              </div>
+              <div>
+                <dt>Customer</dt>
+                <dd>{{ usageLog.customerId ?? "—" }}</dd>
+              </div>
+            </template>
             <div>
               <dt>Error Origin</dt>
               <dd>{{ usageLog.errorOrigin ? ERROR_ORIGIN_LABELS[usageLog.errorOrigin] : "—" }}</dd>
