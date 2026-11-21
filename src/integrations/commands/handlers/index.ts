@@ -1,4 +1,9 @@
 import { CreateIntegrationHandler } from "./create-integration.handler.js";
+import { RotateIntegrationSecretHandler } from "./rotate-integration-secret.handler.js";
 import { UpdateIntegrationHandler } from "./update-integration.handler.js";
 
-export const CommandHandlers = [CreateIntegrationHandler, UpdateIntegrationHandler];
+export const CommandHandlers = [
+  CreateIntegrationHandler,
+  UpdateIntegrationHandler,
+  RotateIntegrationSecretHandler,
+];
