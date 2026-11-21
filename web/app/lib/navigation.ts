@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Blocks,
   Boxes,
   Cpu,
   KeyRound,
@@ -49,6 +50,7 @@ export const navigationGroups: NavigationGroup[] = [
     label: "Access",
     items: [
       { label: "API Keys", path: "/api-keys", icon: KeyRound },
+      { label: "Integrations", path: "/integrations", icon: Blocks },
       { label: "Users", path: "/users", icon: Users },
     ],
   },
