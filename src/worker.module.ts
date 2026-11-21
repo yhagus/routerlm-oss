@@ -1,10 +1,12 @@
 import { BullModule } from "@nestjs/bullmq";
-import { Module } from "@nestjs/common";
+import { AuthenticationModule } from "@nestjs/authentication";
+import { type DynamicModule, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { CqrsModule } from "@nestjs/cqrs";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { type Env, envSchema } from "@/config/schemas/env.schema.js";
+import { ControlPlaneModule } from "@/control-plane/control-plane.module.js";
 import { relations } from "@/db/schemas/relations.js";
 import {
   ErrorCaptureRetention,
@@ -70,4 +72,16 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     OauthSignInPollingProcessor,
   ],
 })
-export class WorkerModule {}
+export class WorkerModule {
+  /**
+   * The worker serving the control plane's gRPC adapter too (ADR 0033), for
+   * when CONTROL_PLANE_PORT is set. Its guard takes Integration Secrets only:
+   * the worker signs no User in, so it needs no session store.
+   */
+  static withControlPlane(): DynamicModule {
+    return {
+      module: WorkerModule,
+      imports: [AuthenticationModule.forRoot({}), ControlPlaneModule.overGrpc()],
+    };
+  }
+}

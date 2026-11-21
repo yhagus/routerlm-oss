@@ -1,5 +1,6 @@
+import { Metadata } from "@grpc/grpc-js";
 import { ApiKeyProvider, type ApiKeyRecord, AuthenticationRegistry } from "@nestjs/authentication";
-import { Injectable } from "@nestjs/common";
+import { type ExecutionContext, Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, isNull } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
@@ -16,7 +17,8 @@ export const INTEGRATION_SECRET_PREFIX = "rlmi";
 const INTEGRATION_SECRET_AUTH_ORDER = 2;
 
 /**
- * Signs Integrations in with `Authorization: Bearer rlmi_…`, and generates
+ * Signs Integrations in with `Authorization: Bearer rlmi_…` (over gRPC, the
+ * `authorization` metadata with the same value), and generates
  * their secrets. Registered in the chain only so `@Authenticate` can name it:
  * every route names its providers, and only the control plane names this one.
  */
@@ -28,6 +30,19 @@ export class IntegrationSecretAuth extends ApiKeyProvider<IntegrationPrincipal> 
   ) {
     super({ prefix: INTEGRATION_SECRET_PREFIX });
     registry.registerProvider(this, { order: INTEGRATION_SECRET_AUTH_ORDER });
+  }
+
+  // The base class reads HTTP headers only: gRPC metadata is transport specific.
+  protected override header(context: ExecutionContext, name: string): string | undefined {
+    if (context.getType() !== "rpc") {
+      return super.header(context, name);
+    }
+    const metadata: unknown = context.switchToRpc().getContext();
+    if (!(metadata instanceof Metadata)) {
+      return undefined;
+    }
+    const [value] = metadata.get(name);
+    return typeof value === "string" ? value : undefined;
   }
 
   // Read from PostgreSQL rather than the snapshot: the control plane is not the

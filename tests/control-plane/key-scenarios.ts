@@ -1,6 +1,7 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
+import { vi } from "vitest";
 import type { Database } from "@/db/schemas/relations.js";
 import { models } from "@/db/schemas/index.js";
 import { authenticateWithApiKey, createApiKey } from "../support/api-keys.js";
@@ -11,6 +12,14 @@ import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-a
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
 const NEXT_YEAR = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+const SNAPSHOT_NOTICE_TIMEOUT_MS = 5_000;
+
+/**
+ * Retries `assertion` until it passes. Over gRPC a key changes in the worker,
+ * and reaches this app's snapshot through the change notice a moment later (ADR 0020).
+ */
+const eventually = (assertion: () => Promise<unknown>): Promise<unknown> =>
+  vi.waitFor(assertion, { timeout: SNAPSHOT_NOTICE_TIMEOUT_MS });
 
 /** How a test file reaches the control plane over one transport. */
 export interface ControlPlaneTransport {
@@ -138,9 +147,11 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
           requestRate: 60,
         });
         expect(fetched).toEqual({ ok: true, body: created.body.apiKey });
-        await expect(authenticateWithApiKey(app, created.body.key)).resolves.toMatchObject({
-          user: { apiKeyId: created.body.apiKey.id },
-        });
+        await eventually(() =>
+          expect(authenticateWithApiKey(app, created.body.key)).resolves.toMatchObject({
+            user: { apiKeyId: created.body.apiKey.id },
+          }),
+        );
       });
 
       it("names a key after its Customer when no name is given, with no limits", async () => {
@@ -247,10 +258,12 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
 
         expect(rotated.body.apiKey).toMatchObject({ id: issued.apiKey.id, customerId: "cus_1" });
         expect(rotated.body.key).not.toBe(issued.key);
-        await expect(authenticateWithApiKey(app, rotated.body.key)).resolves.toMatchObject({
-          user: { apiKeyId: issued.apiKey.id },
-        });
-        await expect(authenticateWithApiKey(app, issued.key)).rejects.toThrow();
+        await eventually(() =>
+          expect(authenticateWithApiKey(app, rotated.body.key)).resolves.toMatchObject({
+            user: { apiKeyId: issued.apiKey.id },
+          }),
+        );
+        await eventually(() => expect(authenticateWithApiKey(app, issued.key)).rejects.toThrow());
       });
 
       it("revokes a key for good: it stops signing in and can no longer change", async () => {
@@ -259,7 +272,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         const revoked = await client.revokeKey(acme.secret, issued.apiKey.id);
 
         expect(revoked).toMatchObject({ ok: true, body: { revokedAt: expect.any(String) } });
-        await expect(authenticateWithApiKey(app, issued.key)).rejects.toThrow();
+        await eventually(() => expect(authenticateWithApiKey(app, issued.key)).rejects.toThrow());
         await expect(
           client.updateKey(acme.secret, issued.apiKey.id, { name: "Back" }),
         ).resolves.toEqual({ ok: false, code: "FAILED_PRECONDITION" });
@@ -311,7 +324,9 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
           ok: true,
           body: { keys: [] },
         });
-        await expect(authenticateWithApiKey(app, theirs.body.key)).resolves.toBeTruthy();
+        await eventually(() =>
+          expect(authenticateWithApiKey(app, theirs.body.key)).resolves.toBeTruthy(),
+        );
       });
 
       it("answers NOT_FOUND for an operator's key and for an id naming no key", async () => {

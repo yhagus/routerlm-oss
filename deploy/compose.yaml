@@ -107,7 +107,10 @@ services:
   worker:
     image: *backend-image
     command: ["bun", "dist/worker.js"]
-    environment: *app-env
+    environment:
+      <<: *app-env
+      # Serves the control plane over gRPC on the compose network only (ADR 0033).
+      CONTROL_PLANE_PORT: ${CONTROL_PLANE_PORT:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
