@@ -5,6 +5,8 @@ import {
   type CreatedApiKey,
   endOfLocalDay,
   localDateOf,
+  MAX_REQUEST_RATE,
+  MAX_SPEND_LIMIT_USD,
   type ModelChoice,
 } from "~/lib/api-keys";
 import { formatCost } from "~/lib/usage";
@@ -34,10 +36,6 @@ const spendLimit = ref("");
 const requestRate = ref("");
 const isSaving = ref(false);
 const error = ref("");
-
-// The backend's bounds: spend_limit is numeric(18, 10), the rate an int32.
-const MAX_SPEND_LIMIT_USD = 99_999_999;
-const MAX_REQUEST_RATE = 2_147_483_647;
 
 const isEdit = computed(() => props.apiKey !== undefined);
 const today = new Date().toLocaleDateString("en-CA");

@@ -1,3 +1,9 @@
+/** The largest Spend Limit in USD (spend_limit is numeric(18, 10)), as the backend's `MAX_SPEND_LIMIT_USD` says. */
+export const MAX_SPEND_LIMIT_USD = 99_999_999;
+
+/** The largest Request Rate in requests per minute (an int32), as the backend's `MAX_REQUEST_RATE` says. */
+export const MAX_REQUEST_RATE = 2_147_483_647;
+
 /** A Model the API Key form offers. */
 export interface ModelChoice {
   id: string;
