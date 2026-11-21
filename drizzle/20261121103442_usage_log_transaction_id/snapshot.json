@@ -1,0 +1,133 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "fde7d847-952c-4209-9b18-8e64b0163f38",
+  "prevIds": [
+    "bbebf5de-7237-434d-b2d8-82ef58002596"
+  ],
+  "footprints": [
+    {
+      "statementType": "drop_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "usage_logs",
+        "usage_logs_integration_id_sequence_idx"
+      ],
+      "writes": [
+        "s|idx|public.usage_logs_integration_id_sequence_idx",
+        "n|idx|public.usage_logs_integration_id_sequence_idx",
+        "e|idx|public.usage_logs_integration_id_sequence_idx",
+        "n|rel|public.usage_logs_integration_id_sequence_idx"
+      ],
+      "reads": [
+        "e|tbl|public.usage_logs",
+        "n|sch|public",
+        "e|col|public.usage_logs.integration_id",
+        "e|col|public.usage_logs.sequence"
+      ],
+      "sharedWrites": []
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "transaction_id"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.transaction_id",
+        "n|col|public.usage_logs.transaction_id",
+        "e|col|public.usage_logs.transaction_id"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "usage_logs",
+        "usage_logs_integration_id_transaction_id_sequence_idx"
+      ],
+      "writes": [
+        "s|idx|public.usage_logs_integration_id_transaction_id_sequence_idx",
+        "n|idx|public.usage_logs_integration_id_transaction_id_sequence_idx",
+        "e|idx|public.usage_logs_integration_id_transaction_id_sequence_idx",
+        "n|rel|public.usage_logs_integration_id_transaction_id_sequence_idx"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public",
+        "n|col|public.usage_logs.integration_id",
+        "n|col|public.usage_logs.transaction_id",
+        "n|col|public.usage_logs.sequence"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "transaction_id",
+        "type": "xid8",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "pg_current_xact_id()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "usage_logs_integration_id_transaction_id_sequence_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "integration_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "transaction_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          },
+          {
+            "value": "sequence",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "drop",
+      "key": "indexes\u0000[\"public\",\"usage_logs_integration_id_sequence_idx\"]"
+    }
+  ]
+}

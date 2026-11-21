@@ -1,6 +1,8 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -89,6 +91,14 @@ export type RecordedAttemptFailure = (typeof RECORDED_ATTEMPT_FAILURES)[number];
 export const ERROR_ORIGINS = ["client", "upstream", "gateway"] as const;
 export type ErrorOrigin = (typeof ERROR_ORIGINS)[number];
 
+/**
+ * A 64-bit PostgreSQL transaction id (`xid8`), read as a decimal string: it
+ * does not fit a JS number exactly.
+ */
+const transactionId = customType<{ data: string; driverData: string }>({
+  dataType: () => "xid8",
+});
+
 /** A longer User-Agent is truncated to this many characters before it is recorded (ADR 0032). */
 export const USER_AGENT_MAX_LENGTH = 512;
 
@@ -109,10 +119,15 @@ export const usageLogs = pgTable(
     integrationId: uuid("integration_id"),
     integrationName: text("integration_name"),
     customerId: text("customer_id"),
-    // Assigned on insert, so it follows commit order closely enough for an
-    // Integration to pull its Usage Logs after a cursor; created_at is the
-    // request time and rows commit late. A JS number holds it exactly up to 2^53.
-    sequence: bigint("sequence", { mode: "number" }).notNull().generatedAlwaysAsIdentity(),
+    // The transaction that wrote the row, then the order it was inserted in:
+    // an Integration pulls its Usage Logs after a cursor on the pair. Only
+    // rows of transactions older than every one still running are pulled, so
+    // a row committed late never lands behind the cursor (created_at is the
+    // request time, and rows commit late). Both read as decimal strings.
+    sequence: bigint("sequence", { mode: "string" }).notNull().generatedAlwaysAsIdentity(),
+    transactionId: transactionId("transaction_id")
+      .notNull()
+      .default(sql`pg_current_xact_id()`),
     userId: uuid("user_id"),
     isPlayground: boolean("is_playground").notNull().default(false),
     modelId: uuid("model_id"),
@@ -169,8 +184,12 @@ export const usageLogs = pgTable(
     index("usage_logs_upstream_model_id_created_at_idx").on(table.upstreamModelId, table.createdAt),
     // The Usage page filters, and the Overview counts, failed requests by origin.
     index("usage_logs_error_origin_created_at_idx").on(table.errorOrigin, table.createdAt),
-    // An Integration's usage pull: its logs after a sequence.
-    index("usage_logs_integration_id_sequence_idx").on(table.integrationId, table.sequence),
+    // An Integration's usage pull: its logs after a (transaction, sequence) cursor.
+    index("usage_logs_integration_id_transaction_id_sequence_idx").on(
+      table.integrationId,
+      table.transactionId,
+      table.sequence,
+    ),
   ],
 );
 
