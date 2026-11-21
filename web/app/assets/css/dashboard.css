@@ -2821,6 +2821,15 @@ tbody tr:hover {
   flex: 1;
   min-width: 0;
 }
+/* An Integration Secret is shown once: the warning under it reads as a caution, not an error */
+.secret-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  color: var(--warning-ink);
+  font-size: 12px;
+}
 /* Signing in to a Provider: the region choice, then the link to its verification page */
 .sign-in__regions {
   display: grid;
