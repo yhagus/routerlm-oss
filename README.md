@@ -119,7 +119,7 @@ clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
 | Service   | What it does                                                        |
 | --------- | ------------------------------------------------------------------- |
 | `backend` | Inference endpoints under `/v1` and the dashboard API under `/api`. |
-| `worker`  | Writes Usage Logs and Error Captures, deletes expired captures.     |
+| `worker`  | Writes Usage Logs and Error Captures, deletes expired captures; serves the control plane over gRPC when `CONTROL_PLANE_PORT` is set. |
 | `web`     | The dashboard and the client docs.                                  |
 | `db`      | PostgreSQL 18, through Drizzle ORM.                                 |
 | `redis`   | BullMQ queues between backend and worker.                           |
@@ -173,6 +173,18 @@ Settings a User changes in the dashboard live in the database instead. Examples 
 | `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.                          |
 | `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports.                                                              |
 | `POSTGRES_USER` / `POSTGRES_DB` | `routerlm`                | Postgres uses them only when it first creates the db volume.             |
+| `CONTROL_PLANE_PORT`            | unset                     | The worker's gRPC port for Integrations. Unset: no gRPC server starts.   |
+
+</details>
+
+<details>
+<summary><b>Control plane over gRPC</b></summary>
+
+An Integration manages its Customers' API Keys through the control plane: over HTTP/JSON under `/integration/v1` on the backend's port, or over gRPC. Both serve [src/control-plane/data/control_plane.proto](src/control-plane/data/control_plane.proto) with the same results ([ADR 0033](docs/adr/0033-integrations-manage-keys-through-one-contract-over-http-and-grpc.md)).
+
+Set `CONTROL_PLANE_PORT` (for example `50051`) to have the worker serve gRPC on that port. It is plaintext HTTP/2 (h2c), with no TLS. The Integration Secret goes in the `authorization` metadata as `Bearer rlmi_…`.
+
+Never publish this port to the internet. The worker runs on Bun, whose HTTP/2 server accepts but ignores some flood and reset protections (such as limits on rapid stream resets). Keep the port on a private network that only your Integrations reach, or put a TLS proxy in front that speaks h2c to the worker. The compose file passes the variable to the worker but publishes no port: services on the compose network reach it at `worker:<port>`. Integrations on the public internet should use the HTTP adapter behind your existing TLS proxy instead.
 
 </details>
 
