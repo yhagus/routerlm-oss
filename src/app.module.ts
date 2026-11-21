@@ -43,7 +43,7 @@ import { UsageModule } from "@/usage/usage.module.js";
     QueueModule,
     ApiKeysModule,
     IntegrationsModule,
-    ControlPlaneModule,
+    ControlPlaneModule.overHttp(),
     UpstreamModule,
     RoutingModule,
     InferenceModule,
