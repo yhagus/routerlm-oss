@@ -63,7 +63,7 @@ const {
   integrationOptions,
   ownerFilterTokens,
   clearOwnerFilters,
-} = useOwnerFilters();
+} = useOwnerFilters(() => capturePage.value?.items ?? []);
 const search = useQuerySearch();
 const page = useQueryPage();
 // Fixed when the range is picked (or refreshed), so paging doesn't shift the window.

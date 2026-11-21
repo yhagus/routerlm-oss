@@ -1,6 +1,6 @@
 import { computed, type ComputedRef, type WritableComputedRef } from "vue";
 import { type ActiveFilter, listFilterTokens, textFilterTokens } from "~/lib/activeFilters";
-import type { IntegrationSummary } from "~/lib/integrations";
+import type { IntegrationSummary, RecordedIntegration } from "~/lib/integrations";
 import { type FilterOption, isUuid, missingOptions } from "~/lib/queryFilters";
 
 export interface OwnerFilters {
@@ -16,18 +16,24 @@ export interface OwnerFilters {
 
 /**
  * The Integration and Customer id filters, held in the URL
- * (?integration=…,…&customer=…) like a page's other filters.
+ * (?integration=…,…&customer=…) like a page's other filters. `shownRecords`
+ * are the rows the page shows: a picked Integration since deleted is named
+ * as they recorded it.
  */
-export function useOwnerFilters(): OwnerFilters {
+export function useOwnerFilters(
+  shownRecords: () => readonly RecordedIntegration[] = () => [],
+): OwnerFilters {
   const integrationFilter = useQueryList("integration", { isValid: isUuid });
   const customerFilter = useQueryParam("customer", { default: "", isValid: anyText });
 
   const { data: integrations } = useDashboardApi<IntegrationSummary[]>("/integrations");
   const integrationOptions = computed(() => {
-    const known = (integrations.value ?? []).map((integration) => ({
+    const existing = (integrations.value ?? []).map((integration) => ({
       value: integration.id,
       label: integration.name,
     }));
+    const deleted = deletedIntegrationOptions(integrationFilter.value, existing, shownRecords());
+    const known = [...existing, ...deleted];
     return [...known, ...missingOptions(integrationFilter.value, known)];
   });
 
@@ -48,4 +54,21 @@ export function useOwnerFilters(): OwnerFilters {
     ownerFilterTokens,
     clearOwnerFilters,
   };
+}
+
+/**
+ * Picked Integrations that no longer exist, named as `records` copied them at
+ * request time. A pick no shown record names is left to `missingOptions`.
+ */
+function deletedIntegrationOptions(
+  picked: readonly string[],
+  existing: readonly FilterOption[],
+  records: readonly RecordedIntegration[],
+): FilterOption[] {
+  return picked
+    .filter((id) => !existing.some((option) => option.value === id))
+    .flatMap((id) => {
+      const name = records.find((record) => record.integrationId === id)?.integrationName;
+      return name ? [{ value: id, label: `${name} (deleted)` }] : [];
+    });
 }
