@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { DeleteProviderAccountCommand } from "../impl/delete-provider-account.command.js";
+import { DeleteProviderAccountCommand } from "@/upstream/commands/impl/delete-provider-account.command.js";
 
 @CommandHandler(DeleteProviderAccountCommand)
 export class DeleteProviderAccountHandler implements ICommandHandler<DeleteProviderAccountCommand> {

@@ -30,15 +30,15 @@ import {
   DEMO_QUOTA_METERS,
   DEMO_USER,
   type DemoModelName,
-} from "../../data/demo-fixtures.js";
+} from "@/demo/data/demo-fixtures.js";
 import {
   generateDemoTraffic,
   type TrafficCaller,
   type TrafficModel,
   type TrafficProviderAccount,
-} from "../../models/demo-traffic.js";
-import { DemoApiKeyGenerator } from "../../providers/demo-api-key-generator.js";
-import { SeedDemoCommand, type SeedDemoResult } from "../impl/seed-demo.command.js";
+} from "@/demo/models/demo-traffic.js";
+import { DemoApiKeyGenerator } from "@/demo/providers/demo-api-key-generator.js";
+import { SeedDemoCommand, type SeedDemoResult } from "@/demo/commands/impl/seed-demo.command.js";
 import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key.js";
 
 // Every app table; Drizzle's migration journal lives in its own schema and stays.

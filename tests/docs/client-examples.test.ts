@@ -19,14 +19,14 @@ import {
   parseCurl,
   proseOf,
   readDocsPages,
-} from "../support/docs-examples.js";
-import { httpControlPlaneClient } from "../support/control-plane-client.js";
-import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
-import { createIntegration } from "../support/integrations.js";
-import { portOf } from "../support/port-of.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/docs-examples.js";
+import { httpControlPlaneClient } from "@tests/support/control-plane-client.js";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { portOf } from "@tests/support/port-of.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const pages = readDocsPages();
 const codeBlocks = pages.flatMap(codeBlocksOf);

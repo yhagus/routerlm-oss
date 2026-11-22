@@ -1,7 +1,7 @@
 import { Query } from "@nestjs/cqrs";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import type { QuotaMeter } from "@/quota-meters/queries/impl/list-quota-meters.query.js";
-import type { ProviderAccount } from "../../models/provider-account.js";
+import type { ProviderAccount } from "@/upstream/models/provider-account.js";
 
 /**
  * A Provider Account in the dashboard's list, with when its Cooldown ends and

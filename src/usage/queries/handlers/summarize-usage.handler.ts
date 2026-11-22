@@ -4,15 +4,15 @@ import { count, type SQL, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type { Database } from "@/db/schemas/relations.js";
 import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
-import type { UsageSummary } from "../../models/usage.js";
-import { byErrorOrigin } from "../../models/by-error-origin.js";
+import type { UsageSummary } from "@/usage/models/usage.js";
+import { byErrorOrigin } from "@/usage/models/by-error-origin.js";
 import {
   failedWithOriginCondition,
   statusCondition,
   whereFilter,
-} from "../../models/usage-filters.js";
-import type { UsageStatus } from "../../schemas/usage.schema.js";
-import { SummarizeUsageQuery } from "../impl/summarize-usage.query.js";
+} from "@/usage/models/usage-filters.js";
+import type { UsageStatus } from "@/usage/schemas/usage.schema.js";
+import { SummarizeUsageQuery } from "@/usage/queries/impl/summarize-usage.query.js";
 
 const MEDIAN = 0.5;
 const P95 = 0.95;

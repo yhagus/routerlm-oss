@@ -5,9 +5,13 @@ import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js
 import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { providers } from "@/db/schemas/index.js";
-import { type FakeReply, FakeUpstream, type ReceivedRequest } from "../support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
-import { ALL_LIMITS, USAGES_PATH, usagesReply } from "../support/kimi-code-usages.js";
+import {
+  type FakeReply,
+  FakeUpstream,
+  type ReceivedRequest,
+} from "@tests/support/fake-upstream.js";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import { ALL_LIMITS, USAGES_PATH, usagesReply } from "@tests/support/kimi-code-usages.js";
 import {
   ACCESS_TOKEN,
   addOauthLoginAccount,
@@ -15,9 +19,9 @@ import {
   refreshedTokensReply,
   REFRESH_TOKEN,
   TOKEN_PATH,
-} from "../support/kimi-oauth.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/kimi-oauth.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

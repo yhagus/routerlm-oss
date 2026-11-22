@@ -1,13 +1,17 @@
 import { z } from "zod";
-import type { MediaExchange, MediaOutcome, MediaUpstreamTarget } from "../../models/media-kind.js";
+import type {
+  MediaExchange,
+  MediaOutcome,
+  MediaUpstreamTarget,
+} from "@/inference/models/media-kind.js";
 import type {
   SubmittedVideoJob,
   VideoGenerationRequest,
   VideoTaskState,
   VideoUpstreamProtocol,
-} from "../../models/video-generation.js";
-import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
+} from "@/inference/models/video-generation.js";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
 
 // DashScope's native video API: an asynchronous
 // create that answers with a task id, then `GET /tasks/{id}` until the task

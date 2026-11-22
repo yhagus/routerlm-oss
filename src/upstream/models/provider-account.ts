@@ -1,7 +1,7 @@
 import { providerAccounts } from "@/db/schemas/index.js";
 import { SECOND_MS } from "@/libs/models/duration.js";
 import type { CodexAccount } from "./openai-codex-tokens.js";
-import type { ProviderKeyCipher } from "../providers/provider-key-cipher.js";
+import type { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 
 const KEY_HINT_LENGTH = 4;
 

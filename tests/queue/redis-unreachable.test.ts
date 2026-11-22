@@ -2,14 +2,14 @@ import { Logger } from "@nestjs/common";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 // Nothing listens on port 1, so every Redis connection is refused. Set before
 // AppModule loads, because ConfigModule reads the environment at import time.
 process.env.REDIS_URL = "redis://localhost:1";
-const { createTestApp } = await import("../support/test-app.js");
+const { createTestApp } = await import("@tests/support/test-app.js");
 const { PingProducer } = await import("@/queue/jobs/ping.producer.js");
 
 describe("Queue with Redis unreachable (e2e)", () => {

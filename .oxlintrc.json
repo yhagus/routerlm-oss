@@ -21,6 +21,13 @@
               "@/*/events/handlers/*"
             ],
             "message": "Another module's handler is its private implementation: dispatch its command, query or event through the bus instead (ADR 0007)."
+          },
+          {
+            "group": [
+              "../*",
+              "../**"
+            ],
+            "message": "Import through an alias instead of climbing out of the folder: @/ for src/, @tests/ for tests/ (ADR 0037)."
           }
         ]
       }

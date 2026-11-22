@@ -6,11 +6,14 @@ import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
-import type { ApiKeySummary } from "../../models/api-key.js";
-import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
+import type { ApiKeySummary } from "@/api-keys/models/api-key.js";
+import { selectApiKeySummaries } from "@/api-keys/models/api-key-summaries.js";
 import { assertModelsExist } from "@/libs/models/allowed-models.js";
-import { assertUserOwnsKey, findUnrevokedApiKey } from "../../models/find-unrevoked-api-key.js";
-import { UpdateApiKeyCommand } from "../impl/update-api-key.command.js";
+import {
+  assertUserOwnsKey,
+  findUnrevokedApiKey,
+} from "@/api-keys/models/find-unrevoked-api-key.js";
+import { UpdateApiKeyCommand } from "@/api-keys/commands/impl/update-api-key.command.js";
 
 const REVOKED_MESSAGE = "A revoked API Key can't be changed.";
 

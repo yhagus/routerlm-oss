@@ -9,7 +9,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import * as schema from "@/db/schemas/index.js";
-import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
 
 const runFile = promisify(execFile);
 const MIGRATIONS_FOLDER = "./drizzle";

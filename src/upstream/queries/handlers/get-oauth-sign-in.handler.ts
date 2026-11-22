@@ -4,10 +4,13 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
-import type { OauthSignIn } from "../../models/oauth-sign-in.js";
-import { type ProviderAccount, providerAccountColumns } from "../../models/provider-account.js";
-import { OauthSignInStore } from "../../providers/oauth-sign-in-store.js";
-import { GetOauthSignInQuery } from "../impl/get-oauth-sign-in.query.js";
+import type { OauthSignIn } from "@/upstream/models/oauth-sign-in.js";
+import {
+  type ProviderAccount,
+  providerAccountColumns,
+} from "@/upstream/models/provider-account.js";
+import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store.js";
+import { GetOauthSignInQuery } from "@/upstream/queries/impl/get-oauth-sign-in.query.js";
 
 @QueryHandler(GetOauthSignInQuery)
 export class GetOauthSignInHandler implements IQueryHandler<GetOauthSignInQuery> {

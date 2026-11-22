@@ -1,4 +1,4 @@
-import { dataUriOf, type MediaUpload } from "../../models/media-upload.js";
+import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload.js";
 
 // A multipart `/v1/videos` request, as the OpenAI SDK sends one with a first
 // frame, read into the JSON body the videos client contract parses.

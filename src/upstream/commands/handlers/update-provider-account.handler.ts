@@ -9,9 +9,9 @@ import {
   type ProviderAccount,
   providerAccountColumns,
   storedKey,
-} from "../../models/provider-account.js";
-import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
-import { UpdateProviderAccountCommand } from "../impl/update-provider-account.command.js";
+} from "@/upstream/models/provider-account.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+import { UpdateProviderAccountCommand } from "@/upstream/commands/impl/update-provider-account.command.js";
 
 @CommandHandler(UpdateProviderAccountCommand)
 export class UpdateProviderAccountHandler implements ICommandHandler<UpdateProviderAccountCommand> {

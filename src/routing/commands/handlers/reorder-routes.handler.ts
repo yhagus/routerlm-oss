@@ -5,9 +5,9 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ModelDetail } from "../../models/model.js";
-import { findModelDetail } from "../../models/model-detail.js";
-import { ReorderRoutesCommand } from "../impl/reorder-routes.command.js";
+import type { ModelDetail } from "@/routing/models/model.js";
+import { findModelDetail } from "@/routing/models/model-detail.js";
+import { ReorderRoutesCommand } from "@/routing/commands/impl/reorder-routes.command.js";
 
 @CommandHandler(ReorderRoutesCommand)
 export class ReorderRoutesHandler implements ICommandHandler<ReorderRoutesCommand> {

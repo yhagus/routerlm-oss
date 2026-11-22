@@ -4,8 +4,8 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { users } from "@/db/schemas/index.js";
-import { normalizeEmail, type User, userColumns } from "../../models/user.js";
-import { FindUserByCredentialsQuery } from "../impl/find-user-by-credentials.query.js";
+import { normalizeEmail, type User, userColumns } from "@/users/models/user.js";
+import { FindUserByCredentialsQuery } from "@/users/queries/impl/find-user-by-credentials.query.js";
 
 @QueryHandler(FindUserByCredentialsQuery)
 export class FindUserByCredentialsHandler implements IQueryHandler<FindUserByCredentialsQuery> {

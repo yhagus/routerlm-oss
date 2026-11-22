@@ -2,14 +2,14 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
-import { FakeUpstream } from "../support/fake-upstream.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { FakeUpstream } from "@tests/support/fake-upstream.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 // The env is read when the app module loads, so it is set before that import.
 const modelsDev = await FakeUpstream.start();
 process.env.MODELS_DEV_API_URL = `${modelsDev.origin}/api.json`;
 process.env.MODELS_DEV_TIMEOUT_MS = "1000";
-const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 

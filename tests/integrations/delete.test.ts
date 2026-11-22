@@ -5,9 +5,9 @@ import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { authenticateWithApiKey, createApiKey } from "../support/api-keys.js";
-import { createIntegration } from "../support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+import { authenticateWithApiKey, createApiKey } from "@tests/support/api-keys.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";

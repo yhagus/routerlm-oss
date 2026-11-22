@@ -12,7 +12,7 @@ import {
   PROBE_AUDIO_CONTENT_TYPE,
   PROBE_AUDIO_DATA_URI,
   PROBE_AUDIO_FILE_NAME,
-} from "../data/probe-audio.js";
+} from "@/playground/data/probe-audio.js";
 import type { ProbedKind } from "./probe-plan.js";
 
 // The fixed, minimal request a Probe sends for each Model Kind (GLOSSARY

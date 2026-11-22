@@ -4,8 +4,8 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { count, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { users } from "@/db/schemas/index.js";
-import { lockUsers } from "../../models/lock-users.js";
-import { DeleteUserCommand } from "../impl/delete-user.command.js";
+import { lockUsers } from "@/users/models/lock-users.js";
+import { DeleteUserCommand } from "@/users/commands/impl/delete-user.command.js";
 
 @CommandHandler(DeleteUserCommand)
 export class DeleteUserHandler implements ICommandHandler<DeleteUserCommand> {

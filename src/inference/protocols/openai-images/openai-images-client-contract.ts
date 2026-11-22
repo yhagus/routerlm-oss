@@ -1,21 +1,21 @@
 import { z } from "zod";
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import { GatewayError } from "../../models/gateway-error.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
 import {
   clientSizeOf,
   type GeneratedImages,
   type ImageGenerationRequest,
   type ImageSize,
   providerSizeOf,
-} from "../../models/image-generation.js";
+} from "@/inference/models/image-generation.js";
 import {
   jsonReply,
   type MediaClientContract,
   type MediaReply,
   type MediaResponseContext,
-} from "../../models/media-kind.js";
-import { dashScopeImageProtocol } from "../dashscope-image/dashscope-image-protocol.js";
-import { writeOpenAiError } from "../openai-chat/openai-error.js";
+} from "@/inference/models/media-kind.js";
+import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol.js";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
 
 // OpenAI's Images API: `POST /v1/images/generations` (ADR 0015) and
 // `POST /v1/images/edits`, which adds the input images to start from.

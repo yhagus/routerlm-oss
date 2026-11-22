@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { z } from "zod";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import type { InferenceCaller } from "../models/inference.js";
-import { VIDEO_RESOLUTIONS } from "../models/video-generation.js";
+import type { InferenceCaller } from "@/inference/models/inference.js";
+import { VIDEO_RESOLUTIONS } from "@/inference/models/video-generation.js";
 
 /** What every video id starts with, as OpenAI's do. */
 const VIDEO_ID_PREFIX = "video_";

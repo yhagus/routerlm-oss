@@ -1,13 +1,13 @@
 import { z } from "zod";
-import type { Transcript, TranscriptionRequest } from "../../models/audio-transcription.js";
+import type { Transcript, TranscriptionRequest } from "@/inference/models/audio-transcription.js";
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "../../models/media-kind.js";
-import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
+} from "@/inference/models/media-kind.js";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
 
 // DashScope's native speech recognition API:
 // one synchronous call with the audio inline as a data URI. The request and

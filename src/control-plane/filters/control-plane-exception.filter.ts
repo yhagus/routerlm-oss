@@ -1,7 +1,10 @@
 import { type ArgumentsHost, Catch, type ExceptionFilter, Inject } from "@nestjs/common";
 import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
-import { CONTROL_PLANE_ERRORS, controlPlaneErrorOf } from "../models/control-plane-error.js";
-import type { ErrorJson } from "../models/proto-json.js";
+import {
+  CONTROL_PLANE_ERRORS,
+  controlPlaneErrorOf,
+} from "@/control-plane/models/control-plane-error.js";
+import type { ErrorJson } from "@/control-plane/models/proto-json.js";
 
 /**
  * Answers the control plane's errors over HTTP as `{code, message}` with the

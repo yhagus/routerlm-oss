@@ -5,11 +5,15 @@ import {
   TRANSCRIPT_FORMATS,
   type Transcript,
   type TranscriptionRequest,
-} from "../../models/audio-transcription.js";
-import { GatewayError } from "../../models/gateway-error.js";
-import { jsonReply, type MediaClientContract, type MediaReply } from "../../models/media-kind.js";
-import { dashScopeTranscriptionProtocol } from "../dashscope-transcription/dashscope-transcription-protocol.js";
-import { writeOpenAiError } from "../openai-chat/openai-error.js";
+} from "@/inference/models/audio-transcription.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import {
+  jsonReply,
+  type MediaClientContract,
+  type MediaReply,
+} from "@/inference/models/media-kind.js";
+import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol.js";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
 import type { TranscriptionFile } from "./openai-transcription-form.js";
 
 // OpenAI's transcription API, `POST /v1/audio/transcriptions`, a multipart

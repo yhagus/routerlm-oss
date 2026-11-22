@@ -9,12 +9,12 @@ import {
 import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
 import type { ClientProtocol } from "@/db/schemas/index.js";
 import { UsageProducer } from "@/usage/jobs/usage.producer.js";
-import { ClientCancelledError } from "../models/attempt-failure.js";
+import { ClientCancelledError } from "@/inference/models/attempt-failure.js";
 import { requestBytesOf, requestSenderOf } from "@/libs/models/client-connection.js";
-import { GatewayError } from "../models/gateway-error.js";
-import { CLIENT_PROTOCOL_CONVERTERS } from "../protocols/converters.js";
-import { openAiChatClientConverter } from "../protocols/openai-chat/openai-chat-client-converter.js";
-import { UsageMeter } from "../models/usage-meter.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import { CLIENT_PROTOCOL_CONVERTERS } from "@/inference/protocols/converters.js";
+import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter.js";
+import { UsageMeter } from "@/inference/models/usage-meter.js";
 
 const INFERENCE_PATH_PREFIX = "/v1/";
 const MULTIPART_CONTENT_TYPE = "multipart/form-data";

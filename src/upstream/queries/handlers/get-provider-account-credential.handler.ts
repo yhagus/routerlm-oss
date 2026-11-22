@@ -1,7 +1,7 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import type { ProviderAccountCredential } from "../../models/provider-account-credential.js";
-import { ProviderAccountCredentials } from "../../providers/provider-account-credentials.js";
-import { GetProviderAccountCredentialQuery } from "../impl/get-provider-account-credential.query.js";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
+import { ProviderAccountCredentials } from "@/upstream/providers/provider-account-credentials.js";
+import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query.js";
 
 @QueryHandler(GetProviderAccountCredentialQuery)
 export class GetProviderAccountCredentialHandler implements IQueryHandler<GetProviderAccountCredentialQuery> {

@@ -3,21 +3,24 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { cliIdentityHeaders } from "../models/cli-identity.js";
-import { codexInferenceHeaders } from "../models/codex-cli-identity.js";
-import { type OauthLoginEndpoint, oauthLoginEndpointOf } from "../models/oauth-device-grant.js";
+import { cliIdentityHeaders } from "@/upstream/models/cli-identity.js";
+import { codexInferenceHeaders } from "@/upstream/models/codex-cli-identity.js";
+import {
+  type OauthLoginEndpoint,
+  oauthLoginEndpointOf,
+} from "@/upstream/models/oauth-device-grant.js";
 import {
   needsRefresh,
   type OauthLoginLifetime,
   SIGN_IN_AGAIN_REASON,
-} from "../models/oauth-login.js";
+} from "@/upstream/models/oauth-login.js";
 import {
   apiKeyCredential,
   CredentialUnavailableError,
   OauthLoginRefusedError,
   type ProviderAccountCredential,
-} from "../models/provider-account-credential.js";
-import { storedOauthTokens } from "../models/provider-account.js";
+} from "@/upstream/models/provider-account-credential.js";
+import { storedOauthTokens } from "@/upstream/models/provider-account.js";
 import { OauthLoginClient } from "./oauth-login-client.js";
 import { OauthRefreshLock } from "./oauth-refresh-lock.js";
 import { ProviderAccountHealth } from "./provider-account-health.js";

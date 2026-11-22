@@ -5,10 +5,10 @@ import {
   DASHSCOPE_GENERATION_PATH,
   FakeUpstream,
   replyWithTwoDashScopeImages,
-} from "../support/fake-upstream.js";
-import { insertApiKey, insertDashScopeImageModel } from "../support/inference.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/fake-upstream.js";
+import { insertApiKey, insertDashScopeImageModel } from "@tests/support/inference.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 

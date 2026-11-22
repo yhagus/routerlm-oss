@@ -6,9 +6,9 @@ import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 // 24 bytes, so every bit of the ciphertext's last base64 character is significant.

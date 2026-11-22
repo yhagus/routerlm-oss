@@ -3,8 +3,8 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { upstreamModels } from "@/db/schemas/index.js";
-import type { UpstreamModel } from "../../models/upstream-model.js";
-import { ListUpstreamModelsQuery } from "../impl/list-upstream-models.query.js";
+import type { UpstreamModel } from "@/upstream/models/upstream-model.js";
+import { ListUpstreamModelsQuery } from "@/upstream/queries/impl/list-upstream-models.query.js";
 
 @QueryHandler(ListUpstreamModelsQuery)
 export class ListUpstreamModelsHandler implements IQueryHandler<ListUpstreamModelsQuery> {

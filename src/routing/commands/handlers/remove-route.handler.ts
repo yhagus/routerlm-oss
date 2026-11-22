@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { RemoveRouteCommand } from "../impl/remove-route.command.js";
+import { RemoveRouteCommand } from "@/routing/commands/impl/remove-route.command.js";
 
 @CommandHandler(RemoveRouteCommand)
 export class RemoveRouteHandler implements ICommandHandler<RemoveRouteCommand> {

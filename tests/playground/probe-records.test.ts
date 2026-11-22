@@ -6,19 +6,23 @@ import { eq } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { errorCaptures, upstreamModels } from "@/db/schemas/index.js";
-import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { addProviderAccount, insertOpenAiChatModel, UPSTREAM_KEY } from "../support/inference.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
-import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import {
+  addProviderAccount,
+  insertOpenAiChatModel,
+  UPSTREAM_KEY,
+} from "@tests/support/inference.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
 // Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
-const { writtenUsageLogs } = await import("../support/usage-logs.js");
+const { writtenUsageLogs } = await import("@tests/support/usage-logs.js");
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const BACKUP_KEY = "sk-backup-secret-9876543210";

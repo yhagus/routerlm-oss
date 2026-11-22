@@ -11,8 +11,12 @@ import {
   FakeUpstream,
   openAiResponsesFixture,
   type ReceivedRequest,
-} from "../support/fake-upstream.js";
-import { insertApiKey, insertOpenAiResponsesModel, UPSTREAM_KEY } from "../support/inference.js";
+} from "@tests/support/fake-upstream.js";
+import {
+  insertApiKey,
+  insertOpenAiResponsesModel,
+  UPSTREAM_KEY,
+} from "@tests/support/inference.js";
 import {
   ACCOUNT_ID,
   accessToken,
@@ -21,7 +25,7 @@ import {
   offerCodexOauthLogin,
   TOKEN_PATH,
   tokensReply,
-} from "../support/openai-codex-oauth.js";
+} from "@tests/support/openai-codex-oauth.js";
 import {
   FIVE_HOURS_IN_SECONDS,
   rateLimitOf,
@@ -30,9 +34,9 @@ import {
   usageReply,
   usageWindow,
   WEEK_IN_SECONDS,
-} from "../support/openai-codex-usage.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/openai-codex-usage.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

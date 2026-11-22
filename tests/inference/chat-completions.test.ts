@@ -4,7 +4,11 @@ import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { models } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { FakeUpstream, openAiChatFixture, UPSTREAM_ONLY_HEADER } from "../support/fake-upstream.js";
+import {
+  FakeUpstream,
+  openAiChatFixture,
+  UPSTREAM_ONLY_HEADER,
+} from "@tests/support/fake-upstream.js";
 import {
   fixtureAsServed,
   insertApiKey,
@@ -12,10 +16,10 @@ import {
   setProviderQuirks,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { portOf } from "../support/port-of.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { portOf } from "@tests/support/port-of.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const EVERY_FEATURE_REQUEST = {
   model: "smart",

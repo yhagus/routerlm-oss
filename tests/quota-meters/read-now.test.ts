@@ -2,22 +2,22 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { providers } from "@/db/schemas/index.js";
-import { FakeUpstream } from "../support/fake-upstream.js";
+import { FakeUpstream } from "@tests/support/fake-upstream.js";
 import {
   GENERAL_REMAINS,
   INVALID_KEY_REPLY,
   REMAINS_PATH,
   remainsAtPercentReply,
   remainsReply,
-} from "../support/minimax-m-plan-remains.js";
+} from "@tests/support/minimax-m-plan-remains.js";
 
 // The reader's timeout comes from the environment, which ConfigModule reads
 // when the app module is first imported.
 process.env.QUOTA_READER_TIMEOUT_MS = "300";
 const fakeUpstream = await FakeUpstream.start();
-const { allowPrivateUpstreams } = await import("../support/private-upstreams.js");
-const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
-const { deleteAllUpstreamData } = await import("../support/upstream.js");
+const { allowPrivateUpstreams } = await import("@tests/support/private-upstreams.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
+const { deleteAllUpstreamData } = await import("@tests/support/upstream.js");
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const M_PLAN_KEY = "sk-cp-0123456789abcdefWXYZ";

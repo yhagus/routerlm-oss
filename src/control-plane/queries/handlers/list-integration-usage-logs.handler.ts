@@ -6,9 +6,13 @@ import { usageLogs } from "@/db/schemas/index.js";
 import type {
   IntegrationUsageLog,
   IntegrationUsageLogPage,
-} from "../../models/integration-usage-log.js";
-import { cursorOf, positionOf, type UsageLogPosition } from "../../models/usage-log-cursor.js";
-import { ListIntegrationUsageLogsQuery } from "../impl/list-integration-usage-logs.query.js";
+} from "@/control-plane/models/integration-usage-log.js";
+import {
+  cursorOf,
+  positionOf,
+  type UsageLogPosition,
+} from "@/control-plane/models/usage-log-cursor.js";
+import { ListIntegrationUsageLogsQuery } from "@/control-plane/queries/impl/list-integration-usage-logs.query.js";
 
 const INTEGRATION_USAGE_LOG_COLUMNS = {
   id: usageLogs.id,

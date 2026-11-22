@@ -3,7 +3,11 @@ import { eq } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
-import { dashScopeImageFixture, type FakeReply, FakeUpstream } from "../support/fake-upstream.js";
+import {
+  dashScopeImageFixture,
+  type FakeReply,
+  FakeUpstream,
+} from "@tests/support/fake-upstream.js";
 import {
   addDashScopeImageRoute,
   addProviderAccount,
@@ -12,10 +16,10 @@ import {
   insertOpenAiChatModel,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { allowPrivateUpstreams } from "../support/private-upstreams.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { allowPrivateUpstreams } from "@tests/support/private-upstreams.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";

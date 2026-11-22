@@ -7,10 +7,10 @@ import { upstreamModels } from "@/db/schemas/index.js";
 import { USAGE_QUEUE } from "@/queue/models/queue-names.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
-import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { insertOpenAiChatModel, UPSTREAM_MODEL_ID } from "../support/inference.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import { insertOpenAiChatModel, UPSTREAM_MODEL_ID } from "@tests/support/inference.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

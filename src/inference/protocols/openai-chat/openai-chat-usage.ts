@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { StopReason, TokenUsage } from "../../models/internal-format.js";
+import type { StopReason, TokenUsage } from "@/inference/models/internal-format.js";
 
 // Usage and finish reasons in Chat Completions terms, read by the upstream
 // converter and written by the client converter.

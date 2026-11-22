@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { HttpClient, HttpClientError, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
 import type { Env } from "@/config/schemas/env.schema.js";
-import type { ModelsDevModel, ModelsDevSnapshot } from "../models/models-dev.js";
+import type { ModelsDevModel, ModelsDevSnapshot } from "@/catalog/models/models-dev.js";
 import { MODELS_DEV_HTTP_CLIENT } from "./models-dev-http-client.js";
 
 const NEWEST_MODEL_COUNT = 5;

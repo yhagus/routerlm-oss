@@ -11,19 +11,19 @@ import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { type ProviderOauthLogin, providerAccounts, providers } from "@/db/schemas/index.js";
 import { SECOND_MS } from "@/libs/models/duration.js";
-import { OauthSignInPolling } from "../../jobs/oauth-sign-in-polling.js";
+import { OauthSignInPolling } from "@/upstream/jobs/oauth-sign-in-polling.js";
 import {
   type DeviceAuthorization,
   type OauthLoginEndpoint,
   OauthLoginError,
   oauthLoginEndpointOf,
   signInNeedsRegion,
-} from "../../models/oauth-device-grant.js";
-import type { OauthSignIn } from "../../models/oauth-sign-in.js";
-import { OauthLoginClient } from "../../providers/oauth-login-client.js";
-import { OauthSignInStore } from "../../providers/oauth-sign-in-store.js";
-import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
-import { StartOauthSignInCommand } from "../impl/start-oauth-sign-in.command.js";
+} from "@/upstream/models/oauth-device-grant.js";
+import type { OauthSignIn } from "@/upstream/models/oauth-sign-in.js";
+import { OauthLoginClient } from "@/upstream/providers/oauth-login-client.js";
+import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+import { StartOauthSignInCommand } from "@/upstream/commands/impl/start-oauth-sign-in.command.js";
 
 @CommandHandler(StartOauthSignInCommand)
 export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignInCommand> {

@@ -8,14 +8,14 @@ import {
   dashScopeTranscriptionFixture,
   FakeUpstream,
   replyWithTwoDashScopeImages,
-} from "../support/fake-upstream.js";
+} from "@tests/support/fake-upstream.js";
 import {
   insertDashScopeImageModel,
   insertDashScopeSpeechModel,
   insertDashScopeTranscriptionModel,
-} from "../support/inference.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";

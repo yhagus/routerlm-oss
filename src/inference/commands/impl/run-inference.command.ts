@@ -5,8 +5,8 @@ import type {
   InferenceResult,
   RunInferenceTarget,
   UsageListener,
-} from "../../models/inference.js";
-import type { ClientProtocolConverter } from "../../protocols/client-protocol-converter.js";
+} from "@/inference/models/inference.js";
+import type { ClientProtocolConverter } from "@/inference/protocols/client-protocol-converter.js";
 
 /**
  * Serves an inference request in the converter's client Protocol and enqueues

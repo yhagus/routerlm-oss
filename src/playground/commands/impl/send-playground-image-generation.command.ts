@@ -7,7 +7,7 @@ import type { InferenceTarget } from "@/inference/models/inference.js";
 import type { MediaClientContract } from "@/inference/models/media-kind.js";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
 import type { User } from "@/users/models/user.js";
-import type { PlaygroundImageGeneration } from "../../models/playground-image-generation.js";
+import type { PlaygroundImageGeneration } from "@/playground/models/playground-image-generation.js";
 
 /**
  * Sends a User's Playground image request through the same inference path

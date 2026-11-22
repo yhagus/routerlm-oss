@@ -4,7 +4,7 @@ import type {
   PendingDeviceCode,
   TokenPoll,
   TokenRefresh,
-} from "../models/oauth-device-grant.js";
+} from "@/upstream/models/oauth-device-grant.js";
 
 /** The sign-in and refresh of one OAuth Login flow, at that flow's endpoint. */
 export interface OauthFlowLoginClient<Endpoint extends OauthLoginEndpoint> {

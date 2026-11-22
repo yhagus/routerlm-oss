@@ -1,7 +1,11 @@
 import { Command } from "@nestjs/cqrs";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type { InferenceCaller, InferenceTarget, UsageListener } from "../../models/inference.js";
-import type { MediaReply } from "../../models/media-kind.js";
+import type {
+  InferenceCaller,
+  InferenceTarget,
+  UsageListener,
+} from "@/inference/models/inference.js";
+import type { MediaReply } from "@/inference/models/media-kind.js";
 
 /**
  * Submits a Video Job (`POST /v1/videos`) through the media inference path,

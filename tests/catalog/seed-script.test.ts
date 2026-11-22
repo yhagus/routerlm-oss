@@ -6,7 +6,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
-import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
 
 const runFile = promisify(execFile);
 // Bun startup plus seeding every shipped Catalog file.

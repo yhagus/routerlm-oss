@@ -2,8 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { InjectThrottlerStorage, minutes, type ThrottlerStorage } from "@nestjs/throttler";
 import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
 import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
-import { GatewayError } from "../models/gateway-error.js";
-import type { InferenceCaller } from "../models/inference.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { InferenceCaller } from "@/inference/models/inference.js";
 
 const REQUEST_RATE_THROTTLER = "request-rate";
 const REQUEST_RATE_WINDOW = minutes(1);

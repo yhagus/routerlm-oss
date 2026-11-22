@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { once } from "node:events";
 import { createServer } from "node:net";
 import { vi } from "vitest";
-import { portOf } from "../support/port-of.js";
+import { portOf } from "@tests/support/port-of.js";
 
 // ADR 0025: processes share a port only on Linux (CI, or a Linux container).
 // Elsewhere the backend runs one process and there is nothing to supervise.

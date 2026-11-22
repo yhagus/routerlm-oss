@@ -5,7 +5,7 @@ import {
   DOCS_ID_DIRECTORY,
   proseOf,
   readDocsPages,
-} from "../support/docs-examples.js";
+} from "@tests/support/docs-examples.js";
 
 // The Indonesian pages translate the prose only. Their examples must stay the
 // examples client-examples.test.ts runs, so a translation can't drift from

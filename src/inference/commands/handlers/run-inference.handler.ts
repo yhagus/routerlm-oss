@@ -16,54 +16,64 @@ import {
   AttemptFailedError,
   ClientCancelledError,
   gatewayErrorFor,
-} from "../../models/attempt-failure.js";
+} from "@/inference/models/attempt-failure.js";
 import {
   DEFAULT_CACHE_MARKER_LIMIT,
   withAutomaticCacheBreakpoints,
-} from "../../models/automatic-cache-breakpoints.js";
+} from "@/inference/models/automatic-cache-breakpoints.js";
 import {
   assertKindServedHere,
   type Destination,
   probeDestination,
   upstreamModelServedHere,
   usableModel,
-} from "../../models/destination.js";
-import { GatewayError } from "../../models/gateway-error.js";
-import type { InferenceRequest } from "../../models/internal-format.js";
-import { applyParameterPolicy, effectiveParameterPolicy } from "../../models/parameter-policy.js";
-import { promptCacheKey } from "../../models/prompt-cache-key.js";
-import { encodedFor, failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
+} from "@/inference/models/destination.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { InferenceRequest } from "@/inference/models/internal-format.js";
+import {
+  applyParameterPolicy,
+  effectiveParameterPolicy,
+} from "@/inference/models/parameter-policy.js";
+import { promptCacheKey } from "@/inference/models/prompt-cache-key.js";
+import {
+  encodedFor,
+  failedRequestUsage,
+  requestOwnerOf,
+} from "@/inference/models/request-usage.js";
 import type {
   ClientProtocolConverter,
   ClientStreamWriter,
   ResponseContext,
-} from "../../protocols/client-protocol-converter.js";
-import { UPSTREAM_PROTOCOL_CONVERTERS, upstreamAuthHeaders } from "../../protocols/converters.js";
+} from "@/inference/protocols/client-protocol-converter.js";
+import {
+  UPSTREAM_PROTOCOL_CONVERTERS,
+  upstreamAuthHeaders,
+} from "@/inference/protocols/converters.js";
 import {
   type AttemptTarget,
   canServe,
   capableRoutes,
   endpointOf,
   routePath,
-} from "../../models/route-selection.js";
-import { AttemptRunner } from "../../providers/attempt-runner.js";
-import { CallerLimits } from "../../providers/caller-limits.js";
+} from "@/inference/models/route-selection.js";
+import { AttemptRunner } from "@/inference/providers/attempt-runner.js";
+import { CallerLimits } from "@/inference/providers/caller-limits.js";
 import {
   DEFAULT_TIMEOUTS,
   type UpstreamCall,
   UpstreamClient,
   type UpstreamStream,
   totalTimeoutMsOf,
-} from "../../providers/upstream-client.js";
-import { serviceTierSentTo } from "../../models/service-tier.js";
-import { forwardedClientHeadersOf } from "../../providers/forwarded-client-headers.js";
-import { UsageMeter } from "../../models/usage-meter.js";
+} from "@/inference/providers/upstream-client.js";
+import { serviceTierSentTo } from "@/inference/models/service-tier.js";
+import { forwardedClientHeadersOf } from "@/inference/providers/forwarded-client-headers.js";
+import { UsageMeter } from "@/inference/models/usage-meter.js";
 import type {
   InferenceCaller,
   InferenceResult,
   RunInferenceTarget,
-} from "../../models/inference.js";
-import { RunInferenceCommand } from "../impl/run-inference.command.js";
+} from "@/inference/models/inference.js";
+import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.command.js";
 
 /** What one Attempt needs besides the request and its target. */
 interface AttemptOptions {

@@ -4,9 +4,9 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { attempts, usageLogs } from "@/db/schemas/index.js";
-import type { UsageLogDetail } from "../../models/usage.js";
-import { usageLogSummaryColumns } from "../../models/usage-log-columns.js";
-import { ShowUsageLogQuery } from "../impl/show-usage-log.query.js";
+import type { UsageLogDetail } from "@/usage/models/usage.js";
+import { usageLogSummaryColumns } from "@/usage/models/usage-log-columns.js";
+import { ShowUsageLogQuery } from "@/usage/queries/impl/show-usage-log.query.js";
 
 @QueryHandler(ShowUsageLogQuery)
 export class ShowUsageLogHandler implements IQueryHandler<ShowUsageLogQuery> {

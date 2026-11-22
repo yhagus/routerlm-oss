@@ -4,10 +4,10 @@ import request from "supertest";
 import { vi } from "vitest";
 import type { Database } from "@/db/schemas/relations.js";
 import { models } from "@/db/schemas/index.js";
-import { authenticateWithApiKey, createApiKey } from "../support/api-keys.js";
-import type { ControlPlaneClient } from "../support/control-plane-client.js";
-import { createIntegration } from "../support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+import { authenticateWithApiKey, createApiKey } from "@tests/support/api-keys.js";
+import type { ControlPlaneClient } from "@tests/support/control-plane-client.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";

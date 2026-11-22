@@ -1,7 +1,7 @@
 import { isIPv4, isIPv6 } from "node:net";
 import { z } from "zod";
-import { allowsPrivateUpstreams } from "../models/private-upstreams-policy.js";
-import { bareHostname } from "../models/url.js";
+import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy.js";
+import { bareHostname } from "@/libs/models/url.js";
 
 /** A network by its first two octets and prefix length; every prefix is at most 16 bits. */
 interface Ipv4Range {

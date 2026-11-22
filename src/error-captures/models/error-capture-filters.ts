@@ -10,7 +10,7 @@ import type {
   CaptureOutcome,
   ErrorCapturePageQuery,
   FailedHopKind,
-} from "../schemas/error-capture-page-query.schema.js";
+} from "@/error-captures/schemas/error-capture-page-query.schema.js";
 
 const FIRST_ERROR_STATUS = 400;
 

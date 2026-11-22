@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { GatewayErrorCode } from "@/db/schemas/index.js";
-import { GatewayError } from "../../models/gateway-error.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
 import {
   type AssistantContentPart,
   type CacheMarker,
@@ -15,12 +15,12 @@ import {
   type ToolChoice,
   UNREPORTED_USAGE,
   type UserContentPart,
-} from "../../models/internal-format.js";
+} from "@/inference/models/internal-format.js";
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "../client-protocol-converter.js";
+} from "@/inference/protocols/client-protocol-converter.js";
 
 // The Anthropic Messages client Protocol (`POST /v1/messages`).
 // Schemas are plain (non-strict) zod objects: unknown fields are dropped (ADR 0002).

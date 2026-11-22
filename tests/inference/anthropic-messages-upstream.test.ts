@@ -1,16 +1,16 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { anthropicMessagesFixture, FakeUpstream } from "../support/fake-upstream.js";
+import { anthropicMessagesFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
 import {
   ALL_CAPABILITIES,
   insertAnthropicMessagesModel,
   insertApiKey,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 /** A second turn: the client sends back the tool call it got and the tool's result. */
 const TOOL_RESULT_TURN_REQUEST = {

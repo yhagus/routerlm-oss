@@ -4,10 +4,13 @@ import type {
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "../../models/media-kind.js";
-import type { SpeechSynthesisRequest, SynthesizedSpeech } from "../../models/speech-synthesis.js";
-import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
+} from "@/inference/models/media-kind.js";
+import type {
+  SpeechSynthesisRequest,
+  SynthesizedSpeech,
+} from "@/inference/models/speech-synthesis.js";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
 
 // DashScope's native speech synthesis API: one
 // synchronous call that answers with the URL of the audio, which the gateway

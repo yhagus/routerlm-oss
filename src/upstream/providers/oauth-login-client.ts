@@ -6,7 +6,7 @@ import type {
   PendingDeviceCode,
   TokenPoll,
   TokenRefresh,
-} from "../models/oauth-device-grant.js";
+} from "@/upstream/models/oauth-device-grant.js";
 import { KimiCodeLoginClient } from "./kimi-code-login-client.js";
 import type { OauthFlowLoginClient } from "./oauth-flow-login-client.js";
 import { OpenAiCodexLoginClient } from "./openai-codex-login-client.js";

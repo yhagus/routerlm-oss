@@ -1,7 +1,7 @@
 import { Command } from "@nestjs/cqrs";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
 import type { User } from "@/users/models/user.js";
-import type { ProbeResults } from "../../models/probe-result.js";
+import type { ProbeResults } from "@/playground/models/probe-result.js";
 
 /**
  * A User's Probe of one Upstream Model (GLOSSARY "Probe"): its Kind's fixed

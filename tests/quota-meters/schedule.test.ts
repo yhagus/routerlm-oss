@@ -11,11 +11,11 @@ import {
   quotaMeters,
 } from "@/db/schemas/index.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { FakeUpstream } from "../support/fake-upstream.js";
-import { USAGES_PATH, usagesReply } from "../support/kimi-code-usages.js";
-import { remainsAtPercentReply } from "../support/minimax-m-plan-remains.js";
-import { allowPrivateUpstreams } from "../support/private-upstreams.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { FakeUpstream } from "@tests/support/fake-upstream.js";
+import { USAGES_PATH, usagesReply } from "@tests/support/kimi-code-usages.js";
+import { remainsAtPercentReply } from "@tests/support/minimax-m-plan-remains.js";
+import { allowPrivateUpstreams } from "@tests/support/private-upstreams.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 // Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");

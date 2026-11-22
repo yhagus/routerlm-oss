@@ -1,12 +1,12 @@
 import { z } from "zod";
 import type { UpstreamProtocol } from "@/db/schemas/index.js";
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import { GatewayError } from "../../models/gateway-error.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
 import {
   jsonReply,
   type MediaClientContract,
   type MediaResponseContext,
-} from "../../models/media-kind.js";
+} from "@/inference/models/media-kind.js";
 import {
   requiredCapabilitiesOf,
   type SubmittedVideoJob,
@@ -19,15 +19,15 @@ import {
   type VideoTaskState,
   type VideoUpstreamProtocol,
   videoFormatOfSize,
-} from "../../models/video-generation.js";
+} from "@/inference/models/video-generation.js";
 import {
   type VideoHandles,
   type VideoJobHandle,
   videoJobOwnerOf,
-} from "../../providers/video-handles.js";
-import { dashScopeVideoProtocol } from "../dashscope-video/dashscope-video-protocol.js";
-import { writeOpenAiError } from "../openai-chat/openai-error.js";
-import { inputImageCheck } from "../openai-images/openai-images-client-contract.js";
+} from "@/inference/providers/video-handles.js";
+import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/dashscope-video-protocol.js";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
+import { inputImageCheck } from "@/inference/protocols/openai-images/openai-images-client-contract.js";
 
 // OpenAI's Videos API, `POST /v1/videos`, with OpenRouter's `resolution` and
 // `aspect_ratio` accepted in place of `size`.

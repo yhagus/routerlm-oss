@@ -5,10 +5,10 @@ import { assertModelsExist } from "@/libs/models/allowed-models.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { integrations } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { IntegrationSummary } from "../../models/integration.js";
-import { integrationNotFound } from "../../models/integration-not-found.js";
-import { selectIntegrationSummaries } from "../../models/integration-summaries.js";
-import { UpdateIntegrationCommand } from "../impl/update-integration.command.js";
+import type { IntegrationSummary } from "@/integrations/models/integration.js";
+import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
+import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries.js";
+import { UpdateIntegrationCommand } from "@/integrations/commands/impl/update-integration.command.js";
 
 @CommandHandler(UpdateIntegrationCommand)
 export class UpdateIntegrationHandler implements ICommandHandler<UpdateIntegrationCommand> {

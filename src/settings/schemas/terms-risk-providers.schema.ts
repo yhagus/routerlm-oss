@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { settingValueSchema } from "../models/setting-definitions.js";
+import { settingValueSchema } from "@/settings/models/setting-definitions.js";
 
 export const newTermsRiskProvidersSchema = z.object({
   allowed: settingValueSchema("allowTermsRiskProviders"),

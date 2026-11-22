@@ -7,7 +7,7 @@ import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys, models } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

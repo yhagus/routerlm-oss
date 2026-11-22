@@ -3,13 +3,13 @@ import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
 import { SECOND_MS } from "@/libs/models/duration.js";
 import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
-import type { QuotaMeterReading } from "../models/quota-meter.js";
+import type { QuotaMeterReading } from "@/quota-meters/models/quota-meter.js";
 import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
   QuotaReadError,
-} from "../models/quota-reader.js";
+} from "@/quota-meters/models/quota-reader.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
 /** On the origin of the Provider's base URL (`https://chatgpt.com/backend-api/codex`). */

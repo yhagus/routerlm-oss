@@ -6,14 +6,14 @@ import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postg
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { unusedConstellationName } from "../../models/constellation-name.js";
+import { unusedConstellationName } from "@/upstream/models/constellation-name.js";
 import {
   type ProviderAccount,
   providerAccountColumns,
   storedKey,
-} from "../../models/provider-account.js";
-import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
-import { CreateProviderAccountCommand } from "../impl/create-provider-account.command.js";
+} from "@/upstream/models/provider-account.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+import { CreateProviderAccountCommand } from "@/upstream/commands/impl/create-provider-account.command.js";
 
 @CommandHandler(CreateProviderAccountCommand)
 export class CreateProviderAccountHandler implements ICommandHandler<CreateProviderAccountCommand> {

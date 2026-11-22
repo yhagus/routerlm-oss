@@ -3,8 +3,8 @@ import { mayUseModel } from "@/api-keys/models/api-key.js";
 import { CAPABILITIES, type Capability } from "@/db/schemas/index.js";
 import { isRouteUsable, type SnapshotModel } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ClientModel, ClientModelList } from "../../models/client-model.js";
-import { ListClientModelsQuery } from "../impl/list-client-models.query.js";
+import type { ClientModel, ClientModelList } from "@/inference/models/client-model.js";
+import { ListClientModelsQuery } from "@/inference/queries/impl/list-client-models.query.js";
 
 @QueryHandler(ListClientModelsQuery)
 export class ListClientModelsHandler implements IQueryHandler<ListClientModelsQuery> {

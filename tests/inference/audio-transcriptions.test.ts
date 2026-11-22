@@ -2,7 +2,7 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
-import { dashScopeTranscriptionFixture, FakeUpstream } from "../support/fake-upstream.js";
+import { dashScopeTranscriptionFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
 import {
   addProviderAccount,
   insertApiKey,
@@ -10,9 +10,9 @@ import {
   insertDashScopeTranscriptionModel,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
 const SPEECH_MP3 = Buffer.from([0x49, 0x44, 0x33, 4, 0, 0, 1, 2, 3]);

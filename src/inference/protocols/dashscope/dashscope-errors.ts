@@ -1,5 +1,5 @@
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
-import { failureReasonOfStatus } from "../../providers/upstream-client.js";
+import { failureReasonOfStatus } from "@/inference/providers/upstream-client.js";
 
 /**
  * The Fallback reason of a failed answer from DashScope's native API, shared

@@ -5,14 +5,14 @@ import {
   anthropicMessagesFixture,
   FakeUpstream,
   openAiChatFixture,
-} from "../support/fake-upstream.js";
+} from "@tests/support/fake-upstream.js";
 import {
   insertAnthropicMessagesModel,
   insertApiKey,
   insertOpenAiChatModel,
-} from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 /** Served by an openai-chat Provider, whose stream events have no names. */
 const CHAT_MODEL = "via-chat";

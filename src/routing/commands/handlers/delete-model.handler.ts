@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { models } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { DeleteModelCommand } from "../impl/delete-model.command.js";
+import { DeleteModelCommand } from "@/routing/commands/impl/delete-model.command.js";
 
 @CommandHandler(DeleteModelCommand)
 export class DeleteModelHandler implements ICommandHandler<DeleteModelCommand> {

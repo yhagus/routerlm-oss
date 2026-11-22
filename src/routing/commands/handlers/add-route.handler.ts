@@ -4,11 +4,11 @@ import { sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ModelDetail } from "../../models/model.js";
-import { findModelDetail } from "../../models/model-detail.js";
-import { assertRouteKindFits } from "../../models/route-kind.js";
-import { toRouteWriteError } from "../../models/write-errors.js";
-import { AddRouteCommand } from "../impl/add-route.command.js";
+import type { ModelDetail } from "@/routing/models/model.js";
+import { findModelDetail } from "@/routing/models/model-detail.js";
+import { assertRouteKindFits } from "@/routing/models/route-kind.js";
+import { toRouteWriteError } from "@/routing/models/write-errors.js";
+import { AddRouteCommand } from "@/routing/commands/impl/add-route.command.js";
 
 @CommandHandler(AddRouteCommand)
 export class AddRouteHandler implements ICommandHandler<AddRouteCommand> {

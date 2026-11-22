@@ -12,16 +12,16 @@ import type {
   TokenUsage,
   ToolChoice,
   UserContentPart,
-} from "../../models/internal-format.js";
-import { isJsonObject } from "../json-object.js";
-import type { ServerSentEvent } from "../server-sent-events.js";
+} from "@/inference/models/internal-format.js";
+import { isJsonObject } from "@/inference/protocols/json-object.js";
+import type { ServerSentEvent } from "@/inference/protocols/server-sent-events.js";
 import {
   type UpstreamHttpRequest,
   UpstreamProtocolError,
   type UpstreamProtocolConverter,
   type UpstreamStreamParser,
   type UpstreamTarget,
-} from "../upstream-protocol-converter.js";
+} from "@/inference/protocols/upstream-protocol-converter.js";
 
 // The Responses API as an upstream (`POST {baseUrl}/responses`), stateless:
 // every request carries the whole conversation and asks the upstream to store

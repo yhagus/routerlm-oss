@@ -1,4 +1,4 @@
-import { dataUriOf, type MediaUpload } from "../../models/media-upload.js";
+import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload.js";
 
 // A multipart `/v1/images/edits` request, read into the JSON body the edits
 // client contract parses, so that both forms are validated alike.

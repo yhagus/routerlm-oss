@@ -7,7 +7,7 @@ import { and, eq, exists, isNotNull, isNull, lt, lte, or } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers, quotaMeters } from "@/db/schemas/index.js";
 import { QUOTA_METERS_QUEUE } from "@/queue/models/queue-names.js";
-import { ReadProviderAccountQuotaCommand } from "../commands/impl/read-provider-account-quota.command.js";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 
 /** Scheduler id: upserting it again on every boot keeps a single schedule. */
 export const QUOTA_READING_SCHEDULER = "quota-reading";

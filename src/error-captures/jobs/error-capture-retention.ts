@@ -8,7 +8,7 @@ import type { Database } from "@/db/schemas/relations.js";
 import { errorCaptures } from "@/db/schemas/index.js";
 import { ERROR_CAPTURES_QUEUE } from "@/queue/models/queue-names.js";
 import { ShowErrorCaptureRetentionQuery } from "@/settings/queries/impl/show-error-capture-retention.query.js";
-import { retentionCutoff } from "../models/retention-cutoff.js";
+import { retentionCutoff } from "@/error-captures/models/retention-cutoff.js";
 
 /** Scheduler id: upserting it again on every boot keeps a single schedule. */
 export const ERROR_CAPTURE_RETENTION_SCHEDULER = "error-capture-retention";

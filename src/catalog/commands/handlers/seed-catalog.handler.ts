@@ -3,7 +3,10 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { type AnyColumn, and, eq, isNull, or, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
-import { SeedCatalogCommand, type SeedResult } from "../impl/seed-catalog.command.js";
+import {
+  SeedCatalogCommand,
+  type SeedResult,
+} from "@/catalog/commands/impl/seed-catalog.command.js";
 
 /** Keeps the stored price, or takes the Catalog's when the stored one is empty. */
 function fillPrice(column: AnyColumn, catalogPrice: number | null): SQL {

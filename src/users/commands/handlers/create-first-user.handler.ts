@@ -4,9 +4,9 @@ import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
 import { users } from "@/db/schemas/index.js";
-import { lockUsers } from "../../models/lock-users.js";
-import { normalizeEmail, type User, userColumns } from "../../models/user.js";
-import { CreateFirstUserCommand } from "../impl/create-first-user.command.js";
+import { lockUsers } from "@/users/models/lock-users.js";
+import { normalizeEmail, type User, userColumns } from "@/users/models/user.js";
+import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command.js";
 
 @CommandHandler(CreateFirstUserCommand)
 export class CreateFirstUserHandler implements ICommandHandler<CreateFirstUserCommand> {

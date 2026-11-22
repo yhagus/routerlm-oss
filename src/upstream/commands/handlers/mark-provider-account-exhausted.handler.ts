@@ -1,6 +1,6 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { CooldownStore } from "../../providers/cooldown-store.js";
-import { MarkProviderAccountExhaustedCommand } from "../impl/mark-provider-account-exhausted.command.js";
+import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
+import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 
 /**
  * How long an Exhausted Provider Account whose reset time is unknown is

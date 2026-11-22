@@ -14,15 +14,15 @@ import {
 import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end-provider-account-exhausted.command.js";
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query.js";
-import { exhaustedStateOf } from "../../models/exhausted.js";
+import { exhaustedStateOf } from "@/quota-meters/models/exhausted.js";
 import {
   overwrittenQuotaMeterColumns,
   type ProviderAccountQuota,
   type QuotaMeterReading,
   selectQuotaMeters,
-} from "../../models/quota-meter.js";
-import { QuotaReaders } from "../../providers/quota-readers.js";
-import { ReadProviderAccountQuotaCommand } from "../impl/read-provider-account-quota.command.js";
+} from "@/quota-meters/models/quota-meter.js";
+import { QuotaReaders } from "@/quota-meters/providers/quota-readers.js";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 
 type ReadingOutcome =
   | { kind: "read"; meters: QuotaMeterReading[] }

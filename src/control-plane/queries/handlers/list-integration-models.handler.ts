@@ -7,8 +7,8 @@ import {
   type SnapshotUpstreamModel,
 } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { IntegrationModel, ModelPrices } from "../../models/integration-model.js";
-import { ListIntegrationModelsQuery } from "../impl/list-integration-models.query.js";
+import type { IntegrationModel, ModelPrices } from "@/control-plane/models/integration-model.js";
+import { ListIntegrationModelsQuery } from "@/control-plane/queries/impl/list-integration-models.query.js";
 
 @QueryHandler(ListIntegrationModelsQuery)
 export class ListIntegrationModelsHandler implements IQueryHandler<ListIntegrationModelsQuery> {

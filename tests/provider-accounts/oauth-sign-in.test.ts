@@ -10,7 +10,7 @@ import { providerAccounts } from "@/db/schemas/index.js";
 import { PollOauthSignInCommand } from "@/upstream/commands/impl/poll-oauth-sign-in.command.js";
 import { CONSTELLATIONS } from "@/upstream/models/constellation-name.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { FakeUpstream, type ReceivedRequest } from "../support/fake-upstream.js";
+import { FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream.js";
 import {
   ACCESS_TOKEN,
   DEVICE_AUTHORIZATION_PATH,
@@ -24,14 +24,14 @@ import {
   TOKEN_PATH,
   tokenErrorReply,
   USER_CODE,
-} from "../support/kimi-oauth.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/kimi-oauth.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 // Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { OAUTH_SIGN_INS_QUEUE } = await import("@/queue/models/queue-names.js");
 

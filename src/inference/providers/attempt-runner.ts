@@ -17,12 +17,20 @@ import {
 } from "@/upstream/providers/provider-account-credentials.js";
 import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { AttemptFailedError, exhaustionError, gatewayErrorFor } from "../models/attempt-failure.js";
-import { exhaustedUntilOf } from "../models/quota-exhausted-error.js";
-import { type AttemptPath, type AttemptTarget, attemptTargets } from "../models/route-selection.js";
-import type { Destination } from "../models/destination.js";
-import type { SentServiceTier } from "../models/service-tier.js";
-import type { UsageMeter } from "../models/usage-meter.js";
+import {
+  AttemptFailedError,
+  exhaustionError,
+  gatewayErrorFor,
+} from "@/inference/models/attempt-failure.js";
+import { exhaustedUntilOf } from "@/inference/models/quota-exhausted-error.js";
+import {
+  type AttemptPath,
+  type AttemptTarget,
+  attemptTargets,
+} from "@/inference/models/route-selection.js";
+import type { Destination } from "@/inference/models/destination.js";
+import type { SentServiceTier } from "@/inference/models/service-tier.js";
+import type { UsageMeter } from "@/inference/models/usage-meter.js";
 
 /** Spec "Fallback": at most this many upstream calls per client request. */
 export const MAX_ATTEMPTS_PER_REQUEST = 5;

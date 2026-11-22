@@ -4,8 +4,8 @@ import { eq, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys, integrations } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { integrationNotFound } from "../../models/integration-not-found.js";
-import { DeleteIntegrationCommand } from "../impl/delete-integration.command.js";
+import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
+import { DeleteIntegrationCommand } from "@/integrations/commands/impl/delete-integration.command.js";
 
 @CommandHandler(DeleteIntegrationCommand)
 export class DeleteIntegrationHandler implements ICommandHandler<DeleteIntegrationCommand> {

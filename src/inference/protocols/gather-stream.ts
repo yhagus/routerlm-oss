@@ -4,7 +4,7 @@ import {
   type InferenceStreamEvent,
   type StopReason,
   UNREPORTED_USAGE,
-} from "../models/internal-format.js";
+} from "@/inference/models/internal-format.js";
 
 /**
  * One response from a whole stream, for a non-streaming client of a Provider

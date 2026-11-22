@@ -4,9 +4,9 @@ import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { models } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 describe("GET /v1/models (e2e)", () => {
   let app: NestNodeApplication;

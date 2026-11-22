@@ -1,6 +1,6 @@
 import { Command } from "@nestjs/cqrs";
-import type { ProviderAccount } from "../../models/provider-account.js";
-import type { ProviderAccountChanges } from "../../schemas/upstream.schema.js";
+import type { ProviderAccount } from "@/upstream/models/provider-account.js";
+import type { ProviderAccountChanges } from "@/upstream/schemas/upstream.schema.js";
 
 /**
  * Edits a Provider Account. A new `key` replaces the stored one. Enabling it

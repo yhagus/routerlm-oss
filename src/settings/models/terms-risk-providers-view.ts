@@ -1,4 +1,4 @@
-import type { SettingValue } from "../providers/settings-store.js";
+import type { SettingValue } from "@/settings/providers/settings-store.js";
 import type { TermsRiskProvidersSetting } from "./terms-risk-providers.js";
 import { SETTING_DEFINITIONS } from "./setting-definitions.js";
 

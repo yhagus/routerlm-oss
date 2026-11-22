@@ -13,8 +13,8 @@ import type { Env } from "@/config/schemas/env.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { publishPrivateUpstreamsAllowed } from "@/libs/models/private-upstreams-policy.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { loadSnapshot } from "../models/load-snapshot.js";
-import { EMPTY_SNAPSHOT, type Snapshot } from "../models/snapshot.js";
+import { loadSnapshot } from "@/snapshot/models/load-snapshot.js";
+import { EMPTY_SNAPSHOT, type Snapshot } from "@/snapshot/models/snapshot.js";
 
 /** Every backend instance listens here and reloads its snapshot on another instance's message. */
 export const SNAPSHOT_CHANGED_CHANNEL = "routerlm:snapshot-changed";

@@ -1,5 +1,5 @@
 import { Query } from "@nestjs/cqrs";
-import type { InferenceCaller } from "../../models/inference.js";
+import type { InferenceCaller } from "@/inference/models/inference.js";
 
 /** A completed Video Job's MP4, streamed through the gateway (`GET /v1/videos/{id}/content`, ADR 0028). */
 export class DownloadVideoContentQuery extends Query<Response> {

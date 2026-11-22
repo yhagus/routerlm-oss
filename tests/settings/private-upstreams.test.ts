@@ -4,10 +4,10 @@ import request from "supertest";
 import { settings } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const REFUSED_BY_DEFAULT = { allowed: false, defaultAllowed: false, isDefault: true };

@@ -4,9 +4,9 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { errorCaptures } from "@/db/schemas/index.js";
-import type { ErrorCaptureDetail } from "../../models/error-capture.js";
-import { selectSummaryRows, summaryOf } from "../../models/error-capture-summaries.js";
-import { ShowErrorCaptureQuery } from "../impl/show-error-capture.query.js";
+import type { ErrorCaptureDetail } from "@/error-captures/models/error-capture.js";
+import { selectSummaryRows, summaryOf } from "@/error-captures/models/error-capture-summaries.js";
+import { ShowErrorCaptureQuery } from "@/error-captures/queries/impl/show-error-capture.query.js";
 
 @QueryHandler(ShowErrorCaptureQuery)
 export class ShowErrorCaptureHandler implements IQueryHandler<ShowErrorCaptureQuery> {

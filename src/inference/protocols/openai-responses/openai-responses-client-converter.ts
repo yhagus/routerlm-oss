@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { GatewayError } from "../../models/gateway-error.js";
-import { serviceTierOfOpenAiClient } from "../../models/service-tier.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import { serviceTierOfOpenAiClient } from "@/inference/models/service-tier.js";
 import {
   type AssistantContentPart,
   type InferenceMessage,
@@ -17,13 +17,13 @@ import {
   type ToolChoice,
   UNREPORTED_USAGE,
   type UserContentPart,
-} from "../../models/internal-format.js";
+} from "@/inference/models/internal-format.js";
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "../client-protocol-converter.js";
-import { openAiChatClientConverter } from "../openai-chat/openai-chat-client-converter.js";
+} from "@/inference/protocols/client-protocol-converter.js";
+import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter.js";
 
 // The Responses client Protocol (`POST /v1/responses`), stateless only (ADR 0002).
 // Schemas are plain (non-strict) zod objects: unknown fields are dropped.

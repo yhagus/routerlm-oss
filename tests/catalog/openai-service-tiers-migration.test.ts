@@ -3,8 +3,8 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { relations } from "@/db/schemas/relations.js";
-import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "../support/migrations.js";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations.js";
 
 const SERVICE_TIERS_MIGRATION_SUFFIX = "_give_openai_its_service_tiers";
 const OPENAI_TIER_VALUES = { fast: "priority", flex: "flex" };

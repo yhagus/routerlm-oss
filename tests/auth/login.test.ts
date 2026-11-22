@@ -2,8 +2,8 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
-import { forgetThrottleCounts } from "../support/redis-state.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import { forgetThrottleCounts } from "@tests/support/redis-state.js";
 
 const FIRST_USER = { email: "ada@example.com", password: "correct horse battery" };
 

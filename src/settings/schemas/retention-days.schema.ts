@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { settingValueSchema } from "../models/setting-definitions.js";
+import { settingValueSchema } from "@/settings/models/setting-definitions.js";
 
 const retentionDaysSchema = settingValueSchema("errorCaptureRetentionDays");
 

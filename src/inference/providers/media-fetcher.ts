@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
-import { AttemptFailedError } from "../models/attempt-failure.js";
-import type { FetchedMedia } from "../models/media-kind.js";
+import { AttemptFailedError } from "@/inference/models/attempt-failure.js";
+import type { FetchedMedia } from "@/inference/models/media-kind.js";
 
 /** A generated file on its way through the gateway, read as it arrives. */
 export interface StreamedMedia {

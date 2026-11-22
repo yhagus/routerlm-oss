@@ -8,20 +8,20 @@ import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
-import { createApiKey } from "../support/api-keys.js";
-import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
-import { insertOpenAiChatModel } from "../support/inference.js";
-import { createIntegration } from "../support/integrations.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
-import { writtenUsageLogs } from "../support/usage-logs.js";
-import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
+import { createApiKey } from "@tests/support/api-keys.js";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import { insertOpenAiChatModel } from "@tests/support/inference.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { writtenUsageLogs } from "@tests/support/usage-logs.js";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("../support/test-app.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 

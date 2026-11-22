@@ -1,14 +1,18 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { dashScopeImageFixture, type FakeReply, FakeUpstream } from "../support/fake-upstream.js";
+import {
+  dashScopeImageFixture,
+  type FakeReply,
+  FakeUpstream,
+} from "@tests/support/fake-upstream.js";
 import {
   addDashScopeImageRoute,
   insertApiKey,
   insertDashScopeImageModel,
-} from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
 const PROMPT = "Put the fox in the cat's place";

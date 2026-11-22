@@ -2,7 +2,7 @@ import { Command } from "@nestjs/cqrs";
 import type { InferenceTarget } from "@/inference/models/inference.js";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
 import type { User } from "@/users/models/user.js";
-import type { PlaygroundTranscription } from "../../models/playground-transcription.js";
+import type { PlaygroundTranscription } from "@/playground/models/playground-transcription.js";
 
 /**
  * Sends a User's Playground transcription request through the same inference

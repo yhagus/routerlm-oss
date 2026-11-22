@@ -5,8 +5,8 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { deleteUnlessRouted } from "../../models/routed-models.js";
-import { DeleteUpstreamModelCommand } from "../impl/delete-upstream-model.command.js";
+import { deleteUnlessRouted } from "@/upstream/models/routed-models.js";
+import { DeleteUpstreamModelCommand } from "@/upstream/commands/impl/delete-upstream-model.command.js";
 
 @CommandHandler(DeleteUpstreamModelCommand)
 export class DeleteUpstreamModelHandler implements ICommandHandler<DeleteUpstreamModelCommand> {

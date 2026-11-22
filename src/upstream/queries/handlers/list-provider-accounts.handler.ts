@@ -4,12 +4,12 @@ import { asc } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
 import { ListQuotaMetersQuery } from "@/quota-meters/queries/impl/list-quota-meters.query.js";
-import { CooldownStore } from "../../providers/cooldown-store.js";
-import { providerAccountColumns } from "../../models/provider-account.js";
+import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
+import { providerAccountColumns } from "@/upstream/models/provider-account.js";
 import {
   type ListedProviderAccount,
   ListProviderAccountsQuery,
-} from "../impl/list-provider-accounts.query.js";
+} from "@/upstream/queries/impl/list-provider-accounts.query.js";
 
 @QueryHandler(ListProviderAccountsQuery)
 export class ListProviderAccountsHandler implements IQueryHandler<ListProviderAccountsQuery> {

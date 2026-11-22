@@ -2,10 +2,10 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import { usageLogs } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
-import { createApiKey } from "../support/api-keys.js";
-import type { ControlPlaneClient } from "../support/control-plane-client.js";
-import { createIntegration } from "../support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+import { createApiKey } from "@tests/support/api-keys.js";
+import type { ControlPlaneClient } from "@tests/support/control-plane-client.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 import type { ControlPlaneTransport } from "./key-scenarios.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };

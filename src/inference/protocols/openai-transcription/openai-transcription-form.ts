@@ -1,4 +1,4 @@
-import { dataUriOf, type MediaUpload } from "../../models/media-upload.js";
+import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload.js";
 
 // A multipart `/v1/audio/transcriptions` request, read into the body the
 // transcription client contract parses.

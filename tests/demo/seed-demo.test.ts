@@ -8,9 +8,9 @@ import { Pool } from "pg";
 import request from "supertest";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import { attempts, usageLogs } from "@/db/schemas/index.js";
-import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
-import { MIGRATIONS_FOLDER } from "../support/migrations.js";
-import { createTestApp, sessionCookieOf } from "../support/test-app.js";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
+import { MIGRATIONS_FOLDER } from "@tests/support/migrations.js";
+import { createTestApp, sessionCookieOf } from "@tests/support/test-app.js";
 
 const runFile = promisify(execFile);
 // Bun startup, the Catalog, one production-cost password hash and the bulk inserts.

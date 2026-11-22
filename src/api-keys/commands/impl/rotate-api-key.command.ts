@@ -1,5 +1,5 @@
 import { Command } from "@nestjs/cqrs";
-import type { CreatedApiKey } from "../../models/api-key.js";
+import type { CreatedApiKey } from "@/api-keys/models/api-key.js";
 
 /**
  * Replaces a key with a new one on the same row, so its Usage Logs stay

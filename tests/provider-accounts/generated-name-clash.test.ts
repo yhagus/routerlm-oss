@@ -2,8 +2,8 @@ import type * as Crypto from "node:crypto";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 // Every random draw picks its lowest value, so every generated name is
 // "Andromeda Antlia" and the second unnamed account's name has to clash.

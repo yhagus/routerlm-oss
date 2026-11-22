@@ -5,7 +5,7 @@ import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
+import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
 import {
   addProviderAccount,
   insertApiKey,
@@ -14,9 +14,9 @@ import {
   setProviderQuirks,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 // The app reads its env when AppModule is imported, so this must run before the imports.
 // Short, so the timeout test need not wait out the 30 seconds a Probe allows.

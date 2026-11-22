@@ -1,5 +1,5 @@
 import { Query } from "@nestjs/cqrs";
-import type { User } from "../../models/user.js";
+import type { User } from "@/users/models/user.js";
 
 /**
  * The User whose password this is, or `null`. Answers in the same time

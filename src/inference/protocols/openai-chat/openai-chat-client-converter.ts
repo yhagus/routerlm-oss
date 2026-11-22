@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { GatewayError } from "../../models/gateway-error.js";
-import { serviceTierOfOpenAiClient } from "../../models/service-tier.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import { serviceTierOfOpenAiClient } from "@/inference/models/service-tier.js";
 import {
   type AssistantContentPart,
   type InferenceMessage,
@@ -13,12 +13,12 @@ import {
   type TokenUsage,
   type ToolChoice,
   type UserContentPart,
-} from "../../models/internal-format.js";
+} from "@/inference/models/internal-format.js";
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "../client-protocol-converter.js";
+} from "@/inference/protocols/client-protocol-converter.js";
 import { finishReasonOf, writeUsage } from "./openai-chat-usage.js";
 
 // The Chat Completions client Protocol (`POST /v1/chat/completions`).

@@ -1,4 +1,4 @@
-import type { GatewayError } from "../../models/gateway-error.js";
+import type { GatewayError } from "@/inference/models/gateway-error.js";
 import { openAiChatClientConverter } from "./openai-chat-client-converter.js";
 
 /**

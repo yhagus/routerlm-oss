@@ -1,7 +1,10 @@
 import { type ArgumentsHost, Catch, type RpcExceptionFilter } from "@nestjs/common";
 import { GrpcException, GrpcExceptionFilter } from "@nestjs/microservices";
 import { type Observable, throwError } from "rxjs";
-import { CONTROL_PLANE_ERRORS, controlPlaneErrorOf } from "../models/control-plane-error.js";
+import {
+  CONTROL_PLANE_ERRORS,
+  controlPlaneErrorOf,
+} from "@/control-plane/models/control-plane-error.js";
 
 /**
  * Answers the control plane's errors over gRPC with the status code

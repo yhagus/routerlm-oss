@@ -5,8 +5,8 @@ import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
 import { CONSTELLATIONS } from "@/upstream/models/constellation-name.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const PROVIDER_ACCOUNT_KEY = "sk-acme-0123456789abcdefWXYZ";

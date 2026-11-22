@@ -4,7 +4,7 @@ import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "../models/internal-format.js";
+} from "@/inference/models/internal-format.js";
 import { type ServerSentEvent, ServerSentEventDecoder } from "./server-sent-events.js";
 
 /**

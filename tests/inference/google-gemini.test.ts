@@ -2,15 +2,15 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
 import type { Database } from "@/db/schemas/relations.js";
-import { type FakeReply, FakeUpstream } from "../support/fake-upstream.js";
+import { type FakeReply, FakeUpstream } from "@tests/support/fake-upstream.js";
 import {
   insertApiKey,
   insertOpenAiChatModel,
   setProviderQuirks,
   UPSTREAM_KEY,
-} from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
 

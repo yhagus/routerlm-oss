@@ -1,15 +1,15 @@
 import { z } from "zod";
 import type { ParameterPolicy } from "@/db/schemas/index.js";
-import { GatewayError } from "../../models/gateway-error.js";
-import type { MediaClientContract, MediaReply } from "../../models/media-kind.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { MediaClientContract, MediaReply } from "@/inference/models/media-kind.js";
 import {
   AUDIO_FORMATS,
   type AudioFormat,
   type SpeechSynthesisRequest,
   type SynthesizedSpeech,
-} from "../../models/speech-synthesis.js";
-import { dashScopeSpeechProtocol } from "../dashscope-speech/dashscope-speech-protocol.js";
-import { writeOpenAiError } from "../openai-chat/openai-error.js";
+} from "@/inference/models/speech-synthesis.js";
+import { dashScopeSpeechProtocol } from "@/inference/protocols/dashscope-speech/dashscope-speech-protocol.js";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
 
 // OpenAI's speech API, `POST /v1/audio/speech`.
 

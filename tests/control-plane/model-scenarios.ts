@@ -3,14 +3,14 @@ import { eq, sql } from "drizzle-orm";
 import { models, routes, upstreamModels } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ControlPlaneClient } from "../support/control-plane-client.js";
+import type { ControlPlaneClient } from "@tests/support/control-plane-client.js";
 import {
   addOpenAiChatRoute,
   insertDashScopeImageModel,
   insertOpenAiChatModel,
-} from "../support/inference.js";
-import { createIntegration } from "../support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+} from "@tests/support/inference.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 import type { ControlPlaneTransport } from "./key-scenarios.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };

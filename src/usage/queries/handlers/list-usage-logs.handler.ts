@@ -3,10 +3,10 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { count, desc } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { usageLogs } from "@/db/schemas/index.js";
-import type { UsageLogPage } from "../../models/usage.js";
-import { whereFilter } from "../../models/usage-filters.js";
-import { usageLogSummaryColumns } from "../../models/usage-log-columns.js";
-import { ListUsageLogsQuery } from "../impl/list-usage-logs.query.js";
+import type { UsageLogPage } from "@/usage/models/usage.js";
+import { whereFilter } from "@/usage/models/usage-filters.js";
+import { usageLogSummaryColumns } from "@/usage/models/usage-log-columns.js";
+import { ListUsageLogsQuery } from "@/usage/queries/impl/list-usage-logs.query.js";
 
 /**
  * Filtering and paging run in SQL, so a large table is never loaded whole.

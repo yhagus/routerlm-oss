@@ -8,8 +8,8 @@ import {
 import { ListIntegrationModelsQuery } from "@/control-plane/queries/impl/list-integration-models.query.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { integrations } from "@/db/schemas/index.js";
-import { integrationNotFound } from "../../models/integration-not-found.js";
-import { ListIntegrationOfferedModelsQuery } from "../impl/list-integration-offered-models.query.js";
+import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
+import { ListIntegrationOfferedModelsQuery } from "@/integrations/queries/impl/list-integration-offered-models.query.js";
 
 // Asks the control plane's own query, so the dashboard never shows other
 // Models or prices than the Integration itself is told.

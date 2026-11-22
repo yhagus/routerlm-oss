@@ -5,21 +5,21 @@ import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js
 import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { type FakeReply, FakeUpstream } from "../support/fake-upstream.js";
+import { type FakeReply, FakeUpstream } from "@tests/support/fake-upstream.js";
 import {
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   UPSTREAM_KEY,
-} from "../support/inference.js";
+} from "@tests/support/inference.js";
 import {
   ALL_LIMITS,
   USAGES_PATH,
   usagesAtRatioReply,
   usagesReply,
-} from "../support/kimi-code-usages.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/kimi-code-usages.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };

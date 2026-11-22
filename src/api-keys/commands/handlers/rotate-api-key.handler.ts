@@ -6,11 +6,14 @@ import type { Database } from "@/db/schemas/relations.js";
 import { apiKeyRotations, apiKeys } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { ApiKeyAuth } from "../../providers/api-key-auth.js";
-import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "../../models/api-key.js";
-import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
-import { assertUserOwnsKey, findUnrevokedApiKey } from "../../models/find-unrevoked-api-key.js";
-import { RotateApiKeyCommand } from "../impl/rotate-api-key.command.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
+import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "@/api-keys/models/api-key.js";
+import { selectApiKeySummaries } from "@/api-keys/models/api-key-summaries.js";
+import {
+  assertUserOwnsKey,
+  findUnrevokedApiKey,
+} from "@/api-keys/models/find-unrevoked-api-key.js";
+import { RotateApiKeyCommand } from "@/api-keys/commands/impl/rotate-api-key.command.js";
 
 const REVOKED_MESSAGE = "A revoked API Key can't be rotated.";
 

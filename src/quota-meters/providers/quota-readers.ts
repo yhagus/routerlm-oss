@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { QuotaReaderName } from "@/db/schemas/index.js";
-import type { QuotaReader } from "../models/quota-reader.js";
+import type { QuotaReader } from "@/quota-meters/models/quota-reader.js";
 import { KimiCodeQuotaReader } from "./kimi-code-quota-reader.js";
 import { MiniMaxMPlanQuotaReader } from "./minimax-m-plan-quota-reader.js";
 import { OpenAiCodexQuotaReader } from "./openai-codex-quota-reader.js";

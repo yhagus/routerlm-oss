@@ -6,7 +6,7 @@ import {
   deleteAllUsers,
   sessionCookieOf,
   setUpFirstUser,
-} from "../support/test-app.js";
+} from "@tests/support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const GRACE = { email: "grace@example.com", password: "grace's password" };

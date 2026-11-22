@@ -1,8 +1,8 @@
 import { lookup } from "node:dns/promises";
 import { Injectable } from "@nestjs/common";
-import { allowsPrivateUpstreams } from "../models/private-upstreams-policy.js";
-import { bareHostname } from "../models/url.js";
-import { isPrivateAddress, isPublicHttpsUrl } from "../schemas/provider-url.schema.js";
+import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy.js";
+import { bareHostname } from "@/libs/models/url.js";
+import { isPrivateAddress, isPublicHttpsUrl } from "@/libs/schemas/provider-url.schema.js";
 
 /** Thrown before any connection is made, so no credential leaves the gateway. */
 export class PrivateUpstreamError extends Error {

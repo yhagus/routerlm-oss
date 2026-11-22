@@ -7,16 +7,16 @@ import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
 import { SECOND_MS } from "@/libs/models/duration.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { OauthSignInPolling } from "../../jobs/oauth-sign-in-polling.js";
-import { unusedConstellationName } from "../../models/constellation-name.js";
-import { oauthLoginEndpointOf } from "../../models/oauth-device-grant.js";
-import { type OauthTokens, storedOauthTokens } from "../../models/provider-account.js";
-import { OauthLoginClient } from "../../providers/oauth-login-client.js";
-import { OauthRefreshLock } from "../../providers/oauth-refresh-lock.js";
-import { OauthSignInStore } from "../../providers/oauth-sign-in-store.js";
-import { ProviderKeyCipher } from "../../providers/provider-key-cipher.js";
-import type { StoredOauthSignIn } from "../../schemas/oauth-sign-in.schema.js";
-import { PollOauthSignInCommand } from "../impl/poll-oauth-sign-in.command.js";
+import { OauthSignInPolling } from "@/upstream/jobs/oauth-sign-in-polling.js";
+import { unusedConstellationName } from "@/upstream/models/constellation-name.js";
+import { oauthLoginEndpointOf } from "@/upstream/models/oauth-device-grant.js";
+import { type OauthTokens, storedOauthTokens } from "@/upstream/models/provider-account.js";
+import { OauthLoginClient } from "@/upstream/providers/oauth-login-client.js";
+import { OauthRefreshLock } from "@/upstream/providers/oauth-refresh-lock.js";
+import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+import type { StoredOauthSignIn } from "@/upstream/schemas/oauth-sign-in.schema.js";
+import { PollOauthSignInCommand } from "@/upstream/commands/impl/poll-oauth-sign-in.command.js";
 
 /** RFC 8628: `slow_down` lengthens the wait between polls by this much, for the rest of the sign-in. */
 const SLOW_DOWN_SECONDS = 5;

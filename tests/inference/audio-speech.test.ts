@@ -4,7 +4,7 @@ import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { routes } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { dashScopeSpeechFixture, FakeUpstream } from "../support/fake-upstream.js";
+import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
 import {
   addProviderAccount,
   insertApiKey,
@@ -12,9 +12,9 @@ import {
   insertDashScopeSpeechModel,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";
 const AUDIO_PATH = "/media/speech.bin";

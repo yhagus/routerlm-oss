@@ -1,6 +1,6 @@
 import { Command } from "@nestjs/cqrs";
 import type { IntegrationPrincipal } from "@/integrations/models/integration.js";
-import type { CustomerApiKey } from "../../models/customer-api-key.js";
+import type { CustomerApiKey } from "@/control-plane/models/customer-api-key.js";
 
 /** Stops one of the Integration's keys for good (RevokeKey); revoking it again changes nothing. */
 export class RevokeCustomerApiKeyCommand extends Command<CustomerApiKey> {

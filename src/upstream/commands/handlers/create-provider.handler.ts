@@ -9,8 +9,8 @@ import {
   assertQuirksFitEndpoints,
   assertServiceTierValuesFitEndpoints,
   type Provider,
-} from "../../models/provider.js";
-import { CreateProviderCommand } from "../impl/create-provider.command.js";
+} from "@/upstream/models/provider.js";
+import { CreateProviderCommand } from "@/upstream/commands/impl/create-provider.command.js";
 
 @CommandHandler(CreateProviderCommand)
 export class CreateProviderHandler implements ICommandHandler<CreateProviderCommand> {

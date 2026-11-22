@@ -3,8 +3,8 @@ import { Injectable } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import type { Job, Queue } from "bullmq";
 import { OAUTH_SIGN_INS_QUEUE } from "@/queue/models/queue-names.js";
-import { signInNeedsRedis } from "../models/oauth-sign-in.js";
-import { PollOauthSignInCommand } from "../commands/impl/poll-oauth-sign-in.command.js";
+import { signInNeedsRedis } from "@/upstream/models/oauth-sign-in.js";
+import { PollOauthSignInCommand } from "@/upstream/commands/impl/poll-oauth-sign-in.command.js";
 
 const POLL_JOB = "poll";
 /**

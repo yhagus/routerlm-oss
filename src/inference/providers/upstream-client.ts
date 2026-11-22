@@ -2,13 +2,16 @@ import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version.js";
-import { AttemptFailedError, ClientCancelledError } from "../models/attempt-failure.js";
-import { type ExhaustedErrorCode, isQuotaExhaustedError } from "../models/quota-exhausted-error.js";
+import { AttemptFailedError, ClientCancelledError } from "@/inference/models/attempt-failure.js";
+import {
+  type ExhaustedErrorCode,
+  isQuotaExhaustedError,
+} from "@/inference/models/quota-exhausted-error.js";
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "../models/internal-format.js";
+} from "@/inference/models/internal-format.js";
 import {
   parseUpstreamStream,
   type UpstreamHttpRequest,
@@ -16,12 +19,15 @@ import {
   UpstreamProtocolError,
   type UpstreamStreamParser,
   type UpstreamTarget,
-} from "../protocols/upstream-protocol-converter.js";
-import type { Destination } from "../models/destination.js";
+} from "@/inference/protocols/upstream-protocol-converter.js";
+import type { Destination } from "@/inference/models/destination.js";
 import type { SnapshotRoute } from "@/snapshot/models/snapshot.js";
-import { upstreamRequestIdOf } from "../models/upstream-request-id.js";
-import { gatherStream } from "../protocols/gather-stream.js";
-import { type ServerSentEvent, ServerSentEventDecoder } from "../protocols/server-sent-events.js";
+import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id.js";
+import { gatherStream } from "@/inference/protocols/gather-stream.js";
+import {
+  type ServerSentEvent,
+  ServerSentEventDecoder,
+} from "@/inference/protocols/server-sent-events.js";
 
 /** Spec "Fallback" defaults; a Route may override each. */
 export const DEFAULT_TIMEOUTS: AttemptTimeouts = {

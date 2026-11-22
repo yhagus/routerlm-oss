@@ -4,9 +4,9 @@ import { and, eq, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { CustomerApiKey } from "../../models/customer-api-key.js";
-import { findCustomerApiKey } from "../../models/customer-api-keys.js";
-import { RevokeCustomerApiKeyCommand } from "../impl/revoke-customer-api-key.command.js";
+import type { CustomerApiKey } from "@/control-plane/models/customer-api-key.js";
+import { findCustomerApiKey } from "@/control-plane/models/customer-api-keys.js";
+import { RevokeCustomerApiKeyCommand } from "@/control-plane/commands/impl/revoke-customer-api-key.command.js";
 
 @CommandHandler(RevokeCustomerApiKeyCommand)
 export class RevokeCustomerApiKeyHandler implements ICommandHandler<RevokeCustomerApiKeyCommand> {

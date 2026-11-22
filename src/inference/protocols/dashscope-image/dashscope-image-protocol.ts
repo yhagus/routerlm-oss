@@ -3,16 +3,16 @@ import type {
   GeneratedImages,
   ImageGenerationRequest,
   ImageSize,
-} from "../../models/image-generation.js";
-import { providerSizeOf, sizeTierOf } from "../../models/image-generation.js";
+} from "@/inference/models/image-generation.js";
+import { providerSizeOf, sizeTierOf } from "@/inference/models/image-generation.js";
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "../../models/media-kind.js";
-import { dashScopeFailureReasonOf } from "../dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "../upstream-protocol-converter.js";
+} from "@/inference/models/media-kind.js";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
 
 // DashScope's native image API: one synchronous call
 // that answers with URLs of the generated images, which the gateway fetches.

@@ -4,8 +4,8 @@ import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
 import { users } from "@/db/schemas/index.js";
-import { normalizeEmail, type User, userColumns } from "../../models/user.js";
-import { CreateUserCommand } from "../impl/create-user.command.js";
+import { normalizeEmail, type User, userColumns } from "@/users/models/user.js";
+import { CreateUserCommand } from "@/users/commands/impl/create-user.command.js";
 
 const UNIQUE_VIOLATION = "23505";
 

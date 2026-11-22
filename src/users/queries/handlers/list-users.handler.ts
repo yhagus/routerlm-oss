@@ -3,8 +3,8 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { users } from "@/db/schemas/index.js";
-import { type User, userColumns } from "../../models/user.js";
-import { ListUsersQuery } from "../impl/list-users.query.js";
+import { type User, userColumns } from "@/users/models/user.js";
+import { ListUsersQuery } from "@/users/queries/impl/list-users.query.js";
 
 @QueryHandler(ListUsersQuery)
 export class ListUsersHandler implements IQueryHandler<ListUsersQuery> {

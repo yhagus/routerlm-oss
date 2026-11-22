@@ -16,7 +16,7 @@ import {
   DEMO_MODEL_NAMES,
   type DemoModelName,
   type TrafficProfile,
-} from "../data/demo-fixtures.js";
+} from "@/demo/data/demo-fixtures.js";
 import { between, logNormal, pickWeighted, type Random, seededRandom } from "./seeded-random.js";
 
 type NewUsageLog = typeof usageLogs.$inferInsert;

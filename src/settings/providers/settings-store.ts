@@ -10,7 +10,7 @@ import {
   type SettingKey,
   type SettingValueOf,
   settingValueSchema,
-} from "../models/setting-definitions.js";
+} from "@/settings/models/setting-definitions.js";
 
 export interface SettingValue<Value = number> {
   value: Value;

@@ -2,9 +2,9 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { authenticateWithApiKey, createApiKey } from "../support/api-keys.js";
-import { createIntegration } from "../support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+import { authenticateWithApiKey, createApiKey } from "@tests/support/api-keys.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

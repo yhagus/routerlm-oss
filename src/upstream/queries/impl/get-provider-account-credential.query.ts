@@ -1,5 +1,5 @@
 import { Query } from "@nestjs/cqrs";
-import type { ProviderAccountCredential } from "../../models/provider-account-credential.js";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 
 /**
  * What a call to the Provider sends for a Provider Account: its API key, or

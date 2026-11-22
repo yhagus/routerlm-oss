@@ -1,5 +1,5 @@
 import { Command } from "@nestjs/cqrs";
-import type { PrivateUpstreamsSetting } from "../../models/private-upstreams.js";
+import type { PrivateUpstreamsSetting } from "@/settings/models/private-upstreams.js";
 
 /** Returns the private-upstreams Setting to its default, which refuses private upstreams. */
 export class ResetPrivateUpstreamsCommand extends Command<PrivateUpstreamsSetting> {}

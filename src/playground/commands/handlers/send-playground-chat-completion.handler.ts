@@ -3,8 +3,8 @@ import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.com
 import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
-import { playgroundSummaryOf } from "../../models/playground-summary.js";
-import { SendPlaygroundChatCompletionCommand } from "../impl/send-playground-chat-completion.command.js";
+import { playgroundSummaryOf } from "@/playground/models/playground-summary.js";
+import { SendPlaygroundChatCompletionCommand } from "@/playground/commands/impl/send-playground-chat-completion.command.js";
 
 /** The name of the stream's last event, which carries the PlaygroundSummary. */
 export const SUMMARY_EVENT = "summary";

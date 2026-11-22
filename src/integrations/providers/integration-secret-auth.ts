@@ -11,7 +11,7 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { integrations } from "@/db/schemas/index.js";
-import type { IntegrationPrincipal } from "../models/integration.js";
+import type { IntegrationPrincipal } from "@/integrations/models/integration.js";
 
 /**
  * Starts every Integration Secret (`rlmi_<keyId>_<secret>`): distinct from API

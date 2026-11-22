@@ -1,16 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient } from "@nestjs/http-client";
 import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version.js";
-import { AttemptFailedError } from "../models/attempt-failure.js";
+import { AttemptFailedError } from "@/inference/models/attempt-failure.js";
 import type { AttemptFailureReason } from "@/db/schemas/index.js";
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "../models/media-kind.js";
-import { upstreamRequestIdOf } from "../models/upstream-request-id.js";
-import { UpstreamProtocolError } from "../protocols/upstream-protocol-converter.js";
+} from "@/inference/models/media-kind.js";
+import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id.js";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
 import { AttemptDeadlines, type AttemptTimeouts } from "./upstream-client.js";
 import { MediaFetcher } from "./media-fetcher.js";
 

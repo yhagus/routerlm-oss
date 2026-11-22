@@ -2,7 +2,7 @@ import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
 import { users } from "@/db/schemas/index.js";
-import { IsSetupRequiredQuery } from "../impl/is-setup-required.query.js";
+import { IsSetupRequiredQuery } from "@/users/queries/impl/is-setup-required.query.js";
 
 @QueryHandler(IsSetupRequiredQuery)
 export class IsSetupRequiredHandler implements IQueryHandler<IsSetupRequiredQuery> {

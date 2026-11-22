@@ -7,11 +7,15 @@ import type { ClientConnection } from "@/libs/models/client-connection.js";
 import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import type { User } from "@/users/models/user.js";
-import { PlaygroundUsage } from "../../models/playground-usage.js";
-import { type ProbePlan, probePlanFor } from "../../models/probe-plan.js";
-import { probeCommandFor } from "../../models/probe-requests.js";
-import { type ProbeResult, type ProbeResults, probeResultOf } from "../../models/probe-result.js";
-import { ProbeUpstreamModelCommand } from "../impl/probe-upstream-model.command.js";
+import { PlaygroundUsage } from "@/playground/models/playground-usage.js";
+import { type ProbePlan, probePlanFor } from "@/playground/models/probe-plan.js";
+import { probeCommandFor } from "@/playground/models/probe-requests.js";
+import {
+  type ProbeResult,
+  type ProbeResults,
+  probeResultOf,
+} from "@/playground/models/probe-result.js";
+import { ProbeUpstreamModelCommand } from "@/playground/commands/impl/probe-upstream-model.command.js";
 
 @CommandHandler(ProbeUpstreamModelCommand)
 export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamModelCommand> {

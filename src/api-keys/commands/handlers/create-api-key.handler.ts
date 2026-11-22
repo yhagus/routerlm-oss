@@ -5,11 +5,11 @@ import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { ApiKeyAuth } from "../../providers/api-key-auth.js";
-import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "../../models/api-key.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
+import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "@/api-keys/models/api-key.js";
 import { assertModelsExist } from "@/libs/models/allowed-models.js";
-import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
-import { CreateApiKeyCommand } from "../impl/create-api-key.command.js";
+import { selectApiKeySummaries } from "@/api-keys/models/api-key-summaries.js";
+import { CreateApiKeyCommand } from "@/api-keys/commands/impl/create-api-key.command.js";
 
 @CommandHandler(CreateApiKeyCommand)
 export class CreateApiKeyHandler implements ICommandHandler<CreateApiKeyCommand> {

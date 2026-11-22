@@ -10,17 +10,17 @@ import {
   openAiResponsesFixture,
   TWO_THINKING_BLOCKS_STREAM,
   UPSTREAM_ONLY_HEADER,
-} from "../support/fake-upstream.js";
+} from "@tests/support/fake-upstream.js";
 import {
   fixtureAsServed,
   insertAnthropicMessagesModel,
   insertApiKey,
   insertOpenAiChatModel,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { portOf } from "../support/port-of.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { portOf } from "@tests/support/port-of.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 /** Served by an openai-chat Provider. */
 const CHAT_MODEL = "via-chat";

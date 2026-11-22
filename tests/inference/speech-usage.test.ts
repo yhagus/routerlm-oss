@@ -4,18 +4,18 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { dashScopeSpeechFixture, FakeUpstream } from "../support/fake-upstream.js";
-import { insertApiKey, insertDashScopeSpeechModel } from "../support/inference.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
-import { untilUsageQueueIsDrained } from "../support/usage-queue.js";
-import { writtenUsageLog } from "../support/usage-logs.js";
+import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
+import { insertApiKey, insertDashScopeSpeechModel } from "@tests/support/inference.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
+import { writtenUsageLog } from "@tests/support/usage-logs.js";
 
 // Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
 // files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("../support/test-app.js");
+const { createTestApp } = await import("@tests/support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 

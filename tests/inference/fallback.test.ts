@@ -3,19 +3,19 @@ import { eq } from "drizzle-orm";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
+import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
 import {
   addOpenAiChatRoute,
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   UPSTREAM_KEY,
-} from "../support/inference.js";
+} from "@tests/support/inference.js";
 import { LOCAL_COPY_MAX_AGE_MS } from "@/upstream/providers/cooldown-store.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
-import { endCooldownElsewhere, startCooldownElsewhere } from "../support/redis-state.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { endCooldownElsewhere, startCooldownElsewhere } from "@tests/support/redis-state.js";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

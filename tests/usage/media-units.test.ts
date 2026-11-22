@@ -12,7 +12,7 @@ import type { UsageJob } from "@/usage/models/usage-job.js";
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("../support/test-app.js");
+const { createTestApp } = await import("@tests/support/test-app.js");
 const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 const { UsageProducer } = await import("@/usage/jobs/usage.producer.js");

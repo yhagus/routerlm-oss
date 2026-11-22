@@ -11,7 +11,7 @@ import {
   providers,
   usageLogs,
 } from "@/db/schemas/index.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const RECEIVED_AT = new Date("2026-11-10T10:00:00Z");

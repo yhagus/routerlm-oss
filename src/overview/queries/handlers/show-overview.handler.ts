@@ -11,8 +11,8 @@ import {
   type OverviewBucket,
   type OriginErrors,
   type OverviewStats,
-} from "../../models/overview.js";
-import { ShowOverviewQuery } from "../impl/show-overview.query.js";
+} from "@/overview/models/overview.js";
+import { ShowOverviewQuery } from "@/overview/queries/impl/show-overview.query.js";
 
 const MS_PER_SECOND = 1000;
 

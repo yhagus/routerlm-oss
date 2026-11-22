@@ -8,7 +8,7 @@ import {
 } from "@nestjs/http-client";
 import { z } from "zod";
 import { withoutTrailingSlash } from "@/libs/models/url.js";
-import { cliIdentityHeaders } from "../models/cli-identity.js";
+import { cliIdentityHeaders } from "@/upstream/models/cli-identity.js";
 import {
   type DeviceAuthorization,
   type OauthLoginEndpoint,
@@ -17,8 +17,8 @@ import {
   type PendingDeviceCode,
   type TokenPoll,
   type TokenRefresh,
-} from "../models/oauth-device-grant.js";
-import type { OauthTokens } from "../models/provider-account.js";
+} from "@/upstream/models/oauth-device-grant.js";
+import type { OauthTokens } from "@/upstream/models/provider-account.js";
 import type { OauthFlowLoginClient } from "./oauth-flow-login-client.js";
 import { OAUTH_LOGIN_HTTP_CLIENT, REFRESH_RETRY } from "./oauth-login-http.js";
 

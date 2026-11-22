@@ -10,8 +10,8 @@ import {
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
   type UpstreamModel,
-} from "../../models/upstream-model.js";
-import { UpdateUpstreamModelCommand } from "../impl/update-upstream-model.command.js";
+} from "@/upstream/models/upstream-model.js";
+import { UpdateUpstreamModelCommand } from "@/upstream/commands/impl/update-upstream-model.command.js";
 
 @CommandHandler(UpdateUpstreamModelCommand)
 export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstreamModelCommand> {

@@ -1,5 +1,5 @@
 import { Command } from "@nestjs/cqrs";
-import type { ProviderAccountQuota } from "../../models/quota-meter.js";
+import type { ProviderAccountQuota } from "@/quota-meters/models/quota-meter.js";
 
 /**
  * Reads a Provider Account's Quota Meters now and stores them. A failed

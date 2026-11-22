@@ -2,10 +2,10 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
 import { upstreamModels } from "@/db/schemas/index.js";
-import { dashScopeImageFixture, FakeUpstream } from "../support/fake-upstream.js";
-import { insertDashScopeImageModel, UPSTREAM_MODEL_ID } from "../support/inference.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { dashScopeImageFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
+import { insertDashScopeImageModel, UPSTREAM_MODEL_ID } from "@tests/support/inference.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";

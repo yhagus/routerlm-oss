@@ -1,4 +1,4 @@
-import type { SettingValue } from "../providers/settings-store.js";
+import type { SettingValue } from "@/settings/providers/settings-store.js";
 import type { PrivateUpstreamsSetting } from "./private-upstreams.js";
 import { SETTING_DEFINITIONS } from "./setting-definitions.js";
 

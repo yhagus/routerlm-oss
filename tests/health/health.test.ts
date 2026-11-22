@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import request from "supertest";
 import { relations } from "@/db/schemas/relations.js";
-import { createTestApp } from "../support/test-app.js";
+import { createTestApp } from "@tests/support/test-app.js";
 
 // Port 1 refuses every connection, so this Postgres never answers.
 const UNREACHABLE_DATABASE_URL = "postgres://routerlm:routerlm@127.0.0.1:1/routerlm";

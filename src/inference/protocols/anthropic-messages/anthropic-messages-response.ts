@@ -5,13 +5,13 @@ import type {
   InferenceStreamEvent,
   StopReason,
   TokenUsage,
-} from "../../models/internal-format.js";
-import { isJsonObject } from "../json-object.js";
-import type { ServerSentEvent } from "../server-sent-events.js";
+} from "@/inference/models/internal-format.js";
+import { isJsonObject } from "@/inference/protocols/json-object.js";
+import type { ServerSentEvent } from "@/inference/protocols/server-sent-events.js";
 import {
   UpstreamProtocolError,
   type UpstreamStreamParser,
-} from "../upstream-protocol-converter.js";
+} from "@/inference/protocols/upstream-protocol-converter.js";
 
 // Responses are read leniently: only the fields the internal format needs.
 // Block types it can't express (redacted_thinking, server tool blocks) are skipped.

@@ -4,8 +4,8 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { integrations } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { integrationNotFound } from "../../models/integration-not-found.js";
-import { EnableIntegrationCommand } from "../impl/enable-integration.command.js";
+import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
+import { EnableIntegrationCommand } from "@/integrations/commands/impl/enable-integration.command.js";
 
 @CommandHandler(EnableIntegrationCommand)
 export class EnableIntegrationHandler implements ICommandHandler<EnableIntegrationCommand> {

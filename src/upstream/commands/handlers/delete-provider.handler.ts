@@ -5,8 +5,8 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { deleteUnlessRouted } from "../../models/routed-models.js";
-import { DeleteProviderCommand } from "../impl/delete-provider.command.js";
+import { deleteUnlessRouted } from "@/upstream/models/routed-models.js";
+import { DeleteProviderCommand } from "@/upstream/commands/impl/delete-provider.command.js";
 
 @CommandHandler(DeleteProviderCommand)
 export class DeleteProviderHandler implements ICommandHandler<DeleteProviderCommand> {

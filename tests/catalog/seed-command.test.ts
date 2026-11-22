@@ -8,7 +8,7 @@ import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command
 import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import * as schema from "@/db/schemas/index.js";
-import { createEmptyDatabase, dropDatabase } from "../support/isolated-database.js";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
 
 const source = { urls: ["https://example.com/pricing"], retrievedOn: "2026-11-15" };
 

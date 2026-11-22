@@ -6,10 +6,10 @@ import type { Database } from "@/db/schemas/relations.js";
 import {
   type ControlPlaneClient,
   httpControlPlaneClient,
-} from "../support/control-plane-client.js";
-import { insertOpenAiChatModel } from "../support/inference.js";
-import { createIntegration } from "../support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "../support/test-app.js";
+} from "@tests/support/control-plane-client.js";
+import { insertOpenAiChatModel } from "@tests/support/inference.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";

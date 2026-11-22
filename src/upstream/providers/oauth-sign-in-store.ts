@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import type { Redis } from "ioredis";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { signInNeedsRedis } from "../models/oauth-sign-in.js";
+import { signInNeedsRedis } from "@/upstream/models/oauth-sign-in.js";
 import {
   type StoredOauthSignIn,
   storedOauthSignInSchema,
-} from "../schemas/oauth-sign-in.schema.js";
+} from "@/upstream/schemas/oauth-sign-in.schema.js";
 
 const SIGN_IN_KEY_PREFIX = "routerlm:oauth-sign-in:";
 /** How long a sign-in stays readable after its code expired or it ended, for the dashboard to show why. */

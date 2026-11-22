@@ -15,21 +15,28 @@ import {
   probeDestination,
   upstreamModelServedHere,
   usableModel,
-} from "../../models/destination.js";
-import { GatewayError } from "../../models/gateway-error.js";
-import type { InferenceCaller } from "../../models/inference.js";
-import type { MediaClientContract, MediaReply, MediaRequest } from "../../models/media-kind.js";
-import { withMediaPlaceholders } from "../../models/media-placeholders.js";
-import { effectiveParameterPolicy, isWatermarkedUnder } from "../../models/parameter-policy.js";
-import { failedRequestUsage, requestOwnerOf } from "../../models/request-usage.js";
-import { type AttemptTarget, endpointOf, routePath } from "../../models/route-selection.js";
-import { UsageMeter } from "../../models/usage-meter.js";
-import { upstreamAuthHeaders } from "../../protocols/converters.js";
-import { AttemptRunner } from "../../providers/attempt-runner.js";
-import { CallerLimits } from "../../providers/caller-limits.js";
-import { MediaUpstreamClient } from "../../providers/media-upstream-client.js";
-import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "../../providers/upstream-client.js";
-import { RunMediaInferenceCommand } from "../impl/run-media-inference.command.js";
+} from "@/inference/models/destination.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { InferenceCaller } from "@/inference/models/inference.js";
+import type {
+  MediaClientContract,
+  MediaReply,
+  MediaRequest,
+} from "@/inference/models/media-kind.js";
+import { withMediaPlaceholders } from "@/inference/models/media-placeholders.js";
+import {
+  effectiveParameterPolicy,
+  isWatermarkedUnder,
+} from "@/inference/models/parameter-policy.js";
+import { failedRequestUsage, requestOwnerOf } from "@/inference/models/request-usage.js";
+import { type AttemptTarget, endpointOf, routePath } from "@/inference/models/route-selection.js";
+import { UsageMeter } from "@/inference/models/usage-meter.js";
+import { upstreamAuthHeaders } from "@/inference/protocols/converters.js";
+import { AttemptRunner } from "@/inference/providers/attempt-runner.js";
+import { CallerLimits } from "@/inference/providers/caller-limits.js";
+import { MediaUpstreamClient } from "@/inference/providers/media-upstream-client.js";
+import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "@/inference/providers/upstream-client.js";
+import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
 
 const HTTP_OK = 200;
 

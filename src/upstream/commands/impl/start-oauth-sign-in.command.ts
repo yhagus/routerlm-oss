@@ -1,6 +1,6 @@
 import { Command } from "@nestjs/cqrs";
-import type { OauthSignIn } from "../../models/oauth-sign-in.js";
-import type { NewOauthSignIn } from "../../schemas/oauth-sign-in.schema.js";
+import type { OauthSignIn } from "@/upstream/models/oauth-sign-in.js";
+import type { NewOauthSignIn } from "@/upstream/schemas/oauth-sign-in.schema.js";
 
 /**
  * Starts a sign-in to a Provider that offers OAuth Login: asks its auth host

@@ -3,10 +3,10 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { count, desc, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { attempts, errorCaptures, usageLogs } from "@/db/schemas/index.js";
-import type { ErrorCapturePage } from "../../models/error-capture.js";
-import { whereErrorCaptureFilter } from "../../models/error-capture-filters.js";
-import { selectSummaryRows, summaryOf } from "../../models/error-capture-summaries.js";
-import { ListErrorCapturesQuery } from "../impl/list-error-captures.query.js";
+import type { ErrorCapturePage } from "@/error-captures/models/error-capture.js";
+import { whereErrorCaptureFilter } from "@/error-captures/models/error-capture-filters.js";
+import { selectSummaryRows, summaryOf } from "@/error-captures/models/error-capture-summaries.js";
+import { ListErrorCapturesQuery } from "@/error-captures/queries/impl/list-error-captures.query.js";
 
 @QueryHandler(ListErrorCapturesQuery)
 export class ListErrorCapturesHandler implements IQueryHandler<ListErrorCapturesQuery> {

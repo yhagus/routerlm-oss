@@ -1,7 +1,15 @@
 import { Command } from "@nestjs/cqrs";
 import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type { InferenceCaller, RunInferenceTarget, UsageListener } from "../../models/inference.js";
-import type { MediaClientContract, MediaReply, MediaRequest } from "../../models/media-kind.js";
+import type {
+  InferenceCaller,
+  RunInferenceTarget,
+  UsageListener,
+} from "@/inference/models/inference.js";
+import type {
+  MediaClientContract,
+  MediaReply,
+  MediaRequest,
+} from "@/inference/models/media-kind.js";
 
 /**
  * Serves a request of a media Kind through the Kind's client contract, with

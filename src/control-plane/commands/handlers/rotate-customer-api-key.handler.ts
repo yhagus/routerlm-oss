@@ -5,10 +5,13 @@ import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeyRotations, apiKeys } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { ControlPlaneError } from "../../models/control-plane-error.js";
-import type { IssuedCustomerApiKey } from "../../models/customer-api-key.js";
-import { findCustomerApiKey, findUnrevokedCustomerApiKey } from "../../models/customer-api-keys.js";
-import { RotateCustomerApiKeyCommand } from "../impl/rotate-customer-api-key.command.js";
+import { ControlPlaneError } from "@/control-plane/models/control-plane-error.js";
+import type { IssuedCustomerApiKey } from "@/control-plane/models/customer-api-key.js";
+import {
+  findCustomerApiKey,
+  findUnrevokedCustomerApiKey,
+} from "@/control-plane/models/customer-api-keys.js";
+import { RotateCustomerApiKeyCommand } from "@/control-plane/commands/impl/rotate-customer-api-key.command.js";
 
 const REVOKED_MESSAGE = "A revoked API Key can't be rotated.";
 

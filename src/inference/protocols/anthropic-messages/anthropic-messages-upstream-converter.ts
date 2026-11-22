@@ -1,4 +1,4 @@
-import { GatewayError } from "../../models/gateway-error.js";
+import { GatewayError } from "@/inference/models/gateway-error.js";
 import type {
   AssistantContentPart,
   CacheMarker,
@@ -12,12 +12,12 @@ import type {
   ToolCallPart,
   ToolChoice,
   UserContentPart,
-} from "../../models/internal-format.js";
+} from "@/inference/models/internal-format.js";
 import type {
   UpstreamHttpRequest,
   UpstreamProtocolConverter,
   UpstreamTarget,
-} from "../upstream-protocol-converter.js";
+} from "@/inference/protocols/upstream-protocol-converter.js";
 import { parseMessagesResponse, startMessagesStream } from "./anthropic-messages-response.js";
 
 const MESSAGES_PATH = "/v1/messages";

@@ -12,7 +12,7 @@ import {
   serviceTierValuesForeignToProtocol,
   serviceTiersWithoutWireValue,
   tierPricesWithoutListedTier,
-} from "../schemas/catalog.schema.js";
+} from "@/catalog/schemas/catalog.schema.js";
 
 /** The Catalog files that ship with the gateway, one JSON file per Provider. */
 export const CATALOG_DIRECTORY = fileURLToPath(new URL("../data", import.meta.url));

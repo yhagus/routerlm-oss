@@ -4,9 +4,9 @@ import request from "supertest";
 import { vi } from "vitest";
 import type { Database } from "@/db/schemas/relations.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { insertApiKey, insertOpenAiChatModel } from "../support/inference.js";
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 // Lets a test make the next snapshot reloads fail, as a database hiccup would.
 const reloads = vi.hoisted(() => ({ failuresLeft: 0 }));

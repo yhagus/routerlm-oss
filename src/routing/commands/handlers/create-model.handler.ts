@@ -3,9 +3,9 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
 import { models } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { Model } from "../../models/model.js";
-import { toModelWriteError } from "../../models/write-errors.js";
-import { CreateModelCommand } from "../impl/create-model.command.js";
+import type { Model } from "@/routing/models/model.js";
+import { toModelWriteError } from "@/routing/models/write-errors.js";
+import { CreateModelCommand } from "@/routing/commands/impl/create-model.command.js";
 
 @CommandHandler(CreateModelCommand)
 export class CreateModelHandler implements ICommandHandler<CreateModelCommand> {

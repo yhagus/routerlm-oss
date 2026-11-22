@@ -7,18 +7,22 @@ import {
   anthropicMessagesFixture,
   type FakeReply,
   FakeUpstream,
-} from "../support/fake-upstream.js";
+} from "@tests/support/fake-upstream.js";
 import {
   addProviderAccount,
   insertAnthropicMessagesModel,
   insertApiKey,
   setProviderQuirks,
   UPSTREAM_KEY,
-} from "../support/inference.js";
-import { GENERAL_REMAINS, REMAINS_PATH, remainsReply } from "../support/minimax-m-plan-remains.js";
+} from "@tests/support/inference.js";
+import {
+  GENERAL_REMAINS,
+  REMAINS_PATH,
+  remainsReply,
+} from "@tests/support/minimax-m-plan-remains.js";
 
-import { createTestApp, setUpFirstUser } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };

@@ -1,15 +1,15 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { FakeUpstream, openAiChatFixture } from "../support/fake-upstream.js";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
 import {
   insertApiKey,
   insertOpenAiChatModel,
   setProviderQuirks,
   UPSTREAM_MODEL_ID,
-} from "../support/inference.js";
-import { createTestApp } from "../support/test-app.js";
-import { deleteAllUpstreamData } from "../support/upstream.js";
+} from "@tests/support/inference.js";
+import { createTestApp } from "@tests/support/test-app.js";
+import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 /** The Chat Completions request the openai-chat `upstream-request.json` fixture was recorded from. */
 const FIXTURE_CLIENT_REQUEST = {

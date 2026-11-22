@@ -16,8 +16,8 @@ import {
   assertQuirksFitEndpoints,
   assertServiceTierValuesFitEndpoints,
   type Provider,
-} from "../../models/provider.js";
-import { UpdateProviderCommand } from "../impl/update-provider.command.js";
+} from "@/upstream/models/provider.js";
+import { UpdateProviderCommand } from "@/upstream/commands/impl/update-provider.command.js";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 

@@ -3,9 +3,9 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { apiKeys } from "@/db/schemas/index.js";
-import type { ApiKeySummary } from "../../models/api-key.js";
-import { selectApiKeySummaries } from "../../models/api-key-summaries.js";
-import { ListApiKeysQuery } from "../impl/list-api-keys.query.js";
+import type { ApiKeySummary } from "@/api-keys/models/api-key.js";
+import { selectApiKeySummaries } from "@/api-keys/models/api-key-summaries.js";
+import { ListApiKeysQuery } from "@/api-keys/queries/impl/list-api-keys.query.js";
 
 @QueryHandler(ListApiKeysQuery)
 export class ListApiKeysHandler implements IQueryHandler<ListApiKeysQuery> {
