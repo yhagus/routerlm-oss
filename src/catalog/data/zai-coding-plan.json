@@ -1,0 +1,73 @@
+{
+  "slug": "zai-coding-plan",
+  "name": "Z.ai GLM Coding Plan",
+  "logo": "zai",
+  "termsRisk": true,
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.z.ai/api/coding/paas/v4"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {
+    "exhaustedErrorCodes": ["1308", "1309", "1310", "1316", "1317", "1318", "1319", "1320", "1321"]
+  },
+  "modelsDevProviderId": "zai-coding-plan",
+  "source": {
+    "urls": [
+      "https://docs.z.ai/devpack/overview",
+      "https://docs.z.ai/devpack/quick-start",
+      "https://docs.z.ai/devpack/notice/api-key-management",
+      "https://docs.z.ai/legal-agreement/subscription-terms",
+      "https://docs.z.ai/api-reference/api-code"
+    ],
+    "retrievedOn": "2026-11-22"
+  },
+  "notes": "Subscription with 5-hour and weekly credit limits and no per-token prices; each model carries the Z.ai API list prices of the same model, so Cost is what a request would cost there. Takes a GLM Coding Plan API key, which since 2026-10-16 is separate from a standard Z.ai API key and not interchangeable with it. The Coding Plan docs name only GLM-5.3 and GLM-5.3-Flash; requests for GLM-5.2 and GLM-5.1 are routed to GLM-5.3 and requests for GLM-4.7 to GLM-5.3-Flash, so only the two are shipped. Global region only. Caching is automatic. Reasoning: thinking cannot be disabled on GLM-5.3 and GLM-5.3-Flash, and the docs list only low, high and max as their reasoning_effort values; no quirk maps the gateway's efforts onto them, and this is untested live. Quota exhaustion: Z.ai answers HTTP 429 with {\"error\":{\"code\":\"1308\",...}}, the code sent as a string, so exhaustedErrorCodes lists the usage-limit codes 1308, 1309, 1310 and 1316 to 1321 as strings; the rate-limit codes 1302 and 1313 and code 1311 are left out and stay a Cooldown. No quota endpoint is documented, so there is no quota reader. Terms risk: the Subscription Terms (section 4.2) limit the plan to officially supported coding tools, forbid general-purpose API access, and forbid to \"resell, sub-resell, repackage, aggregate, proxy\" it.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "glm-5.3",
+      "name": "GLM-5.3",
+      "releaseDate": "2026-08-14",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": 1.4,
+      "source": {
+        "urls": [
+          "https://docs.z.ai/devpack/overview",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Text only. Prices are Z.ai API list prices for GLM-5.3; cache write is not published and is set to the input price, since caching is automatic. Release date comes from models.dev."
+    },
+    {
+      "upstreamModelId": "glm-5.3-flash",
+      "name": "GLM-5.3-Flash",
+      "releaseDate": "2026-08-26",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": 0.15,
+      "source": {
+        "urls": [
+          "https://docs.z.ai/devpack/overview",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Prices are Z.ai API list prices for GLM-5.3-Flash; cache write is not published and is set to the input price, since caching is automatic. Release date comes from models.dev."
+    }
+  ]
+}

@@ -58,6 +58,8 @@ describe("db:seed script (e2e)", () => {
         "opencode-go",
         "xiaomi-mimo",
         "xiaomi-mimo-token-plan",
+        "zai",
+        "zai-coding-plan",
       ]);
     },
     SEED_TIMEOUT_MS,

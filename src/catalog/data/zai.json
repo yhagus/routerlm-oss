@@ -1,0 +1,167 @@
+{
+  "slug": "zai",
+  "name": "Z.ai API",
+  "logo": "zai",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.z.ai/api/paas/v4"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {},
+  "modelsDevProviderId": "zai",
+  "source": {
+    "urls": [
+      "https://docs.z.ai/guides/overview/pricing",
+      "https://docs.z.ai/api-reference/llm/chat-completion",
+      "https://docs.z.ai/guides/llm/glm-5.2",
+      "https://docs.z.ai/guides/capabilities/cache",
+      "https://models.dev/"
+    ],
+    "retrievedOn": "2026-11-22"
+  },
+  "notes": "Pay-as-you-go with per-token prices in USD per million tokens. Takes a standard Z.ai API key; a GLM Coding Plan key does not work here. Global region only. Caching is automatic, and cached storage is free for a limited time, so each model's cache write is set to its input price. The docs give every model here a 128K maximum output. Reasoning: the docs list only low, high and max as reasoning_effort values for GLM-5.3 and GLM-5.3-Flash, and no quirk maps the gateway's efforts onto them; this is untested live. No exhaustedErrorCodes: an insufficient balance answers HTTP 429 with code 1113, which is left as a Cooldown, since topping up the balance ends it at any time. Release dates come from models.dev.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "glm-5.3",
+      "name": "GLM-5.3",
+      "releaseDate": "2026-08-14",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": 1.4,
+      "source": {
+        "urls": ["https://docs.z.ai/guides/overview/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Text only."
+    },
+    {
+      "upstreamModelId": "glm-5.3-flash",
+      "name": "GLM-5.3-Flash",
+      "releaseDate": "2026-08-26",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": 0.15,
+      "source": {
+        "urls": ["https://docs.z.ai/guides/overview/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-22"
+      }
+    },
+    {
+      "upstreamModelId": "glm-5.3-flashx",
+      "name": "GLM-5.3-FlashX",
+      "releaseDate": "2026-09-18",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.37,
+      "outputPrice": 1.25,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": 0.37,
+      "source": {
+        "urls": ["https://docs.z.ai/guides/overview/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Context size, vision, tools and reasoning come from models.dev."
+    },
+    {
+      "upstreamModelId": "glm-5.2",
+      "name": "GLM-5.2",
+      "releaseDate": "2026-06-13",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": 1.4,
+      "source": {
+        "urls": [
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://docs.z.ai/guides/llm/glm-5.2",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Text only."
+    },
+    {
+      "upstreamModelId": "glm-5.1",
+      "name": "GLM-5.1",
+      "releaseDate": "2026-04-07",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 200000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": 1.4,
+      "source": {
+        "urls": ["https://docs.z.ai/guides/overview/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Context size, text-only input, tools and reasoning come from models.dev."
+    },
+    {
+      "upstreamModelId": "glm-5",
+      "name": "GLM-5",
+      "releaseDate": "2026-02-12",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1,
+      "outputPrice": 3.2,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 1,
+      "source": {
+        "urls": ["https://docs.z.ai/guides/overview/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Context size, text-only input, tools and reasoning come from models.dev."
+    },
+    {
+      "upstreamModelId": "glm-4.7",
+      "name": "GLM-4.7",
+      "releaseDate": "2025-12-22",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.6,
+      "outputPrice": 2.2,
+      "cacheReadPrice": 0.11,
+      "cacheWritePrice": 0.6,
+      "source": {
+        "urls": ["https://docs.z.ai/guides/overview/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Context size, text-only input, tools and reasoning come from models.dev."
+    },
+    {
+      "upstreamModelId": "glm-4.6",
+      "name": "GLM-4.6",
+      "releaseDate": "2025-09-30",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.6,
+      "outputPrice": 2.2,
+      "cacheReadPrice": 0.11,
+      "cacheWritePrice": 0.6,
+      "source": {
+        "urls": ["https://docs.z.ai/guides/overview/pricing", "https://models.dev/"],
+        "retrievedOn": "2026-11-22"
+      },
+      "notes": "Context size, text-only input, tools and reasoning come from models.dev."
+    }
+  ]
+}

@@ -72,6 +72,8 @@ describe("The Google Gemini and OpenAI Catalog files", () => {
       "opencode-go": "opencode-go",
       "xiaomi-mimo": "xiaomi",
       "xiaomi-mimo-token-plan": "xiaomi-token-plan-sgp",
+      zai: "zai",
+      "zai-coding-plan": "zai-coding-plan",
     });
   });
 });

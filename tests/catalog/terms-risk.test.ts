@@ -1,7 +1,7 @@
 import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
 
 describe("The Terms Risk flag in the shipped Catalog", () => {
-  it("flags Alibaba Token Plan, ClinePass, Kimi Code, Meta AI, MiniMax M Plan, OpenAI Codex and Xiaomi MiMo Token Plan and no other Provider", async () => {
+  it("flags Alibaba Token Plan, ClinePass, Kimi Code, Meta AI, MiniMax M Plan, OpenAI Codex, Xiaomi MiMo Token Plan and Z.ai GLM Coding Plan and no other Provider", async () => {
     const catalog = await loadCatalog(CATALOG_DIRECTORY);
 
     const flagged = catalog.filter((entry) => entry.termsRisk).map((entry) => entry.slug);
@@ -14,6 +14,7 @@ describe("The Terms Risk flag in the shipped Catalog", () => {
       "minimax-m-plan",
       "openai-codex",
       "xiaomi-mimo-token-plan",
+      "zai-coding-plan",
     ]);
   });
 });
