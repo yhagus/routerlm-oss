@@ -181,7 +181,7 @@ export interface ProviderQuirks {
 }
 
 /** The code that reads a Subscription Provider's Quota Meters. */
-export const QUOTA_READERS = ["minimax-m-plan", "kimi-code"] as const;
+export const QUOTA_READERS = ["minimax-m-plan", "kimi-code", "openai-codex"] as const;
 export type QuotaReader = (typeof QUOTA_READERS)[number];
 
 /** For a select: the empty value is a Provider without a quota reader. */
@@ -189,6 +189,7 @@ export const QUOTA_READER_OPTIONS = [
   { label: "None", value: "" },
   { label: "MiniMax M Plan", value: "minimax-m-plan" },
   { label: "Kimi Code", value: "kimi-code" },
+  { label: "OpenAI Codex", value: "openai-codex" },
 ] satisfies { label: string; value: QuotaReader | "" }[];
 
 /** Where an OAuth Login's account is registered: each region signs in at its own host. */
