@@ -8,6 +8,7 @@ import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
+  type QuotaReading,
   QuotaReadError,
 } from "@/quota-meters/models/quota-reader.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
@@ -92,7 +93,7 @@ export class MiniMaxMPlanQuotaReader implements QuotaReader {
   async read(
     { secret: bearerCredential }: ProviderAccountCredential,
     { quotaBaseUrl }: QuotaReaderProvider,
-  ): Promise<QuotaMeterReading[]> {
+  ): Promise<QuotaReading> {
     if (quotaBaseUrl === undefined) {
       throw new QuotaReadError("The Provider names no quota endpoint in its quotaBaseUrl quirk");
     }
@@ -109,7 +110,10 @@ export class MiniMaxMPlanQuotaReader implements QuotaReader {
         `MiniMax refused the quota reading: ${status.status_code} ${status.status_msg}`,
       );
     }
-    return (entries ?? []).flatMap((entry) => PLAN_WINDOWS.map((window) => meterOf(entry, window)));
+    const meters = (entries ?? []).flatMap((entry) =>
+      PLAN_WINDOWS.map((window) => meterOf(entry, window)),
+    );
+    return { meters, usageResetCount: null };
   }
 
   private async fetchRemains(bearerCredential: string, quotaBaseUrl: string): Promise<unknown> {

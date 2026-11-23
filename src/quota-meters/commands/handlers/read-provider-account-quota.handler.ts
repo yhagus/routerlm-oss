@@ -21,12 +21,14 @@ import {
   type QuotaMeterReading,
   selectQuotaMeters,
 } from "@/quota-meters/models/quota-meter.js";
+import type { QuotaReading } from "@/quota-meters/models/quota-reader.js";
+import { selectUsageResets } from "@/quota-meters/models/usage-reset.js";
 import { QuotaReaders } from "@/quota-meters/providers/quota-readers.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
+import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command.js";
+import { ListUsageResetsQuery } from "@/quota-meters/queries/impl/list-usage-resets.query.js";
 
-type ReadingOutcome =
-  | { kind: "read"; meters: QuotaMeterReading[] }
-  | { kind: "failed"; error: string };
+type ReadingOutcome = { kind: "read"; reading: QuotaReading } | { kind: "failed"; error: string };
 
 /** An upsert's SET that writes, into each of `columns`, the value the upsert tried to insert. */
 function excludedValuesOf(columns: Record<string, AnyColumn>): Record<string, SQL> {
@@ -81,12 +83,30 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     const checkedAt = new Date();
     await this.store(providerAccountId, outcome, checkedAt);
     if (outcome.kind === "read") {
-      await this.applyExhausted(providerAccountId, outcome.meters, {
+      await this.applyExhausted(providerAccountId, outcome.reading.meters, {
         checkedAt,
         continueWhenExhausted: account.continueWhenExhausted,
       });
+      await this.refreshUsageResetsOnNewCount(providerAccountId, outcome.reading.usageResetCount);
     }
     return this.quotaOf(providerAccountId);
+  }
+
+  /**
+   * The list of Usage Resets is fetched only when the reading's count differs
+   * from the stored unexpired resets (ADR 0041); a failed fetch keeps them.
+   */
+  private async refreshUsageResetsOnNewCount(
+    providerAccountId: string,
+    usageResetCount: number | null,
+  ): Promise<void> {
+    if (usageResetCount === null) {
+      return;
+    }
+    const stored = await selectUsageResets(this.db, [providerAccountId]);
+    if ((stored.get(providerAccountId) ?? []).length !== usageResetCount) {
+      await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
+    }
   }
 
   /**
@@ -127,10 +147,10 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       const credential = await this.queryBus.execute(
         new GetProviderAccountCredentialQuery(providerAccountId),
       );
-      const meters = await this.readers
+      const reading = await this.readers
         .readerFor(readerName)
         .read(credential, { baseUrl: chatEndpoint.baseUrl, quotaBaseUrl });
-      return { kind: "read", meters };
+      return { kind: "read", reading };
     } catch (error) {
       return { kind: "failed", error: error instanceof Error ? error.message : String(error) };
     }
@@ -151,7 +171,8 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
         return;
       }
 
-      const readKeys = outcome.meters.map((meter) => meter.key);
+      const { meters } = outcome.reading;
+      const readKeys = meters.map((meter) => meter.key);
       // A meter the Provider no longer reports would otherwise keep its last value forever.
       await tx
         .delete(quotaMeters)
@@ -163,12 +184,10 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
                 notInArray(quotaMeters.key, readKeys),
               ),
         );
-      if (outcome.meters.length > 0) {
+      if (meters.length > 0) {
         await tx
           .insert(quotaMeters)
-          .values(
-            outcome.meters.map((meter) => ({ ...meter, providerAccountId, observedAt: checkedAt })),
-          )
+          .values(meters.map((meter) => ({ ...meter, providerAccountId, observedAt: checkedAt })))
           .onConflictDoUpdate({
             target: [quotaMeters.providerAccountId, quotaMeters.key],
             set: excludedValuesOf(overwrittenQuotaMeterColumns),
@@ -193,6 +212,11 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       throw new NotFoundException("Provider Account not found");
     }
     const meters = await selectQuotaMeters(this.db, [providerAccountId]);
-    return { ...status, quotaMeters: meters.get(providerAccountId) ?? [] };
+    const resets = await this.queryBus.execute(new ListUsageResetsQuery([providerAccountId]));
+    return {
+      ...status,
+      quotaMeters: meters.get(providerAccountId) ?? [],
+      usageResets: resets.get(providerAccountId) ?? null,
+    };
   }
 }

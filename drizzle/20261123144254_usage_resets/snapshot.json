@@ -1,0 +1,241 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "329ea9cc-2cb6-49e7-8028-1ea5d3e65617",
+  "prevIds": [
+    "d25bf2ec-a6e1-4101-834b-141a7b54f40e"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "usage_resets"
+      ],
+      "writes": [
+        "s|tbl|public.usage_resets",
+        "n|tbl|public.usage_resets",
+        "e|tbl|public.usage_resets",
+        "n|rel|public.usage_resets",
+        "n|type|public.usage_resets",
+        "n|rel|public.usage_resets_pkey",
+        "n|rel|public.usage_resets_provider_account_id_external_id_unique"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "usage_resets"
+      ],
+      "writes": [
+        "s|fk|public.usage_resets.usage_resets_provider_account_id_provider_accounts_id_fkey",
+        "n|fk|public.usage_resets.usage_resets_provider_account_id_provider_accounts_id_fkey",
+        "e|fk|public.usage_resets.usage_resets_provider_account_id_provider_accounts_id_fkey",
+        "n|con|public.usage_resets.usage_resets_provider_account_id_provider_accounts_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.usage_resets",
+        "n|sch|public",
+        "n|tbl|public.provider_accounts",
+        "n|sch|public",
+        "n|col|public.usage_resets.provider_account_id",
+        "n|col|public.provider_accounts.id",
+        "e|uniqueness|public.provider_accounts.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "usage_resets",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "provider_account_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "external_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "title",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "granted_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "observed_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "raw",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "usage_resets_provider_account_id_provider_accounts_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "provider_account_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "provider_accounts",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "usage_resets_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_resets",
+        "name": "usage_resets_provider_account_id_external_id_unique",
+        "nameExplicit": true,
+        "columns": [
+          "provider_account_id",
+          "external_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    }
+  ]
+}

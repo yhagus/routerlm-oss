@@ -194,6 +194,7 @@ describe("Quota Meters of a Kimi Code Provider Account (e2e)", () => {
           resetsAt: "2026-11-30T16:00:00.000Z",
         },
       ],
+      usageResets: null,
     });
   });
 

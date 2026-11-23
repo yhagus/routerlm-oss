@@ -1,6 +1,7 @@
 import { HttpClientError, HttpResponseError, HttpTimeoutError } from "@nestjs/http-client";
 import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { QuotaMeterReading } from "./quota-meter.js";
+import type { UsageResetPort } from "./usage-reset.js";
 
 /**
  * Reads the Quota Meters of one Provider Account from one quota endpoint
@@ -12,10 +13,19 @@ export interface QuotaReader {
    *   key, or its OAuth Login's access token and CLI identity headers. A
    *   reader sends the identity headers only when its endpoint wants them.
    */
-  read(
-    credential: ProviderAccountCredential,
-    provider: QuotaReaderProvider,
-  ): Promise<QuotaMeterReading[]>;
+  read(credential: ProviderAccountCredential, provider: QuotaReaderProvider): Promise<QuotaReading>;
+  /** Present only when the Provider has Usage Resets; any other reader reports them unsupported. */
+  readonly usageResets?: UsageResetPort;
+}
+
+/** What one quota reading reports. */
+export interface QuotaReading {
+  meters: QuotaMeterReading[];
+  /**
+   * How many Usage Resets the Provider says the account has; null when the
+   * reading doesn't say. Only compared with the stored resets (ADR 0041).
+   */
+  usageResetCount: number | null;
 }
 
 /** What a reader may build its quota endpoint's URL from; each reader uses one of the two. */

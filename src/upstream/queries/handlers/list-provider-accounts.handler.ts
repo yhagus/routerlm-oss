@@ -4,6 +4,7 @@ import { asc } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
 import { ListQuotaMetersQuery } from "@/quota-meters/queries/impl/list-quota-meters.query.js";
+import { ListUsageResetsQuery } from "@/quota-meters/queries/impl/list-usage-resets.query.js";
 import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
 import { providerAccountColumns } from "@/upstream/models/provider-account.js";
 import {
@@ -27,11 +28,13 @@ export class ListProviderAccountsHandler implements IQueryHandler<ListProviderAc
     const accountIds = accounts.map((account) => account.id);
     const cooldowns = await this.cooldowns.cooldowns(accountIds);
     const quotaMeters = await this.queryBus.execute(new ListQuotaMetersQuery(accountIds));
+    const usageResets = await this.queryBus.execute(new ListUsageResetsQuery(accountIds));
     return accounts.map((account) => ({
       ...account,
       cooldownEndsAt: cooldowns.get(account.id)?.endsAt ?? null,
       cooldownCause: cooldowns.get(account.id)?.cause ?? null,
       quotaMeters: quotaMeters.get(account.id) ?? [],
+      usageResets: usageResets.get(account.id) ?? null,
     }));
   }
 }

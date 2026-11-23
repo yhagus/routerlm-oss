@@ -2,9 +2,14 @@ import type { FakeReply } from "./fake-upstream.js";
 
 /** Where the OpenAI Codex quota reader asks, on the Provider's origin. */
 export const USAGE_PATH = "/backend-api/wham/usage";
+/** Where it lists the account's Usage Resets, which OpenAI calls rate limit reset credits. */
+export const RESET_CREDITS_PATH = "/backend-api/wham/rate-limit-reset-credits";
+/** Where it spends one. */
+export const CONSUME_PATH = "/backend-api/wham/rate-limit-reset-credits/consume";
 
 export const FIVE_HOURS_IN_SECONDS = 18_000;
 export const WEEK_IN_SECONDS = 604_800;
+const DAY_MS = 86_400_000;
 
 /** One window of a `wham/usage` answer; `reset_at` is in epoch seconds. */
 export interface UsageWindow {
@@ -52,6 +57,8 @@ export function rateLimitOf(windows: {
 export function usageReply(answer: {
   rateLimit: UsageRateLimit | null;
   additionalRateLimits?: Array<{ limit_name: string; rate_limit: UsageRateLimit | null }>;
+  /** How many Usage Resets OpenAI says the account has; left out of the answer when unset. */
+  usageResetCount?: number;
 }): FakeReply {
   return {
     kind: "json",
@@ -64,16 +71,75 @@ export function usageReply(answer: {
         ...limit,
         metered_feature: limit.limit_name,
       })),
+      ...(answer.usageResetCount === undefined
+        ? {}
+        : { rate_limit_reset_credits: { available_count: answer.usageResetCount } }),
     },
   };
 }
 
 /** A `wham/usage` answer with both windows used up to `usedPercent`, resetting at `resetsAt`. */
-export function usageAtPercentReply(usedPercent: number, resetsAt: Date): FakeReply {
+export function usageAtPercentReply(
+  usedPercent: number,
+  resetsAt: Date,
+  usageResetCount?: number,
+): FakeReply {
   return usageReply({
     rateLimit: rateLimitOf({
       primary: usageWindow(usedPercent, FIVE_HOURS_IN_SECONDS, resetsAt),
       secondary: usageWindow(usedPercent, WEEK_IN_SECONDS, resetsAt),
     }),
+    usageResetCount,
   });
+}
+
+export type ResetCreditStatus = "available" | "redeeming" | "redeemed";
+
+/** One entry of a `rate-limit-reset-credits` answer, as the Codex CLI's backend client reads it. */
+export interface ResetCredit {
+  id: string;
+  reset_type: string;
+  status: ResetCreditStatus;
+  granted_at: string;
+  expires_at: string | null;
+  title: string;
+  description: string;
+}
+
+/** An available reset named `id`, granted a day ago, expiring at `expiresAt` (null: never). */
+export function resetCredit(
+  id: string,
+  expiresAt: Date | null,
+  status: ResetCreditStatus = "available",
+): ResetCredit {
+  return {
+    id,
+    reset_type: "all_windows",
+    status,
+    granted_at: new Date(Date.now() - DAY_MS).toISOString(),
+    expires_at: expiresAt?.toISOString() ?? null,
+    title: `Reset ${id}`,
+    description: "Restores your usage limits once",
+  };
+}
+
+/** A successful `rate-limit-reset-credits` answer listing `credits`. */
+export function resetCreditsReply(credits: ResetCredit[]): FakeReply {
+  const availableCount = credits.filter((credit) => credit.status === "available").length;
+  return {
+    kind: "json",
+    status: 200,
+    body: { credits, available_count: availableCount, total_earned_count: credits.length },
+  };
+}
+
+export type ConsumeCode = "reset" | "nothing_to_reset" | "no_credit" | "already_redeemed";
+
+/** The answer to spending a reset, with OpenAI's `code`. */
+export function consumeReply(code: ConsumeCode): FakeReply {
+  return {
+    kind: "json",
+    status: 200,
+    body: { code, windows_reset: code === "reset" ? 2 : 0 },
+  };
 }

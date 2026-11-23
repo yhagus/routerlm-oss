@@ -8,6 +8,7 @@ import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
+  type QuotaReading,
   QuotaReadError,
 } from "@/quota-meters/models/quota-reader.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
@@ -77,7 +78,7 @@ export class KimiCodeQuotaReader implements QuotaReader {
   async read(
     { secret: bearerCredential }: ProviderAccountCredential,
     { baseUrl }: QuotaReaderProvider,
-  ): Promise<QuotaMeterReading[]> {
+  ): Promise<QuotaReading> {
     const body = await this.fetchUsages(bearerCredential, baseUrl);
     const parsed = usagesResponseSchema.safeParse(body);
     if (!parsed.success) {
@@ -87,10 +88,11 @@ export class KimiCodeQuotaReader implements QuotaReader {
     }
     const { usages } = parsed.data;
     // Every meter is unscoped: any one limit running out stops the whole plan.
-    return PLAN_LIMITS.flatMap((planLimit) => {
+    const meters = PLAN_LIMITS.flatMap((planLimit) => {
       const limit = usages[planLimit.field];
       return limit ? [meterOf(planLimit, limit)] : [];
     });
+    return { meters, usageResetCount: null };
   }
 
   private async fetchUsages(bearerCredential: string, baseUrl: string): Promise<unknown> {

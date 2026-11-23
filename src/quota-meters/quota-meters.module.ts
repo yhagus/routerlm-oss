@@ -8,14 +8,17 @@ import { ProviderAccountQuotaController } from "./provider-account-quota.control
 import { KimiCodeQuotaReader } from "./providers/kimi-code-quota-reader.js";
 import { MiniMaxMPlanQuotaReader } from "./providers/minimax-m-plan-quota-reader.js";
 import { OpenAiCodexQuotaReader } from "./providers/openai-codex-quota-reader.js";
+import { OpenAiCodexUsageResets } from "./providers/openai-codex-usage-resets.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./providers/quota-reader-http-client.js";
 import { QuotaReaders } from "./providers/quota-readers.js";
+import { UsageResetTargets } from "./providers/usage-reset-targets.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
 import { UpstreamModule } from "@/upstream/upstream.module.js";
 
 /**
  * Quota Meters: the quota readers, reading a Provider Account's meters now
- * from the dashboard, and the meters the dashboard lists. The worker imports
+ * from the dashboard, the meters the dashboard lists, and the Usage Resets
+ * an operator spends. The worker imports
  * it too, for the reading schedule. Exhausted state and credentials are UpstreamModule's.
  */
 @Module({
@@ -40,7 +43,9 @@ import { UpstreamModule } from "@/upstream/upstream.module.js";
     MiniMaxMPlanQuotaReader,
     KimiCodeQuotaReader,
     OpenAiCodexQuotaReader,
+    OpenAiCodexUsageResets,
     QuotaReaders,
+    UsageResetTargets,
     ...CommandHandlers,
     ...QueryHandlers,
   ],

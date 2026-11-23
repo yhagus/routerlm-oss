@@ -1,6 +1,7 @@
 import { asc, inArray } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { type providerAccounts, quotaMeters } from "@/db/schemas/index.js";
+import type { UsageReset } from "./usage-reset.js";
 
 /** One Quota Meter as a quota reader reads it, before it is stored for a Provider Account. */
 export type QuotaMeterReading = Omit<
@@ -35,11 +36,15 @@ const quotaMeterColumns = {
 /** A Quota Meter as the dashboard API returns it. */
 export type QuotaMeter = Omit<typeof quotaMeters.$inferSelect, "id" | "providerAccountId" | "raw">;
 
-/** A Provider Account's quota status: its latest Quota Meters and how the last reading went. */
+/**
+ * A Provider Account's quota status: its latest Quota Meters, how the last
+ * reading went, and its unexpired Usage Resets, soonest expiry first (null
+ * when its Provider has none).
+ */
 export type ProviderAccountQuota = Pick<
   typeof providerAccounts.$inferSelect,
   "quotaCheckedAt" | "quotaError"
-> & { quotaMeters: QuotaMeter[] };
+> & { quotaMeters: QuotaMeter[]; usageResets: UsageReset[] | null };
 
 /** The Quota Meters of each of the Provider Accounts, ordered by key; an account without any maps to none. */
 export async function selectQuotaMeters(

@@ -125,11 +125,13 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
       quotaCheckedAt: expect.any(String),
       quotaError: null,
       quotaMeters: expectedMeters,
+      usageResets: null,
     });
     expect(await listedAccount(providerAccountId)).toMatchObject({
       continueWhenExhausted: false,
       quotaError: null,
       quotaMeters: expectedMeters,
+      usageResets: null,
     });
   });
 
@@ -202,6 +204,7 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
         expect.objectContaining({ key: "5h", remainingPercent: 75 }),
         expect.objectContaining({ key: "weekly", remainingPercent: 48 }),
       ],
+      usageResets: null,
     });
     expect(await listedAccount(providerAccountId)).toMatchObject({
       isEnabled: true,
