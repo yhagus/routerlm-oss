@@ -91,8 +91,12 @@ _Avoid_: Fast mode, priority, speed mode
 A named weekly schedule, such as "DeepSeek Off-Peak": one or more ranges of weekdays and times of day in one time zone. It holds only when, never prices, and can be disabled without losing them; an Upstream Model that attaches it gives its own Window Prices. Deleting it removes those Window Prices from every Upstream Model.
 _Avoid_: Preset, off-time, off-peak, schedule
 
+**Validity Period**:
+The span in which one Upstream Model's Window Prices can apply, with a start, an end, or both. Outside it they don't apply, even while their Pricing Window is active. Window Prices on a window that covers the whole week, with a Validity Period that ends, model a limited-time sale by the Provider.
+_Avoid_: Promo period, expiry, date range
+
 **Window Prices**:
-The token prices one Upstream Model charges while one of its Pricing Windows is active. A price left out stays the standard one. When several of a model's Pricing Windows are active at once, the first in the model's order wins. The moment that decides is when the gateway received the request. A request that asks for a Service Tier ignores them.
+The token prices one Upstream Model charges while one of its Pricing Windows is active, within their Validity Period if they have one. A price left out stays the standard one. At most one of a model's Window Prices can apply at any moment: two whose hours and Validity Periods both overlap are never allowed, whether or not their windows are enabled. A model may attach the same window more than once, for Validity Periods that don't overlap. The moment that decides is when the gateway received the request. A request that asks for a Service Tier ignores them.
 _Avoid_: Off-peak prices, discount, override
 
 **Cooldown**:

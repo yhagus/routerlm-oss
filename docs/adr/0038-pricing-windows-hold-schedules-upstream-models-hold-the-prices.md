@@ -1,5 +1,7 @@
 # Pricing Windows hold schedules, Upstream Models hold the prices
 
+Status: accepted, amended by ADR 0040: Window Prices may carry a Validity Period, and a model's Window Prices may no longer overlap, so the model's order and the "first active window wins" rule are gone.
+
 Some Providers charge less at set hours: DeepSeek charges half price outside its weekday peak hours (01:00-04:00 and 06:00-10:00 UTC), and ClinePass passes on the same peak and off-peak prices. Until now the Catalog has stored only the peak price, so Cost was never understated but was often overstated. We decided that a Pricing Window is a named weekly schedule with no prices: weekday-and-time ranges in one IANA time zone, plus an enabled flag. Each chat Upstream Model that attaches a window gives its own partial Window Prices. A model can attach several windows in an order it chooses, and the first active enabled window wins. The time the gateway received the request decides which window is active.
 
 ## Considered options
