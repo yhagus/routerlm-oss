@@ -17,6 +17,8 @@ import type { ControlPlaneTransport } from "./key-scenarios.js";
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const WINDOW_TIME_ZONE = "Asia/Jakarta";
 const WEEKEND = [{ weekdays: [6, 7], start: "00:00", end: "24:00" }];
+const WEEKDAY_LUNCH = [{ weekdays: [1, 2, 3, 4, 5], start: "12:00", end: "13:00" }];
+const WEEKDAY_NIGHT = [{ weekdays: [1, 2, 3, 4, 5], start: "01:00", end: "05:00" }];
 // The Models here are only listed, never called.
 const UNUSED_BASE_URL = "http://127.0.0.1:1/v1";
 
@@ -115,11 +117,15 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
       return route.upstreamModelId;
     }
 
-    async function createPricingWindow(name: string, isEnabled = true): Promise<string> {
+    async function createPricingWindow(
+      name: string,
+      ranges: object[],
+      isEnabled = true,
+    ): Promise<string> {
       const created = await request(app.getHttpServer())
         .post("/api/pricing-windows")
         .set("Cookie", adaCookie)
-        .send({ name, timeZone: WINDOW_TIME_ZONE, ranges: WEEKEND, isEnabled })
+        .send({ name, timeZone: WINDOW_TIME_ZONE, ranges, isEnabled })
         .expect(201);
       return created.body.id;
     }
@@ -132,7 +138,7 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
         .expect(200);
     }
 
-    it("lists the first Route's enabled Pricing Windows in order, with resolved prices and no name or id", async () => {
+    it("lists the first Route's enabled Pricing Windows by window name, with resolved prices and no name or id", async () => {
       const chat = await insertOpenAiChatModel(app, db, {
         modelName: "acme-large",
         baseUrl: UNUSED_BASE_URL,
@@ -145,9 +151,9 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
         priority: 1,
         capabilities: [],
       });
-      const lunchId = await createPricingWindow("Lunch");
-      const nightId = await createPricingWindow("Night", false);
-      const weekendId = await createPricingWindow("Weekend");
+      const lunchId = await createPricingWindow("Lunch", WEEKDAY_LUNCH);
+      const nightId = await createPricingWindow("Night", WEEKDAY_NIGHT, false);
+      const weekendId = await createPricingWindow("Weekend", WEEKEND);
       await attachPricingWindows(await upstreamModelIdOf(chat.routeId), [
         { pricingWindowId: lunchId, inputPrice: 1 },
         { pricingWindowId: nightId, inputPrice: 0.1 },
@@ -175,7 +181,7 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
               pricingWindows: [
                 {
                   timeZone: WINDOW_TIME_ZONE,
-                  ranges: WEEKEND,
+                  ranges: WEEKDAY_LUNCH,
                   inputPrice: 1,
                   outputPrice: 15,
                   cacheReadPrice: 0.3,
