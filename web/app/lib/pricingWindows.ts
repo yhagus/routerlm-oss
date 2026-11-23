@@ -58,6 +58,13 @@ export interface WindowPrices {
   cacheWritePrice: number | null;
 }
 
+/**
+ * Where Window Prices stand now: before their Validity Period, applying, inside
+ * the period while their window is closed, or past the period's end.
+ */
+export const WINDOW_PRICES_STATUSES = ["scheduled", "active", "inactive", "expired"] as const;
+export type WindowPricesStatus = (typeof WINDOW_PRICES_STATUSES)[number];
+
 /** A Pricing Window attached to an Upstream Model, with its Window Prices there. */
 export interface AttachedPricingWindow extends WindowPrices {
   pricingWindowId: string;
@@ -66,6 +73,11 @@ export interface AttachedPricingWindow extends WindowPrices {
   ranges: PricingWindowRange[];
   isEnabled: boolean;
   isActiveNow: boolean;
+  /** The Validity Period's start, "YYYY-MM-DDTHH:MM" in the window's time zone; null is open. */
+  validFrom: string | null;
+  /** The Validity Period's exclusive end, as `validFrom`; null is open. */
+  validUntil: string | null;
+  status: WindowPricesStatus;
 }
 
 export const WINDOW_PRICE_FIELDS = [

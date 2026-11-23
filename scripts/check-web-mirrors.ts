@@ -25,6 +25,7 @@ import {
   FAILED_HOPS,
 } from "@/error-captures/schemas/error-capture-page-query.schema.js";
 import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
+import { WINDOW_PRICES_STATUSES } from "@/pricing-windows/models/pricing-window-activity.js";
 import { AUDIO_FORMATS } from "@/inference/models/speech-synthesis.js";
 import { VIDEO_RATIOS, VIDEO_RESOLUTIONS } from "@/inference/models/video-generation.js";
 
@@ -57,6 +58,11 @@ const MIRRORS: Mirror[] = [
   },
   { name: "FAILED_HOPS", webFile: "web/app/lib/errorCaptures.ts", backend: FAILED_HOPS },
   { name: "CAPTURE_OUTCOMES", webFile: "web/app/lib/errorCaptures.ts", backend: CAPTURE_OUTCOMES },
+  {
+    name: "WINDOW_PRICES_STATUSES",
+    webFile: "web/app/lib/pricingWindows.ts",
+    backend: WINDOW_PRICES_STATUSES,
+  },
   { name: "AUDIO_FORMATS", webFile: "web/app/lib/playgroundSpeech.ts", backend: AUDIO_FORMATS },
   {
     name: "VIDEO_RESOLUTIONS",
