@@ -32,6 +32,8 @@ export const tokenSeries: ChartSeries[] = [
 
 const PROVIDER_SHARES = [0.443, 0.294, 0.177, 0.086];
 const REQUESTS_PER_DAY = 2_840_000_000;
+/** Each range seeds its own noise, so switching ranges redraws the chart. */
+const SEED_BY_RANGE: Record<RangeKey, number> = { "24h": 24, "7d": 7, "30d": 30 };
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
@@ -113,7 +115,7 @@ export interface TrafficData {
 }
 
 export function buildTraffic(range: RangeKey): TrafficData {
-  const random = seeded(range === "24h" ? 24 : range === "7d" ? 7 : 30);
+  const random = seeded(SEED_BY_RANGE[range]);
   const list = buckets(range);
   const points = list.map((bucket, index) => {
     const volume = bucketVolume(bucket);

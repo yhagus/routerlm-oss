@@ -6,7 +6,11 @@
 //
 // A web constant whose doc comment says it copies "the backend's `NAME`" must
 // have a MIRRORS entry: the check fails on a marked copy nobody compares.
+//
+// TYPE_MIRRORS does the same for response types: a web interface copied from a
+// backend one must have the same field names, inherited ones included.
 import { readdirSync, readFileSync } from "node:fs";
+import ts from "typescript";
 import {
   AUTH_STYLES,
   CAPABILITIES,
@@ -77,6 +81,64 @@ const MIRRORS: Mirror[] = [
     backend: [String(MAX_REQUEST_RATE)],
   },
 ];
+
+interface TypeMirror {
+  /** The web interface, in `webFile`. */
+  name: string;
+  webFile: string;
+  /** The backend interface it copies, when named differently. */
+  backendName?: string;
+  backendFile: string;
+}
+
+/** Web response types copied from the backend's; compared by field name, not by field type. */
+const TYPE_MIRRORS: TypeMirror[] = [
+  ...["UsageLogSummary", "UsageLogAttempt", "UsageLogDetail", "UsageLogPage", "UsageSummary"].map(
+    (name) => ({ name, webFile: "web/app/lib/usage.ts", backendFile: "src/usage/models/usage.ts" }),
+  ),
+  {
+    name: "IntegrationModel",
+    webFile: "web/app/lib/integrations.ts",
+    backendName: "ModelJson",
+    backendFile: "src/control-plane/models/proto-json.ts",
+  },
+];
+
+/** The field names of each mirrored interface, keyed by `file#name`, with web's `~/` alias resolved. */
+function fieldNamesOf(mirrors: readonly TypeMirror[]): Map<string, string[] | undefined> {
+  const files = mirrors.flatMap((mirror) => [mirror.webFile, mirror.backendFile]);
+  const program = ts.createProgram([...new Set(files)], {
+    noEmit: true,
+    strict: true,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    baseUrl: ".",
+    paths: { "~/*": ["web/app/*"], "@/*": ["src/*"] },
+  });
+  const checker = program.getTypeChecker();
+  const fields = new Map<string, string[] | undefined>();
+  for (const mirror of mirrors) {
+    for (const [file, name] of [
+      [mirror.webFile, mirror.name],
+      [mirror.backendFile, mirror.backendName ?? mirror.name],
+    ] as const) {
+      const declaration = program
+        .getSourceFile(file)
+        ?.statements.find(
+          (statement): statement is ts.InterfaceDeclaration =>
+            ts.isInterfaceDeclaration(statement) && statement.name.text === name,
+        );
+      fields.set(
+        `${file}#${name}`,
+        declaration &&
+          checker
+            .getPropertiesOfType(checker.getTypeAtLocation(declaration.name))
+            .map((property) => property.name),
+      );
+    }
+  }
+  return fields;
+}
 
 const WEB_LIB = "web/app/lib";
 
@@ -159,8 +221,32 @@ for (const mirror of MIRRORS) {
   }
 }
 
+const typeFields = fieldNamesOf(TYPE_MIRRORS);
+for (const mirror of TYPE_MIRRORS) {
+  const backendName = mirror.backendName ?? mirror.name;
+  const web = typeFields.get(`${mirror.webFile}#${mirror.name}`);
+  const backend = typeFields.get(`${mirror.backendFile}#${backendName}`);
+  if (!web || !backend) {
+    problems.push(
+      `${web ? mirror.backendFile : mirror.webFile}: no \`interface ${web ? backendName : mirror.name}\` found.`,
+    );
+    continue;
+  }
+  const missing = backend.filter((field) => !web.includes(field));
+  const extra = web.filter((field) => !backend.includes(field));
+  if (missing.length > 0 || extra.length > 0) {
+    problems.push(
+      `${mirror.webFile}: ${mirror.name} has other fields than the backend's ${backendName} (${mirror.backendFile}).` +
+        (missing.length > 0 ? ` Missing: ${missing.join(", ")}.` : "") +
+        (extra.length > 0 ? ` Not in the backend: ${extra.join(", ")}.` : ""),
+    );
+  }
+}
+
 if (problems.length > 0) {
   console.error(problems.join("\n"));
   process.exit(1);
 }
-console.log(`check-web-mirrors: ${MIRRORS.length} lists match the backend.`);
+console.log(
+  `check-web-mirrors: ${MIRRORS.length} lists and ${TYPE_MIRRORS.length} types match the backend.`,
+);

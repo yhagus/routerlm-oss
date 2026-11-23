@@ -101,6 +101,13 @@ function averages(statsPath) {
 const ms = (value) => (value >= 1000 ? `${(value / 1000).toFixed(2)} s` : `${value.toFixed(0)} ms`);
 const count = (value) => Math.round(value).toLocaleString("en-US");
 
+/** A measured amount, with its share of the node's limit when the node has one. */
+function usageCell(value, limit, format) {
+  if (value === undefined) return "-";
+  if (!limit) return format(value);
+  return `${format(value)} (${((value / limit) * 100).toFixed(0)}%)`;
+}
+
 function table(scenario) {
   const summaryPath = join(results, `${scenario.name}.json`);
   const rows = [["Item", "Spec", "Result", "Avg CPU", "Avg RAM"]];
@@ -137,16 +144,8 @@ function table(scenario) {
         node.label,
         node.spec,
         "",
-        cpu === undefined
-          ? "-"
-          : node.cpuLimit
-            ? `${cpu.toFixed(2)} cores (${((cpu / node.cpuLimit) * 100).toFixed(0)}%)`
-            : `${cpu.toFixed(2)} cores`,
-        mem === undefined
-          ? "-"
-          : node.memLimitMiB
-            ? `${mem.toFixed(0)} MiB (${((mem / node.memLimitMiB) * 100).toFixed(0)}%)`
-            : `${mem.toFixed(0)} MiB`,
+        usageCell(cpu, node.cpuLimit, (value) => `${value.toFixed(2)} cores`),
+        usageCell(mem, node.memLimitMiB, (value) => `${value.toFixed(0)} MiB`),
       ]);
     }
   }
