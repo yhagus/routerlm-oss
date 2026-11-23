@@ -1,6 +1,15 @@
 import type { PricingWindowRange } from "@/db/schemas/index.js";
 import { type ValidityPeriod, validityInstantsOf } from "./validity-period.js";
-import { utcOffsetMinutesAt } from "./wall-clock.js";
+import {
+  MILLISECONDS_PER_MINUTE,
+  MINUTES_PER_HOUR,
+  minuteOfDayOf,
+  utcOffsetMinutesAt,
+} from "./wall-clock.js";
+
+// The dashboard keeps a deliberately looser copy of this check in
+// web/app/lib/validityPeriods.ts, to warn while the operator types; this one
+// is the authority that refuses a save.
 
 /**
  * What decides when an attachment's Window Prices can apply: its window's
@@ -23,8 +32,6 @@ interface WeekInterval {
   end: number;
 }
 
-const MILLISECONDS_PER_MINUTE = 60 * 1000;
-const MINUTES_PER_HOUR = 60;
 const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
 const MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY;
 const MILLISECONDS_PER_DAY = MINUTES_PER_DAY * MILLISECONDS_PER_MINUTE;
@@ -192,12 +199,6 @@ function firstInstantWithOffsetOf(timeZone: string, before: number, after: numbe
     }
   }
   return new Date(high);
-}
-
-/** `HH:MM` as minutes since midnight; `24:00` is 1440. */
-function minuteOfDayOf(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * MINUTES_PER_HOUR + minutes;
 }
 
 /**
