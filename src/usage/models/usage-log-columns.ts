@@ -20,6 +20,7 @@ export const usageLogSummaryColumns = {
   userAgent: usageLogs.userAgent,
   clientIp: usageLogs.clientIp,
   serviceTier: usageLogs.serviceTier,
+  pricingWindowName: usageLogs.pricingWindowName,
   inputTokens: usageLogs.inputTokens,
   outputTokens: usageLogs.outputTokens,
   cacheReadTokens: usageLogs.cacheReadTokens,

@@ -87,6 +87,7 @@ export class UsageWriter {
           userAgent: job.userAgent ?? null,
           clientIp: job.clientIp ?? null,
           serviceTier: job.servedBy?.serviceTier ?? null,
+          pricingWindowName: job.servedBy?.pricingWindowName ?? null,
           ...measurements,
           ...unitColumnsOf(job.units ?? null),
           requestBytes: job.requestBytes,

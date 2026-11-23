@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "68cd7cb9-ad51-416c-96c8-a6c172a72e9a",
+  "prevIds": [
+    "4cfe7511-ba75-40d1-a219-e24e9985dff0"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "pricing_window_name"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.pricing_window_name",
+        "n|col|public.usage_logs.pricing_window_name",
+        "e|col|public.usage_logs.pricing_window_name"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "pricing_window_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

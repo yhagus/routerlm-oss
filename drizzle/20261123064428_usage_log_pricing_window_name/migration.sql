@@ -1,0 +1,1 @@
+ALTER TABLE "usage_logs" ADD COLUMN "pricing_window_name" text;
