@@ -87,6 +87,14 @@ _Avoid_: Modality, model type, endpoint type
 The speed or priority class an Attempt asks a Provider for, such as fast or flex, which can cost more money or quota than the default. Each Provider accepts its own set of Service Tiers, or none.
 _Avoid_: Fast mode, priority, speed mode
 
+**Pricing Window**:
+A named weekly schedule, such as "DeepSeek Off-Peak": one or more ranges of weekdays and times of day in one time zone. It holds only when, never prices, and can be disabled without losing them; an Upstream Model that attaches it gives its own Window Prices. Deleting it removes those Window Prices from every Upstream Model.
+_Avoid_: Preset, off-time, off-peak, schedule
+
+**Window Prices**:
+The token prices one Upstream Model charges while one of its Pricing Windows is active. A price left out stays the standard one. When several of a model's Pricing Windows are active at once, the first in the model's order wins. The moment that decides is when the gateway received the request. A request that asks for a Service Tier ignores them.
+_Avoid_: Off-peak prices, discount, override
+
 **Cooldown**:
 A period during which a Provider Account is skipped because it recently failed.
 _Avoid_: Ban, circuit break, backoff
@@ -132,7 +140,7 @@ _Avoid_: Limit, max, clamp
 ### Records
 
 **Cost**:
-What one request costs at the Upstream Model's prices at the time of the request. For a subscription Provider, those are the list prices of the matching pay-as-you-go API, so Cost is what the request would have cost there, not what was paid.
+What one request costs at the Upstream Model's prices at the time of the request, which are its Window Prices while one of its Pricing Windows is active, or a Service Tier's prices when the request asked for one. For a subscription Provider, those are the list prices of the matching pay-as-you-go API, so Cost is what the request would have cost there, not what was paid.
 _Avoid_: Price, charge, bill
 
 **Cache read**:
