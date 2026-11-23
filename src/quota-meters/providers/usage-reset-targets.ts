@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, inArray } from "drizzle-orm";
-import { chatEndpointOf, providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { type QuotaReaderProvider, QuotaReadError } from "@/quota-meters/models/quota-reader.js";
+import {
+  type QuotaReaderProvider,
+  quotaReaderProviderOf,
+} from "@/quota-meters/models/quota-reader.js";
 import type { UsageResetPort } from "@/quota-meters/models/usage-reset.js";
 import { QuotaReaders } from "./quota-readers.js";
 
@@ -40,16 +42,11 @@ export class UsageResetTargets {
     if (!account) {
       throw new NotFoundException("Provider Account not found");
     }
-    const port = account.quotaReader && this.readers.readerFor(account.quotaReader).usageResets;
-    if (!port) {
+    const port = this.readers.usageResetsOf(account.quotaReader);
+    if (port === undefined) {
       return null;
     }
-    const chatEndpoint = chatEndpointOf(account.endpoints);
-    if (chatEndpoint === undefined) {
-      throw new QuotaReadError("The Provider has no chat endpoint to reach its usage resets from");
-    }
-    const { quotaBaseUrl } = providerQuirksSchema.parse(account.quirks);
-    return { port, provider: { baseUrl: chatEndpoint.baseUrl, quotaBaseUrl } };
+    return { port, provider: quotaReaderProviderOf(account) };
   }
 
   /** The ids, among `providerAccountIds`, of the accounts whose Provider has Usage Resets. */
@@ -63,8 +60,7 @@ export class UsageResetTargets {
       .innerJoin(providers, eq(providers.id, providerAccounts.providerId))
       .where(inArray(providerAccounts.id, providerAccountIds));
     const supporting = accounts.filter(
-      ({ quotaReader }) =>
-        quotaReader !== null && this.readers.readerFor(quotaReader).usageResets !== undefined,
+      ({ quotaReader }) => this.readers.usageResetsOf(quotaReader) !== undefined,
     );
     return supporting.map((account) => account.id);
   }

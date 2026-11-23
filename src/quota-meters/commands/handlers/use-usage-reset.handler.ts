@@ -8,16 +8,13 @@ import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-p
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command.js";
 import { UseUsageResetCommand } from "@/quota-meters/commands/impl/use-usage-reset.command.js";
-import type { ProviderAccountQuota } from "@/quota-meters/models/quota-meter.js";
+import { type ProviderAccountQuota, recordQuotaError } from "@/quota-meters/models/quota-meter.js";
 import {
   isUnexpired,
   isUsageResetCallFailure,
   type UsageResetOutcome,
 } from "@/quota-meters/models/usage-reset.js";
-import {
-  type UsageResetTarget,
-  UsageResetTargets,
-} from "@/quota-meters/providers/usage-reset-targets.js";
+import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets.js";
 
 // 409 rather than 400: the request is well formed, but the account's Provider
 // can't honour it.
@@ -34,17 +31,22 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
     private readonly queryBus: QueryBus,
   ) {}
 
-  async execute({
-    providerAccountId,
-    usageResetId,
-    idempotencyKey,
-  }: UseUsageResetCommand): Promise<ProviderAccountQuota> {
-    const target = await this.targetOf(providerAccountId);
-    if (target === null) {
-      throw new ConflictException(UNSUPPORTED_MESSAGE);
+  async execute(command: UseUsageResetCommand): Promise<ProviderAccountQuota> {
+    const { providerAccountId } = command;
+    let outcome: UsageResetOutcome;
+    try {
+      outcome = await this.spend(command);
+    } catch (error) {
+      if (!isUsageResetCallFailure(error)) {
+        throw error;
+      }
+      // The dashboard shows the failure on the account, as it does a failed reading's.
+      await recordQuotaError(this.db, providerAccountId, {
+        error: error.message,
+        checkedAt: new Date(),
+      });
+      throw new BadGatewayException(error.message);
     }
-    const externalId = await this.externalIdOf(providerAccountId, usageResetId);
-    const outcome = await this.spend(providerAccountId, target, { externalId, idempotencyKey });
 
     switch (outcome) {
       case "nothing-to-reset":
@@ -54,18 +56,31 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
         await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
         throw new ConflictException(UNAVAILABLE_MESSAGE);
       case "reset":
+        // A failed list fetch is only logged: the reset is spent either way.
         await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
         // The reading may end the account's Exhausted state.
         return this.commandBus.execute(new ReadProviderAccountQuotaCommand(providerAccountId));
     }
   }
 
-  private async targetOf(providerAccountId: string): Promise<UsageResetTarget | null> {
-    try {
-      return await this.targets.targetOf(providerAccountId);
-    } catch (error) {
-      throw badGatewayFor(error);
+  /**
+   * Asks the Provider to spend the reset. Throws an error that passes
+   * isUsageResetCallFailure when the Provider or the credential fails.
+   */
+  private async spend({
+    providerAccountId,
+    usageResetId,
+    idempotencyKey,
+  }: UseUsageResetCommand): Promise<UsageResetOutcome> {
+    const target = await this.targets.targetOf(providerAccountId);
+    if (target === null) {
+      throw new ConflictException(UNSUPPORTED_MESSAGE);
     }
+    const externalId = await this.externalIdOf(providerAccountId, usageResetId);
+    const credential = await this.queryBus.execute(
+      new GetProviderAccountCredentialQuery(providerAccountId),
+    );
+    return target.port.use(credential, target.provider, { externalId, idempotencyKey });
   }
 
   /** The Provider's id of an unexpired reset of the account; a reset no longer listed is not found. */
@@ -85,31 +100,4 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
     }
     return reset.externalId;
   }
-
-  private async spend(
-    providerAccountId: string,
-    { port, provider }: UsageResetTarget,
-    spend: { externalId: string; idempotencyKey: string },
-  ): Promise<UsageResetOutcome> {
-    try {
-      const credential = await this.queryBus.execute(
-        new GetProviderAccountCredentialQuery(providerAccountId),
-      );
-      return await port.use(credential, provider, spend);
-    } catch (error) {
-      throw badGatewayFor(error);
-    }
-  }
-}
-
-/**
- * A failed call to the Provider answers 502 with the reason a failed quota
- * reading records, such as `The OpenAI quota endpoint answered HTTP 401`;
- * any other error is a bug and is thrown as it is.
- */
-function badGatewayFor(error: unknown): BadGatewayException {
-  if (isUsageResetCallFailure(error)) {
-    return new BadGatewayException(error.message);
-  }
-  throw error;
 }

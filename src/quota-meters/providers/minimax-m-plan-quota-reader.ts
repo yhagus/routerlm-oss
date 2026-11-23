@@ -124,7 +124,7 @@ export class MiniMaxMPlanQuotaReader implements QuotaReader {
       });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "MiniMax");
+      throw asQuotaReadError(error, "MiniMax quota");
     }
   }
 }

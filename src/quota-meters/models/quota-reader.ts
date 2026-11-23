@@ -1,4 +1,6 @@
 import { HttpClientError, HttpResponseError, HttpTimeoutError } from "@nestjs/http-client";
+import { chatEndpointOf, providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
+import type { ProviderEndpoint } from "@/db/schemas/index.js";
 import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
 import type { QuotaMeterReading } from "./quota-meter.js";
 import type { UsageResetPort } from "./usage-reset.js";
@@ -36,6 +38,23 @@ export interface QuotaReaderProvider {
   quotaBaseUrl: string | undefined;
 }
 
+/**
+ * What the quota reader and the Usage Resets of a Provider build their URLs
+ * from. Throws QuotaReadError when the Provider has no chat endpoint, which
+ * fails the call like a Provider that refuses it.
+ */
+export function quotaReaderProviderOf(provider: {
+  endpoints: readonly ProviderEndpoint[];
+  quirks: unknown;
+}): QuotaReaderProvider {
+  const chatEndpoint = chatEndpointOf(provider.endpoints);
+  if (chatEndpoint === undefined) {
+    throw new QuotaReadError("The Provider has no chat endpoint to reach its quota endpoints from");
+  }
+  const { quotaBaseUrl } = providerQuirksSchema.parse(provider.quirks);
+  return { baseUrl: chatEndpoint.baseUrl, quotaBaseUrl };
+}
+
 /** A reading that failed: the Provider refused it, timed out or answered something unreadable. */
 export class QuotaReadError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -45,24 +64,24 @@ export class QuotaReadError extends Error {
 }
 
 /**
- * The QuotaReadError for an HTTP failure of the quota endpoint of
- * `providerName`; any other error is a bug and is thrown as it is.
+ * The QuotaReadError for an HTTP failure of `endpointName`, such as
+ * "OpenAI quota"; any other error is a bug and is thrown as it is.
  */
-export function asQuotaReadError(error: unknown, providerName: string): QuotaReadError {
+export function asQuotaReadError(error: unknown, endpointName: string): QuotaReadError {
   if (error instanceof HttpTimeoutError) {
     return new QuotaReadError(
-      `The ${providerName} quota endpoint timed out after ${error.timeoutMs} ms`,
+      `The ${endpointName} endpoint timed out after ${error.timeoutMs} ms`,
       { cause: error },
     );
   }
   if (error instanceof HttpResponseError) {
-    return new QuotaReadError(`The ${providerName} quota endpoint answered HTTP ${error.status}`, {
+    return new QuotaReadError(`The ${endpointName} endpoint answered HTTP ${error.status}`, {
       cause: error,
     });
   }
   if (error instanceof HttpClientError) {
     return new QuotaReadError(
-      `The ${providerName} quota endpoint could not be reached: ${error.message}`,
+      `The ${endpointName} endpoint could not be reached: ${error.message}`,
       { cause: error },
     );
   }

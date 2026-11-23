@@ -1,6 +1,6 @@
-import { asc, inArray } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
-import { type providerAccounts, quotaMeters } from "@/db/schemas/index.js";
+import { providerAccounts, quotaMeters } from "@/db/schemas/index.js";
 import type { UsageReset } from "./usage-reset.js";
 
 /** One Quota Meter as a quota reader reads it, before it is stored for a Provider Account. */
@@ -66,4 +66,19 @@ export async function selectQuotaMeters(
     metersByAccount.set(providerAccountId, meters);
   }
   return metersByAccount;
+}
+
+/**
+ * Records a failed call for the account's quota, a reading or a Usage Reset,
+ * as the dashboard shows it; the stored meters are left as they were.
+ */
+export async function recordQuotaError(
+  db: Database,
+  providerAccountId: string,
+  { error, checkedAt }: { error: string; checkedAt: Date },
+): Promise<void> {
+  await db
+    .update(providerAccounts)
+    .set({ quotaCheckedAt: checkedAt, quotaError: error })
+    .where(eq(providerAccounts.id, providerAccountId));
 }

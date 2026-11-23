@@ -11,6 +11,7 @@ import type {
   UsageResetOutcome,
   UsageResetPort,
   UsageResetReading,
+  UsageResetToSpend,
 } from "@/quota-meters/models/usage-reset.js";
 import { codexBackendRequestOf } from "./openai-codex-backend.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
@@ -79,7 +80,7 @@ export class OpenAiCodexUsageResets implements UsageResetPort {
   async use(
     credential: ProviderAccountCredential,
     { baseUrl }: QuotaReaderProvider,
-    { externalId, idempotencyKey }: { externalId: string; idempotencyKey: string },
+    { externalId, idempotencyKey }: UsageResetToSpend,
   ): Promise<UsageResetOutcome> {
     const { url, headers } = codexBackendRequestOf(credential, baseUrl, CONSUME_PATH);
     const body = await this.call(() =>
@@ -103,7 +104,7 @@ export class OpenAiCodexUsageResets implements UsageResetPort {
       const response = await send();
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "OpenAI");
+      throw asQuotaReadError(error, "OpenAI usage resets");
     }
   }
 }

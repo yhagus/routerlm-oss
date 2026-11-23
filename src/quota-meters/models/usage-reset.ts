@@ -20,6 +20,13 @@ export type UsageReset = Pick<
   "id" | "title" | "grantedAt" | "expiresAt"
 >;
 
+/** Which reset the Provider is asked to spend, under the key that makes a retry spend nothing more. */
+export interface UsageResetToSpend {
+  /** The Provider's id of the reset. */
+  externalId: string;
+  idempotencyKey: string;
+}
+
 /**
  * How the Provider answered spending a Usage Reset: it restored the meters,
  * no meter was low enough to restore, or the reset is spent or gone.
@@ -44,7 +51,7 @@ export interface UsageResetPort {
   use(
     credential: ProviderAccountCredential,
     provider: QuotaReaderProvider,
-    spend: { externalId: string; idempotencyKey: string },
+    spend: UsageResetToSpend,
   ): Promise<UsageResetOutcome>;
 }
 

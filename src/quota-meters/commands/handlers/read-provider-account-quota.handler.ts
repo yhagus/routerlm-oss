@@ -2,7 +2,6 @@ import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, type AnyColumn, eq, notInArray, type SQL, sql } from "drizzle-orm";
-import { chatEndpointOf, providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
 import {
   type ProviderEndpoint,
@@ -19,14 +18,14 @@ import {
   overwrittenQuotaMeterColumns,
   type ProviderAccountQuota,
   type QuotaMeterReading,
+  recordQuotaError,
   selectQuotaMeters,
 } from "@/quota-meters/models/quota-meter.js";
-import type { QuotaReading } from "@/quota-meters/models/quota-reader.js";
-import { selectUsageResets } from "@/quota-meters/models/usage-reset.js";
+import { type QuotaReading, quotaReaderProviderOf } from "@/quota-meters/models/quota-reader.js";
+import { selectUsageResets, type UsageReset } from "@/quota-meters/models/usage-reset.js";
 import { QuotaReaders } from "@/quota-meters/providers/quota-readers.js";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
 import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command.js";
-import { ListUsageResetsQuery } from "@/quota-meters/queries/impl/list-usage-resets.query.js";
 
 type ReadingOutcome = { kind: "read"; reading: QuotaReading } | { kind: "failed"; error: string };
 
@@ -89,7 +88,8 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       });
       await this.refreshUsageResetsOnNewCount(providerAccountId, outcome.reading.usageResetCount);
     }
-    return this.quotaOf(providerAccountId);
+    const hasUsageResets = this.readers.usageResetsOf(account.quotaReader) !== undefined;
+    return this.quotaOf(providerAccountId, hasUsageResets);
   }
 
   /**
@@ -103,8 +103,8 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     if (usageResetCount === null) {
       return;
     }
-    const stored = await selectUsageResets(this.db, [providerAccountId]);
-    if ((stored.get(providerAccountId) ?? []).length !== usageResetCount) {
+    const stored = await this.storedUsageResetsOf(providerAccountId);
+    if (stored.length !== usageResetCount) {
       await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
     }
   }
@@ -138,18 +138,12 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     provider: { endpoints: ProviderEndpoint[]; quirks: unknown },
   ): Promise<ReadingOutcome> {
     try {
-      const chatEndpoint = chatEndpointOf(provider.endpoints);
-      if (chatEndpoint === undefined) {
-        throw new Error("The Provider has no chat endpoint to read the quota from");
-      }
-      const { quotaBaseUrl } = providerQuirksSchema.parse(provider.quirks);
+      const readerProvider = quotaReaderProviderOf(provider);
       // An OAuth Login about to run out is refreshed first, as before an Attempt.
       const credential = await this.queryBus.execute(
         new GetProviderAccountCredentialQuery(providerAccountId),
       );
-      const reading = await this.readers
-        .readerFor(readerName)
-        .read(credential, { baseUrl: chatEndpoint.baseUrl, quotaBaseUrl });
+      const reading = await this.readers.readerFor(readerName).read(credential, readerProvider);
       return { kind: "read", reading };
     } catch (error) {
       return { kind: "failed", error: error instanceof Error ? error.message : String(error) };
@@ -162,15 +156,11 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     outcome: ReadingOutcome,
     checkedAt: Date,
   ): Promise<void> {
+    if (outcome.kind === "failed") {
+      await recordQuotaError(this.db, providerAccountId, { error: outcome.error, checkedAt });
+      return;
+    }
     await this.db.transaction(async (tx) => {
-      if (outcome.kind === "failed") {
-        await tx
-          .update(providerAccounts)
-          .set({ quotaCheckedAt: checkedAt, quotaError: outcome.error })
-          .where(eq(providerAccounts.id, providerAccountId));
-        return;
-      }
-
       const { meters } = outcome.reading;
       const readKeys = meters.map((meter) => meter.key);
       // A meter the Provider no longer reports would otherwise keep its last value forever.
@@ -200,7 +190,10 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     });
   }
 
-  private async quotaOf(providerAccountId: string): Promise<ProviderAccountQuota> {
+  private async quotaOf(
+    providerAccountId: string,
+    hasUsageResets: boolean,
+  ): Promise<ProviderAccountQuota> {
     const [status] = await this.db
       .select({
         quotaCheckedAt: providerAccounts.quotaCheckedAt,
@@ -212,11 +205,15 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       throw new NotFoundException("Provider Account not found");
     }
     const meters = await selectQuotaMeters(this.db, [providerAccountId]);
-    const resets = await this.queryBus.execute(new ListUsageResetsQuery([providerAccountId]));
     return {
       ...status,
       quotaMeters: meters.get(providerAccountId) ?? [],
-      usageResets: resets.get(providerAccountId) ?? null,
+      usageResets: hasUsageResets ? await this.storedUsageResetsOf(providerAccountId) : null,
     };
+  }
+
+  private async storedUsageResetsOf(providerAccountId: string): Promise<UsageReset[]> {
+    const resets = await selectUsageResets(this.db, [providerAccountId]);
+    return resets.get(providerAccountId) ?? [];
   }
 }

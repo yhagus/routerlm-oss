@@ -103,7 +103,7 @@ export class KimiCodeQuotaReader implements QuotaReader {
       });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "Kimi");
+      throw asQuotaReadError(error, "Kimi quota");
     }
   }
 }

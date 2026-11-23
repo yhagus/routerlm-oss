@@ -92,7 +92,7 @@ export class OpenAiCodexQuotaReader implements QuotaReader {
     const {
       rate_limit: rateLimit,
       additional_rate_limits: additionalRateLimits,
-      rate_limit_reset_credits: usageResetCredits,
+      rate_limit_reset_credits: reportedUsageResets,
     } = parsed.data;
     // Every meter keeps the whole answer raw, so the plan's credits are not lost.
     const plan = metersOf(rateLimit, null, body);
@@ -101,7 +101,7 @@ export class OpenAiCodexQuotaReader implements QuotaReader {
     );
     return {
       meters: [...plan, ...additional],
-      usageResetCount: usageResetCredits?.available_count ?? null,
+      usageResetCount: reportedUsageResets?.available_count ?? null,
     };
   }
 
@@ -114,7 +114,7 @@ export class OpenAiCodexQuotaReader implements QuotaReader {
       const response = await this.http.get(url, { headers });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "OpenAI");
+      throw asQuotaReadError(error, "OpenAI quota");
     }
   }
 }
