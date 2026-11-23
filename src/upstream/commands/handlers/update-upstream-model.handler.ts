@@ -55,6 +55,7 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
             );
           }
           // Only a chat Upstream Model has Window Prices (ADR 0038).
+          // Read directly, not through the QueryBus: the check must see this transaction.
           const pricingWindowNames = await attachedPricingWindowNames(tx, upstreamModelId);
           if (pricingWindowNames.length > 0) {
             throw new BadRequestException(

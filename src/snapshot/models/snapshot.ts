@@ -6,15 +6,13 @@ import type {
   Capability,
   ModelKind,
   ParameterPolicy,
-  PricingWindowRange,
   ServiceTierValues,
   TierPrices,
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
 import type { PricingWindowSchedule } from "@/pricing-windows/models/pricing-window-activity.js";
-import type { WindowPrices } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
-import type { UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
+import type { UpstreamModelPrices, UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
 // PostgreSQL query. Disabled rows are kept, with their flags: the inference
@@ -91,16 +89,13 @@ export function validQuirksOf(provider: SnapshotProvider): StoredProviderQuirks 
 /**
  * An enabled Pricing Window an Upstream Model attaches, with its Window Prices
  * (ADR 0038). Decide whether it applies with `isPricingWindowActiveAt`.
+ * `isEnabled` is always true: disabled windows are left out when the snapshot loads.
  */
 export interface SnapshotPricingWindow extends PricingWindowSchedule {
   /** Copied onto the Usage Log of a request it prices. */
   name: string;
-  timeZone: string;
-  ranges: PricingWindowRange[];
-  /** Always true: disabled windows are left out when the snapshot loads. */
-  isEnabled: boolean;
   /** USD per million tokens; null means the standard price. */
-  windowPrices: WindowPrices;
+  windowPrices: UpstreamModelPrices;
 }
 
 export interface SnapshotUpstreamModel {
@@ -150,6 +145,12 @@ export interface SnapshotRoute {
 /** Whether the Upstream Model is enabled along with its Provider, which must also be usable. */
 export function isUpstreamModelUsable(upstreamModel: SnapshotUpstreamModel): boolean {
   return upstreamModel.isEnabled && upstreamModel.provider.isUsable;
+}
+
+/** The Upstream Model's standard token prices: those outside any Service Tier or Pricing Window. */
+export function standardPricesOf(upstreamModel: SnapshotUpstreamModel): UpstreamModelPrices {
+  const { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice } = upstreamModel;
+  return { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice };
 }
 
 /** Whether the Route is enabled all the way to its Provider, so it can serve its Model. */

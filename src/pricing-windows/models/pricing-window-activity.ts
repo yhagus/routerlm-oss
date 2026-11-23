@@ -3,7 +3,7 @@ import type { IsoWeekday, PricingWindowRange } from "@/db/schemas/index.js";
 /** What decides whether a Pricing Window is active: a stored window and a snapshot one both have it. */
 export interface PricingWindowSchedule {
   timeZone: string;
-  ranges: readonly PricingWindowRange[];
+  ranges: PricingWindowRange[];
   isEnabled: boolean;
 }
 
