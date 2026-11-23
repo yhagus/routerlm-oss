@@ -95,22 +95,23 @@ function handleSave(): void {
     splitOffer.value = split;
     return;
   }
-  void save();
+  void save(attached.value);
 }
 
-function handleAcceptSplit(): void {
-  if (!splitOffer.value) return;
-  attached.value = splitOffer.value;
+/** The split replaces nothing until the API takes it: a refusal leaves the unsplit entries to fix. */
+async function handleAcceptSplit(): Promise<void> {
+  const split = splitOffer.value;
+  if (!split) return;
+  await save(split);
   splitOffer.value = undefined;
-  void save();
 }
 
-async function save(): Promise<void> {
+async function save(entries: readonly AttachedWindowForm[]): Promise<void> {
   isSaving.value = true;
   try {
     await $dashboardApi(`/upstream-models/${props.upstreamModel.id}/pricing-windows`, {
       method: "PUT",
-      body: attached.value.map(windowPricesBody),
+      body: entries.map(windowPricesBody),
     });
     showToast(`Saved the Pricing Windows of ${upstreamModelLabel(props.upstreamModel)}`);
     isOpen.value = false;
