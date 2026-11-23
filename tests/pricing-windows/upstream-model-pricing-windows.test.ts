@@ -205,14 +205,14 @@ describe("Window Prices on Upstream Models (e2e)", () => {
             pricingWindowId: offPeakId,
             name: "Off-Peak",
             isEnabled: true,
-            isActiveNow: true,
+            status: "active",
             inputPrice: 0.5,
           }),
           expect.objectContaining({
             pricingWindowId: weekendId,
             name: "Weekend",
             isEnabled: true,
-            isActiveNow: false,
+            status: "inactive",
             inputPrice: 0.7,
           }),
         ],
@@ -408,6 +408,25 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       ]);
     });
 
+    it("lists Window Prices by the instant their period starts, whatever each window's time zone", async () => {
+      const aucklandId = await createWindow("Auckland Nights", EARLY_ON_ANOTHER_DAY, {
+        timeZone: "Pacific/Auckland",
+      });
+      const utcId = await createWindow("UTC Evenings", LATE_ON_ANOTHER_DAY, { timeZone: "UTC" });
+
+      // 10:00 in Auckland (UTC+13) is 21:00 UTC the day before, so it starts
+      // first although its wall-clock text sorts after 05:00.
+      await putWindowPrices(chatModelId, [
+        { pricingWindowId: utcId, inputPrice: 0.7, validFrom: "2030-01-01T05:00" },
+        { pricingWindowId: aucklandId, inputPrice: 0.5, validFrom: "2030-01-01T10:00" },
+      ]).expect(200);
+
+      expect(await windowPricesOf(chatModelId)).toEqual([
+        expect.objectContaining({ name: "Auckland Nights", validFrom: "2030-01-01T10:00" }),
+        expect.objectContaining({ name: "UTC Evenings", validFrom: "2030-01-01T05:00" }),
+      ]);
+    });
+
     it("lists Window Prices inside their period as inactive while their window isn't active", async () => {
       const lateId = await createWindow("Late", LATE_ON_ANOTHER_DAY);
 
@@ -415,8 +434,11 @@ describe("Window Prices on Upstream Models (e2e)", () => {
         { pricingWindowId: lateId, inputPrice: 0.5, validUntil: utcWallClockInDays(7) },
       ]).expect(200);
 
-      expect(await windowPricesOf(chatModelId)).toEqual([
-        expect.objectContaining({ status: "inactive", isActiveNow: false }),
+      const windowPrices = await windowPricesOf(chatModelId);
+      expect(windowPrices).toEqual([expect.objectContaining({ status: "inactive" })]);
+      // `status` says it all here; only the Pricing Window list has `isActiveNow`.
+      expect(windowPrices).toEqual([
+        expect.not.objectContaining({ isActiveNow: expect.anything() }),
       ]);
     });
 

@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc, eq, inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database, Transaction } from "@/db/schemas/relations.js";
 import {
   pricingWindows,
   providers,
@@ -14,14 +14,9 @@ import {
   type PricingWindow,
   toPricingWindowWriteError,
 } from "@/pricing-windows/models/pricing-window.js";
-import {
-  type AttachedPricingWindowRow,
-  selectAttachedPricingWindows,
-} from "@/pricing-windows/models/upstream-model-pricing-windows.js";
+import { selectAttachmentsByUpstreamModelId } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 import { findOverlappingWindowPrices } from "@/pricing-windows/models/window-prices-overlap.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 @CommandHandler(UpdatePricingWindowCommand)
 export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricingWindowCommand> {
@@ -65,13 +60,13 @@ export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricing
       .select({ id: upstreamModelPricingWindows.upstreamModelId })
       .from(upstreamModelPricingWindows)
       .where(eq(upstreamModelPricingWindows.pricingWindowId, pricingWindowId));
-    const attachments = await selectAttachedPricingWindows(
+    const attachmentsByUpstreamModelId = await selectAttachmentsByUpstreamModelId(
       tx,
       inArray(upstreamModelPricingWindows.upstreamModelId, attachingModelIds),
     );
 
     const now = new Date();
-    const overlappingModelIds = [...attachmentsByUpstreamModelId(attachments)]
+    const overlappingModelIds = [...attachmentsByUpstreamModelId]
       .filter(([, modelAttachments]) => findOverlappingWindowPrices(modelAttachments, now))
       .map(([upstreamModelId]) => upstreamModelId);
     if (overlappingModelIds.length === 0) {
@@ -91,16 +86,4 @@ export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricing
       `Window Prices would overlap on the Upstream Models ${modelNames.join(", ")}, so this Pricing Window's schedule can't change; change their Window Prices first`,
     );
   }
-}
-
-function attachmentsByUpstreamModelId(
-  attachments: readonly AttachedPricingWindowRow[],
-): Map<string, AttachedPricingWindowRow[]> {
-  const grouped = new Map<string, AttachedPricingWindowRow[]>();
-  for (const attachment of attachments) {
-    const modelAttachments = grouped.get(attachment.upstreamModelId) ?? [];
-    modelAttachments.push(attachment);
-    grouped.set(attachment.upstreamModelId, modelAttachments);
-  }
-  return grouped;
 }
