@@ -1,7 +1,6 @@
 import {
   type AttachedPricingWindow,
   type PricingWindow,
-  WINDOW_PRICE_FIELDS,
   type WindowPrices,
   type WindowPricesStatus,
 } from "~/lib/pricingWindows";
@@ -86,11 +85,17 @@ export function validityPeriodOf(entry: AttachedWindowForm): ValidityPeriod {
 }
 
 /** The PUT body entry for one attachment. */
-export function windowPricesBody(entry: AttachedWindowForm) {
-  const prices = Object.fromEntries(
-    WINDOW_PRICE_FIELDS.map(({ key }) => [key, optionalNumber(entry.prices[key])]),
-  );
-  return { pricingWindowId: entry.pricingWindowId, ...prices, ...validityPeriodOf(entry) };
+export type WindowPricesBody = { pricingWindowId: string } & WindowPrices & ValidityPeriod;
+
+export function windowPricesBody(entry: AttachedWindowForm): WindowPricesBody {
+  return {
+    pricingWindowId: entry.pricingWindowId,
+    inputPrice: optionalNumber(entry.prices.inputPrice),
+    outputPrice: optionalNumber(entry.prices.outputPrice),
+    cacheReadPrice: optionalNumber(entry.prices.cacheReadPrice),
+    cacheWritePrice: optionalNumber(entry.prices.cacheWritePrice),
+    ...validityPeriodOf(entry),
+  };
 }
 
 /** The first attachment whose start isn't before its end, so it can never apply. */

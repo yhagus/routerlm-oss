@@ -1,6 +1,14 @@
 import { parseDateTime, toCalendarDateTime, toTimeZone, toZoned } from "@internationalized/date";
 import type { PricingWindowRange } from "~/lib/pricingWindows";
 
+/*
+ * The web's mirror of the backend's Validity Period rules
+ * (src/pricing-windows/models/validity-period.ts and window-prices-overlap.ts),
+ * kept deliberately looser: it only decides when to offer a split, so windows
+ * in different time zones always "may collide". The API's check is
+ * authoritative and refuses any real overlap.
+ */
+
 /** A Validity Period: wall-clock "YYYY-MM-DDTHH:MM" bounds in the window's time zone, null when open. */
 export interface ValidityPeriod {
   validFrom: string | null;
@@ -24,7 +32,11 @@ export function hasOpenBound(period: ValidityPeriod): boolean {
   return period.validFrom === null || period.validUntil === null;
 }
 
-/** "from 2026-12-01 00:00 until 2027-01-01 00:00", "from …", "until …" or "always". */
+/**
+ * "from 2026-12-01 00:00 until 2027-01-01 00:00", "from …", "until …" or "always".
+ * Mirrors the backend's `describeValidityPeriod`, which words the API's refusals,
+ * except that a period with no bounds reads "always" here and "" there.
+ */
 export function formatValidityPeriod(period: ValidityPeriod): string {
   const parts: string[] = [];
   if (period.validFrom !== null) parts.push(`from ${period.validFrom.replace("T", " ")}`);

@@ -74,7 +74,6 @@ export interface AttachedPricingWindow extends WindowPrices {
   timeZone: string;
   ranges: PricingWindowRange[];
   isEnabled: boolean;
-  isActiveNow: boolean;
   /** The Validity Period's start, "YYYY-MM-DDTHH:MM" in the window's time zone; null is open. */
   validFrom: string | null;
   /** The Validity Period's exclusive end, as `validFrom`; null is open. */

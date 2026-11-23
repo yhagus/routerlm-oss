@@ -1,3 +1,7 @@
+import { fromDate } from "@internationalized/date";
+
+const MILLISECONDS_PER_MINUTE = 60_000;
+
 /** The browser's own IANA time zone, such as "Asia/Jakarta". */
 export function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -15,11 +19,7 @@ export function utcOffsetLabel(timeZone: string, at: Date): string {
 
 /** The offset from UTC of `timeZone` at `at`, in minutes. */
 export function utcOffsetMinutes(timeZone: string, at: Date): number {
-  const label = utcOffsetLabel(timeZone, at);
-  const match = /^UTC([+-])(\d{1,2})(?::(\d{2}))?$/.exec(label);
-  if (!match) return 0;
-  const minutes = Number(match[2]) * 60 + Number(match[3] ?? 0);
-  return match[1] === "-" ? -minutes : minutes;
+  return fromDate(at, timeZone).offset / MILLISECONDS_PER_MINUTE;
 }
 
 /** The clock time in `timeZone`, to the minute: "08:55". */
