@@ -3000,7 +3000,7 @@ tbody tr:hover {
     flex-wrap: wrap;
   }
 }
-/* An Upstream Model's attached Pricing Windows, in the order the gateway tries them. */
+/* An Upstream Model's attached Pricing Windows, in the order the API lists them. */
 .window-prices {
   display: grid;
   gap: 10px;
@@ -3020,17 +3020,33 @@ tbody tr:hover {
   align-items: center;
   gap: 8px;
 }
-.window-prices__order {
-  color: var(--faint);
-  font-size: 12px;
-}
 .window-prices__actions {
   display: inline-flex;
   gap: 2px;
   margin-left: auto;
 }
-.window-prices__actions .icon-button:disabled {
-  opacity: 0.4;
+/* The offer to split open-ended Window Prices around a new Validity Period. */
+.split-offer {
+  display: grid;
+  gap: 12px;
+}
+.split-offer__title {
+  margin: 0;
+  font-size: 14px;
+}
+.split-offer__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+}
+.split-offer__list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.split-offer__zone {
+  color: var(--muted);
 }
 .pricing-window-ranges {
   margin: 0;
