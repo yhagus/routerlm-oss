@@ -5,7 +5,7 @@ import request from "supertest";
 import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
 import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
-import { providers } from "@/db/schemas/index.js";
+import { providerAccounts, providers } from "@/db/schemas/index.js";
 import { FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream.js";
 import { insertOpenAiResponsesModel } from "@tests/support/inference.js";
 import {
@@ -252,6 +252,68 @@ describe("Usage Resets of an OpenAI Codex Provider Account (e2e)", () => {
     expect(refused.body.message).toBe("That reset is no longer available");
     expect(callsTo(RESET_CREDITS_PATH)).toHaveLength(2);
     expect(await listedAccount()).toMatchObject({ usageResets: [] });
+  });
+
+  it("answers 502 naming the endpoint when spending fails, and shows the error on the account", async () => {
+    const resetId = await storeOneReset();
+    openAi.replyTo(CONSUME_PATH, { kind: "json", status: 401, body: {} });
+
+    const failed = await useReset(resetId).expect(502);
+
+    const message = "The OpenAI usage resets endpoint answered HTTP 401";
+    expect(failed.body.message).toBe(message);
+    expect(await listedAccount()).toMatchObject({
+      quotaError: message,
+      usageResets: [expect.objectContaining({ id: resetId })],
+    });
+  });
+
+  it("answers the fresh reading and keeps the stored list when the list fetch fails after spending", async () => {
+    const resetId = await storeOneReset(100);
+    openAi.replyTo(CONSUME_PATH, consumeReply("reset"));
+    openAi.replyTo(RESET_CREDITS_PATH, { kind: "json", status: 500, body: {} });
+    openAi.replyTo(USAGE_PATH, usageAtPercentReply(0, windowResetsAt, 0));
+
+    const used = await useReset(resetId).expect(200);
+
+    expect(used.body).toMatchObject({
+      quotaError: null,
+      quotaMeters: [
+        expect.objectContaining({ remainingPercent: 100 }),
+        expect.objectContaining({ remainingPercent: 100 }),
+      ],
+      usageResets: [expect.objectContaining({ id: resetId })],
+    });
+    expect(await listedAccount()).toMatchObject({ cooldownCause: null });
+  });
+
+  it("spends a reset of a disabled Provider Account", async () => {
+    const resetId = await storeOneReset();
+    await db
+      .update(providerAccounts)
+      .set({ isEnabled: false })
+      .where(eq(providerAccounts.id, accountId));
+    openAi.replyTo(CONSUME_PATH, consumeReply("reset"));
+    openAi.replyTo(RESET_CREDITS_PATH, resetCreditsReply([]));
+    openAi.replyTo(USAGE_PATH, usageAtPercentReply(0, windowResetsAt, 0));
+
+    const used = await useReset(resetId).expect(200);
+
+    expect(callsTo(CONSUME_PATH)).toHaveLength(1);
+    expect(used.body).toMatchObject({ quotaError: null, usageResets: [] });
+  });
+
+  it("answers 409 when the account's Provider has no usage resets", async () => {
+    const resetId = await storeOneReset();
+    await db
+      .update(providers)
+      .set({ quotaReader: "kimi-code" })
+      .where(eq(providers.id, providerId));
+
+    const refused = await useReset(resetId).expect(409);
+
+    expect(refused.body.message).toBe("The Provider of this Provider Account has no usage resets");
+    expect(callsTo(CONSUME_PATH)).toHaveLength(0);
   });
 
   it("answers 404 for a reset the account does not hold, without calling OpenAI", async () => {
