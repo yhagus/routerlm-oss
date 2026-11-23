@@ -349,10 +349,22 @@ export interface QuotaMeter {
   observedAt: string;
 }
 
-/** What `POST /provider-accounts/:id/quota-reading` answers, also when the reading failed. */
+/** A one-time grant the Provider honours by restoring the account's Quota Meters early. */
+export interface UsageReset {
+  id: string;
+  title: string;
+  grantedAt: string;
+  /** Null when it never expires. */
+  expiresAt: string | null;
+}
+
+/**
+ * What `POST /provider-accounts/:id/quota-reading` answers, also when the
+ * reading failed, and what spending a Usage Reset answers.
+ */
 export type ProviderAccountQuota = Pick<
   ProviderAccount,
-  "quotaCheckedAt" | "quotaError" | "quotaMeters"
+  "quotaCheckedAt" | "quotaError" | "quotaMeters" | "usageResets"
 >;
 
 /** Never the credential itself: an API key's last four characters, nothing of an OAuth Login. */
@@ -388,6 +400,8 @@ export interface ProviderAccount {
   quotaError: string | null;
   /** Sorted by key. Only the list carries them. */
   quotaMeters: QuotaMeter[];
+  /** Soonest expiry first, never-expiring last; null when its Provider has no Usage Resets. */
+  usageResets: UsageReset[] | null;
   lastError: string | null;
   lastErrorAt: string | null;
   createdAt: string;

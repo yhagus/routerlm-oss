@@ -1,3 +1,4 @@
+import { dateFormat } from "~/lib/dateFormats";
 import type { QuotaMeter } from "~/lib/upstream";
 
 /** At or below these remaining percents a Quota Meter turns yellow, then red. */
@@ -47,6 +48,27 @@ export function resetCountdown(resetsAt: string | null, now: number): string | n
   if (resetsAt === null) return null;
   const remainingMs = new Date(resetsAt).getTime() - now;
   return remainingMs > 0 ? `resets in ${shortDuration(remainingMs)}` : null;
+}
+
+/** Further off than this, a Usage Reset's expiry reads as a date rather than a day count. */
+const EXPIRY_AS_DAYS_LIMIT_MS = 30 * DAY_MS;
+
+/** "No usage resets", "1 usage reset" or "3 usage resets". */
+export function usageResetCount(count: number): string {
+  if (count === 0) return "No usage resets";
+  return count === 1 ? "1 usage reset" : `${count} usage resets`;
+}
+
+/** "expires in 3 days", "expires in 5h 12m", "expires Jan 4, 2027" or "never expires", as of `now`. */
+export function usageResetExpiry(expiresAt: string | null, now: number): string {
+  if (expiresAt === null) return "never expires";
+  const remainingMs = new Date(expiresAt).getTime() - now;
+  if (remainingMs <= 0) return `expired ${dateFormat.format(new Date(expiresAt))}`;
+  if (remainingMs < DAY_MS) return `expires in ${shortDuration(remainingMs)}`;
+  if (remainingMs >= EXPIRY_AS_DAYS_LIMIT_MS)
+    return `expires ${dateFormat.format(new Date(expiresAt))}`;
+  const days = Math.floor(remainingMs / DAY_MS);
+  return days === 1 ? "expires in 1 day" : `expires in ${days} days`;
 }
 
 /** "Checked 5m ago" as of `now`, or "Never checked". */
