@@ -5,6 +5,7 @@ import {
   type SnapshotModel,
   type SnapshotRoute,
   type SnapshotUpstreamModel,
+  standardPricesOf,
 } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices.js";
@@ -51,18 +52,12 @@ function combinedCapabilities(servingRoutes: SnapshotRoute[]): Capability[] {
 }
 
 function pricesOf(upstreamModel: SnapshotUpstreamModel): ModelPrices {
-  return {
-    inputPrice: upstreamModel.inputPrice,
-    outputPrice: upstreamModel.outputPrice,
-    cacheReadPrice: upstreamModel.cacheReadPrice,
-    cacheWritePrice: upstreamModel.cacheWritePrice,
-    unitPrices: upstreamModel.unitPrices,
-  };
+  return { ...standardPricesOf(upstreamModel), unitPrices: upstreamModel.unitPrices };
 }
 
 /** The snapshot holds only the enabled windows, in the Upstream Model's order. */
 function pricingWindowsOf(upstreamModel: SnapshotUpstreamModel): IntegrationPricingWindow[] {
-  const standard = pricesOf(upstreamModel);
+  const standard = standardPricesOf(upstreamModel);
   return upstreamModel.pricingWindows.map((window) => ({
     timeZone: window.timeZone,
     ranges: window.ranges,

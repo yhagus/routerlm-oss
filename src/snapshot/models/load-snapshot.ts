@@ -1,6 +1,10 @@
 import { and, asc, eq, isNull, or } from "drizzle-orm";
 import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
 import type { Database } from "@/db/schemas/relations.js";
+import {
+  type AttachedPricingWindowRow,
+  selectAttachedPricingWindows,
+} from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 import { SettingsStore } from "@/settings/providers/settings-store.js";
 import {
   apiKeys,
@@ -13,7 +17,6 @@ import {
   providerAccounts,
   providers,
   routes,
-  upstreamModelPricingWindows,
   upstreamModels,
 } from "@/db/schemas/index.js";
 import type {
@@ -72,23 +75,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       .from(providerAccounts)
       .orderBy(asc(providerAccounts.priority), asc(providerAccounts.createdAt)),
     db.select().from(upstreamModels),
-    db
-      .select({
-        upstreamModelId: upstreamModelPricingWindows.upstreamModelId,
-        name: pricingWindows.name,
-        timeZone: pricingWindows.timeZone,
-        ranges: pricingWindows.ranges,
-        isEnabled: pricingWindows.isEnabled,
-        inputPrice: upstreamModelPricingWindows.inputPrice,
-        outputPrice: upstreamModelPricingWindows.outputPrice,
-        cacheReadPrice: upstreamModelPricingWindows.cacheReadPrice,
-        cacheWritePrice: upstreamModelPricingWindows.cacheWritePrice,
-      })
-      .from(upstreamModelPricingWindows)
-      .innerJoin(pricingWindows, eq(pricingWindows.id, upstreamModelPricingWindows.pricingWindowId))
-      // A disabled window never applies, so the inference path never sees it.
-      .where(eq(pricingWindows.isEnabled, true))
-      .orderBy(asc(upstreamModelPricingWindows.position)),
+    // A disabled window never applies, so the inference path never sees it.
+    selectAttachedPricingWindows(db, eq(pricingWindows.isEnabled, true)),
     db.select().from(models),
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
     // Not injected: SettingsModule imports SnapshotModule to call changed().
@@ -273,9 +261,7 @@ function endpointsByKind(
   return byKind;
 }
 
-function snapshotPricingWindowOf(
-  row: Omit<SnapshotPricingWindow, "windowPrices"> & SnapshotPricingWindow["windowPrices"],
-): SnapshotPricingWindow {
+function snapshotPricingWindowOf(row: AttachedPricingWindowRow): SnapshotPricingWindow {
   return {
     name: row.name,
     timeZone: row.timeZone,

@@ -1,6 +1,6 @@
 import { isPricingWindowActiveAt } from "@/pricing-windows/models/pricing-window-activity.js";
 import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices.js";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
+import { type SnapshotUpstreamModel, standardPricesOf } from "@/snapshot/models/snapshot.js";
 import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
 import type { ServiceTier } from "./internal-format.js";
 
@@ -23,8 +23,7 @@ export function pricesForRequest(
   tier: ServiceTier | null,
   receivedAt: Date,
 ): RequestPrices {
-  const { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice } = upstreamModel;
-  const standard = { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice };
+  const standard = standardPricesOf(upstreamModel);
   if (tier !== null) {
     return { prices: { ...standard, ...upstreamModel.tierPrices[tier] }, pricingWindowName: null };
   }
