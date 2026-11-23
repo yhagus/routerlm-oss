@@ -3,6 +3,7 @@
 // (run by the root `bun run check`) fails when they drift.
 
 import type { ReasoningEffort, ServiceTier } from "~/lib/parameterPolicy";
+import type { AttachedPricingWindow } from "~/lib/pricingWindows";
 
 export const UPSTREAM_PROTOCOLS = [
   "openai-chat",
@@ -316,6 +317,8 @@ export interface UpstreamModel {
   /** The day the Provider made it available, "YYYY-MM-DD"; null when unknown. */
   releaseDate: string | null;
   isEnabled: boolean;
+  /** Its Pricing Windows in order: the first enabled, active one sets the prices. Chat only. */
+  pricingWindows: AttachedPricingWindow[];
   createdAt: string;
   updatedAt: string;
 }
