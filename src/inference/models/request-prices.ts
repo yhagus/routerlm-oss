@@ -1,4 +1,4 @@
-import { isPricingWindowActiveAt } from "@/pricing-windows/models/pricing-window-activity.js";
+import { doWindowPricesApplyAt } from "@/pricing-windows/models/pricing-window-activity.js";
 import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices.js";
 import { type SnapshotUpstreamModel, standardPricesOf } from "@/snapshot/models/snapshot.js";
 import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
@@ -15,7 +15,8 @@ export interface RequestPrices {
  * The Upstream Model's prices for a request received at `receivedAt` and
  * served at `tier` (ADR 0038). The first rule that matches applies:
  * 1. a tier served it: the tier's prices, standard for the rest; windows are ignored;
- * 2. a Pricing Window applies: its Window Prices, standard for the rest;
+ * 2. Window Prices apply (their window is active, inside their Validity
+ *    Period): those, standard for the rest;
  * 3. otherwise the standard prices.
  */
 export function pricesForRequest(
@@ -29,7 +30,7 @@ export function pricesForRequest(
   }
   // At most one applies: a model's Window Prices never overlap (ADR 0040).
   const applyingWindow = upstreamModel.pricingWindows.find((window) =>
-    isPricingWindowActiveAt(window, receivedAt),
+    doWindowPricesApplyAt(window, receivedAt),
   );
   if (applyingWindow === undefined) {
     return { prices: standard, pricingWindowName: null };

@@ -52,3 +52,13 @@ function etcZoneAtOffset(offsetHours: number): string {
 export function weekdayBefore(weekday: IsoWeekday): IsoWeekday {
   return WEEKDAY_BEFORE[weekday];
 }
+
+const MILLISECONDS_PER_DAY = 24 * MILLISECONDS_PER_HOUR;
+
+/**
+ * The UTC wall clock `days` from `now`, to the minute, as a Validity Period
+ * bound (`YYYY-MM-DDTHH:MM`) of a window in UTC.
+ */
+export function utcWallClockInDays(days: number, now = new Date()): string {
+  return new Date(now.getTime() + days * MILLISECONDS_PER_DAY).toISOString().slice(0, 16);
+}

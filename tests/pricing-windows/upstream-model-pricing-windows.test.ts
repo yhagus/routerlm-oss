@@ -1,7 +1,11 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
 import type { Database } from "@/db/schemas/relations.js";
-import { deleteAllPricingWindows, zoneAtNoonNow } from "@tests/support/pricing-windows.js";
+import {
+  deleteAllPricingWindows,
+  utcWallClockInDays,
+  zoneAtNoonNow,
+} from "@tests/support/pricing-windows.js";
 import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
@@ -354,6 +358,187 @@ describe("Window Prices on Upstream Models (e2e)", () => {
 
       // Friday 22:00 in New York is Saturday 03:00 UTC.
       await patchWindow(lateFridayId, { timeZone: "America/New_York" }).expect(400);
+    });
+  });
+
+  describe("Validity Periods", () => {
+    const WHOLE_WEEK = [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "00:00", end: "24:00" }];
+
+    function createWholeWeekWindow(name = "Whole Week"): Promise<string> {
+      return createWindow(name, WHOLE_WEEK, { timeZone: "UTC" });
+    }
+
+    it("attaches one window for several periods, and lists them by start with their status", async () => {
+      const wholeWeekId = await createWholeWeekWindow();
+      const lastWeek = utcWallClockInDays(-7);
+      const yesterday = utcWallClockInDays(-1);
+      const tomorrow = utcWallClockInDays(1);
+      const nextWeek = utcWallClockInDays(7);
+
+      await putWindowPrices(chatModelId, [
+        { pricingWindowId: wholeWeekId, inputPrice: 0.3, validFrom: nextWeek },
+        {
+          pricingWindowId: wholeWeekId,
+          inputPrice: 0.5,
+          validFrom: yesterday,
+          validUntil: tomorrow,
+        },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.7, validUntil: lastWeek },
+      ]).expect(200);
+
+      expect(await windowPricesOf(chatModelId)).toEqual([
+        expect.objectContaining({
+          inputPrice: 0.7,
+          validFrom: null,
+          validUntil: lastWeek,
+          status: "expired",
+        }),
+        expect.objectContaining({
+          inputPrice: 0.5,
+          validFrom: yesterday,
+          validUntil: tomorrow,
+          status: "active",
+        }),
+        expect.objectContaining({
+          inputPrice: 0.3,
+          validFrom: nextWeek,
+          validUntil: null,
+          status: "scheduled",
+        }),
+      ]);
+    });
+
+    it("lists Window Prices inside their period as inactive while their window isn't active", async () => {
+      const lateId = await createWindow("Late", LATE_ON_ANOTHER_DAY);
+
+      await putWindowPrices(chatModelId, [
+        { pricingWindowId: lateId, inputPrice: 0.5, validUntil: utcWallClockInDays(7) },
+      ]).expect(200);
+
+      expect(await windowPricesOf(chatModelId)).toEqual([
+        expect.objectContaining({ status: "inactive", isActiveNow: false }),
+      ]);
+    });
+
+    it("refuses a period whose start isn't before its end", async () => {
+      const wholeWeekId = await createWholeWeekWindow();
+
+      const refused = await putWindowPrices(chatModelId, [
+        {
+          pricingWindowId: wholeWeekId,
+          inputPrice: 0.5,
+          validFrom: "2027-01-01T00:00",
+          validUntil: "2027-01-01T00:00",
+        },
+      ]).expect(400);
+
+      expect(refused.body.message).toEqual(["0: A Validity Period's start must be before its end"]);
+    });
+
+    it("refuses one window twice for periods that overlap, naming both periods", async () => {
+      const wholeWeekId = await createWholeWeekWindow();
+
+      const refused = await putWindowPrices(chatModelId, [
+        {
+          pricingWindowId: wholeWeekId,
+          inputPrice: 0.5,
+          validFrom: "2026-12-01T00:00",
+          validUntil: "2027-01-01T00:00",
+        },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.7, validFrom: "2026-12-31T23:59" },
+      ]).expect(400);
+
+      expect(refused.body.message).toBe(
+        'The Window Prices for "Whole Week" (from 2026-12-01 00:00 until 2027-01-01 00:00) and "Whole Week" (from 2026-12-31 23:59) can apply at the same moment; only one may apply at a time',
+      );
+    });
+
+    it("refuses open-ended Window Prices whose hours overlap a dated sale", async () => {
+      const offPeakId = await createWindow(
+        "Off-Peak",
+        [{ weekdays: [1, 2, 3, 4, 5], start: "16:00", end: "08:00" }],
+        { timeZone: "UTC" },
+      );
+      const wholeWeekId = await createWholeWeekWindow();
+
+      const refused = await putWindowPrices(chatModelId, [
+        { pricingWindowId: offPeakId, inputPrice: 0.5 },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.3, validUntil: "2027-01-01T00:00" },
+      ]).expect(400);
+
+      expect(refused.body.message).toBe(
+        'The Window Prices for "Off-Peak" and "Whole Week" (until 2027-01-01 00:00) can apply at the same moment; only one may apply at a time',
+      );
+    });
+
+    it("accepts overlapping hours whose periods meet only at the exclusive end", async () => {
+      const offPeakId = await createWindow(
+        "Off-Peak",
+        [{ weekdays: [1, 2, 3, 4, 5], start: "16:00", end: "08:00" }],
+        { timeZone: "UTC" },
+      );
+      const wholeWeekId = await createWholeWeekWindow();
+
+      await putWindowPrices(chatModelId, [
+        { pricingWindowId: offPeakId, inputPrice: 0.5, validFrom: "2027-01-01T00:00" },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.3, validUntil: "2027-01-01T00:00" },
+      ]).expect(200);
+    });
+
+    it("accepts a short sale beside off-peak hours it doesn't reach", async () => {
+      const offPeakId = await createWindow(
+        "Off-Peak",
+        [{ weekdays: [1, 2, 3, 4, 5], start: "16:00", end: "08:00" }],
+        { timeZone: "UTC" },
+      );
+      const wholeWeekId = await createWholeWeekWindow();
+
+      // Wednesday 2 December 2026, 09:00 to 15:00 UTC: between two off-peak stretches.
+      await putWindowPrices(chatModelId, [
+        { pricingWindowId: offPeakId, inputPrice: 0.5 },
+        {
+          pricingWindowId: wholeWeekId,
+          inputPrice: 0.3,
+          validFrom: "2026-12-02T09:00",
+          validUntil: "2026-12-02T15:00",
+        },
+      ]).expect(200);
+    });
+
+    it("refuses a window's new time zone that moves its period into another's", async () => {
+      const decemberId = await createWholeWeekWindow("December");
+      const januaryId = await createWholeWeekWindow("January");
+      await putWindowPrices(chatModelId, [
+        { pricingWindowId: decemberId, inputPrice: 0.5, validUntil: "2027-01-01T00:00" },
+        { pricingWindowId: januaryId, inputPrice: 0.7, validFrom: "2027-01-01T00:00" },
+      ]).expect(200);
+
+      // Midnight in New York is 05:00 UTC, five hours into January.
+      const refused = await patchWindow(decemberId, { timeZone: "America/New_York" }).expect(400);
+
+      expect(refused.body.message).toBe(
+        "Window Prices would overlap on the Upstream Models acme-large (Acme AI), so this Pricing Window's schedule can't change; change their Window Prices first",
+      );
+    });
+
+    it("counts an Upstream Model that attaches a window twice once, and names that window once", async () => {
+      const wholeWeekId = await createWholeWeekWindow();
+      await putWindowPrices(chatModelId, [
+        { pricingWindowId: wholeWeekId, inputPrice: 0.5, validUntil: "2027-01-01T00:00" },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.7, validFrom: "2027-02-01T00:00" },
+      ]).expect(200);
+
+      expect(await listPricingWindows()).toEqual([
+        expect.objectContaining({ id: wholeWeekId, attachedUpstreamModelCount: 1 }),
+      ]);
+      const refused = await request(app.getHttpServer())
+        .patch(`/api/upstream-models/${chatModelId}`)
+        .set("Cookie", cookie)
+        .send({ kind: "image", contextSize: null })
+        .expect(400);
+      expect(refused.body.message).toBe(
+        "The Pricing Windows Whole Week give this Upstream Model Window Prices, so its Kind can't change; detach them first",
+      );
     });
   });
 

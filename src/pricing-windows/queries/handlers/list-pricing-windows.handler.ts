@@ -1,6 +1,6 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { asc, count, eq, getColumns } from "drizzle-orm";
+import { asc, countDistinct, eq, getColumns } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { pricingWindows, upstreamModelPricingWindows } from "@/db/schemas/index.js";
 import type { PricingWindowSummary } from "@/pricing-windows/models/pricing-window.js";
@@ -15,7 +15,8 @@ export class ListPricingWindowsHandler implements IQueryHandler<ListPricingWindo
     const rows = await this.db
       .select({
         ...getColumns(pricingWindows),
-        attachedUpstreamModelCount: count(upstreamModelPricingWindows.id),
+        // A model may attach one window several times (ADR 0040).
+        attachedUpstreamModelCount: countDistinct(upstreamModelPricingWindows.upstreamModelId),
       })
       .from(pricingWindows)
       .leftJoin(

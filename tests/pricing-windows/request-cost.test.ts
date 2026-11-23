@@ -8,7 +8,11 @@ import { upstreamModels } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
 import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { deleteAllPricingWindows, zoneAtNoonNow } from "@tests/support/pricing-windows.js";
+import {
+  deleteAllPricingWindows,
+  utcWallClockInDays,
+  zoneAtNoonNow,
+} from "@tests/support/pricing-windows.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { writtenUsageLog } from "@tests/support/usage-logs.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
@@ -44,6 +48,7 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
   const { timeZone, today } = zoneAtNoonNow();
   const ACTIVE_NOW = [{ weekdays: [today], start: "11:00", end: "14:00" }];
   const NEVER_TODAY = [{ weekdays: [today === 1 ? 2 : 1], start: "00:00", end: "24:00" }];
+  const WHOLE_WEEK = [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "00:00", end: "24:00" }];
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -80,11 +85,16 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     await app.close();
   });
 
-  async function createWindow(name: string, ranges: object[], isEnabled = true): Promise<string> {
+  async function createWindow(
+    name: string,
+    ranges: object[],
+    isEnabled = true,
+    windowTimeZone = timeZone,
+  ): Promise<string> {
     const created = await request(app.getHttpServer())
       .post("/api/pricing-windows")
       .set("Cookie", cookie)
-      .send({ name, timeZone, ranges, isEnabled })
+      .send({ name, timeZone: windowTimeZone, ranges, isEnabled })
       .expect(201);
     return created.body.id;
   }
@@ -194,6 +204,63 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     // (20 x 0.5 + 40 x 1 + 100 x 0.5) per million tokens.
     expect(usageLog.cost).toBeCloseTo(0.0001, 10);
     expect(usageLog.pricingWindowName).toBe("Happy hour");
+  });
+
+  describe("within a Validity Period", () => {
+    function createSaleWindow(): Promise<string> {
+      return createWindow("Sale", WHOLE_WEEK, true, "UTC");
+    }
+
+    it("prices a request received from the start's minute on at Window Prices", async () => {
+      const saleId = await createSaleWindow();
+      await attachWindows([
+        {
+          pricingWindowId: saleId,
+          inputPrice: 1,
+          outputPrice: 4,
+          validFrom: utcWallClockInDays(0),
+        },
+      ]);
+
+      const usageLog = await chatAndWaitForUsageLog();
+
+      expect(usageLog.cost).toBeCloseTo(0.00023, 10);
+      expect(usageLog.pricingWindowName).toBe("Sale");
+    });
+
+    it("prices a request received before the start at the standard prices", async () => {
+      const saleId = await createSaleWindow();
+      await attachWindows([
+        {
+          pricingWindowId: saleId,
+          inputPrice: 1,
+          outputPrice: 4,
+          validFrom: utcWallClockInDays(1),
+        },
+      ]);
+
+      const usageLog = await chatAndWaitForUsageLog();
+
+      expect(usageLog.cost).toBeCloseTo(STANDARD_COST, 10);
+      expect(usageLog.pricingWindowName).toBeNull();
+    });
+
+    it("prices a request received from the end's minute on at the standard prices, as the end is exclusive", async () => {
+      const saleId = await createSaleWindow();
+      await attachWindows([
+        {
+          pricingWindowId: saleId,
+          inputPrice: 1,
+          outputPrice: 4,
+          validUntil: utcWallClockInDays(0),
+        },
+      ]);
+
+      const usageLog = await chatAndWaitForUsageLog();
+
+      expect(usageLog.cost).toBeCloseTo(STANDARD_COST, 10);
+      expect(usageLog.pricingWindowName).toBeNull();
+    });
   });
 
   it("ignores windows for a request served at a Service Tier", async () => {

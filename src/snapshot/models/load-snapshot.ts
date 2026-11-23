@@ -267,6 +267,8 @@ function snapshotPricingWindowOf(row: AttachedPricingWindowRow): SnapshotPricing
     timeZone: row.timeZone,
     ranges: row.ranges,
     isEnabled: row.isEnabled,
+    validFrom: row.validFrom,
+    validUntil: row.validUntil,
     windowPrices: {
       inputPrice: row.inputPrice,
       outputPrice: row.outputPrice,
