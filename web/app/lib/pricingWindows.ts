@@ -1,3 +1,5 @@
+import { formatCost } from "~/lib/usage";
+
 /** A day of the week as ISO numbers it: Monday is 1, Sunday is 7. */
 export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -87,17 +89,55 @@ export const WINDOW_PRICE_FIELDS = [
   { key: "cacheWritePrice", label: "Cache write price" },
 ] as const satisfies readonly { key: keyof WindowPrices; label: string }[];
 
+/**
+ * A Window Price and its change from the standard price, such as "$0.30 (−50%)",
+ * rounded to whole percent. Undefined for a price left out, or with no standard
+ * price to compare against.
+ */
+export function formatWindowPriceChange(
+  price: number | null,
+  standard: number | null,
+): string | undefined {
+  if (price === null || standard === null || standard === 0) return undefined;
+  const percent = Math.round(((price - standard) / standard) * 100);
+  return `${formatCost(price)} (${formatPercentChange(percent)})`;
+}
+
+function formatPercentChange(percent: number): string {
+  if (percent < 0) return `−${-percent}%`;
+  return percent > 0 ? `+${percent}%` : "0%";
+}
+
 /** "HH:MM" from 00:00 to 23:59, as the backend accepts a start. */
 export const START_TIME_PATTERN = "([01][0-9]|2[0-3]):[0-5][0-9]";
 /** A start time, or 24:00 for the end of the day. */
 export const END_TIME_PATTERN = `${START_TIME_PATTERN}|24:00`;
 
-/** The window whose Window Prices apply now: the first enabled, active one, as the gateway picks it. */
+/** The attachment whose Window Prices apply now; the no-overlap rule leaves at most one. */
 export function activePricingWindowOf(
   attached: readonly AttachedPricingWindow[],
 ): AttachedPricingWindow | undefined {
-  return attached.find((window) => window.isEnabled && window.isActiveNow);
+  return attached.find((window) => window.status === "active");
 }
+
+/** How the Window Prices dialog badges each status. */
+export const WINDOW_PRICES_STATUS_BADGES: Record<
+  WindowPricesStatus,
+  { label: string; tone: "good" | "warn" | "neutral"; title: string }
+> = {
+  scheduled: {
+    label: "Scheduled",
+    tone: "neutral",
+    title: "Its Validity Period hasn't started yet",
+  },
+  active: { label: "Active now", tone: "good", title: "Its Window Prices apply now" },
+  inactive: {
+    label: "Window closed",
+    tone: "neutral",
+    title: "Inside its Validity Period, but its window isn't active now",
+  },
+  expired: { label: "Expired", tone: "warn", title: "Its Validity Period has ended" },
+};
 
 /** Runs this long or longer read as a span ("Mon–Fri"); shorter ones list each day. */
 const MIN_WEEKDAY_SPAN = 3;
