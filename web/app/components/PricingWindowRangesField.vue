@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Plus, Trash2 } from "@lucide/vue";
+import { CalendarRange, Plus, Trash2 } from "@lucide/vue";
 import {
+  ALWAYS_RANGE,
   END_TIME_PATTERN,
   ISO_WEEKDAYS,
   type IsoWeekday,
@@ -29,6 +30,11 @@ function handleWeekdayToggle(range: RangeForm, day: IsoWeekday): void {
 
 function handleAdd(): void {
   ranges.value.push(rangeFormFor());
+}
+
+/** Replaces every range with one that covers the whole week. */
+function handleAlways(): void {
+  ranges.value = [rangeFormFor(ALWAYS_RANGE)];
 }
 
 function handleRemove(range: RangeForm): void {
@@ -96,8 +102,16 @@ function handleRemove(range: RangeForm): void {
       An end before the start crosses midnight and belongs to the day it starts on. Use 24:00 to run
       to the end of the day.
     </p>
-    <button class="button range-list__add" type="button" @click="handleAdd">
-      <Plus :size="14" /> Add range
-    </button>
+    <div class="range-list__actions">
+      <button class="button" type="button" @click="handleAdd"><Plus :size="14" /> Add range</button>
+      <button
+        class="button"
+        type="button"
+        title="Replace the ranges with every weekday, 00:00 to 24:00"
+        @click="handleAlways"
+      >
+        <CalendarRange :size="14" /> Always
+      </button>
+    </div>
   </fieldset>
 </template>

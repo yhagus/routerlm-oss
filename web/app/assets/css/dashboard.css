@@ -2982,8 +2982,10 @@ tbody tr:hover {
 .range-list__remove:disabled {
   opacity: 0.4;
 }
-.range-list__add {
-  justify-self: start;
+.range-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 2px;
 }
 @media (max-width: 760px) {
