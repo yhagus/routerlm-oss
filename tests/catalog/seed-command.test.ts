@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
 import { asc, count, eq } from "drizzle-orm";
@@ -534,7 +535,7 @@ describe("Seed Catalog command (e2e)", () => {
       expect(small.map(({ window }) => window)).toEqual([LUNCH.name, NIGHT.name]);
     });
 
-    it("skips a Catalog window that would overlap an operator's attachment, keeping the operator's", async () => {
+    it("skips and logs a Catalog window that would overlap an operator's attachment, keeping the operator's", async () => {
       const [large] = await db
         .select({ id: schema.upstreamModels.id })
         .from(schema.upstreamModels)
@@ -560,6 +561,7 @@ describe("Seed Catalog command (e2e)", () => {
         timeZone: "UTC",
         ranges: [{ weekdays: [1, 2, 3, 4, 5], start: "18:00", end: "20:00" }],
       };
+      const loggedWarnings = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
 
       const result = await commandBus.execute(
         new SeedCatalogCommand([
@@ -574,6 +576,9 @@ describe("Seed Catalog command (e2e)", () => {
       );
 
       expect(result).toMatchObject({ attachedWindowPrices: 0, skippedWindowPrices: 1 });
+      expect(loggedWarnings).toHaveBeenCalledWith(
+        expect.stringContaining('"Example Evening" on Upstream Model "windowed-large"'),
+      );
       expect(await windowPricesOf("windowed-large")).toEqual([
         {
           window: "Operator Sale",
