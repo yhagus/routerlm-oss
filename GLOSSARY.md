@@ -63,6 +63,10 @@ _Avoid_: Quota, rate limit, usage limit
 The state of a Provider Account whose Quota Meter has run out. Like a Cooldown, it is skipped, but until the meter resets. An operator can let a Provider Account keep serving while Exhausted when the Provider bills the excess some other way, such as MiniMax Credits.
 _Avoid_: Over quota, capped, rate-limited
 
+**Usage Reset**:
+A one-time grant on a Provider Account that its Subscription Provider honours by restoring the account's Quota Meters early, such as the resets OpenAI Codex hands out through promotions and referrals. The Provider decides how many a Provider Account has, when each expires and which meters a reset restores; only an operator spends one.
+_Avoid_: Reset credit, banked reset, credits
+
 **Upstream Model**:
 A model as one Provider names and sells it.
 _Avoid_: Provider model, backend model
