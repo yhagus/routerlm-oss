@@ -1,0 +1,111 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "d25bf2ec-a6e1-4101-834b-141a7b54f40e",
+  "prevIds": [
+    "bd6304bf-3a79-4b47-9bdd-c903f44bcc53"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_model_pricing_windows",
+        "valid_from"
+      ],
+      "writes": [
+        "s|col|public.upstream_model_pricing_windows.valid_from",
+        "n|col|public.upstream_model_pricing_windows.valid_from",
+        "e|col|public.upstream_model_pricing_windows.valid_from"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_model_pricing_windows",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_model_pricing_windows",
+        "valid_until"
+      ],
+      "writes": [
+        "s|col|public.upstream_model_pricing_windows.valid_until",
+        "n|col|public.upstream_model_pricing_windows.valid_until",
+        "e|col|public.upstream_model_pricing_windows.valid_until"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_model_pricing_windows",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_check",
+      "statementTarget": [
+        "table",
+        "public",
+        "upstream_model_pricing_windows"
+      ],
+      "writes": [
+        "s|ck|public.upstream_model_pricing_windows.upstream_model_pricing_windows_validity_check",
+        "n|ck|public.upstream_model_pricing_windows.upstream_model_pricing_windows_validity_check",
+        "e|ck|public.upstream_model_pricing_windows.upstream_model_pricing_windows_validity_check",
+        "n|con|public.upstream_model_pricing_windows.upstream_model_pricing_windows_validity_check"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_model_pricing_windows",
+        "n|sch|public",
+        "n|col|public.upstream_model_pricing_windows.valid_from",
+        "n|col|public.upstream_model_pricing_windows.valid_until"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "valid_from",
+        "type": "timestamp",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "valid_until",
+        "type": "timestamp",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_pricing_windows_validity_check",
+        "value": "\"valid_from\" < \"valid_until\"",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

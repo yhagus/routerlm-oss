@@ -9,6 +9,7 @@ import {
   type AttachedPricingWindow,
   readPricingWindowsOf,
 } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
+import { describeValidityPeriod } from "@/pricing-windows/models/validity-period.js";
 import {
   findOverlappingWindowPrices,
   type WindowPricesTiming,
@@ -16,24 +17,36 @@ import {
 import type { WindowPricesEntry } from "@/pricing-windows/schemas/pricing-window.schema.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 
-type ScheduledWindow = WindowPricesTiming & { name: string };
+type ScheduledWindow = Pick<WindowPricesTiming, "timeZone" | "ranges"> & { name: string };
+type ScheduledEntry = WindowPricesTiming & { name: string };
 
 /** Refuses entries of which two could apply at the same moment (ADR 0040). */
 function assertNoOverlap(
   entries: readonly WindowPricesEntry[],
   windowsById: ReadonlyMap<string, ScheduledWindow>,
 ): void {
-  const scheduledEntries = entries.flatMap((entry) => {
+  const scheduledEntries = entries.flatMap((entry): ScheduledEntry[] => {
     const window = windowsById.get(entry.pricingWindowId);
-    return window === undefined ? [] : [window];
+    if (window === undefined) {
+      return [];
+    }
+    return [
+      { ...window, validFrom: entry.validFrom ?? null, validUntil: entry.validUntil ?? null },
+    ];
   });
   const overlap = findOverlappingWindowPrices(scheduledEntries, new Date());
   if (overlap !== undefined) {
     const [first, second] = overlap;
     throw new BadRequestException(
-      `The Window Prices for "${first.name}" and "${second.name}" can apply at the same moment; only one may apply at a time`,
+      `The Window Prices for ${describeEntry(first)} and ${describeEntry(second)} can apply at the same moment; only one may apply at a time`,
     );
   }
+}
+
+/** `"Whole Week" (from 2026-12-01 00:00 until 2027-01-01 00:00)`, or just the quoted name with no period. */
+function describeEntry(entry: ScheduledEntry): string {
+  const period = describeValidityPeriod(entry);
+  return period === "" ? `"${entry.name}"` : `"${entry.name}" (${period})`;
 }
 
 @CommandHandler(ReplaceUpstreamModelPricingWindowsCommand)
@@ -94,6 +107,8 @@ export class ReplaceUpstreamModelPricingWindowsHandler implements ICommandHandle
             outputPrice: entry.outputPrice ?? null,
             cacheReadPrice: entry.cacheReadPrice ?? null,
             cacheWritePrice: entry.cacheWritePrice ?? null,
+            validFrom: entry.validFrom ?? null,
+            validUntil: entry.validUntil ?? null,
           })),
         );
       }

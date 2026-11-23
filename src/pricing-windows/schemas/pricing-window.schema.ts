@@ -67,6 +67,29 @@ export const pricingWindowChangesSchema = pricingWindowFieldsSchema
   .refine(hasAnyField, nothingToChange);
 export type PricingWindowChanges = z.infer<typeof pricingWindowChangesSchema>;
 
+/** `YYYY-MM-DDTHH:MM`; it sorts as it reads, so two compare as strings. */
+const WALL_CLOCK_DATE_TIME =
+  /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Whether `wallClock` is a well-formed date and time that exists on a calendar, so not `2027-02-30T00:00`. */
+function isWallClockDateTime(wallClock: string): boolean {
+  if (!WALL_CLOCK_DATE_TIME.test(wallClock)) {
+    return false;
+  }
+  const asUtc = new Date(`${wallClock}:00Z`);
+  return asUtc.toISOString().startsWith(wallClock);
+}
+
+/**
+ * A Validity Period bound on the wall clock of the window's time zone; left
+ * out or null, that side is open-ended (ADR 0040).
+ */
+const validityBoundSchema = z
+  .string()
+  .refine(isWallClockDateTime, { error: "Write a Validity Period bound as YYYY-MM-DDTHH:MM" })
+  .nullable()
+  .optional();
+
 /** USD per million tokens; left out or null, the standard price applies. */
 const windowPriceSchema = z.number().nonnegative().nullable().optional();
 
@@ -77,6 +100,11 @@ const windowPricesEntrySchema = z
     outputPrice: windowPriceSchema,
     cacheReadPrice: windowPriceSchema,
     cacheWritePrice: windowPriceSchema,
+    validFrom: validityBoundSchema,
+    validUntil: validityBoundSchema,
+  })
+  .refine((entry) => !entry.validFrom || !entry.validUntil || entry.validFrom < entry.validUntil, {
+    error: "A Validity Period's start must be before its end",
   })
   .refine(
     (entry) =>

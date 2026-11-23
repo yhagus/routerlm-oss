@@ -334,10 +334,12 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
 
       const rows: Array<typeof upstreamModelPricingWindows.$inferInsert> = [];
       for (const entry of entries) {
-        const window = windowByName.get(entry.pricingWindow);
-        if (window === undefined) {
+        const storedWindow = windowByName.get(entry.pricingWindow);
+        if (storedWindow === undefined) {
           throw new Error(`Pricing Window "${entry.pricingWindow}" vanished while seeding`);
         }
+        // The Catalog ships no Validity Periods (ADR 0040).
+        const window: ScheduledWindow = { ...storedWindow, validFrom: null, validUntil: null };
         const overlapping = modelWindows.find((other) => doWindowPricesOverlap(window, other, now));
         if (overlapping !== undefined) {
           this.logger.warn(
@@ -349,7 +351,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         modelWindows.push(window);
         rows.push({
           upstreamModelId: modelId,
-          pricingWindowId: window.id,
+          pricingWindowId: storedWindow.id,
           inputPrice: entry.inputPrice ?? null,
           outputPrice: entry.outputPrice ?? null,
           cacheReadPrice: entry.cacheReadPrice ?? null,

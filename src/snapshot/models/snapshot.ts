@@ -11,7 +11,7 @@ import type {
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
-import type { PricingWindowSchedule } from "@/pricing-windows/models/pricing-window-activity.js";
+import type { WindowPricesSchedule } from "@/pricing-windows/models/pricing-window-activity.js";
 import type { UpstreamModelPrices, UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
@@ -88,10 +88,11 @@ export function validQuirksOf(provider: SnapshotProvider): StoredProviderQuirks 
 
 /**
  * An enabled Pricing Window an Upstream Model attaches, with its Window Prices
- * (ADR 0038). Decide whether it applies with `isPricingWindowActiveAt`.
+ * and their Validity Period (ADR 0038, ADR 0040). Decide whether they apply
+ * with `doWindowPricesApplyAt`.
  * `isEnabled` is always true: disabled windows are left out when the snapshot loads.
  */
-export interface SnapshotPricingWindow extends PricingWindowSchedule {
+export interface SnapshotPricingWindow extends WindowPricesSchedule {
   /** Copied onto the Usage Log of a request it prices. */
   name: string;
   /** USD per million tokens; null means the standard price. */

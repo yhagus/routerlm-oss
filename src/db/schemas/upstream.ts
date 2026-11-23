@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  customType,
   date,
   index,
   integer,
@@ -149,6 +150,16 @@ export interface TierPrices {
 }
 
 /** USD per million tokens. Six decimals hold prices below a cent per million. */
+/**
+ * A date and time on the wall clock of a time zone stored elsewhere, read and
+ * written as `YYYY-MM-DDTHH:MM` (a timestamp without time zone).
+ */
+const wallClockDateTime = customType<{ data: string; driverData: string }>({
+  dataType: () => "timestamp",
+  // PostgreSQL writes `2026-12-01 00:00:00`; the minute is the finest bound kept.
+  fromDriver: (stored) => stored.slice(0, "YYYY-MM-DD HH:MM".length).replace(" ", "T"),
+});
+
 const pricePerMillionTokens = (name: string) =>
   numeric(name, { precision: 12, scale: 6, mode: "number" });
 
@@ -429,8 +440,16 @@ export const upstreamModelPricingWindows = pgTable(
     outputPrice: pricePerMillionTokens("output_price"),
     cacheReadPrice: pricePerMillionTokens("cache_read_price"),
     cacheWritePrice: pricePerMillionTokens("cache_write_price"),
+    // The Validity Period, on the wall clock of the window's time zone; a null
+    // bound is open-ended, the start inclusive and the end exclusive (ADR 0040).
+    validFrom: wallClockDateTime("valid_from"),
+    validUntil: wallClockDateTime("valid_until"),
   },
   (table) => [
+    check(
+      "upstream_model_pricing_windows_validity_check",
+      sql`${table.validFrom} < ${table.validUntil}`,
+    ),
     // A window with no price of its own would change nothing.
     check(
       "upstream_model_pricing_windows_price_check",
