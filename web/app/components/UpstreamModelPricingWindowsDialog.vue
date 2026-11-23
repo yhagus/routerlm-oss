@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Unlink } from "@lucide/vue";
+import { ArrowDown, ArrowUp, CalendarClock, Unlink } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
-import { type PricingWindow, WINDOW_PRICE_FIELDS, type WindowPrices } from "~/lib/pricingWindows";
+import {
+  activePricingWindowOf,
+  type PricingWindow,
+  WINDOW_PRICE_FIELDS,
+  type WindowPrices,
+} from "~/lib/pricingWindows";
 import {
   numberField,
   optionalNumber,
@@ -51,6 +56,11 @@ const saveError = ref("");
 
 const title = computed(() => `Pricing Windows of ${upstreamModelLabel(props.upstreamModel)}`);
 
+/** The saved window whose prices apply now; unsaved edits don't reach the gateway yet. */
+const inEffectWindowId = computed(
+  () => activePricingWindowOf(props.upstreamModel.pricingWindows)?.pricingWindowId,
+);
+
 /** The picker offers only the windows not attached yet. */
 const attachOptions = computed(() =>
   (pricingWindows.value ?? [])
@@ -95,19 +105,20 @@ function handleDetach(pricingWindowId: string): void {
   attached.value = attached.value.filter((each) => each.pricingWindowId !== pricingWindowId);
 }
 
+function windowPricesBody(entry: AttachedWindowForm) {
+  const prices = Object.fromEntries(
+    WINDOW_PRICE_FIELDS.map(({ key }) => [key, optionalNumber(entry.prices[key])]),
+  );
+  return { pricingWindowId: entry.pricingWindowId, ...prices };
+}
+
 async function handleSave(): Promise<void> {
   isSaving.value = true;
   saveError.value = "";
   try {
     await $dashboardApi(`/upstream-models/${props.upstreamModel.id}/pricing-windows`, {
       method: "PUT",
-      body: attached.value.map((entry) => ({
-        pricingWindowId: entry.pricingWindowId,
-        inputPrice: optionalNumber(entry.prices.inputPrice),
-        outputPrice: optionalNumber(entry.prices.outputPrice),
-        cacheReadPrice: optionalNumber(entry.prices.cacheReadPrice),
-        cacheWritePrice: optionalNumber(entry.prices.cacheWritePrice),
-      })),
+      body: attached.value.map(windowPricesBody),
     });
     showToast(`Saved the Pricing Windows of ${upstreamModelLabel(props.upstreamModel)}`);
     isOpen.value = false;
@@ -138,6 +149,12 @@ async function handleSave(): Promise<void> {
             <span class="window-prices__order tabular" aria-hidden="true">{{ index + 1 }}</span>
             <strong>{{ entry.name }}</strong>
             <span v-if="!entry.isEnabled" class="status-badge status-badge--warn">Disabled</span>
+            <span
+              v-if="entry.pricingWindowId === inEffectWindowId"
+              class="status-badge status-badge--good"
+              title="Its Window Prices apply now"
+              ><CalendarClock :size="12" aria-hidden="true" />Active now</span
+            >
             <span class="window-prices__actions">
               <button
                 class="icon-button"
