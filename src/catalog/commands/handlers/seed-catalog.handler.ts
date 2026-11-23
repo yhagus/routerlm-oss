@@ -1,6 +1,7 @@
+import { Logger } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { type AnyColumn, and, eq, inArray, isNull, max, or, type SQL, sql } from "drizzle-orm";
+import { type AnyColumn, and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import {
   pricingWindows,
@@ -17,11 +18,15 @@ import type {
   CatalogUpstreamModel,
   CatalogWindowPrices,
 } from "@/catalog/schemas/catalog.schema.js";
+import { selectAttachedPricingWindows } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
+import {
+  doWindowPricesOverlap,
+  type WindowPricesTiming,
+} from "@/pricing-windows/models/window-prices-overlap.js";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
-/** The position before an Upstream Model's first Pricing Window, which is 0. */
-const BEFORE_FIRST_POSITION = -1;
+type ScheduledWindow = WindowPricesTiming & { name: string };
 
 /** Keeps the stored price, or takes the Catalog's when the stored one is empty. */
 function fillPrice(column: AnyColumn, catalogPrice: number | null): SQL {
@@ -63,6 +68,8 @@ const FILLED_WHEN_EMPTY: AnyColumn[] = [
 
 @CommandHandler(SeedCatalogCommand)
 export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
+  private readonly logger = new Logger(SeedCatalogHandler.name);
+
   constructor(@InjectDrizzle() private readonly db: Database) {}
 
   async execute({ catalog }: SeedCatalogCommand): Promise<SeedResult> {
@@ -71,6 +78,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
       createdUpstreamModels: 0,
       createdPricingWindows: 0,
       attachedWindowPrices: 0,
+      skippedWindowPrices: 0,
     };
 
     await this.db.transaction(async (tx) => {
@@ -226,7 +234,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         }
 
         const createdModelIds = new Set(createdModels.map((model) => model.upstreamModelId));
-        result.attachedWindowPrices += await this.attachNewWindowPrices(
+        const { attached, skipped } = await this.attachNewWindowPrices(
           tx,
           provider.id,
           servableModels,
@@ -234,6 +242,8 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             createdModelIds.has(model.upstreamModelId) ||
             createdWindowNames.has(entry.pricingWindow),
         );
+        result.attachedWindowPrices += attached;
+        result.skippedWindowPrices += skipped;
       }
     });
 
@@ -267,33 +277,39 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
   }
 
   /**
-   * Attaches the Catalog Window Prices that `isNew` accepts, after each
-   * model's existing Pricing Windows and in Catalog order, and returns how
-   * many it attached. Only new Upstream Models or new windows qualify, so an
-   * operator's detached or edited attachment is never brought back (ADR 0039).
+   * Attaches the Catalog Window Prices that `isNew` accepts and returns how
+   * many it attached and skipped. Only new Upstream Models or new windows
+   * qualify, so an operator's detached or edited attachment is never brought
+   * back (ADR 0039). An entry that would overlap one of the model's
+   * attachments is skipped and logged, so an operator's sale stays (ADR 0040).
    */
   private async attachNewWindowPrices(
     tx: Transaction,
     providerId: string,
     models: readonly CatalogUpstreamModel[],
     isNew: (model: CatalogUpstreamModel, entry: CatalogWindowPrices) => boolean,
-  ): Promise<number> {
+  ): Promise<{ attached: number; skipped: number }> {
     const attachments = models
       .map((model) => ({
         model,
         entries: (model.windowPrices ?? []).filter((entry) => isNew(model, entry)),
       }))
       .filter(({ entries }) => entries.length > 0);
-    if (attachments.length === 0) return 0;
+    if (attachments.length === 0) return { attached: 0, skipped: 0 };
 
     const windowNames = attachments.flatMap(({ entries }) =>
       entries.map((entry) => entry.pricingWindow),
     );
     const storedWindows = await tx
-      .select({ id: pricingWindows.id, name: pricingWindows.name })
+      .select({
+        id: pricingWindows.id,
+        name: pricingWindows.name,
+        timeZone: pricingWindows.timeZone,
+        ranges: pricingWindows.ranges,
+      })
       .from(pricingWindows)
       .where(inArray(pricingWindows.name, windowNames));
-    const windowIdByName = new Map(storedWindows.map((window) => [window.name, window.id]));
+    const windowByName = new Map(storedWindows.map((window) => [window.name, window]));
 
     const storedModels = await tx
       .select({ id: upstreamModels.id, upstreamModelId: upstreamModels.upstreamModelId })
@@ -303,45 +319,48 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
       storedModels.map((model) => [model.upstreamModelId, model.id]),
     );
 
+    const now = new Date();
     let attached = 0;
+    let skipped = 0;
     for (const { model, entries } of attachments) {
       const modelId = modelIdByUpstreamId.get(model.upstreamModelId);
       if (modelId === undefined) {
         throw new Error(`Upstream Model "${model.upstreamModelId}" vanished while seeding`);
       }
-      const [last] = await tx
-        .select({ position: max(upstreamModelPricingWindows.position) })
-        .from(upstreamModelPricingWindows)
-        .where(eq(upstreamModelPricingWindows.upstreamModelId, modelId));
-      const firstPosition = (last?.position ?? BEFORE_FIRST_POSITION) + 1;
+      const modelWindows: ScheduledWindow[] = await selectAttachedPricingWindows(
+        tx,
+        eq(upstreamModelPricingWindows.upstreamModelId, modelId),
+      );
 
-      const rows = entries.map((entry, index) => {
-        const pricingWindowId = windowIdByName.get(entry.pricingWindow);
-        if (pricingWindowId === undefined) {
+      const rows: Array<typeof upstreamModelPricingWindows.$inferInsert> = [];
+      for (const entry of entries) {
+        const window = windowByName.get(entry.pricingWindow);
+        if (window === undefined) {
           throw new Error(`Pricing Window "${entry.pricingWindow}" vanished while seeding`);
         }
-        return {
+        const overlapping = modelWindows.find((other) => doWindowPricesOverlap(window, other, now));
+        if (overlapping !== undefined) {
+          this.logger.warn(
+            `Skipped the Catalog's Window Prices for "${window.name}" on Upstream Model "${model.upstreamModelId}": they would overlap those for "${overlapping.name}" (ADR 0040)`,
+          );
+          skipped += 1;
+          continue;
+        }
+        modelWindows.push(window);
+        rows.push({
           upstreamModelId: modelId,
-          pricingWindowId,
-          position: firstPosition + index,
+          pricingWindowId: window.id,
           inputPrice: entry.inputPrice ?? null,
           outputPrice: entry.outputPrice ?? null,
           cacheReadPrice: entry.cacheReadPrice ?? null,
           cacheWritePrice: entry.cacheWritePrice ?? null,
-        };
-      });
-      const inserted = await tx
-        .insert(upstreamModelPricingWindows)
-        .values(rows)
-        .onConflictDoNothing({
-          target: [
-            upstreamModelPricingWindows.upstreamModelId,
-            upstreamModelPricingWindows.pricingWindowId,
-          ],
-        })
-        .returning({ id: upstreamModelPricingWindows.id });
-      attached += inserted.length;
+        });
+      }
+      if (rows.length > 0) {
+        await tx.insert(upstreamModelPricingWindows).values(rows);
+        attached += rows.length;
+      }
     }
-    return attached;
+    return { attached, skipped };
   }
 }

@@ -87,10 +87,8 @@ const windowPricesEntrySchema = z
   );
 export type WindowPricesEntry = z.infer<typeof windowPricesEntrySchema>;
 
-/** An Upstream Model's whole ordered list of Pricing Windows: the first active one wins. */
-export const windowPricesListSchema = z
-  .array(windowPricesEntrySchema)
-  .refine(
-    (entries) => new Set(entries.map((entry) => entry.pricingWindowId)).size === entries.length,
-    { error: "Attach each Pricing Window once" },
-  );
+/**
+ * An Upstream Model's whole list of Pricing Windows, in no meaningful order.
+ * The handler refuses two that can apply at the same moment (ADR 0040).
+ */
+export const windowPricesListSchema = z.array(windowPricesEntrySchema);

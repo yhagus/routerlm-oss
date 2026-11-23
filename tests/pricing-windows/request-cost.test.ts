@@ -181,12 +181,12 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     expect(usageLog.pricingWindowName).toBeNull();
   });
 
-  it("prices at the first active window in the model's order", async () => {
-    const offPeakId = await createWindow("Off-peak", ACTIVE_NOW);
+  it("prices at the one window that applies among the model's windows", async () => {
+    const weekendId = await createWindow("Weekend", NEVER_TODAY);
     const happyHourId = await createWindow("Happy hour", ACTIVE_NOW);
     await attachWindows([
+      { pricingWindowId: weekendId, inputPrice: 1, outputPrice: 4 },
       { pricingWindowId: happyHourId, inputPrice: 0.5, outputPrice: 1 },
-      { pricingWindowId: offPeakId, inputPrice: 1, outputPrice: 4 },
     ]);
 
     const usageLog = await chatAndWaitForUsageLog();

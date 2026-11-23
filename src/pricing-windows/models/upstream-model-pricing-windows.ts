@@ -27,8 +27,8 @@ export type AttachedPricingWindowRow = Omit<AttachedPricingWindow, "isActiveNow"
 type Reader = Pick<Database, "select">;
 
 /**
- * The attachments `filter` selects (all when undefined), in each Upstream
- * Model's order. The snapshot and the dashboard both read them this way.
+ * The attachments `filter` selects (all when undefined), by window name. The
+ * snapshot and the dashboard both read them this way.
  */
 export function selectAttachedPricingWindows(
   db: Reader,
@@ -50,12 +50,12 @@ export function selectAttachedPricingWindows(
     .from(upstreamModelPricingWindows)
     .innerJoin(pricingWindows, eq(pricingWindows.id, upstreamModelPricingWindows.pricingWindowId))
     .where(filter)
-    .orderBy(asc(upstreamModelPricingWindows.position));
+    .orderBy(asc(pricingWindows.name));
 }
 
 /**
  * The Pricing Windows of the Upstream Models `upstreamModelFilter` selects (all
- * when undefined), in each model's order, keyed by the Upstream Model's row id.
+ * when undefined), by window name, keyed by the Upstream Model's row id.
  */
 export async function readAttachedPricingWindows(
   db: Reader,
@@ -73,7 +73,7 @@ export async function readAttachedPricingWindows(
   return windowsByUpstreamModelId;
 }
 
-/** The names of the Pricing Windows the Upstream Model attaches, in its order. */
+/** The names of the Pricing Windows the Upstream Model attaches, in alphabetical order. */
 export async function attachedPricingWindowNames(
   db: Reader,
   upstreamModelId: string,
@@ -85,7 +85,7 @@ export async function attachedPricingWindowNames(
   return rows.map((row) => row.name);
 }
 
-/** The Pricing Windows the Upstream Model attaches, in its order. */
+/** The Pricing Windows the Upstream Model attaches, by window name. */
 export async function readPricingWindowsOf(
   db: Reader,
   upstreamModelId: string,
