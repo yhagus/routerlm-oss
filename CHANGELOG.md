@@ -1,3 +1,87 @@
+# v6.2.0 (2026-11-23)
+
+#### Notable changes
+
+**Upgrade**
+* Run the 2 new migrations. `20261123100834_window_prices_never_overlap` refuses to run while any Upstream Model has more than one Pricing Window attached, and the error lists those models and their windows. Detach the extra windows in the dashboard, upgrade, then re-attach them, now under the overlap rule below. `20261123102404_window_prices_validity_periods` adds two nullable columns (the Validity Period start and end) and a check that start is before end; existing Window Prices keep no period and stay open-ended – [4293f0b](https://github.com/yhagus/routerlm-oss/commit/4293f0b99c19ccaf046658431f74f2a32138405f), [7330269](https://github.com/yhagus/routerlm-oss/commit/7330269780f5cc2eb4ef3ab25664691666c4a316)
+* The order of an Upstream Model's windows (`position`) is gone: Window Prices can no longer apply at once, so there is no "first active window wins". Attachments are listed by start instant, then window name – [4293f0b](https://github.com/yhagus/routerlm-oss/commit/4293f0b99c19ccaf046658431f74f2a32138405f), [b125967](https://github.com/yhagus/routerlm-oss/commit/b12596762cdc29f6fe0762880b1683b3e48c21de)
+* The Catalog seed now skips a Catalog-shipped Pricing Window attachment that would overlap one an operator attached, and logs the skip – [5ca97fc](https://github.com/yhagus/routerlm-oss/commit/5ca97fc0d56f1b0dbe1e99f56910838c5d816698), [ff66141](https://github.com/yhagus/routerlm-oss/commit/ff66141bd138c7f085ec0081fbc076c417a3a642)
+* Integrations: `ListModels` pricing window entries gain optional `valid_from` and `valid_until` (`google.protobuf.Timestamp`, RFC 3339 in JSON), and entries whose period has ended are left out. Additive; clients that ignore unknown fields need no change – [e97521d](https://github.com/yhagus/routerlm-oss/commit/e97521d8782470c8b7f163fecfa54ec0b2e48b19), [f4717f9](https://github.com/yhagus/routerlm-oss/commit/f4717f96d18b0dba3011baa55093bc0524a0d099)
+* Dashboard API: `PUT /upstream-models/:id/pricing-windows` entries accept `validFrom` and `validUntil` (`YYYY-MM-DDTHH:MM` in the window's time zone), and the attachment list adds `validFrom`, `validUntil` and `status` (`scheduled`, `active`, `inactive` or `expired`) and drops `isActiveNow`. The Pricing Windows list keeps `isActiveNow` – [7330269](https://github.com/yhagus/routerlm-oss/commit/7330269780f5cc2eb4ef3ab25664691666c4a316), [b125967](https://github.com/yhagus/routerlm-oss/commit/b12596762cdc29f6fe0762880b1683b3e48c21de), [edd1b8a](https://github.com/yhagus/routerlm-oss/commit/edd1b8a24ca4c0b13f4c13de7d61d3cf2840082f), [6140869](https://github.com/yhagus/routerlm-oss/commit/61408691eac387f25d6f0649946e1cfd7f3e023b)
+* No new env variables and no new personal data kept.
+
+**Pricing Windows**
+* Window Prices get a Validity Period (an optional start and end), and Cost applies them only within it, the end being exclusive. An attachment with no period is open-ended – [7330269](https://github.com/yhagus/routerlm-oss/commit/7330269780f5cc2eb4ef3ab25664691666c4a316)
+* Window Prices on one Upstream Model can no longer apply at the same moment; a save that would overlap is refused – [4293f0b](https://github.com/yhagus/routerlm-oss/commit/4293f0b99c19ccaf046658431f74f2a32138405f)
+* The same Pricing Window can be attached to an Upstream Model more than once, with different periods – [7330269](https://github.com/yhagus/routerlm-oss/commit/7330269780f5cc2eb4ef3ab25664691666c4a316), [40687e7](https://github.com/yhagus/routerlm-oss/commit/40687e7359296223b79ab94d9084aa2e99cf1ea2)
+* Each attachment shows a status: Scheduled, Active now, Window closed (inside its period but outside the window's hours) or Expired – [7330269](https://github.com/yhagus/routerlm-oss/commit/7330269780f5cc2eb4ef3ab25664691666c4a316), [40687e7](https://github.com/yhagus/routerlm-oss/commit/40687e7359296223b79ab94d9084aa2e99cf1ea2), [edd1b8a](https://github.com/yhagus/routerlm-oss/commit/edd1b8a24ca4c0b13f4c13de7d61d3cf2840082f)
+
+**Catalog**
+* The shipped DeepSeek and Alibaba Token Plan Providers now come with their Pricing Windows and Window Prices attached – [5ca97fc](https://github.com/yhagus/routerlm-oss/commit/5ca97fc0d56f1b0dbe1e99f56910838c5d816698)
+
+**Dashboard**
+* The Window Prices dialog has period inputs and status badges, shows price changes against the standard price (for example `$0.30 (−50%)`), and no longer has a reorder control – [40687e7](https://github.com/yhagus/routerlm-oss/commit/40687e7359296223b79ab94d9084aa2e99cf1ea2), [edd1b8a](https://github.com/yhagus/routerlm-oss/commit/edd1b8a24ca4c0b13f4c13de7d61d3cf2840082f), [6140869](https://github.com/yhagus/routerlm-oss/commit/61408691eac387f25d6f0649946e1cfd7f3e023b)
+* When a new period would overlap an open-ended Window Price, the dialog offers to split that price around it. If the save is then refused, the unsplit prices are kept – [40687e7](https://github.com/yhagus/routerlm-oss/commit/40687e7359296223b79ab94d9084aa2e99cf1ea2), [39eec61](https://github.com/yhagus/routerlm-oss/commit/39eec61145a074aa184145d92263b677ad945fbf)
+* The Pricing Window range editor has an "Always" preset – [10c180d](https://github.com/yhagus/routerlm-oss/commit/10c180da696921d4c38cc2b1448ce2e902c614bc)
+
+**Integrations**
+* `ListModels` pricing windows carry their Validity Period, so a client can show or schedule upcoming price changes – [e97521d](https://github.com/yhagus/routerlm-oss/commit/e97521d8782470c8b7f163fecfa54ec0b2e48b19), [efe110f](https://github.com/yhagus/routerlm-oss/commit/efe110f3b89bba14b14eb9208334791f797f82ce)
+
+**Other improvements**
+* Release pages are titled with the bare version tag – [e8eaf36](https://github.com/yhagus/routerlm-oss/commit/e8eaf368ca97e58b3c0dbb44d7c8d4310a6fa440)
+
+#### Features
+* `catalog`
+  * [5ca97fc](https://github.com/yhagus/routerlm-oss/commit/5ca97fc0d56f1b0dbe1e99f56910838c5d816698) feat(catalog): ship deepseek and alibaba token plan pricing windows
+* `control-plane`
+  * [e97521d](https://github.com/yhagus/routerlm-oss/commit/e97521d8782470c8b7f163fecfa54ec0b2e48b19) feat(control-plane): list window prices with validity periods in ListModels
+* `pricing-windows`
+  * [7330269](https://github.com/yhagus/routerlm-oss/commit/7330269780f5cc2eb4ef3ab25664691666c4a316) feat(pricing-windows): give Window Prices a Validity Period
+  * [4293f0b](https://github.com/yhagus/routerlm-oss/commit/4293f0b99c19ccaf046658431f74f2a32138405f) feat(pricing-windows): refuse Window Prices that can apply at once
+* `web`
+  * [efe110f](https://github.com/yhagus/routerlm-oss/commit/efe110f3b89bba14b14eb9208334791f797f82ce) feat(web): type validity periods on integration pricing windows
+  * [40687e7](https://github.com/yhagus/routerlm-oss/commit/40687e7359296223b79ab94d9084aa2e99cf1ea2) feat(web): give window prices validity periods and offer to split
+  * [edd1b8a](https://github.com/yhagus/routerlm-oss/commit/edd1b8a24ca4c0b13f4c13de7d61d3cf2840082f) feat(web): mirror window prices status and validity period fields
+  * [10c180d](https://github.com/yhagus/routerlm-oss/commit/10c180da696921d4c38cc2b1448ce2e902c614bc) feat(web): add always preset to pricing window ranges
+
+#### Bug fixes
+* `pricing-windows`
+  * [b125967](https://github.com/yhagus/routerlm-oss/commit/b12596762cdc29f6fe0762880b1683b3e48c21de) fix(pricing-windows): order attachments by start instant, drop isActiveNow
+* `web`
+  * [39eec61](https://github.com/yhagus/routerlm-oss/commit/39eec61145a074aa184145d92263b677ad945fbf) fix(web): keep unsplit window prices when a split save is refused
+
+#### Refactors
+* `db`
+  * [6af0d4b](https://github.com/yhagus/routerlm-oss/commit/6af0d4b559018edce1ffe13c3f114f0a19b621c2) refactor(db): share one Transaction type next to Database
+* `pricing-windows`
+  * [1e2daec](https://github.com/yhagus/routerlm-oss/commit/1e2daecabfa3cf6b75315f3b71a791b977e2039d) refactor(pricing-windows): name window timing types in glossary words
+  * [6d41f6e](https://github.com/yhagus/routerlm-oss/commit/6d41f6e339dbb814c8ab34eb224215498ca4f146) refactor(pricing-windows): parse wall clocks once and share time helpers
+* `web`
+  * [6140869](https://github.com/yhagus/routerlm-oss/commit/61408691eac387f25d6f0649946e1cfd7f3e023b) refactor(web): drop isActiveNow from attached pricing windows
+  * [1a74e7e](https://github.com/yhagus/routerlm-oss/commit/1a74e7ec40610b5c0053c63b8e4aba4cc4035e09) refactor(web): read utc offsets with @internationalized/date
+  * [86727e5](https://github.com/yhagus/routerlm-oss/commit/86727e5b6d4c4df26ab74955920188995335d96c) refactor(web): type the window prices put body explicitly
+
+#### Docs
+* `adr`
+  * [5dfc77d](https://github.com/yhagus/routerlm-oss/commit/5dfc77d4e87bf1d515ac92e5246b835646d37e0d) docs(adr): record window closed status and validity period order
+  * [eb82e2b](https://github.com/yhagus/routerlm-oss/commit/eb82e2bef677af20d5c90d028e5132ce4b306691) docs(adr): record validity periods and non-overlapping window prices
+* `db`
+  * [fbb0bd3](https://github.com/yhagus/routerlm-oss/commit/fbb0bd34a694784e6c6d2abb25265ee17d62ca52) docs(db): move the wall-clock column comment to its declaration
+* `web`
+  * [186e3a2](https://github.com/yhagus/routerlm-oss/commit/186e3a27dc9a13c61f3da3d2061ba7b7a627c925) docs(web): point validity period checks at their backend rules
+
+#### Tests
+* `catalog`
+  * [ff66141](https://github.com/yhagus/routerlm-oss/commit/ff66141bd138c7f085ec0081fbc076c417a3a642) test(catalog): assert the seed logs skipped Window Prices
+* `control-plane`
+  * [f4717f9](https://github.com/yhagus/routerlm-oss/commit/f4717f96d18b0dba3011baa55093bc0524a0d099) test(control-plane): give listed Pricing Windows hours that never overlap
+
+#### Build and CI
+* `release`
+  * [e8eaf36](https://github.com/yhagus/routerlm-oss/commit/e8eaf368ca97e58b3c0dbb44d7c8d4310a6fa440) ci(release): title releases with the bare version tag
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v6.1.0...v6.2.0
+
 # v6.1.0 (2026-11-23)
 
 #### Notable changes
