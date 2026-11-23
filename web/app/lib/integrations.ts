@@ -1,4 +1,5 @@
 import type { ApiKeyRotation } from "~/lib/api-keys";
+import type { PricingWindowRange } from "~/lib/pricingWindows";
 import type { Capability, ModelKind } from "~/lib/upstream";
 import { type DetailLine, unitPriceFormat } from "~/lib/upstreamModelMedia";
 
@@ -76,6 +77,18 @@ export interface IntegrationModel {
   pricePerSecondByResolution?: Record<string, number>;
   pricePerMillionCharacters?: number;
   pricePerAudioSecond?: number;
+  /** The enabled Pricing Windows of the first usable Route, in order, with prices resolved. */
+  pricingWindows: IntegrationPricingWindow[];
+}
+
+/** A Pricing Window as an Integration sees it: no name or id, a price left out falls back already. */
+export interface IntegrationPricingWindow {
+  timeZone: string;
+  ranges: PricingWindowRange[];
+  inputPrice?: number;
+  outputPrice?: number;
+  cacheReadPrice?: number;
+  cacheWritePrice?: number;
 }
 
 /** The create and rotate responses: the whole Integration Secret, shown this once. */

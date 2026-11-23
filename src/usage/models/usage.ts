@@ -38,6 +38,8 @@ export interface UsageLogSummary {
   clientIp: string | null;
   /** The Service Tier that served the request; null for the Provider's default. */
   serviceTier: ServiceTier | null;
+  /** The Pricing Window that priced the request, as named then; null for none. */
+  pricingWindowName: string | null;
   inputTokens: number | null;
   outputTokens: number | null;
   cacheReadTokens: number | null;

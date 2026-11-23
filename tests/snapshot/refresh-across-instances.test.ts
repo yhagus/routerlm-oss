@@ -2,9 +2,13 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import request from "supertest";
 import { vi } from "vitest";
+import { upstreamModels } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { RedisConnection } from "@/redis/providers/redis-connection.js";
+import { httpControlPlaneClient } from "@tests/support/control-plane-client.js";
 import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import { createIntegration } from "@tests/support/integrations.js";
+import { deleteAllPricingWindows } from "@tests/support/pricing-windows.js";
 import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
@@ -65,6 +69,7 @@ describe("Snapshot refresh across backend instances (e2e)", () => {
 
   beforeEach(async () => {
     await deleteAllUpstreamData(db);
+    await deleteAllPricingWindows(db);
     cookie = await setUpFirstUser(dashboardInstance, {
       email: "ops@example.com",
       password: "ops password",
@@ -117,6 +122,47 @@ describe("Snapshot refresh across backend instances (e2e)", () => {
         .set("Authorization", `Bearer ${key}`)
         .expect(200);
       expect(response.body.data).toEqual([]);
+    });
+  });
+
+  it("stops pricing at a Pricing Window disabled on the dashboard of another instance", async () => {
+    await insertOpenAiChatModel(dashboardInstance, db, {
+      modelName: "smart",
+      baseUrl: "http://upstream.invalid/v1",
+    });
+    const [{ id: upstreamModelId }] = await db.select().from(upstreamModels);
+    const window = await request(dashboardInstance.getHttpServer())
+      .post("/api/pricing-windows")
+      .set("Cookie", cookie)
+      .send({
+        name: "Weekend",
+        timeZone: "Asia/Jakarta",
+        ranges: [{ weekdays: [6, 7], start: "00:00", end: "24:00" }],
+      })
+      .expect(201);
+    await request(dashboardInstance.getHttpServer())
+      .put(`/api/upstream-models/${upstreamModelId}/pricing-windows`)
+      .set("Cookie", cookie)
+      .send([{ pricingWindowId: window.body.id, inputPrice: 0.5 }])
+      .expect(200);
+    const { secret } = await createIntegration(dashboardInstance, cookie);
+    const inferenceControlPlane = httpControlPlaneClient(inferenceInstance);
+    const listedWindowCount = async (): Promise<number | undefined> => {
+      const listed = await inferenceControlPlane.listModels(secret);
+      return listed.ok ? listed.body.models[0]?.pricingWindows.length : undefined;
+    };
+    await eventually(async () => {
+      expect(await listedWindowCount()).toBe(1);
+    });
+
+    await request(dashboardInstance.getHttpServer())
+      .patch(`/api/pricing-windows/${window.body.id}`)
+      .set("Cookie", cookie)
+      .send({ isEnabled: false })
+      .expect(200);
+
+    await eventually(async () => {
+      expect(await listedWindowCount()).toBe(0);
     });
   });
 

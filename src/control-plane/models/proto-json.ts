@@ -3,7 +3,7 @@ import type {
   CustomerApiKeyPage,
   IssuedCustomerApiKey,
 } from "./customer-api-key.js";
-import type { IntegrationModel } from "./integration-model.js";
+import type { IntegrationModel, IntegrationPricingWindow } from "./integration-model.js";
 import type { IntegrationUsageLog, IntegrationUsageLogPage } from "./integration-usage-log.js";
 
 // The HTTP adapter's bodies, in proto3's JSON mapping of control_plane.proto:
@@ -48,6 +48,22 @@ export interface ModelJson {
   pricePerSecondByResolution?: Record<string, number>;
   pricePerMillionCharacters?: number;
   pricePerAudioSecond?: number;
+  pricingWindows: PricingWindowJson[];
+}
+
+export interface PricingWindowRangeJson {
+  weekdays: number[];
+  start: string;
+  end: string;
+}
+
+export interface PricingWindowJson {
+  timeZone: string;
+  ranges: PricingWindowRangeJson[];
+  inputPrice?: number;
+  outputPrice?: number;
+  cacheReadPrice?: number;
+  cacheWritePrice?: number;
 }
 
 export interface ListModelsResponseJson {
@@ -182,6 +198,19 @@ export function modelJsonOf(model: IntegrationModel): ModelJson {
     pricePerSecondByResolution: prices?.unitPrices.pricePerSecondByResolution ?? undefined,
     pricePerMillionCharacters: prices?.unitPrices.pricePerMillionCharacters ?? undefined,
     pricePerAudioSecond: prices?.unitPrices.pricePerAudioSecond ?? undefined,
+    pricingWindows: model.pricingWindows.map(pricingWindowJsonOf),
+  };
+}
+
+function pricingWindowJsonOf(window: IntegrationPricingWindow): PricingWindowJson {
+  const { prices } = window;
+  return {
+    timeZone: window.timeZone,
+    ranges: window.ranges,
+    inputPrice: prices.inputPrice ?? undefined,
+    outputPrice: prices.outputPrice ?? undefined,
+    cacheReadPrice: prices.cacheReadPrice ?? undefined,
+    cacheWritePrice: prices.cacheWritePrice ?? undefined,
   };
 }
 

@@ -6,7 +6,7 @@ import { attempts, usageLogs } from "@/db/schemas/index.js";
  * The names a Usage Log and its Attempts copy at request time (ADR 0024).
  * Each is operator-entered configuration (the name of a Model, an Upstream
  * Model, a Provider's slug and name, a Provider Account's name, an API Key's
- * and an Integration's name) or the id an Integration gives its Customer,
+ * and an Integration's name, a Pricing Window's name) or the id an Integration gives its Customer,
  * never prompt or response content, so ADR 0004 still holds. The unit tier
  * is a size or resolution key of the Upstream Model's configured prices.
  */
@@ -20,6 +20,7 @@ const SNAPSHOT_NAME_COLUMNS = [
   "integration_name",
   "customer_id",
   "unit_tier",
+  "pricing_window_name",
 ];
 
 /**

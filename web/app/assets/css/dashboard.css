@@ -2948,6 +2948,93 @@ tbody tr:hover {
   justify-self: start;
   margin-top: 2px;
 }
+/* A Pricing Window's ranges: weekday toggles, start, end and remove share one grid with their header. */
+.range-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.range-list > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+}
+.range-list__head,
+.range-list__row {
+  display: grid;
+  grid-template-columns: max-content minmax(72px, 1fr) minmax(72px, 1fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+.range-list__head {
+  margin-bottom: -2px;
+}
+.range-list__head .field__label {
+  color: var(--faint);
+}
+.range-list__weekday {
+  padding: 0 8px;
+}
+.range-list__remove:disabled {
+  opacity: 0.4;
+}
+.range-list__add {
+  justify-self: start;
+  margin-top: 2px;
+}
+@media (max-width: 760px) {
+  .range-list__head {
+    display: none;
+  }
+  .range-list__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;
+  }
+  .range-list__weekdays {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+  }
+}
+/* An Upstream Model's attached Pricing Windows, in the order the gateway tries them. */
+.window-prices {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.window-prices__item {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+}
+.window-prices__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.window-prices__order {
+  color: var(--faint);
+  font-size: 12px;
+}
+.window-prices__actions {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.window-prices__actions .icon-button:disabled {
+  opacity: 0.4;
+}
+.pricing-window-ranges {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 .header-list {
   display: grid;
   gap: 8px;
@@ -4560,6 +4647,12 @@ svg.lucide {
   white-space: nowrap;
 }
 /* The Price column: the amount over its unit, the same shape for every Kind. */
+/* The price, with the Pricing Window that sets it now beneath. */
+.model-table__price {
+  display: inline-grid;
+  justify-items: end;
+  gap: 4px;
+}
 .price-cell {
   display: inline-grid;
   justify-items: end;

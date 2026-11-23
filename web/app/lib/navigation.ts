@@ -2,6 +2,7 @@ import {
   BarChart3,
   Blocks,
   Boxes,
+  CalendarClock,
   Cpu,
   KeyRound,
   LayoutDashboard,
@@ -44,6 +45,7 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       { label: "Providers", path: "/providers", icon: Network },
       { label: "Upstream Models", path: "/upstream-models", icon: Cpu },
+      { label: "Pricing Windows", path: "/pricing-windows", icon: CalendarClock },
     ],
   },
   {

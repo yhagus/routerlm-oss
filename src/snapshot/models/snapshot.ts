@@ -11,7 +11,8 @@ import type {
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
-import type { UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
+import type { PricingWindowSchedule } from "@/pricing-windows/models/pricing-window-activity.js";
+import type { UpstreamModelPrices, UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
 // PostgreSQL query. Disabled rows are kept, with their flags: the inference
@@ -85,6 +86,18 @@ export function validQuirksOf(provider: SnapshotProvider): StoredProviderQuirks 
   return provider.quirks.data;
 }
 
+/**
+ * An enabled Pricing Window an Upstream Model attaches, with its Window Prices
+ * (ADR 0038). Decide whether it applies with `isPricingWindowActiveAt`.
+ * `isEnabled` is always true: disabled windows are left out when the snapshot loads.
+ */
+export interface SnapshotPricingWindow extends PricingWindowSchedule {
+  /** Copied onto the Usage Log of a request it prices. */
+  name: string;
+  /** USD per million tokens; null means the standard price. */
+  windowPrices: UpstreamModelPrices;
+}
+
 export interface SnapshotUpstreamModel {
   id: string;
   upstreamModelId: string;
@@ -100,6 +113,8 @@ export interface SnapshotUpstreamModel {
   cacheWritePrice: number | null;
   serviceTiers: ServiceTier[];
   tierPrices: Partial<Record<ServiceTier, TierPrices>>;
+  /** Only the enabled ones, in the model's order: the first active one wins. Empty for a media Kind. */
+  pricingWindows: SnapshotPricingWindow[];
   /** A media Kind's prices per counted unit. */
   unitPrices: UpstreamModelUnitPrices;
   /** Image sizes as the Provider writes them (`1024*1024`); null when any size goes. */
@@ -130,6 +145,12 @@ export interface SnapshotRoute {
 /** Whether the Upstream Model is enabled along with its Provider, which must also be usable. */
 export function isUpstreamModelUsable(upstreamModel: SnapshotUpstreamModel): boolean {
   return upstreamModel.isEnabled && upstreamModel.provider.isUsable;
+}
+
+/** The Upstream Model's standard token prices: those outside any Service Tier or Pricing Window. */
+export function standardPricesOf(upstreamModel: SnapshotUpstreamModel): UpstreamModelPrices {
+  const { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice } = upstreamModel;
+  return { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice };
 }
 
 /** Whether the Route is enabled all the way to its Provider, so it can serve its Model. */

@@ -147,7 +147,12 @@ const apiKeyLabel = computed(() => {
             </div>
             <div>
               <dt>Cost</dt>
-              <dd class="tabular">{{ formatCost(usageLog.cost) }}</dd>
+              <dd class="tabular">
+                {{ formatCost(usageLog.cost) }}
+                <span v-if="usageLog.pricingWindowName" class="text-muted-foreground">
+                  · {{ usageLog.pricingWindowName }}
+                </span>
+              </dd>
             </div>
             <div>
               <dt>First token</dt>

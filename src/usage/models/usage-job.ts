@@ -114,8 +114,10 @@ export interface ServedBy extends QueuedServingTarget {
   upstreamModelId: string;
   /** Null when it was served at the Provider's default. Missing in jobs queued before tiers existed. */
   serviceTier?: ServiceTier | null;
-  /** The Upstream Model's prices at the Service Tier that served it. */
+  /** The Upstream Model's prices at the Service Tier or Pricing Window that served it. */
   prices: UpstreamModelPrices;
+  /** The Pricing Window that priced it, null for none. Missing in jobs queued before windows existed. */
+  pricingWindowName?: string | null;
   /** Missing in jobs queued before media Kinds were priced. */
   unitPrices?: UpstreamModelUnitPrices;
 }

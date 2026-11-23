@@ -382,3 +382,71 @@ export const upstreamModels = pgTable(
     ),
   ],
 );
+
+/** A day of the week, Monday = 1 to Sunday = 7 (ISO 8601). */
+export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/**
+ * One weekly range of a Pricing Window, in the window's time zone. Times are
+ * `HH:MM`, and `end` may be `24:00`. A range whose end is before its start
+ * crosses midnight and belongs to the weekdays it starts on (ADR 0038).
+ */
+export interface PricingWindowRange {
+  weekdays: IsoWeekday[];
+  start: string;
+  end: string;
+}
+
+/** A named weekly schedule with no prices (GLOSSARY: Pricing Window, ADR 0038). */
+export const pricingWindows = pgTable("pricing_windows", {
+  id: id(),
+  name: text("name").notNull().unique(),
+  // An IANA name, such as `Asia/Shanghai` or `UTC`.
+  timeZone: text("time_zone").notNull(),
+  // Never empty; the API enforces it.
+  ranges: jsonb("ranges").$type<PricingWindowRange[]>().notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/**
+ * A Pricing Window an Upstream Model attaches, with its Window Prices. A price
+ * left null stays the standard one; the first active window in `position` order wins.
+ */
+export const upstreamModelPricingWindows = pgTable(
+  "upstream_model_pricing_windows",
+  {
+    id: id(),
+    upstreamModelId: uuid("upstream_model_id")
+      .notNull()
+      .references(() => upstreamModels.id, { onDelete: "cascade" }),
+    pricingWindowId: uuid("pricing_window_id")
+      .notNull()
+      .references(() => pricingWindows.id, { onDelete: "cascade" }),
+    // Lower comes first.
+    position: integer("position").notNull(),
+    inputPrice: pricePerMillionTokens("input_price"),
+    outputPrice: pricePerMillionTokens("output_price"),
+    cacheReadPrice: pricePerMillionTokens("cache_read_price"),
+    cacheWritePrice: pricePerMillionTokens("cache_write_price"),
+  },
+  (table) => [
+    unique("upstream_model_pricing_windows_model_window_unique").on(
+      table.upstreamModelId,
+      table.pricingWindowId,
+    ),
+    unique("upstream_model_pricing_windows_model_position_unique").on(
+      table.upstreamModelId,
+      table.position,
+    ),
+    // A window with no price of its own would change nothing.
+    check(
+      "upstream_model_pricing_windows_price_check",
+      sql`${table.inputPrice} is not null
+        or ${table.outputPrice} is not null
+        or ${table.cacheReadPrice} is not null
+        or ${table.cacheWritePrice} is not null`,
+    ),
+  ],
+);

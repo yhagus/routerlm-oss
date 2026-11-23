@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   Braces,
   Brain,
+  CalendarClock,
   Clapperboard,
   Eye,
   Images,
@@ -59,6 +60,7 @@ import {
   unitPriceLines,
 } from "~/lib/upstreamModelMedia";
 import { priceSummary } from "~/lib/upstreamModelPrice";
+import { activePricingWindowOf } from "~/lib/pricingWindows";
 import { probeBlockReason } from "~/lib/probe";
 
 /**
@@ -82,7 +84,8 @@ type UpstreamModelDialog =
   | { kind: "details"; upstreamModel: UpstreamModel }
   | { kind: "create" }
   | { kind: "edit"; upstreamModel: UpstreamModel }
-  | { kind: "delete"; upstreamModel: UpstreamModel };
+  | { kind: "delete"; upstreamModel: UpstreamModel }
+  | { kind: "pricing-windows"; upstreamModel: UpstreamModel };
 
 /** What each icon means, shown in its tooltip. */
 const CAPABILITY_HINTS: Record<Capability, string> = {
@@ -508,6 +511,12 @@ function groupReleaseRange(group: UpstreamModelGroup): string {
 /** A group's Kind is its first member's: models sharing an id almost always share a Kind. */
 function rowKind(row: UpstreamModelRow): ModelKind {
   return isUpstreamModelGroup(row) ? row.members[0].kind : row.kind;
+}
+
+/** The Pricing Window whose prices a model charges now; a group row has none of its own. */
+function activeWindowName(row: UpstreamModelRow): string | undefined {
+  if (isUpstreamModelGroup(row)) return undefined;
+  return activePricingWindowOf(row.pricingWindows)?.name;
 }
 
 function rowCapabilities(row: UpstreamModelRow): Capability[] {
@@ -970,9 +979,18 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       }}</template>
     </template>
     <template #cell-price="{ row }">
-      <UpstreamModelPrice
-        :summary="priceSummary(isUpstreamModelGroup(row) ? row.members : [row], rowKind(row))"
-      />
+      <span class="model-table__price">
+        <UpstreamModelPrice
+          :summary="priceSummary(isUpstreamModelGroup(row) ? row.members : [row], rowKind(row))"
+        />
+        <span
+          v-if="activeWindowName(row)"
+          class="status-badge status-badge--good"
+          title="Its Window Prices apply now"
+          ><CalendarClock :size="12" aria-hidden="true" />{{ activeWindowName(row) }} active
+          now</span
+        >
+      </span>
     </template>
     <template #cell-released="{ row }">{{
       isUpstreamModelGroup(row) ? groupReleaseRange(row) : (row.releaseDate ?? "—")
@@ -1000,6 +1018,16 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         >
           <span v-if="isProbing(row)" class="spinner" aria-hidden="true" />
           <Stethoscope v-else :size="14" />
+        </button>
+        <button
+          v-if="row.kind === 'chat'"
+          class="icon-action"
+          type="button"
+          :aria-label="`Pricing Windows of ${upstreamModelLabel(row)}`"
+          title="Pricing Windows"
+          @click="openDialog({ kind: 'pricing-windows', upstreamModel: row })"
+        >
+          <CalendarClock :size="14" />
         </button>
         <button
           class="icon-action"
@@ -1373,6 +1401,14 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       </button>
     </div>
   </AppDialog>
+
+  <UpstreamModelPricingWindowsDialog
+    v-if="dialog?.kind === 'pricing-windows'"
+    :key="dialog.upstreamModel.id"
+    v-model:open="isDialogOpen"
+    :upstream-model="dialog.upstreamModel"
+    :refresh="refresh"
+  />
 
   <UpstreamModelProbeDialog
     v-if="shownProbe"

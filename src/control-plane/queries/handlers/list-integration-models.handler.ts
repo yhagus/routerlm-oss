@@ -5,9 +5,15 @@ import {
   type SnapshotModel,
   type SnapshotRoute,
   type SnapshotUpstreamModel,
+  standardPricesOf,
 } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { IntegrationModel, ModelPrices } from "@/control-plane/models/integration-model.js";
+import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices.js";
+import type {
+  IntegrationModel,
+  IntegrationPricingWindow,
+  ModelPrices,
+} from "@/control-plane/models/integration-model.js";
 import { ListIntegrationModelsQuery } from "@/control-plane/queries/impl/list-integration-models.query.js";
 
 @QueryHandler(ListIntegrationModelsQuery)
@@ -35,6 +41,7 @@ function integrationModelOf(model: SnapshotModel): IntegrationModel {
     kind: model.kind,
     capabilities: combinedCapabilities(servingRoutes),
     prices: firstUpstreamModel === undefined ? null : pricesOf(firstUpstreamModel),
+    pricingWindows: firstUpstreamModel === undefined ? [] : pricingWindowsOf(firstUpstreamModel),
   };
 }
 
@@ -45,11 +52,15 @@ function combinedCapabilities(servingRoutes: SnapshotRoute[]): Capability[] {
 }
 
 function pricesOf(upstreamModel: SnapshotUpstreamModel): ModelPrices {
-  return {
-    inputPrice: upstreamModel.inputPrice,
-    outputPrice: upstreamModel.outputPrice,
-    cacheReadPrice: upstreamModel.cacheReadPrice,
-    cacheWritePrice: upstreamModel.cacheWritePrice,
-    unitPrices: upstreamModel.unitPrices,
-  };
+  return { ...standardPricesOf(upstreamModel), unitPrices: upstreamModel.unitPrices };
+}
+
+/** The snapshot holds only the enabled windows, in the Upstream Model's order. */
+function pricingWindowsOf(upstreamModel: SnapshotUpstreamModel): IntegrationPricingWindow[] {
+  const standard = standardPricesOf(upstreamModel);
+  return upstreamModel.pricingWindows.map((window) => ({
+    timeZone: window.timeZone,
+    ranges: window.ranges,
+    prices: resolvedWindowPrices(standard, window.windowPrices),
+  }));
 }

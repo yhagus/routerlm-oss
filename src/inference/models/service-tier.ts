@@ -1,6 +1,5 @@
 import type { ServiceTierValues } from "@/db/schemas/index.js";
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
 import type { ServiceTier } from "./internal-format.js";
 
 /**
@@ -57,17 +56,4 @@ export function serviceTierOfWireValue(
     return "flex";
   }
   return null;
-}
-
-/**
- * The Upstream Model's prices for requests served at `tier`: the tier's own
- * prices where it has them, the standard prices for the rest.
- */
-export function pricesAtServiceTier(
-  upstreamModel: SnapshotUpstreamModel,
-  tier: ServiceTier | null,
-): UpstreamModelPrices {
-  const { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice } = upstreamModel;
-  const standard = { inputPrice, outputPrice, cacheReadPrice, cacheWritePrice };
-  return tier === null ? standard : { ...standard, ...upstreamModel.tierPrices[tier] };
 }
