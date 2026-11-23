@@ -12,7 +12,6 @@ import { UpdateCustomerApiKeyCommand } from "./commands/impl/update-customer-api
 import { ControlPlaneGrpcExceptionFilter } from "./filters/control-plane-grpc-exception.filter.js";
 import { ControlPlaneError } from "./models/control-plane-error.js";
 import { CONTROL_PLANE_SERVICE } from "./models/control-plane-grpc.js";
-import { type ListModelsResponseJson, listModelsResponseJsonOf } from "./models/proto-json.js";
 import {
   type ApiKeyMessage,
   apiKeyMessageOf,
@@ -24,6 +23,8 @@ import {
   type ListKeysRequest,
   type ListKeysResponseMessage,
   listKeysResponseMessageOf,
+  type ListModelsResponseMessage,
+  listModelsResponseMessageOf,
   type ListUsageLogsRequest,
   type ListUsageLogsResponseMessage,
   listUsageLogsResponseMessageOf,
@@ -136,13 +137,12 @@ export class ControlPlaneGrpcController {
     return listKeysResponseMessageOf(keys);
   }
 
-  // Model has no Timestamp, so its message is its proto3 JSON.
   @GrpcMethod(CONTROL_PLANE_SERVICE, "ListModels")
   async listModels(
     @CurrentUser() integration: IntegrationPrincipal,
-  ): Promise<ListModelsResponseJson> {
+  ): Promise<ListModelsResponseMessage> {
     const models = await this.queryBus.execute(new ListIntegrationModelsQuery(integration));
-    return listModelsResponseJsonOf(models);
+    return listModelsResponseMessageOf(models);
   }
 
   @GrpcMethod(CONTROL_PLANE_SERVICE, "ListUsageLogs")

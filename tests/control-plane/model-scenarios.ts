@@ -201,6 +201,53 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
       });
     });
 
+    it("lists Window Prices with their Validity Period as instants, leaving out ended ones and keeping upcoming ones", async () => {
+      const chat = await insertOpenAiChatModel(app, db, {
+        modelName: "acme-large",
+        baseUrl: UNUSED_BASE_URL,
+        capabilities: [],
+      });
+      await setTokenPrices(chat.routeId, { inputPrice: 3, outputPrice: 15 });
+      const weekendId = await createPricingWindow("Weekend", WEEKEND);
+      // Bounds are wall-clock times in Asia/Jakarta, seven hours ahead of UTC.
+      await attachPricingWindows(await upstreamModelIdOf(chat.routeId), [
+        {
+          pricingWindowId: weekendId,
+          inputPrice: 2,
+          validFrom: "2020-01-01T00:00",
+          validUntil: "2020-02-01T00:00",
+        },
+        {
+          pricingWindowId: weekendId,
+          inputPrice: 1,
+          validFrom: "2020-02-01T00:00",
+          validUntil: "2099-01-01T00:00",
+        },
+        { pricingWindowId: weekendId, inputPrice: 0.5, validFrom: "2099-01-01T00:00" },
+      ]);
+      const { secret } = await createIntegration(app, adaCookie);
+
+      const listed = await client.listModels(secret);
+
+      expect(listed.ok && listed.body.models[0].pricingWindows).toEqual([
+        {
+          timeZone: WINDOW_TIME_ZONE,
+          ranges: WEEKEND,
+          inputPrice: 1,
+          outputPrice: 15,
+          validFrom: "2020-01-31T17:00:00.000Z",
+          validUntil: "2098-12-31T17:00:00.000Z",
+        },
+        {
+          timeZone: WINDOW_TIME_ZONE,
+          ranges: WEEKEND,
+          inputPrice: 0.5,
+          outputPrice: 15,
+          validFrom: "2098-12-31T17:00:00.000Z",
+        },
+      ]);
+    });
+
     it("lists only the enabled Models within the Integration's allowed Models", async () => {
       const sold = await insertOpenAiChatModel(app, db, {
         modelName: "acme-large",

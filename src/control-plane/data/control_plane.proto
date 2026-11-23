@@ -185,6 +185,10 @@ message PricingWindow {
   optional double output_price = 4;
   optional double cache_read_price = 5;
   optional double cache_write_price = 6;
+  // When these prices start and stop applying; each unset when open-ended.
+  // Prices whose period has ended are never listed; those yet to start are.
+  google.protobuf.Timestamp valid_from = 7;
+  google.protobuf.Timestamp valid_until = 8;
 }
 
 message PricingWindowRange {
