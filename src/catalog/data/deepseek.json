@@ -22,6 +22,19 @@
     "retrievedOn": "2026-11-15"
   },
   "notes": "In thinking mode with tools, reasoning_content of every earlier assistant turn must be sent back or the API returns 400. Prices are the peak rates (01:00-04:00 and 06:00-10:00 UTC on weekdays); off-peak is half price. Caching is automatic and no cache write price is published, so cache write is set to the input price. Release dates come from models.dev (https://models.dev/). Context is models.dev's 1,048,576 (the docs say \"1M\"). The pricing page states a 384K maximum output, which is 393,216 tokens (Alibaba states 393,216 for the same models).",
+  "pricingWindows": [
+    {
+      "name": "DeepSeek Off-Peak",
+      "timeZone": "UTC",
+      "ranges": [
+        { "weekdays": [1, 2, 3, 4, 5], "start": "00:00", "end": "01:00" },
+        { "weekdays": [1, 2, 3, 4, 5], "start": "04:00", "end": "06:00" },
+        { "weekdays": [1, 2, 3, 4, 5], "start": "10:00", "end": "24:00" },
+        { "weekdays": [6, 7], "start": "00:00", "end": "24:00" }
+      ],
+      "notes": "Every hour outside the weekday peak (01:00-04:00 and 06:00-10:00 UTC). DeepSeek also bills Chinese public holidays off-peak in full, which a weekly schedule can't express, so Cost on those days is the peak price."
+    }
+  ],
   "upstreamModels": [
     {
       "upstreamModelId": "deepseek-flash",
@@ -38,7 +51,16 @@
         "urls": ["https://api-docs.deepseek.com/quick_start/pricing", "https://models.dev/"],
         "retrievedOn": "2026-11-17"
       },
-      "notes": "Off-peak: input 0.15, cache read 0.003, output 0.6. maxOutputTokens is the published maximum. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price."
+      "notes": "Off-peak prices are in the DeepSeek Off-Peak window, with cache write at the off-peak input price. maxOutputTokens is the published maximum. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price.",
+      "windowPrices": [
+        {
+          "pricingWindow": "DeepSeek Off-Peak",
+          "inputPrice": 0.15,
+          "outputPrice": 0.6,
+          "cacheReadPrice": 0.003,
+          "cacheWritePrice": 0.15
+        }
+      ]
     },
     {
       "upstreamModelId": "deepseek-v4-pro",
@@ -55,7 +77,16 @@
         "urls": ["https://api-docs.deepseek.com/quick_start/pricing", "https://models.dev/"],
         "retrievedOn": "2026-11-17"
       },
-      "notes": "Off-peak: input 0.66, cache read 0.022, output 1.98. Vision not supported. maxOutputTokens is the published maximum. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price."
+      "notes": "Off-peak prices are in the DeepSeek Off-Peak window, with cache write at the off-peak input price. Vision not supported. maxOutputTokens is the published maximum. Cache write is not published; caching is automatic and a first pass is billed as input, so it is set to the input price.",
+      "windowPrices": [
+        {
+          "pricingWindow": "DeepSeek Off-Peak",
+          "inputPrice": 0.66,
+          "outputPrice": 1.98,
+          "cacheReadPrice": 0.022,
+          "cacheWritePrice": 0.66
+        }
+      ]
     }
   ]
 }

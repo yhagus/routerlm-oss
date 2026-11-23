@@ -18,7 +18,7 @@ export async function seedShippedCatalog(): Promise<void> {
   try {
     const result = await app.get(CommandBus).execute(new SeedCatalogCommand(catalog));
     new Logger("Catalog").log(
-      `Created ${result.createdProviders} Providers and ${result.createdUpstreamModels} Upstream Models`,
+      `Created ${result.createdProviders} Providers, ${result.createdUpstreamModels} Upstream Models and ${result.createdPricingWindows} Pricing Windows, and attached ${result.attachedWindowPrices} Window Prices`,
     );
   } finally {
     await app.close();

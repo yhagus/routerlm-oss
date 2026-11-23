@@ -32,6 +32,14 @@ export async function loadCatalog(directory: string): Promise<CatalogProvider[]>
         `Catalog ${fileName}: slug "${provider.slug}" is already used by another file`,
       );
     }
+    const takenWindowName = pricingWindowNamesOf(provider).find((name) =>
+      providers.some((loaded) => pricingWindowNamesOf(loaded).includes(name)),
+    );
+    if (takenWindowName !== undefined) {
+      throw new Error(
+        `Catalog ${fileName}: Pricing Window "${takenWindowName}" is already defined by another file`,
+      );
+    }
     providers.push(provider);
   }
 
@@ -90,6 +98,24 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
     }
   }
 
+  const windowNames = pricingWindowNamesOf(result.data);
+  for (const model of result.data.upstreamModels) {
+    if (model.windowPrices === undefined) continue;
+    if ((model.kind ?? "chat") !== "chat") {
+      throw new Error(
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" has Window Prices, which only a chat model can have`,
+      );
+    }
+    const unknownWindow = model.windowPrices.find(
+      (entry) => !windowNames.includes(entry.pricingWindow),
+    );
+    if (unknownWindow !== undefined) {
+      throw new Error(
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" prices Pricing Window "${unknownWindow.pricingWindow}" that the file doesn't define`,
+      );
+    }
+  }
+
   const modelIds = result.data.upstreamModels.map((model) => model.upstreamModelId);
   const duplicateId = modelIds.find((id, index) => modelIds.indexOf(id) !== index);
   if (duplicateId !== undefined) {
@@ -97,6 +123,10 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
   }
 
   return result.data;
+}
+
+function pricingWindowNamesOf(provider: CatalogProvider): string[] {
+  return (provider.pricingWindows ?? []).map((window) => window.name);
 }
 
 /** Turns `["upstreamModels", 2, "source"]` into `upstreamModels[2] (gpt-x).source`. */

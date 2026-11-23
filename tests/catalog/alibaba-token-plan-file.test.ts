@@ -67,4 +67,26 @@ describe("The Alibaba Token Plan Catalog file", () => {
       cacheWritePrice: 1.875,
     });
   });
+
+  it("ships the plan's night discount as an every-day Asia/Shanghai Pricing Window", async () => {
+    const { pricingWindows } = await shipped();
+
+    expect(pricingWindows).toMatchObject([
+      {
+        name: "Alibaba Token Plan Night",
+        timeZone: "Asia/Shanghai",
+        ranges: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "22:00", end: "08:00" }],
+      },
+    ]);
+  });
+
+  it("prices Qwen3.8 Max at night", async () => {
+    const { upstreamModels } = await shipped();
+
+    expect(
+      upstreamModels.find((model) => model.upstreamModelId === "qwen3.8-max")?.windowPrices,
+    ).toMatchObject([
+      { pricingWindow: "Alibaba Token Plan Night", inputPrice: 0.8, outputPrice: 2.4 },
+    ]);
+  });
 });
