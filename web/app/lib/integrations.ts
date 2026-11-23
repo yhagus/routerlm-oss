@@ -85,6 +85,9 @@ export interface IntegrationModel {
 export interface IntegrationPricingWindow {
   timeZone: string;
   ranges: PricingWindowRange[];
+  /** RFC 3339; left out when open-ended. */
+  validFrom?: string;
+  validUntil?: string;
   inputPrice?: number;
   outputPrice?: number;
   cacheReadPrice?: number;
