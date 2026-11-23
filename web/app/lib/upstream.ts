@@ -181,7 +181,7 @@ export interface ProviderQuirks {
 }
 
 /** The code that reads a Subscription Provider's Quota Meters. */
-export const QUOTA_READERS = ["minimax-m-plan", "kimi-code"] as const;
+export const QUOTA_READERS = ["minimax-m-plan", "kimi-code", "openai-codex"] as const;
 export type QuotaReader = (typeof QUOTA_READERS)[number];
 
 /** For a select: the empty value is a Provider without a quota reader. */
@@ -189,6 +189,7 @@ export const QUOTA_READER_OPTIONS = [
   { label: "None", value: "" },
   { label: "MiniMax M Plan", value: "minimax-m-plan" },
   { label: "Kimi Code", value: "kimi-code" },
+  { label: "OpenAI Codex", value: "openai-codex" },
 ] satisfies { label: string; value: QuotaReader | "" }[];
 
 /** Where an OAuth Login's account is registered: each region signs in at its own host. */
@@ -349,10 +350,22 @@ export interface QuotaMeter {
   observedAt: string;
 }
 
-/** What `POST /provider-accounts/:id/quota-reading` answers, also when the reading failed. */
+/** A one-time grant the Provider honours by restoring the account's Quota Meters early. */
+export interface UsageReset {
+  id: string;
+  title: string;
+  grantedAt: string;
+  /** Null when it never expires. */
+  expiresAt: string | null;
+}
+
+/**
+ * What `POST /provider-accounts/:id/quota-reading` answers, also when the
+ * reading failed, and what spending a Usage Reset answers.
+ */
 export type ProviderAccountQuota = Pick<
   ProviderAccount,
-  "quotaCheckedAt" | "quotaError" | "quotaMeters"
+  "quotaCheckedAt" | "quotaError" | "quotaMeters" | "usageResets"
 >;
 
 /** Never the credential itself: an API key's last four characters, nothing of an OAuth Login. */
@@ -388,6 +401,8 @@ export interface ProviderAccount {
   quotaError: string | null;
   /** Sorted by key. Only the list carries them. */
   quotaMeters: QuotaMeter[];
+  /** Soonest expiry first, never-expiring last; null when its Provider has no Usage Resets. */
+  usageResets: UsageReset[] | null;
   lastError: string | null;
   lastErrorAt: string | null;
   createdAt: string;

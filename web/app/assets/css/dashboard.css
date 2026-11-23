@@ -5032,6 +5032,34 @@ svg.lucide {
   justify-content: space-between;
   gap: 8px;
 }
+/* Picking a Usage Reset to spend: one radio row per reset, hairlines between them */
+.usage-reset-choices {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.usage-reset-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 13px;
+  cursor: pointer;
+}
+.usage-reset-choice:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.usage-reset-choice__title {
+  font-weight: 600;
+}
+.usage-reset-choice__expiry {
+  color: var(--muted);
+  font-size: 12px;
+}
 @media (prefers-reduced-motion: reduce) {
   .quota-meter__fill {
     transition: none;

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { RefreshCw } from "@lucide/vue";
 import { apiErrorMessage } from "~/lib/api";
-import { checkedAgo } from "~/lib/quotaMeters";
+import { checkedAgo, usageResetCount } from "~/lib/quotaMeters";
 import type { ProviderAccount, ProviderAccountQuota } from "~/lib/upstream";
 
 /**
  * A Provider Account's Quota Meters, how fresh they are, the last reading's
  * error, and a Refresh button that reads them now. Scoped meters, which count
- * one model group, sit under a disclosure.
+ * one model group, sit under a disclosure. When its Provider has Usage Resets,
+ * their count and a picker that spends one.
  */
 const props = defineProps<{
   account: ProviderAccount;
@@ -21,9 +22,11 @@ const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 
 const isReading = ref(false);
+const isUsageResetPickerOpen = ref(false);
 
 const mainMeters = computed(() => props.account.quotaMeters.filter((meter) => !meter.scope));
 const scopedMeters = computed(() => props.account.quotaMeters.filter((meter) => meter.scope));
+const usageResetTotal = computed(() => props.account.usageResets?.length ?? 0);
 
 async function handleRefresh(): Promise<void> {
   isReading.value = true;
@@ -58,6 +61,18 @@ async function handleRefresh(): Promise<void> {
     <p v-if="account.quotaError" class="account-quota__error" role="status">
       {{ account.quotaError }}
     </p>
+    <div v-if="account.usageResets" class="account-quota__footer">
+      <span class="cell-note tabular">{{ usageResetCount(usageResetTotal) }}</span>
+      <button
+        v-if="usageResetTotal > 0"
+        class="text-button"
+        type="button"
+        :aria-label="`Use a usage reset on ${account.name}`"
+        @click="isUsageResetPickerOpen = true"
+      >
+        Use a reset…
+      </button>
+    </div>
     <div class="account-quota__footer">
       <span class="cell-note tabular">{{ checkedAgo(account.quotaCheckedAt, now) }}</span>
       <button
@@ -72,5 +87,12 @@ async function handleRefresh(): Promise<void> {
         Refresh
       </button>
     </div>
+    <UsageResetPickerDialog
+      v-if="account.usageResets"
+      v-model:open="isUsageResetPickerOpen"
+      :account="account"
+      :now="now"
+      :refresh="refresh"
+    />
   </div>
 </template>

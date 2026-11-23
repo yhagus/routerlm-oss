@@ -8,8 +8,11 @@ import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
+  type QuotaReading,
   QuotaReadError,
 } from "@/quota-meters/models/quota-reader.js";
+import { codexBackendRequestOf } from "./openai-codex-backend.js";
+import { OpenAiCodexUsageResets } from "./openai-codex-usage-resets.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
 /** On the origin of the Provider's base URL (`https://chatgpt.com/backend-api/codex`). */
@@ -56,6 +59,11 @@ const usageResponseSchema = z.looseObject({
   additional_rate_limits: z
     .array(z.looseObject({ limit_name: z.string().min(1), rate_limit: rateLimitSchema.nullish() }))
     .nullish(),
+  // A count in an unexpected shape loses only the count, never the meters.
+  rate_limit_reset_credits: z
+    .looseObject({ available_count: z.int().nonnegative().nullish() })
+    .nullish()
+    .catch(null),
 });
 
 /**
@@ -65,12 +73,15 @@ const usageResponseSchema = z.looseObject({
  */
 @Injectable()
 export class OpenAiCodexQuotaReader implements QuotaReader {
-  constructor(@InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient) {}
+  constructor(
+    @InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient,
+    readonly usageResets: OpenAiCodexUsageResets,
+  ) {}
 
   async read(
     credential: ProviderAccountCredential,
     { baseUrl }: QuotaReaderProvider,
-  ): Promise<QuotaMeterReading[]> {
+  ): Promise<QuotaReading> {
     const body = await this.fetchUsage(credential, baseUrl);
     const parsed = usageResponseSchema.safeParse(body);
     if (!parsed.success) {
@@ -78,31 +89,32 @@ export class OpenAiCodexQuotaReader implements QuotaReader {
         cause: parsed.error,
       });
     }
-    const { rate_limit: rateLimit, additional_rate_limits: additionalRateLimits } = parsed.data;
+    const {
+      rate_limit: rateLimit,
+      additional_rate_limits: additionalRateLimits,
+      rate_limit_reset_credits: reportedUsageResets,
+    } = parsed.data;
     // Every meter keeps the whole answer raw, so the plan's credits are not lost.
     const plan = metersOf(rateLimit, null, body);
     const additional = (additionalRateLimits ?? []).flatMap((limit) =>
       metersOf(limit.rate_limit, limit.limit_name, body),
     );
-    return [...plan, ...additional];
+    return {
+      meters: [...plan, ...additional],
+      usageResetCount: reportedUsageResets?.available_count ?? null,
+    };
   }
 
   private async fetchUsage(
-    { secret, identityHeaders }: ProviderAccountCredential,
+    credential: ProviderAccountCredential,
     baseUrl: string,
   ): Promise<unknown> {
-    const url = `${new URL(baseUrl).origin}${USAGE_PATH}`;
+    const { url, headers } = codexBackendRequestOf(credential, baseUrl, USAGE_PATH);
     try {
-      const response = await this.http.get(url, {
-        headers: {
-          ...identityHeaders,
-          authorization: `Bearer ${secret}`,
-          accept: "application/json",
-        },
-      });
+      const response = await this.http.get(url, { headers });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "OpenAI");
+      throw asQuotaReadError(error, "OpenAI quota");
     }
   }
 }

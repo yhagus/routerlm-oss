@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { QuotaReaderName } from "@/db/schemas/index.js";
 import type { QuotaReader } from "@/quota-meters/models/quota-reader.js";
+import type { UsageResetPort } from "@/quota-meters/models/usage-reset.js";
 import { KimiCodeQuotaReader } from "./kimi-code-quota-reader.js";
 import { MiniMaxMPlanQuotaReader } from "./minimax-m-plan-quota-reader.js";
 import { OpenAiCodexQuotaReader } from "./openai-codex-quota-reader.js";
@@ -24,5 +25,10 @@ export class QuotaReaders {
 
   readerFor(name: QuotaReaderName): QuotaReader {
     return this.readers[name];
+  }
+
+  /** How the Provider naming `name` lists and spends its Usage Resets; undefined when it has none. */
+  usageResetsOf(name: QuotaReaderName | null): UsageResetPort | undefined {
+    return name === null ? undefined : this.readerFor(name).usageResets;
   }
 }

@@ -326,6 +326,36 @@ export const quotaMeters = pgTable(
   ],
 );
 
+/**
+ * A Usage Reset a Provider Account holds, as its Provider last listed it (ADR
+ * 0041). The account's rows are replaced whenever the list is fetched again;
+ * there is no history. How many it has is the number not yet expired.
+ */
+export const usageResets = pgTable(
+  "usage_resets",
+  {
+    id: id(),
+    providerAccountId: uuid("provider_account_id")
+      .notNull()
+      .references(() => providerAccounts.id, { onDelete: "cascade" }),
+    // The Provider's own id, which spending the reset names.
+    externalId: text("external_id").notNull(),
+    title: text("title").notNull(),
+    grantedAt: at("granted_at").notNull(),
+    // Null when the reset never expires.
+    expiresAt: at("expires_at"),
+    observedAt: at("observed_at").notNull(),
+    // The Provider's own entry, with what the row doesn't hold.
+    raw: jsonb("raw").$type<unknown>().notNull(),
+  },
+  (table) => [
+    unique("usage_resets_provider_account_id_external_id_unique").on(
+      table.providerAccountId,
+      table.externalId,
+    ),
+  ],
+);
+
 export const upstreamModels = pgTable(
   "upstream_models",
   {

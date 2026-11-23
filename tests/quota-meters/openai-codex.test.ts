@@ -229,6 +229,8 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
           scope: null,
         },
       ],
+      // OpenAI said nothing about resets, so none were fetched.
+      usageResets: [],
     });
   });
 

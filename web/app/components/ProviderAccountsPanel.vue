@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { KeyRound, LogIn, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
-import { resetCountdown } from "~/lib/quotaMeters";
+import { resetCountdown, usageResetCount } from "~/lib/quotaMeters";
 import {
   acceptsApiKey,
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
@@ -299,6 +299,11 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
                 STATUS_BADGES[status.kind].label
               }}</span>
               <span v-if="status.note" class="cell-note tabular">{{ status.note }}</span>
+              <span
+                v-if="status.kind === 'exhausted' && account.usageResets?.length"
+                class="cell-note"
+                >{{ usageResetCount(account.usageResets.length) }} available to use</span
+              >
               <span v-if="hasQuota && account.continueWhenExhausted" class="cell-note"
                 >Continues on Credits when exhausted</span
               >
