@@ -1,3 +1,74 @@
+# v6.1.0 (2026-11-23)
+
+#### Notable changes
+
+**Upgrade**
+* Run the 2 new migrations (`20261123053550_pricing_windows`, `20261123064428_usage_log_pricing_window_name`). They add the `pricing_windows` and `upstream_model_pricing_windows` tables and a nullable `pricing_window_name` column on `usage_logs`; the column has no default, so existing rows are not rewritten – [b257057](https://github.com/yhagus/routerlm-oss/commit/b257057f1eb697e74b24156bfe6a1904db15e6a7), [226fabc](https://github.com/yhagus/routerlm-oss/commit/226fabc182b8199cf0fd7f787054cff044237da7)
+* Integrations: `ListModels` (HTTP and gRPC) gains a `pricing_windows` field on each Model, empty when the Model has none. It is additive; clients that ignore unknown fields need no change. The control plane proto adds the `PricingWindow` and `PricingWindowRange` messages – [35bcbbd](https://github.com/yhagus/routerlm-oss/commit/35bcbbd8d533a7eed7447d6bb01adab660432d5c)
+* No breaking changes, no new env variables and no new personal data kept: until an operator creates a Pricing Window, Cost is computed as before.
+
+**Pricing Windows**
+* A Pricing Window is a named weekly schedule (weekdays and times in one IANA time zone, enabled or disabled) that holds no prices. A new Pricing Windows dashboard page creates, edits, disables and deletes them; deleting one removes its Window Prices from every Upstream Model, disabling keeps them but stops them applying – [b257057](https://github.com/yhagus/routerlm-oss/commit/b257057f1eb697e74b24156bfe6a1904db15e6a7), [b3ba254](https://github.com/yhagus/routerlm-oss/commit/b3ba254ef190f0d6b119f7e5c0123fe167c7bfb5), [23e1d60](https://github.com/yhagus/routerlm-oss/commit/23e1d601b5529fd60e0516e2f34121a27b9907da)
+* An Upstream Model attaches windows from its row on the dashboard and gives each its own Window Prices (any of input, output, cache read and cache write; a price left out stays the standard one). Windows keep an order you choose, and the first active enabled window wins. The dialog marks the window in effect – [b257057](https://github.com/yhagus/routerlm-oss/commit/b257057f1eb697e74b24156bfe6a1904db15e6a7), [8810fa1](https://github.com/yhagus/routerlm-oss/commit/8810fa17b36607ab9c89cfa38a89059713caac5e), [e546f54](https://github.com/yhagus/routerlm-oss/commit/e546f5474fbb183ade534854e7945bee2ff6b69a), [61a21d6](https://github.com/yhagus/routerlm-oss/commit/61a21d6d09d758db653239f063b51fcdfb2f9b5e), [3af7ec2](https://github.com/yhagus/routerlm-oss/commit/3af7ec2a18c1f9abd4d81a97ca15dc2f0378ec75)
+* Cost at Window Prices: a request is priced at the first active window, decided by when the gateway received it, and the Usage Log records the window's name. A request that asks for a Service Tier ignores windows. The Usage Log detail page shows the window beside the Cost; past Usage Logs keep their Cost and have no window name – [226fabc](https://github.com/yhagus/routerlm-oss/commit/226fabc182b8199cf0fd7f787054cff044237da7), [d7f3e97](https://github.com/yhagus/routerlm-oss/commit/d7f3e97298904a5766d718ab7c4bc1bde8a5eaaf)
+* Window edits reach every running instance through the snapshot – [fd733ad](https://github.com/yhagus/routerlm-oss/commit/fd733adfc0190c54d9ca850ad414928bcfaabf23)
+
+**Integrations**
+* `ListModels` lists each Model's enabled Pricing Windows (time zone, ranges and the four token prices, with omitted prices filled in with the standard ones), taken from the same Route as the Model's standard prices. The window's name and id are never exposed – [35bcbbd](https://github.com/yhagus/routerlm-oss/commit/35bcbbd8d533a7eed7447d6bb01adab660432d5c)
+
+**Catalog**
+* New z.ai Providers: Coding Plan and API – [1955b8f](https://github.com/yhagus/routerlm-oss/commit/1955b8f6aebf5951d4f7726ac4162178ddfe185f)
+* New ClinePass Provider, plus a `fixedHeaders` Provider quirk (openai-chat only) that sends fixed request headers with every request to the Provider, editable on the Provider form; they override the client's forwarded headers, and the Provider Account's credential still overrides them – [345c8aa](https://github.com/yhagus/routerlm-oss/commit/345c8aa7c4e28a8092712db882b9b4aa43c93f72)
+
+#### Features
+* `catalog`
+  * [1955b8f](https://github.com/yhagus/routerlm-oss/commit/1955b8f6aebf5951d4f7726ac4162178ddfe185f) feat(catalog): add z.ai coding plan and api providers
+  * [345c8aa](https://github.com/yhagus/routerlm-oss/commit/345c8aa7c4e28a8092712db882b9b4aa43c93f72) feat(catalog): add clinepass provider and a fixed-headers quirk
+* `control-plane`
+  * [35bcbbd](https://github.com/yhagus/routerlm-oss/commit/35bcbbd8d533a7eed7447d6bb01adab660432d5c) feat(control-plane): list each model's enabled pricing windows with resolved prices
+* `pricing-windows`
+  * [b257057](https://github.com/yhagus/routerlm-oss/commit/b257057f1eb697e74b24156bfe6a1904db15e6a7) feat(pricing-windows): manage pricing windows and attach window prices
+* `snapshot`
+  * [fd733ad](https://github.com/yhagus/routerlm-oss/commit/fd733adfc0190c54d9ca850ad414928bcfaabf23) feat(snapshot): load each upstream model's enabled pricing windows
+* `usage`
+  * [226fabc](https://github.com/yhagus/routerlm-oss/commit/226fabc182b8199cf0fd7f787054cff044237da7) feat(usage): price requests at the first active pricing window and record its name
+* `web`
+  * [d7f3e97](https://github.com/yhagus/routerlm-oss/commit/d7f3e97298904a5766d718ab7c4bc1bde8a5eaaf) feat(web): show the pricing window beside a usage log's cost
+  * [8810fa1](https://github.com/yhagus/routerlm-oss/commit/8810fa17b36607ab9c89cfa38a89059713caac5e) feat(web): manage an upstream model's pricing windows from its row
+  * [b3ba254](https://github.com/yhagus/routerlm-oss/commit/b3ba254ef190f0d6b119f7e5c0123fe167c7bfb5) feat(web): add the pricing windows page
+
+#### Bug fixes
+* `web`
+  * [e546f54](https://github.com/yhagus/routerlm-oss/commit/e546f5474fbb183ade534854e7945bee2ff6b69a) fix(web): mark the pricing window in effect in the pricing windows dialog
+
+#### Refactors
+* `general`
+  * [2a07219](https://github.com/yhagus/routerlm-oss/commit/2a072190a3f19c3ac369d61517e1cd8993452b43) refactor: replace parent-relative imports with path aliases
+* `pricing-windows`
+  * [3af7ec2](https://github.com/yhagus/routerlm-oss/commit/3af7ec2a18c1f9abd4d81a97ca15dc2f0378ec75) refactor(pricing-windows): share the attachment select and price types
+* `upstream`
+  * [61a21d6](https://github.com/yhagus/routerlm-oss/commit/61a21d6d09d758db653239f063b51fcdfb2f9b5e) refactor(upstream): read attached pricing windows through a query
+
+#### Docs
+* `general`
+  * [23e1d60](https://github.com/yhagus/routerlm-oss/commit/23e1d601b5529fd60e0516e2f34121a27b9907da) docs: define pricing windows and record adr 0038
+
+#### Tests
+* `pricing-windows`
+  * [1ba29ee](https://github.com/yhagus/routerlm-oss/commit/1ba29ee530942fa498791f0a9390ddd2f6daa086) test(pricing-windows): cover served tiers and playground requests in a window
+  * [d19237c](https://github.com/yhagus/routerlm-oss/commit/d19237c40afb3d6031b3c520e4312ae778559cdb) test(pricing-windows): make the noon time zone helper readable
+  * [6943918](https://github.com/yhagus/routerlm-oss/commit/6943918a5b8a68f5da46fabc500efff5452480d3) test(pricing-windows): cover migrating a database with existing usage logs
+* `snapshot`
+  * [b062356](https://github.com/yhagus/routerlm-oss/commit/b062356e9ec62a2e73497231d58c4d52045f1974) test(snapshot): cover a pricing window edit reaching another instance
+* `usage`
+  * [a40e496](https://github.com/yhagus/routerlm-oss/commit/a40e4964b60aa18492416c2d67c039721b2921ed) test(usage): allow the pricing window name among copied usage log names
+
+#### Chores
+* `general`
+  * [a61076f](https://github.com/yhagus/routerlm-oss/commit/a61076f5a5ef3ab7c70fedef046fc13684dc70bc) chore: lint nested ternaries, check web type mirrors and clarify checks
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v6.0.0...v6.1.0
+
 # v6.0.0 (2026-11-22)
 
 #### Notable changes
