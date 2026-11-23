@@ -6,6 +6,7 @@
   ],
   "rules": {
     "typescript/no-floating-promises": "error",
+    "eslint/no-nested-ternary": "error",
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
     "typescript/consistent-type-assertions": [

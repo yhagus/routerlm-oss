@@ -18,7 +18,10 @@ A release is a CHANGELOG section in a fixed format, a version bump and a tag. Se
 
 ## Checks
 
-Before reporting work done, run `bun run check` (lint, format, types; and `cd web && bun run check` for web changes, which needs the root `bun install` first for the type-aware linter), plus `bun run test:docker` for backend changes.
+Before reporting work done, run the checks for each app you changed:
+
+- Backend (`src/`, `tests/`, `scripts/`): `bun run check` and `bun run test:docker`.
+- Web (`web/`): `cd web && bun run check`. It needs the root `bun install` first for the type-aware linter, and it also runs the web mirror check.
 
 ### Tests
 

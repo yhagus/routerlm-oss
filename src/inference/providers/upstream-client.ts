@@ -149,13 +149,23 @@ export class AttemptDeadlines {
     if (error instanceof AttemptFailedError) {
       return error;
     }
-    const failureReason: AttemptFailureReason = whileStreaming
-      ? "stream_interrupted"
-      : error instanceof UpstreamProtocolError
-        ? "server_error"
-        : "connection_error";
-    return new AttemptFailedError(failureReason, null, describe(error), null, { cause: error });
+    return new AttemptFailedError(
+      failureReasonOfThrown(error, whileStreaming),
+      null,
+      describe(error),
+      null,
+      {
+        cause: error,
+      },
+    );
   }
+}
+
+/** The Fallback reason for an error that isn't already an Attempt failure. */
+function failureReasonOfThrown(error: unknown, whileStreaming: boolean): AttemptFailureReason {
+  if (whileStreaming) return "stream_interrupted";
+  if (error instanceof UpstreamProtocolError) return "server_error";
+  return "connection_error";
 }
 
 function describe(error: unknown): string {

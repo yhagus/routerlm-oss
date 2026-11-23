@@ -45,12 +45,14 @@ export const compactNumber = (value: number) => compactFormatter.format(value);
 export const fullNumber = (value: number) => fullFormatter.format(Math.round(value));
 export const percent = (value: number, digits = 1) => `${(value * 100).toFixed(digits)}%`;
 
+/** The step sizes, per power of ten, that read as round numbers on an axis. */
+const NICE_FRACTIONS = [1, 2, 2.5, 5];
+
 function niceStep(rough: number) {
   if (rough <= 0) return 1;
   const magnitude = 10 ** Math.floor(Math.log10(rough));
   const fraction = rough / magnitude;
-  const nice =
-    fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 2.5 ? 2.5 : fraction <= 5 ? 5 : 10;
+  const nice = NICE_FRACTIONS.find((candidate) => fraction <= candidate) ?? 10;
   return nice * magnitude;
 }
 
