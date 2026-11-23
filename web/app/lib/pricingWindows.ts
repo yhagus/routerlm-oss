@@ -129,10 +129,15 @@ export interface RangeForm extends PricingWindowRange {
 
 let nextRangeKey = 0;
 
-/** A row for `range`, or a new one: every weekday, all day. */
-export function rangeFormFor(
-  range: PricingWindowRange = { weekdays: [...ISO_WEEKDAYS], start: "00:00", end: "24:00" },
-): RangeForm {
+/** The whole week: every weekday, all day. */
+export const ALWAYS_RANGE: PricingWindowRange = {
+  weekdays: [...ISO_WEEKDAYS],
+  start: "00:00",
+  end: "24:00",
+};
+
+/** A row for `range`, or a new one covering the whole week. */
+export function rangeFormFor(range: PricingWindowRange = ALWAYS_RANGE): RangeForm {
   nextRangeKey += 1;
   return { key: nextRangeKey, weekdays: [...range.weekdays], start: range.start, end: range.end };
 }
