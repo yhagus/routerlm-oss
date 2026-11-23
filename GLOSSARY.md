@@ -92,7 +92,7 @@ A named weekly schedule, such as "DeepSeek Off-Peak": one or more ranges of week
 _Avoid_: Preset, off-time, off-peak, schedule
 
 **Validity Period**:
-The span in which one Upstream Model's Window Prices can apply, with a start, an end, or both. Outside it they don't apply, even while their Pricing Window is active. Window Prices on a window that covers the whole week, with a Validity Period that ends, model a limited-time sale by the Provider.
+The span in which one Upstream Model's Window Prices can apply, with a start, an end, or both. Outside it they don't apply, even while their Pricing Window is active. Window Prices on a window that covers the whole week, with a Validity Period that ends, model a limited-time sale by the Provider. Against the clock, Window Prices are Scheduled (before the start), Expired (at or after the end), and otherwise Active now while their window is active, or Window closed while it isn't.
 _Avoid_: Promo period, expiry, date range
 
 **Window Prices**:
