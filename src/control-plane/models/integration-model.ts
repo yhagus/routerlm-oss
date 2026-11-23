@@ -1,11 +1,23 @@
-import type { Capability, ModelKind } from "@/db/schemas/index.js";
+import type { Capability, ModelKind, PricingWindowRange } from "@/db/schemas/index.js";
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
+import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
 
 /** What an Integration's Customers pay for a Model: the prices of the Upstream Model it tries first. */
 export type ModelPrices = Pick<
   SnapshotUpstreamModel,
   "inputPrice" | "outputPrice" | "cacheReadPrice" | "cacheWritePrice" | "unitPrices"
 >;
+
+/**
+ * An enabled Pricing Window of the Upstream Model behind the prices, as an
+ * Integration sees it: its schedule and resolved prices, never its name or id.
+ */
+export interface IntegrationPricingWindow {
+  timeZone: string;
+  ranges: PricingWindowRange[];
+  /** Each Window Price left out is filled with the standard price. */
+  prices: UpstreamModelPrices;
+}
 
 /**
  * A Model an Integration may sell, as the control plane shows it to that
@@ -20,4 +32,6 @@ export interface IntegrationModel {
   capabilities: Capability[];
   /** Null when no Route can serve it right now. */
   prices: ModelPrices | null;
+  /** In the Upstream Model's order; empty when no Route can serve it. */
+  pricingWindows: IntegrationPricingWindow[];
 }

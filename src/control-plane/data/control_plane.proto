@@ -167,6 +167,33 @@ message Model {
   optional double price_per_million_characters = 13;
   // Per second of transcribed audio.
   optional double price_per_audio_second = 14;
+  // The enabled Pricing Windows of the same Upstream Model as the prices above,
+  // in its order: while several are active, the first one prices the request.
+  // A request served at a Service Tier ignores them. Empty for a media Kind.
+  repeated PricingWindow pricing_windows = 15;
+}
+
+// Weekly hours in which a Model's token prices change, such as off-peak hours.
+message PricingWindow {
+  // The IANA time zone the ranges are read in, such as `Asia/Shanghai`.
+  string time_zone = 1;
+  // The window is active while any range is.
+  repeated PricingWindowRange ranges = 2;
+  // The token prices inside the window, in USD per million tokens; each falls
+  // back to the Model's own price, and is unset only when that is unpublished.
+  optional double input_price = 3;
+  optional double output_price = 4;
+  optional double cache_read_price = 5;
+  optional double cache_write_price = 6;
+}
+
+message PricingWindowRange {
+  // ISO weekdays the range starts on: Monday = 1 to Sunday = 7.
+  repeated int32 weekdays = 1;
+  // Wall-clock times as HH:MM. An end before the start runs past
+  // midnight into the next day; `24:00` is the end of the day.
+  string start = 2;
+  string end = 3;
 }
 
 message ListModelsResponse {

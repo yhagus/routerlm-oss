@@ -1,5 +1,6 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq, sql } from "drizzle-orm";
+import request from "supertest";
 import { models, routes, upstreamModels } from "@/db/schemas/index.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
@@ -14,6 +15,8 @@ import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/te
 import type { ControlPlaneTransport } from "./key-scenarios.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
+const WINDOW_TIME_ZONE = "Asia/Jakarta";
+const WEEKEND = [{ weekdays: [6, 7], start: "00:00", end: "24:00" }];
 // The Models here are only listed, never called.
 const UNUSED_BASE_URL = "http://127.0.0.1:1/v1";
 
@@ -32,7 +35,9 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
     });
 
     beforeEach(async () => {
-      await db.execute(sql`truncate table integrations, api_keys, models, providers cascade`);
+      await db.execute(
+        sql`truncate table integrations, api_keys, models, providers, pricing_windows cascade`,
+      );
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
     });
@@ -88,6 +93,7 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
               kind: "image",
               capabilities: [],
               pricePerImageBySize: { "1K": 0.04, "2K": 0.08 },
+              pricingWindows: [],
             },
             {
               id: chat.modelId,
@@ -97,6 +103,92 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
               inputPrice: 3,
               outputPrice: 15,
               cacheReadPrice: 0.3,
+              pricingWindows: [],
+            },
+          ],
+        },
+      });
+    });
+
+    async function upstreamModelIdOf(routeId: string): Promise<string> {
+      const [route] = await db.select().from(routes).where(eq(routes.id, routeId));
+      return route.upstreamModelId;
+    }
+
+    async function createPricingWindow(name: string, isEnabled = true): Promise<string> {
+      const created = await request(app.getHttpServer())
+        .post("/api/pricing-windows")
+        .set("Cookie", adaCookie)
+        .send({ name, timeZone: WINDOW_TIME_ZONE, ranges: WEEKEND, isEnabled })
+        .expect(201);
+      return created.body.id;
+    }
+
+    async function attachPricingWindows(upstreamModelId: string, entries: object[]): Promise<void> {
+      await request(app.getHttpServer())
+        .put(`/api/upstream-models/${upstreamModelId}/pricing-windows`)
+        .set("Cookie", adaCookie)
+        .send(entries)
+        .expect(200);
+    }
+
+    it("lists the first Route's enabled Pricing Windows in order, with resolved prices and no name or id", async () => {
+      const chat = await insertOpenAiChatModel(app, db, {
+        modelName: "acme-large",
+        baseUrl: UNUSED_BASE_URL,
+        capabilities: [],
+      });
+      await setTokenPrices(chat.routeId, { inputPrice: 3, outputPrice: 15, cacheReadPrice: 0.3 });
+      const fallback = await addOpenAiChatRoute(app, db, chat.modelId, {
+        baseUrl: UNUSED_BASE_URL,
+        providerSlug: "acme-fallback",
+        priority: 1,
+        capabilities: [],
+      });
+      const lunchId = await createPricingWindow("Lunch");
+      const nightId = await createPricingWindow("Night", false);
+      const weekendId = await createPricingWindow("Weekend");
+      await attachPricingWindows(await upstreamModelIdOf(chat.routeId), [
+        { pricingWindowId: lunchId, inputPrice: 1 },
+        { pricingWindowId: nightId, inputPrice: 0.1 },
+        { pricingWindowId: weekendId, outputPrice: 5, cacheWritePrice: 0.6 },
+      ]);
+      await attachPricingWindows(await upstreamModelIdOf(fallback.routeId), [
+        { pricingWindowId: nightId, inputPrice: 0.2 },
+      ]);
+      const { secret } = await createIntegration(app, adaCookie);
+
+      const listed = await client.listModels(secret);
+
+      expect(listed).toEqual({
+        ok: true,
+        body: {
+          models: [
+            {
+              id: chat.modelId,
+              name: "acme-large",
+              kind: "chat",
+              capabilities: [],
+              inputPrice: 3,
+              outputPrice: 15,
+              cacheReadPrice: 0.3,
+              pricingWindows: [
+                {
+                  timeZone: WINDOW_TIME_ZONE,
+                  ranges: WEEKEND,
+                  inputPrice: 1,
+                  outputPrice: 15,
+                  cacheReadPrice: 0.3,
+                },
+                {
+                  timeZone: WINDOW_TIME_ZONE,
+                  ranges: WEEKEND,
+                  inputPrice: 3,
+                  outputPrice: 5,
+                  cacheReadPrice: 0.3,
+                  cacheWritePrice: 0.6,
+                },
+              ],
             },
           ],
         },
