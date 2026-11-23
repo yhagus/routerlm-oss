@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { IsoWeekday, PricingWindowRange } from "@/db/schemas/index.js";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
+import { parseWallClock } from "@/pricing-windows/models/wall-clock.js";
 
 // What the dashboard sends to create or change Pricing Windows and to attach
 // them to an Upstream Model.
@@ -67,26 +68,15 @@ export const pricingWindowChangesSchema = pricingWindowFieldsSchema
   .refine(hasAnyField, nothingToChange);
 export type PricingWindowChanges = z.infer<typeof pricingWindowChangesSchema>;
 
-/** `YYYY-MM-DDTHH:MM`; it sorts as it reads, so two compare as strings. */
-const WALL_CLOCK_DATE_TIME =
-  /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d$/;
-
-/** Whether `wallClock` is a well-formed date and time that exists on a calendar, so not `2027-02-30T00:00`. */
-function isWallClockDateTime(wallClock: string): boolean {
-  if (!WALL_CLOCK_DATE_TIME.test(wallClock)) {
-    return false;
-  }
-  const asUtc = new Date(`${wallClock}:00Z`);
-  return asUtc.toISOString().startsWith(wallClock);
-}
-
 /**
  * A Validity Period bound on the wall clock of the window's time zone; left
  * out or null, that side is open-ended (ADR 0040).
  */
 const validityBoundSchema = z
   .string()
-  .refine(isWallClockDateTime, { error: "Write a Validity Period bound as YYYY-MM-DDTHH:MM" })
+  .refine((bound) => parseWallClock(bound) !== undefined, {
+    error: "Write a Validity Period bound as YYYY-MM-DDTHH:MM",
+  })
   .nullable()
   .optional();
 
@@ -103,6 +93,7 @@ const windowPricesEntrySchema = z
     validFrom: validityBoundSchema,
     validUntil: validityBoundSchema,
   })
+  // `YYYY-MM-DDTHH:MM` sorts as it reads, so two bounds compare as strings.
   .refine((entry) => !entry.validFrom || !entry.validUntil || entry.validFrom < entry.validUntil, {
     error: "A Validity Period's start must be before its end",
   })

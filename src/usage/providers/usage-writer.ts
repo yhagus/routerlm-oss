@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database, Transaction } from "@/db/schemas/relations.js";
 import {
   apiKeys,
   attempts,
@@ -24,8 +24,6 @@ import type {
 import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
-
 /** A ServingTarget as the writer stores it: a field the job lacked is null. */
 type StoredServingTarget = { [Field in keyof ServingTarget]: ServingTarget[Field] | null };
 

@@ -17,15 +17,15 @@ import {
 import type { WindowPricesEntry } from "@/pricing-windows/schemas/pricing-window.schema.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 
-type ScheduledWindow = Pick<WindowPricesTiming, "timeZone" | "ranges"> & { name: string };
-type ScheduledEntry = WindowPricesTiming & { name: string };
+type NamedWindowHours = Pick<WindowPricesTiming, "timeZone" | "ranges"> & { name: string };
+type NamedWindowPricesTiming = WindowPricesTiming & { name: string };
 
 /** Refuses entries of which two could apply at the same moment (ADR 0040). */
 function assertNoOverlap(
   entries: readonly WindowPricesEntry[],
-  windowsById: ReadonlyMap<string, ScheduledWindow>,
+  windowsById: ReadonlyMap<string, NamedWindowHours>,
 ): void {
-  const scheduledEntries = entries.flatMap((entry): ScheduledEntry[] => {
+  const timedEntries = entries.flatMap((entry): NamedWindowPricesTiming[] => {
     const window = windowsById.get(entry.pricingWindowId);
     if (window === undefined) {
       return [];
@@ -34,7 +34,7 @@ function assertNoOverlap(
       { ...window, validFrom: entry.validFrom ?? null, validUntil: entry.validUntil ?? null },
     ];
   });
-  const overlap = findOverlappingWindowPrices(scheduledEntries, new Date());
+  const overlap = findOverlappingWindowPrices(timedEntries, new Date());
   if (overlap !== undefined) {
     const [first, second] = overlap;
     throw new BadRequestException(
@@ -44,7 +44,7 @@ function assertNoOverlap(
 }
 
 /** `"Whole Week" (from 2026-12-01 00:00 until 2027-01-01 00:00)`, or just the quoted name with no period. */
-function describeEntry(entry: ScheduledEntry): string {
+function describeEntry(entry: NamedWindowPricesTiming): string {
   const period = describeValidityPeriod(entry);
   return period === "" ? `"${entry.name}"` : `"${entry.name}" (${period})`;
 }

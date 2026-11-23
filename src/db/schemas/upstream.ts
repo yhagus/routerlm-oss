@@ -149,7 +149,6 @@ export interface TierPrices {
   cacheWritePrice?: number;
 }
 
-/** USD per million tokens. Six decimals hold prices below a cent per million. */
 /**
  * A date and time on the wall clock of a time zone stored elsewhere, read and
  * written as `YYYY-MM-DDTHH:MM` (a timestamp without time zone).
@@ -160,6 +159,7 @@ const wallClockDateTime = customType<{ data: string; driverData: string }>({
   fromDriver: (stored) => stored.slice(0, "YYYY-MM-DD HH:MM".length).replace(" ", "T"),
 });
 
+/** USD per million tokens. Six decimals hold prices below a cent per million. */
 const pricePerMillionTokens = (name: string) =>
   numeric(name, { precision: 12, scale: 6, mode: "number" });
 
