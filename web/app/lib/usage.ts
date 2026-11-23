@@ -30,6 +30,8 @@ export interface UsageLogSummary extends RecordedIntegration {
   requestBytes: number;
   responseBytes: number;
   cost: number | null;
+  /** The Pricing Window whose Window Prices set the Cost, as named then; null when none did. */
+  pricingWindowName: string | null;
   timeToFirstTokenMs: number | null;
   durationMs: number;
   attemptCount: number;
