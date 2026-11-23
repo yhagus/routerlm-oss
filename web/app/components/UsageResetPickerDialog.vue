@@ -30,21 +30,33 @@ const chosenResetId = computed(() => {
 });
 const isUsing = ref(false);
 const useError = ref("");
+/**
+ * One key per reset per opening, so a double click or a retry after a failed
+ * request can never spend a second reset.
+ */
+const idempotencyKeys = new Map<string, string>();
 
 watch(isOpen, (open) => {
   if (!open) return;
   pickedResetId.value = null;
   useError.value = "";
+  idempotencyKeys.clear();
 });
 
+function idempotencyKeyFor(resetId: string): string {
+  const key = idempotencyKeys.get(resetId) ?? crypto.randomUUID();
+  idempotencyKeys.set(resetId, key);
+  return key;
+}
+
 async function handleUse(): Promise<void> {
-  if (chosenResetId.value === null) return;
+  if (chosenResetId.value === null || isUsing.value) return;
   isUsing.value = true;
   useError.value = "";
   try {
     await $dashboardApi<ProviderAccountQuota>(
       `/provider-accounts/${props.account.id}/usage-resets/${chosenResetId.value}/use`,
-      { method: "POST", body: { idempotencyKey: crypto.randomUUID() } },
+      { method: "POST", body: { idempotencyKey: idempotencyKeyFor(chosenResetId.value) } },
     );
     await props.refresh();
     isOpen.value = false;

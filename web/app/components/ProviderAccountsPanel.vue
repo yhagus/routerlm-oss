@@ -302,7 +302,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
               <span
                 v-if="status.kind === 'exhausted' && account.usageResets?.length"
                 class="cell-note"
-                >{{ usageResetCount(account.usageResets.length) }} available under Quota</span
+                >{{ usageResetCount(account.usageResets.length) }} available to use</span
               >
               <span v-if="hasQuota && account.continueWhenExhausted" class="cell-note"
                 >Continues on Credits when exhausted</span
