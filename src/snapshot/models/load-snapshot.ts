@@ -9,9 +9,11 @@ import {
   type CredentialKind,
   integrations,
   models,
+  pricingWindows,
   providerAccounts,
   providers,
   routes,
+  upstreamModelPricingWindows,
   upstreamModels,
 } from "@/db/schemas/index.js";
 import type {
@@ -20,6 +22,7 @@ import type {
   SnapshotCredential,
   SnapshotEndpoint,
   SnapshotModel,
+  SnapshotPricingWindow,
   SnapshotProvider,
   SnapshotProviderAccount,
   SnapshotUpstreamModel,
@@ -33,6 +36,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     providerRows,
     accountRows,
     upstreamModelRows,
+    pricingWindowRows,
     modelRows,
     routeRows,
     allowsTermsRiskProviders,
@@ -68,6 +72,23 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       .from(providerAccounts)
       .orderBy(asc(providerAccounts.priority), asc(providerAccounts.createdAt)),
     db.select().from(upstreamModels),
+    db
+      .select({
+        upstreamModelId: upstreamModelPricingWindows.upstreamModelId,
+        name: pricingWindows.name,
+        timeZone: pricingWindows.timeZone,
+        ranges: pricingWindows.ranges,
+        isEnabled: pricingWindows.isEnabled,
+        inputPrice: upstreamModelPricingWindows.inputPrice,
+        outputPrice: upstreamModelPricingWindows.outputPrice,
+        cacheReadPrice: upstreamModelPricingWindows.cacheReadPrice,
+        cacheWritePrice: upstreamModelPricingWindows.cacheWritePrice,
+      })
+      .from(upstreamModelPricingWindows)
+      .innerJoin(pricingWindows, eq(pricingWindows.id, upstreamModelPricingWindows.pricingWindowId))
+      // A disabled window never applies, so the inference path never sees it.
+      .where(eq(pricingWindows.isEnabled, true))
+      .orderBy(asc(upstreamModelPricingWindows.position)),
     db.select().from(models),
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
     // Not injected: SettingsModule imports SnapshotModule to call changed().
@@ -112,6 +133,11 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     ]),
   );
 
+  const pricingWindowsByUpstreamModelId = groupBy(
+    pricingWindowRows,
+    (pricingWindow) => pricingWindow.upstreamModelId,
+  );
+
   const upstreamModelsById = new Map<string, SnapshotUpstreamModel>();
   for (const upstreamModel of upstreamModelRows) {
     const provider = providersById.get(upstreamModel.providerId);
@@ -129,6 +155,9 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         cacheWritePrice: upstreamModel.cacheWritePrice,
         serviceTiers: upstreamModel.serviceTiers,
         tierPrices: upstreamModel.tierPrices,
+        pricingWindows: (pricingWindowsByUpstreamModelId.get(upstreamModel.id) ?? []).map(
+          snapshotPricingWindowOf,
+        ),
         unitPrices: {
           pricePerImage: upstreamModel.pricePerImage,
           pricePerImageBySize: upstreamModel.pricePerImageBySize,
@@ -242,6 +271,23 @@ function endpointsByKind(
     byKind[kind] = { protocol, baseUrl };
   }
   return byKind;
+}
+
+function snapshotPricingWindowOf(
+  row: Omit<SnapshotPricingWindow, "windowPrices"> & SnapshotPricingWindow["windowPrices"],
+): SnapshotPricingWindow {
+  return {
+    name: row.name,
+    timeZone: row.timeZone,
+    ranges: row.ranges,
+    isEnabled: row.isEnabled,
+    windowPrices: {
+      inputPrice: row.inputPrice,
+      outputPrice: row.outputPrice,
+      cacheReadPrice: row.cacheReadPrice,
+      cacheWritePrice: row.cacheWritePrice,
+    },
+  };
 }
 
 function groupBy<T>(items: T[], keyOf: (item: T) => string): Map<string, T[]> {

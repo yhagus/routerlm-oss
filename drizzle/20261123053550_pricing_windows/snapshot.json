@@ -1,0 +1,478 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4cfe7511-ba75-40d1-a219-e24e9985dff0",
+  "prevIds": [
+    "f61f6e3f-6dcb-4732-88ff-06b79d5ec39f"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "pricing_windows"
+      ],
+      "writes": [
+        "s|tbl|public.pricing_windows",
+        "n|tbl|public.pricing_windows",
+        "e|tbl|public.pricing_windows",
+        "n|rel|public.pricing_windows",
+        "n|type|public.pricing_windows",
+        "n|rel|public.pricing_windows_pkey",
+        "n|rel|public.pricing_windows_name_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "upstream_model_pricing_windows"
+      ],
+      "writes": [
+        "s|tbl|public.upstream_model_pricing_windows",
+        "n|tbl|public.upstream_model_pricing_windows",
+        "e|tbl|public.upstream_model_pricing_windows",
+        "n|rel|public.upstream_model_pricing_windows",
+        "n|type|public.upstream_model_pricing_windows",
+        "n|rel|public.upstream_model_pricing_windows_pkey",
+        "n|rel|public.upstream_model_pricing_windows_model_window_unique",
+        "n|rel|public.upstream_model_pricing_windows_model_position_unique"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "upstream_model_pricing_windows"
+      ],
+      "writes": [
+        "s|fk|public.upstream_model_pricing_windows.upstream_model_pricing_windows_usUTIr9QkhL5_fkey",
+        "n|fk|public.upstream_model_pricing_windows.upstream_model_pricing_windows_usUTIr9QkhL5_fkey",
+        "e|fk|public.upstream_model_pricing_windows.upstream_model_pricing_windows_usUTIr9QkhL5_fkey",
+        "n|con|public.upstream_model_pricing_windows.upstream_model_pricing_windows_usUTIr9QkhL5_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_model_pricing_windows",
+        "n|sch|public",
+        "n|tbl|public.upstream_models",
+        "n|sch|public",
+        "n|col|public.upstream_model_pricing_windows.upstream_model_id",
+        "n|col|public.upstream_models.id",
+        "e|uniqueness|public.upstream_models.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "upstream_model_pricing_windows"
+      ],
+      "writes": [
+        "s|fk|public.upstream_model_pricing_windows.upstream_model_pricing_windows_pJuPLWCj2Shh_fkey",
+        "n|fk|public.upstream_model_pricing_windows.upstream_model_pricing_windows_pJuPLWCj2Shh_fkey",
+        "e|fk|public.upstream_model_pricing_windows.upstream_model_pricing_windows_pJuPLWCj2Shh_fkey",
+        "n|con|public.upstream_model_pricing_windows.upstream_model_pricing_windows_pJuPLWCj2Shh_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_model_pricing_windows",
+        "n|sch|public",
+        "n|tbl|public.pricing_windows",
+        "n|sch|public",
+        "n|col|public.upstream_model_pricing_windows.pricing_window_id",
+        "n|col|public.pricing_windows.id",
+        "e|uniqueness|public.pricing_windows.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "pricing_windows",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "upstream_model_pricing_windows",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "time_zone",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "ranges",
+        "type": "jsonb",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "is_enabled",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "true",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "pricing_window_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "input_price",
+        "type": "numeric(12,6)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "output_price",
+        "type": "numeric(12,6)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "cache_read_price",
+        "type": "numeric(12,6)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "cache_write_price",
+        "type": "numeric(12,6)",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_pricing_windows_usUTIr9QkhL5_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "upstream_model_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "upstream_models",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_pricing_windows_pJuPLWCj2Shh_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "pricing_window_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "pricing_windows",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "pricing_windows_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_pricing_windows_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_pricing_windows_model_window_unique",
+        "nameExplicit": true,
+        "columns": [
+          "upstream_model_id",
+          "pricing_window_id"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_pricing_windows_model_position_unique",
+        "nameExplicit": true,
+        "columns": [
+          "upstream_model_id",
+          "position"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "pricing_windows",
+        "name": "pricing_windows_name_key",
+        "nameExplicit": false,
+        "columns": [
+          "name"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_model_pricing_windows",
+        "name": "upstream_model_pricing_windows_price_check",
+        "value": "\"input_price\" is not null\n        or \"output_price\" is not null\n        or \"cache_read_price\" is not null\n        or \"cache_write_price\" is not null",
+        "entityType": "checks"
+      }
+    }
+  ]
+}

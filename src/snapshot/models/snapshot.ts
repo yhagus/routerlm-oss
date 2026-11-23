@@ -6,11 +6,14 @@ import type {
   Capability,
   ModelKind,
   ParameterPolicy,
+  PricingWindowRange,
   ServiceTierValues,
   TierPrices,
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
+import type { PricingWindowSchedule } from "@/pricing-windows/models/pricing-window-activity.js";
+import type { WindowPrices } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 import type { UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
 
 // The in-memory copy of everything the inference path reads, so it makes no
@@ -85,6 +88,21 @@ export function validQuirksOf(provider: SnapshotProvider): StoredProviderQuirks 
   return provider.quirks.data;
 }
 
+/**
+ * An enabled Pricing Window an Upstream Model attaches, with its Window Prices
+ * (ADR 0038). Decide whether it applies with `isPricingWindowActiveAt`.
+ */
+export interface SnapshotPricingWindow extends PricingWindowSchedule {
+  /** Copied onto the Usage Log of a request it prices. */
+  name: string;
+  timeZone: string;
+  ranges: PricingWindowRange[];
+  /** Always true: disabled windows are left out when the snapshot loads. */
+  isEnabled: boolean;
+  /** USD per million tokens; null means the standard price. */
+  windowPrices: WindowPrices;
+}
+
 export interface SnapshotUpstreamModel {
   id: string;
   upstreamModelId: string;
@@ -100,6 +118,8 @@ export interface SnapshotUpstreamModel {
   cacheWritePrice: number | null;
   serviceTiers: ServiceTier[];
   tierPrices: Partial<Record<ServiceTier, TierPrices>>;
+  /** Only the enabled ones, in the model's order: the first active one wins. Empty for a media Kind. */
+  pricingWindows: SnapshotPricingWindow[];
   /** A media Kind's prices per counted unit. */
   unitPrices: UpstreamModelUnitPrices;
   /** Image sizes as the Provider writes them (`1024*1024`); null when any size goes. */

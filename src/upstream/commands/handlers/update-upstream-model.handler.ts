@@ -4,6 +4,7 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { providers, routes, upstreamModels } from "@/db/schemas/index.js";
+import { attachedPricingWindowNames } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
   assertProviderServesKind,
@@ -51,6 +52,13 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
           if (usedByRoute) {
             throw new BadRequestException(
               "Routes use this Upstream Model, so its Kind can't change; remove them first",
+            );
+          }
+          // Only a chat Upstream Model has Window Prices (ADR 0038).
+          const pricingWindowNames = await attachedPricingWindowNames(tx, upstreamModelId);
+          if (pricingWindowNames.length > 0) {
+            throw new BadRequestException(
+              `The Pricing Windows ${pricingWindowNames.join(", ")} give this Upstream Model Window Prices, so its Kind can't change; detach them first`,
             );
           }
         }
