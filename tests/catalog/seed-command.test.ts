@@ -87,10 +87,10 @@ const NIGHT: CatalogPricingWindow = {
   timeZone: "UTC",
   ranges: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "22:00", end: "08:00" }],
 };
-const WEEKEND: CatalogPricingWindow = {
-  name: "Example Weekend",
+const LUNCH: CatalogPricingWindow = {
+  name: "Example Lunch",
   timeZone: "UTC",
-  ranges: [{ weekdays: [6, 7], start: "00:00", end: "24:00" }],
+  ranges: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "12:00", end: "13:00" }],
 };
 
 function windowedModel(
@@ -129,19 +129,19 @@ const windowedCatalog: CatalogProvider[] = [
   },
 ];
 
-/** The same Provider after a later Catalog adds the Weekend window. */
-const windowedCatalogWithWeekend: CatalogProvider[] = [
+/** The same Provider after a later Catalog adds the Lunch window. */
+const windowedCatalogWithLunch: CatalogProvider[] = [
   {
     ...windowedCatalog[0],
-    pricingWindows: [NIGHT, WEEKEND],
+    pricingWindows: [NIGHT, LUNCH],
     upstreamModels: [
       windowedModel("windowed-large", [
         { pricingWindow: NIGHT.name, inputPrice: 1, outputPrice: 4 },
-        { pricingWindow: WEEKEND.name, cacheReadPrice: 0.1 },
+        { pricingWindow: LUNCH.name, cacheReadPrice: 0.1 },
       ]),
       windowedModel("windowed-small", [
         { pricingWindow: NIGHT.name, inputPrice: 0.5 },
-        { pricingWindow: WEEKEND.name, inputPrice: 0.25 },
+        { pricingWindow: LUNCH.name, inputPrice: 0.25 },
       ]),
     ],
   },
@@ -430,12 +430,11 @@ describe("Seed Catalog command (e2e)", () => {
   });
 
   describe("Pricing Windows", () => {
-    /** The Pricing Windows an Upstream Model attaches, in position order. */
+    /** The Pricing Windows an Upstream Model attaches, by window name. */
     async function windowPricesOf(upstreamModelId: string) {
       return db
         .select({
           window: schema.pricingWindows.name,
-          position: schema.upstreamModelPricingWindows.position,
           inputPrice: schema.upstreamModelPricingWindows.inputPrice,
           outputPrice: schema.upstreamModelPricingWindows.outputPrice,
           cacheReadPrice: schema.upstreamModelPricingWindows.cacheReadPrice,
@@ -451,7 +450,7 @@ describe("Seed Catalog command (e2e)", () => {
           eq(schema.upstreamModels.id, schema.upstreamModelPricingWindows.upstreamModelId),
         )
         .where(eq(schema.upstreamModels.upstreamModelId, upstreamModelId))
-        .orderBy(asc(schema.upstreamModelPricingWindows.position));
+        .orderBy(asc(schema.pricingWindows.name));
     }
 
     async function storedWindow(name: string) {
@@ -470,7 +469,6 @@ describe("Seed Catalog command (e2e)", () => {
       expect(await windowPricesOf("windowed-large")).toEqual([
         {
           window: NIGHT.name,
-          position: 0,
           inputPrice: 1,
           outputPrice: 4,
           cacheReadPrice: null,
@@ -512,35 +510,78 @@ describe("Seed Catalog command (e2e)", () => {
       expect(await windowPricesOf("windowed-small")).toEqual([]);
     });
 
-    it("attaches a window a later Catalog adds after the models' existing windows", async () => {
-      await commandBus.execute(new SeedCatalogCommand(windowedCatalogWithWeekend));
+    it("attaches a window a later Catalog adds to the models", async () => {
+      await commandBus.execute(new SeedCatalogCommand(windowedCatalogWithLunch));
 
-      const large = await windowPricesOf("windowed-large");
-      expect(large.map(({ window, position }) => [window, position])).toEqual([
-        [NIGHT.name, 0],
-        [WEEKEND.name, 1],
+      expect(await windowPricesOf("windowed-large")).toMatchObject([
+        { window: LUNCH.name, cacheReadPrice: 0.1, inputPrice: null },
+        { window: NIGHT.name, inputPrice: 1 },
       ]);
-      expect(large[1]).toMatchObject({ cacheReadPrice: 0.1, inputPrice: null });
       expect(await windowPricesOf("windowed-small")).toMatchObject([
-        { window: WEEKEND.name, position: 0, inputPrice: 0.25 },
+        { window: LUNCH.name, inputPrice: 0.25 },
       ]);
     });
 
-    it("brings back a deleted window, attached after the models' remaining windows", async () => {
+    it("brings back a deleted window, attached to the models that list it", async () => {
       await db.delete(schema.pricingWindows).where(eq(schema.pricingWindows.name, NIGHT.name));
 
-      await commandBus.execute(new SeedCatalogCommand(windowedCatalogWithWeekend));
+      await commandBus.execute(new SeedCatalogCommand(windowedCatalogWithLunch));
 
       expect(await storedWindow(NIGHT.name)).toMatchObject({ ...NIGHT, isEnabled: true });
       const large = await windowPricesOf("windowed-large");
-      expect(large.map(({ window, position }) => [window, position])).toEqual([
-        [WEEKEND.name, 1],
-        [NIGHT.name, 2],
-      ]);
+      expect(large.map(({ window }) => window)).toEqual([LUNCH.name, NIGHT.name]);
       const small = await windowPricesOf("windowed-small");
-      expect(small.map(({ window, position }) => [window, position])).toEqual([
-        [WEEKEND.name, 0],
-        [NIGHT.name, 1],
+      expect(small.map(({ window }) => window)).toEqual([LUNCH.name, NIGHT.name]);
+    });
+
+    it("skips a Catalog window that would overlap an operator's attachment, keeping the operator's", async () => {
+      const [large] = await db
+        .select({ id: schema.upstreamModels.id })
+        .from(schema.upstreamModels)
+        .where(eq(schema.upstreamModels.upstreamModelId, "windowed-large"));
+      const [sale] = await db
+        .insert(schema.pricingWindows)
+        .values({
+          name: "Operator Sale",
+          timeZone: "UTC",
+          ranges: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "00:00", end: "24:00" }],
+        })
+        .returning({ id: schema.pricingWindows.id });
+      await db
+        .delete(schema.upstreamModelPricingWindows)
+        .where(eq(schema.upstreamModelPricingWindows.upstreamModelId, large?.id ?? ""));
+      await db.insert(schema.upstreamModelPricingWindows).values({
+        upstreamModelId: large?.id ?? "",
+        pricingWindowId: sale?.id ?? "",
+        inputPrice: 1,
+      });
+      const evening: CatalogPricingWindow = {
+        name: "Example Evening",
+        timeZone: "UTC",
+        ranges: [{ weekdays: [1, 2, 3, 4, 5], start: "18:00", end: "20:00" }],
+      };
+
+      const result = await commandBus.execute(
+        new SeedCatalogCommand([
+          {
+            ...windowedCatalog[0],
+            pricingWindows: [evening],
+            upstreamModels: [
+              windowedModel("windowed-large", [{ pricingWindow: evening.name, inputPrice: 0.5 }]),
+            ],
+          },
+        ]),
+      );
+
+      expect(result).toMatchObject({ attachedWindowPrices: 0, skippedWindowPrices: 1 });
+      expect(await windowPricesOf("windowed-large")).toEqual([
+        {
+          window: "Operator Sale",
+          inputPrice: 1,
+          outputPrice: null,
+          cacheReadPrice: null,
+          cacheWritePrice: null,
+        },
       ]);
     });
   });

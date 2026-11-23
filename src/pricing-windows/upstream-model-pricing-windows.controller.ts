@@ -21,7 +21,7 @@ export class UpstreamModelPricingWindowsController {
     return this.queryBus.execute(new ListUpstreamModelPricingWindowsQuery(upstreamModelId));
   }
 
-  /** Attaches, detaches and reorders in one call: the body is the whole new list. */
+  /** Attaches, detaches and changes prices in one call: the body is the whole new list. */
   @Put(":id/pricing-windows")
   replaceUpstreamModelPricingWindows(
     @Param("id", ParseUUIDPipe) upstreamModelId: string,

@@ -412,7 +412,8 @@ export const pricingWindows = pgTable("pricing_windows", {
 
 /**
  * A Pricing Window an Upstream Model attaches, with its Window Prices. A price
- * left null stays the standard one; the first active window in `position` order wins.
+ * left null stays the standard one. No two of a model's attachments can apply
+ * at the same moment (ADR 0040); the API enforces it.
  */
 export const upstreamModelPricingWindows = pgTable(
   "upstream_model_pricing_windows",
@@ -424,22 +425,12 @@ export const upstreamModelPricingWindows = pgTable(
     pricingWindowId: uuid("pricing_window_id")
       .notNull()
       .references(() => pricingWindows.id, { onDelete: "cascade" }),
-    // Lower comes first.
-    position: integer("position").notNull(),
     inputPrice: pricePerMillionTokens("input_price"),
     outputPrice: pricePerMillionTokens("output_price"),
     cacheReadPrice: pricePerMillionTokens("cache_read_price"),
     cacheWritePrice: pricePerMillionTokens("cache_write_price"),
   },
   (table) => [
-    unique("upstream_model_pricing_windows_model_window_unique").on(
-      table.upstreamModelId,
-      table.pricingWindowId,
-    ),
-    unique("upstream_model_pricing_windows_model_position_unique").on(
-      table.upstreamModelId,
-      table.position,
-    ),
     // A window with no price of its own would change nothing.
     check(
       "upstream_model_pricing_windows_price_check",

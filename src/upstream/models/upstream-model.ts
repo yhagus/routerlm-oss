@@ -17,7 +17,7 @@ import type { AttachedPricingWindow } from "@/pricing-windows/models/upstream-mo
 /** An Upstream Model as the dashboard API returns it. */
 export type UpstreamModel = typeof upstreamModels.$inferSelect;
 
-/** An Upstream Model in the dashboard's list, with its Pricing Windows in its order. */
+/** An Upstream Model in the dashboard's list, with its Pricing Windows by window name. */
 export interface ListedUpstreamModel extends UpstreamModel {
   pricingWindows: AttachedPricingWindow[];
 }

@@ -113,7 +113,7 @@ export interface SnapshotUpstreamModel {
   cacheWritePrice: number | null;
   serviceTiers: ServiceTier[];
   tierPrices: Partial<Record<ServiceTier, TierPrices>>;
-  /** Only the enabled ones, in the model's order: the first active one wins. Empty for a media Kind. */
+  /** Only the enabled ones; at most one is active at any moment (ADR 0040). Empty for a media Kind. */
   pricingWindows: SnapshotPricingWindow[];
   /** A media Kind's prices per counted unit. */
   unitPrices: UpstreamModelUnitPrices;

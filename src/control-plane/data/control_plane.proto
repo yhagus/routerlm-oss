@@ -167,8 +167,8 @@ message Model {
   optional double price_per_million_characters = 13;
   // Per second of transcribed audio.
   optional double price_per_audio_second = 14;
-  // The enabled Pricing Windows of the same Upstream Model as the prices above,
-  // in its order: while several are active, the first one prices the request.
+  // The enabled Pricing Windows of the same Upstream Model as the prices above.
+  // At most one is active at any moment, and it prices the request.
   // A request served at a Service Tier ignores them. Empty for a media Kind.
   repeated PricingWindow pricing_windows = 15;
 }

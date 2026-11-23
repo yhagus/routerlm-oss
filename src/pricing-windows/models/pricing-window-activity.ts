@@ -85,7 +85,7 @@ function rangeCovers(range: PricingWindowRange, weekday: IsoWeekday, minuteOfDay
 /**
  * Whether the Pricing Window is active at `instant`, read on the wall clock of
  * its time zone. A disabled window is never active. Cost and the dashboard's
- * "active now" both decide with this one function (ADR 0038).
+ * "active now" both decide with this one function (ADR 0038, ADR 0040).
  */
 export function isPricingWindowActiveAt(window: PricingWindowSchedule, instant: Date): boolean {
   if (!window.isEnabled) {

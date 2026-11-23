@@ -9,7 +9,32 @@ import {
   type AttachedPricingWindow,
   readPricingWindowsOf,
 } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
+import {
+  findOverlappingWindowPrices,
+  type WindowPricesTiming,
+} from "@/pricing-windows/models/window-prices-overlap.js";
+import type { WindowPricesEntry } from "@/pricing-windows/schemas/pricing-window.schema.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+
+type ScheduledWindow = WindowPricesTiming & { name: string };
+
+/** Refuses entries of which two could apply at the same moment (ADR 0040). */
+function assertNoOverlap(
+  entries: readonly WindowPricesEntry[],
+  windowsById: ReadonlyMap<string, ScheduledWindow>,
+): void {
+  const scheduledEntries = entries.flatMap((entry) => {
+    const window = windowsById.get(entry.pricingWindowId);
+    return window === undefined ? [] : [window];
+  });
+  const overlap = findOverlappingWindowPrices(scheduledEntries, new Date());
+  if (overlap !== undefined) {
+    const [first, second] = overlap;
+    throw new BadRequestException(
+      `The Window Prices for "${first.name}" and "${second.name}" can apply at the same moment; only one may apply at a time`,
+    );
+  }
+}
 
 @CommandHandler(ReplaceUpstreamModelPricingWindowsCommand)
 export class ReplaceUpstreamModelPricingWindowsHandler implements ICommandHandler<ReplaceUpstreamModelPricingWindowsCommand> {
@@ -38,17 +63,23 @@ export class ReplaceUpstreamModelPricingWindowsHandler implements ICommandHandle
         );
       }
 
-      const pricingWindowIds = entries.map((entry) => entry.pricingWindowId);
+      const pricingWindowIds = [...new Set(entries.map((entry) => entry.pricingWindowId))];
       if (pricingWindowIds.length > 0) {
-        // Locked, so none is deleted before the new links reference it.
+        // Locked, so none is deleted or rescheduled before the new links reference it.
         const found = await tx
-          .select({ id: pricingWindows.id })
+          .select({
+            id: pricingWindows.id,
+            name: pricingWindows.name,
+            timeZone: pricingWindows.timeZone,
+            ranges: pricingWindows.ranges,
+          })
           .from(pricingWindows)
           .where(inArray(pricingWindows.id, pricingWindowIds))
           .for("share");
         if (found.length !== pricingWindowIds.length) {
           throw new NotFoundException("Pricing Window not found");
         }
+        assertNoOverlap(entries, new Map(found.map((window) => [window.id, window])));
       }
 
       await tx
@@ -56,10 +87,9 @@ export class ReplaceUpstreamModelPricingWindowsHandler implements ICommandHandle
         .where(eq(upstreamModelPricingWindows.upstreamModelId, upstreamModelId));
       if (entries.length > 0) {
         await tx.insert(upstreamModelPricingWindows).values(
-          entries.map((entry, position) => ({
+          entries.map((entry) => ({
             upstreamModelId,
             pricingWindowId: entry.pricingWindowId,
-            position,
             inputPrice: entry.inputPrice ?? null,
             outputPrice: entry.outputPrice ?? null,
             cacheReadPrice: entry.cacheReadPrice ?? null,
