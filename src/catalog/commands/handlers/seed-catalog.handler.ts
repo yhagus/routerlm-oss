@@ -24,7 +24,7 @@ import {
   type WindowPricesTiming,
 } from "@/pricing-windows/models/window-prices-overlap.js";
 
-type ScheduledWindow = WindowPricesTiming & { name: string };
+type NamedWindowPricesTiming = WindowPricesTiming & { name: string };
 
 /** Keeps the stored price, or takes the Catalog's when the stored one is empty. */
 function fillPrice(column: AnyColumn, catalogPrice: number | null): SQL {
@@ -325,7 +325,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
       if (modelId === undefined) {
         throw new Error(`Upstream Model "${model.upstreamModelId}" vanished while seeding`);
       }
-      const modelWindows: ScheduledWindow[] = await selectAttachedPricingWindows(
+      const modelWindows: NamedWindowPricesTiming[] = await selectAttachedPricingWindows(
         tx,
         eq(upstreamModelPricingWindows.upstreamModelId, modelId),
       );
@@ -337,7 +337,11 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
           throw new Error(`Pricing Window "${entry.pricingWindow}" vanished while seeding`);
         }
         // The Catalog ships no Validity Periods (ADR 0040).
-        const window: ScheduledWindow = { ...storedWindow, validFrom: null, validUntil: null };
+        const window: NamedWindowPricesTiming = {
+          ...storedWindow,
+          validFrom: null,
+          validUntil: null,
+        };
         const overlapping = modelWindows.find((other) => doWindowPricesOverlap(window, other, now));
         if (overlapping !== undefined) {
           this.logger.warn(
