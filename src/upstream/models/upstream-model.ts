@@ -12,9 +12,15 @@ import {
   UNIQUE_VIOLATION,
 } from "@/libs/models/postgres-errors.js";
 import type { upstreamModels } from "@/db/schemas/index.js";
+import type { AttachedPricingWindow } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 
 /** An Upstream Model as the dashboard API returns it. */
 export type UpstreamModel = typeof upstreamModels.$inferSelect;
+
+/** An Upstream Model in the dashboard's list, with its Pricing Windows in its order. */
+export interface ListedUpstreamModel extends UpstreamModel {
+  pricingWindows: AttachedPricingWindow[];
+}
 
 /** The HTTP error for a failed Upstream Model insert or update, or the original error. */
 export function toUpstreamModelWriteError(

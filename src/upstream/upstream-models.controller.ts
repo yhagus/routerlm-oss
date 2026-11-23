@@ -14,7 +14,7 @@ import { DashboardController } from "@/auth/decorators/dashboard-controller.deco
 import { CreateUpstreamModelCommand } from "./commands/impl/create-upstream-model.command.js";
 import { DeleteUpstreamModelCommand } from "./commands/impl/delete-upstream-model.command.js";
 import { UpdateUpstreamModelCommand } from "./commands/impl/update-upstream-model.command.js";
-import type { UpstreamModel } from "./models/upstream-model.js";
+import type { ListedUpstreamModel, UpstreamModel } from "./models/upstream-model.js";
 import { ListUpstreamModelsQuery } from "./queries/impl/list-upstream-models.query.js";
 import {
   type NewUpstreamModel,
@@ -31,7 +31,7 @@ export class UpstreamModelsController {
   ) {}
 
   @Get()
-  listUpstreamModels(): Promise<UpstreamModel[]> {
+  listUpstreamModels(): Promise<ListedUpstreamModel[]> {
     return this.queryBus.execute(new ListUpstreamModelsQuery());
   }
 
