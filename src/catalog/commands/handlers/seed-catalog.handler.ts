@@ -2,7 +2,7 @@ import { Logger } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { type AnyColumn, and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database, Transaction } from "@/db/schemas/relations.js";
 import {
   pricingWindows,
   providers,
@@ -23,8 +23,6 @@ import {
   doWindowPricesOverlap,
   type WindowPricesTiming,
 } from "@/pricing-windows/models/window-prices-overlap.js";
-
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 type ScheduledWindow = WindowPricesTiming & { name: string };
 

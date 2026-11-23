@@ -2,7 +2,7 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, count, eq, inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database, Transaction } from "@/db/schemas/relations.js";
 import {
   providerAccounts,
   providers,
@@ -18,8 +18,6 @@ import {
   type Provider,
 } from "@/upstream/models/provider.js";
 import { UpdateProviderCommand } from "@/upstream/commands/impl/update-provider.command.js";
-
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 @CommandHandler(UpdateProviderCommand)
 export class UpdateProviderHandler implements ICommandHandler<UpdateProviderCommand> {
