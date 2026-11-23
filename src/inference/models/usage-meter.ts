@@ -20,11 +20,8 @@ import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-fail
 import type { GatewayError } from "./gateway-error.js";
 import type { TokenUsage } from "./internal-format.js";
 import type { AttemptTarget } from "./route-selection.js";
-import {
-  pricesAtServiceTier,
-  type SentServiceTier,
-  serviceTierOfWireValue,
-} from "./service-tier.js";
+import { pricesForRequest } from "./request-prices.js";
+import { type SentServiceTier, serviceTierOfWireValue } from "./service-tier.js";
 
 /**
  * The upstream status recorded for an Attempt that answered. UpstreamClient
@@ -155,7 +152,7 @@ export class UsageMeter {
       ...servingTargetOf(target),
       serviceTier,
       // Taken now, so a later price edit doesn't change this request's Cost.
-      prices: pricesAtServiceTier(target.upstreamModel, serviceTier),
+      ...pricesForRequest(target.upstreamModel, serviceTier, this.receivedAt),
       unitPrices: target.upstreamModel.unitPrices,
     };
     if (this.isStreamed) {
@@ -180,7 +177,7 @@ export class UsageMeter {
     this.servedBy = {
       ...this.servedBy,
       serviceTier,
-      prices: pricesAtServiceTier(upstreamModel, serviceTier),
+      ...pricesForRequest(upstreamModel, serviceTier, this.receivedAt),
     };
   }
 

@@ -173,6 +173,9 @@ export const usageLogs = pgTable(
     responseBytes: integer("response_bytes").notNull(),
     // The Service Tier that served the request; null for the Provider's default.
     serviceTier: text("service_tier", { enum: SERVICE_TIERS }),
+    // The Pricing Window that priced the request, copied by name with no
+    // foreign key so it outlives a rename or delete (ADR 0024, ADR 0038).
+    pricingWindowName: text("pricing_window_name"),
     // USD, from the Upstream Model's prices at request time. Null if unknown.
     cost: numeric("cost", { precision: 18, scale: 10, mode: "number" }),
     timeToFirstTokenMs: integer("time_to_first_token_ms"),
