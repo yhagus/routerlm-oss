@@ -100,7 +100,7 @@ A period during which a Provider Account is skipped because it recently failed.
 _Avoid_: Ban, circuit break, backoff
 
 **Catalog**:
-The Providers and Upstream Models, with their Capabilities and prices, that ship with the gateway. A Catalog Gap is only reported, never added automatically.
+The Providers and Upstream Models, with their Capabilities and prices, and the Pricing Windows they use, that ship with the gateway. A Catalog Gap is only reported, never added automatically.
 _Avoid_: Master data, seed data
 
 **Protocol**:

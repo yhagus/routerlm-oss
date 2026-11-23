@@ -17,15 +17,25 @@
   "source": {
     "urls": [
       "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+      "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-overview",
+      "https://www.alibabacloud.com/help/zh/model-studio/token-plan-personal-overview",
       "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
       "https://www.alibabacloud.com/help/en/model-studio/token-plan-faq",
       "https://www.alibabacloud.com/help/en/model-studio/token-plan-usage-quota",
       "https://www.alibabacloud.com/help/en/model-studio/more-tools",
       "https://www.alibabacloud.com/help/en/model-studio/model-pricing"
     ],
-    "retrievedOn": "2026-11-20"
+    "retrievedOn": "2026-11-23"
   },
-  "notes": "Alibaba Model Studio's subscription (Personal and Team Edition), Singapore only. It bills Credits from a monthly quota and has no per-token prices; each model carries the list prices of its pay-as-you-go equivalent (Singapore where Alibaba sells it there), so Cost is what a request would cost there. Takes a Token Plan API key (sk-sp-...), which is not interchangeable with a Model Studio pay-as-you-go key (sk-...) or a Coding Plan key; Personal and Team keys are separate too. The Team overview says Team Edition has its own base URL shown in My Subscriptions; an operator whose console shows another host edits the base URL. Only chat models are shipped: the plan lists image, video and speech models, but the FAQ says they \"cannot be called directly through the text model Base URL\" and no media endpoint is documented. Left out: auto (picks an underlying model per request, so it has no prices or limits of its own) and qwen4-max-preview (Token Plan only, retired after 2026-11-25). The docs don't say whether explicit cache takes cache_control markers, so the quirk is off. Quota exhaustion answers 429 insufficient_quota and is not billed pay-as-you-go; there is no usage endpoint, so the Provider has no quota reader. Terms risk: the docs limit the plan to interactive use in AI coding and agent tools, name \"automated scripts or application backends\" as not permitted, and say violations may lead to subscription suspension or API key revocation.",
+  "notes": "Alibaba Model Studio's subscription (Personal and Team Edition), Singapore only. Where the editions differ in price, the Pricing Windows follow Personal Edition. It bills Credits from a monthly quota and has no per-token prices; each model carries the list prices of its pay-as-you-go equivalent (Singapore where Alibaba sells it there), so Cost is what a request would cost there. Takes a Token Plan API key (sk-sp-...), which is not interchangeable with a Model Studio pay-as-you-go key (sk-...) or a Coding Plan key; Personal and Team keys are separate too. The Team overview says Team Edition has its own base URL shown in My Subscriptions; an operator whose console shows another host edits the base URL. Only chat models are shipped: the plan lists image, video and speech models, but the FAQ says they \"cannot be called directly through the text model Base URL\" and no media endpoint is documented. Left out: auto (picks an underlying model per request, so it has no prices or limits of its own) and qwen4-max-preview (Token Plan only, retired after 2026-11-25). The docs don't say whether explicit cache takes cache_control markers, so the quirk is off. Quota exhaustion answers 429 insufficient_quota and is not billed pay-as-you-go; there is no usage endpoint, so the Provider has no quota reader. Terms risk: the docs limit the plan to interactive use in AI coding and agent tools, name \"automated scripts or application backends\" as not permitted, and say violations may lead to subscription suspension or API key revocation.",
+  "pricingWindows": [
+    {
+      "name": "Alibaba Token Plan Night",
+      "timeZone": "Asia/Shanghai",
+      "ranges": [{ "weekdays": [1, 2, 3, 4, 5, 6, 7], "start": "22:00", "end": "08:00" }],
+      "notes": "The plan's night discount, 22:00-08:00 UTC+8 every day. The docs give no weekday limit. The discount is on Credits consumption as a whole, so each token price is cut by the same share."
+    }
+  ],
   "upstreamModels": [
     {
       "upstreamModelId": "qwen4-max",
@@ -69,7 +79,16 @@
         ],
         "retrievedOn": "2026-11-20"
       },
-      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.8-max on Alibaba Model Studio (International)."
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.8-max on Alibaba Model Studio (International). On Personal Edition the Alibaba Token Plan Night window prices it at 40% of the standard prices: the Chinese overview says \"享 4 折\" (pay 40%). The English overview says \"60% off\", and the console's \"40% Off Nights\" badge is a literal translation of 4折. Team Edition gives it no night discount.",
+      "windowPrices": [
+        {
+          "pricingWindow": "Alibaba Token Plan Night",
+          "inputPrice": 0.8,
+          "outputPrice": 2.4,
+          "cacheReadPrice": 0.1,
+          "cacheWritePrice": 1
+        }
+      ]
     },
     {
       "upstreamModelId": "qwen3.8-flash",
@@ -90,7 +109,16 @@
         ],
         "retrievedOn": "2026-11-20"
       },
-      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.8-flash on Alibaba Model Studio (International)."
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of qwen3.8-flash on Alibaba Model Studio (International). On Personal Edition the Alibaba Token Plan Night window prices it at 40% of the standard prices: the Chinese overview says \"享 4 折\" (pay 40%). The English overview says \"60% off\", and the console's \"40% Off Nights\" badge is a literal translation of 4折. Team Edition gives it no night discount.",
+      "windowPrices": [
+        {
+          "pricingWindow": "Alibaba Token Plan Night",
+          "inputPrice": 0.06,
+          "outputPrice": 0.188,
+          "cacheReadPrice": 0.0064,
+          "cacheWritePrice": 0.08
+        }
+      ]
     },
     {
       "upstreamModelId": "qwen3.7-max",
@@ -196,7 +224,10 @@
         ],
         "retrievedOn": "2026-11-20"
       },
-      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8; off-peak is half); Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8), and the Alibaba Token Plan Night window prices it at half. Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry.",
+      "windowPrices": [
+        { "pricingWindow": "Alibaba Token Plan Night", "inputPrice": 0.15, "outputPrice": 0.6 }
+      ]
     },
     {
       "upstreamModelId": "deepseek-v4.1-flash-1017",
@@ -218,7 +249,10 @@
         ],
         "retrievedOn": "2026-11-20"
       },
-      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8; off-peak is half); Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8), and the Alibaba Token Plan Night window prices it at half. Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry.",
+      "windowPrices": [
+        { "pricingWindow": "Alibaba Token Plan Night", "inputPrice": 0.15, "outputPrice": 0.6 }
+      ]
     },
     {
       "upstreamModelId": "deepseek-v4-pro",
@@ -262,7 +296,10 @@
         ],
         "retrievedOn": "2026-11-20"
       },
-      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8; off-peak is half); Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry."
+      "notes": "On Personal and Team Edition. Prices are its Singapore pay-as-you-go peak prices (08:00-22:00 UTC+8), and the Alibaba Token Plan Night window prices it at half. Alibaba publishes no cache-hit price for it. Context size, output limit and capabilities come from models.dev's alibaba-token-plan entry.",
+      "windowPrices": [
+        { "pricingWindow": "Alibaba Token Plan Night", "inputPrice": 0.66, "outputPrice": 1.98 }
+      ]
     },
     {
       "upstreamModelId": "deepseek-v4-flash-0731",
@@ -283,7 +320,16 @@
         ],
         "retrievedOn": "2026-11-20"
       },
-      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of deepseek-v4-flash-0731 on Alibaba Model Studio (International)."
+      "notes": "On Personal and Team Edition. Context size, output limit, capabilities and prices are those of deepseek-v4-flash-0731 on Alibaba Model Studio (International). The Alibaba Token Plan Night window prices it at half.",
+      "windowPrices": [
+        {
+          "pricingWindow": "Alibaba Token Plan Night",
+          "inputPrice": 0.22,
+          "outputPrice": 0.66,
+          "cacheReadPrice": 0.044,
+          "cacheWritePrice": 0.22
+        }
+      ]
     },
     {
       "upstreamModelId": "kimi-k2.7-code",

@@ -23,6 +23,7 @@ import {
   SERVICE_TIERS,
   type ServiceTier,
 } from "@/inference/models/internal-format.js";
+import { isIanaTimeZone, rangeSchema } from "@/pricing-windows/schemas/pricing-window.schema.js";
 
 // The shape of one Catalog file: a Provider and the Upstream Models it sells.
 // Field names match the `providers` and `upstream_models` columns.
@@ -364,6 +365,28 @@ export const serviceTierPricesSchema = z
   .strictObject({ fast: tierPricesSchema, flex: tierPricesSchema })
   .partial();
 
+/** USD per million tokens during a Pricing Window; left out, the standard price applies. */
+const windowPriceSchema = z.number().nonnegative().optional();
+
+/** An Upstream Model's prices during one Pricing Window of its file (ADR 0039). */
+const catalogWindowPricesSchema = z
+  .strictObject({
+    /** The name of a Pricing Window the same Catalog file defines. */
+    pricingWindow: z.string().min(1),
+    inputPrice: windowPriceSchema,
+    outputPrice: windowPriceSchema,
+    cacheReadPrice: windowPriceSchema,
+    cacheWritePrice: windowPriceSchema,
+  })
+  .refine(
+    (entry) =>
+      [entry.inputPrice, entry.outputPrice, entry.cacheReadPrice, entry.cacheWritePrice].some(
+        (price) => price !== undefined,
+      ),
+    { error: "Give the Pricing Window at least one price" },
+  );
+export type CatalogWindowPrices = z.infer<typeof catalogWindowPricesSchema>;
+
 const upstreamModelSchema = z.strictObject({
   upstreamModelId: z.string().min(1),
   // The name the Provider's docs give the model, such as "K2.8 Preview". Every
@@ -401,6 +424,14 @@ const upstreamModelSchema = z.strictObject({
   serviceTiers: serviceTiersSchema.optional(),
   /** Only for tiers that cost other than the standard prices. */
   tierPrices: serviceTierPricesSchema.optional(),
+  /** Chat only. In order: the first active Pricing Window wins. */
+  windowPrices: z
+    .array(catalogWindowPricesSchema)
+    .refine(
+      (entries) => new Set(entries.map((entry) => entry.pricingWindow)).size === entries.length,
+      { error: "List each Pricing Window once" },
+    )
+    .optional(),
   releaseDate: z.iso.date(),
   source: sourceSchema,
   notes: z.string().optional(),
@@ -433,6 +464,18 @@ export const providerEndpointsSchema = z
     { error: "A Provider has at most one endpoint per Kind" },
   );
 
+/**
+ * A Pricing Window the Provider publishes, such as an off-peak schedule. Its
+ * name is unique across the Catalog: the seed finds the stored window by it.
+ */
+const catalogPricingWindowSchema = z.strictObject({
+  name: z.string().trim().min(1),
+  timeZone: z.string().refine(isIanaTimeZone, { error: "Unknown time zone" }),
+  ranges: z.array(rangeSchema).min(1, { error: "A Pricing Window needs at least one range" }),
+  notes: z.string().optional(),
+});
+export type CatalogPricingWindow = z.infer<typeof catalogPricingWindowSchema>;
+
 export const catalogProviderSchema = z.strictObject({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
@@ -454,6 +497,13 @@ export const catalogProviderSchema = z.strictObject({
    * OAuth Login still needs `oauthLogin`).
    */
   credentialKinds: z.array(z.enum(CREDENTIAL_KINDS)).min(1).optional(),
+  /** The Pricing Windows its Upstream Models' `windowPrices` name. */
+  pricingWindows: z
+    .array(catalogPricingWindowSchema)
+    .refine((windows) => new Set(windows.map((window) => window.name)).size === windows.length, {
+      error: "Name each Pricing Window once",
+    })
+    .optional(),
   source: sourceSchema,
   notes: z.string().optional(),
   upstreamModels: z.array(upstreamModelSchema),

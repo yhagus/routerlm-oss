@@ -1,13 +1,18 @@
 import { CommandBus } from "@nestjs/cqrs";
 import { Test, TestingModule } from "@nestjs/testing";
-import { count, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command.js";
-import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
+import type {
+  CatalogPricingWindow,
+  CatalogProvider,
+  CatalogUpstreamModel,
+} from "@/catalog/schemas/catalog.schema.js";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import * as schema from "@/db/schemas/index.js";
+import type { PricingWindowRange } from "@/db/schemas/index.js";
 import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
 
 const source = { urls: ["https://example.com/pricing"], retrievedOn: "2026-11-15" };
@@ -73,6 +78,71 @@ const catalog: CatalogProvider[] = [
         releaseDate: "2025-09-15",
         source,
       },
+    ],
+  },
+];
+
+const NIGHT: CatalogPricingWindow = {
+  name: "Example Night",
+  timeZone: "UTC",
+  ranges: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "22:00", end: "08:00" }],
+};
+const WEEKEND: CatalogPricingWindow = {
+  name: "Example Weekend",
+  timeZone: "UTC",
+  ranges: [{ weekdays: [6, 7], start: "00:00", end: "24:00" }],
+};
+
+function windowedModel(
+  upstreamModelId: string,
+  windowPrices: CatalogUpstreamModel["windowPrices"],
+) {
+  return {
+    upstreamModelId,
+    name: upstreamModelId,
+    capabilities: [],
+    contextSize: 32000,
+    maxOutputTokens: null,
+    inputPrice: 2,
+    outputPrice: 8,
+    cacheReadPrice: null,
+    cacheWritePrice: null,
+    releaseDate: "2026-01-01",
+    source,
+    windowPrices,
+  };
+}
+
+/** A Provider whose models price the Night window, as first shipped. */
+const windowedCatalog: CatalogProvider[] = [
+  {
+    ...catalog[0],
+    slug: "windowed",
+    name: "Windowed",
+    pricingWindows: [NIGHT],
+    upstreamModels: [
+      windowedModel("windowed-large", [
+        { pricingWindow: NIGHT.name, inputPrice: 1, outputPrice: 4 },
+      ]),
+      windowedModel("windowed-small", [{ pricingWindow: NIGHT.name, inputPrice: 0.5 }]),
+    ],
+  },
+];
+
+/** The same Provider after a later Catalog adds the Weekend window. */
+const windowedCatalogWithWeekend: CatalogProvider[] = [
+  {
+    ...windowedCatalog[0],
+    pricingWindows: [NIGHT, WEEKEND],
+    upstreamModels: [
+      windowedModel("windowed-large", [
+        { pricingWindow: NIGHT.name, inputPrice: 1, outputPrice: 4 },
+        { pricingWindow: WEEKEND.name, cacheReadPrice: 0.1 },
+      ]),
+      windowedModel("windowed-small", [
+        { pricingWindow: NIGHT.name, inputPrice: 0.5 },
+        { pricingWindow: WEEKEND.name, inputPrice: 0.25 },
+      ]),
     ],
   },
 ];
@@ -357,5 +427,121 @@ describe("Seed Catalog command (e2e)", () => {
     const [routes] = await db.select({ total: count() }).from(schema.routes);
 
     expect([accounts?.total, models?.total, routes?.total]).toEqual([0, 0, 0]);
+  });
+
+  describe("Pricing Windows", () => {
+    /** The Pricing Windows an Upstream Model attaches, in position order. */
+    async function windowPricesOf(upstreamModelId: string) {
+      return db
+        .select({
+          window: schema.pricingWindows.name,
+          position: schema.upstreamModelPricingWindows.position,
+          inputPrice: schema.upstreamModelPricingWindows.inputPrice,
+          outputPrice: schema.upstreamModelPricingWindows.outputPrice,
+          cacheReadPrice: schema.upstreamModelPricingWindows.cacheReadPrice,
+          cacheWritePrice: schema.upstreamModelPricingWindows.cacheWritePrice,
+        })
+        .from(schema.upstreamModelPricingWindows)
+        .innerJoin(
+          schema.pricingWindows,
+          eq(schema.pricingWindows.id, schema.upstreamModelPricingWindows.pricingWindowId),
+        )
+        .innerJoin(
+          schema.upstreamModels,
+          eq(schema.upstreamModels.id, schema.upstreamModelPricingWindows.upstreamModelId),
+        )
+        .where(eq(schema.upstreamModels.upstreamModelId, upstreamModelId))
+        .orderBy(asc(schema.upstreamModelPricingWindows.position));
+    }
+
+    async function storedWindow(name: string) {
+      const [window] = await db
+        .select()
+        .from(schema.pricingWindows)
+        .where(eq(schema.pricingWindows.name, name));
+      return window;
+    }
+
+    it("creates the Catalog's Pricing Windows, enabled, and attaches the new models' Window Prices", async () => {
+      const result = await commandBus.execute(new SeedCatalogCommand(windowedCatalog));
+
+      expect(result).toMatchObject({ createdPricingWindows: 1, attachedWindowPrices: 2 });
+      expect(await storedWindow(NIGHT.name)).toMatchObject({ ...NIGHT, isEnabled: true });
+      expect(await windowPricesOf("windowed-large")).toEqual([
+        {
+          window: NIGHT.name,
+          position: 0,
+          inputPrice: 1,
+          outputPrice: 4,
+          cacheReadPrice: null,
+          cacheWritePrice: null,
+        },
+      ]);
+    });
+
+    it("creates and attaches nothing when run again", async () => {
+      const result = await commandBus.execute(new SeedCatalogCommand(windowedCatalog));
+
+      expect(result).toMatchObject({ createdPricingWindows: 0, attachedWindowPrices: 0 });
+      const [attachments] = await db
+        .select({ total: count() })
+        .from(schema.upstreamModelPricingWindows);
+      expect(attachments?.total).toBe(2);
+    });
+
+    it("leaves a disabled, edited window and a detached one alone", async () => {
+      const editedRanges: PricingWindowRange[] = [{ weekdays: [1], start: "23:00", end: "24:00" }];
+      await db
+        .update(schema.pricingWindows)
+        .set({ isEnabled: false, ranges: editedRanges })
+        .where(eq(schema.pricingWindows.name, NIGHT.name));
+      const [small] = await db
+        .select({ id: schema.upstreamModels.id })
+        .from(schema.upstreamModels)
+        .where(eq(schema.upstreamModels.upstreamModelId, "windowed-small"));
+      await db
+        .delete(schema.upstreamModelPricingWindows)
+        .where(eq(schema.upstreamModelPricingWindows.upstreamModelId, small?.id ?? ""));
+
+      await commandBus.execute(new SeedCatalogCommand(windowedCatalog));
+
+      expect(await storedWindow(NIGHT.name)).toMatchObject({
+        isEnabled: false,
+        ranges: editedRanges,
+      });
+      expect(await windowPricesOf("windowed-small")).toEqual([]);
+    });
+
+    it("attaches a window a later Catalog adds after the models' existing windows", async () => {
+      await commandBus.execute(new SeedCatalogCommand(windowedCatalogWithWeekend));
+
+      const large = await windowPricesOf("windowed-large");
+      expect(large.map(({ window, position }) => [window, position])).toEqual([
+        [NIGHT.name, 0],
+        [WEEKEND.name, 1],
+      ]);
+      expect(large[1]).toMatchObject({ cacheReadPrice: 0.1, inputPrice: null });
+      expect(await windowPricesOf("windowed-small")).toMatchObject([
+        { window: WEEKEND.name, position: 0, inputPrice: 0.25 },
+      ]);
+    });
+
+    it("brings back a deleted window, attached after the models' remaining windows", async () => {
+      await db.delete(schema.pricingWindows).where(eq(schema.pricingWindows.name, NIGHT.name));
+
+      await commandBus.execute(new SeedCatalogCommand(windowedCatalogWithWeekend));
+
+      expect(await storedWindow(NIGHT.name)).toMatchObject({ ...NIGHT, isEnabled: true });
+      const large = await windowPricesOf("windowed-large");
+      expect(large.map(({ window, position }) => [window, position])).toEqual([
+        [WEEKEND.name, 1],
+        [NIGHT.name, 2],
+      ]);
+      const small = await windowPricesOf("windowed-small");
+      expect(small.map(({ window, position }) => [window, position])).toEqual([
+        [WEEKEND.name, 0],
+        [NIGHT.name, 1],
+      ]);
+    });
   });
 });

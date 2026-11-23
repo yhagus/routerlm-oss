@@ -18,7 +18,7 @@ const weekdaySchema = z.union([
   z.literal(7),
 ]) satisfies z.ZodType<IsoWeekday>;
 
-const rangeSchema = z
+export const rangeSchema = z
   .strictObject({
     weekdays: z
       .array(weekdaySchema)
@@ -37,7 +37,7 @@ const rangeSchema = z
   }) satisfies z.ZodType<PricingWindowRange>;
 
 /** Whether `timeZone` is an IANA time zone name, such as `Asia/Shanghai` or `UTC`. */
-function isIanaTimeZone(timeZone: string): boolean {
+export function isIanaTimeZone(timeZone: string): boolean {
   // The engine also accepts offsets such as `+08:00`, which are no IANA name.
   if (!/^[A-Za-z]/.test(timeZone)) {
     return false;
