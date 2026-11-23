@@ -60,6 +60,8 @@ export interface PricingWindowRangeJson {
 export interface PricingWindowJson {
   timeZone: string;
   ranges: PricingWindowRangeJson[];
+  validFrom?: string;
+  validUntil?: string;
   inputPrice?: number;
   outputPrice?: number;
   cacheReadPrice?: number;
@@ -202,11 +204,13 @@ export function modelJsonOf(model: IntegrationModel): ModelJson {
   };
 }
 
-function pricingWindowJsonOf(window: IntegrationPricingWindow): PricingWindowJson {
+export function pricingWindowJsonOf(window: IntegrationPricingWindow): PricingWindowJson {
   const { prices } = window;
   return {
     timeZone: window.timeZone,
     ranges: window.ranges,
+    validFrom: window.validFrom?.toISOString(),
+    validUntil: window.validUntil?.toISOString(),
     inputPrice: prices.inputPrice ?? undefined,
     outputPrice: prices.outputPrice ?? undefined,
     cacheReadPrice: prices.cacheReadPrice ?? undefined,

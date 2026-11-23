@@ -3,8 +3,18 @@ import type {
   CustomerApiKeyPage,
   IssuedCustomerApiKey,
 } from "./customer-api-key.js";
+import type { IntegrationModel, IntegrationPricingWindow } from "./integration-model.js";
 import type { IntegrationUsageLog, IntegrationUsageLogPage } from "./integration-usage-log.js";
-import { type ApiKeyJson, apiKeyJsonOf, type UsageLogJson, usageLogJsonOf } from "./proto-json.js";
+import {
+  type ApiKeyJson,
+  apiKeyJsonOf,
+  type ModelJson,
+  modelJsonOf,
+  type PricingWindowJson,
+  pricingWindowJsonOf,
+  type UsageLogJson,
+  usageLogJsonOf,
+} from "./proto-json.js";
 
 // The gRPC adapter's messages of control_plane.proto, as @grpc/proto-loader
 // decodes and encodes them (controlPlaneGrpcOptions): the same lowerCamelCase
@@ -91,6 +101,19 @@ export interface UsageLogMessage extends Omit<UsageLogJson, "receivedAt"> {
   receivedAt: TimestampMessage;
 }
 
+export interface PricingWindowMessage extends Omit<PricingWindowJson, "validFrom" | "validUntil"> {
+  validFrom?: TimestampMessage;
+  validUntil?: TimestampMessage;
+}
+
+export interface ModelMessage extends Omit<ModelJson, "pricingWindows"> {
+  pricingWindows: PricingWindowMessage[];
+}
+
+export interface ListModelsResponseMessage {
+  models: ModelMessage[];
+}
+
 export interface ListUsageLogsResponseMessage {
   usageLogs: UsageLogMessage[];
   nextCursor?: string;
@@ -147,6 +170,25 @@ export function listKeysResponseMessageOf(page: CustomerApiKeyPage): ListKeysRes
     keys: page.keys.map(apiKeyMessageOf),
     nextPageToken: page.nextPageToken ?? undefined,
   };
+}
+
+function pricingWindowMessageOf(window: IntegrationPricingWindow): PricingWindowMessage {
+  return {
+    ...pricingWindowJsonOf(window),
+    validFrom: optionalTimestampMessageOf(window.validFrom),
+    validUntil: optionalTimestampMessageOf(window.validUntil),
+  };
+}
+
+function modelMessageOf(model: IntegrationModel): ModelMessage {
+  return {
+    ...modelJsonOf(model),
+    pricingWindows: model.pricingWindows.map(pricingWindowMessageOf),
+  };
+}
+
+export function listModelsResponseMessageOf(models: IntegrationModel[]): ListModelsResponseMessage {
+  return { models: models.map(modelMessageOf) };
 }
 
 function usageLogMessageOf(usageLog: IntegrationUsageLog): UsageLogMessage {

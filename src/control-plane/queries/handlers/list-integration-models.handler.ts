@@ -9,6 +9,7 @@ import {
 } from "@/snapshot/models/snapshot.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices.js";
+import { validityInstantsOf } from "@/pricing-windows/models/validity-period.js";
 import type {
   IntegrationModel,
   IntegrationPricingWindow,
@@ -21,17 +22,18 @@ export class ListIntegrationModelsHandler implements IQueryHandler<ListIntegrati
   constructor(private readonly snapshot: SnapshotService) {}
 
   execute({ integration }: ListIntegrationModelsQuery): Promise<IntegrationModel[]> {
+    const now = new Date();
     const isWithinCeiling = (model: SnapshotModel): boolean =>
       integration.allowedModelIds.length === 0 || integration.allowedModelIds.includes(model.id);
     const listed = [...this.snapshot.current.modelsByName.values()]
       .filter((model) => model.isEnabled && isWithinCeiling(model))
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map(integrationModelOf);
+      .map((model) => integrationModelOf(model, now));
     return Promise.resolve(listed);
   }
 }
 
-function integrationModelOf(model: SnapshotModel): IntegrationModel {
+function integrationModelOf(model: SnapshotModel, now: Date): IntegrationModel {
   // Routes come in the order the gateway tries them.
   const servingRoutes = model.routes.filter(isRouteUsable);
   const firstUpstreamModel = servingRoutes.at(0)?.upstreamModel;
@@ -41,7 +43,8 @@ function integrationModelOf(model: SnapshotModel): IntegrationModel {
     kind: model.kind,
     capabilities: combinedCapabilities(servingRoutes),
     prices: firstUpstreamModel === undefined ? null : pricesOf(firstUpstreamModel),
-    pricingWindows: firstUpstreamModel === undefined ? [] : pricingWindowsOf(firstUpstreamModel),
+    pricingWindows:
+      firstUpstreamModel === undefined ? [] : pricingWindowsOf(firstUpstreamModel, now),
   };
 }
 
@@ -55,12 +58,30 @@ function pricesOf(upstreamModel: SnapshotUpstreamModel): ModelPrices {
   return { ...standardPricesOf(upstreamModel), unitPrices: upstreamModel.unitPrices };
 }
 
-/** The snapshot holds only the enabled windows, in the Upstream Model's order. */
-function pricingWindowsOf(upstreamModel: SnapshotUpstreamModel): IntegrationPricingWindow[] {
+/**
+ * The snapshot holds only the enabled windows, ordered by Validity Period
+ * start, then window name. Window Prices whose period has ended by `now` are
+ * left out; those yet to start stay in, so an Integration can show them.
+ */
+function pricingWindowsOf(
+  upstreamModel: SnapshotUpstreamModel,
+  now: Date,
+): IntegrationPricingWindow[] {
   const standard = standardPricesOf(upstreamModel);
-  return upstreamModel.pricingWindows.map((window) => ({
-    timeZone: window.timeZone,
-    ranges: window.ranges,
-    prices: resolvedWindowPrices(standard, window.windowPrices),
-  }));
+  return upstreamModel.pricingWindows.flatMap((window) => {
+    const { start, end } = validityInstantsOf(window, window.timeZone);
+    const hasEnded = end !== null && end <= now;
+    if (hasEnded) {
+      return [];
+    }
+    return [
+      {
+        timeZone: window.timeZone,
+        ranges: window.ranges,
+        validFrom: start,
+        validUntil: end,
+        prices: resolvedWindowPrices(standard, window.windowPrices),
+      },
+    ];
+  });
 }

@@ -9,12 +9,16 @@ export type ModelPrices = Pick<
 >;
 
 /**
- * An enabled Pricing Window of the Upstream Model behind the prices, as an
- * Integration sees it: its schedule and resolved prices, never its name or id.
+ * Window Prices on an enabled Pricing Window of the Upstream Model behind the
+ * prices, as an Integration sees them: their schedule, Validity Period and
+ * resolved prices, never the window's name or id.
  */
 export interface IntegrationPricingWindow {
   timeZone: string;
   ranges: PricingWindowRange[];
+  /** The Validity Period's bounds as instants; null when open-ended. */
+  validFrom: Date | null;
+  validUntil: Date | null;
   /** Each Window Price left out is filled with the standard price. */
   prices: UpstreamModelPrices;
 }
@@ -32,6 +36,9 @@ export interface IntegrationModel {
   capabilities: Capability[];
   /** Null when no Route can serve it right now. */
   prices: ModelPrices | null;
-  /** In the Upstream Model's order; empty when no Route can serve it. */
+  /**
+   * Those whose Validity Period hasn't ended, earliest start first (open start
+   * first), then by window name; empty when no Route can serve it.
+   */
   pricingWindows: IntegrationPricingWindow[];
 }
