@@ -81,9 +81,9 @@ The web app serves the full client docs at http://localhost:3001/docs.
 
 > **Back up `ENCRYPTION_KEY`.** RouterLM encrypts Provider Account keys and API Keys with it (AES-256-GCM). Without it, nobody can read the Provider Account keys, and the dashboard can no longer copy the API Keys. The API Keys still work, because RouterLM checks them against a hash.
 
-> **Going to production:** the stack publishes the gateway on port 3000 and the dashboard on 3001, over plain HTTP. Put your own reverse proxy with TLS in front of them, and set `WEB_ORIGIN` to the dashboard's public URL.
+> **Going to production:** by default the stack serves the gateway on port 3000 and the dashboard on 3001, over plain HTTP. Set `ROUTERLM_API_ADDRESS` and `ROUTERLM_DASHBOARD_ADDRESS` in `.env` to two hostnames whose DNS points at the machine, open ports 80 and 443, and set `WEB_ORIGIN` and `NUXT_PUBLIC_GATEWAY_URL` to the new URLs. The bundled Caddy then serves both over HTTPS and gets the certificates itself.
 >
-> Behind a reverse proxy, also set `TRUST_PROXY` (to `true`, or to the proxy's address or subnet). Dashboard login allows 10 attempts a minute per client IP, and without `TRUST_PROXY` every client appears as the proxy's IP. The gateway does not rate limit `/v1`. Set rate limits in the reverse proxy.
+> The gateway does not rate limit `/v1`. Set rate limits in Caddy, or in a proxy in front of it.
 
 ---
 
@@ -109,20 +109,23 @@ The client docs at http://localhost:3001/docs describe each format.
 ## Architecture
 
 ```
-clients ──► backend (NestJS on Bun, :3000) ──► upstream providers
-                │            │
-                │            └─► Redis ──► worker (usage, Error Captures, retention)
-                ▼
-           PostgreSQL ◄── web dashboard (Nuxt, :3001)
+clients ──► caddy :3000 ─┬─ /v1, /health ──────► inference ──► upstream providers
+                         └─ /integration/v1 ──► admin
+browser ──► caddy :3001 ──► web ── /api ──────► admin
+inference, admin ──► PostgreSQL, Redis ──► worker (usage, Error Captures, retention)
 ```
 
-| Service   | What it does                                                        |
-| --------- | ------------------------------------------------------------------- |
-| `backend` | Inference endpoints under `/v1` and the dashboard API under `/api`. |
+The backend runs as two containers of the same image, so Customers' inference never competes with the dashboard, the Playground or the control plane for the same processes and database connections ([ADR 0094](docs/adr/0094-backend-roles-split-inference-from-admin-behind-an-edge-proxy.md)). The dashboard API is never on a public port.
+
+| Service     | What it does                                                        |
+| ----------- | ------------------------------------------------------------------- |
+| `caddy`     | The edge proxy: the only service on the host's ports. Routes by path, balances inference replicas, and serves HTTPS when given hostnames. |
+| `inference` | Inference endpoints under `/v1` (`BACKEND_ROLE=inference`).         |
+| `admin`     | The dashboard API under `/api`, the Playground and the control plane under `/integration/v1` (`BACKEND_ROLE=admin`). |
 | `worker`  | Writes Usage Logs and Error Captures, deletes expired captures; serves the control plane over gRPC when `CONTROL_PLANE_PORT` is set. |
 | `web`     | The dashboard and the client docs.                                  |
 | `db`      | PostgreSQL 18, through Drizzle ORM.                                 |
-| `redis`   | BullMQ queues between backend and worker.                           |
+| `redis`     | BullMQ queues between the backend and the worker.                   |
 | `migrate` | One-shot: applies migrations and seeds the Catalog on every `up`.   |
 
 [GLOSSARY.md](GLOSSARY.md) defines the domain terms (Model, Route, Provider Account, Cooldown, Exhausted…). [docs/adr/](docs/adr/) records the design decisions.
@@ -166,12 +169,16 @@ Settings a User changes in the dashboard live in the database instead. Examples 
 | `ENCRYPTION_KEY`                | required                  | Encrypts Provider Account keys and API Keys. 32 bytes, base64.           |
 | `POSTGRES_PASSWORD`             | required                  | Postgres uses it only when it first creates the db volume.               |
 | `ROUTERLM_VERSION`              | the release's version     | The image version to run.                                                |
+| `ROUTERLM_API_ADDRESS`          | `:3000`                   | What Caddy serves the gateway on. A hostname turns on HTTPS.             |
+| `ROUTERLM_DASHBOARD_ADDRESS`    | `:3001`                   | What Caddy serves the dashboard on. A hostname turns on HTTPS.           |
 | `WEB_ORIGIN`                    | `http://localhost:3001`   | The dashboard's public URL.                                              |
-| `SNAPSHOT_RELOAD_INTERVAL_MS`   | `30000`                   | How often each backend instance reloads its snapshot (ms).               |
-| `BACKEND_PROCESSES`             | `1`                       | Gateway processes on the backend's port. Set it to the VM's CPU count.   |
-| `TRUST_PROXY`                   | unset                     | Proxies whose `X-Forwarded-For` RouterLM trusts. Set it behind a proxy.  |
 | `NUXT_PUBLIC_GATEWAY_URL`       | browser host, port `3000` | Gateway base URL shown in the `/docs` examples.                          |
-| `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports.                                                              |
+| `SNAPSHOT_RELOAD_INTERVAL_MS`   | `30000`                   | How often each backend instance reloads its snapshot (ms).               |
+| `INFERENCE_PROCESSES`           | `1`                       | Gateway processes in the inference container. Give it the VM's CPUs.     |
+| `ADMIN_PROCESSES`               | `1`                       | Gateway processes in the admin container.                                |
+| `ROUTERLM_SUBNET`               | `172.29.84.0/24`          | The compose network, and the only `X-Forwarded-For` source trusted.      |
+| `BACKEND_PORT` / `WEB_PORT`     | `3000` / `3001`           | Host ports for the API and the dashboard over plain HTTP.                |
+| `HTTP_PORT` / `HTTPS_PORT`      | `80` / `443`              | Host ports Caddy uses for hostname addresses.                            |
 | `POSTGRES_USER` / `POSTGRES_DB` | `routerlm`                | Postgres uses them only when it first creates the db volume.             |
 | `CONTROL_PLANE_PORT`            | unset                     | The worker's gRPC port for Integrations. Unset: no gRPC server starts.   |
 
@@ -180,11 +187,11 @@ Settings a User changes in the dashboard live in the database instead. Examples 
 <details>
 <summary><b>Control plane over gRPC</b></summary>
 
-An Integration manages its Customers' API Keys through the control plane: over HTTP/JSON under `/integration/v1` on the backend's port, or over gRPC. Both serve [src/control-plane/data/control_plane.proto](src/control-plane/data/control_plane.proto) with the same results ([ADR 0033](docs/adr/0033-integrations-manage-keys-through-one-contract-over-http-and-grpc.md)).
+An Integration manages its Customers' API Keys through the control plane: over HTTP/JSON under `/integration/v1` on the gateway's address, or over gRPC. Both serve [src/control-plane/data/control_plane.proto](src/control-plane/data/control_plane.proto) with the same results ([ADR 0033](docs/adr/0033-integrations-manage-keys-through-one-contract-over-http-and-grpc.md)).
 
 Set `CONTROL_PLANE_PORT` (for example `50051`) to have the worker serve gRPC on that port. It is plaintext HTTP/2 (h2c), with no TLS. The Integration Secret goes in the `authorization` metadata as `Bearer rlmi_…`.
 
-Never publish this port to the internet. The worker runs on Bun, whose HTTP/2 server accepts but ignores some flood and reset protections (such as limits on rapid stream resets). Keep the port on a private network that only your Integrations reach, or put a TLS proxy in front that speaks h2c to the worker. The compose file passes the variable to the worker but publishes no port: services on the compose network reach it at `worker:<port>`. Integrations on the public internet should use the HTTP adapter behind your existing TLS proxy instead.
+Never publish this port to the internet. The worker runs on Bun, whose HTTP/2 server accepts but ignores some flood and reset protections (such as limits on rapid stream resets). Keep the port on a private network that only your Integrations reach, or put a TLS proxy in front that speaks h2c to the worker. The compose file passes the variable to the worker but publishes no port: services on the compose network reach it at `worker:<port>`. Integrations on the public internet should use the HTTP adapter through Caddy instead.
 
 </details>
 
@@ -202,6 +209,10 @@ docker compose up -d
 ```
 
 It takes its project name from the folder. For a default clone, that name is `routerlm-oss`, the same name that `deploy/compose.yaml` uses. In that folder, the two stacks share containers and data.
+
+It runs the same layout as `deploy/compose.yaml`: Caddy on `localhost:3000` sends `/v1` and `/health` to the `inference` container and `/integration/v1` to `admin`, and `localhost:3001` serves the dashboard, whose `/api` reaches `admin` on the compose network only. Both backend containers reload on change. It uses plain HTTP and ports instead of HTTPS and hostnames.
+
+Unlike `deploy/compose.yaml`, the development stack always serves the control plane over gRPC and publishes it on `127.0.0.1:50051` (change the host port with `CONTROL_PLANE_PORT`).
 
 <details>
 <summary><b>Try the production images locally</b></summary>

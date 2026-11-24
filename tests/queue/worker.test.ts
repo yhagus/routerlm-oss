@@ -18,7 +18,7 @@ describe("Worker (e2e)", () => {
   let pingEvents: QueueEvents;
 
   beforeAll(async () => {
-    backend = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    backend = await Test.createTestingModule({ imports: [AppModule.forRole("all")] }).compile();
     await backend.init();
     pingEvents = new QueueEvents(PING_QUEUE, { connection: { url: redisUrl.toString() } });
     await pingEvents.waitUntilReady();

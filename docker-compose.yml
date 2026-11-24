@@ -1,10 +1,18 @@
 # Development stack: `docker compose up -d`
-#   backend -> http://localhost:3000
-#   web     -> http://localhost:3001
-#   db      -> postgres://routerlm:routerlm@localhost:5432/routerlm
-#   redis   -> redis://localhost:6379
-#   worker  -> runs queue jobs, no port
-#   migrate -> one-shot: applies migrations and seeds the Catalog, then exits
+#
+# The same split as deploy/compose.yaml (ADR 0094), with hot reload and
+# without TLS or hostnames: Caddy routes by port and path instead.
+#   caddy     -> http://localhost:3000  /v1/*, /health -> inference
+#                                       /integration/v1/* -> admin
+#                                       anything else -> 404
+#                http://localhost:3001  -> web
+#   inference -> BACKEND_ROLE=inference, reloads on change, no host port
+#   admin     -> BACKEND_ROLE=admin, reloads on change, no host port
+#   web       -> nuxt dev; reaches admin's /api on the compose network only
+#   db        -> postgres://routerlm:routerlm@localhost:5432/routerlm
+#   redis     -> redis://localhost:6379
+#   worker    -> runs queue jobs; gRPC control plane on 127.0.0.1:50051
+#   migrate   -> one-shot: applies migrations and seeds the Catalog, then exits
 #
 # Every value below has a development default. Override any of them in `.env`
 # next to this file (see .env.example). Only ENCRYPTION_KEY has no default:
@@ -16,16 +24,53 @@ x-postgres: &postgres
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-routerlm}
   POSTGRES_DB: ${POSTGRES_DB:-routerlm}
 
-# Shared by backend, worker and migrate. Hostnames are compose service names.
+# Shared by inference, admin, worker and migrate. Hostnames are compose service
+# names. Only Caddy reaches the role containers, so the compose subnet is the
+# only X-Forwarded-For source they trust.
 x-app-env: &app-env
   DATABASE_URL: postgres://${POSTGRES_USER:-routerlm}:${POSTGRES_PASSWORD:-routerlm}@db:5432/${POSTGRES_DB:-routerlm}
   REDIS_URL: redis://redis:6379
   WEB_ORIGIN: http://localhost:${WEB_PORT:-3001}
+  TRUST_PROXY: ${ROUTERLM_SUBNET:-172.29.84.0/24}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env to the output of `openssl rand -base64 32` (see README)}
   SNAPSHOT_RELOAD_INTERVAL_MS: ${SNAPSHOT_RELOAD_INTERVAL_MS:-30000}
   ERROR_CAPTURE_RETENTION_DAYS: ${ERROR_CAPTURE_RETENTION_DAYS:-7}
 
+x-backend-dev: &backend-dev
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: backend
+  volumes:
+    - .:/app
+    # Keep the container's Linux node_modules instead of the host's.
+    - backend_node_modules:/app/node_modules
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+    # The backend survives Redis outages, so starting it is enough.
+    redis:
+      condition: service_started
+  restart: unless-stopped
+
 services:
+  caddy:
+    image: caddy:2.10-alpine
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+      - "${WEB_PORT:-3001}:3001"
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - inference
+      - admin
+      - web
+    restart: unless-stopped
+
   db:
     image: postgres:18-alpine
     ports:
@@ -72,34 +117,31 @@ services:
         condition: service_healthy
     restart: "no"
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: backend
-    ports:
-      - "${BACKEND_PORT:-3000}:3000"
+  inference:
+    <<: *backend-dev
     environment:
       <<: *app-env
       PORT: 3000
-    volumes:
-      - .:/app
-      # Keep the container's Linux node_modules instead of the host's.
-      - backend_node_modules:/app/node_modules
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      # The backend survives Redis outages, so starting it is enough.
-      redis:
-        condition: service_started
-    restart: unless-stopped
+      BACKEND_ROLE: inference
+
+  admin:
+    <<: *backend-dev
+    environment:
+      <<: *app-env
+      PORT: 3000
+      BACKEND_ROLE: admin
 
   worker:
     build:
       context: .
       dockerfile: Dockerfile
       target: worker
-    environment: *app-env
+    # The control plane over gRPC (plaintext h2c), on the host's loopback only.
+    ports:
+      - "127.0.0.1:${CONTROL_PLANE_PORT:-50051}:50051"
+    environment:
+      <<: *app-env
+      CONTROL_PLANE_PORT: 50051
     volumes:
       - .:/app
       - worker_node_modules:/app/node_modules
@@ -115,22 +157,61 @@ services:
       context: ./web
       dockerfile: Dockerfile
       target: dev
-    ports:
-      - "${WEB_PORT:-3001}:3000"
     environment:
       HOST: 0.0.0.0
       PORT: 3000
-      NUXT_BACKEND_URL: http://backend:3000
+      NUXT_BACKEND_URL: http://admin:3000
       # The gateway address the docs' examples show. Empty: the browser's host on port 3000.
       NUXT_PUBLIC_GATEWAY_URL: ${NUXT_PUBLIC_GATEWAY_URL:-}
     volumes:
       - ./web:/app
       - web_node_modules:/app/node_modules
     depends_on:
-      - backend
+      - admin
     restart: unless-stopped
 
+# The routes of deploy/compose.yaml's Caddyfile, always over plain HTTP on
+# ports 3000 and 3001. Keep the two in step.
+configs:
+  caddyfile:
+    content: |
+      {
+      	auto_https off
+      }
+
+      :3000 {
+      	@inference path /v1/* /health
+      	handle @inference {
+      		reverse_proxy {
+      			dynamic a inference 3000 {
+      				refresh 5s
+      			}
+      			lb_policy least_conn
+      			lb_try_duration 5s
+      			fail_duration 30s
+      		}
+      	}
+      	handle /integration/v1/* {
+      		reverse_proxy admin:3000
+      	}
+      	handle {
+      		respond 404
+      	}
+      }
+
+      :3001 {
+      	reverse_proxy web:3000
+      }
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${ROUTERLM_SUBNET:-172.29.84.0/24}
+
 volumes:
+  caddy_data:
+  caddy_config:
   postgres_data:
   redis_data:
   backend_node_modules:

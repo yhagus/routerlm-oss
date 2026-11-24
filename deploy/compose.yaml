@@ -6,14 +6,33 @@
 #   # fill in ENCRYPTION_KEY and POSTGRES_PASSWORD in .env
 #   docker compose up -d
 #
-#   backend -> the gateway and dashboard API, http://localhost:3000
-#   web     -> the dashboard, http://localhost:3001
-#   worker  -> runs queue jobs, no port
-#   migrate -> one-shot: applies migrations and seeds the Catalog, then exits
+# The backend runs split by role behind Caddy, the edge proxy (ADR 0094):
+#   caddy     -> the only service on the host's ports
+#                $ROUTERLM_API_ADDRESS        /v1/*, /health -> inference
+#                (default :3000)              /integration/v1/* -> admin
+#                                             anything else -> 404
+#                $ROUTERLM_DASHBOARD_ADDRESS  -> web
+#                (default :3001)
+#   inference -> the gateway's inference endpoints only, no host port
+#   admin     -> the dashboard API, Playground and control plane over HTTP, no host port
+#   web       -> the dashboard; reaches admin's /api on the compose network only
+#   worker    -> runs queue jobs; serves gRPC on the compose network when CONTROL_PLANE_PORT is set
+#   migrate   -> one-shot: applies migrations and seeds the Catalog, then exits
 #   db, redis -> not published to the host
 #
+# By default Caddy serves plain HTTP on ports 3000 and 3001. For production,
+# set ROUTERLM_API_ADDRESS and ROUTERLM_DASHBOARD_ADDRESS to hostnames whose
+# DNS points at this machine: Caddy then serves them over HTTPS on 443 and
+# gets their certificates on its own (see .env).
+#
+# More inference capacity: raise INFERENCE_PROCESSES to the CPUs you give it,
+# or run replicas with `--scale inference=N`; Caddy finds them through the
+# compose DNS, balances them by least connections, and for 30s skips one it
+# could not reach. It retries only a request it could not deliver, so an
+# inference request never reaches two replicas.
+#
 # Upgrade: set ROUTERLM_VERSION in .env (or download the newer compose.yaml),
-# then `docker compose pull && docker compose up -d`.
+# then `docker compose pull && docker compose up -d --remove-orphans`.
 #
 # The project name and the volume names match the development stack
 # (docker-compose.yml), so an install made from a clone of the repo keeps its
@@ -27,20 +46,63 @@ x-postgres: &postgres
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
   POSTGRES_DB: ${POSTGRES_DB:-routerlm}
 
-# Shared by backend, worker and migrate. Hostnames are compose service names.
+# Shared by inference, admin, worker and migrate. Hostnames are compose service
+# names. Only Caddy reaches the role containers, so the compose subnet is the
+# only X-Forwarded-For source they trust.
 x-app-env: &app-env
   DATABASE_URL: postgres://${POSTGRES_USER:-routerlm}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-routerlm}
   REDIS_URL: redis://redis:6379
   WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3001}
-  TRUST_PROXY: ${TRUST_PROXY:-}
+  TRUST_PROXY: ${ROUTERLM_SUBNET:-172.29.84.0/24}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY in .env to the output of `openssl rand -base64 32`}
   SNAPSHOT_RELOAD_INTERVAL_MS: ${SNAPSHOT_RELOAD_INTERVAL_MS:-30000}
+
+x-backend-healthcheck: &backend-healthcheck
+  test:
+    - CMD
+    - bun
+    - -e
+    - "fetch('http://localhost:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+  interval: 10s
+  timeout: 5s
+  retries: 6
+  start_period: 10s
+
+x-backend-depends-on: &backend-depends-on
+  migrate:
+    condition: service_completed_successfully
+  # The backend survives Redis outages, so starting it is enough.
+  redis:
+    condition: service_started
 
 # The release workflow replaces "latest" with the release's version in the
 # compose.yaml it attaches to a GitHub Release.
 x-backend-image: &backend-image ghcr.io/yhagus/routerlm-backend:${ROUTERLM_VERSION:-latest}
 
 services:
+  caddy:
+    image: caddy:2.10-alpine
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+      - "${WEB_PORT:-3001}:3001"
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      inference:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+      web:
+        condition: service_started
+    restart: unless-stopped
+
   db:
     image: postgres:18-alpine
     environment: *postgres
@@ -77,31 +139,27 @@ services:
         condition: service_healthy
     restart: "no"
 
-  backend:
+  inference:
     image: *backend-image
-    ports:
-      - "${BACKEND_PORT:-3000}:3000"
     environment:
       <<: *app-env
       PORT: 3000
-      # Gateway processes sharing port 3000; set it to the VM's CPU count (ADR 0025).
-      BACKEND_PROCESSES: ${BACKEND_PROCESSES:-1}
-    healthcheck:
-      test:
-        - CMD
-        - bun
-        - -e
-        - "fetch('http://localhost:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 10s
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      # The backend survives Redis outages, so starting it is enough.
-      redis:
-        condition: service_started
+      BACKEND_ROLE: inference
+      # Gateway processes sharing port 3000; set it to the CPUs inference may use (ADR 0025).
+      BACKEND_PROCESSES: ${INFERENCE_PROCESSES:-1}
+    healthcheck: *backend-healthcheck
+    depends_on: *backend-depends-on
+    restart: unless-stopped
+
+  admin:
+    image: *backend-image
+    environment:
+      <<: *app-env
+      PORT: 3000
+      BACKEND_ROLE: admin
+      BACKEND_PROCESSES: ${ADMIN_PROCESSES:-1}
+    healthcheck: *backend-healthcheck
+    depends_on: *backend-depends-on
     restart: unless-stopped
 
   worker:
@@ -120,17 +178,51 @@ services:
 
   web:
     image: ghcr.io/yhagus/routerlm-web:${ROUTERLM_VERSION:-latest}
-    ports:
-      - "${WEB_PORT:-3001}:3000"
     environment:
-      NUXT_BACKEND_URL: http://backend:3000
+      NUXT_BACKEND_URL: http://admin:3000
       # The gateway address the docs' examples show. Empty: the browser's host on port 3000.
       NUXT_PUBLIC_GATEWAY_URL: ${NUXT_PUBLIC_GATEWAY_URL:-}
     depends_on:
-      backend:
+      admin:
         condition: service_healthy
     restart: unless-stopped
+
+# docker-compose.yml carries the same routes for development. Keep the two in step.
+configs:
+  caddyfile:
+    content: |
+      ${ROUTERLM_API_ADDRESS:-:3000} {
+      	@inference path /v1/* /health
+      	handle @inference {
+      		reverse_proxy {
+      			dynamic a inference 3000 {
+      				refresh 5s
+      			}
+      			lb_policy least_conn
+      			lb_try_duration 5s
+      			fail_duration 30s
+      		}
+      	}
+      	handle /integration/v1/* {
+      		reverse_proxy admin:3000
+      	}
+      	handle {
+      		respond 404
+      	}
+      }
+
+      ${ROUTERLM_DASHBOARD_ADDRESS:-:3001} {
+      	reverse_proxy web:3000
+      }
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${ROUTERLM_SUBNET:-172.29.84.0/24}
 
 volumes:
   postgres_data:
   redis_data:
+  caddy_data:
+  caddy_config:

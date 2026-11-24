@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import type { Response } from "supertest";
 import request from "supertest";
 import { AppModule } from "@/app.module.js";
+import type { BackendRole } from "@/config/schemas/env.schema.js";
 import { configureApp, createNodeAdapter } from "@/configure-app.js";
 import type { Database } from "@/db/schemas/relations.js";
 import { allowPrivateUpstreams } from "./private-upstreams.js";
@@ -20,9 +21,12 @@ export interface TestApp {
 
 export async function createTestApp(
   database?: Database,
-  { allowsPrivateUpstreams = true }: { allowsPrivateUpstreams?: boolean } = {},
+  {
+    allowsPrivateUpstreams = true,
+    role = "all",
+  }: { allowsPrivateUpstreams?: boolean; role?: BackendRole } = {},
 ): Promise<TestApp> {
-  const moduleBuilder = Test.createTestingModule({ imports: [AppModule] })
+  const moduleBuilder = Test.createTestingModule({ imports: [AppModule.forRole(role)] })
     .overrideProvider(PasswordHasher)
     .useValue(CHEAP_PASSWORD_HASHER);
   if (database) moduleBuilder.overrideProvider(getDrizzleToken()).useValue(database);

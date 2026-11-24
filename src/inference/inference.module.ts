@@ -1,4 +1,9 @@
-import { type MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
+import {
+  type DynamicModule,
+  type MiddlewareConsumer,
+  Module,
+  type NestModule,
+} from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { HttpClientModule } from "@nestjs/http-client";
 import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
@@ -30,7 +35,6 @@ import { VideoTaskReader } from "./providers/video-task-reader.js";
     UpstreamModule,
     UsageModule,
   ],
-  controllers: [InferenceController],
   providers: [
     ...CommandHandlers,
     ...QueryHandlers,
@@ -45,6 +49,10 @@ import { VideoTaskReader } from "./providers/video-task-reader.js";
   ],
 })
 export class InferenceModule implements NestModule {
+  static overHttp(): DynamicModule {
+    return { module: InferenceModule, controllers: [InferenceController] };
+  }
+
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(ApiKeyHeaderMiddleware).forRoutes(`${INFERENCE_API_PREFIX}/*path`);
   }

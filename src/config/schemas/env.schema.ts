@@ -11,9 +11,14 @@ export const controlPlanePortSchema = z.preprocess(
   z.coerce.number().int().min(1).max(MAX_PORT).optional(),
 );
 
+export const BACKEND_ROLES = ["all", "inference", "admin"] as const;
+
+export type BackendRole = (typeof BACKEND_ROLES)[number];
+
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   BACKEND_PROCESSES: z.coerce.number().int().min(1).default(1),
+  BACKEND_ROLE: z.enum(BACKEND_ROLES).default("all"),
   DATABASE_URL: z.url({ error: "DATABASE_URL is not set or not a URL; see .env.example" }),
   WEB_ORIGIN: z.url().default("http://localhost:3001"),
   REDIS_URL: z.url({ error: "REDIS_URL is not set or not a URL; see .env.example" }),
