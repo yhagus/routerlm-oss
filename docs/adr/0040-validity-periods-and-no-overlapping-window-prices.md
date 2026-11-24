@@ -2,6 +2,10 @@
 
 Providers run limited-time sales, such as 50% off one model until the end of the month, and a Pricing Window had no way to end. We decided (2026-11-23) that each Upstream Model's Window Prices may carry a Validity Period: an optional start and end, each a date and time in the window's time zone, start inclusive and end exclusive, a missing bound being open-ended. A sale is Window Prices on a window that covers the whole week with a Validity Period that ends; the window form has an "Always" preset (every weekday, `00:00`-`24:00`) for that. We also decided that at most one of a model's Window Prices can apply at any moment, which replaces the order rule of ADR 0038: two attachments on one model whose weekly hours overlap and whose Validity Periods overlap are rejected. The same window may be attached to a model several times, for Validity Periods that don't overlap.
 
+Replacing an Upstream Model's Pricing Windows locks the model row and the attached Pricing Window rows in the same transaction as the overlap check, so a concurrent Kind change, deletion or reschedule cannot slip in between the check and the write.
+
+Attachments are sorted in code, not in SQL, because the stored starts are wall-clock text in each window's own time zone, so only their instants compare across zones.
+
 ## Considered options
 
 - A Validity Period on the Pricing Window: one shared "Whole Week" window could then carry only one sale at a time, so every sale would need its own window. Sales are usually per model, and the window stays reusable master data.

@@ -4,6 +4,8 @@ Status: accepted, supersedes the env variable in ADR 0019
 
 ADR 0019 makes Provider URLs https and public, and checks them when they are written and again when the gateway connects. One deploy-time env variable, `ALLOW_PRIVATE_UPSTREAMS`, lifted both rules for self-hosters with a LAN upstream such as Ollama or vLLM. Changing it meant editing the deployment and restarting it. We decided that a boolean Setting, "Allow private upstreams" (default off), lifts both rules instead, and that the env variable is removed with no fallback, as ADR 0017 did for the Retention Period.
 
+The checks that use the setting (module-constant URL schemas, `OutboundFetch`) are synchronous and cannot read the database, so each successful snapshot reload publishes the value to `src/libs/models/private-upstreams-policy.ts` (ADR 0020). It starts off, so a process that has not read it yet refuses private upstreams, and a failed reload keeps the last value read.
+
 ## Considered options
 
 - Keep the env variable, as ADR 0019 decided. Rejected: operators wanted to change it from the dashboard while the gateway runs.

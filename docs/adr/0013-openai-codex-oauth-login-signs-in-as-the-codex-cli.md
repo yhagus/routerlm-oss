@@ -4,6 +4,8 @@ ChatGPT subscribers use Codex through their plan, not through an OpenAI API key,
 
 The Provider row's `oauthLogin` names its flow (`kimi-code` or `openai-codex`) and each flow has its own data shape. Codex's is the issuer, the client id and the CLI version, with no regions. The flow itself is code, like quota readers (ADR 0010): the device-auth paths on the issuer, the exchange at `/oauth/token`, and reading the account id, email and plan type from the id_token's claims instead of calling a profile endpoint. The account id is sent as `chatgpt-account-id` on every call. A Provider also states which credential kinds it accepts, so an API key cannot be added to OpenAI Codex.
 
+Polling the device auth answers 403 or 404 until the User approves, which the gateway reads as still pending, not a failure. OpenAI no longer hands out the authorization code once it did, so a failed exchange of an approved code ends the sign-in.
+
 ## Considered options
 
 - Browser PKCE with a localhost callback, the CLI's default: OpenAI only allows its own `127.0.0.1` redirect, which an operator's browser cannot reach on a self-hosted gateway.

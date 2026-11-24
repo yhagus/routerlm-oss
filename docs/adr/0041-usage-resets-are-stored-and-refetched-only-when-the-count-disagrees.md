@@ -4,6 +4,8 @@ An operator picks which Usage Reset to spend, since each one expires on its own 
 
 We decided to store the list, replacing it as a whole like Quota Meters, and to fetch it again only when there is a reason: the reading's count differs from the number of stored resets that haven't expired, the gateway has just spent a reset, or the Provider refuses a reset as already spent or missing. A reset that expires is dropped by its expiry date, with no fetch. Opening the picker reads only the database. The count is never stored on its own: how many resets an account has is the number of stored resets that haven't expired, and the reading's count is only compared against it.
 
+Spending a reset carries an idempotency key that `UsageResetPickerDialog.vue` holds per reset for one opening of the picker, so a double click or a retry after a failed request can never spend a second reset.
+
 ## Considered Options
 
 - Fetching the list live each time the picker opens. Rejected: an upstream call on every look, and nothing to show while the Provider is slow or down.

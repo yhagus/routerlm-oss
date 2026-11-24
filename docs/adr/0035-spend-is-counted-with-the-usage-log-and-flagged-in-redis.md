@@ -4,6 +4,8 @@ A Spend Limit (ADR 0034) needs a running total of Cost per API Key, and the gate
 
 We decided that the API Key's `spent` column is incremented in that same transaction, so each request is counted exactly once and Postgres stays the source of truth. After the commit, the worker writes to Redis whether the key has reached its Spend Limit, and a gateway process checks that flag with one Redis read per request. Changing a Spend Limit recomputes the flag.
 
+The flag is compared in Postgres, because `numeric(18, 10)` holds more digits than a JS number, and a null Spend Limit compares as no limit. The worker recomputes the flag after the commit, so it never shows spend that rolled back, and from a fresh read, so it never undoes a Spend Limit raised while the transaction ran.
+
 ## Considered Options
 
 - An atomic counter in Redis, incremented by the gateway process when a request finishes. Rejected: tighter, but it drifts from the Usage Logs when Redis loses data or a process dies between the request and the increment, and then it is unclear which total is right.
