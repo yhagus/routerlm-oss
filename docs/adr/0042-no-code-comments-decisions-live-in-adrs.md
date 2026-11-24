@@ -13,4 +13,4 @@ The rule is `routerlm/no-comments` (`scripts/lint/no-comments.mjs`), an oxlint J
 
 - The ban is a ratchet. `comment-baseline.json` holds how many comments each file may still have. A file with more fails the lint; a file with fewer also fails until `bun run comments:baseline` lowers its entry, so the count only moves down. The script refuses to raise an entry unless passed `--allow-growth`, which a reviewer should question.
 - Vendored components (`web/app/components/ui/`, `web/app/components/ai-elements/`) are outside the rule, as they are outside the web lint. CSS and Vue `<template>` comments are outside what oxlint parses, so the rule does not see them; the `/delete-comment` skill sweeps them by hand.
-- Running the sweep again is the `/delete-comment` skill (`.claude/skills/delete-comment/`).
+- Running the sweep again is the `/delete-comment` skill, kept in the maintainer's global Claude Code skills (`~/.claude/skills/delete-comment/`).
