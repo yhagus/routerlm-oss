@@ -7,10 +7,6 @@ import {
   readDocsPages,
 } from "@tests/support/docs-examples.js";
 
-// The Indonesian pages translate the prose only. Their examples must stay the
-// examples client-examples.test.ts runs, so a translation can't drift from
-// what the gateway does.
-
 const englishPages = readDocsPages();
 const indonesianPages = readDocsPages(DOCS_ID_DIRECTORY);
 
@@ -18,7 +14,6 @@ function examplesOf(page: DocsPage): { language: string; code: string }[] {
   return codeBlocksOf(page).map(({ language, code }) => ({ language, code }));
 }
 
-/** The `::code-tabs` and closing `::` lines, which group the examples into tabs. */
 function blockMarkersOf(page: DocsPage): string[] {
   return page.markdown.split("\n").filter((line) => line.startsWith("::"));
 }

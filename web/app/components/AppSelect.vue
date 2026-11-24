@@ -14,7 +14,6 @@ import {
 
 type SelectOption = { label: string; value: Value };
 
-/** Gap between the trigger and the menu, and the menu's margin from the viewport edge. */
 const MENU_OFFSET = 5;
 const VIEWPORT_MARGIN = 12;
 
@@ -22,16 +21,11 @@ const props = withDefaults(
   defineProps<{
     modelValue: Value;
     options: SelectOption[];
-    /** The control's accessible name (its aria-label). */
     label: string;
     placeholder?: string;
-    /** Adds a filter field at the top of the menu, for long lists. */
     searchable?: boolean;
-    /** Extra class on the menu, which is portalled to <body> and so can't be styled through the trigger's parents. */
     menuClass?: string;
-    /** Which trigger edge the menu lines up with. */
     menuAlign?: "start" | "end";
-    /** Menu text when there are no options at all. */
     emptyText?: string;
   }>(),
   {
@@ -48,7 +42,6 @@ const query = ref("");
 const listbox = useTemplateRef("listbox");
 const listId = useId();
 
-/** The options the menu shows: all of them, or those whose label contains the query. */
 const visibleOptions = computed(() => {
   const needle = query.value.trim().toLowerCase();
   if (!props.searchable || needle === "") return props.options;
@@ -64,7 +57,6 @@ function handleOpenChange(isOpen: boolean): void {
   if (!isOpen) query.value = "";
 }
 
-/** The filter field focuses itself (auto-focus); without one, the picked option takes focus. */
 function handleOpenAutoFocus(event: Event): void {
   event.preventDefault();
   if (!props.searchable) void listbox.value?.highlightSelected();
@@ -76,7 +68,6 @@ function handleSelect(value: unknown): void {
   handleOpenChange(false);
 }
 
-/** Arrow keys open the menu, as they do on a native select. */
 function handleTriggerArrowKey(event: KeyboardEvent): void {
   event.preventDefault();
   handleOpenChange(true);

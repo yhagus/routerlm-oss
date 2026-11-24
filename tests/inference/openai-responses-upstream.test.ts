@@ -12,7 +12,6 @@ import {
 import { createTestApp } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-/** The Chat Completions request the openai-responses `upstream-request.json` fixture was recorded from. */
 const FIXTURE_CLIENT_REQUEST = {
   model: "smart",
   messages: [
@@ -27,7 +26,6 @@ const FIXTURE_CLIENT_REQUEST = {
     {
       role: "assistant",
       content: null,
-      // Unsigned reasoning from another Protocol: the upstream can't take it back.
       reasoning_content: "Need the weather.",
       tool_calls: [
         {
@@ -74,7 +72,6 @@ const FIXTURE_CLIENT_REQUEST = {
 
 const ENCRYPTED_REASONING = "gAAAAABencrypted-reasoning";
 
-/** The quirks of the OpenAI Codex Provider in the Catalog. */
 const CODEX_QUIRKS: CatalogProviderQuirks = {
   alwaysStreams: true,
   includesEncryptedReasoning: true,
@@ -180,7 +177,6 @@ describe("An openai-responses upstream (e2e)", () => {
           finish_reason: "tool_calls",
         },
       ],
-      // 120 input tokens, 100 of them read from the cache.
       usage: {
         prompt_tokens: 120,
         completion_tokens: 40,
@@ -345,7 +341,6 @@ describe("An openai-responses upstream (e2e)", () => {
   });
 
   it("ends the client's stream with an error event when the upstream's stream fails", async () => {
-    // After the first delta has reached the client, so the failure can only end its stream.
     const events = openAiResponsesFixture("upstream-stream-tool-call.sse").split("\n\n");
     upstream.reply({
       kind: "stream",

@@ -16,8 +16,6 @@ import {
 } from "@/quota-meters/models/usage-reset.js";
 import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets.js";
 
-// 409 rather than 400: the request is well formed, but the account's Provider
-// can't honour it.
 const UNSUPPORTED_MESSAGE = "The Provider of this Provider Account has no usage resets";
 const NOTHING_TO_RESET_MESSAGE = "No meter is low enough to reset yet";
 const UNAVAILABLE_MESSAGE = "That reset is no longer available";
@@ -40,7 +38,6 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
       if (!isUsageResetCallFailure(error)) {
         throw error;
       }
-      // The dashboard shows the failure on the account, as it does a failed reading's.
       await recordQuotaError(this.db, providerAccountId, {
         error: error.message,
         checkedAt: new Date(),
@@ -52,21 +49,14 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
       case "nothing-to-reset":
         throw new ConflictException(NOTHING_TO_RESET_MESSAGE);
       case "unavailable":
-        // The stored list was stale: the next pick should not offer it again.
         await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
         throw new ConflictException(UNAVAILABLE_MESSAGE);
       case "reset":
-        // A failed list fetch is only logged: the reset is spent either way.
         await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
-        // The reading may end the account's Exhausted state.
         return this.commandBus.execute(new ReadProviderAccountQuotaCommand(providerAccountId));
     }
   }
 
-  /**
-   * Asks the Provider to spend the reset. Throws an error that passes
-   * isUsageResetCallFailure when the Provider or the credential fails.
-   */
   private async spend({
     providerAccountId,
     usageResetId,
@@ -83,7 +73,6 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
     return target.port.use(credential, target.provider, { externalId, idempotencyKey });
   }
 
-  /** The Provider's id of an unexpired reset of the account; a reset no longer listed is not found. */
   private async externalIdOf(providerAccountId: string, usageResetId: string): Promise<string> {
     const [reset] = await this.db
       .select({ externalId: usageResets.externalId })

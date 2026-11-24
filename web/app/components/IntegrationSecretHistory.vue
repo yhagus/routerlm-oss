@@ -3,7 +3,6 @@ import { Blocks, CloudOff, RefreshCw } from "@lucide/vue";
 import { dateTimeFormat } from "~/lib/dateFormats";
 import type { IntegrationRotation, IntegrationSummary } from "~/lib/integrations";
 
-/** Every rotation of the Integration Secret, newest first, ending with the Integration's creation. */
 const props = defineProps<{ integration: IntegrationSummary }>();
 
 const {
@@ -12,7 +11,6 @@ const {
   status,
 } = useDashboardApi<IntegrationRotation[]>(
   () => `/integrations/${props.integration.id}/rotations`,
-  // A rotation from the header lands here without leaving the tab.
   { watch: [() => props.integration.lastRotatedAt] },
 );
 

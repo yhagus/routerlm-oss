@@ -1,45 +1,4 @@
 <script setup lang="ts" generic="Row extends RowData">
-/**
- * A list in a table panel: a toolbar (search, the caller's extra controls,
- * Filters, Columns, Refresh, paginator), the active-filter tokens, then the
- * rows, 50 to a page. Search (`?q=`) and page (`?page=`) live in the URL.
- *
- * The search field holds what is being typed; once typing pauses for 300ms
- * the text is committed to `?q=` together with a return to page 1, in one URL
- * change. `?q=` is the only search the rows follow, so a server-mode page
- * fetches once per committed search, and back/forward restores the field.
- *
- * Client mode (no `rowCount`): pass every row the caller's filters keep. The
- * table searches the values of columns with an accessor, then pages in the
- * browser.
- *
- *   <DataTable table-id="providers" label="Providers" :columns :rows="filteredRows"
- *     :get-row-id="(row) => row.id" :is-loading :error :refresh :filters="filterTokens"
- *     @clear-filters="clearFilters">
- *     <template #filters><AppMultiSelect v-model="protocols" … /></template>
- *     <template #cell-name="{ row }"><strong>{{ row.name }}</strong></template>
- *     <template #empty><EmptyState :icon="Plug"><strong>No Providers yet.</strong></EmptyState></template>
- *   </DataTable>
- *
- * Server mode (`rowCount` set): pass the current page's rows and the total.
- * The caller reads the same URL state, `useQuerySearch()` and
- * `useQueryPage()`, puts it in its request, and gets the page back. Changing
- * the search or a filter returns to page 1.
- *
- *   const search = useQuerySearch();
- *   const page = useQueryPage();
- *   const { data, … } = useDashboardApi("/captures", { query: { q: search, page } });
- *   <DataTable … :rows="data?.items ?? []" :row-count="data?.total ?? 0" />
- *
- * Sub-rows (`getSubRows`): a row with sub-rows can expand to list them below
- * it. The search keeps a row when it or one of its sub-rows matches, and the
- * paginator counts top-level rows only, so an expanded row never splits across
- * pages. Cell slots get `isExpanded` and `toggleExpanded` for the expander;
- * `v-model:expanded` holds which rows are open (component-local without it).
- *
- * Rows stay on screen while `refresh` runs; placeholders show only while
- * `isLoading` (nothing loaded yet).
- */
 import { CloudOff, RefreshCw, SearchX } from "@lucide/vue";
 import {
   FlexRender,
@@ -63,31 +22,20 @@ import {
 
 const props = withDefaults(
   defineProps<{
-    /** Names the stored column choice: `routerlm:columns:<tableId>`. */
     tableId: string;
-    /** What the rows are, plural: "Providers". Used in accessible names and the error. */
     label: string;
     columns: DataTableColumn<Row>[];
-    /** Client mode: every row the caller's filters keep. Server mode: the current page. */
     rows: Row[];
     getRowId: (row: Row) => string;
     rowClass?: (row: Row) => HTMLAttributes["class"];
-    /** One column's header and cell classes, such as right alignment for numbers. */
     columnClass?: (columnId: string) => HTMLAttributes["class"];
-    /** Nothing loaded yet: rows show placeholders. */
     isLoading: boolean;
-    /** A failed load; shows an error with Retry in place of the rows. */
     error?: unknown;
-    /** Re-runs the current query; Refresh and Retry call it. */
     refresh: () => Promise<unknown>;
-    /** Server mode: how many rows match in all. Leave it out for client mode. */
     rowCount?: number;
-    /** The caller's filters in effect, one token each; the search token is added here. */
     filters?: ActiveFilter[];
     searchPlaceholder?: string;
-    /** A row's sub-rows, listed below it while it is expanded; none for a plain row. */
     getSubRows?: (row: Row) => Row[] | undefined;
-    /** Replaces the paginator's "1,234 results", such as a count in the caller's own terms. */
     countLabel?: string;
   }>(),
   { filters: () => [], searchPlaceholder: "Search" },
@@ -95,14 +43,10 @@ const props = withDefaults(
 const emit = defineEmits<{ clearFilters: [] }>();
 defineSlots<
   {
-    /** Extra visible controls after the search, such as a time-range select. */
     controls?: () => unknown;
-    /** The filter fields, stacked in the Filters popover. */
     filters?: () => unknown;
-    /** Shown when there are no rows and no search or filter is set. */
     empty?: () => unknown;
   } & {
-    /** One cell's content; without it the column's `cell` renders. */
     [cell: `cell-${string}`]: (props: {
       row: Row;
       isExpanded: boolean;
@@ -116,16 +60,12 @@ const SEARCH_COMMIT_DELAY_MS = 300;
 const committedSearch = useQuerySearch();
 const page = useQueryPage();
 const columnVisibility = useColumnVisibility(props.tableId);
-/** The ids of the rows whose sub-rows are listed. */
 const expanded = defineModel<ExpandedStateList>("expanded", { default: () => ({}) });
 
-/** The field's text, ahead of `committedSearch` while typing. */
 const searchText = shallowRef(committedSearch.value);
-/** What this table last committed, so its own commit reaching the URL isn't taken for back/forward. */
 let lastCommittedSearch = committedSearch.value;
 let searchCommitTimer: ReturnType<typeof setTimeout> | undefined;
 
-/** Applies `text` as the search; a different search starts from the first page. */
 function commitSearch(text: string): void {
   clearTimeout(searchCommitTimer);
   searchText.value = text;
@@ -141,7 +81,6 @@ function handleSearchInput(text: string): void {
   searchCommitTimer = setTimeout(() => commitSearch(text), SEARCH_COMMIT_DELAY_MS);
 }
 
-// Back/forward or a link changed `?q=`: the URL already holds its page, so only the field follows.
 watch(committedSearch, (text) => {
   if (text === lastCommittedSearch) return;
   lastCommittedSearch = text;
@@ -150,7 +89,6 @@ watch(committedSearch, (text) => {
 });
 onScopeDispose(() => clearTimeout(searchCommitTimer));
 
-/** The search token's remove and Clear all apply at once, without the typing delay. */
 const searchForTokens = computed({
   get: () => committedSearch.value,
   set: commitSearch,
@@ -181,17 +119,14 @@ const table = useTable({
   manualFiltering: isServerMode,
   autoResetPageIndex: false,
   getSubRows: props.getSubRows,
-  // A row with sub-rows stays while one of them matches the search.
   filterFromLeafRows: props.getSubRows !== undefined,
   paginateExpandedRows: false,
-  // A refresh replaces the rows; the open ones stay open.
   autoResetExpanded: false,
   onPaginationChange: (updater: Updater<PaginationState>) => {
     page.value = functionalUpdate(updater, pagination.value).pageIndex + 1;
   },
   onExpandedChange: (updater: Updater<ExpandedState>) => {
     const next = functionalUpdate(updater, expanded.value);
-    // `true` (every row) only comes from expand-all, which this table doesn't offer.
     if (next !== true) expanded.value = next;
   },
   onColumnVisibilityChange: (updater: Updater<ColumnVisibilityState>) => {
@@ -199,8 +134,6 @@ const table = useTable({
   },
 });
 
-// Counted here rather than through the table's `rowCount` option: the adapter
-// drops an option whose ref holds `undefined`, which client mode would pass.
 const totalRows = computed(() => props.rowCount ?? table.getFilteredRowModel().rows.length);
 const pageCount = computed(() => Math.max(1, Math.ceil(totalRows.value / DATA_TABLE_PAGE_SIZE)));
 const visibleColumnCount = computed(() => table.getVisibleLeafColumns().length);
@@ -226,8 +159,6 @@ function handleColumnsReset(): void {
   columnVisibility.value = {};
 }
 
-// A new filter starts from the first page (a new search does so in `commitSearch`). Filters are
-// the caller's, so the table can only see them change through their tokens.
 watch(
   () => props.filters.map((filter) => filter.key).join("\n"),
   () => {
@@ -235,9 +166,6 @@ watch(
   },
 );
 
-// After rows disappear (a delete, a narrower filter), a page past the end shows the last one.
-// Only a loaded total counts: before the first load, or while a load has failed, the row count
-// is 0 and would send the reader, and Retry, back to page 1.
 watch(
   [pageCount, () => props.isLoading, () => props.error],
   () => {

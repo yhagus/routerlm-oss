@@ -7,12 +7,9 @@ import {
 } from "~/lib/quotaMeters";
 import type { QuotaMeter } from "~/lib/upstream";
 
-/** One Quota Meter: "5h 75% · resets in 1h 37m" over a bar colored by what is left. */
 const props = defineProps<{
   meter: QuotaMeter;
-  /** The time countdowns count from, in epoch milliseconds. */
   now: number;
-  /** Smaller, for scoped meters such as `weekly:video`. */
   isCompact?: boolean;
 }>();
 

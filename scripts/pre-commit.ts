@@ -1,7 +1,3 @@
-// Git pre-commit hook, installed by simple-git-hooks (see "simple-git-hooks"
-// in package.json). Runs the backend checks on every commit, and the web
-// checks too when the commit stages files under web/. The checks run on the
-// working tree, not only on the staged changes.
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 
@@ -32,8 +28,6 @@ run("bun", ["run", "check"]);
 
 const touchesWeb = stagedFiles().some((file) => file.startsWith(`${WEB_DIRECTORY}/`));
 if (touchesWeb) {
-  // A fresh worktree often has only the root dependencies; a merge commit
-  // still stages web files, so install the web ones before checking them.
   if (!existsSync(`${WEB_DIRECTORY}/node_modules`)) {
     run("bun", ["install", "--frozen-lockfile"], WEB_DIRECTORY);
   }

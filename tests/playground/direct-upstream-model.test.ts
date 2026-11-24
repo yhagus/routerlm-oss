@@ -27,7 +27,6 @@ import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 
-/** As the web sends it: the Upstream Model's own id in `model`, which resolution ignores. */
 const DIRECT_REQUEST = {
   model: UPSTREAM_MODEL_ID,
   messages: [{ role: "user", content: "Hello there" }],

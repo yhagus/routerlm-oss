@@ -23,21 +23,10 @@ import {
   type UpstreamTarget,
 } from "@/inference/protocols/upstream-protocol-converter.js";
 
-// The Responses API as an upstream (`POST {baseUrl}/responses`), stateless:
-// every request carries the whole conversation and asks the upstream to store
-// nothing. Requests are written in the shapes the client converter
-// (openai-responses-client-converter.ts) reads.
-
 const RESPONSES_PATH = "/responses";
 const ENCRYPTED_REASONING = "reasoning.encrypted_content";
-// The Protocol's own default for function tools is strict; Chat Completions' and
-// Anthropic's is not, so a tool the client didn't mark keeps their meaning.
 const DEFAULT_TOOL_STRICTNESS = false;
-// Parts the Protocol takes as one string are joined with a blank line.
 const PART_SEPARATOR = "\n\n";
-
-// Key order here is the order on the wire: keep it fixed so the same request
-// always gives the same bytes (upstream prompt caches compare prefixes).
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
   const { quirks } = target;
@@ -63,7 +52,6 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (request.responseFormat) {
     body.text = { format: writeResponseFormat(request.responseFormat) };
   }
-  // The Protocol has no thinking budget; only an effort level survives.
   if (request.reasoning?.effort) {
     body.reasoning = { effort: request.reasoning.effort };
   }
@@ -87,7 +75,6 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (target.serviceTierValue !== undefined) {
     body.service_tier = target.serviceTierValue;
   }
-  // Nothing is ever stored upstream: the gateway is stateless (ADR 0002).
   body.store = false;
   const isAnsweredAsStream = request.stream === null && quirks.alwaysStreams === true;
   if (request.stream !== null || isAnsweredAsStream) {
@@ -109,7 +96,6 @@ function writeDeveloperMessage(request: InferenceRequest): Record<string, unknow
   };
 }
 
-/** The Protocol lists an assistant turn's reasoning, text and tool calls as separate items. */
 function writeInputItems(message: InferenceMessage): Record<string, unknown>[] {
   switch (message.role) {
     case "user":
@@ -138,7 +124,6 @@ function writeUserPart(part: UserContentPart): Record<string, unknown> {
   return { type: "input_image", image_url: imageUrl };
 }
 
-/** A lone text result goes as a plain string, the form every Responses upstream accepts. */
 function writeToolOutput(content: UserContentPart[]): string | Record<string, unknown>[] {
   const [first] = content;
   if (content.length === 1 && first.type === "text") {
@@ -147,7 +132,6 @@ function writeToolOutput(content: UserContentPart[]): string | Record<string, un
   return content.map(writeUserPart);
 }
 
-/** Adjacent text parts become one message item. */
 function writeAssistantItems(content: AssistantContentPart[]): Record<string, unknown>[] {
   const items: Record<string, unknown>[] = [];
   let openText: { type: "output_text"; text: string }[] | null = null;
@@ -175,11 +159,6 @@ function writeAssistantItems(content: AssistantContentPart[]): Record<string, un
   return items;
 }
 
-/**
- * Reasoning is only accepted back with the encrypted content the Protocol
- * issued for it; reasoning without it came from another Protocol and is left
- * out (see writeAssistantItems).
- */
 function writeReasoningItem(part: ReasoningPart): Record<string, unknown> {
   return {
     type: "reasoning",
@@ -222,8 +201,6 @@ function writeResponseFormat(format: ResponseFormat): Record<string, unknown> {
   }
 }
 
-// Responses are read leniently: only the fields the internal format needs.
-
 const reasoningTextSchema = z.object({ text: z.string() });
 
 const outputItemSchema = z.discriminatedUnion("type", [
@@ -251,7 +228,6 @@ const outputItemSchema = z.discriminatedUnion("type", [
 ]);
 type OutputItem = z.infer<typeof outputItemSchema>;
 
-/** Output items of types the internal format can't carry (such as hosted tool calls) are skipped. */
 const lenientOutputSchema = z.array(z.unknown()).transform((items) =>
   items.flatMap((item) => {
     const parsed = outputItemSchema.safeParse(item);
@@ -312,7 +288,6 @@ function contentOfItem(item: OutputItem): AssistantContentPart[] {
   }
 }
 
-/** Raw reasoning text when the upstream sends it, else its summary. */
 function reasoningTextOf(item: Extract<OutputItem, { type: "reasoning" }>): string {
   const texts = item.content?.length ? item.content : (item.summary ?? []);
   return texts.map((text) => text.text).join(PART_SEPARATOR);
@@ -323,7 +298,6 @@ const INCOMPLETE_STOP_REASONS: Record<string, StopReason> = {
   content_filter: "content-filter",
 };
 
-/** The Protocol has no finish reason: a complete response that called a tool stopped for it. */
 function stopReasonOf(response: UpstreamResponse, hasToolCalls: boolean): StopReason {
   const incompleteReason = response.incomplete_details?.reason;
   if (response.status === "incomplete" && incompleteReason) {
@@ -332,10 +306,6 @@ function stopReasonOf(response: UpstreamResponse, hasToolCalls: boolean): StopRe
   return hasToolCalls ? "tool-calls" : "end";
 }
 
-/**
- * The Protocol's input count includes the cached input. It has no cache
- * writes to bill, so a reported usage means zero writes.
- */
 function tokenUsageOf(usage: ResponsesUsage | undefined): TokenUsage {
   const inputTokens = usage?.input_tokens ?? null;
   const cacheReadTokens = usage?.input_tokens_details?.cached_tokens ?? null;
@@ -382,7 +352,6 @@ type StreamEvent = z.infer<typeof streamEventSchema>;
 
 const typedEventSchema = z.object({ type: z.string() });
 
-/** The event types streamEventSchema reads; the Protocol sends many others, which are skipped. */
 const READ_EVENT_TYPES: ReadonlySet<string> = new Set<StreamEvent["type"]>([
   "response.output_text.delta",
   "response.refusal.delta",
@@ -398,7 +367,6 @@ const READ_EVENT_TYPES: ReadonlySet<string> = new Set<StreamEvent["type"]>([
   "error",
 ]);
 
-/** The Protocol has no end marker: its stream ends with the body. */
 class ResponsesStreamParser implements UpstreamStreamParser {
   readonly isDone = false;
   private readonly reader = new ResponseStreamReader();
@@ -432,7 +400,6 @@ function startStream(): UpstreamStreamParser {
   return new ResponsesStreamParser();
 }
 
-/** The text and reasoning deltas, by event type: what ResponseStreamReader makes of each. */
 const TOKEN_DELTA_TYPES: ReadonlyMap<string, "text-delta" | "reasoning-delta"> = new Map([
   ["response.output_text.delta", "text-delta"],
   ["response.refusal.delta", "text-delta"],
@@ -440,12 +407,6 @@ const TOKEN_DELTA_TYPES: ReadonlyMap<string, "text-delta" | "reasoning-delta"> =
   ["response.reasoning_summary_text.delta", "reasoning-delta"],
 ]);
 
-/**
- * The event of a text or reasoning delta (most of a stream), read without
- * running two zod schemas on every token. Undefined for any other event, which
- * takes the schema path: this accepts only what streamEventSchema accepts, and
- * gives the event ResponseStreamReader would.
- */
 function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
   if (!isJsonObject(json) || typeof json.type !== "string" || typeof json.delta !== "string") {
     return undefined;
@@ -476,14 +437,8 @@ const reasoningItemSchema = z.object({
   encrypted_content: z.string().nullish(),
 });
 
-/**
- * Turns the Protocol's output item events into internal deltas. Tool calls are
- * numbered in the order they start; the Protocol numbers every output item.
- */
 class ResponseStreamReader {
-  /** Tool call index by the output index of its item. */
   private readonly toolIndexes = new Map<number, number>();
-  /** Output indexes of the tool calls whose arguments arrived as deltas. */
   private readonly toolsWithDeltas = new Set<number>();
 
   *read(event: StreamEvent): Iterable<InferenceStreamEvent> {
@@ -512,7 +467,6 @@ class ResponseStreamReader {
         return;
       case "response.completed":
       case "response.incomplete":
-        // The final response may leave out the items it already streamed.
         yield {
           type: "finish",
           stopReason: stopReasonOf(event.response, this.toolIndexes.size > 0),
@@ -550,10 +504,6 @@ class ResponseStreamReader {
     yield { type: "tool-call-delta", index, argumentsDelta: delta };
   }
 
-  /**
-   * A reasoning item's encrypted content arrives only once it is done; so do
-   * the arguments of a tool call the upstream sent without deltas.
-   */
   private *itemDone(outputIndex: number, item: unknown): Iterable<InferenceStreamEvent> {
     const reasoning = reasoningItemSchema.safeParse(item);
     if (reasoning.success && reasoning.data.encrypted_content) {
@@ -573,7 +523,6 @@ class ResponseStreamReader {
   }
 }
 
-/** The `openai-responses` upstream Protocol: the OpenAI Responses API and the Providers that copy it. */
 export const openAiResponsesUpstreamConverter: UpstreamProtocolConverter = {
   protocol: "openai-responses",
   writeRequest,

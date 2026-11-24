@@ -16,15 +16,9 @@ import {
   usageLogJsonOf,
 } from "./proto-json.js";
 
-// The gRPC adapter's messages of control_plane.proto, as @grpc/proto-loader
-// decodes and encodes them (controlPlaneGrpcOptions): the same lowerCamelCase
-// names as proto3's JSON mapping, with Timestamps as messages. In a request,
-// a field left unset is absent.
-
 const MILLISECONDS_PER_SECOND = 1000;
 const NANOSECONDS_PER_MILLISECOND = 1_000_000;
 
-/** A google.protobuf.Timestamp; `seconds` is an int64, which arrives as a string. */
 export interface TimestampMessage {
   seconds: number | string;
   nanos: number;
@@ -39,7 +33,6 @@ export function timestampMessageOf(date: Date): TimestampMessage {
   };
 }
 
-/** The instant a Timestamp names, to the millisecond. */
 export function timestampOf(timestamp: TimestampMessage): Date {
   return new Date(
     Number(timestamp.seconds) * MILLISECONDS_PER_SECOND +
@@ -65,7 +58,6 @@ export interface UpdateKeyRequest {
   updateMask?: { paths?: string[] };
 }
 
-/** RotateKeyRequest, RevokeKeyRequest and GetKeyRequest. */
 export interface KeyIdRequest {
   id?: string;
 }
@@ -125,7 +117,6 @@ const optionalTimestampMessageOf = (date: Date | null): TimestampMessage | undef
 const optionalIsoStringOf = (timestamp: TimestampMessage | undefined): string | undefined =>
   timestamp ? timestampOf(timestamp).toISOString() : undefined;
 
-/** A CreateKeyRequest as the HTTP adapter's body, for the same schema to check it. */
 export function newKeyJsonOf(request: CreateKeyRequest): object {
   return { ...request, expiresAt: optionalIsoStringOf(request.expiresAt) };
 }
@@ -133,12 +124,6 @@ export function newKeyJsonOf(request: CreateKeyRequest): object {
 const lowerCamelCaseOf = (fieldName: string): string =>
   fieldName.replaceAll(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
 
-/**
- * An UpdateKeyRequest as the HTTP adapter's body: the fields its update mask
- * lists, where one left unset is null (cleared), or empty for allowed Models.
- * A path outside KeySettings, such as `customer_id`, stays in, so the
- * schema refuses it as it does over HTTP.
- */
 export function keyChangesJsonOf(request: UpdateKeyRequest): object {
   const settings: Record<string, unknown> = {
     ...request.key,

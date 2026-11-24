@@ -1,7 +1,3 @@
-// The clip a transcription Probe sends: one second of silence as a WAV file,
-// 16 kHz mono 16-bit PCM, the format speech recognition models take everywhere.
-// Built here rather than shipped as a file, so the build has no asset to copy.
-
 const SAMPLE_RATE_HZ = 16_000;
 const CHANNELS = 1;
 const BYTES_PER_SAMPLE = 2;
@@ -10,7 +6,6 @@ const FMT_CHUNK_BYTES = 16;
 const PCM_FORMAT = 1;
 const BITS_PER_BYTE = 8;
 
-/** Where each field of the canonical 44-byte WAV header starts. */
 const HEADER_OFFSET = {
   riffId: 0,
   riffSize: 4,
@@ -27,10 +22,8 @@ const HEADER_OFFSET = {
   dataSize: 40,
 } as const;
 const HEADER_BYTES = 44;
-/** The RIFF size leaves out the chunk's own id and size fields. */
 const RIFF_ID_AND_SIZE_BYTES = 8;
 
-/** The WAV file's bytes. */
 function silentWav(): Buffer {
   const dataBytes = SAMPLE_RATE_HZ * CHANNELS * BYTES_PER_SAMPLE * DURATION_SECONDS;
   const wav = Buffer.alloc(HEADER_BYTES + dataBytes);

@@ -2,11 +2,9 @@
 import { ChevronLeft, ChevronRight } from "@lucide/vue";
 import { formatCount } from "~/lib/usage";
 
-/** "1,234 results · Page 2 of 25" with previous and next arrows. */
 const props = defineProps<{
   rowCount: number;
   pageCount: number;
-  /** Replaces "1,234 results" when the caller counts its rows in its own words. */
   countLabel?: string;
 }>();
 const page = defineModel<number>("page", { required: true });

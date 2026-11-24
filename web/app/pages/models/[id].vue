@@ -39,12 +39,10 @@ const { data: upstreamModels, status: upstreamModelsStatus } =
   useDashboardApi<UpstreamModel[]>("/upstream-models");
 const { data: providers, status: providersStatus } = useDashboardApi<Provider[]>("/providers");
 const { isBlocked } = useTermsRiskAllowed();
-/** A Route summary doesn't carry Terms Risk, so it is looked up from the Provider list. */
 const blockedProviderIds = computed(
   () => new Set((providers.value ?? []).filter(isBlocked).map((provider) => provider.id)),
 );
 
-/** Add Route lists Upstream Models by Provider name, so it waits for both lists. */
 const isLoadingRouteOptions = computed(
   () =>
     (upstreamModelsStatus.value === "pending" && !upstreamModels.value) ||
@@ -57,7 +55,6 @@ useHead({ title: () => model.value?.name ?? "Model" });
 const providerNameById = computed(
   () => new Map((providers.value ?? []).map((provider) => [provider.id, provider.name])),
 );
-/** Only Upstream Models of the Model's Kind: the backend refuses a Route to another Kind. */
 const upstreamModelOptions = computed(() =>
   (upstreamModels.value ?? [])
     .filter((upstreamModel) => upstreamModel.kind === model.value?.kind)
@@ -88,7 +85,6 @@ function openDialog(next: ModelDialog): void {
   }
 }
 
-/** Runs a dialog's write; on failure the dialog stays open with the backend's message. */
 async function saveFromDialog(
   write: () => Promise<unknown>,
   successMessage: string,
@@ -167,7 +163,6 @@ async function saveModelPolicy(parameterPolicy: ParameterPolicy): Promise<void> 
   }
 }
 
-/** An override that sets nothing is saved as no override. */
 async function saveRouteOverride(
   routeToChange: RouteSummary,
   override: ParameterPolicy | null,
@@ -232,7 +227,6 @@ async function toggleRoute(routeToToggle: RouteSummary): Promise<void> {
   }
 }
 
-/** Swaps a Route with its neighbour; `offset` is -1 to move it up, 1 to move it down. */
 async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
   const routeIds = (model.value?.routes ?? []).map((routeInOrder) => routeInOrder.id);
   const neighbourIndex = index + offset;

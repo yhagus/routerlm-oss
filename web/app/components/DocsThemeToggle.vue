@@ -4,7 +4,6 @@ import { computed, type Component } from "vue";
 import type { ThemePreference } from "~/composables/useTheme";
 import type { DocsMessageKey } from "~/lib/docsMessages";
 
-/** The shared theme switch (system, light, dark), as one icon button that cycles. */
 const { preference, nextPreference, cycle } = useTheme();
 const { t } = useDocsLocale();
 

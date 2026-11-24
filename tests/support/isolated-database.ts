@@ -1,11 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 
-/**
- * Creates an empty database named `<prefix>_<random>` (plus `suffix`, for a
- * script that checks the name) on the server `serverUrl` points at, so
- * parallel runs never see each other's rows. Returns its URL.
- */
 export async function createEmptyDatabase(
   serverUrl: string,
   prefix: string,

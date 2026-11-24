@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
 
-// The parts of a Catalog file these tests change.
 interface CatalogFile {
   endpoints: { protocol: string }[];
   serviceTierValues?: Record<string, string>;

@@ -3,18 +3,11 @@ import { Check, Copy } from "@lucide/vue";
 import { computed } from "vue";
 import { readableMarkdownOf } from "~/lib/docsCode";
 
-/**
- * A docs page's title block: the title and description, then ruled cells for
- * the endpoint (on an endpoint's page), the page number, the revision and a
- * button that copies the page's Markdown.
- */
 const props = defineProps<{
   title: string;
   description?: string;
   endpoint?: string;
-  /** The page's place in the contents, e.g. "03 / 09"; unknown while the contents load. */
   pageCounter: string | null;
-  /** The page's Markdown source. */
   markdown: string;
 }>();
 

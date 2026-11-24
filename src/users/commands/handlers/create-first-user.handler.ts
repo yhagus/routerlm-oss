@@ -18,7 +18,6 @@ export class CreateFirstUserHandler implements ICommandHandler<CreateFirstUserCo
   async execute({ newUser }: CreateFirstUserCommand): Promise<User> {
     const passwordHash = await this.passwordHasher.hash(newUser.password);
     return this.db.transaction(async (tx) => {
-      // Serialises concurrent setups so only one of them sees an empty table.
       await lockUsers(tx);
       const [existing] = await tx.select({ id: users.id }).from(users).limit(1);
       if (existing) {

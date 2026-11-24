@@ -12,15 +12,10 @@ import {
   type ProviderAccount,
 } from "~/lib/upstream";
 
-/**
- * A Provider's accounts, each holding an API key or an OAuth Login, with
- * adding, signing in, editing, switching and deleting.
- */
 const props = defineProps<{
   provider: Provider;
   accounts: ProviderAccount[];
   refresh: () => Promise<unknown>;
-  /** The accounts haven't arrived yet: placeholder rows instead of the empty state. */
   isLoading?: boolean;
 }>();
 
@@ -28,7 +23,6 @@ type ProviderAccountDialog =
   | { kind: "create" }
   | { kind: "edit"; account: ProviderAccount }
   | { kind: "delete"; account: ProviderAccount }
-  /** With an account, signs in again on it; with none, adds one. */
   | { kind: "sign-in"; account: ProviderAccount | null };
 
 const { $dashboardApi } = useNuxtApp();
@@ -40,11 +34,9 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
 });
 const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "medium" });
 
-/** Only Providers with a quota reader have Quota Meters, Exhausted accounts and the Credits toggle. */
 const hasQuota = computed(() => props.provider.quotaReader !== null);
 
 const COUNTDOWN_TICK_MS = 30_000;
-/** What countdowns and "Checked … ago" count from; ticks while the panel is shown. */
 const now = ref(Date.now());
 let countdownTimer: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
@@ -54,7 +46,6 @@ onUnmounted(() => clearInterval(countdownTimer));
 
 type AccountStatusKind = "exhausted" | "cooldown" | "ready" | "disabled";
 
-/** Where the account stands for routing, with when that ends for a Cooldown. */
 interface AccountStatus {
   kind: AccountStatusKind;
   note: string | null;
@@ -67,7 +58,6 @@ const STATUS_BADGES: Record<AccountStatusKind, { label: string; badgeClass: stri
   disabled: { label: "Disabled", badgeClass: "status-badge--warn" },
 };
 
-/** An Exhausted account is skipped like one in Cooldown, but until its Quota Meter resets. */
 function accountStatus(account: ProviderAccount): AccountStatus {
   if (!account.isEnabled) return { kind: "disabled", note: account.disabledReason };
   const endsAt = account.cooldownEndsAt ? new Date(account.cooldownEndsAt) : null;
@@ -78,14 +68,12 @@ function accountStatus(account: ProviderAccount): AccountStatus {
   return { kind: "cooldown", note: `until ${timeFormat.format(endsAt)}` };
 }
 
-/** What tells an OAuth Login apart: its region (Kimi Code), or who signed in on which plan (OpenAI Codex). */
 function oauthLoginNote(account: ProviderAccount): string | null {
   if (account.oauthRegion) return OAUTH_REGION_LABELS[account.oauthRegion];
   const identity = [account.oauthEmail, account.oauthPlanType].filter(Boolean);
   return identity.length > 0 ? identity.join(" · ") : null;
 }
 
-/** Which credential the account holds and what tells it apart, never the credential itself. */
 function accountCredential(account: ProviderAccount): { label: string; note: string | null } {
   if (account.credentialKind === "oauth-login") {
     return { label: "OAuth Login", note: oauthLoginNote(account) };
@@ -105,7 +93,6 @@ const accountRows = computed(() =>
     })),
 );
 
-/** How the Provider's accounts get their credential, as the empty state tells it. */
 function addAccountHint(provider: Provider): string {
   const canAddKey = acceptsApiKey(provider);
   const canSignIn = offersSignIn(provider);
@@ -133,7 +120,6 @@ const {
 interface ProviderAccountForm {
   name: string;
   key: string;
-  /** A number, or "" when the input is empty. */
   priority: number | string;
   continueWhenExhausted: boolean;
 }
@@ -156,7 +142,6 @@ function openDialog(next: ProviderAccountDialog): void {
   }
 }
 
-/** An edited account that holds an OAuth Login: it has no key to replace. */
 const editsOauthLogin = computed(() => {
   const current = dialog.value;
   return current?.kind === "edit" && current.account.credentialKind === "oauth-login";
@@ -177,7 +162,6 @@ function deleteDescription(account: ProviderAccount): string {
 async function saveAccount(): Promise<void> {
   const current = dialog.value;
   if (!current || current.kind === "delete" || current.kind === "sign-in") return;
-  // Only Providers with a quota reader show the toggle; the others keep the stored value.
   const quotaFields = hasQuota.value
     ? { continueWhenExhausted: form.value.continueWhenExhausted }
     : {};
@@ -188,7 +172,6 @@ async function saveAccount(): Promise<void> {
   };
   const failureMessage = "Couldn't save the Provider Account.";
   if (current.kind === "create") {
-    // An empty name leaves it out: the backend makes one up from two constellations.
     const name = form.value.name.trim();
     let addedName = name;
     await submitDialog(
@@ -211,7 +194,6 @@ async function saveAccount(): Promise<void> {
     );
     return;
   }
-  // An empty key field keeps the stored key.
   const key = form.value.key === "" ? {} : { key: form.value.key };
   await submitDialog(
     async () => {
@@ -234,7 +216,6 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
   return toggleRow(account, account.name);
 }
 
-/** A completed sign-in: the list reloads, so the account appears, or is Ready again, in place. */
 async function handleSignedIn(account: ProviderAccount): Promise<void> {
   const current = dialog.value;
   const isSignInAgain = current?.kind === "sign-in" && current.account !== null;
@@ -377,11 +358,6 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
     "
     :description="accountDialogDescription"
   >
-    <!--
-      Not a sign-in form: browsers and password managers must not fill it. The key is a
-      masked text input, because a password input makes browsers offer saved logins
-      whatever `autocomplete` says.
-    -->
     <form
       class="form"
       autocomplete="off"

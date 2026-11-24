@@ -13,6 +13,8 @@ A sign-in in progress is short-lived state in Redis, not a database row, and exp
 
 API key accounts keep identifying the gateway honestly as `routerlm/<version>`; only an OAuth Login presents the CLI.
 
+The quota reader calls Kimi's `GET <base URL>/usages` with the credential as a Bearer token and no CLI identity header besides `Authorization`; Kimi answers an API key and an OAuth Login's access token alike only on those terms.
+
 ## Considered options
 
 - Importing the CLI's credentials file: refresh tokens rotate, so the gateway and a local CLI sharing one login would invalidate each other on every refresh.

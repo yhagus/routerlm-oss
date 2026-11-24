@@ -45,19 +45,16 @@ describe("Route selection (e2e)", () => {
     await app.close();
   });
 
-  /** Each Route's Provider has a base URL of its own, so the path names the Route an Attempt used. */
   function baseUrlOf(routeName: string): string {
     return `${upstream.baseUrl}/${routeName}`;
   }
 
-  /** The Routes the Attempts went to, in order. */
   function attemptedRoutes(): string[] {
     return upstream.requests.map((received) =>
       received.path.replace("/v1/", "").replace("/chat/completions", ""),
     );
   }
 
-  /** Creates the Model "smart" with its first Route (priority 0) named `routeName`. */
   async function insertModelWithRoute(
     routeName: string,
     limits: UpstreamModelLimits = {},
@@ -140,7 +137,6 @@ describe("Route selection (e2e)", () => {
     await addRoute("large", 1, { contextSize: 128_000 });
     upstream.reply(SUCCESS);
 
-    // About 100 prompt tokens (4 characters each) plus 3 950 output tokens.
     await chat({
       messages: [{ role: "user", content: "word".repeat(100) }],
       max_tokens: 3_950,

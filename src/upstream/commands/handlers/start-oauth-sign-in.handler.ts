@@ -38,10 +38,7 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
   async execute({ newSignIn }: StartOauthSignInCommand): Promise<OauthSignIn> {
     const { providerId, providerAccountId } = newSignIn;
     const oauthLogin = await this.oauthLoginOf(providerId);
-    // Only a sign-in with regions takes one; the account would keep it otherwise.
     const region = signInNeedsRegion(oauthLogin) ? (newSignIn.region ?? null) : null;
-    // Generated once per Provider Account: the account the sign-in creates
-    // keeps it, and signing in again presents the account's own.
     const deviceId =
       providerAccountId === undefined
         ? randomUUID().replaceAll("-", "")
@@ -98,7 +95,6 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
     return provider.oauthLogin;
   }
 
-  /** The device id of the Provider's own account that holds an OAuth Login to sign in again on. */
   private async deviceIdOf(providerAccountId: string, providerId: string): Promise<string> {
     const [account] = await this.db
       .select({ deviceId: providerAccounts.oauthDeviceId })

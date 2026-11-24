@@ -11,7 +11,6 @@ import {
 import { createTestApp } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-/** The Chat Completions request the openai-chat `upstream-request.json` fixture was recorded from. */
 const FIXTURE_CLIENT_REQUEST = {
   model: "smart",
   messages: [
@@ -70,7 +69,6 @@ const FIXTURE_CLIENT_REQUEST = {
   stream: true,
 };
 
-/** A Messages request with the client's own cache markers on system, user and assistant content. */
 const MARKED_MESSAGES_REQUEST = {
   model: "smart",
   max_tokens: 256,
@@ -232,7 +230,6 @@ describe("An openai-chat upstream (e2e)", () => {
   });
 
   it("ends the client's stream with an error event when the upstream's stream reports an error", async () => {
-    // After the first chunk has reached the client, so the failure can only end its stream.
     const [firstChunk] = openAiChatFixture("upstream-stream-tool-call.sse").split("\n\n");
     upstream.reply({
       kind: "stream",
@@ -247,8 +244,6 @@ describe("An openai-chat upstream (e2e)", () => {
   });
 
   it("ends a Messages stream with an error event when the upstream interleaves tool call arguments", async () => {
-    // A Messages content block can't be reopened once the next one starts, so
-    // arguments for call 0 after call 1 began can't be written to the client.
     const chunk = (toolCall: object): string =>
       `data: ${JSON.stringify({
         id: "chatcmpl-upstream-1",

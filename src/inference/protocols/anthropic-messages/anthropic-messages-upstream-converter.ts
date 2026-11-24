@@ -21,14 +21,9 @@ import type {
 import { parseMessagesResponse, startMessagesStream } from "./anthropic-messages-response.js";
 
 const MESSAGES_PATH = "/v1/messages";
-// The version every Anthropic-compatible Provider accepts; later versions
-// refuse sampling parameters (temperature, top_p) on every model.
 const ANTHROPIC_VERSION = "2023-06-01";
-// The Protocol requires max_tokens; used when neither the client nor the
-// Upstream Model sets a limit.
 const DEFAULT_MAX_OUTPUT_TOKENS = 8192;
 
-/** The Protocol has no "none" or "minimal" effort: "none" sends no thinking settings at all. */
 const EFFORT_LEVELS = {
   minimal: "low",
   low: "low",
@@ -39,10 +34,6 @@ const EFFORT_LEVELS = {
 
 type ContentBlock = Record<string, unknown>;
 type MessageParam = { role: "user" | "assistant"; content: ContentBlock[] };
-
-// Key order here is the order on the wire: keep it fixed so the same request
-// always gives the same bytes (upstream prompt caches compare prefixes, and
-// thinking blocks are only accepted back after an unchanged prefix).
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
   const body: Record<string, unknown> = {
@@ -78,7 +69,6 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (request.stopSequences) {
     body.stop_sequences = request.stopSequences;
   }
-  // Usage arrives in message_start and message_delta on every stream; nothing to ask for.
   if (request.stream) {
     body.stream = true;
   }
@@ -89,11 +79,6 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   };
 }
 
-/**
- * Tool results go back as `tool_result` blocks in a user turn. Adjacent turns
- * of the same role are joined, so the results of parallel tool calls (and the
- * client's next words) share one user turn, as the Protocol expects.
- */
 function writeMessages(messages: InferenceMessage[]): MessageParam[] {
   const written: MessageParam[] = [];
   for (const message of messages) {
@@ -134,7 +119,6 @@ function writeUserBlocks(content: UserContentPart[]): ContentBlock[] {
   );
 }
 
-/** The Protocol refuses empty text blocks, which other Protocols allow. */
 function writeTextBlocks(parts: TextPart[]): ContentBlock[] {
   return parts
     .filter((part) => part.text !== "")
@@ -154,8 +138,6 @@ function writeAssistantBlock(part: AssistantContentPart): ContentBlock[] {
     case "text":
       return writeTextBlocks([part]);
     case "reasoning":
-      // Thinking is only accepted back with the signature the Protocol issued
-      // for it; reasoning from another Protocol has none and is left out.
       return part.signature === undefined
         ? []
         : [{ type: "thinking", thinking: part.text, signature: part.signature }];
@@ -199,7 +181,6 @@ function writeTool(tool: FunctionTool): ContentBlock {
 
 function writeToolChoice(request: InferenceRequest): ContentBlock | undefined {
   const isParallelDisabled = request.parallelToolCalls === false;
-  // Turning parallel calls off needs a tool_choice to carry the flag.
   const choice = request.toolChoice ?? (isParallelDisabled ? { type: "auto" } : undefined);
   if (!choice) {
     return undefined;
@@ -224,11 +205,6 @@ function toolChoiceBlockOf(choice: ToolChoice): ContentBlock {
   }
 }
 
-/**
- * A budget goes as a fixed thinking budget (the models that take one refuse
- * effort levels); an effort level turns on adaptive thinking with a readable
- * summary, since the default display returns empty thinking text.
- */
 function writeThinking(reasoning: InferenceRequest["reasoning"]): ContentBlock | undefined {
   if (reasoning?.budgetTokens !== undefined) {
     return { type: "enabled", budget_tokens: reasoning.budgetTokens };
@@ -252,10 +228,6 @@ function writeOutputConfig(request: InferenceRequest): ContentBlock | undefined 
   return Object.keys(outputConfig).length > 0 ? outputConfig : undefined;
 }
 
-/**
- * Only a JSON schema has a counterpart. Plain JSON mode has none (the Protocol
- * needs a schema that closes every object), so it is left to the prompt.
- */
 function writeOutputFormat(format: ResponseFormat | undefined): ContentBlock | undefined {
   if (format?.type !== "json-schema") {
     return undefined;
@@ -274,7 +246,6 @@ function withCacheControl(block: ContentBlock, marker: CacheMarker | undefined):
   return { ...block, cache_control: cacheControl };
 }
 
-/** The `anthropic-messages` upstream Protocol: Anthropic Messages and the Providers that copy it. */
 export const anthropicMessagesUpstreamConverter: UpstreamProtocolConverter = {
   protocol: "anthropic-messages",
   writeRequest,

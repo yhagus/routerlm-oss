@@ -11,7 +11,6 @@ const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" 
 const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
 const FIRST_COOLDOWN_MS = 5_000;
 const ONE_HOUR_MS = 60 * 60_000;
-// The first Cooldown has to run out before the Provider Account is tried again.
 const SECOND_FAILURE_TEST_TIMEOUT_MS = 15_000;
 
 function rateLimitedWithRetryAfter(retryAfter: string): FakeReply {
@@ -23,7 +22,6 @@ function rateLimitedWithRetryAfter(retryAfter: string): FakeReply {
   };
 }
 
-/** When the Cooldown ends, and when the request that started it was sent and answered (epoch ms). */
 interface ObservedCooldown {
   endsAt: number;
   requestSentAt: number;
@@ -59,7 +57,6 @@ describe("Provider Account Cooldown (e2e)", () => {
     await app.close();
   });
 
-  /** The Cooldown end the dashboard shows for the Provider Account, or null. */
   async function cooldownEndsAt(): Promise<number | null> {
     const listed = await request(app.getHttpServer())
       .get("/api/provider-accounts")
@@ -71,7 +68,6 @@ describe("Provider Account Cooldown (e2e)", () => {
     return account.cooldownEndsAt === null ? null : Date.parse(account.cooldownEndsAt);
   }
 
-  /** Sends one request that the only Provider Account fails with `reply`. */
   async function failRequestWith(reply: FakeReply): Promise<ObservedCooldown> {
     upstream.reply(reply);
     const requestSentAt = Date.now();
@@ -87,7 +83,6 @@ describe("Provider Account Cooldown (e2e)", () => {
     return { endsAt, requestSentAt, requestAnsweredAt };
   }
 
-  /** The Cooldown started during the request and lasts `durationMs`. */
   function expectToLast(cooldown: ObservedCooldown, durationMs: number): void {
     expect(cooldown.endsAt).toBeGreaterThanOrEqual(cooldown.requestSentAt + durationMs);
     expect(cooldown.endsAt).toBeLessThanOrEqual(cooldown.requestAnsweredAt + durationMs);
@@ -116,7 +111,6 @@ describe("Provider Account Cooldown (e2e)", () => {
   });
 
   it("waits until a Retry-After date", async () => {
-    // An HTTP date has whole seconds, so pick one exactly 30 seconds after a whole second.
     const retryAt = Math.ceil(Date.now() / 1000) * 1000 + 30_000;
 
     const cooldown = await failRequestWith(

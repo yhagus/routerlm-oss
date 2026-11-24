@@ -28,7 +28,6 @@ const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" 
 const CHAT_PATH = "/v1/chat/completions";
 const GLOBAL_TOKEN_PATH = `/global${TOKEN_PATH}`;
 const HOUR_SECONDS = 3600;
-/** Under the 300 seconds below which every OAuth Login is refreshed. */
 const SHORT_LIFETIME_SECONDS = 60;
 const RENEWED = { accessToken: "access-token-2", refreshToken: "refresh-token-2" };
 
@@ -49,7 +48,6 @@ const COMPLETION: FakeReply = {
 describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
-  // Plays Kimi's API, `/usages` included, and its auth hosts.
   let kimi: FakeUpstream;
   let catalogKimiCode: CatalogProvider;
   let apiKey: string;

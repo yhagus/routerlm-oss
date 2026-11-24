@@ -3,13 +3,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { text as readBody } from "node:stream/consumers";
 import { portOf } from "./port-of.js";
 
-/** What the fake upstream answers to the next request. */
 export type FakeReply =
-  /**
-   * `delayMs` holds the whole answer back, as a slow but healthy non-stream
-   * upstream. `onReceived` runs when the request arrives, and the answer waits
-   * for it: to change the world between the gateway's call and what it does next.
-   */
   | {
       kind: "json";
       status: number;
@@ -18,43 +12,28 @@ export type FakeReply =
       delayMs?: number;
       onReceived?: () => void | Promise<void>;
     }
-  /** `events` is raw server-sent-event text; `holdOpen` keeps the connection open afterwards. */
   | { kind: "stream"; events: string; holdOpen?: boolean; headers?: Record<string, string> }
-  /**
-   * Sends a stream in `pieces`, pausing between them so the gateway reads
-   * each one on its own, as a stream split across network packets.
-   */
   | { kind: "stream-in-pieces"; pieces: Array<string | Uint8Array> }
-  /** Sends the stream's first events, then drops the connection. */
   | { kind: "stream-then-reset"; events: string }
-  /** Never sends headers, as an upstream that stopped answering. */
   | { kind: "hang" }
-  /** Sends a 200 and its headers, then nothing: no body, no stream event. */
   | { kind: "headers-only" }
-  /** Drops the connection without answering. */
   | { kind: "reset" }
-  /** Raw bytes with their content type, as a media host serves a generated file. */
   | { kind: "binary"; status: number; contentType: string; body: Uint8Array };
 
-/** A request the fake upstream received. */
 export interface ReceivedRequest {
   method: string;
   path: string;
   headers: IncomingMessage["headers"];
   body: unknown;
-  /** The body exactly as sent, for checks on its bytes. */
   rawBody: string;
 }
 
-/** Long enough for the gateway to read one piece of a stream before the next is sent. */
 const PAUSE_BETWEEN_PIECES_MS = 20;
 
 const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded";
 
-/** Sent with every reply, to prove upstream headers never reach the client. */
 export const UPSTREAM_ONLY_HEADER = "x-upstream-request-id";
 
-/** A recorded openai-chat exchange: what an upstream gets or sends (`upstream-*`), or a client (`client-*`). */
 export function openAiChatFixture(name: string): string {
   return readFileSync(
     new URL(`../../src/inference/protocols/openai-chat/fixtures/${name}`, import.meta.url),
@@ -62,7 +41,6 @@ export function openAiChatFixture(name: string): string {
   );
 }
 
-/** A recorded anthropic-messages exchange, named as for openAiChatFixture. */
 export function anthropicMessagesFixture(name: string): string {
   return readFileSync(
     new URL(`../../src/inference/protocols/anthropic-messages/fixtures/${name}`, import.meta.url),
@@ -70,10 +48,6 @@ export function anthropicMessagesFixture(name: string): string {
   );
 }
 
-/**
- * The anthropic-messages upstream's recorded stream, but with its thinking in
- * one delta, as the client fixtures (`client-stream.sse`) were recorded from.
- */
 export function anthropicStreamWithOneThinkingDelta(): string {
   return anthropicMessagesFixture("upstream-stream-tool-call.sse")
     .split("\n\n")
@@ -81,7 +55,6 @@ export function anthropicStreamWithOneThinkingDelta(): string {
     .join("\n\n");
 }
 
-/** An anthropic-messages stream of two thinking blocks, the first one signed. */
 export const TWO_THINKING_BLOCKS_STREAM = [
   'event: message_start\ndata: {"type":"message_start","message":{"id":"msg_up","type":"message","role":"assistant","model":"claude-test-5","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":5,"output_tokens":1}}}',
   'event: content_block_start\ndata: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}}',
@@ -96,7 +69,6 @@ export const TWO_THINKING_BLOCKS_STREAM = [
   "",
 ].join("\n\n");
 
-/** A recorded dashscope-image exchange, named as for openAiChatFixture. */
 export function dashScopeImageFixture(name: string): string {
   return readFileSync(
     new URL(`../../src/inference/protocols/dashscope-image/fixtures/${name}`, import.meta.url),
@@ -104,14 +76,8 @@ export function dashScopeImageFixture(name: string): string {
   );
 }
 
-/** DashScope's path for a synchronous image generation. */
 export const DASHSCOPE_GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
 
-/**
- * Queues the recorded dashscope-image answer, two images, with its image URLs
- * pointing at the fake and their bytes queued. DashScope reports them at
- * `outputSize`; the recording's 1024×1024 is the 1K tier.
- */
 export function replyWithTwoDashScopeImages(
   upstream: FakeUpstream,
   outputSize: { width: number; height: number } = { width: 1024, height: 1024 },
@@ -136,7 +102,6 @@ export function replyWithTwoDashScopeImages(
   upstream.replyTo("/media/b.png", imageBytes);
 }
 
-/** A recorded dashscope-transcription exchange, named as for openAiChatFixture. */
 export function dashScopeTranscriptionFixture(name: string): string {
   return readFileSync(
     new URL(
@@ -147,7 +112,6 @@ export function dashScopeTranscriptionFixture(name: string): string {
   );
 }
 
-/** A recorded dashscope-video exchange, named as for openAiChatFixture. */
 export function dashScopeVideoFixture(name: string): string {
   return readFileSync(
     new URL(`../../src/inference/protocols/dashscope-video/fixtures/${name}`, import.meta.url),
@@ -155,7 +119,6 @@ export function dashScopeVideoFixture(name: string): string {
   );
 }
 
-/** A recorded dashscope-speech exchange, named as for openAiChatFixture. */
 export function dashScopeSpeechFixture(name: string): string {
   return readFileSync(
     new URL(`../../src/inference/protocols/dashscope-speech/fixtures/${name}`, import.meta.url),
@@ -163,7 +126,6 @@ export function dashScopeSpeechFixture(name: string): string {
   );
 }
 
-/** A recorded openai-responses exchange, named as for openAiChatFixture. */
 export function openAiResponsesFixture(name: string): string {
   return readFileSync(
     new URL(`../../src/inference/protocols/openai-responses/fixtures/${name}`, import.meta.url),
@@ -171,12 +133,6 @@ export function openAiResponsesFixture(name: string): string {
   );
 }
 
-/**
- * A local HTTP server standing in for a Provider, so no test calls a real
- * one. Queue replies with `reply()`; each request takes the next one. A reply
- * queued with `replyTo()` goes only to a request for its path, and one queued
- * with `replyWithCredential()` only to a request sending that key.
- */
 export class FakeUpstream {
   readonly requests: ReceivedRequest[] = [];
   private readonly replies: FakeReply[] = [];
@@ -195,22 +151,18 @@ export class FakeUpstream {
     return upstream;
   }
 
-  /** Scheme, host and port, without a path: what plays a Provider's auth host. */
   get origin(): string {
     return `http://127.0.0.1:${portOf(this.server.address())}`;
   }
 
-  /** What a Provider row's base URL should be. */
   get baseUrl(): string {
     return `http://127.0.0.1:${portOf(this.server.address())}/v1`;
   }
 
-  /** As `baseUrl`, through the name `localhost` rather than the loopback address, so the host has to be resolved. */
   get localhostBaseUrl(): string {
     return `http://localhost:${portOf(this.server.address())}/v1`;
   }
 
-  /** A URL on the fake for a generated file, as a Provider returns one; queue its bytes with `replyTo(path, ...)`. */
   mediaUrl(path: string): string {
     return `${this.origin}${path}`;
   }
@@ -227,28 +179,18 @@ export class FakeUpstream {
     this.replies.push(reply);
   }
 
-  /**
-   * Queues a reply for the next request to `path`, whichever other requests
-   * arrive first: for a request the gateway makes on the side, at no fixed moment.
-   */
   replyTo(path: string, reply: FakeReply): void {
     const replies = this.repliesByPath.get(path) ?? [];
     replies.push(reply);
     this.repliesByPath.set(path, replies);
   }
 
-  /**
-   * Queues a reply for the next request sending `credential`, as a bearer
-   * token or an `x-api-key`: to answer each Provider Account its own way
-   * when they are called at once.
-   */
   replyWithCredential(credential: string, reply: FakeReply): void {
     const replies = this.repliesByCredential.get(credential) ?? [];
     replies.push(reply);
     this.repliesByCredential.set(credential, replies);
   }
 
-  /** Resolves when the gateway closes a connection the fake upstream was still answering. */
   waitForDisconnect(): Promise<void> {
     return new Promise((resolve) => this.disconnectWaiters.push(resolve));
   }
@@ -350,7 +292,6 @@ export class FakeUpstream {
   }
 }
 
-/** A JSON body parsed, or a form's fields by name, as an auth host receives them. */
 function parsedBody(text: string, contentType: string | undefined): unknown {
   if (text === "") {
     return undefined;
@@ -371,7 +312,6 @@ async function writeInPieces(
   }
 }
 
-/** The key a request sends, as a bearer token or an `x-api-key`; empty when it sends none. */
 function credentialOf(request: IncomingMessage): string {
   const apiKey = request.headers["x-api-key"];
   if (typeof apiKey === "string") {

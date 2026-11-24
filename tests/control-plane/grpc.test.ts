@@ -4,12 +4,9 @@ import { createServer } from "node:net";
 import { vi } from "vitest";
 import type { ControlPlaneTransport } from "./key-scenarios.js";
 
-// Each suite's beforeAll starts a worker process, which takes a few seconds.
 const WORKER_STARTUP_TIMEOUT_MS = 30_000;
 vi.setConfig({ hookTimeout: WORKER_STARTUP_TIMEOUT_MS });
 
-// The worker processes queue jobs as it serves the control plane. Its own
-// Redis database keeps jobs that other test files enqueued out of its way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -35,16 +32,11 @@ async function stop(worker: ChildProcess): Promise<void> {
   await exited;
 }
 
-// Stopped once more at the end, in case a suite's setup failed before it could.
 const startedWorkers = new Set<ChildProcess>();
 afterAll(async () => {
   await Promise.all([...startedWorkers].map(stop));
 });
 
-/**
- * The gRPC adapter of a worker started as in production (`bun src/worker.ts`)
- * with CONTROL_PLANE_PORT set, against the same database as the test's app.
- */
 const GRPC_TRANSPORT: ControlPlaneTransport = {
   name: "gRPC",
   connect: async () => {

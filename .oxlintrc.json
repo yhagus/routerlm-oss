@@ -1,6 +1,15 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": [
+    "./scripts/lint/no-comments.mjs"
+  ],
   "rules": {
+    "routerlm/no-comments": [
+      "error",
+      {
+        "baseline": "comment-baseline.json"
+      }
+    ],
     "typescript/no-floating-promises": "error",
     "eslint/no-nested-ternary": "error",
     "typescript/no-explicit-any": "error",

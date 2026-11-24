@@ -4,10 +4,6 @@ import { apiErrorMessage } from "~/lib/api";
 import type { ApiKeyRotation, ApiKeySummary } from "~/lib/api-keys";
 import { dateTimeFormat } from "~/lib/dateFormats";
 
-/**
- * Every recorded rotation of one API Key, newest first, ending with when the
- * key was created. Loaded each time it opens, so it never shows a stale list.
- */
 const props = defineProps<{ apiKey: ApiKeySummary }>();
 const isOpen = defineModel<boolean>("open", { required: true });
 

@@ -1,10 +1,6 @@
-// The Parameter Policy on a Model or a Route override, and the editor's form for it.
-
-/** Ordered from least to most reasoning, as the backend caps them. */
 export const REASONING_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh"] as const;
 export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
 
-/** The gateway's Service Tier names; each Provider maps them to its own wire values. */
 export const SERVICE_TIERS = ["fast", "flex"] as const;
 export type ServiceTier = (typeof SERVICE_TIERS)[number];
 
@@ -18,13 +14,10 @@ export interface ParameterValues {
   topP?: number;
   maxOutputTokens?: number;
   reasoningEffort?: ReasoningEffort;
-  /** Cap only: the backend rejects it as a default or forced value. */
   reasoningBudgetTokens?: number;
   stopSequences?: string[];
   serviceTier?: ServiceTier;
-  /** Forced only: a speech request always names a voice, so a default never applies. */
   voice?: string;
-  /** Whether a media Provider marks what it generates; off when not set. */
   watermark?: boolean;
 }
 
@@ -37,7 +30,6 @@ export interface ParameterPolicy {
   defaults?: ParameterValues;
   forced?: ParameterValues;
   caps?: ParameterCaps;
-  /** Plain text placed before the client's system content; never a template. */
   systemPrompt?: string;
 }
 
@@ -66,7 +58,6 @@ export const RULE_KINDS: { kind: RuleKind; label: string }[] = [
   { kind: "caps", label: "Cap" },
 ];
 
-/** Stop sequences, Service Tiers, voices and watermarks have no order, so they can't be capped. */
 export function isCappable(parameter: PolicyParameter): parameter is keyof ParameterCaps {
   return (
     parameter !== "stopSequences" &&
@@ -76,20 +67,16 @@ export function isCappable(parameter: PolicyParameter): parameter is keyof Param
   );
 }
 
-/** A thinking budget has no default or forced value; only a Cap limits it. */
 export function isCapOnly(parameter: PolicyParameter): boolean {
   return parameter === "reasoningBudgetTokens";
 }
 
-/** Whether the editor offers `parameter` as a rule of `kind`. */
 export function isRuleOffered(parameter: PolicyParameter, kind: RuleKind): boolean {
   if (kind === "caps") return isCappable(parameter);
   if (isCapOnly(parameter)) return false;
-  // The backend takes a default voice but never applies it, so it isn't offered.
   return !(kind === "defaults" && parameter === "voice");
 }
 
-/** The editor's inputs as text: an empty field means "not set". */
 export interface PolicyForm {
   rules: Record<RuleKind, Record<PolicyParameter, string>>;
   systemPrompt: string;
@@ -102,7 +89,6 @@ const NUMBER_RANGES = {
   reasoningBudgetTokens: { min: 1, max: Number.MAX_SAFE_INTEGER, isWhole: true },
 } as const;
 
-/** The allowed range of a numeric parameter, or undefined for the others. */
 export function numberRange(
   parameter: PolicyParameter,
 ): { min: number; max: number; isWhole: boolean } | undefined {
@@ -126,7 +112,6 @@ export function formFromPolicy(policy: ParameterPolicy | null): PolicyForm {
   return { rules, systemPrompt: policy?.systemPrompt ?? "" };
 }
 
-/** The policy the form describes, or the first problem that stops it from being saved. */
 export function policyFromForm(
   form: PolicyForm,
 ): { policy: ParameterPolicy } | { problem: string } {
@@ -148,7 +133,6 @@ export function policyFromForm(
   return { policy };
 }
 
-/** Labels of the Caps set without a default beside them: the parameter then stays omitted. */
 export function capsWithoutDefault(form: PolicyForm): string[] {
   return POLICY_PARAMETERS.filter(
     ({ name }) =>
@@ -176,7 +160,6 @@ function rowFromValues(values: ParameterValues | undefined): Record<PolicyParame
   };
 }
 
-/** Parses one field into `values`; returns what is wrong with it, if anything. */
 function setValue(values: ParameterValues, parameter: PolicyParameter, text: string): string {
   if (parameter === "stopSequences") {
     values.stopSequences = text.split("\n").filter((line) => line !== "");
@@ -217,7 +200,6 @@ function setValue(values: ParameterValues, parameter: PolicyParameter, text: str
   return "";
 }
 
-/** A default or forced value above its cap could never be sent as set. */
 function capProblem(policy: ParameterPolicy): string {
   for (const kind of ["defaults", "forced"] as const) {
     for (const { name, label } of POLICY_PARAMETERS) {

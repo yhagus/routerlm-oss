@@ -8,13 +8,7 @@ import {
   TagsInputRoot,
 } from "reka-ui";
 
-/**
- * A list of short values typed one at a time: Enter, a comma, a paste or
- * leaving the field adds what was typed as a tag; Backspace or a tag's ×
- * removes one. Duplicates are ignored.
- */
 defineProps<{
-  /** The field's accessible name. */
   label: string;
   placeholder?: string;
 }>();

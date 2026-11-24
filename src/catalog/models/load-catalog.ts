@@ -14,13 +14,8 @@ import {
   tierPricesWithoutListedTier,
 } from "@/catalog/schemas/catalog.schema.js";
 
-/** The Catalog files that ship with the gateway, one JSON file per Provider. */
 export const CATALOG_DIRECTORY = fileURLToPath(new URL("../data", import.meta.url));
 
-/**
- * Reads and validates every `*.json` file in `directory`. Throws on the first
- * invalid file, naming the file and the entry at fault.
- */
 export async function loadCatalog(directory: string): Promise<CatalogProvider[]> {
   const fileNames = (await readdir(directory)).filter((name) => name.endsWith(".json")).sort();
   const providers: CatalogProvider[] = [];
@@ -129,7 +124,6 @@ function pricingWindowNamesOf(provider: CatalogProvider): string[] {
   return (provider.pricingWindows ?? []).map((window) => window.name);
 }
 
-/** Turns `["upstreamModels", 2, "source"]` into `upstreamModels[2] (gpt-x).source`. */
 function describeIssue(json: unknown, issue: z.core.$ZodIssue): string {
   const [section, index, ...rest] = issue.path;
   if (section !== "upstreamModels" || typeof index !== "number") {

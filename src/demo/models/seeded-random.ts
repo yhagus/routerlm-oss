@@ -1,9 +1,7 @@
-/** A source of numbers in [0, 1), like `Math.random`, but repeatable. */
 export type Random = () => number;
 
 const UINT32_RANGE = 2 ** 32;
 
-/** Mulberry32: tiny, fast, and the same sequence for the same seed on every machine. */
 export function seededRandom(seed: number): Random {
   let state = seed >>> 0;
   return () => {
@@ -20,7 +18,6 @@ export interface Weighted<T> {
   weight: number;
 }
 
-/** One of `entries`, each as likely as its share of the total weight. */
 export function pickWeighted<T>(random: Random, entries: readonly Weighted<T>[]): T {
   const totalWeight = entries.reduce((sum, entry) => sum + entry.weight, 0);
   let remaining = random() * totalWeight;
@@ -37,17 +34,11 @@ export function pickWeighted<T>(random: Random, entries: readonly Weighted<T>[])
   return last.value;
 }
 
-/**
- * A positive number around `median`, skewed long like request sizes are:
- * `spread` is the standard deviation of its logarithm.
- */
 export function logNormal(random: Random, median: number, spread: number): number {
-  // Box-Muller; 1 - random() keeps the logarithm's argument above zero.
   const gaussian = Math.sqrt(-2 * Math.log(1 - random())) * Math.cos(2 * Math.PI * random());
   return median * Math.exp(spread * gaussian);
 }
 
-/** An integer in [min, max]. */
 export function between(random: Random, min: number, max: number): number {
   return min + Math.floor(random() * (max - min + 1));
 }

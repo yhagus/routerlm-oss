@@ -37,7 +37,6 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
         throw new NotFoundException("Provider not found");
       }
 
-      // A PATCH may change only the endpoints or only the quirks, so the result is what must fit.
       const endpoints = changes.endpoints ?? stored.endpoints;
       assertQuirksFitEndpoints(endpoints, changes.quirks ?? stored.quirks);
       const serviceTierValues = changes.serviceTierValues ?? stored.serviceTierValues;
@@ -67,7 +66,6 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
   }
 }
 
-/** A tier the Provider stops mapping would be dropped from every Attempt of the Upstream Models that list it. */
 async function refuseWhileModelsListUnmappedTiers(
   tx: Transaction,
   providerId: string,
@@ -91,7 +89,6 @@ async function refuseWhileModelsListUnmappedTiers(
   );
 }
 
-/** Without OAuth Login these Provider Accounts could neither renew their tokens nor be signed in again. */
 async function refuseWhileOauthLoginAccountsExist(
   tx: Transaction,
   providerId: string,
@@ -113,11 +110,6 @@ async function refuseWhileOauthLoginAccountsExist(
   );
 }
 
-/**
- * Readings taken by the previous reader describe meters the new one may not
- * know, so the Provider Accounts start over as never read. Their Exhausted
- * state is left alone: it comes from the Provider's refusals, not from a reading.
- */
 async function clearQuotaReadings(tx: Transaction, providerId: string): Promise<void> {
   const accountsOfProvider = tx
     .select({ id: providerAccounts.id })

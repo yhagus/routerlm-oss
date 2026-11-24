@@ -14,7 +14,6 @@ import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-datab
 const runFile = promisify(execFile);
 const MIGRATIONS_FOLDER = "./drizzle";
 const RENAME_MIGRATION_SUFFIX = "_rename_minimax_to_minimax_api";
-// Bun startup plus seeding every shipped Catalog file.
 const SEED_TIMEOUT_MS = 30_000;
 
 type PreRenameDatabase = { databaseUrl: string; pool: Pool; db: Database };
@@ -37,7 +36,6 @@ describe("MiniMax API rename migration (e2e)", () => {
       await rm(preRenameMigrationsFolder, { recursive: true, force: true });
   });
 
-  /** A database migrated to the schema before the rename, as an existing install has it. */
   async function openPreRenameDatabase(): Promise<PreRenameDatabase> {
     const databaseUrl = await createEmptyDatabase(serverUrl, "minimax_rename");
     const pool = new Pool({ connectionString: databaseUrl });
@@ -98,7 +96,6 @@ describe("MiniMax API rename migration (e2e)", () => {
   });
 });
 
-/** Copies every migration that precedes the rename into a temporary folder. */
 async function copyMigrationsBeforeRename(): Promise<string> {
   const folder = await mkdtemp(join(tmpdir(), "routerlm-migrations-"));
   const migrationNames = (await readdir(MIGRATIONS_FOLDER)).sort();
@@ -112,13 +109,10 @@ async function copyMigrationsBeforeRename(): Promise<string> {
   return folder;
 }
 
-/** The MiniMax Provider as the seeder created it before the rename, in use by one Route. */
 async function insertMiniMaxWithRoute(
   { pool }: PreRenameDatabase,
   providerName: string,
 ): Promise<{ providerId: string; accountId: string; routeId: string }> {
-  // Plain SQL: Drizzle names every column of today's schema in an insert,
-  // and later migrations add columns this database doesn't have yet.
   const providerId = await insertReturningId(
     pool,
     `insert into providers (slug, name, protocol, base_url, auth_style, quirks, is_from_catalog)

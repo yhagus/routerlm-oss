@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-/**
- * A docs page as a datasheet sheet: the title block, the numbered article
- * with its captioned figures, and the pager as the sheet's footer.
- */
 const { docsRoot, t } = useDocsLocale();
 const { page, status } = useDocsPage();
 const { currentPage, pageCounter } = useDocsContents();
@@ -14,8 +10,6 @@ useSeoMeta({
   description: () => page.value?.description,
 });
 
-// Each page's Markdown opens with its title as an h1, which the title block
-// already shows; render the body without it so the page has one h1.
 const pageBody = computed(() => {
   if (!page.value) return null;
   const [firstNode, ...otherNodes] = page.value.body.value;
@@ -25,8 +19,6 @@ const pageBody = computed(() => {
     : page.value;
 });
 
-// Sections and figures are numbered by CSS counters (see docs.css); figure
-// captions print the page number with them, as in "Fig. 03-1".
 const articleCounters = computed(
   () => `ds-page ${currentPage.value?.number ?? 0} ds-section ds-subsection ds-figure`,
 );

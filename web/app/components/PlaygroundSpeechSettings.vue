@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { AUDIO_FORMAT_LABELS, AUDIO_FORMATS, type AudioFormat } from "~/lib/playgroundSpeech";
 
-/** The speech tab's request parameters, in the side rail and the narrow-screen sheet alike. */
 const voice = defineModel<string>("voice", { required: true });
 const format = defineModel<AudioFormat>("format", { required: true });
 

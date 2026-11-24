@@ -23,19 +23,11 @@ import { ProvidersController } from "./providers.controller.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
 import { UpstreamModelsController } from "./upstream-models.controller.js";
 
-/**
- * Dashboard management of Providers, Upstream Models and Provider Accounts,
- * and signing in to a Provider that offers OAuth Login. The worker imports it
- * too, and polls for the pending sign-ins.
- */
 @Module({
   imports: [
     SnapshotModule,
     RedisModule,
-    // The connection is the importing process's: QueueModule's in the backend, WorkerModule's in the worker.
     BullModule.registerQueue({ name: OAUTH_SIGN_INS_QUEUE }),
-    // No retries, but for a refresh: the next poll is the retry. A redirect fails rather than
-    // carry a device code or a token to another host.
     HttpClientModule.registerAsync({
       name: OAUTH_LOGIN_HTTP_CLIENT,
       inject: [OutboundFetch],
@@ -67,8 +59,6 @@ import { UpstreamModelsController } from "./upstream-models.controller.js";
     ...CommandHandlers,
     ...QueryHandlers,
   ],
-  // The gateway decrypts Provider Account keys, reads and refreshes OAuth
-  // Logins, and keeps the accounts' Cooldown and health.
   exports: [ProviderKeyCipher, ProviderAccountCredentials, CooldownStore, ProviderAccountHealth],
 })
 export class UpstreamModule {}

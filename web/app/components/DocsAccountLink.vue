@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { ArrowRight } from "@lucide/vue";
 
-/**
- * The way back to the dashboard for an operator already signed in this visit,
- * and to the sign-in page for anyone else. The docs never ask the backend who
- * is signed in, so a fresh visit always offers "Sign in".
- */
 const currentUser = useCurrentUser();
 const { t } = useDocsLocale();
 </script>

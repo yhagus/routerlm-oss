@@ -8,16 +8,8 @@ import { ConfigService } from "@nestjs/config";
 import { Redis, type RedisOptions } from "ioredis";
 import type { Env } from "@/config/schemas/env.schema.js";
 
-// The inference path waits at most this long for Redis; past it, Redis state
-// is treated as unknown rather than holding the request.
 const COMMAND_TIMEOUT_MS = 250;
 
-/**
- * The backend's Redis connections, outside BullMQ: one shared connection for
- * commands (Cooldown state, snapshot change notices) and one per subscriber.
- * Redis is optional to every caller, so commands fail at once while it is
- * unreachable instead of queueing, and ioredis reconnects in the background.
- */
 @Injectable()
 export class RedisConnection implements OnApplicationBootstrap, OnApplicationShutdown {
   private readonly logger = new Logger(RedisConnection.name);
@@ -49,10 +41,6 @@ export class RedisConnection implements OnApplicationBootstrap, OnApplicationShu
     }
   }
 
-  /**
-   * A connection of its own for SUBSCRIBE, which takes a connection over. It
-   * connects on its first command and resubscribes after every reconnect.
-   */
   createSubscriber(): Redis {
     const subscriber = this.connection("subscriber", {});
     this.subscribers.push(subscriber);
@@ -61,7 +49,6 @@ export class RedisConnection implements OnApplicationBootstrap, OnApplicationShu
 
   private connection(role: string, options: RedisOptions): Redis {
     const connection = new Redis(this.url, { ...options, lazyConnect: true });
-    // Without a listener, ioredis reports every failed reconnect as an unhandled error.
     connection.on("error", (error: Error) => this.logger.warn(`Redis (${role}): ${error.message}`));
     return connection;
   }

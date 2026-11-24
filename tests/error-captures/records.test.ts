@@ -16,7 +16,6 @@ import {
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
-// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -30,7 +29,6 @@ const BACKUP_KEY = "sk-backup-secret-9876543210";
 const SESSION_COOKIE = "__Host-sid=dashboard-session";
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const CAPTURED_BODY_LIMIT_BYTES = 256 * 1024;
-// The fake upstream sends a JSON string, so its body is the text plus two quotes.
 const QUOTES_BYTES = 2;
 const POLL_INTERVAL_MS = 50;
 
@@ -78,7 +76,6 @@ describe("Error Captures written for failed requests (e2e)", () => {
       .send(body);
   }
 
-  /** The captures of the one request made, once the worker has written its Usage Log. */
   async function writtenCaptures() {
     const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
     while (Date.now() < deadline) {
@@ -188,7 +185,6 @@ describe("Error Captures written for failed requests (e2e)", () => {
     expect(capture.requestHeaders).toMatchObject({ "x-api-key": "[REDACTED]" });
   });
 
-  /** The captured upstream response body of a request the upstream fails with `text` as a JSON string. */
   async function capturedUpstreamBodyOf(text: string): Promise<string | null> {
     upstream.reply({ kind: "json", status: 500, body: text });
     await chat(CHAT_REQUEST).expect(502);
@@ -214,7 +210,6 @@ describe("Error Captures written for failed requests (e2e)", () => {
   });
 
   it("never cuts a multi-byte character in half when truncating a captured body", async () => {
-    // The two bytes of "é" straddle the limit.
     const kept = `"${"a".repeat(CAPTURED_BODY_LIMIT_BYTES - QUOTES_BYTES)}`;
     const text = `${kept.slice(1)}é and more`;
 

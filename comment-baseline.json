@@ -1,0 +1,12 @@
+{
+  "scripts/check-web-mirrors.ts": 12,
+  "web/app/lib/api-keys.ts": 2,
+  "web/app/lib/attemptFailures.ts": 1,
+  "web/app/lib/errorCaptures.ts": 2,
+  "web/app/lib/errorOrigins.ts": 1,
+  "web/app/lib/playgroundSpeech.ts": 1,
+  "web/app/lib/playgroundTranscription.ts": 1,
+  "web/app/lib/playgroundVideo.ts": 2,
+  "web/app/lib/upstream.ts": 1,
+  "web/app/lib/validityPeriods.ts": 1
+}

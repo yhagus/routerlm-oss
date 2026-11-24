@@ -29,7 +29,6 @@ export class UpdateIntegrationHandler implements ICommandHandler<UpdateIntegrati
     if (updated.length === 0) {
       throw integrationNotFound();
     }
-    // Requests of the Integration's API Keys record its name in their Usage Logs.
     await this.snapshot.changed();
     const [summary] = await selectIntegrationSummaries(this.db, eq(integrations.id, id));
     return summary;

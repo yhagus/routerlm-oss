@@ -5,10 +5,8 @@ import { RedisModule } from "@/redis/redis.module.js";
 import { OutboundFetch } from "./providers/outbound-fetch.js";
 import { RedisThrottlerStorage } from "./providers/redis-throttler-storage.js";
 
-/** Login attempts allowed per client IP per minute (ADR 0021). */
 const LOGINS_PER_MINUTE = 10;
 
-// Shared injectables that belong to no module's domain are registered and exported here.
 @Global()
 @Module({
   imports: [

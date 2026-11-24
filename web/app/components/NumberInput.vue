@@ -7,27 +7,16 @@ import {
   significantCharsBefore,
 } from "~/lib/numberInput";
 
-/**
- * A text field for numbers that groups digits as you type (1 048 576) and
- * keeps the caret beside the same digit. It holds the plain number as a
- * string ("" when empty), so callers parse it as before. `class`, `required`,
- * `placeholder` and aria attributes pass through to the input.
- */
 defineOptions({ inheritAttrs: false });
 
 const props = withDefaults(
   defineProps<{
-    /** Whole numbers only. */
     whole?: boolean;
     min?: number;
     max?: number;
-    /** A token count: accepts 128k / 1m and shows the size beside the value. */
     tokens?: boolean;
-    /** A mark before the value, such as "$". Not typed, not copied. */
     prefix?: string;
-    /** A quiet unit at the right edge, such as "/ 1M tokens". */
     suffix?: string;
-    /** The unit in words, for screen readers: "US dollars per million tokens". */
     unitLabel?: string;
   }>(),
   {
@@ -46,7 +35,6 @@ const model = defineModel<string | number>({ required: true });
 const input = useTemplateRef<HTMLInputElement>("input");
 const rules = computed(() => ({ isWhole: props.whole, allowsShorthand: props.tokens }));
 
-/** The held value as a plain-number string, whatever type the caller stored. */
 const value = computed(() =>
   model.value === "" ? "" : parseNumberInput(String(model.value), rules.value),
 );
@@ -62,7 +50,6 @@ const tokenNote = computed(() => {
     ? `${compactTokens.format(amount)} tokens`
     : "";
 });
-/** The token size wins the right edge; a field without one shows its suffix there. */
 const note = computed(() => tokenNote.value || props.suffix);
 
 function problemWith(text: string): string {
@@ -90,8 +77,6 @@ function onInput(event: Event): void {
   const caret = field.selectionStart ?? typed.length;
   const next = parseNumberInput(typed, rules.value);
   const display = formatNumberInput(next);
-  // Set the text directly: when the held value doesn't change (a stray letter),
-  // Vue has nothing to re-render, but the letter must still go.
   field.value = display;
   const expandedShorthand = props.tokens && /[km]\s*$/i.test(typed);
   const nextCaret = expandedShorthand
@@ -102,11 +87,6 @@ function onInput(event: Event): void {
   field.setCustomValidity(problemWith(next));
 }
 
-/**
- * Backspace just after a separator (or Delete just before one) would remove
- * only the separator, which formatting puts straight back. Step the caret
- * over it so the key removes the digit beyond.
- */
 function onBeforeInput(event: InputEvent): void {
   const field = event.target;
   if (!(field instanceof HTMLInputElement)) return;

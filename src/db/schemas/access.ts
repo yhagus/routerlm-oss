@@ -10,22 +10,16 @@ import {
 } from "drizzle-orm/pg-core";
 import { at, createdAt, id } from "./columns.js";
 
-// People and access: Users, their dashboard sessions, Integrations and API Keys.
-
 export const users = pgTable("users", {
   id: id(),
-  // Unique as stored: callers lowercase and trim the address before writing it.
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  // Null for the User created by the setup screen, or when the creator was deleted.
   createdById: uuid("created_by_id").references((): AnyPgColumn => users.id, {
     onDelete: "set null",
   }),
   createdAt: createdAt(),
 });
 
-// The columns @nestjs/authentication's SessionRecord needs, as its Drizzle
-// SessionStore example defines them. `id` is the SHA-256 of the session cookie.
 export const sessions = pgTable(
   "sessions",
   {
@@ -45,28 +39,18 @@ export const sessions = pgTable(
   ],
 );
 
-// An outside business application that issues API Keys to its own Customers.
 export const integrations = pgTable("integrations", {
   id: id(),
   name: text("name").notNull(),
-  // The Integration Secret, as API Keys keep theirs: the public id from
-  // ApiKeyProvider.generate() that findKey() looks up, and the SHA-256 of the
-  // whole secret. The secret itself is shown once and never kept.
   keyId: text("key_id").notNull().unique(),
   hash: text("hash").notNull(),
-  // The Models its API Keys may be restricted to. Empty means every Model;
-  // an array for the same reason as on API Keys.
   allowedModelIds: uuid("allowed_model_ids").array("[]").notNull().default([]),
   createdById: uuid("created_by_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: createdAt(),
-  // Null while active. A disabled Integration's secret and API Keys stop working.
   disabledAt: at("disabled_at"),
-  // When its secret last signed a control plane call in; null if never. Written
-  // at most once a minute, so it can lag the latest call by up to a minute.
   lastUsedAt: at("last_used_at"),
 });
 
-// One row per rotation of an Integration Secret, newest last, shaped like api_key_rotations.
 export const integrationRotations = pgTable(
   "integration_rotations",
   {
@@ -92,35 +76,20 @@ export const apiKeys = pgTable(
   {
     id: id(),
     name: text("name").notNull(),
-    // The public id from ApiKeyProvider.generate(), the part findKey() looks up.
     keyId: text("key_id").notNull().unique(),
-    // SHA-256 of the whole key, what sign-in compares against.
     hash: text("hash").notNull(),
-    // The whole key, encrypted (ProviderKeyCipher, purpose "api-key"), only so
-    // the dashboard can show it again. Null for keys created before keys were
-    // kept, and for revoked keys.
     encryptedKey: text("encrypted_key"),
     createdById: uuid("created_by_id").references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
-    // Null means the key never expires.
     expiresAt: at("expires_at"),
     revokedAt: at("revoked_at"),
-    // Empty means every Model. Kept as an array rather than a join table so that
-    // deleting a Model never widens a restricted key to "all Models".
     allowedModelIds: uuid("allowed_model_ids").array("[]").notNull().default([]),
-    // The Integration that issued the key; null for a key a User created. Deleting
-    // the Integration revokes its keys first, then clears this.
     integrationId: uuid("integration_id").references(() => integrations.id, {
       onDelete: "set null",
     }),
-    // The id the Integration gives its Customer: set on every key an Integration
-    // issues, never changed, null on a User's key. Kept after the Integration is deleted.
     customerId: text("customer_id"),
-    // USD. Null means no limit.
     spendLimit: numeric("spend_limit", { precision: 18, scale: 10, mode: "number" }),
-    // USD of Cost counted against the Spend Limit, added with each Usage Log (ADR 0035).
     spent: numeric("spent", { precision: 18, scale: 10, mode: "number" }).notNull().default(0),
-    // Requests per minute. Null means no limit.
     requestRate: integer("request_rate"),
   },
   (table) => [
@@ -128,8 +97,6 @@ export const apiKeys = pgTable(
   ],
 );
 
-// One row per rotation of an API Key, newest last. Rotations before this table
-// existed were never recorded.
 export const apiKeyRotations = pgTable(
   "api_key_rotations",
   {
@@ -139,7 +106,6 @@ export const apiKeyRotations = pgTable(
       .references(() => apiKeys.id, { onDelete: "cascade" }),
     rotatedAt: at("rotated_at").notNull().defaultNow(),
     rotatedById: uuid("rotated_by_id").references(() => users.id, { onDelete: "set null" }),
-    // Public key ids: the one that stopped working and the one that replaced it.
     previousKeyId: text("previous_key_id").notNull(),
     newKeyId: text("new_key_id").notNull(),
   },

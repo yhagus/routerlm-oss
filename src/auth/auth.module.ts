@@ -8,17 +8,12 @@ import "./models/authentication-types.js";
 import { DrizzleSessionStore } from "./providers/drizzle-session.store.js";
 import { SessionAuth } from "./providers/session-auth.js";
 
-/**
- * Dashboard sign-in. AuthenticationModule is global and installs a global
- * guard: every route needs a signed-in User unless it is `@Public()`.
- */
 @Module({
   imports: [
     AuthenticationModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env, true>) => ({
         session: {
-          // The browser calls the web app, whose server forwards to us with the page's Origin.
           trustedOrigins: [config.get("WEB_ORIGIN", { infer: true })],
         },
       }),

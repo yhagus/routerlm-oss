@@ -17,7 +17,6 @@ export interface SettingValue<Value = number> {
   isDefault: boolean;
 }
 
-/** Reads and writes Settings. Every read goes to the database, so a change applies without a restart. */
 @Injectable()
 export class SettingsStore {
   constructor(@InjectDrizzle() private readonly db: Database) {}
@@ -43,7 +42,6 @@ export class SettingsStore {
       .onConflictDoUpdate({ target: settings.key, set: { value, updatedAt: new Date() } });
   }
 
-  /** Deletes the row, so the Setting follows its default again. */
   async reset(key: SettingKey): Promise<void> {
     await this.db.delete(settings).where(eq(settings.key, key));
   }

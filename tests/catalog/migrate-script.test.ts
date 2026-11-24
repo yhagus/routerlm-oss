@@ -7,7 +7,6 @@ import { type Database, relations } from "@/db/schemas/relations.js";
 import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
 
 const runFile = promisify(execFile);
-// Bun startup, every migration and seeding every shipped Catalog file.
 const MIGRATE_TIMEOUT_MS = 60_000;
 const SHIPPED_PROVIDER_COUNT = 19;
 
@@ -17,7 +16,6 @@ describe("production migrate entrypoint (e2e)", () => {
   let pool: Pool;
   let db: Database;
 
-  // A DATABASE_URL in the environment wins over the one in the developer's .env.
   const runMigrate = () =>
     runFile("bun", ["src/migrate.ts"], {
       env: { ...process.env, DATABASE_URL: databaseUrl },

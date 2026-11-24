@@ -8,9 +8,6 @@ import { storedOauthTokens } from "@/upstream/models/provider-account.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import type { FakeReply } from "./fake-upstream.js";
 
-// The fake upstream plays OpenAI's auth host under `/auth`: these are the
-// paths the Codex CLI calls and the answers OpenAI gives (spec #35, "OAuth Login").
-
 export const ISSUER_PATH = "/auth";
 export const USER_CODE_PATH = `${ISSUER_PATH}/api/accounts/deviceauth/usercode`;
 export const DEVICE_TOKEN_PATH = `${ISSUER_PATH}/api/accounts/deviceauth/token`;
@@ -26,18 +23,15 @@ export const ACCOUNT_ID = "chatgpt-account-0123";
 export const EMAIL = "ada@example.com";
 export const PLAN_TYPE = "pro";
 
-/** An unsigned JWT with these claims, as the gateway reads it: the signature is never checked. */
 export function jwtWith(claims: Record<string, unknown>): string {
   const encode = (part: object) => Buffer.from(JSON.stringify(part)).toString("base64url");
   return `${encode({ alg: "none", typ: "JWT" })}.${encode(claims)}.signature`;
 }
 
-/** An access token that runs out `lifetimeSeconds` from now; `label` tells tokens apart. */
 export function accessToken(label: string, lifetimeSeconds: number): string {
   return jwtWith({ label, exp: Math.floor(Date.now() / 1000) + lifetimeSeconds });
 }
 
-/** An id_token naming a ChatGPT account, its email and plan, where OpenAI puts them. */
 export function idToken(
   account: { accountId?: string; email?: string; planType?: string; profileEmail?: string } = {},
 ): string {
@@ -61,7 +55,6 @@ export function userCodeReply(interval = "5"): FakeReply {
   };
 }
 
-/** What the device token endpoint answers until the User approves. */
 export const PENDING_REPLY: FakeReply = {
   kind: "json",
   status: 403,
@@ -78,7 +71,6 @@ export const APPROVED_REPLY: FakeReply = {
   },
 };
 
-/** The tokens the issuer's token endpoint grants or refreshes to. Leave out what a refresh doesn't rotate. */
 export function tokensReply(tokens: {
   accessToken: string;
   refreshToken?: string;
@@ -95,7 +87,6 @@ export function tokensReply(tokens: {
   };
 }
 
-/** Makes a Provider sign in as the Codex CLI at the fake upstream's `/auth`. */
 export async function offerCodexOauthLogin(
   db: Database,
   providerId: string,
@@ -117,14 +108,9 @@ export async function offerCodexOauthLogin(
 export interface InsertedCodexLogin {
   accessToken: string;
   refreshToken: string;
-  /** Before every other account of the Provider when not given. */
   priority?: number;
 }
 
-/**
- * Adds a Provider Account holding an OpenAI Codex OAuth Login, as a
- * completed sign-in leaves it, then refreshes the snapshot. Returns its id.
- */
 export async function addCodexLoginAccount(
   app: NestNodeApplication,
   db: Database,

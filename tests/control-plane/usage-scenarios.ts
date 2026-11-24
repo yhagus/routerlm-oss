@@ -11,18 +11,12 @@ import type { ControlPlaneTransport } from "./key-scenarios.js";
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const RECEIVED_AT = new Date("2026-11-20T09:30:00.000Z");
 
-/** Who a seeded Usage Log was made by: a Customer's key, or an operator's key. */
 interface UsageLogCaller {
   apiKeyId: string;
   apiKeyName: string;
   integration?: { id: string; name: string; customerId: string };
 }
 
-/**
- * The control plane's usage pull scenarios. Usage Logs are inserted straight
- * in the database, as the worker writes them, so a test controls when each
- * one's transaction commits.
- */
 export function describeUsageScenarios(transport: ControlPlaneTransport): void {
   describe(`Control plane usage pull over ${transport.name} (e2e)`, () => {
     let app: NestNodeApplication;
@@ -65,7 +59,6 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
       };
     }
 
-    /** Pulls one page, failing the test if the call fails. */
     async function pull(query: { after?: string; pageSize?: number } = {}) {
       const page = await client.listUsageLogs(acme.secret, query);
       if (!page.ok) throw new Error(`listUsageLogs failed with ${page.code}`);
@@ -204,10 +197,6 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
   });
 }
 
-/**
- * Inserts a Usage Log in a transaction left open until `commit` is called, as
- * a worker whose transaction commits late. `inserted` resolves to its id.
- */
 function startUsageLogTransaction(
   db: Database,
   usageLog: typeof usageLogs.$inferInsert,
@@ -234,7 +223,6 @@ function startUsageLogTransaction(
   };
 }
 
-/** A successful chat request by `caller`, as the worker records it. */
 function usageLogOf(caller: UsageLogCaller): typeof usageLogs.$inferInsert {
   return {
     createdAt: RECEIVED_AT,

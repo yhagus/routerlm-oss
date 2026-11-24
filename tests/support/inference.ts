@@ -18,7 +18,6 @@ import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema.js"
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 
-/** The Provider Account key the fake upstream expects; it must never reach a client or a log. */
 export const UPSTREAM_KEY = "sk-upstream-secret-0123456789";
 export const UPSTREAM_MODEL_ID = "acme-large-2026";
 export const ALL_CAPABILITIES: Capability[] = ["vision", "tools", "reasoning", "structured-output"];
@@ -30,40 +29,26 @@ export interface InsertedModel {
   providerAccountId: string;
 }
 
-/** A Route's timeout overrides, so tests need not wait out the defaults. */
 export interface RouteTimeouts {
   connectTimeoutMs?: number;
   firstTokenTimeoutMs?: number;
   totalTimeoutMs?: number;
 }
 
-/** What the Upstream Model behind a Route can take. */
 export interface UpstreamModelLimits {
-  /** Chat when not given; its Provider's one endpoint serves this Kind. */
   kind?: ModelKind;
   capabilities?: Capability[];
-  /** 128 000 when not given. */
   contextSize?: number;
-  /** None when not given. */
   maxOutputTokens?: number;
-  /** Image sizes as the Provider writes them (`1024*1024`); any size when not given. */
   sizes?: string[];
-  /** USD per generated image, by size tier (`1K`, `2K`). */
   pricePerImageBySize?: Record<string, number>;
-  /** Video resolutions, such as `720P`; any resolution when not given. */
   resolutions?: string[];
-  /** A video's shortest and longest duration in seconds; no limit when not given. */
   minDurationSeconds?: number;
   maxDurationSeconds?: number;
-  /** USD per second of video, by resolution (`720P`). */
   pricePerSecondByResolution?: Record<string, number>;
-  /** USD per input image of an image edit. */
   pricePerInputImage?: number;
-  /** The most input images it takes; any number when not given. */
   maxInputImages?: number;
-  /** USD per million characters of synthesized speech. */
   pricePerMillionCharacters?: number;
-  /** USD per second of transcribed audio. */
   pricePerAudioSecond?: number;
 }
 
@@ -72,11 +57,6 @@ export interface ModelOptions extends RouteTimeouts, UpstreamModelLimits {
   baseUrl: string;
 }
 
-/**
- * Creates a Model served by one Route to an openai-chat Provider at
- * `baseUrl`, with one Provider Account, straight in the database, then
- * refreshes the snapshot as a dashboard write would.
- */
 export function insertOpenAiChatModel(
   app: NestNodeApplication,
   db: Database,
@@ -85,7 +65,6 @@ export function insertOpenAiChatModel(
   return insertModel(app, db, { protocol: "openai-chat", authStyle: "bearer" }, options);
 }
 
-/** As insertOpenAiChatModel, for an anthropic-messages Provider taking the key as x-api-key. */
 export function insertAnthropicMessagesModel(
   app: NestNodeApplication,
   db: Database,
@@ -94,10 +73,6 @@ export function insertAnthropicMessagesModel(
   return insertModel(app, db, { protocol: "anthropic-messages", authStyle: "x-api-key" }, options);
 }
 
-/**
- * As insertOpenAiChatModel, for an image Model served by a dashscope-image
- * Provider. `baseUrl` is the endpoint's, such as `{fake origin}/api/v1`.
- */
 export function insertDashScopeImageModel(
   app: NestNodeApplication,
   db: Database,
@@ -111,7 +86,6 @@ export function insertDashScopeImageModel(
   );
 }
 
-/** As addOpenAiChatRoute, for an image Route to a dashscope-image Provider of its own. */
 export async function addDashScopeImageRoute(
   app: NestNodeApplication,
   db: Database,
@@ -129,11 +103,6 @@ export async function addDashScopeImageRoute(
   return route;
 }
 
-/**
- * As insertOpenAiChatModel, for a video Model served by a dashscope-video
- * Provider that can generate from text alone. `baseUrl` is the endpoint's,
- * such as `{fake origin}/api/v1`.
- */
 export function insertDashScopeVideoModel(
   app: NestNodeApplication,
   db: Database,
@@ -147,7 +116,6 @@ export function insertDashScopeVideoModel(
   );
 }
 
-/** As addOpenAiChatRoute, for a video Route to a dashscope-video Provider of its own. */
 export async function addDashScopeVideoRoute(
   app: NestNodeApplication,
   db: Database,
@@ -165,7 +133,6 @@ export async function addDashScopeVideoRoute(
   return route;
 }
 
-/** As insertDashScopeImageModel, for a speech Model served by a dashscope-speech Provider. */
 export function insertDashScopeSpeechModel(
   app: NestNodeApplication,
   db: Database,
@@ -179,7 +146,6 @@ export function insertDashScopeSpeechModel(
   );
 }
 
-/** As insertDashScopeImageModel, for a transcription Model served by a dashscope-transcription Provider. */
 export function insertDashScopeTranscriptionModel(
   app: NestNodeApplication,
   db: Database,
@@ -193,7 +159,6 @@ export function insertDashScopeTranscriptionModel(
   );
 }
 
-/** As insertOpenAiChatModel, for an openai-responses Provider. */
 export function insertOpenAiResponsesModel(
   app: NestNodeApplication,
   db: Database,
@@ -223,15 +188,10 @@ async function insertModel(
 
 export interface RouteOptions extends RouteTimeouts, UpstreamModelLimits {
   baseUrl: string;
-  /** Unique per Provider. */
   providerSlug: string;
   priority: number;
 }
 
-/**
- * Adds a Route to an openai-chat Provider of its own (one Provider Account
- * with UPSTREAM_KEY) behind an existing Model, then refreshes the snapshot.
- */
 export async function addOpenAiChatRoute(
   app: NestNodeApplication,
   db: Database,
@@ -314,10 +274,6 @@ async function insertRoute(
   return { routeId: route.id, providerId: provider.id, providerAccountId: providerAccount.id };
 }
 
-/**
- * Adds a Provider Account with its own `key` to a Provider, then refreshes
- * the snapshot. Returns its id.
- */
 export async function addProviderAccount(
   app: NestNodeApplication,
   db: Database,
@@ -338,10 +294,6 @@ export async function addProviderAccount(
   return providerAccount.id;
 }
 
-/**
- * Issues an API Key (restricted to `allowedModelIds` when given, with the row
- * id `id` when given) and returns it whole.
- */
 export async function insertApiKey(
   app: NestNodeApplication,
   db: Database,
@@ -357,7 +309,6 @@ export async function insertApiKey(
   return { key, id: row.id };
 }
 
-/** Sets a Provider's quirks straight in the database, then refreshes the snapshot. */
 export async function setProviderQuirks(
   app: NestNodeApplication,
   db: Database,
@@ -368,14 +319,8 @@ export async function setProviderQuirks(
   await app.get(SnapshotService).changed();
 }
 
-/** When the client fixtures say a response was created, in seconds. */
 const FIXTURE_CREATED_AT = 1_794_700_000;
 
-/**
- * A client fixture (`client-*`) as one request should get it: with the id
- * the gateway gave that request in place of the fixture's stand-in, and with
- * its creation time when the Protocol sends one.
- */
 export function fixtureAsServed(
   fixture: string,
   standInRequestId: string,

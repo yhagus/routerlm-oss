@@ -1,10 +1,5 @@
 import { computed } from "vue";
 
-/**
- * The docs page the address names, in the language the address names
- * (/docs/... or /id/docs/...). The page body and the contents column share
- * one query.
- */
 export function useDocsPage() {
   const route = useRoute();
   const { collection } = useDocsLocale();

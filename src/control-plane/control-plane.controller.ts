@@ -45,14 +45,8 @@ import {
 } from "./schemas/customer-api-key.schema.js";
 import { type UsageLogPageQuery, usageLogPageQuerySchema } from "./schemas/usage-log.schema.js";
 
-/** Where the HTTP adapter of the control plane lives (ADR 0033). */
 export const CONTROL_PLANE_HTTP_PREFIX = "integration/v1";
 
-/**
- * The control plane's HTTP/JSON adapter (control_plane.proto). Only an
- * Integration Secret gets in: never a User's session nor an API Key. Each
- * route calls the command or query a gRPC adapter calls too.
- */
 @Controller(CONTROL_PLANE_HTTP_PREFIX)
 @Authenticate({ providers: [IntegrationSecretAuth] })
 @UseFilters(ControlPlaneExceptionFilter)
@@ -82,7 +76,6 @@ export class ControlPlaneController {
     return listKeysResponseJsonOf(keys);
   }
 
-  // Ids are not parsed as uuids here: a malformed one is NOT_FOUND, as over gRPC.
   @Get("keys/:id")
   async getKey(
     @CurrentUser() integration: IntegrationPrincipal,
@@ -92,7 +85,6 @@ export class ControlPlaneController {
     return apiKeyJsonOf(apiKey);
   }
 
-  /** The fields present in the body are the update mask; one sent as null is cleared. */
   @Patch("keys/:id")
   async updateKey(
     @CurrentUser() integration: IntegrationPrincipal,

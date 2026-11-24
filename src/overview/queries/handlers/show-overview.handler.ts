@@ -25,10 +25,6 @@ const EMPTY_STATS: OverviewStats = {
   errorsByOrigin: byErrorOrigin(() => ({ count: 0, rate: null })),
 };
 
-/**
- * Aggregates Usage Logs over time for the Overview. Bucketing and every sum
- * and rate run in SQL; only the empty buckets are filled in here.
- */
 @QueryHandler(ShowOverviewQuery)
 export class ShowOverviewHandler implements IQueryHandler<ShowOverviewQuery> {
   constructor(@InjectDrizzle() private readonly db: Database) {}
@@ -42,8 +38,6 @@ export class ShowOverviewHandler implements IQueryHandler<ShowOverviewQuery> {
       gte(usageLogs.createdAt, new Date(startMs)),
       lt(usageLogs.createdAt, new Date(endMs)),
     );
-    // A literal rather than a parameter, so the SELECT and GROUP BY render the
-    // same expression; bucketSeconds comes from OVERVIEW_BUCKETS, never from input.
     const bucketStartSeconds = sql<number>`extract(epoch from date_bin(${sql.raw(
       `interval '${bucketSeconds} seconds'`,
     )}, ${usageLogs.createdAt}, timestamptz 'epoch'))`.mapWith(Number);
@@ -70,7 +64,6 @@ export class ShowOverviewHandler implements IQueryHandler<ShowOverviewQuery> {
   }
 }
 
-/** What OverviewStats aggregates over a group of Usage Logs. */
 function statsColumns() {
   const totalInputTokens = sql`coalesce(${usageLogs.inputTokens}, 0)
     + coalesce(${usageLogs.cacheReadTokens}, 0)
@@ -91,10 +84,6 @@ function statsColumns() {
   };
 }
 
-/**
- * What OriginErrors aggregates over a group of Usage Logs, as one JSON object:
- * a Drizzle selection nests only one level deep.
- */
 function originErrorsColumn(origin: ErrorOrigin): SQL<OriginErrors> {
   const failedWithOrigin = sql`count(*) filter (where ${failedWithOriginCondition(origin)})`;
   return sql<OriginErrors>`json_build_object(
@@ -103,7 +92,6 @@ function originErrorsColumn(origin: ErrorOrigin): SQL<OriginErrors> {
   )`;
 }
 
-/** `part / whole` as a float, or null when `whole` is 0 or null. */
 function ratio(part: SQL, whole: SQL): SQL<number | null> {
   return sql<number | null>`(${part})::float8 / nullif(${whole}, 0)`.mapWith(Number);
 }

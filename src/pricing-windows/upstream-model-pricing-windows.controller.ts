@@ -6,7 +6,6 @@ import type { AttachedPricingWindow } from "./models/upstream-model-pricing-wind
 import { ListUpstreamModelPricingWindowsQuery } from "./queries/impl/list-upstream-model-pricing-windows.query.js";
 import { type WindowPricesEntry, windowPricesListSchema } from "./schemas/pricing-window.schema.js";
 
-/** An Upstream Model's Pricing Windows and their Window Prices. */
 @DashboardController("upstream-models")
 export class UpstreamModelPricingWindowsController {
   constructor(
@@ -21,7 +20,6 @@ export class UpstreamModelPricingWindowsController {
     return this.queryBus.execute(new ListUpstreamModelPricingWindowsQuery(upstreamModelId));
   }
 
-  /** Attaches, detaches and changes prices in one call: the body is the whole new list. */
   @Put(":id/pricing-windows")
   replaceUpstreamModelPricingWindows(
     @Param("id", ParseUUIDPipe) upstreamModelId: string,

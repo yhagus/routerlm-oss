@@ -34,14 +34,12 @@ const DAY_MS = 24 * HOUR_MS;
 describe("Usage Resets of an OpenAI Codex Provider Account (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
-  // Plays the Codex backend: `wham/usage` and the reset credit endpoints.
   let openAi: FakeUpstream;
   let catalogCodex: CatalogProvider;
   let cookie: string;
   let providerId: string;
   let token: string;
   let accountId: string;
-  /** Far enough out that a meter used up stays Exhausted for the whole test. */
   let windowResetsAt: Date;
 
   beforeAll(async () => {
@@ -105,7 +103,6 @@ describe("Usage Resets of an OpenAI Codex Provider Account (e2e)", () => {
     return openAi.requests.filter((received) => received.path === path);
   }
 
-  /** Reads the quota once with one stored reset, `credit-a`, and answers our id of it. */
   async function storeOneReset(usedPercent = 50): Promise<string> {
     openAi.replyTo(USAGE_PATH, usageAtPercentReply(usedPercent, windowResetsAt, 1));
     openAi.replyTo(

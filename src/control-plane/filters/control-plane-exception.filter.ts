@@ -6,11 +6,6 @@ import {
 } from "@/control-plane/models/control-plane-error.js";
 import type { ErrorJson } from "@/control-plane/models/proto-json.js";
 
-/**
- * Answers the control plane's errors over HTTP as `{code, message}` with the
- * HTTP status control_plane.proto maps the code to, the guard's 401 included.
- * Anything else (a bug) keeps Nest's default 500.
- */
 @Catch()
 export class ControlPlaneExceptionFilter implements ExceptionFilter {
   constructor(@Inject(HttpAdapterHost) private readonly adapterHost: HttpAdapterHost) {}

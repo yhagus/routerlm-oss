@@ -25,18 +25,10 @@ import { isTimeRange, TIME_RANGES, type TimeRange, timeRangeStart } from "~/lib/
 useHead({ title: "Error Captures" });
 
 const route = useRoute();
-/** Set when a Usage Log links here: only that request's captures, within which the filters still apply. */
 const usageLogId = computed(() =>
   typeof route.query.usageLogId === "string" ? route.query.usageLogId : undefined,
 );
 
-// Filters
-
-// Held in the URL (?range=7d&failedAt=…&account=…&failureReason=…&outcome=…&model=…&key=…&errorOrigin=…
-// &integration=…&customer=…) so a refresh or a link keeps them; each list matches any of its picks, and
-// the Customer id matches exactly. The range defaults to all time
-// so a Usage Log's link shows its captures however old. The DataTable holds the search (?q=) and
-// page (?page=) the same way; this page reads them for its request.
 const timeRange = useQueryParam<TimeRange>("range", { default: "all", isValid: isTimeRange });
 const failedAtFilter = useQueryList("failedAt", {
   isValid: oneOf(FAILED_HOPS),
@@ -66,7 +58,6 @@ const {
 } = useOwnerFilters(() => capturePage.value?.items ?? []);
 const search = useQuerySearch();
 const page = useQueryPage();
-// Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
 const from = ref(timeRangeStart(timeRange.value, Date.now()));
 
 function refreshTimeRange(): void {
@@ -88,8 +79,6 @@ function clearFilters(): void {
   clearOwnerFilters();
 }
 
-// The DataTable returns to page 1 when the search or a filter token changes; the time range and the
-// Usage Log have no token, so it does that here.
 watch(timeRange, () => {
   refreshTimeRange();
   page.value = 1;
@@ -149,12 +138,9 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...ownerFilterTokens.value,
 ]);
 
-/** Whether an empty list means nothing matched, rather than nothing was captured. */
 const isNarrowed = computed(
   () => activeFilters.value.length > 0 || search.value.trim() !== "" || timeRange.value !== "all",
 );
-
-// Data: re-runs whenever the search, a filter or the page changes.
 
 const {
   data: capturePage,
@@ -162,7 +148,6 @@ const {
   error: loadError,
   refresh: refreshCaptures,
 } = useDashboardApi<ErrorCapturePage>("/error-captures", {
-  // With API Keys and the Playground both picked, the backend matches either.
   query: computed(() => ({
     usageLogId: usageLogId.value,
     from: from.value,
@@ -182,18 +167,12 @@ const {
   })),
 });
 
-/**
- * Moves the window to end now, then reloads. A moved window starts the request
- * on its own; `defer` joins it instead of repeating it, and still reloads when
- * the window can't move ("All time").
- */
 async function refresh(): Promise<void> {
   refreshTimeRange();
   await nextTick();
   await refreshCaptures({ dedupe: "defer" });
 }
 
-/** Placeholder rows only while there is nothing to show yet. */
 const isLoading = computed(() => captureStatus.value === "pending" && !capturePage.value);
 
 const columns: DataTableColumn<ErrorCaptureSummary>[] = [

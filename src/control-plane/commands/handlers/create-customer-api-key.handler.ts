@@ -27,7 +27,6 @@ export class CreateCustomerApiKeyHandler implements ICommandHandler<CreateCustom
     const { key, id: keyId, hash } = this.apiKeyAuth.generate();
     const [created] = await this.db
       .insert(apiKeys)
-      // No encrypted copy: the whole key is the Integration's to pass on, never shown again.
       .values({
         name: newKey.name ?? newKey.customerId,
         keyId,

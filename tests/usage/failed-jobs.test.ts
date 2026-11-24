@@ -5,7 +5,6 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 
-// Needs Redis at REDIS_URL, in its own database so other files' jobs stay out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -14,11 +13,9 @@ const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 const { UsageProducer } = await import("@/usage/jobs/usage.producer.js");
 
-// Three attempts with 1s and 2s backoff, plus slack.
 const ALL_ATTEMPTS_TIMEOUT_MS = 15_000;
 const POLL_INTERVAL_MS = 100;
 
-/** Names an API Key that does not exist, so the worker's write always fails. */
 function unwritableUsageJob(): UsageJob {
   return {
     usageLogId: randomUUID(),

@@ -43,7 +43,6 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
 
         if (changes.kind !== undefined && changes.kind !== stored.kind) {
           assertProviderServesKind(changes.kind, stored.endpoints);
-          // Every Route of a Model points at an Upstream Model of the Model's Kind (ADR 0015).
           const [usedByRoute] = await tx
             .select({ id: routes.id })
             .from(routes)
@@ -54,8 +53,6 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
               "Routes use this Upstream Model, so its Kind can't change; remove them first",
             );
           }
-          // Only a chat Upstream Model has Window Prices (ADR 0038).
-          // Read directly, not through the QueryBus: the check must see this transaction.
           const pricingWindowNames = await attachedPricingWindowNames(tx, upstreamModelId);
           if (pricingWindowNames.length > 0) {
             throw new BadRequestException(
@@ -63,7 +60,6 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
             );
           }
         }
-        // A PATCH may change only the tiers or only their prices, so the result is what must fit.
         assertServiceTiersFitProvider(
           {
             serviceTiers: changes.serviceTiers ?? stored.serviceTiers,

@@ -4,6 +4,8 @@ A dashboard write reloaded the writing instance and told the others over Redis p
 
 The interval uses `@nestjs/schedule`, the first-party option documented on docs.nestjs.com. A BullMQ job would run once for the whole fleet, and every instance needs its own reload.
 
+Reloads of one instance run one after another so the last always reads the latest writes. The Redis publisher fails at once while Redis is down instead of holding the dashboard write, the subscriber reloads on every (re)connect to catch up on lost messages, and a failed reload keeps the previous snapshot, including the Allow private upstreams value, so a database blip cannot cut off working LAN upstreams.
+
 ## Considered Options
 
 - A version check in Redis. Rejected: it fails exactly when Redis is down, which is one of the faults being covered.

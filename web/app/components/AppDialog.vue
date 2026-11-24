@@ -8,8 +8,6 @@ import {
   DialogTitle,
 } from "reka-ui";
 
-// A modal panel with a title, a description and the caller's content (a form, buttons).
-// `wide` fits longer forms, and scrolls when taller than the screen.
 defineProps<{ title: string; description: string; wide?: boolean }>();
 const isOpen = defineModel<boolean>("open", { required: true });
 </script>

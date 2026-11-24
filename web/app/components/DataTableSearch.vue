@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Search, X } from "@lucide/vue";
 
-/** The DataTable's search field, with a clear button while it holds text. */
 defineProps<{
-  /** The field's accessible name, such as "Search Providers". */
   label: string;
   placeholder: string;
 }>();

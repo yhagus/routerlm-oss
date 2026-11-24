@@ -25,7 +25,6 @@ export interface NavigationGroup {
   items: NavigationItem[];
 }
 
-/** The dashboard's pages, grouped as the sidebar shows them. */
 export const navigationGroups: NavigationGroup[] = [
   {
     label: "Gateway",
@@ -62,7 +61,6 @@ export const navigationGroups: NavigationGroup[] = [
   },
 ];
 
-/** The page a path belongs to, for the breadcrumb. `/models/<id>` belongs to Models. */
 export function findNavigationItem(path: string): NavigationItem | undefined {
   return navigationGroups
     .flatMap((group) => group.items)

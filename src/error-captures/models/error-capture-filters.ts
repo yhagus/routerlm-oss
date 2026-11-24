@@ -14,10 +14,6 @@ import type {
 
 const FIRST_ERROR_STATUS = 400;
 
-/**
- * The Error Captures a page query selects, as a WHERE condition over captures
- * joined to their Usage Log and left-joined to their Attempt.
- */
 export function whereErrorCaptureFilter(query: ErrorCapturePageQuery): SQL | undefined {
   return and(
     query.usageLogId === undefined ? undefined : eq(errorCaptures.usageLogId, query.usageLogId),
@@ -48,7 +44,6 @@ function failedAtCondition(hop: FailedHopKind): SQL {
   }
 }
 
-/** Matches `clientOutcome` on the web: recovered means the client got a success. */
 function outcomeCondition(outcome: CaptureOutcome): SQL | undefined {
   switch (outcome) {
     case "recovered":
@@ -58,10 +53,6 @@ function outcomeCondition(outcome: CaptureOutcome): SQL | undefined {
   }
 }
 
-/**
- * Captures whose Model name, API Key name, error code, User-Agent, client IP or
- * upstream request id contains `text`, ignoring case.
- */
 function searchCondition(text: string): SQL | undefined {
   const pattern = containing(text);
   return or(

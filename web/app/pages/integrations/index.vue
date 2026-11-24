@@ -28,11 +28,9 @@ const {
 const { data: modelChoices, status: modelChoicesStatus } =
   useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
 
-/** Only the first load shows placeholders; a refresh keeps the current rows until it lands. */
 const isLoadingIntegrations = computed(
   () => integrationsStatus.value === "pending" && !integrations.value,
 );
-// Saving before the choices arrive would silently allow every Model.
 const isLoadingModelChoices = computed(
   () => modelChoicesStatus.value === "pending" && !modelChoices.value,
 );
@@ -62,8 +60,6 @@ const columns: DataTableColumn<IntegrationRow>[] = [
   actionsColumn(),
 ];
 
-// Create and edit
-
 const editing = ref<IntegrationSummary | undefined>(undefined);
 const isFormOpen = ref(false);
 
@@ -84,8 +80,6 @@ async function handleUpdated(integration: IntegrationSummary): Promise<void> {
   await refresh();
 }
 
-// The Integration Secret, shown once right after creating or rotating it
-
 const revealed = ref<{ integration: CreatedIntegration; verb: "created" | "rotated" } | null>(null);
 const isRevealOpen = computed({
   get: () => revealed.value !== null,
@@ -93,8 +87,6 @@ const isRevealOpen = computed({
     if (!isOpen) revealed.value = null;
   },
 });
-
-// Disable and enable: one click each, undone by the other
 
 async function setEnabled(integration: IntegrationSummary, isEnabled: boolean): Promise<void> {
   const action = isEnabled ? "enable" : "disable";
@@ -107,8 +99,6 @@ async function setEnabled(integration: IntegrationSummary, isEnabled: boolean): 
   }
 }
 
-// Rotate and delete share one confirmation dialog
-
 const confirming = ref<IntegrationConfirmation | null>(null);
 
 async function handleRotated(integration: CreatedIntegration): Promise<void> {
@@ -120,8 +110,6 @@ async function handleDeleted(integration: IntegrationSummary): Promise<void> {
   showToast(`Deleted ${integration.name}`);
   await refresh();
 }
-
-// Row menu
 
 type IntegrationActionId = "detail" | "edit" | "rotate" | "disable" | "enable" | "delete";
 

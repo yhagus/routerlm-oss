@@ -14,7 +14,6 @@ import { portOf } from "@tests/support/port-of.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
-// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -25,7 +24,6 @@ const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 const ADA = { email: "ada@example.com", password: "correct horse battery staple" };
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
 const BACKUP_KEY = "sk-backup-secret-9876543210";
-// Short Route timeouts, so the timeout case takes a fraction of a second.
 const FAST_TIMEOUTS = { connectTimeoutMs: 300, firstTokenTimeoutMs: 300, totalTimeoutMs: 600 };
 const SDK_USER_AGENT = "OpenAI/Python 1.99.0";
 const FORGED_CLIENT_IP = "203.0.113.7";
@@ -39,7 +37,6 @@ const SUCCESS: FakeReply = {
 };
 const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
 
-/** One openai-chat stream chunk that carries a single tool call delta. */
 function toolCallChunk(toolCall: object): string {
   const chunk = {
     id: "chatcmpl-upstream-1",
@@ -73,10 +70,8 @@ async function startRecordingApp(): Promise<RecordingApp> {
   return { app, db, apiKey: "", providerId: "", cookie: "" };
 }
 
-/** Empties the records, then serves Model "smart" from one Provider Account of the fake upstream. */
 async function resetRecordingApp(gateway: RecordingApp, upstream: FakeUpstream): Promise<void> {
   const usageQueue = gateway.app.get<Queue>(getQueueToken(USAGE_QUEUE));
-  // The previous test's job must not land after the tables are emptied.
   await untilUsageQueueIsDrained(usageQueue);
   await deleteAllUpstreamData(gateway.db);
   ({ providerId: gateway.providerId } = await insertOpenAiChatModel(gateway.app, gateway.db, {
@@ -97,7 +92,6 @@ function chat(gateway: RecordingApp, body: object = CHAT_REQUEST, key = gateway.
     .send(body);
 }
 
-/** The Usage Page's newest row, once the worker has written `count` Usage Logs. */
 async function newestUsageLog(gateway: RecordingApp, count = 1): Promise<UsageLogItem> {
   const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -120,7 +114,6 @@ interface UsageLogAttemptItem {
   failureReason: string | null;
 }
 
-/** The Attempts of the Usage Page's newest row, from its detail view. */
 async function newestUsageLogAttempts(gateway: RecordingApp): Promise<UsageLogAttemptItem[]> {
   const { id } = await newestUsageLog(gateway);
   const detail = await request(gateway.app.getHttpServer())
@@ -130,7 +123,6 @@ async function newestUsageLogAttempts(gateway: RecordingApp): Promise<UsageLogAt
   return detail.body.attempts;
 }
 
-/** The one Error Capture, whole, once the worker has written it. */
 async function onlyErrorCapture(gateway: RecordingApp) {
   await newestUsageLog(gateway);
   const list = await request(gateway.app.getHttpServer())
@@ -251,8 +243,6 @@ describe("Error Origin, client and Provider request id of recorded requests (e2e
   });
 
   it("records a Messages stream the gateway refused mid-way as an upstream error whose Attempt broke off", async () => {
-    // Arguments for call 0 after call 1 began can't be written as Messages
-    // content blocks, so the gateway ends the stream with an error event.
     upstream.reply({
       kind: "stream",
       events:

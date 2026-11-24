@@ -14,7 +14,6 @@ export class ListCustomerApiKeysHandler implements IQueryHandler<ListCustomerApi
   constructor(@InjectDrizzle() private readonly db: Database) {}
 
   async execute({ integration, page }: ListCustomerApiKeysQuery): Promise<CustomerApiKeyPage> {
-    // One more than the page, to tell whether another page follows.
     const keys = await selectCustomerApiKeys(this.db, integration.integrationId, {
       where: and(
         page.customerId === undefined ? undefined : eq(apiKeys.customerId, page.customerId),
@@ -31,8 +30,6 @@ export class ListCustomerApiKeysHandler implements IQueryHandler<ListCustomerApi
   }
 }
 
-// A page token is the last listed key's id, encoded so clients treat it as opaque.
-
 function pageTokenAfter(lastKeyId: string): string {
   return Buffer.from(lastKeyId).toString("base64url");
 }
@@ -45,10 +42,6 @@ function lastKeyIdOf(pageToken: string): string {
   return decoded.data;
 }
 
-/**
- * Keys after `lastKeyId` in the newest-first order. Compared in SQL against
- * that key's own row, since created_at holds microseconds a JS Date would round off.
- */
 function olderThan(lastKeyId: string): SQL {
   return sql`(${apiKeys.createdAt}, ${apiKeys.id}) < (select created_at, id from api_keys where id = ${lastKeyId})`;
 }

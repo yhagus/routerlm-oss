@@ -1,18 +1,11 @@
 import { computed, ref, shallowRef } from "vue";
 import { apiErrorMessage } from "~/lib/api";
 
-/** A listed row the dashboard can switch on and off. */
 interface ToggleableRow {
   id: string;
   isEnabled: boolean;
 }
 
-/**
- * The editing state a dashboard list page shares (Providers, Provider
- * Accounts, Upstream Models): which dialog is open, whether a write is
- * running, the dialog's error, and the writes made from a dialog or a row.
- * Every successful write toasts and reloads the list with `refresh`.
- */
 export function useEditableList<Dialog extends object>(
   resourcePath: string,
   refresh: () => Promise<unknown>,
@@ -39,13 +32,8 @@ export function useEditableList<Dialog extends object>(
     dialog.value = null;
   }
 
-  /**
-   * Runs a write started from the open dialog. On success the dialog closes
-   * with a `doneMessage` toast; on failure it stays open and shows the error.
-   */
   async function submitDialog(
     write: () => Promise<unknown>,
-    /** The toast on success; a function when it depends on the response (a generated name). */
     doneMessage: string | (() => string),
     failureMessage: string,
   ): Promise<void> {
@@ -63,7 +51,6 @@ export function useEditableList<Dialog extends object>(
     }
   }
 
-  /** Deletes a row from its confirmation dialog. */
   function deleteRow(row: { id: string }, name: string, failureMessage: string): Promise<void> {
     return submitDialog(
       () => $dashboardApi(`${resourcePath}/${row.id}`, { method: "DELETE" }),
@@ -72,7 +59,6 @@ export function useEditableList<Dialog extends object>(
     );
   }
 
-  /** Enables a disabled row or disables an enabled one; errors go to a toast. */
   async function toggleRow(row: ToggleableRow, name: string): Promise<void> {
     try {
       await $dashboardApi(`${resourcePath}/${row.id}`, {

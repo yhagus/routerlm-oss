@@ -10,7 +10,6 @@ import {
 } from "~/components/ui/dropdown-menu";
 import type { HideableColumn } from "~/lib/dataTable";
 
-/** The DataTable's Columns menu: one checkbox per hideable column, then Reset. */
 defineProps<{ columns: HideableColumn[] }>();
 const emit = defineEmits<{
   toggle: [columnId: string, isVisible: boolean];

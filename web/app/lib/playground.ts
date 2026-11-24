@@ -1,23 +1,14 @@
-// The Playground's conversation, held in the browser only, and the Chat
-// Completions stream the backend answers it with.
-
 import type { ReasoningEffort } from "~/lib/parameterPolicy";
 
-/** What a media Kind counted, such as images made; each Kind sets only its own. */
 export interface PlaygroundUnits {
   imagesOut?: number;
   imagesIn?: number;
-  /** Characters of text a speech request spoke. */
   characters?: number;
-  /** Seconds of video a Video Job asked for. */
   outputSeconds?: number;
-  /** Seconds of audio a transcription request heard. */
   audioSeconds?: number;
-  /** The price tier the Provider names, such as `2K`. */
   tier?: string;
 }
 
-/** What the backend sends after the answer: tokens or units, Cost, and who served it. */
 export interface PlaygroundSummary {
   usage: {
     inputTokens: number | null;
@@ -26,20 +17,13 @@ export interface PlaygroundSummary {
     cacheWriteTokens: number | null;
     reasoningTokens: number | null;
   };
-  /** Null for chat, which counts tokens instead. */
   units: PlaygroundUnits | null;
   cost: number | null;
-  /** The served Route; null for a direct Upstream Model test or when nothing answered. */
   route: { id: string; providerSlug: string; upstreamModelId: string } | null;
-  /** The Upstream Model that answered, for both sources; null when nothing answered. */
   upstreamModel: { id: string; upstreamModelId: string; providerSlug: string } | null;
   providerAccount: { id: string; name: string } | null;
 }
 
-/**
- * Our error contract: a code from the error table and our own message. The
- * code is null when the request never reached the inference path.
- */
 export interface PlaygroundError {
   code: string | null;
   message: string;
@@ -54,7 +38,6 @@ export type AnswerState =
 export interface UserMessage {
   role: "user";
   text: string;
-  /** Data URLs: images go inline and are never uploaded anywhere. */
   imageUrls: string[];
 }
 
@@ -67,7 +50,6 @@ export interface AssistantMessage {
 
 export type PlaygroundMessage = UserMessage | AssistantMessage;
 
-/** Parameters left undefined are not sent, so the Model's Parameter Policy decides. */
 export interface PlaygroundSettings {
   model: string;
   systemPrompt: string;
@@ -77,7 +59,6 @@ export interface PlaygroundSettings {
   reasoningEffort?: ReasoningEffort;
 }
 
-/** The Chat Completions body for the whole conversation so far. */
 export function chatCompletionRequest(
   settings: PlaygroundSettings,
   conversation: PlaygroundMessage[],
@@ -124,12 +105,9 @@ const EVENT_SEPARATOR = "\n\n";
 const SUMMARY_EVENT = "summary";
 const DONE_DATA = "[DONE]";
 
-/** Reads the backend's event stream as it arrives. */
 export async function* streamEventsOf(
   body: ReadableStream<Uint8Array>,
 ): AsyncIterable<StreamEvent> {
-  // A TextDecoder rather than a TextDecoderStream: the stream's types only
-  // accept ArrayBuffer-backed chunks, and fetch bodies are typed more widely.
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffered = "";
@@ -177,7 +155,6 @@ export function isPlaygroundSummary(payload: unknown): payload is PlaygroundSumm
   return typeof usage === "object" && usage !== null && (cost === null || typeof cost === "number");
 }
 
-/** The error envelope `{ error: { code, message } }`, if `payload` is one. */
 export function playgroundErrorOf(payload: unknown): PlaygroundError | null {
   const error = readProperty(payload, "error");
   const code = readProperty(error, "code");
@@ -185,10 +162,6 @@ export function playgroundErrorOf(payload: unknown): PlaygroundError | null {
   return typeof code === "string" && typeof message === "string" ? { code, message } : null;
 }
 
-/**
- * The error of a failed Playground call. The body was asked for as a stream,
- * so a refused request's JSON envelope arrives as one too.
- */
 export async function playgroundErrorOfFailure(failure: unknown): Promise<PlaygroundError | null> {
   const data = readProperty(failure, "data");
   if (!(data instanceof ReadableStream)) return playgroundErrorOf(data);
@@ -199,7 +172,6 @@ export async function playgroundErrorOfFailure(failure: unknown): Promise<Playgr
   }
 }
 
-/** Images go inline as data URLs; this keeps a request well under the body limit. */
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export function dataUrlOf(file: File): Promise<string> {

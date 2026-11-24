@@ -2,7 +2,6 @@
 import type { ModelKind } from "~/lib/upstream";
 import type { MediaForm } from "~/lib/upstreamModelMedia";
 
-/** The unit prices and limits of a media Kind; renders nothing for chat. */
 defineProps<{ kind: ModelKind }>();
 const form = defineModel<MediaForm>({ required: true });
 </script>

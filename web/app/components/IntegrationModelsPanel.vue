@@ -7,7 +7,6 @@ import {
 } from "~/lib/integrations";
 import { CAPABILITY_LABELS, MODEL_KIND_LABELS } from "~/lib/upstream";
 
-/** The Models the Integration may sell, priced as its control plane lists them. */
 const props = defineProps<{ integration: IntegrationSummary }>();
 
 const {
@@ -16,7 +15,6 @@ const {
   status,
 } = useDashboardApi<{ models: IntegrationModel[] }>(
   () => `/integrations/${props.integration.id}/models`,
-  // Editing the allowed Models changes the list.
   { watch: [() => props.integration.allowedModels] },
 );
 

@@ -40,7 +40,6 @@ export class UsersController {
     return this.commandBus.execute(new CreateUserCommand(newUser, creator.id));
   }
 
-  /** Sets another User's password and signs them out everywhere else. */
   @Put(":id/password")
   @HttpCode(HttpStatus.NO_CONTENT)
   resetPassword(

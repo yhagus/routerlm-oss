@@ -18,8 +18,6 @@ import {
 import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// The app reads its env when AppModule is imported, so this must run before the imports.
-// Short, so the timeout test need not wait out the 30 seconds a Probe allows.
 vi.hoisted(() => {
   process.env.PROBE_TIMEOUT_MS = "500";
 });
@@ -36,14 +34,12 @@ const SUCCESS: FakeReply = {
 const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
 const UNAUTHORIZED: FakeReply = { kind: "json", status: 401, body: { error: "bad key" } };
 const FORBIDDEN: FakeReply = { kind: "json", status: 403, body: { error: "forbidden" } };
-/** MiniMax's plan limit in its native shape: an exhaustion refusal once the quirk names 2067. */
 const PLAN_LIMIT_REACHED: FakeReply = {
   kind: "json",
   status: 400,
   body: { base_resp: { status_code: 2067, status_msg: "plan limit reached" } },
 };
 
-/** A chat answer that ran out of tokens with `message`. */
 function chatAnswer(message: Record<string, unknown>): FakeReply {
   return {
     kind: "json",
@@ -141,7 +137,6 @@ describe("Probe of an Upstream Model (e2e)", () => {
           errorOrigin: null,
           errorMessage: null,
           errorCaptureId: null,
-          // 20 uncached input, 100 cache-read and 40 output tokens at $1 per million.
           cost: 0.00016,
         },
         {

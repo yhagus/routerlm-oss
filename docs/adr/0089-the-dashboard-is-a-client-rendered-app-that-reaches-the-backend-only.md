@@ -1,0 +1,7 @@
+# The dashboard is a client-rendered app that reaches the backend only through its own /api forwarder
+
+The web app is an authenticated operations console with no SEO surface, so `nuxt.config.ts` sets `ssr: false`. The browser talks only to this app: `web/server/api/[...path].ts` forwards every `/api/**` call to the backend's dashboard API at the same path with the browser's Cookie and Origin, and returns the backend's Set-Cookie unchanged, so the session cookie is first-party.
+
+We decided that the forwarder rejects any normalised path that does not stay under the dashboard API prefix (`/api/../v1` must not reach the rest of the backend), and streams the backend body with `proxyRequest` so Playground answers arrive as they are generated; when the browser leaves early (Stop) the backend call is aborted, which ends the upstream call.
+
+On the client, `$dashboardApi` (and `$dashboardFetch`, the same client typed as Nuxt's `$fetch` for `createUseFetch`) goes through this forwarder, and a 401 forgets the User and goes to login. Direct calls use `$dashboardApi` rather than `$fetch`, because `$fetch`'s types match each request against this app's own Nitro routes and matching the `/api` catch-all exceeds the type checker's depth limit. `useDashboardApi` is lazy by default: pages render at once and fill in, so navigation never waits on the backend; pass `lazy: false` only where a page cannot render without the data.

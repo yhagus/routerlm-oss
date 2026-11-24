@@ -5,7 +5,6 @@ import {
   type ReasoningEffort,
 } from "./internal-format.js";
 
-/** Every parameter a Parameter Policy can set, in a fixed order. */
 export const POLICY_PARAMETERS = [
   "temperature",
   "topP",
@@ -21,13 +20,6 @@ type PolicyParameter = (typeof POLICY_PARAMETERS)[number];
 type CappedParameter = Exclude<keyof ParameterCaps, "reasoningBudgetTokens">;
 type NumericParameter = "temperature" | "topP" | "maxOutputTokens";
 
-/**
- * The request the upstream gets under this policy (spec "Inference path"
- * step 4): a forced value replaces the client's, a default fills what the
- * client omitted, a cap clamps whatever is left, and the system prompt goes
- * before the client's system content. Pure: the same request and policy
- * always give the same result, so the upstream bytes stay identical.
- */
 export function applyParameterPolicy(
   request: InferenceRequest,
   policy: ParameterPolicy,
@@ -51,12 +43,6 @@ export function applyParameterPolicy(
   return policed;
 }
 
-/**
- * The policy for one Route: the Model's, except that every parameter the
- * Route override sets (as a default, forced value or cap) takes all its rules
- * from the override, and the override's system prompt, even an empty one,
- * replaces the Model's.
- */
 export function effectiveParameterPolicy(
   modelPolicy: ParameterPolicy,
   routeOverride: ParameterPolicy | null,
@@ -94,12 +80,6 @@ function numberUnderPolicy(
   return Math.min(value, cap);
 }
 
-/**
- * A forced effort replaces the client's whole reasoning setting (a thinking
- * budget included); a default applies only when the client asked for no
- * reasoning at all; a cap bounds an effort by the order of REASONING_EFFORTS,
- * and the budget cap bounds a thinking budget the client supplied.
- */
 function reasoningUnderPolicy(
   clientReasoning: InferenceRequest["reasoning"],
   { defaults, forced, caps }: ParameterPolicy,
@@ -148,10 +128,6 @@ function isCapped(parameter: PolicyParameter): parameter is CappedParameter {
   );
 }
 
-/**
- * Whether a media Provider should mark what it generates under this policy.
- * A client can't ask for a watermark, so a default decides it as a forced value does.
- */
 export function isWatermarkedUnder({ defaults, forced }: ParameterPolicy): boolean {
   return forced?.watermark ?? defaults?.watermark ?? false;
 }

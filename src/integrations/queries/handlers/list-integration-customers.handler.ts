@@ -18,7 +18,6 @@ export class ListIntegrationCustomersHandler implements IQueryHandler<ListIntegr
     pageQuery: { page, pageSize, search },
   }: ListIntegrationCustomersQuery): Promise<IntegrationCustomerPage> {
     await assertIntegrationExists(this.db, integrationId);
-    // Customers come from the API Keys, so one whose keys never made a request is listed too.
     const keyCondition = and(
       eq(apiKeys.integrationId, integrationId),
       customerIdMatches(apiKeys.customerId, search),
@@ -39,7 +38,6 @@ export class ListIntegrationCustomersHandler implements IQueryHandler<ListIntegr
         .where(keyCondition)
         .groupBy(apiKeys.customerId),
     );
-    // Grouped from usage_logs_integration_id_customer_id_idx alone.
     const customerUsage = this.db.$with("customer_usage").as(
       this.db
         .select({
@@ -83,7 +81,6 @@ export class ListIntegrationCustomersHandler implements IQueryHandler<ListIntegr
   }
 }
 
-/** Set (a Customer's), and starting with `search` when there is one. */
 function customerIdMatches(customerId: PgColumn, search: string | undefined): SQL | undefined {
   return search === undefined ? isNotNull(customerId) : like(customerId, startingWith(search));
 }

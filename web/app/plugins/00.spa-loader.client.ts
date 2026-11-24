@@ -1,5 +1,3 @@
-// Nuxt removes #__nuxt-loader the instant the app resolves, which reads as a
-// flicker. Renaming it hides it from that removal so it can fade out instead.
 const FADE_MS = 220;
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -17,7 +15,6 @@ export default defineNuxtPlugin((nuxtApp) => {
       loader.remove();
       return;
     }
-    // Wait one frame so the mounted app paints underneath before fading.
     requestAnimationFrame(() => {
       screen.classList.add("is-done");
       setTimeout(() => loader.remove(), FADE_MS);
@@ -25,6 +22,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 
   nuxtApp.hook("app:suspense:resolve", fadeOut);
-  // The error page renders outside the suspense boundary, so a 404 on first load never resolves it.
   nuxtApp.hook("app:error", fadeOut);
 });

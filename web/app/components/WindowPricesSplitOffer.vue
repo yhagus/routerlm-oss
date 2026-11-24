@@ -2,12 +2,7 @@
 import { formatValidityPeriod } from "~/lib/validityPeriods";
 import { type AttachedWindowForm, validityPeriodOf } from "~/lib/windowPricesForm";
 
-/**
- * The offer to split open-ended Window Prices around a new Validity Period,
- * previewing every attachment that accepting it saves.
- */
 defineProps<{
-  /** The attachments as they'd be saved after the split. */
   entries: readonly AttachedWindowForm[];
   isSaving: boolean;
 }>();

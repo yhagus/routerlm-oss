@@ -14,9 +14,6 @@ import type {
 import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
 import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
 
-// DashScope's native image API: one synchronous call
-// that answers with URLs of the generated images, which the gateway fetches.
-
 const GENERATION_PATH = "/services/aigc/multimodal-generation/generation";
 
 const responseSchema = z.object({
@@ -37,7 +34,6 @@ const responseSchema = z.object({
     .optional(),
 });
 
-/** The request body DashScope takes: the input images an edit starts from come before the prompt. */
 function requestBodyOf(request: ImageGenerationRequest, target: MediaUpstreamTarget): unknown {
   const inputImages = request.inputImages.map((image) => ({ image }));
   return {
@@ -84,7 +80,6 @@ async function generate(
   };
 }
 
-/** The size DashScope says it generated, which is what it bills; null when it doesn't say. */
 function outputSizeOf(usage: z.infer<typeof responseSchema>["usage"]): ImageSize | null {
   if (usage?.output_width === undefined || usage.output_height === undefined) {
     return null;

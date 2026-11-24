@@ -19,7 +19,6 @@ export class RotateIntegrationSecretHandler implements ICommandHandler<RotateInt
   async execute({ id, rotatedById }: RotateIntegrationSecretCommand): Promise<CreatedIntegration> {
     const { key: secret, id: keyId, hash } = this.secretAuth.generate();
     await this.db.transaction(async (tx) => {
-      // Locked so a concurrent rotation can't record the same previous secret.
       const [current] = await tx
         .select({ keyId: integrations.keyId })
         .from(integrations)

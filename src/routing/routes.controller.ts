@@ -25,7 +25,6 @@ import {
   routeOrderSchema,
 } from "./schemas/routing.schema.js";
 
-/** A Model's Routes. Every write answers with the whole Model, Routes in their new order. */
 @DashboardController("models/:modelId")
 export class RoutesController {
   constructor(private readonly commandBus: CommandBus) {}

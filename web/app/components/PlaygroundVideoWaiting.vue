@@ -3,11 +3,9 @@ import { useIntervalFn } from "@vueuse/core";
 import { computed, shallowRef } from "vue";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
-/** A running Video Job's status line, with the time it has run; it ticks only while shown. */
 const props = defineProps<{
   label: string;
   submittedAt: number;
-  /** Percent done, when the gateway says. */
   progress: number | null;
 }>();
 

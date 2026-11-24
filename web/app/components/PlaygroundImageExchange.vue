@@ -4,7 +4,6 @@ import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { type ImageExchange, imageFileName } from "~/lib/playgroundImages";
 
-/** One image request in the tab's history: the prompt and attachments, then the images or error. */
 defineProps<{ exchange: ImageExchange }>();
 
 const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget();

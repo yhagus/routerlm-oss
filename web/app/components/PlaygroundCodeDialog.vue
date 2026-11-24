@@ -7,12 +7,7 @@ import {
   CodeBlockHeader,
 } from "@/components/ai-elements/code-block";
 
-/**
- * The Playground's request as code a client application would send: the same
- * Chat Completions body, against the gateway instead of the dashboard.
- */
 const props = defineProps<{
-  /** The request body, or what stops one from being built. */
   request: { body: Record<string, unknown> } | { problem: string };
 }>();
 const isOpen = defineModel<boolean>("open", { required: true });
@@ -25,7 +20,6 @@ type Format = (typeof FORMATS)[number]["value"];
 const format = ref<Format>("curl");
 const language = computed(() => (format.value === "curl" ? "bash" : "typescript"));
 
-/** Images go inline as data URLs; the snippet shows where they go, not the bytes. */
 function withoutImageData(value: unknown): unknown {
   if (typeof value === "string" && /^(data|blob):/.test(value)) return "<image data URL>";
   if (Array.isArray(value)) return value.map(withoutImageData);

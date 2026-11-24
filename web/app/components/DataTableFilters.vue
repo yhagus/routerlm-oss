@@ -2,12 +2,7 @@
 import { ListFilter } from "@lucide/vue";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 
-/**
- * The DataTable's Filters button and popover. The caller's filter fields go in
- * the default slot, stacked; they apply as they change.
- */
 const props = defineProps<{
-  /** How many filters are set; shown on the button as "Filters · 3", or a badge on phones. */
   activeCount: number;
 }>();
 const emit = defineEmits<{ clearAll: [] }>();
@@ -32,7 +27,6 @@ const accessibleName = computed(() =>
       >
         <ListFilter :size="14" aria-hidden="true" />
         <span class="data-table-tool__label tabular" aria-hidden="true">{{ buttonText }}</span>
-        <!-- Phones hide the label, so the count rides on the icon. -->
         <span v-if="hasActiveFilters" class="data-table-tool__count tabular" aria-hidden="true">
           {{ activeCount }}
         </span>

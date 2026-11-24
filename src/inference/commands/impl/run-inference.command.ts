@@ -8,12 +8,6 @@ import type {
 } from "@/inference/models/inference.js";
 import type { ClientProtocolConverter } from "@/inference/protocols/client-protocol-converter.js";
 
-/**
- * Serves an inference request in the converter's client Protocol and enqueues
- * its usage job once it is answered (spec step 9). `onUsage` sees the same
- * job, for a caller that reports it back. `target` is the Model the body
- * names unless a direct Upstream Model test or a Probe says otherwise.
- */
 export class RunInferenceCommand extends Command<InferenceResult> {
   constructor(
     readonly converter: ClientProtocolConverter,

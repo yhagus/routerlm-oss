@@ -7,11 +7,6 @@ import { formatPageNumber } from "~/composables/useDocsContents";
 import type { DocsLocale } from "~/lib/docsMessages";
 import { firstMatchIndexOf, type SearchRow, type Section, searchSections } from "~/lib/docsSearch";
 
-/**
- * Search across every page of the current language, in a modal dialog. The
- * sections load on the first open; matching runs in the browser as the
- * reader types. Opens with ⌘K / Ctrl+K, or `/` outside a text field.
- */
 const { locale, collection, t } = useDocsLocale();
 const { pages } = useDocsContents();
 const { withGatewayUrl } = useGatewayUrl();
@@ -28,7 +23,6 @@ type IndexState =
   | { status: "loading" }
   | { status: "ready"; sections: Section[] }
   | { status: "failed" };
-/** Each language's sections, loaded once per visit. */
 const indexes = shallowRef<Partial<Record<DocsLocale, IndexState>>>({});
 const index = computed<IndexState>(() => indexes.value[locale.value] ?? { status: "idle" });
 
@@ -38,7 +32,6 @@ async function loadIndex(): Promise<void> {
   if (state === "loading" || state === "ready") return;
   indexes.value = { ...indexes.value, [forLocale]: { status: "loading" } };
   try {
-    // Code is left out: every example carries the same URLs and headers, which would match everything.
     const sections = await queryCollectionSearchSections(collection.value, {
       ignoredTags: ["pre", "code-tabs"],
     });
@@ -78,7 +71,6 @@ function close(): void {
   dialog.value?.close();
 }
 
-/** Runs on every close, Esc included: the dialog's own close event. */
 function handleClosed(): void {
   returnFocusTo?.focus();
   returnFocusTo = null;
@@ -113,7 +105,6 @@ function handleInputKeydown(event: KeyboardEvent): void {
   }
 }
 
-/** A `/` typed into a field is text, not a shortcut. */
 function isTypingIn(target: EventTarget | null): boolean {
   return (
     target instanceof HTMLElement &&
@@ -130,7 +121,6 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
   open();
 });
 
-/** A click on the backdrop lands on the dialog element itself, outside its panel. */
 function handleDialogClick(event: MouseEvent): void {
   if (event.target === dialog.value) close();
 }

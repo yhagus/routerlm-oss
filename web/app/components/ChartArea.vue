@@ -14,18 +14,13 @@ const props = withDefaults(
   defineProps<{
     series: ChartSeries[];
     points: ChartPoint[];
-    /** Accessible name, e.g. "Requests per hour by provider". */
     label: string;
     height?: number;
-    /** Stacked bands sum to a total; unstacked draws independent lines. */
     stacked?: boolean;
     formatValue?: (value: number) => string;
-    /** Labels the y-axis ticks. */
     formatTick?: (value: number) => string;
-    /** The least the y-axis reaches, so small values don't fill the whole height. */
     scaleFloor?: number;
     unit?: string;
-    /** Legend entries become buttons that hide or show their series. */
     toggleable?: boolean;
   }>(),
   {
@@ -44,7 +39,6 @@ interface TooltipRow extends ChartSeries {
 }
 
 defineSlots<{
-  /** Replaces the tooltip's rows under its title; `rows` are the shown series, top band first. */
   tooltip?: (props: { index: number; rows: TooltipRow[] }) => unknown;
 }>();
 
@@ -57,7 +51,6 @@ const width = useElementWidth(root);
 const active = ref<number | null>(null);
 const hiddenKeys = ref<ReadonlySet<string>>(new Set());
 
-/** The series not hidden from the legend, each with its position in `series` and in point values. */
 const shownSeries = computed(() =>
   props.series.flatMap((series, index) =>
     hiddenKeys.value.has(series.key) ? [] : [{ ...series, index }],
@@ -77,7 +70,6 @@ function toggleSeries(key: string): void {
 const innerWidth = computed(() => Math.max(1, width.value - PAD.left - PAD.right));
 const innerHeight = computed(() => props.height - PAD.top - PAD.bottom);
 
-/** Cumulative tops per series (stacked) or raw values (unstacked). */
 const tops = computed(() =>
   shownSeries.value.map((series, position) =>
     props.points.map((point) =>
@@ -107,7 +99,6 @@ interface PlottedValue {
   value: number;
 }
 
-/** Splits a series at its nulls into the runs of consecutive values a line can join. */
 function runsOf(values: (number | null)[]): PlottedValue[][] {
   const runs: PlottedValue[][] = [];
   let current: PlottedValue[] = [];
@@ -127,7 +118,6 @@ function linePath(run: PlottedValue[]): string {
   return run.map(({ index, value }, step) => `${step ? "L" : "M"}${x(index)},${y(value)}`).join("");
 }
 
-/** The area under one run, down to `base` (the band below when stacked, else zero). */
 function areaPath(run: PlottedValue[], base: (number | null)[] | undefined): string {
   const back = run
     .toReversed()
@@ -147,13 +137,11 @@ const shapes = computed(() =>
       tops: seriesTops,
       line: runs.map(linePath).join(""),
       area: runs.map((run) => areaPath(run, base)).join(""),
-      // A value with no neighbour draws no line, so it gets a marker instead.
       isolated: runs.flatMap((run) => (run.length === 1 ? run : [])),
     };
   }),
 );
 
-/** The marker of each series that has a value at the hovered point. */
 const activeDots = computed(() => {
   const index = active.value;
   if (index === null) return [];
@@ -186,7 +174,6 @@ const tooltipRows = computed(() => {
     color: series.color,
     value: point.values[series.index] ?? null,
   }));
-  // Stacked bands read top-down, so list them in the same order.
   return props.stacked ? rows.reverse() : rows;
 });
 const activeTotal = computed(() =>

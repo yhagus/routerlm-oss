@@ -5,8 +5,6 @@ import type { Database } from "@/db/schemas/relations.js";
 import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// Every random draw picks its lowest value, so every generated name is
-// "Andromeda Antlia" and the second unnamed account's name has to clash.
 vi.mock("node:crypto", async (importOriginal) => {
   const crypto = await importOriginal<typeof Crypto>();
   return {

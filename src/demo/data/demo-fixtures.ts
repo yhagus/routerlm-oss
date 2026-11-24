@@ -1,9 +1,5 @@
 import type { ClientProtocol } from "@/db/schemas/index.js";
 
-// What `db:seed:demo` creates for the README screenshots. Every name, key and
-// address here is fictional; the keys reach no Provider.
-
-/** A local demo credential, printed when the seed finishes. Never a real account. */
 export const DEMO_USER = { email: "admin@example.com", password: "routerlm-demo" } as const;
 
 export interface DemoProviderAccount {
@@ -34,17 +30,10 @@ export const DEMO_PROVIDER_ACCOUNTS: DemoProviderAccount[] = [
   { providerSlug: "deepseek", name: "Hydra", key: "sk-demo-deepseek-hydra-6Rv5", priority: 0 },
 ];
 
-/**
- * How big a Model's requests are and how fast it answers. Token counts are
- * medians; each request varies around them.
- */
 export interface TrafficProfile {
-  /** Input + cache-read + cache-write tokens. */
   contextTokens: number;
   outputTokens: number;
-  /** The share of the context served from the prompt cache, on average. */
   cacheReadShare: number;
-  /** The share of the output spent on reasoning. */
   reasoningShare: number;
   firstTokenMs: number;
   outputTokensPerSecond: number;
@@ -60,7 +49,6 @@ export type DemoModelName = (typeof DEMO_MODEL_NAMES)[number];
 
 export interface DemoModel {
   name: DemoModelName;
-  /** In priority order: the first serves, the others are Fallbacks. */
   routes: DemoRoute[];
   profile: TrafficProfile;
 }
@@ -148,19 +136,14 @@ export const DEMO_MODELS: DemoModel[] = [
   },
 ];
 
-/** Relative weights: how often a caller picks each Model. */
 export type ModelMix = Partial<Record<DemoModelName, number>>;
 
 export interface DemoCaller {
-  /** The API Key name, or `null` for the Playground. */
   apiKeyName: string | null;
-  /** Relative share of all requests. */
   weight: number;
   clientProtocol: ClientProtocol;
-  /** The share of requests that stream. */
   streamedShare: number;
   userAgent: string;
-  /** The address the requests come from, as the gateway's socket sees it. */
   clientIp: string;
   models: ModelMix;
 }
@@ -213,7 +196,6 @@ export const DEMO_CALLERS: DemoCaller[] = [
   },
 ];
 
-/** The quota readings shown for the Providers that report one (ADR 0010). */
 export interface DemoQuotaMeter {
   providerSlug: string;
   key: string;
@@ -222,7 +204,6 @@ export interface DemoQuotaMeter {
   used: number;
   limit: number;
   windowSeconds: number;
-  /** How far ahead the window resets. */
   resetsInSeconds: number;
 }
 

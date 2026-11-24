@@ -102,14 +102,12 @@ describe("Video Jobs on /v1/videos (e2e)", () => {
       });
   }
 
-  /** Submits VIDEO_REQUEST and returns the video id. */
   async function submitted(): Promise<string> {
     upstream.replyTo(SYNTHESIS_PATH, accepted());
     const response = await submit().expect(200);
     return response.body.id;
   }
 
-  /** The task as DashScope reports it in `status`, with no video. */
   function taskIn(status: string): FakeReply {
     return {
       kind: "json",
@@ -118,7 +116,6 @@ describe("Video Jobs on /v1/videos (e2e)", () => {
     };
   }
 
-  /** The recorded finished task, its video URL pointing at `path` on the fake. */
   function taskSucceeded(path: string): FakeReply {
     const body = dashScopeVideoFixture("upstream-task-succeeded.json").replace(
       /https:\/\/[^"]*result\.mp4[^"]*/,
@@ -196,7 +193,6 @@ describe("Video Jobs on /v1/videos (e2e)", () => {
     expect(response.body.error.message).toContain("text-to-video");
   });
 
-  /** A Model whose one Route animates frames and follows references, up to `maxInputImages`. */
   function insertAnimator(options: { maxInputImages?: number } = {}) {
     return insertDashScopeVideoModel(app, db, {
       modelName: "animator",
@@ -357,7 +353,6 @@ describe("Video Jobs on /v1/videos (e2e)", () => {
       seconds: "5",
       size: "1280x720",
       created_at: expect.any(Number),
-      // The task's end_time, 2026-11-19 14:23:39 in China Standard Time.
       completed_at: 1_795_069_419,
     });
     const sent = upstream.lastRequest;

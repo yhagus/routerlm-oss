@@ -4,17 +4,10 @@ import { playgroundErrorOf, readProperty } from "~/lib/playground";
 import { probePath, type ProbeResult, type ProbeResults } from "~/lib/probe";
 import type { UpstreamModel } from "~/lib/upstream";
 
-/** A finished Probe: its results, or the backend's refusal. */
 export type UpstreamModelProbe =
   | { status: "done"; upstreamModel: UpstreamModel; results: ProbeResult[] }
   | { status: "refused"; upstreamModel: UpstreamModel; message: string };
 
-/**
- * Runs Probes, several Upstream Models at once, and holds their outcomes in
- * component state only, so the results are gone once their dialog closes or
- * the page reloads. Finished Probes queue up in the order they finish: the
- * dialog shows the first, and closing it shows the next.
- */
 export function useUpstreamModelProbe() {
   const { $dashboardApi } = useNuxtApp();
 
@@ -40,7 +33,6 @@ export function useUpstreamModelProbe() {
     runningIds.value = ids;
   }
 
-  /** Queues the outcome, replacing an unseen earlier one for the same Upstream Model. */
   function finish(outcome: UpstreamModelProbe): void {
     const others = finishedProbes.value.filter(
       (probe) => probe.upstreamModel.id !== outcome.upstreamModel.id,

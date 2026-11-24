@@ -29,11 +29,8 @@ const TOKEN_PATH = "/api/oauth/token";
 const PROFILE_PATH = "me";
 const DEVICE_CODE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code";
 const REFRESH_GRANT_TYPE = "refresh_token";
-/** The token error (RFC 6749, section 5.2) of a refresh token that is no longer valid. */
 const INVALID_GRANT = "invalid_grant";
-/** RFC 8628: what a client waits between polls when the auth host names no interval. */
 const DEFAULT_POLL_INTERVAL_SECONDS = 5;
-// The dashboard shows it as a link, so it must not be a `javascript:` URL.
 const webLinkSchema = z.url({ protocol: /^https?$/ });
 
 const deviceAuthorizationSchema = z.object({
@@ -65,17 +62,10 @@ const profileSchema = z.object({
   user_level_name: z.string().nullish(),
 });
 
-/**
- * The OAuth device-code grant (RFC 8628) against Kimi Code's auth host
- * (ADR 0012), written natively: Nest has no first-party OAuth client
- * (ADR 0001). Which host, client id and CLI version is Provider data;
- * nothing here names a host.
- */
 @Injectable()
 export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoint> {
   constructor(@InjectHttpClient(OAUTH_LOGIN_HTTP_CLIENT) private readonly http: HttpClient) {}
 
-  /** Asks for a device code and the user code that goes with it. Throws OauthLoginError. */
   async authorizeDevice(endpoint: KimiCodeEndpoint): Promise<DeviceAuthorization> {
     let answer: HttpResponse;
     try {
@@ -104,7 +94,6 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
     };
   }
 
-  /** Asks once whether the User has approved the device code. Never throws for an HTTP failure. */
   async pollToken(endpoint: KimiCodeEndpoint, pending: PendingDeviceCode): Promise<TokenPoll> {
     let answer: HttpResponse;
     try {
@@ -137,10 +126,6 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
     }
   }
 
-  /**
-   * Trades the refresh token for new tokens; the refresh token it returns
-   * replaces the one sent. Never throws for an HTTP failure.
-   */
   async refreshTokens(endpoint: KimiCodeEndpoint, refreshToken: string): Promise<TokenRefresh> {
     let answer: HttpResponse;
     try {
@@ -169,11 +154,6 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
     return { kind: isRefused ? "refused" : "unanswered", reason };
   }
 
-  /**
-   * Who the access token belongs to, from `GET <base URL>/me`. Like the quota
-   * endpoint, it takes no identity header besides `Authorization`. Null when
-   * the Provider doesn't answer: a sign-in is worth keeping without a name.
-   */
   async readProfile(baseUrl: string, accessToken: string): Promise<OauthProfile | null> {
     try {
       const response = await this.http.get(`${withoutTrailingSlash(baseUrl)}/${PROFILE_PATH}`, {
@@ -196,7 +176,6 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
     }
   }
 
-  /** A form-encoded POST as the Provider's CLI. A non-2xx answer is returned, not thrown. */
   private postForm(
     { authHost, clientId, identity }: KimiCodeEndpoint,
     path: string,

@@ -84,7 +84,6 @@ describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () =
       .send(TEXT_REQUEST);
   }
 
-  /** What /v1/models says "smart" can do; a Model with no usable Route offers nothing. */
   async function offeredCapabilities(): Promise<string[]> {
     const response = await request(app.getHttpServer())
       .get("/v1/models")

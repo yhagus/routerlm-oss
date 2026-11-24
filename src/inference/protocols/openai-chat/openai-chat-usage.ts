@@ -1,34 +1,21 @@
 import { z } from "zod";
 import type { StopReason, TokenUsage } from "@/inference/models/internal-format.js";
 
-// Usage and finish reasons in Chat Completions terms, read by the upstream
-// converter and written by the client converter.
-
 export const usageSchema = z.object({
   prompt_tokens: z.number().nullish(),
   completion_tokens: z.number().nullish(),
   prompt_tokens_details: z
     .object({
       cached_tokens: z.number().nullish(),
-      // Providers with explicit caching (Alibaba) report the tokens written to it.
       cache_creation_input_tokens: z.number().nullish(),
     })
     .nullish(),
   completion_tokens_details: z.object({ reasoning_tokens: z.number().nullish() }).nullish(),
-  // DeepSeek reports cache hits under its own name.
   prompt_cache_hit_tokens: z.number().nullish(),
-  // Kimi Code may report them beside the other counts.
   cached_tokens: z.number().nullish(),
 });
 export type OpenAiUsage = z.infer<typeof usageSchema>;
 
-/**
- * A count the upstream didn't report stays null, which flags the Usage Log
- * incomplete (spec "Records"). Cache reads are part of Chat Completions
- * (`cached_tokens`), so a missing one is unreported. Cache writes are not:
- * only Providers with explicit caching add a count, and the others write
- * nothing to bill, so a usage object without one means zero writes.
- */
 export function tokenUsageOf(usage: OpenAiUsage | undefined): TokenUsage {
   const promptTokens = usage?.prompt_tokens ?? null;
   const cacheReadTokens =
@@ -50,7 +37,6 @@ export function tokenUsageOf(usage: OpenAiUsage | undefined): TokenUsage {
   };
 }
 
-/** The usage object a Chat Completions client expects; counts never reported are left out. */
 export function writeUsage(usage: TokenUsage): Record<string, unknown> {
   const cachedTokens = (usage.cacheReadTokens ?? 0) + (usage.cacheWriteTokens ?? 0);
   const promptTokens = usage.inputTokens === null ? null : usage.inputTokens + cachedTokens;

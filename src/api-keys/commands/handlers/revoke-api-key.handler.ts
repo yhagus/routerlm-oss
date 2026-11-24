@@ -17,7 +17,6 @@ export class RevokeApiKeyHandler implements ICommandHandler<RevokeApiKeyCommand>
   async execute({ id }: RevokeApiKeyCommand): Promise<void> {
     const revoked = await this.db
       .update(apiKeys)
-      // A revoked key never needs showing again, so its encrypted copy goes.
       .set({ revokedAt: sql`coalesce(${apiKeys.revokedAt}, now())`, encryptedKey: null })
       .where(eq(apiKeys.id, id))
       .returning({ id: apiKeys.id });

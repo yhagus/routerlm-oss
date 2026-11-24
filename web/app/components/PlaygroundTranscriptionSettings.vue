@@ -1,5 +1,4 @@
 <script setup lang="ts">
-/** The transcription tab's request parameters, in the side rail and the narrow-screen sheet alike. */
 const language = defineModel<string>("language", { required: true });
 </script>
 

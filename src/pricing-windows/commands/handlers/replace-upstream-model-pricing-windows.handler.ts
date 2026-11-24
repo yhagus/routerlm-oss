@@ -20,7 +20,6 @@ import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 type NamedWindowHours = Pick<WindowPricesTiming, "timeZone" | "ranges"> & { name: string };
 type NamedWindowPricesTiming = WindowPricesTiming & { name: string };
 
-/** Refuses entries of which two could apply at the same moment (ADR 0040). */
 function assertNoOverlap(
   entries: readonly WindowPricesEntry[],
   windowsById: ReadonlyMap<string, NamedWindowHours>,
@@ -43,7 +42,6 @@ function assertNoOverlap(
   }
 }
 
-/** `"Whole Week" (from 2026-12-01 00:00 until 2027-01-01 00:00)`, or just the quoted name with no period. */
 function describeEntry(entry: NamedWindowPricesTiming): string {
   const period = describeValidityPeriod(entry);
   return period === "" ? `"${entry.name}"` : `"${entry.name}" (${period})`;
@@ -61,7 +59,6 @@ export class ReplaceUpstreamModelPricingWindowsHandler implements ICommandHandle
     entries,
   }: ReplaceUpstreamModelPricingWindowsCommand): Promise<AttachedPricingWindow[]> {
     const replaced = await this.db.transaction(async (tx) => {
-      // Locked, so a concurrent Kind change can't slip in between the check and the write.
       const [upstreamModel] = await tx
         .select({ kind: upstreamModels.kind })
         .from(upstreamModels)
@@ -78,7 +75,6 @@ export class ReplaceUpstreamModelPricingWindowsHandler implements ICommandHandle
 
       const pricingWindowIds = [...new Set(entries.map((entry) => entry.pricingWindowId))];
       if (pricingWindowIds.length > 0) {
-        // Locked, so none is deleted or rescheduled before the new links reference it.
         const found = await tx
           .select({
             id: pricingWindows.id,

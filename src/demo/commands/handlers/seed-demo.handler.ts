@@ -41,7 +41,6 @@ import { DemoApiKeyGenerator } from "@/demo/providers/demo-api-key-generator.js"
 import { SeedDemoCommand, type SeedDemoResult } from "@/demo/commands/impl/seed-demo.command.js";
 import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key.js";
 
-// Every app table; Drizzle's migration journal lives in its own schema and stays.
 const APP_TABLES: PgTable[] = [
   errorCaptures,
   attempts,
@@ -57,10 +56,8 @@ const APP_TABLES: PgTable[] = [
   providers,
 ];
 
-// Keeps each insert well under PostgreSQL's 65,535 bind parameters.
 const INSERT_BATCH_SIZE = 500;
 
-/** Provider Accounts per Provider slug, in priority order. */
 type AccountsBySlug = ReadonlyMap<string, TrafficProviderAccount[]>;
 
 @CommandHandler(SeedDemoCommand)
@@ -210,7 +207,6 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
     return trafficModels;
   }
 
-  /** An API Key for every caller but the Playground, whose traffic belongs to the User. */
   private async createCallers(userId: string): Promise<TrafficCaller[]> {
     const callers: TrafficCaller[] = [];
     for (const caller of DEMO_CALLERS) {
@@ -225,7 +221,6 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
           name: caller.apiKeyName,
           keyId,
           hash,
-          // Kept like any created key, so a demo key can be copied too (ADR 0029).
           encryptedKey: this.keyCipher.encrypt(key, API_KEY_CIPHER_PURPOSE),
           createdById: userId,
         })
@@ -252,7 +247,6 @@ function batchesOf<T>(rows: T[]): T[][] {
   return batches;
 }
 
-/** The entry for `key`, or an error naming what the demo fixtures expected the Catalog to hold. */
 function requireValue<T>(map: ReadonlyMap<string, T>, key: string, what: string): T {
   const value = map.get(key);
   if (value === undefined) {

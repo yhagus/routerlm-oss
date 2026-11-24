@@ -4,6 +4,8 @@ The Playground needs the parts every LLM chat surface needs: a conversation that
 
 AI Elements Vue requires Tailwind CSS with shadcn-vue's CSS variables. The web app had UnoCSS installed but used none of its utilities, so we replaced it with Tailwind CSS v4 (`@tailwindcss/vite`, as shadcn-vue's Nuxt guide shows) rather than running two utility engines.
 
+Tailwind's preflight is not applied globally, because the dashboard's own styles were written against browser defaults. `app/assets/css/scoped-preflight.css` holds a copy of Tailwind 4.3.5's preflight scoped to `:where(.tw-scope, [data-slot])`, so vendored components (every `data-slot` element) and AI Elements used in a page (put `.tw-scope` on their root) still get it; it is regenerated from `node_modules/tailwindcss/preflight.css` when Tailwind updates. `text-input` is excluded from Tailwind's class scanning with `@source not inline("text-input")`, because Tailwind would read it as a `text-{color}` utility on `--color-input` and fade the typed text.
+
 ## Considered options
 
 - Nuxt UI chat components: first-party under ADR 0001, but fewer LLM-specific parts and a component library that brings its own design system.

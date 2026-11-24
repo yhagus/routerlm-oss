@@ -30,9 +30,7 @@ function applyPreference(preference: ThemePreference) {
   try {
     if (preference === "system") localStorage.removeItem(THEME_STORAGE_KEY);
     else localStorage.setItem(THEME_STORAGE_KEY, preference);
-  } catch {
-    // Storage blocked: the choice still applies for this page view.
-  }
+  } catch {}
 }
 
 export function useTheme() {

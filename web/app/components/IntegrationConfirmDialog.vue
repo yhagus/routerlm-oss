@@ -12,11 +12,6 @@ export interface IntegrationConfirmation {
   integration: IntegrationSummary;
 }
 
-/**
- * Asks before rotating an Integration Secret or deleting an Integration, then
- * does it. Open while `confirmation` is set; a failure keeps it open with the
- * backend's message.
- */
 const confirmation = defineModel<IntegrationConfirmation | null>("confirmation", {
   required: true,
 });

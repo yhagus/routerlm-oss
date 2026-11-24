@@ -9,23 +9,16 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
-/**
- * One entry of the menu. A destructive one is drawn in the danger colour, below
- * a separator. A disabled one stays listed with a `hint` saying why.
- */
 export interface RowAction<Id extends string = string> {
   id: Id;
   label: string;
   icon: Component;
   isDestructive?: boolean;
   isDisabled?: boolean;
-  /** A short line under the label, such as why the action is unavailable. */
   hint?: string;
 }
 
-/** A table row's actions behind one "…" button, so the row stays one line wide. */
 const props = defineProps<{
-  /** What the button is for, such as "Actions for ada@example.com". */
   label: string;
   actions: RowAction<Id>[];
 }>();
@@ -33,7 +26,6 @@ const emit = defineEmits<{ select: [id: Id] }>();
 
 const ITEM_CLASS = "rounded-md py-2 text-xs text-(--ink-2) focus:bg-(--control-hover)";
 
-/** The first destructive action, which a separator sets apart from the rest. */
 const firstDestructiveId = computed(
   () => props.actions.find((action, index) => index > 0 && action.isDestructive)?.id,
 );

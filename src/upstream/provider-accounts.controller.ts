@@ -45,7 +45,6 @@ export class ProviderAccountsController {
     return this.commandBus.execute(new CreateProviderAccountCommand(newAccount));
   }
 
-  /** Renames, reprioritises, enables or disables a Provider Account, or replaces its key. */
   @Patch(":id")
   updateProviderAccount(
     @Param("id", ParseUUIDPipe) providerAccountId: string,

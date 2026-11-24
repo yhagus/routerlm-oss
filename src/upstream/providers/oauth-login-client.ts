@@ -15,11 +15,6 @@ type OauthLoginFlow = OauthLoginEndpoint["flow"];
 type EndpointOf<Flow extends OauthLoginFlow> = Extract<OauthLoginEndpoint, { flow: Flow }>;
 type FlowLoginClients = { [Flow in OauthLoginFlow]: OauthFlowLoginClient<EndpointOf<Flow>> };
 
-/**
- * A Provider's sign-in and the refresh of the login it grants, whichever
- * flow the Provider signs in with (ADR 0012, 0013): each flow is code of its
- * own, and this hands the call to it.
- */
 @Injectable()
 export class OauthLoginClient implements OauthFlowLoginClient<OauthLoginEndpoint> {
   private readonly flowClients: FlowLoginClients;
@@ -43,7 +38,6 @@ export class OauthLoginClient implements OauthFlowLoginClient<OauthLoginEndpoint
     return this.clientOf(endpoint).refreshTokens(endpoint, refreshToken);
   }
 
-  /** Kimi Code's profile of the access token's owner; see KimiCodeLoginClient.readProfile. */
   readKimiCodeProfile(baseUrl: string, accessToken: string): Promise<OauthProfile | null> {
     return this.kimiCode.readProfile(baseUrl, accessToken);
   }

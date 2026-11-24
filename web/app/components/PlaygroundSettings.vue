@@ -1,9 +1,4 @@
 <script setup lang="ts">
-/**
- * The Playground's request parameters. The page shows it in a side rail on wide
- * screens and in a sheet on narrow ones; both copies bind the same values. The
- * Model is picked in the Model bar, not here.
- */
 defineProps<{ reasoningOptions: { value: string; label: string }[] }>();
 
 const systemPrompt = defineModel<string>("systemPrompt", { required: true });

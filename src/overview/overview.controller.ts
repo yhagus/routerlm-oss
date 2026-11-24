@@ -5,7 +5,6 @@ import type { Overview } from "./models/overview.js";
 import { ShowOverviewQuery } from "./queries/impl/show-overview.query.js";
 import { type OverviewQuery, overviewQuerySchema } from "./schemas/overview-query.schema.js";
 
-/** The dashboard's landing page: gateway traffic over time. Only a User's session gets in. */
 @DashboardController("overview")
 export class OverviewController {
   constructor(private readonly queryBus: QueryBus) {}

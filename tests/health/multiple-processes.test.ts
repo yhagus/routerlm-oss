@@ -4,8 +4,6 @@ import { createServer } from "node:net";
 import { vi } from "vitest";
 import { portOf } from "@tests/support/port-of.js";
 
-// ADR 0025: processes share a port only on Linux (CI, or a Linux container).
-// Elsewhere the backend runs one process and there is nothing to supervise.
 const PROCESS_COUNT = 2;
 const STARTUP_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 100;
@@ -33,7 +31,6 @@ describe.runIf(process.platform === "linux")("Backend with BACKEND_PROCESSES=2 (
   let healthUrl: string;
   let output = "";
 
-  /** The pids the primary has logged as started, oldest first. */
   const startedPids = (): number[] =>
     [...output.matchAll(STARTED_PROCESS_LINE)].map((match) => Number(match[1]));
 

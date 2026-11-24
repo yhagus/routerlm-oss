@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import type { FilterOption } from "~/lib/queryFilters";
 
-/**
- * The Integration and Customer id fields of a DataTable's filters. The
- * Customer id applies on Enter or when the field loses focus, not per key.
- */
 defineProps<{ integrationOptions: FilterOption[] }>();
 const integrationIds = defineModel<string[]>("integrationIds", { required: true });
 const customerId = defineModel<string>("customerId", { required: true });
 
 const customerIdDraft = ref(customerId.value);
-// Clearing the filter from its token, or back/forward, changes it from outside.
 watch(customerId, (next) => {
   customerIdDraft.value = next;
 });

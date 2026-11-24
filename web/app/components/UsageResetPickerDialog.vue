@@ -3,16 +3,9 @@ import { apiErrorMessage } from "~/lib/api";
 import { usageResetExpiry } from "~/lib/quotaMeters";
 import type { ProviderAccount, ProviderAccountQuota } from "~/lib/upstream";
 
-/**
- * Picks one of a Provider Account's Usage Resets, soonest expiry first, and
- * spends it. When spending fails, the account is reloaded so the list shows
- * what the Provider still offers.
- */
 const props = defineProps<{
   account: ProviderAccount;
-  /** The time expiries count from, in epoch milliseconds. */
   now: number;
-  /** Reloads the account list. */
   refresh: () => Promise<unknown>;
 }>();
 const isOpen = defineModel<boolean>("open", { required: true });
@@ -21,19 +14,13 @@ const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 
 const usageResets = computed(() => props.account.usageResets ?? []);
-/** The operator's pick; null until they pick, which leaves the first one chosen. */
 const pickedResetId = ref<string | null>(null);
-/** Falls back to the first reset when the pick is gone from a reloaded list. */
 const chosenResetId = computed(() => {
   const isPickListed = usageResets.value.some((reset) => reset.id === pickedResetId.value);
   return isPickListed ? pickedResetId.value : (usageResets.value[0]?.id ?? null);
 });
 const isUsing = ref(false);
 const useError = ref("");
-/**
- * One key per reset per opening, so a double click or a retry after a failed
- * request can never spend a second reset.
- */
 const idempotencyKeys = new Map<string, string>();
 
 watch(isOpen, (open) => {

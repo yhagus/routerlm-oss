@@ -14,10 +14,6 @@ import {
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
 import { dateFormat } from "~/lib/dateFormats";
 
-/**
- * Every API Key the Integration issued to its Customers. They belong to what
- * the Integration sold, so the only thing the dashboard does with one is revoke it.
- */
 const props = defineProps<{ integrationId: string }>();
 const emit = defineEmits<{ revoked: [] }>();
 
@@ -38,7 +34,6 @@ interface ApiKeyRow extends ApiKeySummary {
   status: ApiKeyStatus;
 }
 
-// Status is worked out once per load, as on the API Keys page.
 const rows = computed<ApiKeyRow[]>(() =>
   (apiKeys.value ?? []).map((apiKey) => ({ ...apiKey, status: apiKeyStatus(apiKey, Date.now()) })),
 );

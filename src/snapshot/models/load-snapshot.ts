@@ -32,7 +32,6 @@ import type {
 } from "./snapshot.js";
 import { providerIsUsable } from "./provider-usability.js";
 
-/** Reads the whole snapshot. The tables are operator-sized, so it reads them whole. */
 export async function loadSnapshot(db: Database): Promise<Snapshot> {
   const [
     keyRows,
@@ -62,7 +61,6 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       })
       .from(apiKeys)
       .leftJoin(integrations, eq(apiKeys.integrationId, integrations.id))
-      // A disabled Integration's keys are left out, so they read as unknown keys.
       .where(
         and(
           isNull(apiKeys.revokedAt),
@@ -75,11 +73,9 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       .from(providerAccounts)
       .orderBy(asc(providerAccounts.priority), asc(providerAccounts.createdAt)),
     db.select().from(upstreamModels),
-    // A disabled window never applies, so the inference path never sees it.
     selectAttachedPricingWindows(db, eq(pricingWindows.isEnabled, true)),
     db.select().from(models),
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
-    // Not injected: SettingsModule imports SnapshotModule to call changed().
     new SettingsStore(db).read("allowTermsRiskProviders"),
     new SettingsStore(db).read("allowPrivateUpstreams"),
   ]);
@@ -170,8 +166,6 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
   for (const model of modelRows) {
     const modelRoutes = (routesByModelId.get(model.id) ?? []).flatMap((route) => {
       const upstreamModel = upstreamModelsById.get(route.upstreamModelId);
-      // The routing write path refuses a Route of another Kind; this keeps
-      // one that slipped past it from ever serving.
       if (!upstreamModel || upstreamModel.kind !== model.kind) {
         return [];
       }
@@ -237,7 +231,6 @@ function snapshotApiKeyOf(row: {
   };
 }
 
-/** Null for an API key account without a key, which no Route can use. */
 function snapshotCredentialOf(account: {
   credentialKind: CredentialKind;
   encryptedKey: string | null;

@@ -12,7 +12,6 @@ import {
   usagePageQuerySchema,
 } from "./schemas/usage.schema.js";
 
-/** The Usage page: Usage Logs and their summary, filtered, and one Usage Log in detail. Only a User's session gets in. */
 @DashboardController("usage")
 export class UsageController {
   constructor(private readonly queryBus: QueryBus) {}
@@ -24,7 +23,6 @@ export class UsageController {
     return this.queryBus.execute(new ListUsageLogsQuery(query));
   }
 
-  /** One summary over the same filters as the list. */
   @Get("totals")
   summarizeUsage(@Query({ schema: usageFilterSchema }) filter: UsageFilter): Promise<UsageSummary> {
     return this.queryBus.execute(new SummarizeUsageQuery(filter));

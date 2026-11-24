@@ -13,10 +13,8 @@ const { $dashboardApi } = useNuxtApp();
 const isSubmitting = ref(false);
 const errorMessage = ref("");
 
-/** Only a path inside this app, so a crafted link can't send the User elsewhere. */
 function redirectTarget(): string {
   const redirect = route.query.redirect;
-  // Browsers read a backslash as a slash, so `/\host` would act like `//host`.
   const isLocalPath =
     typeof redirect === "string" &&
     redirect.startsWith("/") &&

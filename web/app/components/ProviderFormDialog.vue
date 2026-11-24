@@ -21,10 +21,6 @@ import {
   QUOTA_READER_OPTIONS,
 } from "~/lib/upstream";
 
-/**
- * Adds a Provider (no `provider`) or edits one. Emits `saved` after a
- * successful write, once the dialog has closed and toasted.
- */
 const props = defineProps<{ provider?: Provider }>();
 const emit = defineEmits<{ saved: [] }>();
 const isOpen = defineModel<boolean>("open", { required: true });
@@ -51,20 +47,15 @@ const logoOptions = [
 ];
 
 const form = ref(providerFormFor(props.provider));
-/** A new Provider's slug follows its name until the slug is typed by hand. */
 const isSlugTyped = ref(false);
-/** The slug still follows the name: a new Provider whose slug nobody has typed in. */
 const isSlugAuto = computed(() => !props.provider && !isSlugTyped.value);
 const isSaving = ref(false);
 const error = ref("");
 
-/** The quirks below follow the chat endpoint's Protocol; "" hides them all. */
 const chatProtocol = computed(() => chatProtocolOf(form.value));
-/** Both OpenAI Protocols take a prompt cache key; only Chat Completions has the other request fields. */
 const isOpenAiProtocol = computed(
   () => chatProtocol.value === "openai-chat" || chatProtocol.value === "openai-responses",
 );
-/** What the logo and the quota reader fall back to: the chat endpoint's base URL, else the first. */
 const formBaseUrl = computed(() => mainBaseUrl(form.value.endpoints));
 
 watch(isOpen, (open) => {
@@ -84,16 +75,11 @@ function handleNameInput(event: Event): void {
   form.value.slug = slugFromName(form.value.name);
 }
 
-/** Clearing the slug hands it back to the name. */
 function handleSlugInput(event: Event): void {
   form.value.slug = inputValue(event);
   isSlugTyped.value = form.value.slug !== "";
 }
 
-/**
- * The browser can't point at a required field hidden in the closed Advanced
- * section, so a field that fails validation opens it first.
- */
 function handleInvalidField(event: Event): void {
   if (!(event.target instanceof HTMLElement)) return;
   const section = event.target.closest("details");

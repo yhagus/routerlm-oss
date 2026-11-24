@@ -5,12 +5,9 @@ import { ERROR_ORIGINS } from "~/lib/errorOrigins";
 import { formatRate, type OverviewBucket } from "~/lib/overview";
 import { formatCount } from "~/lib/usage";
 
-/** The Overview error-rate chart's tooltip rows: each shown origin's rate and failed count, then the total. */
 const props = defineProps<{
   buckets: OverviewBucket[];
-  /** The hovered bucket's position in `buckets`. */
   index: number;
-  /** The origins the chart shows, top band first. */
   rows: ChartSeries[];
 }>();
 

@@ -23,10 +23,6 @@ import type { AttemptTarget } from "./route-selection.js";
 import { pricesForRequest } from "./request-prices.js";
 import { type SentServiceTier, serviceTierOfWireValue } from "./service-tier.js";
 
-/**
- * The upstream status recorded for an Attempt that answered. UpstreamClient
- * only tells that the status was 2xx, and the Providers we speak to answer 200.
- */
 const ANSWERED_UPSTREAM_STATUS = 200;
 const FIRST_ERROR_STATUS = 400;
 
@@ -50,13 +46,6 @@ interface FailedAttempt {
   upstreamResponse: UpstreamFailureResponse | null;
 }
 
-/**
- * Measures one inference request as it goes, for its Usage Log and Attempts
- * (spec "Records"). Its measurements are counts, sizes, ids and times. The
- * only content it holds is for an Error Capture, and the job carries it only
- * when the request or one of its Attempts failed (ADR 0004, ADR 0006).
- * `finish` turns it into the usage job.
- */
 export class UsageMeter {
   private readonly usageLogId = randomUUID();
   private readonly receivedAt = new Date();
@@ -75,7 +64,6 @@ export class UsageMeter {
   private responseBytes = 0;
   private clientRequest: ClientRequest | null = null;
   private readonly failedAttempts: FailedAttempt[] = [];
-  /** Redacted from every Error Capture of this request. */
   private readonly credentialSecrets: string[] = [];
 
   constructor(
@@ -85,11 +73,6 @@ export class UsageMeter {
     private readonly sender: RequestSender,
   ) {}
 
-  /**
-   * Keeps the client request in case it fails. Only called once the caller
-   * is authenticated (a valid API Key, or a Playground session): requests
-   * without either get no Error Capture (spec "Records").
-   */
   requestReceived(headers: RawHeaders, body: unknown): void {
     this.clientRequest = { headers, body };
   }
@@ -103,7 +86,6 @@ export class UsageMeter {
     this.modelName = modelName;
   }
 
-  /** `sentServiceTier` is the tier the Attempt asks for, null when it asks for none. */
   attemptStarted(target: AttemptTarget, sentServiceTier: SentServiceTier | null): void {
     this.openAttempt = {
       target,
@@ -115,16 +97,10 @@ export class UsageMeter {
     };
   }
 
-  /** The Provider Account key or access token an Attempt sends, to redact from Error Captures. */
   credentialUsed(secret: string): void {
     this.credentialSecrets.push(secret);
   }
 
-  /**
-   * Fallback skipped the target's Provider Account as Exhausted. Recorded as
-   * an Attempt without an upstream call (no status, no duration), so the
-   * Usage Log shows why the account did not serve the request.
-   */
   attemptSkippedAsExhausted(target: AttemptTarget): void {
     this.attempts.push({
       startedAt: new Date().toISOString(),
@@ -136,10 +112,6 @@ export class UsageMeter {
     });
   }
 
-  /**
-   * The upstream answered: the whole response, or a stream's first event.
-   * `upstreamRequestId` is the request id it returned, null when none.
-   */
   attemptAnswered(upstreamRequestId: string | null): void {
     if (!this.openAttempt) {
       return;
@@ -151,7 +123,6 @@ export class UsageMeter {
     this.servedBy = {
       ...servingTargetOf(target),
       serviceTier,
-      // Taken now, so a later price edit doesn't change this request's Cost.
       ...pricesForRequest(target.upstreamModel, serviceTier, this.receivedAt),
       unitPrices: target.upstreamModel.unitPrices,
     };
@@ -160,10 +131,6 @@ export class UsageMeter {
     }
   }
 
-  /**
-   * `servedTierValue` is the Service Tier the upstream says served the
-   * request, as it spells it; it replaces the tier the Attempt sent.
-   */
   usageReported(usage: TokenUsage, servedTierValue: string | undefined): void {
     this.usage = usage;
     if (servedTierValue === undefined || !this.servedBy || !this.openAttempt) {
@@ -181,7 +148,6 @@ export class UsageMeter {
     };
   }
 
-  /** What the answering Attempt of a media Kind counted. */
   unitsCounted(units: MediaUnits): void {
     this.units = units;
   }
@@ -195,7 +161,6 @@ export class UsageMeter {
       attemptIndex: this.attempts.length,
       upstreamResponse: failure.upstreamResponse,
     });
-    // A stream that broke off keeps the request id its answer came with.
     this.openAttempt.upstreamRequestId =
       failure.upstreamRequestId ?? this.openAttempt.upstreamRequestId;
     const hasAnswered = this.openAttempt.hasAnswered;
@@ -205,7 +170,6 @@ export class UsageMeter {
     );
   }
 
-  /** The gateway refused what the answering Attempt streamed, so its stream broke off. */
   attemptInterrupted(): void {
     this.closeAttempt("stream_interrupted", ANSWERED_UPSTREAM_STATUS);
   }
@@ -214,32 +178,27 @@ export class UsageMeter {
     this.closeAttempt(null, ANSWERED_UPSTREAM_STATUS);
   }
 
-  /** The error the client got, as a status or as a stream's error event. */
   failedWith(error: GatewayError): void {
     this.errorCode = error.code;
     this.errorOrigin = error.origin;
   }
 
-  /** The request ended in an exception outside the error contract: a gateway bug. */
   failedInGateway(): void {
     this.errorOrigin = "gateway";
   }
 
-  /** Finishes a request answered with `error`, whose body is the client Protocol's `envelope`. */
   finishWithError(error: GatewayError, envelope: unknown): UsageJob {
     this.failedWith(error);
     this.responseWritten(Buffer.byteLength(JSON.stringify(envelope)));
     return this.finish(error.status, false);
   }
 
-  /** Counts `byteLength` more bytes of the response body as sent. */
   responseWritten(byteLength: number): void {
     this.responseBytes += byteLength;
   }
 
   finish(httpStatus: number, isCancelled: boolean): UsageJob {
     if (this.openAttempt) {
-      // Only a client leaving ends a request while an Attempt is still running.
       const hasAnswered = this.openAttempt.hasAnswered;
       this.closeAttempt(
         isCancelled ? "cancelled" : null,
@@ -256,7 +215,6 @@ export class UsageMeter {
       isStreamed: this.isStreamed,
       httpStatus,
       errorCode: this.errorCode,
-      // A client leaving is no failure of anyone's (ADR 0031).
       errorOrigin: isCancelled ? null : this.errorOrigin,
       userAgent: this.sender.userAgent,
       clientIp: this.sender.clientIp,
@@ -273,11 +231,6 @@ export class UsageMeter {
     };
   }
 
-  /**
-   * Spec "Records" and ADR 0006: every failed Attempt is captured, even one
-   * Fallback recovered from. The client request alone is captured only when
-   * the request failed before any Attempt did; a client leaving is not a failure.
-   */
   private errorCaptureOf(httpStatus: number, isCancelled: boolean): ErrorCaptureRecord | null {
     const hasFailed = httpStatus >= FIRST_ERROR_STATUS || this.errorCode !== null;
     const hasFailedAttempts = this.failedAttempts.length > 0;
@@ -291,7 +244,6 @@ export class UsageMeter {
       requestCaptureId: randomUUID(),
       request: this.captured({
         headers: this.clientRequest.headers,
-        // Parsed by Nest already; undefined when the request had no body.
         body: JSON.stringify(this.clientRequest.body) ?? "",
       }),
       failedAttempts: this.failedAttempts.map(({ captureId, attemptIndex, upstreamResponse }) => ({
@@ -329,7 +281,6 @@ export class UsageMeter {
   }
 }
 
-/** The ids and names of what an Attempt tried, as its records copy them (ADR 0024). */
 function servingTargetOf({ route, upstreamModel, providerAccount }: AttemptTarget): ServingTarget {
   return {
     routeId: route?.id ?? null,

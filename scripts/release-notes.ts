@@ -1,10 +1,3 @@
-// Prints the commit part of a CHANGELOG section: every commit since the last
-// release, grouped by Conventional Commit type, then by scope (the module),
-// each linked by its short id. See docs/agents/releasing.md.
-//
-//   bun scripts/release-notes.ts <previous-tag> <new-tag> [<ref>]
-//
-// <ref> defaults to HEAD; pass the new tag once it exists.
 import { execFileSync } from "node:child_process";
 
 interface Commit {
@@ -15,7 +8,6 @@ interface Commit {
   breaking: boolean;
 }
 
-/** Type → heading, in the order the sections are printed. */
 const SECTIONS: [heading: string, types: string[]][] = [
   ["Features", ["feat"]],
   ["Bug fixes", ["fix"]],
@@ -35,7 +27,6 @@ function git(...args: string[]): string {
   return execFileSync("git", args, { encoding: "utf8" }).trim();
 }
 
-/** https://github.com/<owner>/<repo>, from the origin remote's ssh or https URL. */
 function repositoryUrl(): string {
   const remote = git("remote", "get-url", "origin");
   const path = /github\.com[:/](.+?)(?:\.git)?$/.exec(remote)?.[1];

@@ -8,11 +8,8 @@ import { relations } from "@/db/schemas/relations.js";
 import { LibsModule } from "@/libs/libs.module.js";
 import { CatalogModule } from "./catalog.module.js";
 
-// Seeding needs only the database, so it doesn't demand REDIS_URL and the
-// other variables the API process validates.
 const seedEnvSchema = envSchema.pick({ DATABASE_URL: true });
 
-/** What `db:seed` boots: config, the database and the command bus, without the HTTP app. */
 @Module({
   imports: [
     CqrsModule.forRoot(),

@@ -4,7 +4,6 @@ import { apiKeyRotations, apiKeys, integrations, users } from "@/db/schemas/inde
 import { findModelNames } from "@/libs/models/allowed-models.js";
 import type { ApiKeySummary } from "./api-key.js";
 
-/** API Key summaries, newest first, optionally narrowed by `where`. */
 export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<ApiKeySummary[]> {
   const lastRotations = db
     .select({

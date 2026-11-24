@@ -9,6 +9,8 @@ We decided that Customers call the inference endpoints directly, with their API 
 
 Each Integration authenticates with its own Integration Secret, issued from the dashboard, stored hashed, rotatable and revocable. An Integration sees only its own API Keys and Usage Logs. Error Captures stay operator-only, since they can hold request content and upstream details.
 
+The dashboard's Models page for an Integration asks the control plane's own ListModels query (`ListIntegrationOfferedModelsHandler`), so it never shows other Models or prices than the Integration is told.
+
 ## Considered Options
 
 - gRPC for inference as well. Rejected: no measurable gain, and Customers' SDKs cannot use it.

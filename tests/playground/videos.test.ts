@@ -53,7 +53,6 @@ describe("Playground Video Jobs (e2e)", () => {
     await app.close();
   });
 
-  /** Queues the recorded finished task for the next poll, its video on the fake. */
   function queueFinishedTask(): void {
     const answer = dashScopeVideoFixture("upstream-task-succeeded.json").replace(
       /https:\/\/[^"]*result\.mp4[^"]*/,

@@ -11,10 +11,6 @@ import {
   PROTOCOL_LABELS,
 } from "~/lib/upstream";
 
-/**
- * A Provider's endpoints on one line: one icon per Kind it serves, in Kind
- * order so every row lines up. Each icon's tooltip names the Protocol and host.
- */
 const props = defineProps<{ endpoints: readonly ProviderEndpoint[] }>();
 
 const KIND_ICONS: Record<ModelKind, Component> = {

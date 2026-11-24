@@ -1,8 +1,4 @@
 <script setup lang="ts">
-/**
- * One row of a chart tooltip: the value in bold, then what it measures. A
- * series row leads with its colour key; the total row has none.
- */
 defineProps<
   | { value: string; label: string; color: string; total?: false }
   | { value: string; label: string; total: true }

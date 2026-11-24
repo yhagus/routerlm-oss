@@ -2,10 +2,6 @@
 import { Plus, Trash2 } from "@lucide/vue";
 import { type FixedHeaderForm, fixedHeaderFormFor } from "~/lib/providerForm";
 
-/**
- * Edits the headers sent on every request to a Provider: one name and value
- * per row. Saving replaces the whole set.
- */
 const headers = defineModel<FixedHeaderForm[]>({ required: true });
 
 function rowLabel(header: FixedHeaderForm): string {

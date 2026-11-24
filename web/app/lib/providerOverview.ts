@@ -1,6 +1,5 @@
 import type { Provider, ProviderAccount, UpstreamModel } from "~/lib/upstream";
 
-/** Where a Provider Account stands for routing, as of `now`. */
 export type AccountState = "ready" | "cooldown" | "disabled";
 
 export function accountStateOf(account: ProviderAccount, now: number): AccountState {
@@ -9,11 +8,9 @@ export function accountStateOf(account: ProviderAccount, now: number): AccountSt
   return "ready";
 }
 
-/** What the Providers page shows in a Provider's row, from its accounts and Upstream Models. */
 export interface ProviderStats {
   accounts: Record<AccountState, number> & { total: number };
   models: { enabled: number; total: number };
-  /** An enabled Provider no request can reach: no ready account or no enabled model. */
   isUnroutable: boolean;
 }
 
@@ -40,7 +37,6 @@ export function providerStats(
   };
 }
 
-/** The base URL's host, or the URL itself when it doesn't parse. */
 export function baseUrlHost(baseUrl: string): string {
   try {
     return new URL(baseUrl).host;
@@ -49,7 +45,6 @@ export function baseUrlHost(baseUrl: string): string {
   }
 }
 
-/** Why an enabled Provider can't take traffic, in a sentence. */
 export function unroutableReason(stats: ProviderStats): string {
   if (stats.accounts.total === 0) return "No Provider Account: add a key before routing here.";
   if (stats.accounts.ready === 0) {
@@ -58,7 +53,6 @@ export function unroutableReason(stats: ProviderStats): string {
   return "No enabled Upstream Model: enable one before routing here.";
 }
 
-/** The same reason in two or three words, for a status cell. */
 export function unroutableShort(stats: ProviderStats): string {
   if (stats.accounts.total === 0) return "No account";
   if (stats.accounts.ready === 0) return "No ready account";

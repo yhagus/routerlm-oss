@@ -10,11 +10,6 @@ function readStoredLanguage(): string | null {
   }
 }
 
-/**
- * The code language the reader last picked in a docs tab group (a fence
- * language such as `bash` or `ts`). Every tab group on every page follows it,
- * and it is remembered across visits when the browser allows storage.
- */
 export function useDocsCodeLanguage(): {
   preferredLanguage: Readonly<Ref<string | null>>;
   choose: (language: string) => void;
@@ -25,9 +20,7 @@ export function useDocsCodeLanguage(): {
     preferredLanguage.value = language;
     try {
       localStorage.setItem(STORAGE_KEY, language);
-    } catch {
-      // Storage is blocked (private mode, site data off): the choice lasts this visit.
-    }
+    } catch {}
   }
 
   return { preferredLanguage, choose };

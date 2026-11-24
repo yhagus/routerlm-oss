@@ -6,11 +6,6 @@ import {
   controlPlaneErrorOf,
 } from "@/control-plane/models/control-plane-error.js";
 
-/**
- * Answers the control plane's errors over gRPC with the status code
- * control_plane.proto maps each one to, the guard's UNAUTHENTICATED included.
- * Anything else (a bug) keeps Nest's default UNKNOWN.
- */
 @Catch()
 export class ControlPlaneGrpcExceptionFilter implements RpcExceptionFilter {
   private readonly defaultFilter = new GrpcExceptionFilter();

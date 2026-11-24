@@ -29,7 +29,6 @@ import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-
 
 type ReadingOutcome = { kind: "read"; reading: QuotaReading } | { kind: "failed"; error: string };
 
-/** An upsert's SET that writes, into each of `columns`, the value the upsert tried to insert. */
 function excludedValuesOf(columns: Record<string, AnyColumn>): Record<string, SQL> {
   return Object.fromEntries(
     Object.entries(columns).map(([name, column]) => [
@@ -92,10 +91,6 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     return this.quotaOf(providerAccountId, hasUsageResets);
   }
 
-  /**
-   * The list of Usage Resets is fetched only when the reading's count differs
-   * from the stored unexpired resets (ADR 0041); a failed fetch keeps them.
-   */
   private async refreshUsageResetsOnNewCount(
     providerAccountId: string,
     usageResetCount: number | null,
@@ -109,10 +104,6 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     }
   }
 
-  /**
-   * Routing never reads Quota Meters, so a reading tells upstream whether the
-   * account is Exhausted. A failed reading changes nothing.
-   */
   private async applyExhausted(
     providerAccountId: string,
     meters: QuotaMeterReading[],
@@ -123,8 +114,6 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
       await this.commandBus.execute(new EndProviderAccountExhaustedCommand(providerAccountId));
       return;
     }
-    // The operator lets the Provider bill the excess; an Exhausted state set
-    // by a refused Attempt still runs its course.
     if (!continueWhenExhausted) {
       await this.commandBus.execute(
         new MarkProviderAccountExhaustedCommand(providerAccountId, state.until),
@@ -139,7 +128,6 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
   ): Promise<ReadingOutcome> {
     try {
       const readerProvider = quotaReaderProviderOf(provider);
-      // An OAuth Login about to run out is refreshed first, as before an Attempt.
       const credential = await this.queryBus.execute(
         new GetProviderAccountCredentialQuery(providerAccountId),
       );
@@ -150,7 +138,6 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     }
   }
 
-  /** A successful reading replaces every meter of the account; a failed one leaves them as they were. */
   private async store(
     providerAccountId: string,
     outcome: ReadingOutcome,
@@ -163,7 +150,6 @@ export class ReadProviderAccountQuotaHandler implements ICommandHandler<ReadProv
     await this.db.transaction(async (tx) => {
       const { meters } = outcome.reading;
       const readKeys = meters.map((meter) => meter.key);
-      // A meter the Provider no longer reports would otherwise keep its last value forever.
       await tx
         .delete(quotaMeters)
         .where(

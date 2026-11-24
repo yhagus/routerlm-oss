@@ -52,16 +52,10 @@ import {
 import { openAiTranscriptionClientContract } from "./protocols/openai-transcription/openai-transcription-client-contract.js";
 import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
 
-/** What Nest sends with a JSON body it serialises itself. */
 const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 
-/** Where client applications call the gateway. */
 export const INFERENCE_API_PREFIX = "v1";
 
-/**
- * The client-facing inference API. Only API Keys sign in here; because of
- * that restriction, `@CurrentUser()` is always an ApiKeyPrincipal on these routes.
- */
 @Controller(INFERENCE_API_PREFIX)
 @Authenticate({ providers: [ApiKeyAuth] })
 export class InferenceController {
@@ -165,7 +159,6 @@ export class InferenceController {
     return replyWithMedia(reply, response);
   }
 
-  /** JSON, or a multipart form with the images uploaded as files. */
   @Post("images/edits")
   @HttpCode(200)
   @UseInterceptors(FileFieldsInterceptor([...IMAGE_EDIT_FILE_FIELDS], MEDIA_UPLOAD_OPTIONS))
@@ -187,7 +180,6 @@ export class InferenceController {
     return replyWithMedia(reply, response);
   }
 
-  /** A multipart form uploading the audio as `file`; an upload over the size limit gets a 413. */
   @Post("audio/transcriptions")
   @HttpCode(200)
   @UseInterceptors(FileInterceptor(TRANSCRIPTION_FILE_FIELD, MEDIA_UPLOAD_OPTIONS))
@@ -209,7 +201,6 @@ export class InferenceController {
     return replyWithMedia(reply, response);
   }
 
-  /** JSON, or a multipart form with the first frame uploaded as a file. */
   @Post("videos")
   @HttpCode(200)
   @UseInterceptors(FileInterceptor(VIDEO_FIRST_FRAME_FIELD, MEDIA_UPLOAD_OPTIONS))
@@ -246,7 +237,6 @@ export class InferenceController {
     );
   }
 
-  /** The MP4 streams through as it downloads (ADR 0028), so it gets a reply of its own. */
   @Get("videos/:videoId/content")
   downloadVideoContent(
     @Param("videoId") videoId: string,
@@ -269,10 +259,6 @@ export class InferenceController {
   }
 }
 
-/**
- * The reply Nest sends for `result`. A JSON body is already serialised, so it
- * goes out as those bytes, with the content type Nest gives a JSON reply.
- */
 function replyWith(result: InferenceResult, response: ServerResponse): Uint8Array | Response {
   if (result.kind === "stream") {
     return eventStreamResponse(result.chunks);

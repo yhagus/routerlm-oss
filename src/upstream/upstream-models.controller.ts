@@ -42,7 +42,6 @@ export class UpstreamModelsController {
     return this.commandBus.execute(new CreateUpstreamModelCommand(newUpstreamModel));
   }
 
-  /** Edits Capabilities, limits and prices, or enables or disables the Upstream Model. */
   @Patch(":id")
   updateUpstreamModel(
     @Param("id", ParseUUIDPipe) upstreamModelId: string,

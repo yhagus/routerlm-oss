@@ -10,38 +10,25 @@ import { GatewayError } from "./gateway-error.js";
 import type { InferenceCaller, ProbeTarget } from "./inference.js";
 import type { AttemptPath, AttemptTarget } from "./route-selection.js";
 
-/**
- * What a request resolved to (spec step 3), and how its Attempts are made:
- * Fallback over its paths, or a Probe's one Attempt.
- */
 export type Destination = FallbackDestination | ProbeDestination;
 
 interface ResolvedNames {
-  /** Null for a direct Upstream Model test or a Probe: no Parameter Policy, no automatic cache breakpoints. */
   model: SnapshotModel | null;
-  /** The Model's id, or the Upstream Model's row id with no Model. */
   id: string;
-  /** What the response names as its model. */
   name: string;
 }
 
 export interface FallbackDestination extends ResolvedNames {
   kind: "fallback";
-  /** Capable of serving the request, in the order they are tried. */
   paths: AttemptPath[];
 }
 
 export interface ProbeDestination extends ResolvedNames {
   kind: "probe";
-  /** The one Attempt, with no Fallback. */
   target: AttemptTarget;
   totalTimeoutMs: number;
 }
 
-/**
- * The enabled Model named `name`, if the caller may use it (spec step 3).
- * Its Kind is checked apart, once the Usage Log knows the Model.
- */
 export function usableModel(
   snapshot: Snapshot,
   name: string,
@@ -61,10 +48,6 @@ export function usableModel(
   return model;
 }
 
-/**
- * The Upstream Model a direct Upstream Model test names by row id, if it
- * and its Provider are enabled and it has the Kind the client endpoint serves.
- */
 export function upstreamModelServedHere(
   snapshot: Snapshot,
   upstreamModelRowId: string,
@@ -86,10 +69,6 @@ export function upstreamModelServedHere(
   return upstreamModel;
 }
 
-/**
- * What a Probe reaches: the Upstream Model and Provider Account it names,
- * even disabled ones. The Probe's caller refuses what it must not call.
- */
 export function probeDestination(
   snapshot: Snapshot,
   { upstreamModelId, providerAccountId, totalTimeoutMs }: ProbeTarget,
@@ -121,10 +100,6 @@ export function probeDestination(
   };
 }
 
-/**
- * Refuses a Model or Upstream Model of another Kind than the client endpoint
- * serves (GLOSSARY "Model Kind"), naming both Kinds.
- */
 export function assertKindServedHere(
   named: string,
   itsKind: ModelKind,

@@ -3,7 +3,6 @@ import { inArray } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { models } from "@/db/schemas/index.js";
 
-/** Refuses allowed Model ids that name no Model. */
 export async function assertModelsExist(db: Database, modelIds: string[]): Promise<void> {
   if (modelIds.length === 0) {
     return;
@@ -14,7 +13,6 @@ export async function assertModelsExist(db: Database, modelIds: string[]): Promi
   }
 }
 
-/** The names of the Models that still exist among `modelIds`, by id. */
 export async function findModelNames(
   db: Database,
   modelIds: string[],

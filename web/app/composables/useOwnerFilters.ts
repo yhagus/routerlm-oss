@@ -4,22 +4,13 @@ import type { IntegrationSummary, RecordedIntegration } from "~/lib/integrations
 import { type FilterOption, isUuid, missingOptions } from "~/lib/queryFilters";
 
 export interface OwnerFilters {
-  /** Integration ids; a row matches any of them. */
   integrationFilter: WritableComputedRef<string[]>;
-  /** A Customer id, matched exactly; "" for any Customer. */
   customerFilter: WritableComputedRef<string>;
   integrationOptions: ComputedRef<FilterOption[]>;
-  /** The Integration and Customer tokens for the active-filters row. */
   ownerFilterTokens: ComputedRef<ActiveFilter[]>;
   clearOwnerFilters: () => void;
 }
 
-/**
- * The Integration and Customer id filters, held in the URL
- * (?integration=…,…&customer=…) like a page's other filters. `shownRecords`
- * are the rows the page shows: a picked Integration since deleted is named
- * as they recorded it.
- */
 export function useOwnerFilters(
   shownRecords: () => readonly RecordedIntegration[] = () => [],
 ): OwnerFilters {
@@ -56,10 +47,6 @@ export function useOwnerFilters(
   };
 }
 
-/**
- * Picked Integrations that no longer exist, named as `records` copied them at
- * request time. A pick no shown record names is left to `missingOptions`.
- */
 function deletedIntegrationOptions(
   picked: readonly string[],
   existing: readonly FilterOption[],

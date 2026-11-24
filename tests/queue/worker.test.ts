@@ -3,8 +3,6 @@ import { getQueueToken } from "@nestjs/bullmq";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { type Queue, QueueEvents } from "bullmq";
 
-// Needs a reachable Redis at REDIS_URL. Each run uses its own Redis database,
-// so parallel runs never process each other's jobs.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();

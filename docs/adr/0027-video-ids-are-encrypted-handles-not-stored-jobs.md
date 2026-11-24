@@ -2,6 +2,8 @@
 
 Video generation is asynchronous: a client submits, polls `GET /v1/videos/{id}`, then downloads the content. The poll must reach the same Provider Account and upstream task. We decided that the id the gateway returns is the encrypted Provider Account, Upstream Model and upstream task id, so any process can answer a poll and the gateway keeps no job state (ADR 0002).
 
+Two consequences of the handle being encrypted: it is a few hundred characters, so `configureApp` raises the HTTP adapter's maximum route parameter length from 100 to 1024 (`MAX_PARAM_LENGTH`), and `ProviderKeyCipher` takes a `purpose` authenticated with the ciphertext, so a video id never decrypts as a Provider Account key or any other secret.
+
 ## Considered options
 
 - A job table keyed by a gateway id: holds no content, so ADR 0004 allows it, but it adds a migration, a cleanup job and state that drifts from the Provider's.

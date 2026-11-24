@@ -32,7 +32,6 @@ import {
   newTermsRiskProvidersSchema,
 } from "./schemas/terms-risk-providers.schema.js";
 
-/** Settings a User changes from the dashboard. Only a User's session gets in. */
 @DashboardController("settings")
 export class SettingsController {
   constructor(
@@ -45,7 +44,6 @@ export class SettingsController {
     return this.queryBus.execute(new ShowErrorCaptureRetentionQuery());
   }
 
-  /** What saving `days` would delete, for the confirmation before shortening the period. */
   @Get("error-capture-retention/impact")
   showErrorCaptureRetentionImpact(
     @Query({ schema: retentionImpactQuerySchema }) { days }: RetentionImpactQuery,

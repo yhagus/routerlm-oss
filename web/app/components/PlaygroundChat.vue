@@ -56,10 +56,6 @@ import {
 import type { RouteSummary } from "~/lib/routing";
 import { formatCost, formatCount } from "~/lib/usage";
 
-// The Playground's chat tab: a conversation with a chat Model or Upstream
-// Model, streamed as Chat Completions.
-
-/** Answers render as Markdown; code blocks follow the dashboard's light or dark theme. */
 const isDark = useIsDark();
 const markdownExtensions = {
   code: code(),
@@ -84,8 +80,6 @@ const {
   requestPath,
 } = usePlaygroundTarget("chat");
 
-// Settings
-
 const systemPrompt = ref("");
 const temperature = ref("");
 const topP = ref("");
@@ -101,14 +95,12 @@ function isReasoningEffort(value: string): value is ReasoningEffort {
   return REASONING_EFFORTS.some((effort) => effort === value);
 }
 
-/** An optional number field: undefined when empty, null when it isn't a number in range. */
 function numberField(text: string, isValid: (value: number) => boolean): number | undefined | null {
   if (text.trim() === "") return undefined;
   const value = Number(text);
   return Number.isFinite(value) && isValid(value) ? value : null;
 }
 
-/** The settings to send, or what is wrong with them. */
 function readSettings(): { settings: PlaygroundSettings } | { problem: string } {
   const target = requestModel();
   if ("problem" in target) return target;
@@ -135,7 +127,6 @@ function readSettings(): { settings: PlaygroundSettings } | { problem: string } 
   };
 }
 
-/** The parameters this tab sends, shown in the Model bar so they're visible without the rail. */
 const sentParameters = computed(() => {
   const parameters: string[] = [];
   if (systemPrompt.value.trim() !== "") parameters.push("System prompt");
@@ -151,10 +142,6 @@ const sentParameters = computed(() => {
   return parameters;
 });
 
-/**
- * Starters offer an image prompt only when the target sees images: the
- * Upstream Model itself, or a Route of the Model that can serve requests.
- */
 const canSeeImages = computed(() =>
   source.value === "upstream"
     ? Boolean(selectedUpstreamModel.value?.capabilities.includes("vision"))
@@ -169,13 +156,6 @@ const canSeeImages = computed(() =>
       ),
 );
 
-// Conversation: lives in this page only, and is gone on reload.
-
-/**
- * How each answer was requested: the Model's Routes as they were then, so its
- * receipt can say "Route 2 of 3" after the Model is switched, or "direct" for
- * an Upstream Model test.
- */
 const routesByAnswer = new WeakMap<AssistantMessage, RouteSummary[]>();
 const directAnswers = new WeakSet<AssistantMessage>();
 function routesOf(message: AssistantMessage): RouteSummary[] | null {
@@ -205,10 +185,8 @@ const hasDraft = computed(
   () => promptInput.textInput.value.trim() !== "" || promptInput.files.value.length > 0,
 );
 const canSend = computed(() => !isSending.value && canTry.value && hasDraft.value);
-/** The composer takes files dropped anywhere, so it goes while another tab shows. */
 const isActivated = useIsActivated();
 
-/** The composer's submit. Throwing hands the text back to the composer and shows the problem. */
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSending.value) return;
   const read = readSettings();
@@ -217,11 +195,9 @@ async function submit(message: PromptInputMessage): Promise<void> {
   const imageUrls = message.files.map((file) => file.url);
   if (text === "" && imageUrls.length === 0) return;
   composerError.value = "";
-  // The answer streams in the background; the composer is free again at once.
   void send(read.settings, requestPath("chat/completions"), text, imageUrls);
 }
 
-/** A starter prompt: text ones send at once, the image one waits for a file. */
 function start(prompt: string, withImage: boolean): void {
   promptInput.setTextInput(prompt);
   if (withImage) promptInput.openFileDialog();
@@ -236,7 +212,6 @@ async function send(
 ): Promise<void> {
   conversation.value.push({ role: "user", text, imageUrls });
   const body = chatCompletionRequest(settings, conversation.value);
-  // Reactive, so the page shows the answer as it streams in.
   const answer = reactive<AssistantMessage>({
     role: "assistant",
     text: "",
@@ -294,14 +269,10 @@ function clearConversation(): void {
   conversation.value = [];
 }
 
-/** The answer still streaming its reasoning: the Reasoning block stays open until text starts. */
 function isThinking(message: AssistantMessage): boolean {
   return message.state.kind === "streaming" && message.text === "";
 }
 
-// Session totals
-
-/** Totals over every answer in this tab, so a run of test sends adds up. */
 const sessionTotals = computed(() => {
   const totals: {
     requests: number;
@@ -342,10 +313,7 @@ const settingsHint = computed(() =>
     : "Empty parameters aren't sent: a direct test applies no Parameter Policy.",
 );
 
-// Request as code
-
 const isCodeOpen = ref(false);
-/** The conversation so far plus the unsent message, as the body a client would send. */
 const codeRequest = computed(() => {
   if (source.value === "upstream") {
     return {

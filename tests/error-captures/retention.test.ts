@@ -6,7 +6,6 @@ import { getDrizzleToken } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
 import { errorCaptures, settings, usageLogs } from "@/db/schemas/index.js";
 
-// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();

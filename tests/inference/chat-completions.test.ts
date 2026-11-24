@@ -48,10 +48,8 @@ const EVERY_FEATURE_REQUEST = {
 };
 
 const COMPLETION_ID_PREFIX = "chatcmpl-";
-/** The request id the client fixtures were recorded with. */
 const FIXTURE_REQUEST_ID = "ours-1";
 
-/** The upstream's recorded stream, but with the reasoning in one delta. */
 const ONE_REASONING_DELTA_STREAM = openAiChatFixture("upstream-stream-tool-call.sse")
   .split("\n\n")
   .filter((event) => !event.includes('"reasoning_content":" weather."'))
@@ -157,7 +155,6 @@ describe("Chat Completions (e2e)", () => {
   });
 
   it("sends a recorded request on in the upstream's terms, dropping the fields it doesn't know", async () => {
-    // Shows that the reasoning sent back was read; without the quirk it isn't sent upstream.
     await setProviderQuirks(app, db, providerId, { reasoningContentInHistory: "tool-call-turns" });
     upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
 

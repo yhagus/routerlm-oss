@@ -23,24 +23,18 @@ type NewUsageLog = typeof usageLogs.$inferInsert;
 type NewAttempt = typeof attempts.$inferInsert;
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
 
-/** A seeded Provider Account, as Usage Logs and Attempts copy it. */
 export interface TrafficProviderAccount {
   id: string;
   name: string;
 }
 
-/** One Route of a seeded Model, with the rows it points at. */
 export interface TrafficRoute {
   routeId: string;
-  /** The `upstream_models` row id. */
   upstreamModelRowId: string;
-  /** The model name as the Provider spells it. */
   upstreamModelName: string;
   providerSlug: string;
-  /** The Provider's display name. */
   providerName: string;
   prices: UpstreamModelPrices;
-  /** Its Provider's accounts, in priority order. */
   providerAccounts: TrafficProviderAccount[];
 }
 
@@ -68,14 +62,12 @@ export interface DemoTraffic {
 
 export const DEMO_REQUEST_COUNT = 1_750;
 
-// Any fixed seed: the same seed draws the same week of traffic on every run.
 const DEMO_SEED = 20_261_116;
 
 const HOUR_MS = 60 * 60 * SECOND_MS;
 const DAY_MS = 24 * HOUR_MS;
 const TRAFFIC_WINDOW_MS = 7 * DAY_MS;
 
-// Relative traffic per UTC hour: quiet nights, busy working hours.
 const HOURLY_WEIGHTS = [
   0.08, 0.06, 0.05, 0.05, 0.06, 0.1, 0.2, 0.4, 0.7, 0.95, 1, 1, 0.85, 0.95, 1, 1, 0.95, 0.8, 0.6,
   0.45, 0.35, 0.25, 0.18, 0.12,
@@ -84,12 +76,10 @@ const WEEKEND_WEIGHT = 0.3;
 const SUNDAY = 0;
 const SATURDAY = 6;
 
-// About 1.5% of requests fail; a few more succeed only after a Fallback.
 const FAILED_SHARE = 0.015;
 const RECOVERED_SHARE = 0.035;
 const MAX_ERROR_CAPTURES = 8;
 
-// The gateway's default first-token timeout, which a timed-out Attempt waits out.
 const FIRST_TOKEN_TIMEOUT_MS = 60 * SECOND_MS;
 
 const CACHED_REQUEST_SHARE = 0.8;
@@ -112,7 +102,6 @@ const FAILURE_WEIGHTS = [
 
 const SERVER_ERROR_STATUSES = [500, 502, 503];
 
-/** What the client gets when every Attempt failed, after the last one's failure. */
 const GATEWAY_ERRORS: Record<FallbackFailure, { httpStatus: number; errorCode: GatewayErrorCode }> =
   {
     rate_limited: { httpStatus: 429, errorCode: "upstream_rate_limited" },
@@ -131,11 +120,6 @@ interface FailedAttempt {
   candidate: Candidate;
 }
 
-/**
- * A week of gateway traffic ending at `now`: Usage Logs with their Attempts,
- * and Error Captures for the latest failures. The same inputs draw the same
- * requests, shifted to `now`.
- */
 export function generateDemoTraffic(
   now: Date,
   models: ReadonlyMap<DemoModelName, TrafficModel>,
@@ -196,7 +180,6 @@ export function generateDemoTraffic(
       const usageLog: NewUsageLog = {
         ...base,
         ...GATEWAY_ERRORS[lastFailure.failure],
-        // Every Fallback failure is the upstream's, as its error code says.
         errorOrigin: "upstream",
         requestBytes: requestBytesFor(model.profile.contextTokens),
         responseBytes: ERROR_RESPONSE_BYTES,
@@ -244,7 +227,6 @@ export function generateDemoTraffic(
   return traffic;
 }
 
-/** DEMO_REQUEST_COUNT times in the week before `now`, oldest first, denser in working hours. */
 function requestTimes(random: Random, now: Date): Date[] {
   const times: Date[] = [];
   const windowStart = now.getTime() - TRAFFIC_WINDOW_MS;
@@ -286,7 +268,6 @@ function pickOutcome(random: Random): Outcome {
   return "served";
 }
 
-/** How many Attempts fail before one serves, or all of them for a failed request (two or three). */
 function failedAttemptCountFor(random: Random, outcome: Outcome, candidateCount: number): number {
   if (outcome === "served") return 0;
   if (outcome === "recovered") return 1;
@@ -339,12 +320,10 @@ function failedAttemptDurationMs(random: Random, failure: FallbackFailure): numb
   }
 }
 
-/** What an Attempt on a candidate tried, as the Attempt copies it (ADR 0024). */
 function servingTargetOf(candidate: Candidate): ServingTarget {
   return { ...usageLogTargetOf(candidate), providerName: candidate.route.providerName };
 }
 
-/** The part of a candidate's ServingTarget a Usage Log copies: all but the Provider's name. */
 function usageLogTargetOf({
   route,
   providerAccount,
@@ -367,7 +346,6 @@ function attribution(
     : { apiKeyId: null, userId: source.userId, isPlayground: true };
 }
 
-/** Token counts around the profile's medians. The input count excludes cache reads and writes. */
 function tokenUsage(random: Random, profile: TrafficProfile): TokenUsage {
   const contextTokens = Math.max(50, Math.round(logNormal(random, profile.contextTokens, 0.6)));
   const cacheReadShare =
@@ -397,7 +375,6 @@ function requestBytesFor(contextTokens: number): number {
   return contextTokens * BYTES_PER_TOKEN + REQUEST_ENVELOPE_BYTES;
 }
 
-/** The failed request's last Attempt as an Error Capture stores it: credentials already redacted. */
 function errorCaptureOf(
   usageLog: NewUsageLog,
   failed: FailedAttempt,

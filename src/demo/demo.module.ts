@@ -12,15 +12,8 @@ import { providerKeyCipherProvider } from "@/upstream/providers/provider-key-cip
 import { CommandHandlers } from "./commands/handlers/index.js";
 import { DemoApiKeyGenerator } from "./providers/demo-api-key-generator.js";
 
-// The database, and the key that encrypts the demo Provider Account keys so
-// the app started on the same .env can read them. No Redis: nothing here
-// publishes to running instances.
 const demoEnvSchema = envSchema.pick({ DATABASE_URL: true, ENCRYPTION_KEY: true });
 
-/**
- * What `db:seed:demo` boots: config, the database and the command bus, with
- * the Catalog seeding it starts from.
- */
 @Module({
   imports: [
     CqrsModule.forRoot(),
@@ -37,7 +30,6 @@ const demoEnvSchema = envSchema.pick({ DATABASE_URL: true, ENCRYPTION_KEY: true 
     CatalogModule,
   ],
   providers: [
-    // The production cost, as AuthenticationModule's default: the demo User signs in like any other.
     { provide: PasswordHasher, useValue: new PasswordHasher() },
     providerKeyCipherProvider,
     DemoApiKeyGenerator,

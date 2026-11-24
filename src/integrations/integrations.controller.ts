@@ -44,7 +44,6 @@ import {
   newIntegrationSchema,
 } from "./schemas/integration.schema.js";
 
-// A dashboard controller: only a User's session gets in, never an Integration Secret or API Key.
 @DashboardController("integrations")
 export class IntegrationsController {
   constructor(
@@ -62,13 +61,11 @@ export class IntegrationsController {
     return this.queryBus.execute(new GetIntegrationQuery(id));
   }
 
-  /** Every rotation of the Integration Secret, newest first. */
   @Get(":id/rotations")
   listIntegrationRotations(@Param("id", ParseUUIDPipe) id: string): Promise<IntegrationRotation[]> {
     return this.queryBus.execute(new ListIntegrationRotationsQuery(id));
   }
 
-  /** The Customers named on its API Keys, rolled up over all time, most recently active first. */
   @Get(":id/customers")
   listIntegrationCustomers(
     @Param("id", ParseUUIDPipe) id: string,
@@ -77,7 +74,6 @@ export class IntegrationsController {
     return this.queryBus.execute(new ListIntegrationCustomersQuery(id, pageQuery));
   }
 
-  /** The Models it may sell, exactly as its control plane's ListModels answers it. */
   @Get(":id/models")
   listIntegrationModels(@Param("id", ParseUUIDPipe) id: string): Promise<ListModelsResponseJson> {
     return this.queryBus.execute(new ListIntegrationOfferedModelsQuery(id));
@@ -91,7 +87,6 @@ export class IntegrationsController {
     return this.commandBus.execute(new CreateIntegrationCommand(newIntegration, creator.id));
   }
 
-  /** Renames the Integration or changes its allowed Models; an empty list means every Model. */
   @Patch(":id")
   updateIntegration(
     @Param("id", ParseUUIDPipe) id: string,
@@ -100,7 +95,6 @@ export class IntegrationsController {
     return this.commandBus.execute(new UpdateIntegrationCommand(id, changes));
   }
 
-  // 201 like POST /integrations: both answer with a newly made secret.
   @Post(":id/rotate")
   rotateIntegrationSecret(
     @Param("id", ParseUUIDPipe) id: string,
@@ -121,7 +115,6 @@ export class IntegrationsController {
     return this.commandBus.execute(new EnableIntegrationCommand(id));
   }
 
-  /** Deletes the Integration for good, revoking every API Key it issued. Disable it to suspend instead. */
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteIntegration(@Param("id", ParseUUIDPipe) id: string): Promise<void> {

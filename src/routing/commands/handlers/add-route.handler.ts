@@ -18,7 +18,6 @@ export class AddRouteHandler implements ICommandHandler<AddRouteCommand> {
   ) {}
 
   async execute({ modelId, newRoute }: AddRouteCommand): Promise<ModelDetail> {
-    // Answers 404 for an unknown Model before the insert can fail on it.
     const model = await findModelDetail(this.db, modelId);
     await assertRouteKindFits(this.db, model, newRoute.upstreamModelId);
     const lastPriorityPlusOne = sql<number>`(

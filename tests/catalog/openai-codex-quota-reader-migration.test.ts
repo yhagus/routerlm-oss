@@ -34,7 +34,6 @@ describe("OpenAI Codex quota reader migration (e2e)", () => {
     await rm(migrationsBefore, { recursive: true, force: true });
   });
 
-  /** The OpenAI Codex Provider as the seeder created it before it named a quota reader. */
   async function insertSeededCodex(): Promise<void> {
     await pool.query(
       `insert into providers (slug, name, protocol, base_url, auth_style, is_from_catalog, quirks)

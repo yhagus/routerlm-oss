@@ -19,14 +19,8 @@ import {
   windowPricesBody,
 } from "~/lib/windowPricesForm";
 
-/**
- * A chat Upstream Model's Window Prices: attach Pricing Windows (the same one
- * more than once), give each attachment prices and a Validity Period, and save
- * the whole list with one PUT. At most one attachment may apply at any moment.
- */
 const props = defineProps<{
   upstreamModel: UpstreamModel;
-  /** Reloads the Upstream Models after a save. */
   refresh: () => Promise<unknown>;
 }>();
 const isOpen = defineModel<boolean>("open", { required: true });
@@ -35,11 +29,9 @@ const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 const { data: pricingWindows, status } = useDashboardApi<PricingWindow[]>("/pricing-windows");
 
-/** In the order the API lists them; new attachments go last. */
 const attached = ref<AttachedWindowForm[]>(
   props.upstreamModel.pricingWindows.map(attachedWindowFormOf),
 );
-/** The attachments a split would save, while the offer to split is shown. */
 const splitOffer = shallowRef<AttachedWindowForm[]>();
 const isSaving = ref(false);
 const saveError = ref("");
@@ -57,7 +49,6 @@ const attachPlaceholder = computed(() => {
   return attachOptions.value.length > 0 ? "Attach a Pricing Window" : "No Pricing Windows yet";
 });
 
-/** The standard price as an empty Window Price's placeholder: what applies when it's left out. */
 function standardPlaceholder(key: keyof WindowPrices): string {
   const standard = props.upstreamModel[key];
   return standard === null ? "Standard (none)" : `${standard} (standard)`;
@@ -98,7 +89,6 @@ function handleSave(): void {
   void save(attached.value);
 }
 
-/** The split replaces nothing until the API takes it: a refusal leaves the unsplit entries to fix. */
 async function handleAcceptSplit(): Promise<void> {
   const split = splitOffer.value;
   if (!split) return;

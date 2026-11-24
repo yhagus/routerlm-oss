@@ -36,7 +36,6 @@ export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricing
           .returning();
         const isRescheduled = changes.ranges !== undefined || changes.timeZone !== undefined;
         if (row !== undefined && isRescheduled) {
-          // Read in this transaction, so the check sees the new schedule.
           await this.assertNoOverlapOnAttachingModels(tx, pricingWindowId);
         }
         return row;
@@ -51,7 +50,6 @@ export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricing
     return updated;
   }
 
-  /** Refuses the new schedule when it makes two attachments overlap on any Upstream Model (ADR 0040). */
   private async assertNoOverlapOnAttachingModels(
     tx: Transaction,
     pricingWindowId: string,

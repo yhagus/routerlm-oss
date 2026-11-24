@@ -8,6 +8,10 @@ Status: accepted, but ADR 0030 replaces its env variable with a Setting
 - The check is repeated at connect time: the shared outbound-client helper in `src/libs/` resolves the host and refuses a private, loopback or link-local result. This covers a hostname that resolves privately, or changes later (DNS rebinding). It applies to the inference, quota and OAuth clients.
 - One deploy-time env variable lifts both rules, for self-hosters who run Ollama or vLLM on a LAN. It is an env variable and not a Setting (ADR 0017), because a dashboard toggle would let a hijacked session switch the rule off. The test stack sets it for the fake upstream on localhost.
 
+The connect-time check in `OutboundFetch` resolves the host itself, but the connection resolves the name again, so a rebind in the milliseconds between the check and the connect is not covered.
+
+A stored `quotaBaseUrl` that no longer passes the URL policy is kept as stored (`storedProviderQuirksSchema`): only the quota reader uses it and it reports the error itself, so it must not fail inference.
+
 ## Considered Options
 
 - A write-time check on the host literal only. Rejected: it gives a false sense of safety, since a public name can resolve to a private address.

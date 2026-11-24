@@ -3,13 +3,11 @@ import { computed } from "vue";
 import { PROVIDER_LOGOS } from "~/lib/providerLogos";
 
 const props = defineProps<{
-  /** The Provider's chosen mark; null or an unknown key picks one by the base URL's host. */
   logo: string | null;
   name: string;
   baseUrl: string;
 }>();
 
-/** Logo keys by the host the base URL points at, so a Provider with no logo on a known host gets its mark. */
 const LOGOS_BY_HOST: [RegExp, string][] = [
   [/(^|\.)openai\.com$/, "openai"],
   [/(^|\.)anthropic\.com$/, "anthropic"],

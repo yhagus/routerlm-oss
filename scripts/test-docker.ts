@@ -1,11 +1,6 @@
-// Runs the feature tests against throwaway Postgres and Redis containers from
-// docker-compose.test.yml, then removes them, whether the tests pass or not.
-// Every run gets its own Compose project and free host ports, so runs in
-// several worktrees at once never share or collide on a stack.
 import { spawnSync } from "node:child_process";
 import { createServer } from "node:net";
 
-/** A host port that is free right now, chosen by the OS. */
 function freePort(): Promise<number> {
   return new Promise((resolvePort, reject) => {
     const server = createServer();
@@ -31,11 +26,9 @@ const TEST_ENV = {
   DATABASE_URL: `postgres://routerlm:routerlm@localhost:${dbPort}/routerlm`,
   TEST_DATABASE_URL: `postgres://routerlm:routerlm@localhost:${dbPort}/routerlm_test`,
   REDIS_URL: `redis://localhost:${redisPort}`,
-  // A fixed test-only key; it encrypts nothing real.
   ENCRYPTION_KEY: "dGVzdC1vbmx5LWVuY3J5cHRpb24ta2V5LTMyLWJ5dGU=",
 };
 
-/** Runs a command with inherited output and returns its exit code. */
 function run(command: string, args: string[], env: NodeJS.ProcessEnv = process.env): number {
   const result = spawnSync(command, args, { stdio: "inherit", env });
   if (result.error) {
@@ -50,17 +43,11 @@ function runTests(): number {
     console.error("test:docker: the test services did not become healthy.");
     return upStatus;
   }
-  // Arguments go to vitest: `bun run test:docker tests/health` runs only that folder.
   return run("bun", ["run", "test", ...process.argv.slice(2)], { ...process.env, ...TEST_ENV });
 }
 
-// Ctrl-C reaches the test run too; outliving it lets the teardown below run.
 process.on("SIGINT", () => {});
 
-/**
- * Removes the test stack quietly, printing Compose's output only when it fails,
- * so the test summary stays the last thing a truncated log shows.
- */
 function tearDown(): void {
   const result = spawnSync("docker", [...COMPOSE, "down", "--volumes", "--remove-orphans"], {
     env: COMPOSE_ENV,

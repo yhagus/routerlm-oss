@@ -46,7 +46,6 @@ describe("Transcription on /v1/audio/transcriptions (e2e)", () => {
     await app.close();
   });
 
-  /** A multipart transcription request uploading `file`, with `fields` as form fields. */
   function transcribe(
     fields: Record<string, string> = {},
     file: { bytes: Buffer; filename: string; contentType: string } = {

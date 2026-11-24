@@ -36,18 +36,10 @@ const inferenceCurlExamples = curlExamples.filter((block) => !isControlPlaneExam
 const controlPlaneCurlExamples = curlExamples.filter(isControlPlaneExample);
 const sdkExamples = codeBlocks.filter((block) => block.language === "ts");
 
-/**
- * The one exception to "the docs name no Provider" (ADR 0006): the client
- * examples import these Providers' SDKs, so their names may appear in code.
- * Prose stays Provider-free, and no other Provider name may appear in code.
- */
 const SDK_OWNERS = ["OpenAI", "Anthropic"];
-/** The Model name the errors page uses to show a `model_not_found` envelope. */
 const UNKNOWN_MODEL_NAME = "unknown-model";
 const OPERATOR = { email: "operator@example.com", password: "operator's password" };
 
-/** SDK snippets are written here so they import the SDKs from this repo's node_modules. */
-// One folder per test process, so a run in the same checkout never deletes another run's snippets.
 const SNIPPET_DIRECTORY = new URL(`./.docs-examples/${process.pid}/`, import.meta.url);
 
 function errorsPage(): DocsPage {
@@ -60,7 +52,6 @@ function nameOf(block: CodeBlock): string {
   return `${block.fileName} example ${block.position}`;
 }
 
-/** Streams are replied to with a recorded stream, everything else with a recorded response. */
 function replyFor(upstream: FakeUpstream, block: CodeBlock): void {
   if (/stream/.test(block.code)) {
     upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
@@ -121,7 +112,6 @@ describe("Client documentation (e2e)", () => {
       const text = await response.text();
 
       expect({ status: response.status, text }).toMatchObject({ status: 200 });
-      // A stream that failed midway still answers 200, then ends with an error envelope.
       expect(text).not.toMatch(/event: error|"error":\{/);
     },
   );
@@ -130,7 +120,6 @@ describe("Client documentation (e2e)", () => {
     let integrationSecret: string;
     let apiKeyRecordId: string;
 
-    // Each example gets a fresh API Key, since revoking one breaks the examples after it.
     beforeEach(async () => {
       const cookie = await setUpFirstUser(app, OPERATOR);
       ({ secret: integrationSecret } = await createIntegration(app, cookie));

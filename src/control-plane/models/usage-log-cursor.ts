@@ -1,10 +1,5 @@
 import { ControlPlaneError } from "./control-plane-error.js";
 
-/**
- * Where an Integration's usage pull stands: the last pulled Usage Log's
- * writing transaction and sequence, both 64-bit integers kept as decimal
- * strings. Clients see it only encoded, as an opaque cursor.
- */
 export interface UsageLogPosition {
   transactionId: string;
   sequence: string;

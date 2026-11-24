@@ -1,0 +1,8 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["./scripts/lint/no-comments.mjs"],
+  "ignorePatterns": ["web/app/components/ui/**", "web/app/components/ai-elements/**"],
+  "rules": {
+    "routerlm/no-comments": "error"
+  }
+}

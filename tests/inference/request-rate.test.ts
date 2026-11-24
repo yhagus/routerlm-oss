@@ -15,8 +15,6 @@ import { writtenUsageLogs } from "@tests/support/usage-logs.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 import { forgetThrottleCounts } from "@tests/support/redis-state.js";
 
-// Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
-// files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -141,7 +139,6 @@ describe("Request Rate of an API Key (e2e)", () => {
     await chat(key).expect(200);
     await chat(key).expect(429);
 
-    // Ends the minute's window early, as if it had run out.
     await forgetThrottleCounts(app);
 
     await chat(key).expect(200);

@@ -1,22 +1,11 @@
 import { parseDateTime, toCalendarDateTime, toTimeZone, toZoned } from "@internationalized/date";
 import type { PricingWindowRange } from "~/lib/pricingWindows";
 
-/*
- * The web's mirror of the backend's Validity Period rules
- * (src/pricing-windows/models/validity-period.ts and window-prices-overlap.ts),
- * kept deliberately looser: it only decides when to offer a split, so windows
- * in different time zones always "may collide". The API's check is
- * authoritative and refuses any real overlap.
- */
-
-/** A Validity Period: wall-clock "YYYY-MM-DDTHH:MM" bounds in the window's time zone, null when open. */
 export interface ValidityPeriod {
   validFrom: string | null;
-  /** Exclusive. */
   validUntil: string | null;
 }
 
-/** When one attachment's Window Prices can apply: its window's hours and its Validity Period. */
 export interface WindowPricesTiming extends ValidityPeriod {
   timeZone: string;
   ranges: readonly PricingWindowRange[];
@@ -25,7 +14,6 @@ export interface WindowPricesTiming extends ValidityPeriod {
 const MINUTES_PER_HOUR = 60;
 const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
 const MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY;
-/** "YYYY-MM-DDTHH:MM" is the first 16 characters of a CalendarDateTime's ISO text. */
 const WALL_CLOCK_LENGTH = 16;
 
 export function hasOpenBound(period: ValidityPeriod): boolean {
@@ -44,21 +32,12 @@ export function formatValidityPeriod(period: ValidityPeriod): string {
   return parts.length > 0 ? parts.join(" ") : "always";
 }
 
-/**
- * Whether two attachments look able to apply at the same moment, as the split
- * offer asks it. Windows in different time zones are assumed to share hours:
- * the API's DST-aware check has the final say and names any conflict it finds.
- */
 export function mayApplyTogether(first: WindowPricesTiming, second: WindowPricesTiming): boolean {
   if (!doValidityPeriodsIntersect(first, second)) return false;
   if (first.timeZone !== second.timeZone) return true;
   return doWeeklyHoursMeet(first.ranges, second.ranges);
 }
 
-/**
- * The parts of `open`'s Validity Period left once `cut`'s period is taken out
- * of it: up to `cut`'s start, then from `cut`'s end, read in `open`'s time zone.
- */
 export function periodsAround(open: WindowPricesTiming, cut: WindowPricesTiming): ValidityPeriod[] {
   const pieces: ValidityPeriod[] = [];
   if (cut.validFrom !== null) {
@@ -99,7 +78,6 @@ function instantOf(wallClock: string, timeZone: string): number {
   return toZoned(parseDateTime(wallClock), timeZone).toDate().getTime();
 }
 
-/** The same instant as `wallClock` in `fromZone`, written as a wall clock in `toZone`. */
 function wallClockIn(wallClock: string, fromZone: string, toZone: string): string {
   if (fromZone === toZone) return wallClock;
   const zoned = toTimeZone(toZoned(parseDateTime(wallClock), fromZone), toZone);
@@ -118,11 +96,6 @@ function doWeeklyHoursMeet(
     );
 }
 
-/**
- * A range as [start, end) minute spans from Monday 00:00. A range that crosses
- * midnight belongs to the weekday it starts on; one that crosses Sunday's
- * midnight wraps to Monday.
- */
 function weekSpansOf(range: PricingWindowRange): [number, number][] {
   const start = minutesOf(range.start);
   const rawEnd = minutesOf(range.end);
@@ -138,7 +111,6 @@ function weekSpansOf(range: PricingWindowRange): [number, number][] {
   });
 }
 
-/** "HH:MM" (or "24:00") as minutes since midnight. */
 function minutesOf(time: string): number {
   const [hours = 0, minutes = 0] = time.split(":").map(Number);
   return hours * MINUTES_PER_HOUR + minutes;

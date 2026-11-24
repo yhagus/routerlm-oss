@@ -13,9 +13,6 @@ import {
   type UpstreamStreamParser,
 } from "@/inference/protocols/upstream-protocol-converter.js";
 
-// Responses are read leniently: only the fields the internal format needs.
-// Block types it can't express (redacted_thinking, server tool blocks) are skipped.
-
 const usageSchema = z.object({
   input_tokens: z.number().nullish(),
   output_tokens: z.number().nullish(),
@@ -33,7 +30,6 @@ const STOP_REASONS: Record<string, StopReason> = {
   stop_sequence: "stop-sequence",
   tool_use: "tool-calls",
   refusal: "content-filter",
-  // Only server tools pause a turn; to a client the turn is over.
   pause_turn: "end",
 };
 
@@ -41,10 +37,8 @@ function stopReasonOf(stopReason: string | null | undefined): StopReason {
   return (stopReason && STOP_REASONS[stopReason]) || "end";
 }
 
-/** `input_tokens` already excludes the cached input, as TokenUsage does. */
 function tokenUsageOf(usage: MessagesUsage): TokenUsage {
   const inputTokens = usage.input_tokens ?? null;
-  // Providers that copy the Protocol often leave the cache counts out when nothing was cached.
   const zeroWhenInputKnown = inputTokens === null ? null : 0;
   return {
     inputTokens,
@@ -151,10 +145,6 @@ const deltaSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("input_json_delta"), partial_json: z.string() }),
 ]);
 
-/**
- * What a stream has told so far. Content blocks are numbered across all
- * types; tool calls are numbered among themselves, as the internal format wants.
- */
 class StreamState {
   usage: MessagesUsage = {};
   private readonly toolCallIndexByBlock = new Map<number, number>();
@@ -169,7 +159,6 @@ class StreamState {
     return this.toolCallIndexByBlock.get(blockIndex);
   }
 
-  /** message_delta counts are cumulative and may restate the input counts. */
   updateUsage(update: MessagesUsage): void {
     this.usage = {
       input_tokens: update.input_tokens ?? this.usage.input_tokens,
@@ -181,7 +170,6 @@ class StreamState {
   }
 }
 
-/** The Protocol ends every stream with message_stop: a body that ends before it was cut off. */
 class MessagesStreamParser implements UpstreamStreamParser {
   isDone = false;
   private readonly state = new StreamState();
@@ -222,17 +210,10 @@ function parseJson(data: string): unknown {
   }
 }
 
-/**
- * The event of a text or thinking delta (most of a stream), read without
- * running two zod schemas on every token. Undefined for any other event, which
- * takes the schema path: this accepts only what streamEventSchema and
- * deltaSchema accept, and gives the event eventsOfDelta would.
- */
 function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
   if (!isJsonObject(json) || json.type !== "content_block_delta") {
     return undefined;
   }
-  // z.number() rejects Infinity, which JSON.parse gives for an overflowing number.
   if (typeof json.index !== "number" || !Number.isFinite(json.index)) {
     return undefined;
   }
@@ -249,7 +230,6 @@ function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
   return undefined;
 }
 
-/** Null for an event type this reader doesn't know: the Protocol adds new ones over time. */
 function parseStreamEvent(json: unknown): StreamEvent | null {
   const typed = typedEventSchema.safeParse(json);
   if (typed.success && !KNOWN_STREAM_EVENT_TYPES.has(typed.data.type)) {

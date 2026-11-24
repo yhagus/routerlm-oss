@@ -18,7 +18,6 @@ import { IsSetupRequiredQuery } from "@/users/queries/impl/is-setup-required.que
 import { type NewUser, newUserSchema } from "@/users/schemas/new-user.schema.js";
 import { DashboardController } from "./decorators/dashboard-controller.decorator.js";
 
-// Far above any real value; they only stop an oversized body before it is hashed.
 const MAX_EMAIL_LENGTH = 254;
 const MAX_PASSWORD_LENGTH = 1_024;
 const loginSchema = z.object({
@@ -27,7 +26,6 @@ const loginSchema = z.object({
 });
 type Login = z.infer<typeof loginSchema>;
 
-// One message for an unknown email and a wrong password, so neither is revealed.
 const INVALID_CREDENTIALS = "Invalid email or password";
 
 @DashboardController("auth")
@@ -44,7 +42,6 @@ export class AuthController {
     return { isSetupRequired: await this.queryBus.execute(new IsSetupRequiredQuery()) };
   }
 
-  /** Creates the first User and signs them in. Refused (409) once any User exists. */
   @Public()
   @Post("setup")
   async completeSetup(@Body({ schema: newUserSchema }) newUser: NewUser): Promise<User> {

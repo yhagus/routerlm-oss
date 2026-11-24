@@ -18,7 +18,6 @@ import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import type { StoredOauthSignIn } from "@/upstream/schemas/oauth-sign-in.schema.js";
 import { PollOauthSignInCommand } from "@/upstream/commands/impl/poll-oauth-sign-in.command.js";
 
-/** RFC 8628: `slow_down` lengthens the wait between polls by this much, for the rest of the sign-in. */
 const SLOW_DOWN_SECONDS = 5;
 
 @CommandHandler(PollOauthSignInCommand)
@@ -52,7 +51,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     }
   }
 
-  /** What the sign-in has come to, after asking the auth host once. */
   private async poll(
     signIn: StoredOauthSignIn,
   ): Promise<StoredOauthSignIn["outcome"] & { slowDown?: boolean }> {
@@ -68,13 +66,11 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       .from(providers)
       .where(eq(providers.id, signIn.providerId));
     if (!provider?.oauthLogin) {
-      // The Provider was deleted, or stopped offering OAuth Login, mid sign-in.
       return { status: "denied" };
     }
 
     const endpoint = oauthLoginEndpointOf(provider.oauthLogin, signIn.region, signIn.deviceId);
     if (endpoint === null) {
-      // An operator changed the Provider's sign-in to one with regions mid sign-in.
       return { status: "denied" };
     }
     const poll = await this.oauthLoginClient.pollToken(endpoint, {
@@ -93,18 +89,11 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       case "expired":
         return { status: "expired" };
       case "unanswered":
-        // The code's own expiry ends a sign-in whose auth host never answers.
         this.logger.warn(`A sign-in poll got no usable answer (${poll.reason}); polling again`);
         return { status: "pending" };
     }
   }
 
-  /**
-   * The Provider Account an earlier run of this poll created without getting
-   * to record that the sign-in completed (Redis failed, so the queue runs
-   * the poll again). The grant spent the device code, so the auth host would
-   * no longer say; the device id, generated for this sign-in, does.
-   */
   private async providerAccountCreatedBy(signIn: StoredOauthSignIn): Promise<string | undefined> {
     if (signIn.providerAccountId !== undefined) {
       return undefined;
@@ -121,13 +110,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     return created?.id;
   }
 
-  /**
-   * Stores the granted OAuth Login on the Provider Account signed in again,
-   * or on a new one. The grant spent the device code, so no later poll can
-   * make up for a login that could not be stored: the sign-in ends here,
-   * denied, and the User starts another. Either write is one statement, so
-   * a failure leaves no account, and no login, half made.
-   */
   private async keepLogin(
     signIn: StoredOauthSignIn,
     chatBaseUrl: string | undefined,
@@ -163,13 +145,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     return { status: "completed", providerAccountId: signIn.providerAccountId };
   }
 
-  /**
-   * Signing in again: the granted OAuth Login replaces the Provider
-   * Account's, which is enabled again. Its name, priority and device id
-   * stay, and so do its Usage Logs and Quota Meters. Under the refresh lock,
-   * so a refresh of the old login in progress can't overwrite the new one.
-   * False when the account no longer exists.
-   */
   private async replaceLogin(
     providerAccountId: string,
     signIn: StoredOauthSignIn,
@@ -195,7 +170,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     return true;
   }
 
-  /** The Provider Account that holds the granted OAuth Login. Returns its id. */
   private async createProviderAccount(
     signIn: StoredOauthSignIn,
     chatBaseUrl: string | undefined,
@@ -218,7 +192,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       .onConflictDoNothing()
       .returning({ id: providerAccounts.id });
     if (created === undefined) {
-      // A concurrent poll of this sign-in created the account first.
       const existing = await this.providerAccountCreatedBy(signIn);
       if (existing === undefined) {
         throw new Error("The Provider Account of this sign-in vanished after a conflict");
@@ -229,10 +202,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     return created.id;
   }
 
-  /**
-   * Who signed in, as the Provider tells: OpenAI Codex in the id_token it
-   * granted, Kimi Code in its profile. Null when it doesn't.
-   */
   private async signedInName(
     chatBaseUrl: string | undefined,
     tokens: OauthTokens,
@@ -249,7 +218,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     return accountName(profile?.nickname?.trim() || profile?.email, profile?.levelName);
   }
 
-  /** A constellation name no other account of the Provider uses, when the Provider tells no name. */
   private async generateName(providerId: string): Promise<string> {
     const siblings = await this.db
       .select({ name: providerAccounts.name })
@@ -259,10 +227,6 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
   }
 }
 
-/**
- * Why a write failed, without the statement: a failed query's own message
- * quotes its parameters, which here include the tokens' ciphertext.
- */
 function failureOf(error: unknown): string {
   if (!(error instanceof Error)) {
     return String(error);
@@ -270,7 +234,6 @@ function failureOf(error: unknown): string {
   return error.cause instanceof Error ? error.cause.message : error.message;
 }
 
-/** A name that tells accounts apart: who signed in and on which plan, such as `Ada (Allegretto)`. */
 function accountName(
   who: string | null | undefined,
   plan: string | null | undefined,

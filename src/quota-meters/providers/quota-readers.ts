@@ -6,7 +6,6 @@ import { KimiCodeQuotaReader } from "./kimi-code-quota-reader.js";
 import { MiniMaxMPlanQuotaReader } from "./minimax-m-plan-quota-reader.js";
 import { OpenAiCodexQuotaReader } from "./openai-codex-quota-reader.js";
 
-/** The quota reader a Provider names in `providers.quota_reader` (ADR 0010). */
 @Injectable()
 export class QuotaReaders {
   private readonly readers: Record<QuotaReaderName, QuotaReader>;
@@ -27,7 +26,6 @@ export class QuotaReaders {
     return this.readers[name];
   }
 
-  /** How the Provider naming `name` lists and spends its Usage Resets; undefined when it has none. */
   usageResetsOf(name: QuotaReaderName | null): UsageResetPort | undefined {
     return name === null ? undefined : this.readerFor(name).usageResets;
   }

@@ -1,10 +1,5 @@
-/** The languages the client documentation is written in. English is the default. */
 export type DocsLocale = "en" | "id";
 
-/**
- * The docs' interface text in English. A `{name}` placeholder is filled from
- * the values passed to `t()` (see useDocsLocale).
- */
 const ENGLISH_MESSAGES = {
   docs: "Docs",
   clientApi: "Client API",
@@ -54,7 +49,6 @@ const ENGLISH_MESSAGES = {
 
 export type DocsMessageKey = keyof typeof ENGLISH_MESSAGES;
 
-/** Every language translates every key, so a missing translation fails the typecheck. */
 export const DOCS_MESSAGES: Record<DocsLocale, Record<DocsMessageKey, string>> = {
   en: ENGLISH_MESSAGES,
   id: {

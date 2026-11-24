@@ -11,7 +11,6 @@ import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
-// 24 bytes, so every bit of the ciphertext's last base64 character is significant.
 const PROVIDER_ACCOUNT_KEY = "sk-live-0123456789abcdef";
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
 
@@ -66,7 +65,6 @@ describe("Provider Account keys at rest (e2e)", () => {
     return stored.encryptedKey ?? "";
   }
 
-  /** A Model "smart" with one Route to the Provider, and an API Key for it, all made from the dashboard. */
   async function serveModelAndIssueApiKey(): Promise<string> {
     const server = app.getHttpServer();
     const upstreamModel = await request(server)
@@ -109,7 +107,6 @@ describe("Provider Account keys at rest (e2e)", () => {
       .send(TEXT_REQUEST);
   }
 
-  /** Replaces the Provider Account's stored key, as a corrupted or foreign row would. */
   async function overwriteStoredKey(
     providerAccountId: string,
     encryptedKey: string,

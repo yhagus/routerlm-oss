@@ -3,17 +3,12 @@ import { computed } from "vue";
 import { pickHeading } from "~/composables/useActiveHeading";
 import { formatPageNumber } from "~/composables/useDocsContents";
 
-/**
- * The numbered contents: every page of the current language, and under the
- * current page its numbered sections, the one being read marked.
- */
 const emit = defineEmits<{ sectionPicked: [] }>();
 
 const { t } = useDocsLocale();
 const { pages, isLoading, currentPage } = useDocsContents();
 const { page } = useDocsPage();
 
-/** The current page's h2 sections, each with the ids of its h3s. */
 const sections = computed(() =>
   (page.value?.body.toc?.links ?? []).map((link) => ({
     id: link.id,
@@ -21,7 +16,6 @@ const sections = computed(() =>
     childIds: (link.children ?? []).map((child) => child.id),
   })),
 );
-// The scroll-spy follows h3s too, so a link to one is held and scrolled to.
 const headingIds = computed(() =>
   sections.value.flatMap((section) => [section.id, ...section.childIds]),
 );
@@ -58,7 +52,6 @@ function isActiveSection(section: { id: string; childIds: string[] }): boolean {
           class="ds-contents__sections"
         >
           <li v-for="(section, index) in sections" :key="section.id">
-            <!-- Handled here rather than by the router, so picking the current hash again still scrolls. -->
             <a
               :href="`#${section.id}`"
               class="ds-contents__section"

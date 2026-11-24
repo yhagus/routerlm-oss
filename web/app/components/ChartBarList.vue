@@ -8,7 +8,6 @@ const props = withDefaults(
     series: ChartSeries[];
     label: string;
     formatValue?: (value: number) => string;
-    /** Compact value printed at the bar's end; defaults to `formatValue`. */
     formatTotal?: (value: number) => string;
   }>(),
   { formatValue: fullNumber },

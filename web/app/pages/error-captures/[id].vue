@@ -17,10 +17,6 @@ useMissingResource(() => isNotFound(loadError.value), "Error Capture");
 
 useHead({ title: "Error Capture" });
 
-/**
- * Back goes to the list the reader came from, with its filter, search and
- * page, and to the plain list when they arrived by a direct link.
- */
 const backTo = computed(() => {
   const previous: unknown = window.history.state?.back;
   return typeof previous === "string" && /^\/error-captures(\?|$)/.test(previous)
@@ -36,7 +32,6 @@ const description = computed(() =>
     ? `Captured ${timeFormat.format(new Date(capture.value.createdAt))}. ${NOTICE}`
     : NOTICE,
 );
-/** What the Provider said went wrong, when its body says so. */
 const cause = computed(() => upstreamErrorMessage(capture.value?.responseBody ?? null));
 const attemptHop = computed(() =>
   capture.value?.failedHop.kind === "gateway-to-provider-account" ? capture.value.failedHop : null,

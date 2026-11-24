@@ -6,10 +6,6 @@ import {
   UNREPORTED_USAGE,
 } from "@/inference/models/internal-format.js";
 
-/**
- * One response from a whole stream, for a non-streaming client of a Provider
- * that only streams. Parts keep the order the stream started them in.
- */
 export async function gatherStream(
   events: AsyncIterable<InferenceStreamEvent>,
 ): Promise<InferenceResponse> {
@@ -29,7 +25,6 @@ export async function gatherStream(
         }
         break;
       case "reasoning-delta":
-        // A signature closes its reasoning: reasoning after it is a new part.
         if (last?.type === "reasoning" && last.signature === undefined) {
           last.text += event.text;
         } else {

@@ -42,7 +42,6 @@ import {
 } from "./schemas/customer-api-key.schema.js";
 import { usageLogPageQuerySchema } from "./schemas/usage-log.schema.js";
 
-/** A request checked with the schema the HTTP adapter checks its body with. */
 function parsedRequest<Schema extends z.ZodType>(
   schema: Schema,
   request: unknown,
@@ -54,13 +53,6 @@ function parsedRequest<Schema extends z.ZodType>(
   return parsed.data;
 }
 
-/**
- * The control plane's gRPC adapter (control_plane.proto), served by the
- * worker when CONTROL_PLANE_PORT is set. It calls the commands and queries
- * the HTTP adapter calls, with the same Integration Secret rules: the secret
- * comes from the `authorization` metadata. An unset id is NOT_FOUND, as an
- * unknown one is.
- */
 @Controller()
 @Authenticate({ providers: [IntegrationSecretAuth] })
 @UseFilters(ControlPlaneGrpcExceptionFilter)

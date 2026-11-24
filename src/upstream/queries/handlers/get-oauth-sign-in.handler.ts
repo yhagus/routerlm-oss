@@ -27,7 +27,6 @@ export class GetOauthSignInHandler implements IQueryHandler<GetOauthSignInQuery>
     const { outcome } = signIn;
     switch (outcome.status) {
       case "pending":
-        // The poll that would record the expiry may not have run yet.
         if (Date.now() >= signIn.expiresAt) {
           return { id: signInId, status: "expired" };
         }
@@ -57,7 +56,6 @@ export class GetOauthSignInHandler implements IQueryHandler<GetOauthSignInQuery>
       .from(providerAccounts)
       .where(eq(providerAccounts.id, providerAccountId));
     if (!account) {
-      // Deleted since the sign-in completed.
       throw new NotFoundException("Provider Account not found");
     }
     return account;

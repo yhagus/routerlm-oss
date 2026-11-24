@@ -2,7 +2,6 @@
 import { X } from "@lucide/vue";
 import type { ActiveFilter } from "~/lib/activeFilters";
 
-/** The filters in effect, one removable token each, shown under a filter bar while any is set. */
 defineProps<{ filters: ActiveFilter[] }>();
 const emit = defineEmits<{ clearAll: [] }>();
 </script>

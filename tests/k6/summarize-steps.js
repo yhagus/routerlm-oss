@@ -1,5 +1,3 @@
-// Prints one table for the steps find-limit.sh ran: node summarize-steps.js <topology> <vus>...
-// Reads results/step-<topology>-<vus>.json (k6 summary) and its .stats.log.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,7 +5,6 @@ import { fileURLToPath } from "node:url";
 const results = join(dirname(fileURLToPath(import.meta.url)), "results");
 const [topology, ...steps] = process.argv.slice(2);
 
-/** The highest CPU % and memory (MiB) each gateway container reached. */
 function peaks(statsPath) {
   const peak = { cpu: 0, mem: 0 };
   if (!existsSync(statsPath)) return peak;

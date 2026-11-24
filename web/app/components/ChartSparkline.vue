@@ -5,7 +5,6 @@ import { useElementWidth } from "~/lib/chart";
 const props = withDefaults(
   defineProps<{
     values: number[];
-    /** Labels aligned with `values`, shown on hover. */
     labels?: string[];
     label: string;
     formatValue?: (value: number) => string;

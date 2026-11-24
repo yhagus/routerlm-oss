@@ -20,7 +20,6 @@ describeModelScenarios(HTTP_TRANSPORT);
 describeUsageScenarios(HTTP_TRANSPORT);
 describeLastUsedScenarios(HTTP_TRANSPORT);
 
-// What only the HTTP adapter has: statuses, the error body and the cookie.
 describe("Control plane HTTP adapter (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;

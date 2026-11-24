@@ -4,23 +4,14 @@ import type { PlaygroundSummary } from "~/lib/playground";
 import type { RouteSummary } from "~/lib/routing";
 import { formatCost, formatCount } from "~/lib/usage";
 
-/**
- * What the gateway reported after an answer: which Route served it, in the
- * order the Model tried them, then tokens and Cost.
- */
 const props = defineProps<{
   summary: PlaygroundSummary;
-  /** The Model's Routes when the request was sent, or null if they weren't loaded. */
   routes: RouteSummary[] | null;
-  /** Sent straight to an Upstream Model, with no Model or Route. */
   direct: boolean;
-  /** Provider names by slug, for answers no Route snapshot names. */
   providerNames: Map<string, string>;
-  /** Provider logos by slug: the summary names its Provider without one. */
   providerLogos: Map<string, string | null>;
 }>();
 
-/** Who answered: the served Route's Upstream Model, or the direct target. */
 const answered = computed(() => props.summary.route ?? props.summary.upstreamModel);
 const providerName = computed(() => {
   if (!answered.value) return "";
@@ -28,7 +19,6 @@ const providerName = computed(() => {
   return served.value?.providerName ?? props.providerNames.get(slug) ?? slug;
 });
 
-/** The served Route's place in the fallback order: 1 means no fallback happened. */
 const served = computed(() => {
   const route = props.summary.route;
   if (!route || !props.routes) return null;
@@ -41,7 +31,6 @@ const served = computed(() => {
   };
 });
 
-/** A media Kind's units, or a chat answer's tokens; then Cost. */
 const facts = computed(() => {
   const { usage, units } = props.summary;
   if (units) {

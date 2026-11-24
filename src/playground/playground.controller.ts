@@ -50,7 +50,6 @@ import type { PlaygroundVideoJob } from "./models/playground-video-job.js";
 import { ProbeUpstreamModelCommand } from "./commands/impl/probe-upstream-model.command.js";
 import type { ProbeResults } from "./models/probe-result.js";
 
-/** The Playground's endpoints: a signed-in User's session, never an API Key. */
 @DashboardController("playground")
 @UseFilters(PlaygroundExceptionFilter)
 export class PlaygroundController {
@@ -75,7 +74,6 @@ export class PlaygroundController {
     return eventStreamResponse(chunks);
   }
 
-  /** A direct Upstream Model test: no Model, so the body's `model` is not resolved. */
   @Post("upstream-models/:upstreamModelId/chat/completions")
   @HttpCode(200)
   async sendChatCompletionToUpstreamModel(
@@ -94,7 +92,6 @@ export class PlaygroundController {
     return eventStreamResponse(chunks);
   }
 
-  /** An image request as a client sends it to `/v1/images/generations`; the answer adds a summary. */
   @Post("images/generations")
   @HttpCode(200)
   generateImage(
@@ -114,7 +111,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A direct Upstream Model test of image generation: the body's `model` is not resolved. */
   @Post("upstream-models/:upstreamModelId/images/generations")
   @HttpCode(200)
   generateImageWithUpstreamModel(
@@ -135,7 +131,6 @@ export class PlaygroundController {
     );
   }
 
-  /** An image edit as a client sends it to `/v1/images/edits`: JSON, or a multipart upload. */
   @Post("images/edits")
   @HttpCode(200)
   @UseInterceptors(FileFieldsInterceptor([...IMAGE_EDIT_FILE_FIELDS], MEDIA_UPLOAD_OPTIONS))
@@ -157,7 +152,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A direct Upstream Model test of image edits: the body's `model` is not resolved. */
   @Post("upstream-models/:upstreamModelId/images/edits")
   @HttpCode(200)
   @UseInterceptors(FileFieldsInterceptor([...IMAGE_EDIT_FILE_FIELDS], MEDIA_UPLOAD_OPTIONS))
@@ -180,7 +174,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A speech request as a client sends it to `/v1/audio/speech`; the answer adds a summary. */
   @Post("audio/speech")
   @HttpCode(200)
   synthesizeSpeech(
@@ -196,7 +189,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A direct Upstream Model test of speech: the body's `model` is not resolved. */
   @Post("upstream-models/:upstreamModelId/audio/speech")
   @HttpCode(200)
   synthesizeSpeechWithUpstreamModel(
@@ -214,7 +206,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A Video Job as a client submits it to `POST /v1/videos`; the answer adds a summary. */
   @Post("videos")
   @HttpCode(200)
   submitVideoJob(
@@ -230,7 +221,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A direct Upstream Model test of a Video Job: the body's `model` is not resolved. */
   @Post("upstream-models/:upstreamModelId/videos")
   @HttpCode(200)
   submitVideoJobToUpstreamModel(
@@ -248,7 +238,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A Video Job the User submitted here, from a Model or an Upstream Model, with its current status. */
   @Get("videos/:videoId")
   retrieveVideoJob(
     @Param("videoId") videoId: string,
@@ -265,7 +254,6 @@ export class PlaygroundController {
     );
   }
 
-  /** The MP4 of a completed Video Job the User submitted here, streamed. */
   @Get("videos/:videoId/content")
   downloadVideoContent(
     @Param("videoId") videoId: string,
@@ -282,7 +270,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A transcription upload as a client sends it to `/v1/audio/transcriptions`; the answer adds a summary. */
   @Post("audio/transcriptions")
   @HttpCode(200)
   @UseInterceptors(FileInterceptor(TRANSCRIPTION_FILE_FIELD, MEDIA_UPLOAD_OPTIONS))
@@ -303,7 +290,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A direct Upstream Model test of transcription: the body's `model` is not resolved. */
   @Post("upstream-models/:upstreamModelId/audio/transcriptions")
   @HttpCode(200)
   @UseInterceptors(FileInterceptor(TRANSCRIPTION_FILE_FIELD, MEDIA_UPLOAD_OPTIONS))
@@ -325,7 +311,6 @@ export class PlaygroundController {
     );
   }
 
-  /** A Probe: the Upstream Model checked once with each enabled Provider Account; no body. */
   @Post("upstream-models/:upstreamModelId/probe")
   @HttpCode(200)
   probeUpstreamModel(

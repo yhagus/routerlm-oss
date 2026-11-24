@@ -8,10 +8,6 @@ import { whereFilter } from "@/usage/models/usage-filters.js";
 import { usageLogSummaryColumns } from "@/usage/models/usage-log-columns.js";
 import { ListUsageLogsQuery } from "@/usage/queries/impl/list-usage-logs.query.js";
 
-/**
- * Filtering and paging run in SQL, so a large table is never loaded whole.
- * Reads only usage_logs: its names are copied at request time (ADR 0024).
- */
 @QueryHandler(ListUsageLogsQuery)
 export class ListUsageLogsHandler implements IQueryHandler<ListUsageLogsQuery> {
   constructor(@InjectDrizzle() private readonly db: Database) {}

@@ -19,16 +19,12 @@ describe("Provider Account credential kinds on an upgraded install (e2e)", () =>
   let db: Database;
   let providerId: string;
 
-  // An install from before Provider Accounts could hold an OAuth Login, with
-  // one account, upgraded to today's schema.
   beforeAll(async () => {
     migrationsBeforeCredentialKinds = await copyMigrationsBefore(CREDENTIAL_KINDS_MIGRATION_SUFFIX);
     databaseUrl = await createEmptyDatabase(serverUrl, "credential_kinds");
     pool = new Pool({ connectionString: databaseUrl });
     db = drizzle({ client: pool, relations });
     await migrate(db, { migrationsFolder: migrationsBeforeCredentialKinds });
-    // Plain SQL: Drizzle names every column of today's schema in an insert,
-    // and this database doesn't have them all yet.
     const { rows } = await pool.query<{ id: string }>(
       `insert into providers (slug, name, protocol, base_url, auth_style)
        values ('acme', 'Acme AI', 'openai-chat', 'https://api.acme.example/v1', 'bearer')

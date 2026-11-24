@@ -3,19 +3,12 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 export interface ChartSeries {
   key: string;
   name: string;
-  /** A CSS color, usually a `var(--series-*)` token so light/dark swap in CSS. */
   color: string;
 }
 
 export interface ChartPoint {
-  /** Short label for the x-axis. */
   tick: string;
-  /** Full label for the tooltip and the screen-reader table. */
   title: string;
-  /**
-   * One value per series, in series order. Null means no data (a rate over
-   * zero requests): an unstacked line breaks there, a stacked band counts it as 0.
-   */
   values: (number | null)[];
 }
 
@@ -29,9 +22,7 @@ export interface Segment {
 export interface BarRow {
   key: string;
   label: string;
-  /** One value per series, in series order. */
   values: number[];
-  /** Optional note after the value, e.g. a status. */
   note?: string;
 }
 
@@ -45,7 +36,6 @@ export const compactNumber = (value: number) => compactFormatter.format(value);
 export const fullNumber = (value: number) => fullFormatter.format(Math.round(value));
 export const percent = (value: number, digits = 1) => `${(value * 100).toFixed(digits)}%`;
 
-/** The step sizes, per power of ten, that read as round numbers on an axis. */
 const NICE_FRACTIONS = [1, 2, 2.5, 5];
 
 function niceStep(rough: number) {
@@ -56,7 +46,6 @@ function niceStep(rough: number) {
   return nice * magnitude;
 }
 
-/** Clean y-axis ticks from 0 to a rounded maximum that covers `max`. */
 export function niceTicks(max: number, count = 4) {
   const step = niceStep(max / count);
   const top = Math.max(step, Math.ceil(max / step) * step);
@@ -65,11 +54,6 @@ export function niceTicks(max: number, count = 4) {
   return { ticks, max: top };
 }
 
-/**
- * Evenly spaced indices for x-axis labels, always including the last point.
- * The last point sits at least one step after the tick before it, so their
- * labels don't overlap.
- */
 export function tickIndices(length: number, target = 6) {
   if (length <= target) return Array.from({ length }, (_, index) => index);
   const step = Math.ceil((length - 1) / (target - 1));
@@ -79,7 +63,6 @@ export function tickIndices(length: number, target = 6) {
   return indices;
 }
 
-/** Tracks an element's content width so SVG charts draw at real pixel size. */
 export function useElementWidth(target: Ref<HTMLElement | null>, fallback = 600) {
   const width = ref(fallback);
   let observer: ResizeObserver | undefined;

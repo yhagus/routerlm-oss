@@ -38,9 +38,7 @@ const {
 const { data: modelChoices, status: modelChoicesStatus } =
   useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
 
-/** Only the first load shows placeholders; a refresh keeps the current rows until it lands. */
 const isLoadingApiKeys = computed(() => apiKeysStatus.value === "pending" && !apiKeys.value);
-// Saving before the choices arrive would silently allow every Model.
 const isLoadingModelChoices = computed(
   () => modelChoicesStatus.value === "pending" && !modelChoices.value,
 );
@@ -53,13 +51,10 @@ interface ApiKeyRow extends ApiKeySummary {
   status: ApiKeyStatus;
 }
 
-// Status is worked out once per load: a key that expires while the page is open shows it on the next refresh.
 const rows = computed<ApiKeyRow[]>(() =>
   (apiKeys.value ?? []).map((apiKey) => ({ ...apiKey, status: apiKeyStatus(apiKey, Date.now()) })),
 );
 
-// Held in the URL (?status=…&integration=…&customer=…) so a refresh or a link
-// keeps them. The DataTable holds the search and page the same way.
 const statusFilter = useQueryList("status", {
   isValid: oneOf(API_KEY_STATUSES),
   order: API_KEY_STATUSES,
@@ -87,7 +82,6 @@ function matchesFilters(row: ApiKeyRow): boolean {
   return customerFilter.value === "" || row.customerId === customerFilter.value;
 }
 
-/** Rows the filters keep; the DataTable applies the search. */
 const filteredRows = computed(() => rows.value.filter(matchesFilters));
 
 function clearFilters(): void {
@@ -116,8 +110,6 @@ function allowedModelsLabel(apiKey: ApiKeySummary): string {
   return apiKey.allowedModels.map((model) => model.name ?? "Deleted Model").join(", ");
 }
 
-// Rotation history
-
 const historyOf = ref<ApiKeySummary | null>(null);
 const isHistoryOpen = computed({
   get: () => historyOf.value !== null,
@@ -125,8 +117,6 @@ const isHistoryOpen = computed({
     if (!isOpen) historyOf.value = null;
   },
 });
-
-// Create and edit
 
 const editing = ref<ApiKeySummary | undefined>(undefined);
 const isFormOpen = ref(false);
@@ -153,8 +143,6 @@ async function handleUpdated(apiKey: ApiKeySummary): Promise<void> {
   await refresh();
 }
 
-// The key shown right after creating or rotating it
-
 const revealed = ref<{ apiKey: CreatedApiKey; verb: "created" | "rotated" } | null>(null);
 const isRevealOpen = computed({
   get: () => revealed.value !== null,
@@ -176,8 +164,6 @@ function selectAll(event: FocusEvent): void {
   if (event.target instanceof HTMLInputElement) event.target.select();
 }
 
-// Copy an existing key: fetched only when asked for (ADR 0029)
-
 async function copyApiKey(apiKey: ApiKeySummary): Promise<void> {
   try {
     const { key } = await $dashboardApi<{ key: string }>(`/api-keys/${apiKey.id}/key`);
@@ -186,8 +172,6 @@ async function copyApiKey(apiKey: ApiKeySummary): Promise<void> {
     showToast(apiErrorMessage(error, `Couldn't copy ${apiKey.name}.`));
   }
 }
-
-// Rotate and revoke share one confirmation dialog
 
 type Confirmation = { kind: "rotate" | "revoke"; apiKey: ApiKeySummary };
 const confirming = ref<Confirmation | null>(null);
@@ -224,8 +208,6 @@ async function confirmAction(): Promise<void> {
     isConfirming.value = false;
   }
 }
-
-// Row menu: a revoked key has no actions left, and an Integration's key only revoke.
 
 type ApiKeyActionId = "copy" | "edit" | "rotate" | "revoke";
 

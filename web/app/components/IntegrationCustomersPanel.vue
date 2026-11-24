@@ -5,11 +5,6 @@ import { dateTimeFormat } from "~/lib/dateFormats";
 import type { IntegrationCustomer, IntegrationCustomerPage } from "~/lib/integrations";
 import { formatCost, formatCount } from "~/lib/usage";
 
-/**
- * The Integration's Customers, rolled up over all time and paged by the
- * backend, most recently active first. The search matches the start of a
- * Customer id, case-sensitively.
- */
 const props = defineProps<{ integrationId: string }>();
 
 const search = useQuerySearch();
@@ -43,7 +38,6 @@ const columns: DataTableColumn<IntegrationCustomer>[] = [
   actionsColumn(),
 ];
 
-/** A Customer's rows on another page, filtered to this Integration and that Customer. */
 function ownerQuery(customer: IntegrationCustomer): Record<string, string> {
   return { integration: props.integrationId, customer: customer.customerId };
 }

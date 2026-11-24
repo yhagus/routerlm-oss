@@ -7,12 +7,6 @@ const DEADLOCK_DETECTED = "40P01";
 const ATTEMPTS = 5;
 const RETRY_DELAY_MS = 50;
 
-/**
- * Truncates `tables`, retrying when PostgreSQL picks the truncate as a deadlock
- * victim. A previous test's background work (an Exhausted Attempt starts a
- * quota reading nobody awaits) can still hold row locks on these tables, and
- * no request a test makes can wait for that work to end.
- */
 export async function truncateTables(db: Database, tables: SQL): Promise<void> {
   for (let attempt = 1; ; attempt += 1) {
     try {

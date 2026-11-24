@@ -3,7 +3,6 @@ import type { Queue } from "bullmq";
 const DRAIN_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;
 
-/** Waits until the worker has taken every usage job, so one test's jobs don't land in the next. */
 export async function untilUsageQueueIsDrained(usageQueue: Queue): Promise<void> {
   const deadline = Date.now() + DRAIN_TIMEOUT_MS;
   while (Date.now() < deadline) {

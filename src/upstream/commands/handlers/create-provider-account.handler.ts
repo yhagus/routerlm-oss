@@ -45,7 +45,6 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
     }
   }
 
-  /** OpenAI Codex, for one, serves its plan to an OAuth Login only (ADR 0013). */
   private async requireApiKeysAccepted(providerId: string): Promise<void> {
     const [provider] = await this.db
       .select({ name: providers.name, credentialKinds: providers.credentialKinds })
@@ -58,7 +57,6 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
     }
   }
 
-  /** A constellation name no other account of the Provider uses, so the dashboard can tell them apart. */
   private async generateName(providerId: string): Promise<string> {
     const siblings = await this.db
       .select({ name: providerAccounts.name })

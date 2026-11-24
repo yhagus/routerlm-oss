@@ -18,7 +18,6 @@ export class ReorderRoutesHandler implements ICommandHandler<ReorderRoutesComman
 
   async execute({ modelId, order: { routeIds } }: ReorderRoutesCommand): Promise<ModelDetail> {
     await this.db.transaction(async (tx) => {
-      // Locks the Routes so one added or removed meanwhile can't escape the check below.
       const current = await tx
         .select({ id: routes.id })
         .from(routes)

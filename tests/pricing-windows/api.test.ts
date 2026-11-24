@@ -150,8 +150,6 @@ describe("Pricing Windows (e2e)", () => {
   });
 
   describe("active now", () => {
-    // In this zone the wall clock reads 12:xx right now, so ranges around noon
-    // never wrap past midnight by accident.
     const { timeZone, today } = zoneAtNoonNow();
     const yesterday = weekdayBefore(today);
 
@@ -181,7 +179,6 @@ describe("Pricing Windows (e2e)", () => {
     });
 
     it("counts a range that crosses midnight from the weekday it starts on", async () => {
-      // Today's 14:00 has not come yet, and the part before 13:00 belongs to yesterday's range.
       expect(await isActiveNow([{ weekdays: [today], start: "14:00", end: "13:00" }])).toBe(false);
     });
 

@@ -41,7 +41,6 @@ describe("GET /v1/models (e2e)", () => {
     await app.get(SnapshotService).changed();
     const { key } = await insertApiKey(app, db, [smart.modelId, retired.modelId]);
 
-    // Anthropic-style clients send the key as x-api-key.
     const response = await request(app.getHttpServer())
       .get("/v1/models")
       .set("x-api-key", key)

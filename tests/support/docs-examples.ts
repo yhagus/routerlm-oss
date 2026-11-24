@@ -1,15 +1,11 @@
 import { readdirSync, readFileSync } from "node:fs";
 
-/** The client documentation's Markdown pages, as the web app serves them at /docs. */
 export const DOCS_DIRECTORY = new URL("../../web/content/docs/", import.meta.url);
-/** The Indonesian translation of the same pages, served at /id/docs. */
 export const DOCS_ID_DIRECTORY = new URL("../../web/content/docs-id/", import.meta.url);
 
-/** The placeholders every example uses, so a reader knows what to substitute. */
 export const DOCS_BASE_URL = "https://gateway.example.com";
 export const DOCS_MODEL_NAME = "my-model";
 export const DOCS_API_KEY_VARIABLE = "ROUTERLM_API_KEY";
-/** The control plane examples' placeholders, from the Integrations page. */
 export const DOCS_CONTROL_PLANE_URL = `${DOCS_BASE_URL}/integration/v1/`;
 export const DOCS_INTEGRATION_SECRET_VARIABLE = "ROUTERLM_INTEGRATION_SECRET";
 export const DOCS_API_KEY_RECORD_ID = "0f8e2b6a-3c1d-4e5f-9a7b-6c4d2e1f0a9b";
@@ -20,16 +16,13 @@ export interface DocsPage {
   markdown: string;
 }
 
-/** One fenced code block of a docs page. */
 export interface CodeBlock {
   fileName: string;
-  /** 1-based position among the page's code blocks, to name the example in test output. */
   position: number;
   language: string;
   code: string;
 }
 
-/** An HTTP request a documented curl command sends. */
 export interface CurlRequest {
   method: string;
   url: string;
@@ -58,17 +51,10 @@ export function codeBlocksOf(page: DocsPage): CodeBlock[] {
   }));
 }
 
-/** The page's prose: everything outside fenced blocks and inline code. */
 export function proseOf(page: DocsPage): string {
   return page.markdown.replace(FENCED_BLOCK, "").replace(/`[^`\n]*`/g, "");
 }
 
-/**
- * Reads a curl command the way a POSIX shell would, for the subset the docs
- * use: line continuations, single and double quotes, `$VARIABLE` expansion
- * outside single quotes, and the options -H, -d, -X and -N. Anything else
- * throws, so an example can't silently rely on something this doesn't run.
- */
 export function parseCurl(command: string, variables: Record<string, string>): CurlRequest {
   const [program, ...args] = shellWords(command, variables);
   if (program !== "curl") {
@@ -87,7 +73,6 @@ export function parseCurl(command: string, variables: Record<string, string>): C
     } else if (arg === "-X") {
       explicitMethod = args[++index];
     } else if (arg === "-N") {
-      // Disables curl's output buffering; it changes nothing on the wire.
     } else if (arg.startsWith("-")) {
       throw new Error(`Unsupported curl option ${arg}`);
     } else {

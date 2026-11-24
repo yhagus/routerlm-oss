@@ -8,7 +8,6 @@ import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migratio
 
 const ERROR_ORIGIN_MIGRATION_SUFFIX = "_error_origin";
 
-/** A Usage Log as it was recorded before Error Origin existed, and the origin the backfill gives it. */
 interface RecordedRequest {
   errorCode: string | null;
   httpStatus: number;
@@ -17,7 +16,6 @@ interface RecordedRequest {
   expectedOrigin: "client" | "upstream" | "gateway" | null;
 }
 
-// The backfill rules of spec #76, one row each.
 const RECORDED_REQUESTS: RecordedRequest[] = [
   {
     errorCode: "upstream_rate_limited",
@@ -33,7 +31,6 @@ const RECORDED_REQUESTS: RecordedRequest[] = [
     attemptCount: 2,
     expectedOrigin: "upstream",
   },
-  // Every Provider Account in Cooldown: no Attempt was made, yet the cause is upstream.
   {
     errorCode: "upstream_error",
     httpStatus: 503,
@@ -48,7 +45,6 @@ const RECORDED_REQUESTS: RecordedRequest[] = [
     attemptCount: 1,
     expectedOrigin: "upstream",
   },
-  // The Provider refused the request as invalid.
   {
     errorCode: "invalid_request",
     httpStatus: 400,
@@ -56,7 +52,6 @@ const RECORDED_REQUESTS: RecordedRequest[] = [
     attemptCount: 1,
     expectedOrigin: "upstream",
   },
-  // The gateway itself couldn't read the body.
   {
     errorCode: "invalid_request",
     httpStatus: 400,
@@ -157,7 +152,6 @@ describe("Error Origin migration (e2e)", () => {
     await rm(migrationsBefore, { recursive: true, force: true });
   });
 
-  /** Inserts the request's Usage Log, `position` seconds apart to keep their order, and its Attempts. */
   async function insertRecordedRequest(request: RecordedRequest, position: number): Promise<void> {
     const createdAt = new Date(Date.UTC(2026, 10, 10, 10, 0, position)).toISOString();
     const { rows } = await pool.query<{ id: string }>(

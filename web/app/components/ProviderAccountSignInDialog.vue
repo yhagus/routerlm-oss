@@ -13,17 +13,6 @@ import {
   type ProviderAccount,
 } from "~/lib/upstream";
 
-/**
- * Signs in to a Provider that offers OAuth Login: asks which region the
- * account is in when the flow has regions (Kimi Code; OpenAI Codex starts
- * right away), shows the code and the Provider's verification page, and
- * waits for the gateway to report the outcome. With an `account` it signs in
- * again on that Provider Account. Emits `completed` with the Provider Account
- * that now holds the OAuth Login.
- *
- * Mount it for one sign-in: closing it unmounts it, which stops the polling.
- * There is nothing to cancel, the gateway lets an abandoned sign-in expire.
- */
 const props = defineProps<{ provider: Provider; account: ProviderAccount | null }>();
 const emit = defineEmits<{ completed: [account: ProviderAccount] }>();
 const isOpen = defineModel<boolean>("open", { required: true });
@@ -33,11 +22,9 @@ const { showToast } = useToast();
 
 const SIGN_INS_PATH = "/provider-accounts/sign-ins";
 const POLL_INTERVAL_MS = 2000;
-/** The verification page comes from the Provider: only a web address becomes a link. */
 const WEB_ADDRESS = /^https?:\/\//i;
 
 type SignInState =
-  /** Choosing a region, or starting a flow without regions (or failing to). */
   | { step: "start" }
   | { step: "pending"; signIn: PendingOauthSignIn }
   | { step: "ended"; outcome: "denied" | "expired" };
@@ -62,7 +49,6 @@ const state = shallowRef<SignInState>({ step: "start" });
 const isStarting = ref(false);
 const error = ref("");
 
-/** Set once the dialog is gone, so an answer still on its way changes nothing. */
 let isAbandoned = false;
 onBeforeUnmount(() => {
   isAbandoned = true;
@@ -75,7 +61,6 @@ const title = computed(() => {
   return `Sign in with ${props.provider.name}`;
 });
 
-/** Kimi Code's auth hosts, one per region; null for a flow without regions. */
 const regionAuthHosts = computed(() => {
   const oauthLogin = props.provider.oauthLogin;
   return oauthLogin?.flow === "kimi-code" ? oauthLogin.authHosts : null;
@@ -87,7 +72,6 @@ const regionHint = computed(() => {
   return `Global accounts sign in at ${hosts.global}, Chinese accounts at ${hosts.china}.`;
 });
 
-/** A flow without regions that failed to start, such as OpenAI with device login off. */
 const canRetryStart = computed(
   () =>
     state.value.step === "start" &&
@@ -117,7 +101,6 @@ const waitingNote = computed(() => {
   return `Waiting for approval. The code expires at ${expiresAt}.`;
 });
 
-/** Starts a sign-in; `region` only for a flow with regions. */
 async function startSignIn(region?: OauthRegion): Promise<void> {
   isStarting.value = true;
   error.value = "";
@@ -140,13 +123,11 @@ async function startSignIn(region?: OauthRegion): Promise<void> {
   }
 }
 
-/** One read of the sign-in's state. The gateway is the one that asks the Provider. */
 async function readSignIn(): Promise<void> {
   const pending = state.value;
   if (pending.step !== "pending") return;
   try {
     const signIn = await $dashboardApi<OauthSignIn>(`${SIGN_INS_PATH}/${pending.signIn.id}`);
-    // Closed or started again while the answer was on its way.
     if (isAbandoned || state.value !== pending) return;
     error.value = "";
     if (signIn.status === "pending") return;
@@ -158,7 +139,6 @@ async function readSignIn(): Promise<void> {
     state.value = { step: "ended", outcome: signIn.status };
   } catch (caught) {
     if (isAbandoned || state.value !== pending) return;
-    // The gateway forgets a sign-in a while after it ends.
     if (isNotFound(caught)) {
       poll.pause();
       state.value = { step: "ended", outcome: "expired" };
@@ -174,7 +154,6 @@ function startAgain(): void {
   if (!regionAuthHosts.value) void startSignIn();
 }
 
-// A flow without regions has nothing to choose, so it asks for a code at once.
 onMounted(() => {
   if (!regionAuthHosts.value) void startSignIn();
 });

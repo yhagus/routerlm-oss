@@ -1,6 +1,3 @@
-// Placeholder telemetry for the dashboard prototype. The series are generated
-// from a fixed seed so every reload draws the same charts; replace these
-// builders with gateway API data when it exists.
 import type { ChartPoint, ChartSeries } from "./chart";
 
 export type RangeKey = "24h" | "7d" | "30d";
@@ -11,7 +8,6 @@ export const rangeOptions: { label: string; value: RangeKey }[] = [
   { label: "Last 30 days", value: "30d" },
 ];
 
-/** Provider identity colors. Fixed per provider so filters never repaint them. */
 export const providerSeries: ChartSeries[] = [
   { key: "OpenAI", name: "OpenAI", color: "var(--series-1)" },
   { key: "Anthropic", name: "Anthropic", color: "var(--series-2)" },
@@ -22,7 +18,6 @@ export const providerSeries: ChartSeries[] = [
 export const providerColor = (name: string) =>
   providerSeries.find((series) => series.key === name)?.color ?? "var(--bar-fill)";
 
-/** Token categories: input in violet, output in magenta, cached as the paired step. */
 export const tokenSeries: ChartSeries[] = [
   { key: "input", name: "Uncached input", color: "var(--token-input)" },
   { key: "inputCached", name: "Cached input", color: "var(--token-input-cached)" },
@@ -32,7 +27,6 @@ export const tokenSeries: ChartSeries[] = [
 
 const PROVIDER_SHARES = [0.443, 0.294, 0.177, 0.086];
 const REQUESTS_PER_DAY = 2_840_000_000;
-/** Each range seeds its own noise, so switching ranges redraws the chart. */
 const SEED_BY_RANGE: Record<RangeKey, number> = { "24h": 24, "7d": 7, "30d": 30 };
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -48,7 +42,6 @@ function seeded(seed: number) {
   };
 }
 
-/** Traffic peaks mid-afternoon UTC and dips overnight. */
 const diurnal = (hour: number) => 1 + 0.42 * Math.sin(((hour - 9) / 24) * Math.PI * 2);
 const weekly = (date: Date) => ([0, 6].includes(date.getUTCDay()) ? 0.74 : 1.08);
 
@@ -119,7 +112,6 @@ export function buildTraffic(range: RangeKey): TrafficData {
   const list = buckets(range);
   const points = list.map((bucket, index) => {
     const volume = bucketVolume(bucket);
-    // CommandCode degrades toward the end of the window, so its share slips.
     const degraded = index > list.length * 0.8 ? 0.72 : 1;
     const values = PROVIDER_SHARES.map((share, provider) => {
       const noise = 0.93 + random() * 0.14;
@@ -135,7 +127,6 @@ export function buildTraffic(range: RangeKey): TrafficData {
   return { points, totals, latency, cacheHit };
 }
 
-/** Daily input and output token totals for the current month view. */
 export function buildDailyTokens(): ChartPoint[] {
   const random = seeded(2026);
   return buckets("30d").map((bucket) => {

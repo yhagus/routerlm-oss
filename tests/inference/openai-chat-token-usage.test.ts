@@ -10,8 +10,6 @@ import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
-// Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
-// files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -41,7 +39,6 @@ describe("Token usage an openai-chat upstream reports (e2e)", () => {
 
   beforeEach(async () => {
     upstream.reset();
-    // The previous test's job must not land after the tables are emptied.
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     await insertOpenAiChatModel(app, db, { modelName: "smart", baseUrl: upstream.baseUrl });

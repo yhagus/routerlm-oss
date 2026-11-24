@@ -39,7 +39,6 @@ describe("Alibaba media endpoints migration (e2e)", () => {
     await rm(migrationsBefore, { recursive: true, force: true });
   });
 
-  /** The Alibaba Provider as the seeder created it before the Catalog had media endpoints. */
   async function insertSeededAlibaba(endpoints: unknown[]): Promise<void> {
     await pool.query(
       `insert into providers (slug, name, endpoints, auth_style, is_from_catalog)

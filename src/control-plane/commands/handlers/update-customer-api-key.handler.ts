@@ -34,7 +34,6 @@ export class UpdateCustomerApiKeyHandler implements ICommandHandler<UpdateCustom
     if (changes.allowedModelIds) {
       await assertWithinCeiling(this.db, integration, changes.allowedModelIds);
     }
-    // Guarded again on revokedAt: the key may have been revoked since the check.
     const updated = await this.db
       .update(apiKeys)
       .set(changes)
@@ -50,10 +49,8 @@ export class UpdateCustomerApiKeyHandler implements ICommandHandler<UpdateCustom
       throw new ControlPlaneError("FAILED_PRECONDITION", REVOKED_MESSAGE);
     }
     if (changes.spendLimit !== undefined) {
-      // So a raised limit serves the key at once, and a lowered one stops it.
       await this.spendLimitFlags.recompute(id);
     }
-    // Everything here but the name is what inference reads from the snapshot.
     await this.snapshot.changed();
     return findCustomerApiKey(this.db, integrationId, id);
   }

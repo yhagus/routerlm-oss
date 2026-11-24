@@ -10,10 +10,6 @@ import { type UsageResetSpend, usageResetSpendSchema } from "./schemas/usage-res
 export class ProviderAccountQuotaController {
   constructor(private readonly commandBus: CommandBus) {}
 
-  /**
-   * The dashboard's Refresh button. A failed reading still answers 200, with
-   * the last meters and `quotaError` set.
-   */
   @Post(":id/quota-reading")
   @HttpCode(HttpStatus.OK)
   readQuotaNow(
@@ -22,12 +18,6 @@ export class ProviderAccountQuotaController {
     return this.commandBus.execute(new ReadProviderAccountQuotaCommand(providerAccountId));
   }
 
-  /**
-   * Spends a Usage Reset, then answers the account's quota as a fresh reading
-   * left it. 404 for a reset the account no longer lists; 409 when its
-   * Provider has no Usage Resets or refuses this one; 502 when the Provider
-   * fails, with the reason a failed reading records.
-   */
   @Post(":id/usage-resets/:resetId/use")
   @HttpCode(HttpStatus.OK)
   useUsageReset(

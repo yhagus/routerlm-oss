@@ -12,10 +12,8 @@ import type {
   UpstreamProtocol,
 } from "@/db/schemas/index.js";
 
-/** A Provider as the dashboard API returns it. It holds no secrets. */
 export type Provider = typeof providers.$inferSelect;
 
-/** Refuses quirks the Protocol of the chat endpoint doesn't read, naming them. */
 export function assertQuirksFitEndpoints(
   endpoints: readonly ProviderEndpoint[],
   quirks: ProviderQuirks,
@@ -29,10 +27,6 @@ export function assertQuirksFitEndpoints(
   }
 }
 
-/**
- * Refuses Service Tier values unless the chat endpoint's Protocol sends a
- * tier (ADR 0014), naming the tiers.
- */
 export function assertServiceTierValuesFitEndpoints(
   endpoints: readonly ProviderEndpoint[],
   serviceTierValues: ServiceTierValues,

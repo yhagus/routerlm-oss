@@ -10,13 +10,11 @@ import {
 import type { UsageResetPort } from "@/quota-meters/models/usage-reset.js";
 import { QuotaReaders } from "./quota-readers.js";
 
-/** How to list and spend the Usage Resets of one Provider Account. */
 export interface UsageResetTarget {
   port: UsageResetPort;
   provider: QuotaReaderProvider;
 }
 
-/** Which Provider Accounts have Usage Resets: those whose Provider's quota reader supports them. */
 @Injectable()
 export class UsageResetTargets {
   constructor(
@@ -24,11 +22,6 @@ export class UsageResetTargets {
     private readonly readers: QuotaReaders,
   ) {}
 
-  /**
-   * Null when the account's Provider has no Usage Resets. Throws
-   * NotFoundException for an unknown account, and QuotaReadError when the
-   * Provider has no chat endpoint to build the reset endpoints' URL from.
-   */
   async targetOf(providerAccountId: string): Promise<UsageResetTarget | null> {
     const [account] = await this.db
       .select({
@@ -49,7 +42,6 @@ export class UsageResetTargets {
     return { port, provider: quotaReaderProviderOf(account) };
   }
 
-  /** The ids, among `providerAccountIds`, of the accounts whose Provider has Usage Resets. */
   async withUsageResets(providerAccountIds: string[]): Promise<string[]> {
     if (providerAccountIds.length === 0) {
       return [];

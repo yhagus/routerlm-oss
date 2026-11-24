@@ -35,7 +35,6 @@ const SUCCESS: FakeReply = {
   body: JSON.parse(anthropicMessagesFixture("upstream-response-tool-call.json")),
 };
 
-/** MiniMax's Anthropic-compatible answer once the plan's usage limit is reached, as observed upstream. */
 const USAGE_LIMIT_EXCEEDED: FakeReply = {
   kind: "json",
   status: 429,
@@ -51,21 +50,18 @@ const USAGE_LIMIT_EXCEEDED: FakeReply = {
   },
 };
 
-/** MiniMax's plan limit with automatic Credit use off, in its native `base_resp` shape. */
 const PLAN_LIMIT_REACHED: FakeReply = {
   kind: "json",
   status: 400,
   body: { base_resp: { status_code: 2067, status_msg: "plan limit reached" } },
 };
 
-/** MiniMax's native error shape, sent with HTTP 200 instead of an error status. */
 const USAGE_LIMIT_EXCEEDED_WITH_200: FakeReply = {
   kind: "json",
   status: 200,
   body: { base_resp: { status_code: 2056, status_msg: "usage limit exceeded" } },
 };
 
-/** An M Plan remains answer with both unscoped windows at `percent`, resetting at the given times. */
 function remainsAt(percent: number, fiveHourResetsAt: Date, weeklyResetsAt: Date): FakeReply {
   return remainsReply([
     {
@@ -82,8 +78,6 @@ describe("Exhausted Provider Accounts (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
   let inferenceUpstream: FakeUpstream;
-  // The quota reader asks its own fake upstream, so its replies never take the
-  // place of an inference reply queued on the other one.
   let quotaUpstream: FakeUpstream;
   let providerId: string;
   let apiKey: string;
@@ -154,7 +148,6 @@ describe("Exhausted Provider Accounts (e2e)", () => {
     return list.body.find((account: { id: string }) => account.id === primaryAccountId);
   }
 
-  /** Which Provider Account each Attempt used, by the key it sent. */
   function attemptedKeys(): string[] {
     return inferenceUpstream.requests.map((received) => String(received.headers["x-api-key"]));
   }

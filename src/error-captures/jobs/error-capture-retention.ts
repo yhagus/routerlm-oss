@@ -10,15 +10,10 @@ import { ERROR_CAPTURES_QUEUE } from "@/queue/models/queue-names.js";
 import { ShowErrorCaptureRetentionQuery } from "@/settings/queries/impl/show-error-capture-retention.query.js";
 import { retentionCutoff } from "@/error-captures/models/retention-cutoff.js";
 
-/** Scheduler id: upserting it again on every boot keeps a single schedule. */
 export const ERROR_CAPTURE_RETENTION_SCHEDULER = "error-capture-retention";
 const DELETE_EXPIRED_CAPTURES_JOB = "delete-expired";
 const RUN_EVERY_MS = 60 * 60 * 1000;
 
-/**
- * Deletes Error Captures once they are older than the retention period
- * (a Setting, read on every run), as a repeating job. Worker only.
- */
 @Injectable()
 export class ErrorCaptureRetention implements OnApplicationBootstrap {
   private readonly logger = new Logger(ErrorCaptureRetention.name);
@@ -52,7 +47,6 @@ export class ErrorCaptureRetention implements OnApplicationBootstrap {
   }
 }
 
-/** Registered only in WorkerModule, like every processor. */
 @Processor(ERROR_CAPTURES_QUEUE)
 export class ErrorCaptureRetentionProcessor extends WorkerHost {
   constructor(private readonly retention: ErrorCaptureRetention) {

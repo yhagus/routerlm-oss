@@ -1,15 +1,3 @@
-// k6 load script for the gateway's inference endpoints.
-//   PROFILE   smoke | load | stress
-//   SCENARIO  a group or one scenario name (default mixed)
-//     raw       the gateway alone: an instant upstream, and a fixed request RATE
-//               (open model) to find how many req/s the 2 CPU / 2 GB gateway takes
-//     mixed     realistic traffic through a paced upstream (200 ms to the first
-//               token, then 100 tokens/s), a fixed number of VUs
-//     edge      extreme requests: 900K-token prompts, oversize bodies, long streams
-//     upstream  upstream faults (5xx, 429, hang, reset, malformed, flapping), alone
-//               and with a healthy backup Route to fail over to
-//     all       mixed, edge and upstream at once (raw is always run on its own)
-// Run by the `k6` service of ../docker-compose.yml; see ../README.md.
 import http from "k6/http";
 import { check, sleep } from "k6";
 import { Counter } from "k6/metrics";
@@ -18,7 +6,6 @@ const BASE_URL = __ENV.BASE_URL || "http://backend:3000";
 const API_KEY = __ENV.PERF_API_KEY;
 const PROFILE = __ENV.PROFILE || "smoke";
 const SCENARIO = __ENV.SCENARIO || "mixed";
-// What the paced upstream takes for one answer, so the limits follow its settings.
 const PACED_ANSWER_MS =
   Number(__ENV.UPSTREAM_LATENCY_MS || 200) +
   (Number(__ENV.OUTPUT_TOKENS || 200) / Number(__ENV.TOKENS_PER_SECOND || 100)) * 1000;
@@ -29,26 +16,15 @@ const HEADERS = {
 };
 const USER_MESSAGE = [{ role: "user", content: "Say hello." }];
 
-// The gateway estimates 1 token per 4 characters (route-selection.ts), and
-// refuses a request bigger than 20 MB (configure-app.ts).
 const CHARACTERS_PER_TOKEN = 4;
 const textOfTokens = (tokens) => "word ".repeat((tokens * CHARACTERS_PER_TOKEN) / 5);
 
 const chatBody = (model, extra = {}) => ({ model, messages: USER_MESSAGE, ...extra });
 const STREAM = { stream: true, stream_options: { include_usage: true } };
 
-/**
- * Every scenario. `body` is a function so that big bodies are built only by
- * the VUs that use them. `expect` is the status range that counts as a pass,
- * `done` text a complete answer contains. `weight` is the share of a mixed or
- * raw run; `vus` an edge or upstream scenario's VUs in the load profile (the
- * stress profile multiplies it); `p95Ms` its p95 limit; `pauseS` a pause
- * after each call, for scenarios that are refused in milliseconds.
- */
 const OK = { min: 200, max: 200 };
 const ERROR = { min: 400, max: 599 };
 const SCENARIOS = {
-  // Realistic traffic: a paced upstream.
   chat: {
     group: "mixed",
     weight: 40,
@@ -82,7 +58,6 @@ const SCENARIOS = {
     done: "completed",
   },
 
-  // The gateway alone: an instant upstream, so the gateway is the bottleneck.
   "raw-chat": {
     group: "raw",
     weight: 40,
@@ -116,14 +91,11 @@ const SCENARIOS = {
     done: "completed",
   },
 
-  // Edge cases. Each should be served or refused cleanly: no 5xx, no crash,
-  // no memory blow-up past the 2 GB budget.
   "huge-context": {
     group: "edge",
     vus: 4,
     p95Ms: PACED_ANSWER_MS + 5000,
     path: "/v1/chat/completions",
-    // About 900K tokens (3.6 MB) from the client, on the 1M-context Model.
     body: () => ({
       model: "perf-large",
       messages: [{ role: "user", content: textOfTokens(900_000) }],
@@ -149,13 +121,11 @@ const SCENARIOS = {
     vus: 4,
     p95Ms: 5000,
     path: "/v1/chat/completions",
-    // About 1.2M tokens for a 128K-context Model: a clean 4xx, not a crash.
     body: () => ({
       model: "perf-chat",
       messages: [{ role: "user", content: textOfTokens(1_200_000) }],
     }),
     expect: { min: 400, max: 499 },
-    // Refused in milliseconds: pause, or the VUs only measure how fast k6 can send 5 MB.
     pauseS: 0.5,
   },
   "oversize-body": {
@@ -163,7 +133,6 @@ const SCENARIOS = {
     vus: 2,
     p95Ms: 10000,
     path: "/v1/chat/completions",
-    // Over the 20 MB body limit.
     body: () => ({
       model: "perf-large",
       messages: [{ role: "user", content: "x".repeat(21 * 1024 * 1024) }],
@@ -176,7 +145,6 @@ const SCENARIOS = {
     vus: 10,
     p95Ms: PACED_ANSWER_MS + 5000,
     path: "/v1/chat/completions",
-    // 4000 short turns.
     body: () => {
       const messages = [];
       for (let i = 0; i < 2000; i++) {
@@ -194,7 +162,6 @@ const SCENARIOS = {
     vus: 20,
     p95Ms: 30000,
     path: "/v1/chat/completions",
-    // The fake upstream sends 2000 tokens at 5 ms each for this marker.
     body: () => ({
       model: "perf-chat",
       ...STREAM,
@@ -208,22 +175,17 @@ const SCENARIOS = {
     vus: 50,
     p95Ms: 20000,
     path: "/v1/chat/completions",
-    // The fake upstream waits 10 s: many requests held open at once.
     body: () => chatBody("perf-chat", { messages: [{ role: "user", content: "[perf:slow]" }] }),
     expect: OK,
     done: "chat.completion",
   },
 
-  // Upstream faults. `fault-*`: the only Route is broken, so the client must get
-  // a clean error, in time. `failover-*`: a healthy Route follows the broken
-  // one, so the client must still get its answer.
   "fault-5xx": faultCase("5xx", { pauseS: 0.5 }),
   "fault-429": faultCase("429", { pauseS: 0.5 }),
   "fault-timeout": faultCase("timeout", { pauseS: 0.5 }),
   "fault-reset": faultCase("reset", { pauseS: 0.5 }),
   "fault-malformed": faultCase("malformed", { pauseS: 0.5 }),
   "fault-flap": faultCase("flap", { expect: { min: 200, max: 599 }, pauseS: 0.5 }),
-  // A stream that dies after five tokens cannot be saved; it must just end.
   "fault-midstream": faultCase("midstream", {
     stream: true,
     expect: { min: 200, max: 599 },
@@ -240,7 +202,6 @@ function faultCase(kind, { stream = false, expect = ERROR, pauseS } = {}) {
   return {
     group: "upstream",
     vus: 5,
-    // The Route's 5 s total timeout, plus headroom.
     p95Ms: 8000,
     path: "/v1/chat/completions",
     body: () => chatBody(`fault-${kind}`, stream ? STREAM : {}),
@@ -253,7 +214,6 @@ function failoverCase(kind) {
   return {
     group: "upstream",
     vus: 5,
-    // The broken attempt (up to the Route's 5 s total timeout) and then a whole paced answer.
     p95Ms: PACED_ANSWER_MS + 8000,
     path: "/v1/chat/completions",
     body: () => chatBody(`failover-${kind}`),
@@ -262,14 +222,6 @@ function failoverCase(kind) {
   };
 }
 
-/**
- * Per profile.
- *  stages      mixed: [duration, target VUs]; closed model, a VU sends its next
- *              request when the last one ends
- *  rawStages   raw: [duration, requests per second]; open model, the rate holds
- *              whatever the latency, so it shows the gateway's ceiling
- *  edgeScale   edge and upstream VUs, as a multiple of each scenario's `vus`
- */
 const STEADY_VUS = Number(__ENV.VUS || 300);
 const STEADY_DURATION = __ENV.DURATION || "3m";
 
@@ -277,10 +229,6 @@ const BENCH_RAW_VUS = Number(__ENV.BENCH_RAW_VUS || 300);
 const BENCH_MIXED_VUS = Number(__ENV.BENCH_MIXED_VUS || 1800);
 
 const PROFILES = {
-  // One minute for ../benchmark.sh. Closed model for both groups: each VU sends
-  // its next request as soon as the last ends, so the gateway is always as busy
-  // as the VUs can keep it. raw (instant upstream) then shows its top speed;
-  // mixed (paced upstream) shows how many open streams it holds.
   bench: {
     stages: [
       ["10s", BENCH_MIXED_VUS],
@@ -296,8 +244,6 @@ const PROFILES = {
     p95Factor: 100,
     maxFailed: 0.01,
   },
-  // A fixed number of VUs held for DURATION, with no error allowed: one step of
-  // a search for the highest load the gateway takes cleanly (see ../find-limit.sh).
   steady: {
     stages: [
       ["30s", STEADY_VUS],
@@ -348,7 +294,6 @@ const PROFILES = {
       ["1m", 3000],
       ["30s", 0],
     ],
-    // Steps to find where the gateway gives out; not a pass/fail run.
     rawStages: [
       ["1m", 500],
       ["1m", 1000],
@@ -398,8 +343,6 @@ const thresholds = {
   http_req_failed: [`rate<=${profile.maxFailed}`],
   checks: [`rate>=${1 - profile.maxFailed}`],
 };
-// http_req_failed counts a status outside a scenario's `expect` as failed, so
-// the fault scenarios that expect errors do not trip it.
 for (const name of names) {
   const spec = SCENARIOS[name];
   const base = { exec: "call", env: { SCENARIO_NAME: name } };
@@ -413,7 +356,6 @@ for (const name of names) {
       gracefulRampDown: "10s",
       stages: profile.stages.map(([d, target]) => ({ duration: d, target: scaled(target, share) })),
     };
-    // A call costs the paced upstream's whole answer; the limit is a multiple of it.
     thresholds[`http_req_duration{scenario:${name}}`] = [
       `p(95)<${(PACED_ANSWER_MS + 500) * profile.p95Factor}`,
     ];
@@ -444,8 +386,6 @@ for (const name of names) {
         };
     thresholds[`http_req_duration{scenario:${name}}`] = [`p(95)<${profile.rawP95Ms}`];
   } else {
-    // Edge and upstream: a few VUs each. The smoke profile runs each once at a
-    // time, to prove it works.
     scenarios[name] = {
       ...base,
       executor: "constant-vus",
@@ -469,13 +409,10 @@ export function setup() {
   }
 }
 
-// Responses by status, so a failed run says what failed (0 is a connection
-// error or a timeout, with no response at all).
 const STATUSES = [0, 200, 400, 401, 404, 413, 429, 500, 502, 503, 504];
 const byStatus = Object.fromEntries(STATUSES.map((s) => [s, new Counter(`status_${s}`)]));
 const otherStatus = new Counter("status_other");
 
-// Each VU builds its payload on its first call and keeps it.
 let payload;
 let sampled = 0;
 
@@ -488,7 +425,6 @@ export function call() {
     responseCallback: http.expectedStatuses(spec.expect),
   });
   (byStatus[response.status] ?? otherStatus).add(1);
-  // A few error bodies, to see what the gateway or the upstream said.
   if (
     !(response.status >= spec.expect.min && response.status <= spec.expect.max) &&
     sampled < 2 &&

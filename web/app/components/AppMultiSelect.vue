@@ -12,9 +12,7 @@ import {
 
 type SelectOption = { label: string; value: Value };
 
-/** Picked options named in full on the trigger; more are counted instead. */
 const MAX_NAMED_PICKS = 2;
-/** Gap between the trigger and the menu, and the menu's margin from the viewport edge. */
 const MENU_OFFSET = 5;
 const VIEWPORT_MARGIN = 12;
 
@@ -22,19 +20,10 @@ const props = withDefaults(
   defineProps<{
     modelValue: Value[];
     options: SelectOption[];
-    /** The control's accessible name. */
     label: string;
-    /** Trigger text while nothing is picked, such as "Any capability". */
     placeholder: string;
-    /** Plural noun for a count on the trigger, such as "capabilities" in "3 capabilities". */
     noun: string;
-    /**
-     * How the caller combines the picks. With "any", picking every option
-     * filters nothing, so it is emitted as no pick. With "all" (a model must
-     * have every picked capability), a full pick still narrows the list.
-     */
     match?: "any" | "all";
-    /** Menu text when there are no options at all; defaults to "No <noun> yet". */
     emptyText?: string;
   }>(),
   { match: "any" },
@@ -59,7 +48,6 @@ function isPicked(option: SelectOption): boolean {
   return props.modelValue.includes(option.value);
 }
 
-/** Emits the picks in option order; under "any", a full pick becomes no pick. */
 function handlePicksChange(picked: unknown): void {
   const pickedValues: unknown[] = Array.isArray(picked) ? picked : [];
   const next = props.options
@@ -69,19 +57,16 @@ function handlePicksChange(picked: unknown): void {
   emit("update:modelValue", props.match === "any" && isEveryOptionPicked ? [] : next);
 }
 
-/** Focus moves back to the list, since the Clear button disappears with the picks. */
 function clearPicks(): void {
   emit("update:modelValue", []);
   void listbox.value?.highlightSelected();
 }
 
-/** The first picked option, or the first option, takes focus when the menu opens. */
 function handleOpenAutoFocus(event: Event): void {
   event.preventDefault();
   void listbox.value?.highlightSelected();
 }
 
-/** Arrow keys open the menu, as they do on a native select. */
 function handleTriggerArrowKey(event: KeyboardEvent): void {
   event.preventDefault();
   open.value = true;

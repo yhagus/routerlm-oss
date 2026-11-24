@@ -1,9 +1,4 @@
 <script setup lang="ts">
-/**
- * The loading indicator: a small ring with a short label. With `label` empty
- * it is a bare ring for tight spots (a count, a button), still announced to
- * screen readers.
- */
 withDefaults(defineProps<{ label?: string }>(), { label: "Loading…" });
 </script>
 

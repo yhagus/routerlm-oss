@@ -42,7 +42,6 @@ const FAILED_ATTEMPT: Omit<NewAttempt, "usageLogId"> = {
   durationMs: 250,
 };
 
-/** What one capture is made of; an `attempt` makes it a gateway-to-provider-account capture. */
 interface CaptureSetup {
   usageLog?: Partial<NewUsageLog>;
   attempt?: Partial<NewAttempt>;
@@ -101,7 +100,6 @@ describe("Error Captures API: filtering the list (e2e)", () => {
     await app.close();
   });
 
-  /** Records a failed request with one capture, and returns the capture's id. */
   async function capture({ usageLog, attempt, capture }: CaptureSetup = {}): Promise<string> {
     const [{ id: usageLogId }] = await db
       .insert(usageLogs)
@@ -130,7 +128,6 @@ describe("Error Captures API: filtering the list (e2e)", () => {
     return id;
   }
 
-  /** The ids of the captures the list returns for `query`, after checking the total agrees. */
   async function listedIds(query: string): Promise<string[]> {
     const response = await request(app.getHttpServer())
       .get(`/api/error-captures?${query}`)

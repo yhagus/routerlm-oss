@@ -4,26 +4,14 @@ import { ConfigService } from "@nestjs/config";
 import type { Env } from "@/config/schemas/env.schema.js";
 
 const ALGORITHM = "aes-256-gcm";
-// 96-bit IVs are what GCM is designed for.
 const IV_BYTES = 12;
-// Fixed so a truncated tag is refused instead of weakening authentication.
 const AUTH_TAG_BYTES = 16;
 const FORMAT_VERSION = "v1";
 const SEPARATOR = ".";
 
-/**
- * Encrypts Provider Account keys at rest with AES-256-GCM. The stored form is
- * `v1.<iv>.<auth tag>.<ciphertext>`, each part base64url; the version prefix
- * leaves room for a later change of format or encryption key.
- *
- * Other secrets the gateway hands out (video ids, ADR 0027) pass a `purpose`,
- * authenticated with the ciphertext, so a value encrypted for one purpose
- * never decrypts as another, nor as a Provider Account key.
- */
 export class ProviderKeyCipher {
   private readonly encryptionKey: Buffer;
 
-  /** @param encryptionKeyBase64 32 bytes in base64, as `ENCRYPTION_KEY` holds them. */
   constructor(encryptionKeyBase64: string) {
     this.encryptionKey = Buffer.from(encryptionKeyBase64, "base64");
   }
@@ -43,7 +31,6 @@ export class ProviderKeyCipher {
     return [FORMAT_VERSION, ...encodedParts].join(SEPARATOR);
   }
 
-  /** Throws when the value was tampered with, or encrypted under another encryption key or purpose. */
   decrypt(encryptedKey: string, purpose?: string): string {
     const [version, iv, authTag, ciphertext] = encryptedKey.split(SEPARATOR);
     if (version !== FORMAT_VERSION || !iv || !authTag || !ciphertext) {
@@ -63,7 +50,6 @@ export class ProviderKeyCipher {
   }
 }
 
-/** Registers ProviderKeyCipher with the `ENCRYPTION_KEY` from the environment. */
 export const providerKeyCipherProvider: FactoryProvider<ProviderKeyCipher> = {
   provide: ProviderKeyCipher,
   inject: [ConfigService],

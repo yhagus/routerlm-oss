@@ -9,7 +9,6 @@ import {
   speechFileName,
 } from "~/lib/playgroundSpeech";
 
-/** One speech request in the tab's history: the text and voice, then the audio or error. */
 defineProps<{ exchange: SpeechExchange }>();
 
 const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget();

@@ -9,7 +9,6 @@ import { providers, upstreamModels } from "@/db/schemas/index.js";
 import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
 
 const runFile = promisify(execFile);
-// Bun startup plus seeding every shipped Catalog file.
 const SEED_TIMEOUT_MS = 30_000;
 
 describe("db:seed script (e2e)", () => {
@@ -33,7 +32,6 @@ describe("db:seed script (e2e)", () => {
   it(
     "seeds a Provider for every Catalog file shipped with the gateway",
     async () => {
-      // A DATABASE_URL in the environment wins over the one in the developer's .env.
       await runFile("bun", ["src/seed.ts"], {
         env: { ...process.env, DATABASE_URL: databaseUrl },
         timeout: SEED_TIMEOUT_MS,

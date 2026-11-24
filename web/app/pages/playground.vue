@@ -4,7 +4,6 @@ import { MODEL_KIND_LABELS, type ModelKind } from "~/lib/upstream";
 
 useHead({ title: "Playground" });
 
-/** The Kinds the Playground can test; each has its own tab component below. */
 const PLAYGROUND_KINDS = [
   "chat",
   "image",
@@ -37,7 +36,6 @@ const kind = ref<PlaygroundKind>("chat");
       </div>
     </PageHeading>
 
-    <!-- Kept alive, so switching Kinds keeps each tab's history and settings. -->
     <KeepAlive>
       <PlaygroundChat v-if="kind === 'chat'" />
       <PlaygroundImages v-else-if="kind === 'image'" />

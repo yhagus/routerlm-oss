@@ -26,7 +26,6 @@ const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" 
 const CHAT_PATH = "/v1/chat/completions";
 const GLOBAL_TOKEN_PATH = `/global${TOKEN_PATH}`;
 const HOUR_SECONDS = 3600;
-/** Under the 300 seconds below which every OAuth Login is refreshed. */
 const SHORT_LIFETIME_SECONDS = 60;
 const RENEWED = { accessToken: "access-token-2", refreshToken: "refresh-token-2" };
 
@@ -57,7 +56,6 @@ const INVALID_GRANT: FakeReply = { kind: "json", status: 400, body: { error: "in
 describe("Inference from a Provider Account holding an OAuth Login (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
-  // Plays the Provider's API and both of its auth hosts.
   let kimi: FakeUpstream;
   let apiKey: string;
   let cookie: string;
@@ -72,7 +70,6 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     kimi.reset();
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
-    // Its API key account is the backup: the OAuth Login account runs first.
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: "smart",
       baseUrl: kimi.baseUrl,
@@ -105,7 +102,6 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     return kimi.requests.filter((received) => received.path === CHAT_PATH);
   }
 
-  /** The credential each Attempt sent, in order. */
   function attemptedCredentials(): string[] {
     return chatCalls().map((received) =>
       String(received.headers.authorization).replace("Bearer ", ""),
@@ -172,7 +168,6 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
       priority: -1,
     });
     kimi.replyTo(GLOBAL_TOKEN_PATH, refreshedTokensReply({ ...RENEWED, expiresIn: HOUR_SECONDS }));
-    // The older login's first Attempt fails, so the younger one is tried too.
     kimi.reply(UNAVAILABLE);
     kimi.reply(COMPLETION);
 
@@ -196,7 +191,6 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     await chat().expect(200);
 
     expect(refreshes().map((refresh) => refresh.path)).toEqual([`/china${TOKEN_PATH}`]);
-    // Inference goes to the Provider's one base URL, whichever the region.
     expect(chatCalls()).toHaveLength(1);
   });
 
@@ -310,7 +304,6 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     await chat().expect(200);
 
     expect(refreshes()).toHaveLength(1);
-    // The API key account serves instead, as itself.
     expect(attemptedCredentials()).toEqual([UPSTREAM_KEY]);
     expect(kimi.lastRequest.headers).not.toHaveProperty("x-msh-platform");
     await vi.waitFor(async () =>

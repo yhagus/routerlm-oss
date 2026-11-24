@@ -9,20 +9,14 @@ import {
   upstreamModelLabel,
 } from "~/lib/upstream";
 
-/**
- * What a direct Upstream Model test will do before anything is sent: no Model,
- * no Routes, no Parameter Policy, and the Provider Accounts it can go through.
- */
 const props = defineProps<{
   provider: Provider;
   upstreamModel: UpstreamModel;
-  /** This Provider's accounts, in the order the gateway tries them. */
   accounts: ProviderAccount[];
 }>();
 
 const usableAccounts = computed(() => props.accounts.filter((account) => account.isEnabled));
 
-/** Why the test can't be served, or null when it can. */
 const blocker = computed(() => {
   if (!props.provider.isEnabled) return "Provider disabled";
   if (!props.upstreamModel.isEnabled) return "Upstream Model disabled";
@@ -32,7 +26,6 @@ const blocker = computed(() => {
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
 
-/** An account's state as the gateway will see it when this request arrives. */
 function accountState(account: ProviderAccount): { label: string; tone: "good" | "warn" | null } {
   if (!account.isEnabled) {
     return {
@@ -49,7 +42,6 @@ function accountState(account: ProviderAccount): { label: string; tone: "good" |
   return { label: "Ready", tone: "good" };
 }
 
-/** Which credential the account holds: an API key by its ending, or an OAuth Login. */
 function credentialNote(account: ProviderAccount): string {
   return account.credentialKind === "oauth-login"
     ? "OAuth Login"

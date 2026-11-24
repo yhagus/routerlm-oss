@@ -9,23 +9,15 @@ import type {
   ListUsageLogsResponseJson,
 } from "@/control-plane/models/proto-json.js";
 
-/** A control plane answer: the response message in proto3 JSON, or the error's code. */
 export type ControlPlaneOutcome<T> =
   | { ok: true; body: T }
   | { ok: false; code: ControlPlaneErrorCode };
 
-/**
- * The control plane as an Integration calls it, whatever the transport, so
- * one scenario suite runs over each adapter. `secret` is the Integration
- * Secret sent with the call; undefined sends none. Requests are plain objects
- * in proto3 JSON, so a scenario can send an invalid one.
- */
 export interface ControlPlaneClient {
   createKey(
     secret: string | undefined,
     newKey: object,
   ): Promise<ControlPlaneOutcome<IssuedKeyJson>>;
-  /** The fields present in `changes` are the update mask; null clears one. */
   updateKey(secret: string, id: string, changes: object): Promise<ControlPlaneOutcome<ApiKeyJson>>;
   rotateKey(secret: string, id: string): Promise<ControlPlaneOutcome<IssuedKeyJson>>;
   revokeKey(secret: string, id: string): Promise<ControlPlaneOutcome<ApiKeyJson>>;
@@ -43,7 +35,6 @@ export interface ControlPlaneClient {
 
 const PREFIX = "/integration/v1";
 
-/** The control plane over its HTTP adapter, on the app's own port. */
 export function httpControlPlaneClient(app: NestNodeApplication): ControlPlaneClient {
   const server = app.getHttpServer();
   const send = async <T>(
