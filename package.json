@@ -19,6 +19,7 @@
     "worker:prod": "bun dist/worker.js",
     "migrate:prod": "bun dist/migrate.js",
     "lint": "oxlint --type-aware src/ tests/ scripts/",
+    "comments:baseline": "bun scripts/comment-baseline.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check:mirrors": "bun scripts/check-web-mirrors.ts",
     "check": "bun run lint && bun run format:check && bun run typecheck && bun run check:mirrors && bun run check:redis-keys",
