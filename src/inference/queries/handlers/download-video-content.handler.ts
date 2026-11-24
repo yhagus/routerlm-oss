@@ -14,7 +14,6 @@ export class DownloadVideoContentHandler implements IQueryHandler<DownloadVideoC
     private readonly fetcher: MediaFetcher,
   ) {}
 
-  /** Polls the task, then relays its video as it downloads: the upstream URL never reaches the client. */
   async execute({ videoId, caller, clientSignal }: DownloadVideoContentQuery): Promise<Response> {
     const { state } = await this.tasks.read(videoId, caller, clientSignal);
     if (state.status === "expired") {
@@ -29,14 +28,11 @@ export class DownloadVideoContentHandler implements IQueryHandler<DownloadVideoC
     }
     try {
       const video = await this.fetcher.stream(state.videoUrl, clientSignal);
-      // Alibaba serves it as MP4; the host's own label is often a generic one.
       return new Response(video.body, {
         status: 200,
         headers: { "content-type": VIDEO_CONTENT_TYPE },
       });
     } catch (error) {
-      // A network failure, a refused redirect or a private host: the client
-      // hears the gateway's words, never the media host's.
       throw error instanceof AttemptFailedError
         ? gatewayErrorFor(error)
         : new GatewayError(

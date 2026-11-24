@@ -3,13 +3,11 @@ import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts, quotaMeters } from "@/db/schemas/index.js";
 import type { UsageReset } from "./usage-reset.js";
 
-/** One Quota Meter as a quota reader reads it, before it is stored for a Provider Account. */
 export type QuotaMeterReading = Omit<
   typeof quotaMeters.$inferSelect,
   "id" | "providerAccountId" | "observedAt"
 >;
 
-/** What a reading stores for each meter, besides the account and key that identify it. */
 const readingColumns = {
   label: quotaMeters.label,
   unit: quotaMeters.unit,
@@ -23,30 +21,21 @@ const readingColumns = {
   observedAt: quotaMeters.observedAt,
 };
 
-/** The columns a new reading overwrites in a meter row: the Provider's raw entry too. */
 export const overwrittenQuotaMeterColumns = { ...readingColumns, raw: quotaMeters.raw };
 
-/** The columns the dashboard API returns for a Quota Meter; the Provider's raw entry stays internal. */
 const quotaMeterColumns = {
   providerAccountId: quotaMeters.providerAccountId,
   key: quotaMeters.key,
   ...readingColumns,
 };
 
-/** A Quota Meter as the dashboard API returns it. */
 export type QuotaMeter = Omit<typeof quotaMeters.$inferSelect, "id" | "providerAccountId" | "raw">;
 
-/**
- * A Provider Account's quota status: its latest Quota Meters, how the last
- * reading went, and its unexpired Usage Resets, soonest expiry first (null
- * when its Provider has none).
- */
 export type ProviderAccountQuota = Pick<
   typeof providerAccounts.$inferSelect,
   "quotaCheckedAt" | "quotaError"
 > & { quotaMeters: QuotaMeter[]; usageResets: UsageReset[] | null };
 
-/** The Quota Meters of each of the Provider Accounts, ordered by key; an account without any maps to none. */
 export async function selectQuotaMeters(
   db: Database,
   providerAccountIds: string[],
@@ -68,10 +57,6 @@ export async function selectQuotaMeters(
   return metersByAccount;
 }
 
-/**
- * Records a failed call for the account's quota, a reading or a Usage Reset,
- * as the dashboard shows it; the stored meters are left as they were.
- */
 export async function recordQuotaError(
   db: Database,
   providerAccountId: string,

@@ -2,10 +2,6 @@
 import { Copy, TriangleAlert } from "@lucide/vue";
 import type { CreatedIntegration } from "~/lib/integrations";
 
-/**
- * Shows an Integration Secret right after it was issued. Unlike an API Key it
- * is never kept in a form the dashboard can show again, so this is the only chance to copy it.
- */
 const props = defineProps<{
   integration: CreatedIntegration;
   verb: "created" | "rotated";

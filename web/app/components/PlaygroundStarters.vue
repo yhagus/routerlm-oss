@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ImagePlus, Play } from "@lucide/vue";
 
-/** One-click test prompts, shown above the composer until the first send. */
 defineProps<{ canSeeImages: boolean }>();
 const emit = defineEmits<{ start: [prompt: string, withImage: boolean] }>();
 

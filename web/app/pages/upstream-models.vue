@@ -17,12 +17,10 @@ const {
   refresh: refreshProviders,
 } = useDashboardApi<Provider[]>("/providers");
 
-/** Reloads both lists, so Retry recovers whichever one failed. */
 async function refresh(): Promise<void> {
   await Promise.all([refreshUpstreamModels(), refreshProviders()]);
 }
 
-/** The table needs both lists: models to list, Providers to name them. */
 const isLoading = computed(
   () =>
     (upstreamModelsStatus.value === "pending" && !upstreamModels.value) ||

@@ -1,6 +1,5 @@
 import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
 
-/** Window Prices with each price left out filled with the standard one (ADR 0038). */
 export function resolvedWindowPrices(
   standard: UpstreamModelPrices,
   windowPrices: UpstreamModelPrices,

@@ -3,12 +3,7 @@ import { apiErrorMessage } from "~/lib/api";
 import type { ModelChoice } from "~/lib/api-keys";
 import type { CreatedIntegration, IntegrationSummary } from "~/lib/integrations";
 
-/**
- * Creates an Integration, or edits one's name and allowed Models. An edit sends
- * only the fields that changed.
- */
 const props = defineProps<{
-  /** The Integration to edit; absent to create one. */
   integration?: IntegrationSummary;
   modelChoices: ModelChoice[] | undefined;
   isLoadingModelChoices: boolean;
@@ -39,10 +34,6 @@ watch(
   { immediate: true },
 );
 
-/**
- * The Models offered, plus any deleted Model the Integration is still
- * restricted to, so an edit can drop it instead of silently keeping it.
- */
 const modelOptions = computed(() => {
   const options = (props.modelChoices ?? []).map((model) => ({
     label: model.name,
@@ -68,7 +59,6 @@ function sameIds(first: string[], second: string[]): boolean {
   return first.length === second.length && first.every((id) => second.includes(id));
 }
 
-/** The fields an edit changes; empty when nothing did. */
 const changes = computed(() => {
   const original = props.integration;
   if (!original) return {};

@@ -43,7 +43,6 @@ export class RefreshUsageResetsHandler implements ICommandHandler<RefreshUsageRe
     }
   }
 
-  /** The list replaces every stored reset of the account, with no history. */
   private async replace(providerAccountId: string, resets: UsageResetReading[]): Promise<void> {
     const observedAt = new Date();
     await this.db.transaction(async (tx) => {

@@ -8,13 +8,8 @@ import {
   protocolOptionsFor,
 } from "~/lib/upstream";
 
-/**
- * Edits a Provider's endpoints: one row per Model Kind it serves, each with
- * the Protocol and base URL for that Kind. Saving replaces the whole list.
- */
 const endpoints = defineModel<EndpointForm[]>({ required: true });
 
-/** Another row is useful only while some Kind with a Protocol has no row yet. */
 const unusedKinds = computed(() =>
   ENDPOINT_KIND_OPTIONS.filter(
     (option) => !endpoints.value.some((endpoint) => endpoint.kind === option.value),
@@ -26,7 +21,6 @@ function kindLabel(kind: string): string {
   return known ? MODEL_KIND_LABELS[known] : "new";
 }
 
-/** A new Kind keeps the Protocol only when it serves that Kind too. */
 function handleKindChange(endpoint: EndpointForm, kind: string): void {
   endpoint.kind = kind;
   const protocols = protocolOptionsFor(kind);

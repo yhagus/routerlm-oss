@@ -3,11 +3,6 @@ import { eq } from "drizzle-orm";
 import type { Database } from "@/db/schemas/relations.js";
 import { type ModelKind, upstreamModels } from "@/db/schemas/index.js";
 
-/**
- * Refuses a Route from the Model to an Upstream Model of another Kind, naming
- * both Kinds (GLOSSARY "Model Kind"), and a Route to an Upstream Model that
- * doesn't exist.
- */
 export async function assertRouteKindFits(
   db: Database,
   model: { name: string; kind: ModelKind },

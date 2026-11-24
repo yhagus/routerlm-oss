@@ -2,10 +2,6 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { PriceSummary } from "~/lib/upstreamModelPrice";
 
-/**
- * One Price cell for any Kind: the amount over its unit. Hovering lists every
- * published price, such as cache prices or each video resolution.
- */
 defineProps<{ summary: PriceSummary | null }>();
 </script>
 

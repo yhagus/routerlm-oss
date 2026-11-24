@@ -29,29 +29,19 @@ import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/da
 import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
 import { inputImageCheck } from "@/inference/protocols/openai-images/openai-images-client-contract.js";
 
-// OpenAI's Videos API, `POST /v1/videos`, with OpenRouter's `resolution` and
-// `aspect_ratio` accepted in place of `size`.
-
-/** DashScope's own default duration, used when the client names none. */
 const DEFAULT_SECONDS = 5;
-/** The resolution used when the client names neither a size nor a resolution. */
 const DEFAULT_RESOLUTION: VideoResolution = "720P";
-/** The `seconds` that would let the Provider choose: its Cost isn't known at submit (ADR 0027). */
 const PROVIDER_CHOSEN_SECONDS = -1;
-/** DashScope's seed range. */
 const MAX_SEED = 2_147_483_647;
 const CLIENT_SIZE = /^(\d+)x(\d+)$/;
 const SECONDS = /^-?\d+$/;
 
-/** An image URL as a string (OpenAI) or nested as `{url}` (OpenRouter): an http(s) URL or a data URI. */
 const imageUrlSchema = z
   .union([z.string(), z.object({ url: z.string() }).transform(({ url }) => url)])
   .pipe(z.string().check(inputImageCheck));
 
-/** OpenRouter's content-part `type`; only images are taken. */
 const imagePartTypeSchema = z.literal("image_url").optional();
 
-// A plain (non-strict) object: unknown fields are dropped (ADR 0002).
 const requestSchema = z.object({
   model: z.string().min(1),
   prompt: z.string().min(1),
@@ -63,12 +53,10 @@ const requestSchema = z.object({
     .pipe(z.enum(VIDEO_RESOLUTIONS))
     .optional(),
   aspect_ratio: z.enum(VIDEO_RATIOS).optional(),
-  // A string in a multipart form.
   seed: z
     .union([z.int(), z.string().regex(SECONDS).transform(Number)])
     .pipe(z.int().min(0).max(MAX_SEED))
     .optional(),
-  /** OpenAI's first frame. */
   input_reference: z.object({ image_url: imageUrlSchema }).optional(),
   frame_images: z
     .array(
@@ -99,7 +87,6 @@ function parseRequest(body: unknown): VideoGenerationRequest {
     prompt,
     seconds: requestedSecondsOf(seconds),
     resolution: format.resolution,
-    // The video takes its first frame's aspect ratio, so no ratio is sent.
     ratio: hasFirstFrame ? null : format.ratio,
     clientSize: size ?? null,
     media,
@@ -107,7 +94,6 @@ function parseRequest(body: unknown): VideoGenerationRequest {
   };
 }
 
-/** The input images in DashScope's order: the frames, then the references. */
 function mediaOf({
   input_reference,
   frame_images = [],
@@ -152,7 +138,6 @@ function requestedSecondsOf(seconds: number | undefined): number {
   return seconds;
 }
 
-/** The resolution and ratio a `size`, or a `resolution` and `aspect_ratio`, ask for. */
 function videoFormatOf(
   size: string | undefined,
   resolution: VideoResolution | undefined,
@@ -205,12 +190,10 @@ function unservableReason(
   return null;
 }
 
-/** The video Protocols, by name: a poll reads the task in the Protocol of the Upstream Model's endpoint. */
 export const VIDEO_UPSTREAM_PROTOCOLS: Partial<Record<UpstreamProtocol, VideoUpstreamProtocol>> = {
   "dashscope-video": dashScopeVideoProtocol,
 };
 
-/** An OpenAI video object: what the create call and every poll answer with. */
 export function videoObjectOf(
   videoId: string,
   handle: VideoJobHandle,
@@ -229,7 +212,6 @@ export function videoObjectOf(
     size: handle.size,
     created_at: handle.createdAt,
     ...completedAt,
-    // Our own words: the Provider's error text is never forwarded.
     ...(state.status === "failed" && {
       error: {
         code: "video_generation_failed",
@@ -239,10 +221,6 @@ export function videoObjectOf(
   };
 }
 
-/**
- * The client contract of `POST /v1/videos`. Its response seals where the job
- * went into the video id (ADR 0027), so it needs the gateway's VideoHandles.
- */
 export function openAiVideosClientContract(
   handles: VideoHandles,
 ): MediaClientContract<VideoGenerationRequest, SubmittedVideoJob> {

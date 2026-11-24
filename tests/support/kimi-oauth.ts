@@ -7,12 +7,8 @@ import { storedOauthTokens } from "@/upstream/models/provider-account.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 import type { FakeReply } from "./fake-upstream.js";
 
-// The fake upstream plays Kimi's auth host and its `/me`: these are the
-// paths the gateway calls and the answers Kimi gives (spec #28, "OAuth Login").
-
 export const DEVICE_AUTHORIZATION_PATH = "/api/oauth/device_authorization";
 export const TOKEN_PATH = "/api/oauth/token";
-/** Relative to the fake upstream's origin: its base URL ends in `/v1`. */
 export const PROFILE_PATH = "/v1/me";
 
 export const DEVICE_CODE = "device-code-0123456789";
@@ -20,7 +16,6 @@ export const USER_CODE = "WDJB-MJHT";
 export const ACCESS_TOKEN = "kimi-access-token-0123456789";
 export const REFRESH_TOKEN = "kimi-refresh-token-9876543210";
 
-/** Starts a sign-in whose code lasts `expiresIn` seconds and is polled every `interval` seconds. */
 export function deviceAuthorizationReply(timing: {
   expiresIn: number;
   interval?: number;
@@ -39,14 +34,12 @@ export function deviceAuthorizationReply(timing: {
   };
 }
 
-/** What the token endpoint answers until the User approves, and how it refuses. */
 export function tokenErrorReply(
   error: "authorization_pending" | "slow_down" | "access_denied" | "expired_token",
 ): FakeReply {
   return { kind: "json", status: 400, body: { error } };
 }
 
-/** The User approved: the tokens, held back `delayMs` when given. */
 export function grantedTokensReply(delayMs?: number): FakeReply {
   return {
     kind: "json",
@@ -73,7 +66,6 @@ export const DEVICE_ID = "device-id-0123456789abcdef";
 export const CLIENT_ID = "client-id-of-the-cli";
 export const CLI_VERSION = "9.8.7";
 
-/** What the token endpoint answers to a refresh: new tokens, the refresh token rotated. */
 export function refreshedTokensReply(
   tokens: { accessToken: string; refreshToken: string; expiresIn: number },
   delayMs?: number,
@@ -91,7 +83,6 @@ export function refreshedTokensReply(
   };
 }
 
-/** Makes a Provider offer OAuth Login at auth hosts the fake upstream plays, under `/global` and `/china`. */
 export async function offerOauthLogin(
   db: Database,
   providerId: string,
@@ -111,23 +102,15 @@ export async function offerOauthLogin(
 }
 
 export interface InsertedOauthLogin {
-  /** How long the access token lasted when it was granted. */
   lifetimeSeconds: number;
-  /** How long ago it was granted; just now when not given. */
   ageSeconds?: number;
   accessToken?: string;
   refreshToken?: string;
   region?: OauthRegion;
-  /** `DEVICE_ID` when not given; a Provider's accounts each need their own. */
   deviceId?: string;
-  /** Before every other account of the Provider when not given. */
   priority?: number;
 }
 
-/**
- * Adds a Provider Account holding an OAuth Login, as a completed sign-in
- * leaves it, then refreshes the snapshot. Returns its id.
- */
 export async function addOauthLoginAccount(
   app: NestNodeApplication,
   db: Database,

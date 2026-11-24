@@ -1,7 +1,3 @@
-/**
- * A message to show for a failed dashboard API call: the backend's
- * `message` (one string, or one per invalid field), or `fallback`.
- */
 export function apiErrorMessage(error: unknown, fallback: string): string {
   const message = readProperty(readProperty(error, "data"), "message");
   if (typeof message === "string") {

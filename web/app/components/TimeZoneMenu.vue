@@ -11,17 +11,11 @@ import {
   utcOffsetMinutes,
 } from "~/lib/timeZones";
 
-/**
- * The header's time zones. The button shows the browser's offset from UTC, and
- * the server's too when the two differ. Its popover names both zones with the
- * time now in each, and says which one the dashboard uses where.
- */
 const { data: server, status, error } = useDashboardApi<{ timeZone: string }>("/time-zone");
 
 const browser = browserTimeZone();
 const now = ref(new Date());
 const isOpen = ref(false);
-// The clock ticks only while the popover is open.
 const { pause, resume } = useIntervalFn(() => (now.value = new Date()), 1000, {
   immediate: false,
 });
@@ -38,7 +32,6 @@ const browserOffset = computed(() => utcOffsetLabel(browser, now.value));
 const serverOffset = computed(() =>
   server.value ? utcOffsetLabel(server.value.timeZone, now.value) : null,
 );
-/** Minutes the browser's clock is ahead of the server's; 0 when they agree. */
 const offsetGap = computed(() =>
   server.value
     ? utcOffsetMinutes(browser, now.value) - utcOffsetMinutes(server.value.timeZone, now.value)
@@ -59,7 +52,6 @@ const gapText = computed(() => {
     : `Your browser is ${amount} behind the server.`;
 });
 
-/** Dates show beside the times only when the zones are on different days. */
 const showDates = computed(
   () =>
     server.value !== undefined &&

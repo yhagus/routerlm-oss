@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Construction } from "@lucide/vue";
 
-// A dashboard page whose screen hasn't been built yet.
 const props = defineProps<{ title: string; description: string }>();
 useHead({ title: props.title });
 </script>

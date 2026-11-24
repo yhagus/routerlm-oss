@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import type { TierPriceForm } from "~/lib/upstreamModelMedia";
 
-/**
- * Prices that depend on a tier the Provider names, such as an image size
- * (`2K`) or a video resolution (`720P`): the tiers are typed as tags, then
- * each gets its own price.
- */
 defineProps<{
-  /** What a tier is, such as "Size tier"; names the tag field and each price. */
   tierLabel: string;
-  /** The unit after the price, such as "/ image". */
   suffix: string;
   unitLabel: string;
 }>();

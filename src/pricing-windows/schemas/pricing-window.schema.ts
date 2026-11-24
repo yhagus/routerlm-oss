@@ -3,9 +3,6 @@ import type { IsoWeekday, PricingWindowRange } from "@/db/schemas/index.js";
 import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
 import { parseWallClock } from "@/pricing-windows/models/wall-clock.js";
 
-// What the dashboard sends to create or change Pricing Windows and to attach
-// them to an Upstream Model.
-
 const TIME_OF_DAY = /^([01]\d|2[0-3]):[0-5]\d$/;
 const END_OF_DAY = "24:00";
 
@@ -32,14 +29,11 @@ export const rangeSchema = z
       error: "Write the end as HH:MM, or 24:00",
     }),
   })
-  // `00:00` to `24:00` is a whole day, so only the same spelling is refused.
   .refine((range) => range.start !== range.end, {
     error: "A range's start can't equal its end",
   }) satisfies z.ZodType<PricingWindowRange>;
 
-/** Whether `timeZone` is an IANA time zone name, such as `Asia/Shanghai` or `UTC`. */
 export function isIanaTimeZone(timeZone: string): boolean {
-  // The engine also accepts offsets such as `+08:00`, which are no IANA name.
   if (!/^[A-Za-z]/.test(timeZone)) {
     return false;
   }
@@ -68,10 +62,6 @@ export const pricingWindowChangesSchema = pricingWindowFieldsSchema
   .refine(hasAnyField, nothingToChange);
 export type PricingWindowChanges = z.infer<typeof pricingWindowChangesSchema>;
 
-/**
- * A Validity Period bound on the wall clock of the window's time zone; left
- * out or null, that side is open-ended (ADR 0040).
- */
 const validityBoundSchema = z
   .string()
   .refine((bound) => parseWallClock(bound) !== undefined, {
@@ -80,7 +70,6 @@ const validityBoundSchema = z
   .nullable()
   .optional();
 
-/** USD per million tokens; left out or null, the standard price applies. */
 const windowPriceSchema = z.number().nonnegative().nullable().optional();
 
 const windowPricesEntrySchema = z
@@ -93,7 +82,6 @@ const windowPricesEntrySchema = z
     validFrom: validityBoundSchema,
     validUntil: validityBoundSchema,
   })
-  // `YYYY-MM-DDTHH:MM` sorts as it reads, so two bounds compare as strings.
   .refine((entry) => !entry.validFrom || !entry.validUntil || entry.validFrom < entry.validUntil, {
     error: "A Validity Period's start must be before its end",
   })
@@ -106,8 +94,4 @@ const windowPricesEntrySchema = z
   );
 export type WindowPricesEntry = z.infer<typeof windowPricesEntrySchema>;
 
-/**
- * An Upstream Model's whole list of Pricing Windows, in no meaningful order.
- * The handler refuses two that can apply at the same moment (ADR 0040).
- */
 export const windowPricesListSchema = z.array(windowPricesEntrySchema);

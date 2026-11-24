@@ -1,16 +1,8 @@
-// The logo set a Provider's `logo` key points into. Each mark is a file in
-// assets/provider-logos named after its key, so adding a logo means dropping
-// in a file. Vendored files, so rendering them with `v-html` shows nothing untrusted.
-
 export interface ProviderLogoMark {
   label: string;
   svg: string;
 }
 
-/**
- * Names for marks whose file title isn't how the dashboard writes the company:
- * a product name (xAI's file is titled "Grok") or other casing.
- */
 const LABEL_OVERRIDES: Record<string, string> = {
   alibabacloud: "Alibaba Cloud",
   bedrock: "Amazon Bedrock",

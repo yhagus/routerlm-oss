@@ -17,22 +17,13 @@ import {
 import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol.js";
 import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
 
-// OpenAI's Images API: `POST /v1/images/generations` (ADR 0015) and
-// `POST /v1/images/edits`, which adds the input images to start from.
-
-/** The most images OpenAI's Images API lets one request ask for. */
 const MAX_IMAGES_PER_REQUEST = 10;
-/** The most input images OpenAI's Images API lets one edit send. */
 export const MAX_INPUT_IMAGES_PER_EDIT = 16;
-/** DashScope's seed range. */
 const MAX_SEED = 2_147_483_647;
 const CLIENT_SIZE = /^(\d+)x(\d+)$/;
-/** The `size` that leaves the choice to the model, as if none was sent. */
 const AUTOMATIC_SIZE = "auto";
-/** A multipart form sends every field as text: `n=2`. */
 const FORM_INTEGER = /^\d+$/;
 
-/** An integer, also when a multipart form wrote it as text. */
 function integerField(schema: z.ZodInt) {
   return z.preprocess(
     (value) => (typeof value === "string" && FORM_INTEGER.test(value) ? Number(value) : value),
@@ -40,13 +31,11 @@ function integerField(schema: z.ZodInt) {
   );
 }
 
-// A plain (non-strict) object: unknown fields are dropped (ADR 0002).
 const generationSchema = z.object({
   model: z.string().min(1),
   prompt: z.string().min(1),
   n: z.int().min(1).max(MAX_IMAGES_PER_REQUEST).default(1),
   size: z.string().optional(),
-  // Accepted extensions: DashScope takes both, OpenAI neither.
   negative_prompt: z.string().optional(),
   seed: z.int().min(0).max(MAX_SEED).optional(),
 });
@@ -67,7 +56,6 @@ const featureRefusedSchema = z.object({
   mask: z.unknown().optional(),
 });
 
-/** An input image is an https (or http) URL the Provider fetches, or an image data URI. */
 export function inputImageCheck(context: z.core.ParsePayload<string>): void {
   const url = context.value;
   if (/^https?:\/\//.test(url) || url.startsWith("data:image/")) {
@@ -123,11 +111,10 @@ function clientSizeIn(size: string | undefined): ImageSize | null {
   return size === undefined || size === AUTOMATIC_SIZE ? null : imageSizeOf(size);
 }
 
-/** Images go back as `b64_json` only and never stream (ADR 0015); a mask is not supported. */
 function refuseUnsupportedFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
   if (!features.success) {
-    return; // Malformed: the full schema explains it.
+    return;
   }
   const { response_format, stream, partial_images, mask } = features.data;
   if (response_format !== undefined && response_format !== "b64_json") {
@@ -193,7 +180,6 @@ export const openAiImagesClientContract: MediaClientContract<
   writeError: writeOpenAiError,
 };
 
-/** `POST /v1/images/edits`: the same contract, with the input images the request must bring. */
 export const openAiImageEditsClientContract: MediaClientContract<
   ImageGenerationRequest,
   GeneratedImages

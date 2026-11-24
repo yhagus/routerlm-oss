@@ -15,11 +15,6 @@ import { findNavigationItem } from "~/lib/navigation";
 
 const COPY_FEEDBACK_MS = 2000;
 
-/**
- * Nuxt's error page: an unknown dashboard address, a detail page whose record
- * doesn't exist, or a crash nothing else caught. Never shows an id or the
- * address, which can carry one.
- */
 const props = defineProps<{ error: NuxtError }>();
 
 const route = useRoute();
@@ -28,7 +23,6 @@ const currentUser = useCurrentUser();
 const occurredAt = new Date().toISOString();
 const notFound = computed(() => isNotFound(props.error));
 const resource = computed(() => missingResourceOf(props.error));
-/** The section the failed address belongs to, so the way back stays close to the task. */
 const section = computed(() => findNavigationItem(route.path));
 const backLabel = computed(() =>
   section.value && section.value.path !== "/" ? `Back to ${section.value.label}` : "Go to Overview",
@@ -49,16 +43,11 @@ const icon = computed(() => {
   if (resource.value) return FileQuestionMark;
   return notFound.value ? SearchX : TriangleAlert;
 });
-/**
- * Fixed text for a 404: Nuxt's own message quotes the address, and the
- * backend's can name the record's id.
- */
 const detailMessage = computed(() => {
   if (resource.value) return props.error.message;
   if (notFound.value) return "No dashboard page matches this address.";
   return props.error.message || "No message was given.";
 });
-/** Nuxt's 404 status message quotes the address, so a 404 gets fixed text. */
 const statusText = computed(() =>
   notFound.value
     ? `${props.error.statusCode} Not Found`

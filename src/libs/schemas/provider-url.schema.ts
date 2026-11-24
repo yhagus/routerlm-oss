@@ -3,7 +3,6 @@ import { z } from "zod";
 import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy.js";
 import { bareHostname } from "@/libs/models/url.js";
 
-/** A network by its first two octets and prefix length; every prefix is at most 16 bits. */
 interface Ipv4Range {
   firstOctet: number;
   secondOctet: number;
@@ -28,7 +27,6 @@ function isPrivateIpv4(address: string): boolean {
   });
 }
 
-/** Whether an IP address literal is loopback, private or link-local. */
 export function isPrivateAddress(address: string): boolean {
   return isIPv4(address) ? isPrivateIpv4(address) : isPrivateIpv6(address);
 }
@@ -43,7 +41,6 @@ function isPrivateIpv6(address: string): boolean {
   return isPrivateMappedIpv4(lower);
 }
 
-/** `new URL` writes `::ffff:127.0.0.1` as `::ffff:7f00:1`. */
 function isPrivateMappedIpv4(lower: string): boolean {
   const mapped = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(lower);
   if (!mapped) return false;
@@ -52,22 +49,16 @@ function isPrivateMappedIpv4(lower: string): boolean {
   return isPrivateIpv4(`${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`);
 }
 
-/** Whether the URL's host is `localhost` or a loopback, private or link-local address literal. */
 function hasPrivateHost(url: URL): boolean {
   const host = bareHostname(url).toLowerCase();
   if (host === "localhost" || host.endsWith(".localhost")) return true;
   return (isIPv4(host) || isIPv6(host)) && isPrivateAddress(host);
 }
 
-/** Whether the URL is https and its host is not a `localhost` or a private address literal. */
 export function isPublicHttpsUrl(url: URL): boolean {
   return url.protocol === "https:" && !hasPrivateHost(url);
 }
 
-/**
- * A URL the gateway sends a credential to: https and not a loopback, private
- * or link-local literal, unless the Allow private upstreams Setting lifts both rules.
- */
 export const providerUrlSchema = z.url().check(
   z.refine((value) => allowsPrivateUpstreams() || isPublicHttpsUrl(new URL(value)), {
     error:

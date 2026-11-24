@@ -46,7 +46,6 @@ export class UpdateProviderAccountHandler implements ICommandHandler<UpdateProvi
     return updated;
   }
 
-  /** A key can't replace an OAuth Login: the account would hold two credentials. */
   private async requireApiKeyAccount(providerAccountId: string): Promise<void> {
     const [account] = await this.db
       .select({ credentialKind: providerAccounts.credentialKind })

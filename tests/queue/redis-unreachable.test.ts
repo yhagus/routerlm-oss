@@ -6,8 +6,6 @@ import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js
 import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// Nothing listens on port 1, so every Redis connection is refused. Set before
-// AppModule loads, because ConfigModule reads the environment at import time.
 process.env.REDIS_URL = "redis://localhost:1";
 const { createTestApp } = await import("@tests/support/test-app.js");
 const { PingProducer } = await import("@/queue/jobs/ping.producer.js");

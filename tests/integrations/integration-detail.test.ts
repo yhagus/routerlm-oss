@@ -13,7 +13,6 @@ import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/te
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
-// The Models here are only listed, never called.
 const UNUSED_BASE_URL = "http://127.0.0.1:1/v1";
 
 const REQUEST_OF_A_CUSTOMER: Omit<typeof usageLogs.$inferInsert, "createdAt"> = {
@@ -50,7 +49,6 @@ describe("An Integration's detail page (e2e)", () => {
     await app.close();
   });
 
-  /** Issues a key to the Customer through the control plane and returns its id. */
   async function issueKey(secret: string, customerId: string): Promise<string> {
     const created = await client.createKey(secret, { customerId });
     if (!created.ok) throw new Error(`createKey failed with ${created.code}`);
@@ -131,7 +129,6 @@ describe("An Integration's detail page (e2e)", () => {
   describe("its Customers", () => {
     let acmeId: string;
 
-    // cus_beta requested last, cus_alpha before, and other_gamma never.
     beforeEach(async () => {
       const acme = await createIntegration(app, adaCookie);
       acmeId = acme.id;

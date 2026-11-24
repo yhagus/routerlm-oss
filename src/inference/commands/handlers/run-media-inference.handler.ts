@@ -40,13 +40,6 @@ import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-in
 
 const HTTP_OK = 200;
 
-/**
- * The inference path of every media Kind: parse with the Kind's client
- * contract, resolve the Model (or the Upstream Model of a direct test), keep
- * the Routes the request's limits allow, then make Attempts with Fallback
- * until one answers, and write the result back. The Kind's upstream Protocol
- * makes each Attempt, fetching the files it generated (ADR 0028).
- */
 @CommandHandler(RunMediaInferenceCommand)
 export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferenceCommand> {
   constructor(
@@ -137,7 +130,6 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     }
   }
 
-  /** The Model the request names, with the Routes that can serve it. */
   private resolveNamedModel(
     contract: MediaClientContract<MediaRequest, unknown>,
     request: MediaRequest,
@@ -168,7 +160,6 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     };
   }
 
-  /** The Upstream Model of a direct Upstream Model test, if it can serve the request. */
   private resolveUpstreamModel(
     contract: MediaClientContract<MediaRequest, unknown>,
     request: MediaRequest,
@@ -203,7 +194,6 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     const endpoint = endpointOf(upstreamModel);
     const protocol = endpoint && contract.upstreamProtocols[endpoint.protocol];
     if (!endpoint || !protocol) {
-      // unservableReasonOf() already skips these Upstream Models.
       throw new Error(
         `The Provider ${provider.slug} has no ${upstreamModel.kind} endpoint the gateway can call`,
       );
@@ -227,10 +217,6 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
   }
 }
 
-/**
- * The Parameter Policy one Attempt goes under: the Model's, with the Route's
- * override. Null for a direct Upstream Model test, which has no Model.
- */
 function attemptPolicyOf(
   destination: Destination,
   route: SnapshotRoute | null,
@@ -244,7 +230,6 @@ function attemptPolicyOf(
   );
 }
 
-/** The request one Attempt sends, under its Parameter Policy. */
 function policedRequest(
   contract: MediaClientContract<MediaRequest, unknown>,
   request: MediaRequest,
@@ -258,13 +243,11 @@ function policedRequest(
   return contract.applyParameterPolicy(request, policy);
 }
 
-/** Whether the Route's Parameter Policy turns the watermark on; a direct test has no policy. */
 function isWatermarkedOn(destination: Destination, route: SnapshotRoute | null): boolean {
   const policy = attemptPolicyOf(destination, route);
   return policy !== null && isWatermarkedUnder(policy);
 }
 
-/** The reason no Route could serve the request, from the first Route that gives one. */
 function firstReasonOf(
   contract: MediaClientContract<MediaRequest, unknown>,
   routes: SnapshotRoute[],
@@ -279,11 +262,6 @@ function firstReasonOf(
   return "this request";
 }
 
-/**
- * Why the Upstream Model can't serve the request, or null when it can: it
- * must be enabled along with its Provider, have an endpoint in a Protocol of
- * the Kind, and meet the request's limits.
- */
 function unservableReasonOf(
   contract: MediaClientContract<MediaRequest, unknown>,
   upstreamModel: SnapshotUpstreamModel,

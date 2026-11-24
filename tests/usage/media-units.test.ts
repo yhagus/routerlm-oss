@@ -8,7 +8,6 @@ import type { Database } from "@/db/schemas/relations.js";
 import { usageLogs } from "@/db/schemas/index.js";
 import type { UsageJob } from "@/usage/models/usage-job.js";
 
-// Needs Redis at REDIS_URL, in its own database so other files' jobs stay out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -20,7 +19,6 @@ const { UsageProducer } = await import("@/usage/jobs/usage.producer.js");
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;
 
-/** A served request's job, with the units a media Kind counts when given. */
 function servedUsageJob(units: UsageJob["units"]): UsageJob {
   return {
     usageLogId: randomUUID(),

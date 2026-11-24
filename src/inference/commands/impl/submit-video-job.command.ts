@@ -7,11 +7,6 @@ import type {
 } from "@/inference/models/inference.js";
 import type { MediaReply } from "@/inference/models/media-kind.js";
 
-/**
- * Submits a Video Job (`POST /v1/videos`) through the media inference path,
- * with Fallback, and answers with a queued video whose id is the job's
- * sealed handle (ADR 0027). Its one Usage Log is written now.
- */
 export class SubmitVideoJobCommand extends Command<MediaReply> {
   constructor(
     readonly body: unknown,

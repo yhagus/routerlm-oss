@@ -4,7 +4,6 @@ import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.sche
 const MAX_NAME_LENGTH = 100;
 const MAX_ALLOWED_MODELS = 500;
 
-// Empty means every Model.
 const allowedModelIdsSchema = z
   .array(z.uuid())
   .max(MAX_ALLOWED_MODELS)
@@ -15,13 +14,11 @@ const integrationFieldsSchema = z.object({
   allowedModelIds: allowedModelIdsSchema,
 });
 
-/** Name and optional allowed Models of a new Integration. */
 export const newIntegrationSchema = integrationFieldsSchema.extend({
   allowedModelIds: allowedModelIdsSchema.default([]),
 });
 export type NewIntegration = z.infer<typeof newIntegrationSchema>;
 
-/** What an edit of an Integration changes: at least one field, each as a new Integration takes it. */
 export const integrationChangesSchema = integrationFieldsSchema
   .partial()
   .refine(hasAnyField, nothingToChange);

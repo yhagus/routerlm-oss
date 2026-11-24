@@ -12,10 +12,6 @@ import {
   WEEKDAY_SHORT_NAMES,
 } from "~/lib/pricingWindows";
 
-/**
- * Edits a Pricing Window's ranges: one row per range, with a toggle for each
- * weekday and its start and end times. Saving replaces the whole list.
- */
 const ranges = defineModel<RangeForm[]>({ required: true });
 
 function rangeName(index: number): string {
@@ -32,7 +28,6 @@ function handleAdd(): void {
   ranges.value.push(rangeFormFor());
 }
 
-/** Replaces every range with one that covers the whole week. */
 function handleAlways(): void {
   ranges.value = [rangeFormFor(ALWAYS_RANGE)];
 }

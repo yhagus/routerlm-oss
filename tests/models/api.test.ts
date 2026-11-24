@@ -34,7 +34,6 @@ describe("Models (e2e)", () => {
     return created.body.id;
   }
 
-  /** Creates a Provider with one Upstream Model and returns both ids. */
   async function createUpstreamModel(
     providerSlug: string,
     upstreamModelId: string,
@@ -234,7 +233,6 @@ describe("Models (e2e)", () => {
     const modelId = await createModel("smart");
     const { providerId, upstreamModelId } = await createUpstreamModel("acme", "acme-large", []);
     const routeId = await addRoute(modelId, upstreamModelId);
-    // No Protocol serves images yet, so no Provider can have an image endpoint to add one through the API.
     const [painter] = await db
       .insert(upstreamModels)
       .values({ providerId, upstreamModelId: "acme-paint", kind: "image", contextSize: 1 })

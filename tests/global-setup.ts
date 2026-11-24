@@ -2,10 +2,6 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
 
-// E2E tests write to and truncate their database, so they never use the
-// app's DATABASE_URL (which bun loads from .env): vitest.config.ts points
-// them at TEST_DATABASE_URL. This creates that database when it is missing
-// and applies the migrations, so `bun run test` works on a fresh Postgres.
 export default async function setup(): Promise<void> {
   const databaseUrl = new URL(requireTestDatabaseUrl());
   const databaseName = databaseUrl.pathname.slice(1);

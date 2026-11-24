@@ -4,7 +4,6 @@ import type { Database } from "@/db/schemas/relations.js";
 import { integrationRotations, integrations, users } from "@/db/schemas/index.js";
 import type { IntegrationSummary } from "./integration.js";
 
-/** Integration summaries, newest first, optionally narrowed by `where`. */
 export async function selectIntegrationSummaries(
   db: Database,
   where?: SQL,

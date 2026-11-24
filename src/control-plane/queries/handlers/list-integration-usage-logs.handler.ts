@@ -44,12 +44,6 @@ const INTEGRATION_USAGE_LOG_COLUMNS = {
   isIncomplete: usageLogs.isIncomplete,
 } satisfies Record<keyof IntegrationUsageLog, unknown>;
 
-/**
- * Pulls in (writing transaction, sequence) order, and only rows of
- * transactions older than every one still running. A transaction still
- * running, whatever sequence it drew, commits rows that sort after every row
- * pulled so far, so the cursor never passes a row that commits late.
- */
 @QueryHandler(ListIntegrationUsageLogsQuery)
 export class ListIntegrationUsageLogsHandler implements IQueryHandler<ListIntegrationUsageLogsQuery> {
   constructor(@InjectDrizzle() private readonly db: Database) {}
@@ -82,7 +76,6 @@ export class ListIntegrationUsageLogsHandler implements IQueryHandler<ListIntegr
   }
 }
 
-/** Rows whose transaction is older than every transaction still running, so is over. */
 function writtenByFinishedTransaction(): SQL {
   return sql`${usageLogs.transactionId} < pg_snapshot_xmin(pg_current_snapshot())`;
 }

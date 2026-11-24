@@ -23,7 +23,6 @@ export class DisableIntegrationHandler implements ICommandHandler<DisableIntegra
     if (disabled.length === 0) {
       throw integrationNotFound();
     }
-    // Its API Keys sign in from the snapshot, which must drop them.
     await this.snapshot.changed();
   }
 }

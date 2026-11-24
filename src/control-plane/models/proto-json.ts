@@ -6,9 +6,6 @@ import type {
 import type { IntegrationModel, IntegrationPricingWindow } from "./integration-model.js";
 import type { IntegrationUsageLog, IntegrationUsageLogPage } from "./integration-usage-log.js";
 
-// The HTTP adapter's bodies, in proto3's JSON mapping of control_plane.proto:
-// lowerCamelCase names, Timestamps as RFC 3339 strings, unset optional fields left out.
-
 export interface ApiKeyJson {
   id: string;
   keyId: string;
@@ -107,7 +104,6 @@ export interface ListUsageLogsResponseJson {
   nextCursor?: string;
 }
 
-/** The body of an HTTP error: the gRPC status name and a message. */
 export interface ErrorJson {
   code: string;
   message: string;
@@ -144,8 +140,6 @@ export function usageLogJsonOf(usageLog: IntegrationUsageLog): UsageLogJson {
   return {
     id: usageLog.id,
     receivedAt: usageLog.createdAt.toISOString(),
-    // Always set on an Integration's Usage Logs: the worker copies the
-    // Integration only from an API Key that names a Customer.
     apiKeyId: usageLog.apiKeyId ?? "",
     apiKeyName: usageLog.apiKeyName ?? undefined,
     customerId: usageLog.customerId ?? "",

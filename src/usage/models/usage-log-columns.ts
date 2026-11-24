@@ -1,6 +1,5 @@
 import { usageLogs } from "@/db/schemas/index.js";
 
-/** The columns of a Usage Log as the Usage page shows it: a UsageLogSummary. */
 export const usageLogSummaryColumns = {
   id: usageLogs.id,
   createdAt: usageLogs.createdAt,

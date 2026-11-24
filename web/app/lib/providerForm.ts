@@ -1,5 +1,3 @@
-// What the Provider form edits, and the request body it turns into.
-
 import {
   REASONING_EFFORTS,
   type ReasoningEffort,
@@ -24,7 +22,6 @@ import {
 
 type FlowFields<Login> = Omit<Login, "flow">;
 
-/** One endpoint row as the inputs hold it; `key` only tells the rows apart while editing. */
 export interface EndpointForm {
   key: number;
   kind: string;
@@ -32,12 +29,10 @@ export interface EndpointForm {
   baseUrl: string;
 }
 
-/** As the API takes it: the backend checks the Kind and Protocol values. */
 export type EndpointFields = Omit<EndpointForm, "key">;
 
 let nextEndpointKey = 0;
 
-/** One fixed header row as the inputs hold it; `key` only tells the rows apart while editing. */
 export interface FixedHeaderForm {
   key: number;
   name: string;
@@ -46,13 +41,11 @@ export interface FixedHeaderForm {
 
 let nextFixedHeaderKey = 0;
 
-/** A fixed header row, empty or prefilled from a Provider's quirk. */
 export function fixedHeaderFormFor(name = "", value = ""): FixedHeaderForm {
   nextFixedHeaderKey += 1;
   return { key: nextFixedHeaderKey, name, value };
 }
 
-/** An endpoint row, empty or prefilled from a Provider's endpoint. */
 export function endpointFormFor(endpoint?: ProviderEndpoint): EndpointForm {
   nextEndpointKey += 1;
   return {
@@ -63,26 +56,21 @@ export function endpointFormFor(endpoint?: ProviderEndpoint): EndpointForm {
   };
 }
 
-/** The Protocol the quirks follow: the chat endpoint's, "" without one. */
 export function chatProtocolOf(form: Pick<ProviderForm, "endpoints">): string {
   return form.endpoints.find((endpoint) => endpoint.kind === "chat")?.protocol ?? "";
 }
 
-/** Field values as the inputs hold them: "" for an empty select or text field. */
 export interface ProviderForm {
   slug: string;
   name: string;
-  /** "" picks a mark by the base URL's host. */
   logo: string;
   termsRisk: boolean;
-  /** At least one; the backend refuses two for one Kind. */
   endpoints: EndpointForm[];
   authStyle: string;
   reasoningContentInHistory: string;
   acceptsCacheControl: boolean;
   acceptsPromptCacheKey: boolean;
   usesMaxCompletionTokens: boolean;
-  /** Blank means the default (four). */
   cacheMarkerLimit: number | string;
   hasReasoningAsThinking: boolean;
   thinkingEfforts: Record<ReasoningEffort, string>;
@@ -93,22 +81,17 @@ export interface ProviderForm {
   systemAsDeveloperMessage: boolean;
   droppedParameters: DroppableParameter[];
   forwardedClientHeaders: string[];
-  /** Rows missing a name or a value are left out on save. */
   fixedHeaders: FixedHeaderForm[];
-  /** As typed; digits-only codes are sent as numbers. */
   exhaustedErrorCodes: string[];
   quotaReader: string;
   quotaBaseUrl: string;
-  /** "" for a Provider without OAuth Login. Each flow keeps its fields, so switching back loses nothing. */
   oauthLoginFlow: string;
   kimiCodeOauthLogin: FlowFields<KimiCodeOauthLogin>;
   openAiCodexOauthLogin: FlowFields<OpenAiCodexOauthLogin>;
   credentialKinds: CredentialKind[];
-  /** The wire value for each Service Tier, "" when the Provider has no such tier. */
   serviceTierValues: Record<ServiceTier, string>;
 }
 
-/** The fields `POST /providers` and `PATCH /providers/:id` share. */
 export interface ProviderFields {
   name: string;
   logo: string | null;
@@ -141,7 +124,6 @@ function openAiCodexFields(login: ProviderOauthLogin | null): FlowFields<OpenAiC
 }
 
 const ALL_DIGITS = /^\d+$/;
-/** The accents NFKD splits off letters, so "Ü" slugs as "u". */
 const COMBINING_MARKS = /\p{Mark}/gu;
 
 function emptyEfforts(): Record<ReasoningEffort, string> {
@@ -155,7 +137,6 @@ function emptyEfforts(): Record<ReasoningEffort, string> {
   };
 }
 
-/** The form for a new Provider (no `provider`) or prefilled from an existing one. */
 export function providerFormFor(provider: Provider | undefined): ProviderForm {
   const quirks = provider?.quirks ?? {};
   const oauthLogin = provider?.oauthLogin ?? null;
@@ -201,7 +182,6 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
   };
 }
 
-/** A slug from a Provider's name: "Kimi Code" becomes "kimi-code". */
 export function slugFromName(name: string): string {
   return name
     .normalize("NFKD")
@@ -211,7 +191,6 @@ export function slugFromName(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** The request body's shared fields, built from the form alone. */
 export function providerFieldsFromForm(form: ProviderForm): ProviderFields {
   return {
     name: form.name,
@@ -234,7 +213,6 @@ function oauthLoginFromForm(form: ProviderForm): ProviderOauthLogin | null {
   return null;
 }
 
-/** Only the tiers given a wire value: a tier left blank is one the Provider doesn't offer. */
 function serviceTierValuesFromForm(form: ProviderForm): Partial<Record<ServiceTier, string>> {
   const values: Partial<Record<ServiceTier, string>> = {};
   for (const tier of SERVICE_TIERS) {
@@ -244,11 +222,6 @@ function serviceTierValuesFromForm(form: ProviderForm): Partial<Record<ServiceTi
   return values;
 }
 
-/**
- * Only the quirks that are set, and only those the chat endpoint's Protocol
- * reads: the backend refuses the other Protocol's quirks, so switching
- * Protocol drops them.
- */
 function quirksFromForm(form: ProviderForm): ProviderQuirks {
   return { ...protocolQuirks(form), ...sharedQuirks(form) };
 }
@@ -303,7 +276,6 @@ function openaiChatQuirks(form: ProviderForm): ProviderQuirks {
   return quirks;
 }
 
-/** Header names are case-insensitive, and the backend takes them lowercase only. */
 function fixedHeadersFromRows(rows: FixedHeaderForm[]): Record<string, string> {
   const headers: Record<string, string> = {};
   for (const row of rows) {
@@ -314,7 +286,6 @@ function fixedHeadersFromRows(rows: FixedHeaderForm[]): Record<string, string> {
   return headers;
 }
 
-/** Quirks every Protocol reads: what makes a Provider Account Exhausted, and where its quota is read. */
 function sharedQuirks(form: ProviderForm): ProviderQuirks {
   const quirks: ProviderQuirks = {};
   if (form.exhaustedErrorCodes.length > 0) {

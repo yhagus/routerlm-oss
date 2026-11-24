@@ -24,17 +24,12 @@ import type {
 import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
-/** A ServingTarget as the writer stores it: a field the job lacked is null. */
 type StoredServingTarget = { [Field in keyof ServingTarget]: ServingTarget[Field] | null };
 
-/** What a request's records copy from its job (ADR 0024). */
 interface JobSnapshot {
   requestNames: RequestNames;
-  /** The Integration's name and the Customer id, both null for a key no Integration issued. */
   customerNames: { integrationName: string | null; customerId: string | null };
-  /** All null when no Attempt answered. */
   servedBy: StoredServingTarget;
-  /** In the order of the job's Attempts. */
   attemptTargets: StoredServingTarget[];
 }
 
@@ -48,7 +43,6 @@ const NOT_SERVED: StoredServingTarget = {
   providerAccountName: null,
 };
 
-/** Writes a request's Usage Log, its Attempts and its Error Captures, in the worker. */
 @Injectable()
 export class UsageWriter {
   constructor(
@@ -56,12 +50,6 @@ export class UsageWriter {
     private readonly spendLimitFlags: SpendLimitFlags,
   ) {}
 
-  /**
-   * Idempotent: a retried job finds its Usage Log already written and stops,
-   * so its Cost is added to the API Key's spent once (ADR 0035).
-   * Ids are written as the job has them, even when an operator has deleted
-   * that row since: they stay what served the request (ADR 0024).
-   */
   async writeUsage(job: UsageJob): Promise<void> {
     const snapshot = snapshotOf(job);
     const measurements = measurementsOf(job);
@@ -100,7 +88,6 @@ export class UsageWriter {
       if (written.length === 0) {
         return false;
       }
-      // Chosen here so the Error Captures can point at their Attempts.
       const attemptIds = job.attempts.map(() => randomUUID());
       if (job.attempts.length > 0) {
         await transaction.insert(attempts).values(
@@ -128,19 +115,12 @@ export class UsageWriter {
         ? addToSpent(transaction, job.caller.apiKeyId, measurements.cost)
         : false;
     });
-    // Recomputed after the commit, so the flag never shows spend that rolled
-    // back, and from a fresh read, so it never undoes a Spend Limit raised
-    // while the transaction ran.
     if (job.caller.kind === "api-key" && hasSpentAgainstLimit) {
       await this.spendLimitFlags.recompute(job.caller.apiKeyId);
     }
   }
 }
 
-/**
- * Adds a request's Cost to its API Key's spent. Returns whether it added to a
- * key with a Spend Limit: not for an unknown or zero Cost, or a key deleted since.
- */
 async function addToSpent(
   transaction: Transaction,
   apiKeyId: string,
@@ -157,18 +137,12 @@ async function addToSpent(
   return keySpend !== undefined && keySpend.spendLimit !== null;
 }
 
-/**
- * One capture per failed Attempt, linked to that Attempt (and so to its
- * Provider Account). A request that failed before any Attempt failed gets one
- * capture with no Attempt: the client's request to the gateway.
- */
 function errorCaptureRowsOf(
   job: UsageJob,
   capture: ErrorCaptureRecord,
   attemptIds: string[],
 ): NewErrorCapture[] {
   const { request } = capture;
-  // Each capture names who sent the request, so it is complete on its own (ADR 0032).
   const clientRequest = {
     usageLogId: job.usageLogId,
     requestHeaders: request.headers,
@@ -188,10 +162,6 @@ function errorCaptureRowsOf(
   }));
 }
 
-/**
- * Token counts and Cost. A media Kind counts units instead of tokens, so its
- * Cost comes from them and its missing token counts make it no less complete.
- */
 function measurementsOf(job: UsageJob) {
   const measurements = usageMeasurementsOf(job.servedBy, job.usage);
   if (!job.units) {
@@ -200,7 +170,6 @@ function measurementsOf(job: UsageJob) {
   return { ...measurements, cost: unitCostOf(job.servedBy, job.units), isIncomplete: false };
 }
 
-/** The unit columns of a Usage Log: null for a unit the Kind doesn't count, and all null for chat. */
 function unitColumnsOf(units: MediaUnits | null) {
   return {
     imagesOut: units?.imagesOut ?? null,
@@ -227,13 +196,6 @@ function callerColumnsOf(caller: UsageCaller) {
   }
 }
 
-/**
- * The job's request names and targets, with every field a job may lack set
- * to null. Jobs queued before Usage Logs copied names (commit 4e83ea0) lack
- * the names and an Attempt's Upstream Model id; jobs queued before Attempts
- * copied the Provider's name lack that name. Remove this tolerance, and make
- * those job fields required, once no such job can still be queued.
- */
 function snapshotOf(job: UsageJob): JobSnapshot {
   const storedTargetOf = (target: QueuedServingTarget): StoredServingTarget => ({
     routeId: target.routeId,
@@ -258,7 +220,6 @@ function snapshotOf(job: UsageJob): JobSnapshot {
   };
 }
 
-/** The target columns a Usage Log and its Attempts share; only an Attempt also copies the Provider's name. */
 function servingTargetColumnsOf(target: StoredServingTarget) {
   return {
     routeId: target.routeId,

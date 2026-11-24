@@ -25,36 +25,27 @@ import {
 } from "~/lib/playgroundTranscription";
 import { formatCost } from "~/lib/usage";
 
-// The Playground's transcription tab: an audio file in, its transcript out.
-
 const { $dashboardApi } = useNuxtApp();
 const { source, modelDetail, canTry, requestModel, requestPath } =
   usePlaygroundTarget("transcription");
 
-// Settings
-
 const language = ref("");
 const isSettingsSheetOpen = ref(false);
 
-/** The settings to send, or what is missing from them. */
 function readSettings(): { settings: PlaygroundTranscriptionSettings } | { problem: string } {
   const target = requestModel();
   if ("problem" in target) return target;
   return { settings: { model: target.model, language: language.value.trim() } };
 }
 
-// The audio file to send next
-
 const fileInput = useTemplateRef("fileInput");
 const audioFile = ref<File | null>(null);
 const composerError = ref("");
 
-/** Refuses an oversized file here, so it is never uploaded. */
 function handleFileChange(event: Event): void {
   const input = event.target;
   if (!(input instanceof HTMLInputElement)) return;
   const file = input.files?.[0] ?? null;
-  // Cleared, so choosing the same file again fires another change.
   input.value = "";
   if (!file) return;
   const problem = audioFileProblemOf(file);
@@ -65,8 +56,6 @@ function handleFileChange(event: Event): void {
   composerError.value = "";
   audioFile.value = file;
 }
-
-// History: lives in this tab only, and is gone on reload.
 
 const exchanges = ref<TranscriptionExchange[]>([]);
 let nextExchangeId = 1;
@@ -88,13 +77,11 @@ function handleSubmit(): void {
   }
   composerError.value = "";
   audioFile.value = null;
-  // The transcript arrives in the background; the composer is free again at once.
   void send(read.settings, file);
 }
 
 async function send(settings: PlaygroundTranscriptionSettings, file: File): Promise<void> {
   const isDirect = source.value === "upstream";
-  // Reactive, so the tab shows the transcript when it arrives.
   const exchange = reactive<TranscriptionExchange>({
     id: nextExchangeId++,
     fileName: file.name,
@@ -142,7 +129,6 @@ function clearHistory(): void {
   exchanges.value = [];
 }
 
-/** Totals over every request in this tab, so a run of test sends adds up. */
 const totals = computed(() => {
   let transcripts = 0;
   let cost: number | null = null;

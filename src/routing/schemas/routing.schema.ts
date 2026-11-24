@@ -7,9 +7,6 @@ import {
   SERVICE_TIERS,
 } from "@/inference/models/internal-format.js";
 
-// What the dashboard sends to create or change Models and their Routes.
-
-// The widest ranges any upstream Protocol accepts; the upstream refuses what its model doesn't.
 const capSchemas = {
   temperature: z.number().min(0).max(2),
   topP: z.number().min(0).max(1),
@@ -25,7 +22,6 @@ const parameterValuesSchema = z.strictObject({
 });
 const CAPPED_PARAMETERS = z.object(capSchemas).keyof().options;
 
-/** Kept unchanged: the system prompt is plain text, never a template. */
 export const parameterPolicySchema = z
   .strictObject({
     defaults: parameterValuesSchema.partial().optional(),
@@ -56,20 +52,17 @@ export const parameterPolicySchema = z
     }
   }) satisfies z.ZodType<ParameterPolicy>;
 
-/** Where a capped value sits in its order: efforts by their place in REASONING_EFFORTS. */
 function rank(value: number | ReasoningEffort): number {
   return typeof value === "number" ? value : REASONING_EFFORTS.indexOf(value);
 }
 
 const modelFieldsSchema = z.strictObject({
-  // What clients send as `model`.
   name: z.string().trim().min(1),
   isEnabled: z.boolean(),
   parameterPolicy: parameterPolicySchema,
   hasAutomaticCacheBreakpoints: z.boolean(),
 });
 
-/** A Model's Kind is chosen once, when it is created: its Routes depend on it. */
 export const newModelSchema = modelFieldsSchema.extend({
   kind: z.enum(MODEL_KINDS).optional(),
   isEnabled: z.boolean().optional(),
@@ -81,7 +74,6 @@ export type NewModel = z.infer<typeof newModelSchema>;
 export const modelChangesSchema = modelFieldsSchema.partial().refine(hasAnyField, nothingToChange);
 export type ModelChanges = z.infer<typeof modelChangesSchema>;
 
-// Null means the gateway default (spec "Fallback": 10 s, 60 s, 10 min).
 const routeTimeoutMsSchema = z.int().positive().nullable();
 
 const routeFieldsSchema = z.strictObject({
@@ -90,11 +82,9 @@ const routeFieldsSchema = z.strictObject({
   connectTimeoutMs: routeTimeoutMsSchema,
   firstTokenTimeoutMs: routeTimeoutMsSchema,
   totalTimeoutMs: routeTimeoutMsSchema,
-  // Null means the Model's Parameter Policy applies unchanged.
   parameterPolicyOverride: parameterPolicySchema.nullable(),
 });
 
-/** A new Route goes last; reorder to move it. */
 export const newRouteSchema = routeFieldsSchema.extend({
   isEnabled: z.boolean().optional(),
   connectTimeoutMs: routeTimeoutMsSchema.optional(),
@@ -107,7 +97,6 @@ export type NewRoute = z.infer<typeof newRouteSchema>;
 export const routeChangesSchema = routeFieldsSchema.partial().refine(hasAnyField, nothingToChange);
 export type RouteChanges = z.infer<typeof routeChangesSchema>;
 
-/** Every Route of the Model, each once, first to try first. */
 export const routeOrderSchema = z.strictObject({
   routeIds: z.array(z.uuid()).refine((routeIds) => new Set(routeIds).size === routeIds.length, {
     error: "List each Route once",

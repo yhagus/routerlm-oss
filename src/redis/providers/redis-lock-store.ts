@@ -4,36 +4,26 @@ import type { Redis } from "ioredis";
 import { RedisConnection } from "./redis-connection.js";
 
 const LOCK_KEY_PREFIX = "routerlm:lock:";
-/** One counter for every lock; no lock key can be named like it. */
 const FENCING_COUNTER_KEY = "routerlm:lock-fencing-token";
 
-// Takes the lock if nobody holds it, expiring on Redis's clock, and draws a
-// fencing token from a counter that never goes back. Returns the token, or 0.
 const ACQUIRE_SCRIPT = `
 if redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) then
   return redis.call('INCR', KEYS[2])
 end
 return 0`;
 
-// Renews the lock, if it is still the owner's.
 const RENEW_SCRIPT = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
   return redis.call('PEXPIRE', KEYS[1], ARGV[2])
 end
 return 0`;
 
-// Deletes the lock, if it is still the owner's.
 const RELEASE_SCRIPT = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
   return redis.call('DEL', KEYS[1])
 end
 return 0`;
 
-/**
- * Keeps the locks of `@nestjs/locks` in Redis, so the backend and worker
- * processes share them. It is the store docs.nestjs.com shows for Redis
- * ("Locks"), on the shared connection.
- */
 @Injectable()
 export class RedisLockStore implements LockStore {
   private readonly redis: Redis;

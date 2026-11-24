@@ -2,7 +2,6 @@
 import { computed } from "vue";
 import { formatPageNumber } from "~/composables/useDocsContents";
 
-/** The sheet's footer: the previous and next pages in the contents' order, and the document's imprint. */
 const { t } = useDocsLocale();
 const { pages, currentPage } = useDocsContents();
 const appVersion = useRuntimeConfig().public.appVersion;

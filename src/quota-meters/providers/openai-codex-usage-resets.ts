@@ -16,14 +16,11 @@ import type {
 import { codexBackendRequestOf } from "./openai-codex-backend.js";
 import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
-/** On the origin of the Provider's base URL, as the Codex CLI's backend client calls them. */
 const RESET_CREDITS_PATH = "/backend-api/wham/rate-limit-reset-credits";
 const CONSUME_PATH = `${RESET_CREDITS_PATH}/consume`;
 
-/** What a reset OpenAI lists without a title is called. */
 const UNTITLED_RESET = "Usage reset";
 
-// Loose, so a reset's raw payload keeps whatever else OpenAI sends.
 const creditSchema = z.looseObject({
   id: z.string().min(1),
   status: z.string(),
@@ -36,7 +33,6 @@ const creditsResponseSchema = z.looseObject({ credits: z.array(creditSchema) });
 
 const consumeResponseSchema = z.looseObject({ code: z.string() });
 
-/** OpenAI's answer to spending a reset, by its `code`. */
 const OUTCOMES_BY_CODE: ReadonlyMap<string, UsageResetOutcome> = new Map([
   ["reset", "reset"],
   ["nothing_to_reset", "nothing-to-reset"],
@@ -44,11 +40,6 @@ const OUTCOMES_BY_CODE: ReadonlyMap<string, UsageResetOutcome> = new Map([
   ["already_redeemed", "unavailable"],
 ]);
 
-/**
- * The Usage Resets of a ChatGPT plan, which OpenAI calls rate limit reset
- * credits: listed and spent as the Codex CLI does, with the same credential
- * as the usage reading.
- */
 @Injectable()
 export class OpenAiCodexUsageResets implements UsageResetPort {
   constructor(@InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient) {}
@@ -65,7 +56,6 @@ export class OpenAiCodexUsageResets implements UsageResetPort {
         cause: parsed.error,
       });
     }
-    // A reset being redeemed or already redeemed can no longer be spent.
     return parsed.data.credits
       .filter((credit) => credit.status === "available")
       .map((credit) => ({

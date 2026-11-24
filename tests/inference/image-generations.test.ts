@@ -68,7 +68,6 @@ describe("Image generation on /v1/images/generations (e2e)", () => {
       .send(body);
   }
 
-  /** The recorded DashScope answer, its two image URLs pointing at `paths` on the fake. */
   function generated(...paths: [string, string]): Extract<FakeReply, { kind: "json" }> {
     const [first, second] = paths.map((path) => upstream.mediaUrl(path));
     const body = dashScopeImageFixture("upstream-response.json")
@@ -266,8 +265,6 @@ describe("Image generation on /v1/images/generations (e2e)", () => {
   });
 
   it("refuses a generated image on a private address when the Setting doesn't allow them", async () => {
-    // The generation call goes out while private upstreams are allowed; only
-    // the media fetch after it runs without that allowance.
     upstream.replyTo(GENERATION_PATH, {
       ...generated("/media/a.png", "/media/b.png"),
       onReceived: () => allowPrivateUpstreams(app, false),

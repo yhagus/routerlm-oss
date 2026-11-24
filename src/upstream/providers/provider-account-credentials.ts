@@ -26,21 +26,14 @@ import { OauthRefreshLock } from "./oauth-refresh-lock.js";
 import { ProviderAccountHealth } from "./provider-account-health.js";
 import { ProviderKeyCipher } from "./provider-key-cipher.js";
 
-/** A Provider Account's OAuth Login as stored, decrypted, with the auth host that refreshes it. */
 interface StoredLogin extends OauthLoginLifetime {
   accessToken: string;
   refreshToken: string;
   endpoint: OauthLoginEndpoint;
-  /** OpenAI Codex only: the ChatGPT account the login calls for. */
   accountId: string | null;
 }
 
-/** What reading a credential may do to its Provider Account. */
 export interface CredentialReadOptions {
-  /**
-   * Whether an OAuth Login the auth host refuses to refresh disables the
-   * account. False for a Probe, which observes the account and never changes it.
-   */
   disablesRefusedLogin: boolean;
 }
 
@@ -50,12 +43,6 @@ type StoredCredential =
   | { kind: "api-key"; key: string }
   | { kind: "oauth-login"; login: StoredLogin };
 
-/**
- * The credential a call to a Provider sends for a Provider Account: its API
- * key, or its OAuth Login's access token, which is refreshed here when it is
- * about to run out. There is no background refresh: a login is renewed only
- * by the call that needs it.
- */
 @Injectable()
 export class ProviderAccountCredentials {
   private readonly logger = new Logger(ProviderAccountCredentials.name);
@@ -68,12 +55,6 @@ export class ProviderAccountCredentials {
     private readonly health: ProviderAccountHealth,
   ) {}
 
-  /**
-   * Throws NotFoundException for an unknown account, OauthLoginRefusedError
-   * when the Provider refuses to renew its OAuth Login, and
-   * CredentialUnavailableError when a login that has run out can't be renewed
-   * for now.
-   */
   async credentialOf(
     providerAccountId: string,
     options: CredentialReadOptions = DISABLES_REFUSED_LOGIN,
@@ -104,11 +85,6 @@ export class ProviderAccountCredentials {
     }
   }
 
-  /**
-   * The credential to try once more with after the Provider answered 401 to
-   * `rejected`: the OAuth Login, refreshed whatever its age. Throws as
-   * `credentialOf` does.
-   */
   credentialAfterRejection(
     providerAccountId: string,
     rejected: ProviderAccountCredential,
@@ -121,11 +97,6 @@ export class ProviderAccountCredentials {
     );
   }
 
-  /**
-   * Refreshes the login under the Provider Account's lock, unless another
-   * process did meanwhile: the stored login is read again once the lock is
-   * held, and refreshed only if it is still `isStale`.
-   */
   private refreshed(
     providerAccountId: string,
     isStale: (login: StoredLogin) => boolean,
@@ -143,13 +114,11 @@ export class ProviderAccountCredentials {
     });
   }
 
-  /** Asks the auth host for new tokens and stores them in place of the old ones. */
   private async refresh(
     providerAccountId: string,
     login: StoredLogin,
     { disablesRefusedLogin }: CredentialReadOptions,
   ): Promise<StoredLogin> {
-    // Before the request, so the stored expiry is never later than the real one.
     const grantedAt = new Date();
     const refresh = await this.oauthLoginClient.refreshTokens(login.endpoint, login.refreshToken);
     switch (refresh.kind) {
@@ -222,12 +191,10 @@ export class ProviderAccountCredentials {
       throw new CredentialUnavailableError("Provider Account holds no credential");
     }
     if (account.oauthLogin === null) {
-      // An operator took the OAuth data off the Provider: nothing says how to present or refresh the login.
       throw new CredentialUnavailableError("The Provider no longer offers OAuth Login");
     }
     const endpoint = oauthLoginEndpointOf(account.oauthLogin, account.region, deviceId);
     if (endpoint === null) {
-      // Signed in without a region, but the Provider now signs in with regions.
       throw new CredentialUnavailableError("The OAuth Login names no region of the Provider");
     }
     return {
@@ -252,7 +219,6 @@ function loginCredential({
   return { secret: accessToken, identityHeaders: identityHeadersOf(endpoint, accountId) };
 }
 
-/** How a call made with the login presents itself as the Provider's CLI (ADR 0012, 0013). */
 function identityHeadersOf(
   endpoint: OauthLoginEndpoint,
   accountId: string | null,

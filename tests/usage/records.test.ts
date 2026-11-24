@@ -26,8 +26,6 @@ import { portOf } from "@tests/support/port-of.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
-// Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
-// files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -39,7 +37,6 @@ const PROMPT_TEXT = "Which umbrella should I pack for Lisbon?";
 const RESPONSE_TEXT = "Checking the weather.";
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: PROMPT_TEXT }] };
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
-// 1,000 uncached input tokens, 10,000 cache reads and 2,000 cache writes, in OpenAI's shape.
 const FULL_USAGE = {
   prompt_tokens: 13_000,
   completion_tokens: 500,
@@ -74,7 +71,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
 
   beforeEach(async () => {
     upstream.reset();
-    // The previous test's job must not land after the tables are emptied.
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     ({
@@ -145,7 +141,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
       isStreamed: false,
       httpStatus: 200,
       errorCode: null,
-      // The fixture reports 120 prompt tokens, 100 of them cache reads.
       inputTokens: 20,
       outputTokens: 40,
       cacheReadTokens: 100,
@@ -155,7 +150,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
       isCancelled: false,
       isIncomplete: false,
     });
-    // (20 x 2 + 40 x 8 + 100 x 0.5) per million tokens.
     expect(written.usageLog.cost).toBeCloseTo(0.00041, 10);
     expect(written.usageLog.requestBytes).toBe(JSON.stringify(CHAT_REQUEST).length);
     expect(written.usageLog.responseBytes).toBeGreaterThan(0);
@@ -164,7 +158,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
     ]);
   });
 
-  /** Queues a successful upstream answer reporting `usage`. */
   function upstreamAnswersWithUsage(usage: object): void {
     const answer: Record<string, unknown> = JSON.parse(
       openAiChatFixture("upstream-response-tool-call.json"),
@@ -193,7 +186,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
       reasoningTokens: 100,
       isIncomplete: false,
     });
-    // (1000 x 2 + 500 x 8 + 10000 x 0.5 + 2000 x 2.5) per million tokens.
     expect(usageLog.cost).toBeCloseTo(0.016, 10);
   });
 
@@ -213,7 +205,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
       cacheReadTokens: null,
       isIncomplete: true,
     });
-    // (1000 x 2 + 500 x 8 + 2000 x 2.5) per million tokens.
     expect(usageLog.cost).toBeCloseTo(0.011, 10);
   });
 
@@ -248,7 +239,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
     await chat(CHAT_REQUEST).expect(200);
 
     const { usageLog } = await writtenUsageLog();
-    // (1000 x 2 + 500 x 8 + 10000 x 0.5) per million tokens.
     expect(usageLog.cost).toBeCloseTo(0.011, 10);
   });
 
@@ -341,7 +331,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
     });
     await setProviderQuirks(app, db, providerId, { exhaustedErrorCodes: [2056] });
     const answer = JSON.parse(openAiChatFixture("upstream-response-tool-call.json"));
-    // The first request's refusal makes the first account Exhausted.
     upstream.reply({
       kind: "json",
       status: 429,
@@ -439,7 +428,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
       return request(app.getHttpServer());
     }
 
-    /** Waits until the worker wrote `count` Usage Logs, and returns them oldest first. */
     async function writtenUsageLogs(count: number) {
       const deadline = Date.now() + WORKER_WRITE_TIMEOUT_MS;
       while (Date.now() < deadline) {
@@ -665,7 +653,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
       await chat({ ...CHAT_REQUEST, service_tier: "flex" }).expect(200);
 
       const { usageLog } = await writtenUsageLog();
-      // (20 x 1 + 40 x 4) at flex, plus 100 cache reads x 0.5 at the standard price, per million.
       expect(usageLog.cost).toBeCloseTo(0.00023, 10);
       const listed = await request(app.getHttpServer())
         .get("/api/usage")
@@ -688,7 +675,6 @@ describe("Usage Logs and Attempts (e2e)", () => {
 
       const { usageLog } = await writtenUsageLog();
       expect(usageLog.serviceTier).toBeNull();
-      // Standard prices: (1000 x 2 + 500 x 8 + 10000 x 0.5 + 2000 x 2.5) per million tokens.
       expect(usageLog.cost).toBeCloseTo(0.016, 10);
     });
   });

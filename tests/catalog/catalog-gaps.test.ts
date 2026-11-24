@@ -5,7 +5,6 @@ import type { Database } from "@/db/schemas/relations.js";
 import { FakeUpstream } from "@tests/support/fake-upstream.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// The env is read when the app module loads, so it is set before that import.
 const modelsDev = await FakeUpstream.start();
 process.env.MODELS_DEV_API_URL = `${modelsDev.origin}/api.json`;
 process.env.MODELS_DEV_TIMEOUT_MS = "1000";
@@ -13,7 +12,6 @@ const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
-/** The shipped Catalog's Anthropic Provider maps to models.dev's "anthropic". */
 const PROVIDER_SLUG = "anthropic";
 const HELD_MODEL_ID = "claude-held";
 
@@ -37,7 +35,6 @@ describe("Catalog Gaps API (e2e)", () => {
   let db: Database;
   let cookie: string;
 
-  // A fresh app per test, because it caches what models.dev answered.
   beforeEach(async () => {
     modelsDev.reset();
     ({ app, db } = await createTestApp());

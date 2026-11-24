@@ -19,9 +19,7 @@ import { UpstreamClient } from "./providers/upstream-client.js";
 import { VideoHandles } from "./providers/video-handles.js";
 import { VideoTaskReader } from "./providers/video-task-reader.js";
 
-/** The client-facing `/v1/*` API: inference and the Model list. */
 @Module({
-  // Retries are off: Fallback across Provider Accounts and Routes is the gateway's job.
   imports: [
     HttpClientModule.registerAsync({
       inject: [OutboundFetch],

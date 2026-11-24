@@ -14,15 +14,12 @@ import {
 import type { upstreamModels } from "@/db/schemas/index.js";
 import type { AttachedPricingWindow } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 
-/** An Upstream Model as the dashboard API returns it. */
 export type UpstreamModel = typeof upstreamModels.$inferSelect;
 
-/** An Upstream Model in the dashboard's list, with its Pricing Windows by window name. */
 export interface ListedUpstreamModel extends UpstreamModel {
   pricingWindows: AttachedPricingWindow[];
 }
 
-/** The HTTP error for a failed Upstream Model insert or update, or the original error. */
 export function toUpstreamModelWriteError(
   error: unknown,
   providerModelName: string | undefined,
@@ -38,10 +35,6 @@ export function toUpstreamModelWriteError(
   return error;
 }
 
-/**
- * Refuses an Upstream Model that lists a Service Tier its Provider maps to no
- * wire value, or prices a tier it doesn't list (ADR 0014), naming the tiers.
- */
 export function assertServiceTiersFitProvider(
   upstreamModel: {
     serviceTiers: readonly ServiceTier[];
@@ -66,7 +59,6 @@ export function assertServiceTiersFitProvider(
   }
 }
 
-/** Refuses an Upstream Model of a Kind its Provider has no endpoint for (ADR 0026), naming the Kind. */
 export function assertProviderServesKind(
   kind: ModelKind,
   endpoints: readonly ProviderEndpoint[],

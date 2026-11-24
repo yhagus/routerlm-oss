@@ -28,12 +28,6 @@ import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from "~
 
 useHead({ title: "Usage" });
 
-// Filters
-
-// Held in the URL (?range=7d&model=…&key=…&status=failed,cancelled&errorOrigin=client&serviceTier=fast) so a
-// refresh or a link (the Overview's origin tiles) keeps them. Model, API Key, status, origin, tier and
-// Integration are comma-separated lists; a log matches any pick. The Customer id matches exactly. The DataTable
-// holds the search (?q=) and page (?page=) the same way; this page reads them for its requests.
 const timeRange = useQueryParam<TimeRange>("range", { default: "24h", isValid: isTimeRange });
 const modelFilter = useQueryList("model", { isValid: isUuid });
 const apiKeyFilter = useQueryList("key", { isValid: isApiKeyChoice, order: [PLAYGROUND] });
@@ -58,7 +52,6 @@ const {
 } = useOwnerFilters(() => usagePage.value?.items ?? []);
 const search = useQuerySearch();
 const page = useQueryPage();
-// Fixed when the range is picked (or refreshed), so paging doesn't shift the window.
 const from = ref(timeRangeStart(timeRange.value, Date.now()));
 
 function refreshTimeRange(): void {
@@ -78,8 +71,6 @@ function clearFilters(): void {
   clearOwnerFilters();
 }
 
-// The DataTable returns to page 1 when the search or a filter token changes; the time range has no
-// token, so it does that here.
 watch(timeRange, () => {
   refreshTimeRange();
   page.value = 1;
@@ -122,7 +113,6 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...ownerFilterTokens.value,
 ]);
 
-// With API Keys and the Playground both picked, the backend matches either.
 const filterQuery = computed(() => ({
   from: from.value,
   modelId: listParam(modelFilter.value),
@@ -135,8 +125,6 @@ const filterQuery = computed(() => ({
   customerId: customerFilter.value || undefined,
   q: search.value.trim() || undefined,
 }));
-
-// Data: both requests re-run whenever the search, a filter or the page changes.
 
 const {
   data: usagePage,
@@ -156,18 +144,12 @@ const {
   refresh: refreshSummary,
 } = useDashboardApi<UsageSummary>("/usage/totals", { query: filterQuery });
 
-/**
- * Moves the window to end now, then reloads the logs and the totals. A moved
- * window starts both requests on its own; `defer` joins those instead of
- * repeating them, and still reloads when the window can't move ("All time").
- */
 async function refresh(): Promise<void> {
   refreshTimeRange();
   await nextTick();
   await Promise.all([refreshLogs({ dedupe: "defer" }), refreshSummary({ dedupe: "defer" })]);
 }
 
-/** Only the first load shows placeholders; a refetch keeps the current rows until it lands. */
 const isLoadingLogs = computed(() => usagePageStatus.value === "pending" && !usagePage.value);
 
 const columns: DataTableColumn<UsageLogSummary>[] = [

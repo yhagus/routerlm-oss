@@ -6,7 +6,6 @@ import { deleteAllUpstreamData, insertRouteTo } from "@tests/support/upstream.js
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
-// A Provider that ships with no Catalog file but speaks a known Protocol (ADR 0003).
 const ACME = {
   slug: "acme",
   name: "Acme AI",

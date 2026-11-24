@@ -40,7 +40,6 @@ const {
 useMissingResource(() => isNotFound(loadError.value), "Integration");
 const { data: modelChoices, status: modelChoicesStatus } =
   useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
-// Saving before the choices arrive would silently allow every Model.
 const isLoadingModelChoices = computed(
   () => modelChoicesStatus.value === "pending" && !modelChoices.value,
 );
@@ -49,9 +48,7 @@ useHead({ title: () => integration.value?.name ?? "Integration" });
 
 const status = computed(() => (integration.value ? integrationStatus(integration.value) : null));
 
-/** The open tab lives in `?tab=` so a link can open it directly. */
 const activeTab = useQueryParam<Tab>("tab", { default: "overview", isValid: oneOf(TABS) });
-// Each tab's table keeps its search and page in `?q=` and `?page=`; a new tab starts without them.
 const search = useQuerySearch();
 const page = useQueryPage();
 watch(activeTab, () => {
@@ -63,8 +60,6 @@ function formatDate(value: string): string {
   return dateFormat.format(new Date(value));
 }
 
-// Edit
-
 const isFormOpen = ref(false);
 
 async function handleUpdated(updated: IntegrationSummary): Promise<void> {
@@ -72,8 +67,6 @@ async function handleUpdated(updated: IntegrationSummary): Promise<void> {
   showToast(`Saved ${updated.name}`);
   await refresh();
 }
-
-// Disable and enable: one click each, undone by the other
 
 async function toggleEnabled(): Promise<void> {
   if (!integration.value) return;
@@ -88,15 +81,12 @@ async function toggleEnabled(): Promise<void> {
   }
 }
 
-// Rotate and delete
-
 const confirming = ref<IntegrationConfirmation | null>(null);
 
 function openConfirm(kind: IntegrationConfirmation["kind"]): void {
   if (integration.value) confirming.value = { kind, integration: integration.value };
 }
 
-/** The new Integration Secret, shown once right after rotating it. */
 const rotated = ref<CreatedIntegration | null>(null);
 const isRotatedOpen = computed({
   get: () => rotated.value !== null,
@@ -109,8 +99,6 @@ async function handleRotated(integrationWithSecret: CreatedIntegration): Promise
   rotated.value = integrationWithSecret;
   await refresh();
 }
-
-// The less frequent actions sit behind one "…" button beside Edit.
 
 type MoreActionId = "rotate" | "toggle" | "delete";
 
@@ -214,7 +202,6 @@ async function handleDeleted(deleted: IntegrationSummary): Promise<void> {
           <TabsTrigger class="tabs__trigger" value="secret-history">Secret history</TabsTrigger>
         </TabsList>
 
-        <!-- Hidden tabs unmount: each table owns `?q=` and `?page=` while it is shown. -->
         <TabsContent value="overview" class="tabs__panel">
           <IntegrationOverviewPanel :integration-id="integrationId" />
         </TabsContent>

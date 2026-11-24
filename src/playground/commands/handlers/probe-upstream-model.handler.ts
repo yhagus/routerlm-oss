@@ -41,7 +41,6 @@ export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamM
     return { results };
   }
 
-  /** One Probe call, with its own deadline; however it fails, its result says why. */
   private async probeWith(
     { upstreamModel, kind }: ProbePlan,
     providerAccount: SnapshotProviderAccount,
@@ -67,8 +66,6 @@ export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamM
     try {
       await this.commandBus.execute(command);
     } catch (error) {
-      // A GatewayError is the failure the result reports; anything else is a
-      // bug, which the result reports as the gateway's.
       if (!(error instanceof GatewayError)) {
         this.logger.error(
           `Probe of Upstream Model ${upstreamModel.id} with Provider Account ${providerAccount.id} failed`,

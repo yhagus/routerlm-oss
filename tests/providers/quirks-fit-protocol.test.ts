@@ -10,7 +10,6 @@ const ANTHROPIC_ENDPOINTS = [
   { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example/v1" },
 ];
 
-// acceptsCacheControl is openai-chat only.
 const ACME = {
   slug: "acme",
   name: "Acme AI",

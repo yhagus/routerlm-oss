@@ -49,9 +49,6 @@ import {
 } from "~/lib/playgroundVideo";
 import { formatCost } from "~/lib/usage";
 
-// The Playground's video tab: a prompt in, a Video Job submitted and polled
-// until its MP4 can be played.
-
 const { $dashboardApi } = useNuxtApp();
 const {
   source,
@@ -63,15 +60,12 @@ const {
   requestPath,
 } = usePlaygroundTarget("video");
 
-// Settings
-
 const seconds = ref("");
 const resolution = ref<ResolutionChoice>(MODEL_DEFAULT);
 const aspectRatio = ref<RatioChoice>(MODEL_DEFAULT);
 const seed = ref("");
 const isSettingsSheetOpen = ref(false);
 
-/** The Upstream Models a request may reach: the picked one, or the Model's routed ones. */
 const targetUpstreamModels = computed(() => {
   if (source.value === "upstream") {
     return selectedUpstreamModel.value ? [selectedUpstreamModel.value] : [];
@@ -82,7 +76,6 @@ const targetUpstreamModels = computed(() => {
   return upstreamModelsOfKind.value.filter((upstreamModel) => routedIds.has(upstreamModel.id));
 });
 
-/** The resolutions some target lists, or every one when none lists any. */
 const resolutionOptions = computed(() => {
   const listed = new Set(
     targetUpstreamModels.value.flatMap((upstreamModel) => upstreamModel.resolutions ?? []),
@@ -103,26 +96,22 @@ watch(resolutionOptions, (options) => {
   }
 });
 
-/** The durations the targets take, such as `2 to 10, default 5`. */
 const durationPlaceholder = computed(() => {
   const targets = targetUpstreamModels.value;
   const minimums = targets.flatMap((target) => target.minDurationSeconds ?? []);
   const maximums = targets.flatMap((target) => target.maxDurationSeconds ?? []);
-  // A range only when every target states one; otherwise the gateway's answer says.
   const isRangeKnown =
     targets.length > 0 && minimums.length === targets.length && maximums.length === targets.length;
   if (!isRangeKnown) return `Default ${DEFAULT_VIDEO_SECONDS}`;
   return `${Math.min(...minimums)} to ${Math.max(...maximums)}, default ${DEFAULT_VIDEO_SECONDS}`;
 });
 
-/** A whole number field: undefined when empty, null when it isn't one in range. */
 function wholeNumberField(text: string, min: number, max: number): number | undefined | null {
   if (text.trim() === "") return undefined;
   const value = Number(text);
   return Number.isInteger(value) && value >= min && value <= max ? value : null;
 }
 
-/** The parameters to send, or what is wrong with them. */
 function readParameters(): { parameters: VideoParameters } | { problem: string } {
   const parsedSeconds = wholeNumberField(seconds.value, 1, Number.MAX_SAFE_INTEGER);
   if (parsedSeconds === null) return { problem: "Duration must be a whole number of seconds." };
@@ -138,7 +127,6 @@ function readParameters(): { parameters: VideoParameters } | { problem: string }
   };
 }
 
-/** The settings to send, or what is missing from them. */
 function readSettings(): { settings: PlaygroundVideoSettings } | { problem: string } {
   const target = requestModel();
   if ("problem" in target) return target;
@@ -147,20 +135,16 @@ function readSettings(): { settings: PlaygroundVideoSettings } | { problem: stri
   return { settings: { model: target.model, ...read.parameters } };
 }
 
-/** The parameters this tab sends, shown in the bar so they're visible without the rail. */
 const sentParameters = computed(() => {
   const read = readParameters();
   return "parameters" in read ? videoParameterLabels(read.parameters) : [];
 });
-
-// History: lives in this tab only, and is gone on reload.
 
 const exchanges = ref<VideoExchange[]>([]);
 let nextExchangeId = 1;
 const composerError = ref("");
 const runningSubmit = ref<AbortController | null>(null);
 const isSubmitting = computed(() => runningSubmit.value !== null);
-/** Ends every poll at once: on Clear, and when the Playground is left. */
 let polling = new AbortController();
 onBeforeUnmount(() => polling.abort());
 
@@ -172,7 +156,6 @@ const canSend = computed(
   () => !isSubmitting.value && canTry.value && promptInput.textInput.value.trim() !== "",
 );
 
-/** The composer's submit. Throwing hands the prompt back to the composer and shows the problem. */
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSubmitting.value) return;
   const prompt = message.text.trim();
@@ -180,13 +163,11 @@ async function submit(message: PromptInputMessage): Promise<void> {
   const read = readSettings();
   if ("problem" in read) throw new Error(read.problem);
   composerError.value = "";
-  // The job runs for minutes in the background; the composer is free again once it is accepted.
   void send(read.settings, prompt);
 }
 
 async function send(settings: PlaygroundVideoSettings, prompt: string): Promise<void> {
   const isDirect = source.value === "upstream";
-  // Reactive, so the tab shows each status as it is polled.
   const exchange = reactive<VideoExchange>({
     id: nextExchangeId++,
     prompt,
@@ -230,7 +211,6 @@ async function send(settings: PlaygroundVideoSettings, prompt: string): Promise<
   void poll(exchange, polling.signal);
 }
 
-/** Polls a submitted Video Job until it completes, fails or expires. */
 async function poll(exchange: VideoExchange, signal: AbortSignal): Promise<void> {
   while (exchange.state.kind === "running") {
     const { videoId, summary } = exchange.state;
@@ -245,7 +225,6 @@ async function poll(exchange: VideoExchange, signal: AbortSignal): Promise<void>
             summary,
           };
     } catch (failure) {
-      // Cleared, or the Playground was left: the exchange is gone.
       if (signal.aborted) return;
       exchange.state = { kind: "failed", error: await errorOf(failure), summary };
     }
@@ -272,7 +251,6 @@ function clearHistory(): void {
   exchanges.value = [];
 }
 
-/** Totals over every Video Job in this tab, so a run of test submits adds up. */
 const totals = computed(() => {
   let jobs = 0;
   let cost: number | null = null;

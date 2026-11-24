@@ -13,23 +13,17 @@ import {
   type WindowPricesTiming,
 } from "~/lib/validityPeriods";
 
-/** One attachment as the Window Prices dialog's inputs hold it. */
 export interface AttachedWindowForm {
-  /** Tells the rows apart while editing: a window can be attached more than once. */
   key: number;
   pricingWindowId: string;
   name: string;
   timeZone: string;
   ranges: PricingWindow["ranges"];
   isEnabled: boolean;
-  /** As last saved; undefined until saved. */
   status: WindowPricesStatus | undefined;
-  /** The Validity Period as last saved; undefined for a new attachment. */
   savedPeriod: ValidityPeriod | undefined;
-  /** "YYYY-MM-DDTHH:MM" as a datetime-local input holds it, "" for an open bound. */
   validFrom: string;
   validUntil: string;
-  /** Each price a typed string, "" for the standard one. */
   prices: Record<keyof WindowPrices, string | number>;
 }
 
@@ -84,7 +78,6 @@ export function validityPeriodOf(entry: AttachedWindowForm): ValidityPeriod {
   };
 }
 
-/** The PUT body entry for one attachment. */
 export type WindowPricesBody = { pricingWindowId: string } & WindowPrices & ValidityPeriod;
 
 export function windowPricesBody(entry: AttachedWindowForm): WindowPricesBody {
@@ -98,7 +91,6 @@ export function windowPricesBody(entry: AttachedWindowForm): WindowPricesBody {
   };
 }
 
-/** The first attachment whose start isn't before its end, so it can never apply. */
 export function emptyPeriodEntryOf(
   entries: readonly AttachedWindowForm[],
 ): AttachedWindowForm | undefined {
@@ -108,11 +100,6 @@ export function emptyPeriodEntryOf(
   );
 }
 
-/**
- * The attachments after splitting each saved, open-ended one that a new or
- * edited period collides with: it is cut at the new start, and a copy with the
- * same prices runs from the new end. Undefined when nothing needs splitting.
- */
 export function splitOpenEndedAround(
   entries: readonly AttachedWindowForm[],
 ): AttachedWindowForm[] | undefined {
@@ -132,7 +119,6 @@ export function splitOpenEndedAround(
   return hasSplit ? result : undefined;
 }
 
-/** Whether the period is new or differs from the saved one: those are what a split makes room for. */
 function hasNewPeriod(entry: AttachedWindowForm): boolean {
   if (entry.savedPeriod === undefined) return true;
   const period = validityPeriodOf(entry);
@@ -142,7 +128,6 @@ function hasNewPeriod(entry: AttachedWindowForm): boolean {
   );
 }
 
-/** `entry` split around `cut`, or no pieces when it isn't open-ended or `cut` can't collide with it. */
 function splitPiecesOf(entry: AttachedWindowForm, cut: AttachedWindowForm): AttachedWindowForm[] {
   const entryTiming = timingOf(entry);
   const cutTiming = timingOf(cut);

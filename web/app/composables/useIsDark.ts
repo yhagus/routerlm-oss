@@ -1,10 +1,5 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
-/**
- * Whether the dark palette is showing: the stored theme (`data-theme` on the
- * root) wins, otherwise the system setting. For code that can't read the CSS
- * tokens, such as a syntax highlighter picking its theme.
- */
 export function useIsDark(): Ref<boolean> {
   const isDark = ref(false);
   let media: MediaQueryList | undefined;

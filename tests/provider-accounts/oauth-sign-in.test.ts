@@ -27,7 +27,6 @@ import {
 } from "@tests/support/kimi-oauth.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -38,12 +37,10 @@ const { OAUTH_SIGN_INS_QUEUE } = await import("@/queue/models/queue-names.js");
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const CLIENT_ID = "client-id-of-the-cli";
 const CLI_VERSION = "9.8.7";
-// Short, so a test sees several polls without waiting; real auth hosts say 5 seconds.
 const POLL_INTERVAL_SECONDS = 0.1;
 const LONG_ENOUGH_SECONDS = 60;
 const WAIT_TIMEOUT_MS = 5_000;
 const WAIT_STEP_MS = 25;
-// Long enough for a dashboard request to finish while the auth host is still answering a poll.
 const GRANT_DELAY_MS = 500;
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
 
@@ -61,8 +58,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
   let authHost: FakeUpstream;
   let cookie: string;
   let providerId: string;
-  // Each test signs in at paths of its own, so a poll that outlives its test
-  // never takes a reply queued for the next one.
   let testNumber = 0;
   let globalAuthHost: string;
   let chinaAuthHost: string;
@@ -117,7 +112,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
 
   const globalPath = (path: string) => `/global-${testNumber}${path}`;
 
-  /** Queues the auth host's answers for a sign-in with a global account: the start, then each poll in turn. */
   function authHostAnswers(
     timing: { expiresIn: number; interval?: number },
     ...polls: ReturnType<typeof tokenErrorReply>[]
@@ -153,7 +147,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     throw new Error(`Timed out waiting for ${what}`);
   }
 
-  /** The sign-in once it is no longer pending. */
   function endedSignIn(signInId: string): Promise<SignIn> {
     return until(async () => {
       const signIn = await readSignIn(signInId);
@@ -165,7 +158,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     return authHost.requests.filter((received) => received.path === globalPath(TOKEN_PATH));
   }
 
-  /** Resolves once the auth host has been polled `count` times. */
   function untilPolled(count: number): Promise<ReceivedRequest[]> {
     return until(
       async () => (pollsReceived().length >= count ? pollsReceived() : undefined),
@@ -173,7 +165,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     );
   }
 
-  /** Starts a sign-in the User approves at the first poll, and returns it completed. */
   async function completedSignIn(): Promise<SignIn> {
     authHostAnswers(
       { expiresIn: LONG_ENOUGH_SECONDS, interval: POLL_INTERVAL_SECONDS },
@@ -248,7 +239,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     const started = await startSignIn().expect(201);
     await untilPolled(1);
 
-    // Ten of the intervals the sign-in started with: without the slow down, the next poll is long due.
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_SECONDS * 10 * 1000));
 
     expect(pollsReceived()).toHaveLength(1);
@@ -296,13 +286,11 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
   });
 
   it("creates one Provider Account when two polls of the same sign-in are granted at once", async () => {
-    // A long interval keeps the queue's own poll away; the test runs the two polls itself.
     authHostAnswers(
       { expiresIn: LONG_ENOUGH_SECONDS, interval: LONG_ENOUGH_SECONDS },
       grantedTokensReply(GRANT_DELAY_MS),
       grantedTokensReply(),
     );
-    // The slower poll loses the race to create the account and records its outcome last.
     const started = await startSignIn().expect(201);
     const commandBus = app.get(CommandBus);
 
@@ -337,7 +325,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     expect(stored.oauthEncryptedRefreshToken).not.toContain(REFRESH_TOKEN);
     expect(keyCipher.decrypt(stored.oauthEncryptedAccessToken ?? "")).toBe(ACCESS_TOKEN);
     expect(keyCipher.decrypt(stored.oauthEncryptedRefreshToken ?? "")).toBe(REFRESH_TOKEN);
-    // The fake auth host grants tokens that last 900 seconds.
     const lifetimeMs = (stored.oauthExpiresAt?.getTime() ?? 0) - grantedAfter;
     expect(lifetimeMs).toBeGreaterThan(895_000);
     expect(lifetimeMs).toBeLessThan(905_000);
@@ -432,7 +419,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
   });
 
   it("ends the sign-in at once when the granted OAuth Login can't be kept, and creates no Provider Account", async () => {
-    // The Provider is deleted while the auth host grants the tokens, so no account can hold them.
     authHostAnswers(
       { expiresIn: LONG_ENOUGH_SECONDS, interval: POLL_INTERVAL_SECONDS },
       grantedTokensReply(GRANT_DELAY_MS),
@@ -495,7 +481,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
       .set("Cookie", cookie)
       .send({ name: "Team plan", priority: 7 })
       .expect(200);
-    // As the gateway leaves an account whose login the Provider no longer renews.
     const [disabled] = await db
       .update(providerAccounts)
       .set({ isEnabled: false, disabledReason: "Sign in again" })
@@ -533,7 +518,6 @@ describe("Signing in to a Provider for an OAuth Login (e2e)", () => {
     const keyCipher = app.get(ProviderKeyCipher);
     expect(keyCipher.decrypt(stored[0].oauthEncryptedAccessToken ?? "")).toBe("access-token-2");
     expect(keyCipher.decrypt(stored[0].oauthEncryptedRefreshToken ?? "")).toBe("refresh-token-2");
-    // The account stays the same device to the Provider, and keeps the name the operator gave it.
     expect(stored[0].oauthDeviceId).toBe(disabled.deviceId);
     const signInAgainCalls = authHost.requests.slice(-2);
     expect(signInAgainCalls.map((call) => call.headers["x-msh-device-id"])).toEqual([

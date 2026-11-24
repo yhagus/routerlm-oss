@@ -6,22 +6,15 @@ import type {
   SnapshotUpstreamModel,
 } from "@/snapshot/models/snapshot.js";
 
-/** The Model Kinds a Probe can check; video, with its long-running jobs, is not one. */
 const PROBED_KINDS = ["chat", "image", "speech", "transcription"] as const;
 export type ProbedKind = (typeof PROBED_KINDS)[number];
 
-/** What a Probe checks: the Upstream Model, its Kind, and the Provider Accounts to call. */
 export interface ProbePlan {
   upstreamModel: SnapshotUpstreamModel;
   kind: ProbedKind;
   providerAccounts: SnapshotProviderAccount[];
 }
 
-/**
- * The Probe of the Upstream Model with row id `upstreamModelId`, or the
- * client error that refuses it before any upstream call. A disabled Upstream
- * Model or Provider is probed all the same; disabled Provider Accounts are left out.
- */
 export function probePlanFor(snapshot: Snapshot, upstreamModelId: string): ProbePlan {
   const upstreamModel = snapshot.upstreamModelsById.get(upstreamModelId);
   if (!upstreamModel) {

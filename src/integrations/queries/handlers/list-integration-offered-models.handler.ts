@@ -11,8 +11,6 @@ import { integrations } from "@/db/schemas/index.js";
 import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
 import { ListIntegrationOfferedModelsQuery } from "@/integrations/queries/impl/list-integration-offered-models.query.js";
 
-// Asks the control plane's own query, so the dashboard never shows other
-// Models or prices than the Integration itself is told.
 @QueryHandler(ListIntegrationOfferedModelsQuery)
 export class ListIntegrationOfferedModelsHandler implements IQueryHandler<ListIntegrationOfferedModelsQuery> {
   constructor(

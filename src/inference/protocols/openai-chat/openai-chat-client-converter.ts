@@ -21,9 +21,6 @@ import {
 } from "@/inference/protocols/client-protocol-converter.js";
 import { finishReasonOf, writeUsage } from "./openai-chat-usage.js";
 
-// The Chat Completions client Protocol (`POST /v1/chat/completions`).
-// Schemas are plain (non-strict) zod objects: unknown fields are dropped (ADR 0002).
-
 const textPartSchema = z.object({ type: z.literal("text"), text: z.string() });
 const imagePartSchema = z.object({
   type: z.literal("image_url"),
@@ -102,7 +99,6 @@ const requestSchema = z.object({
   top_p: z.number().min(0).max(1).nullish(),
   stop: z.union([z.string(), z.array(z.string())]).nullish(),
   prompt_cache_key: z.string().min(1).nullish(),
-  // Any string: values that name no Service Tier ask for none.
   service_tier: z.string().nullish(),
   stream: z.boolean().nullish(),
   stream_options: z.object({ include_usage: z.boolean().optional() }).nullish(),
@@ -145,11 +141,10 @@ const featureRefusedSchema = z.object({
 
 const SUPPORTED_CONTENT_PARTS = new Set(["text", "image_url"]);
 
-/** Features ADR 0002 keeps out of v1 get a 400 that names them, rather than being dropped. */
 function refuseOutOfScopeFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
   if (!features.success) {
-    return; // Malformed: the full schema explains it.
+    return;
   }
   const { n, audio, modalities, web_search_options, functions, tools, messages } = features.data;
   if (n !== undefined && n !== 1) {
@@ -192,7 +187,6 @@ function unsupported(feature: string): GatewayError {
 function toInferenceRequest(request: ClientRequest): InferenceRequest {
   const system: TextPart[] = [];
   const messages: InferenceMessage[] = [];
-  // System and developer messages are hoisted, in order, ahead of the conversation.
   for (const message of request.messages) {
     if (message.role === "system" || message.role === "developer") {
       system.push(...textParts(message.content));
@@ -382,7 +376,6 @@ function startStream(request: InferenceRequest, context: ResponseContext): Clien
 class OpenAiChatStreamWriter implements ClientStreamWriter {
   private readonly header: Record<string, unknown>;
   private readonly isUsageRequested: boolean;
-  // Usage arrives before `finish` but goes out last, so it is held to the end.
   private usage: TokenUsage | undefined;
 
   constructor(request: InferenceRequest, context: ResponseContext) {
@@ -421,13 +414,11 @@ class OpenAiChatStreamWriter implements ClientStreamWriter {
         this.usage = event.usage;
         return "";
       case "reasoning-signature":
-        // Chat Completions has nowhere to carry a reasoning signature.
         return "";
     }
   }
 
   end(): string {
-    // Usage goes last, in a chunk without choices, as OpenAI sends it.
     const usageChunk =
       this.isUsageRequested && this.usage
         ? serverSentEvent({ ...this.header, choices: [], usage: writeUsage(this.usage) })
@@ -468,7 +459,6 @@ function writeError(error: GatewayError): unknown {
   };
 }
 
-/** OpenAI ends a failed stream with the error envelope as a data line, and no `[DONE]`. */
 function writeStreamError(error: GatewayError): string {
   return serverSentEvent(writeError(error));
 }

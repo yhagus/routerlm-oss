@@ -1,18 +1,4 @@
-/* Client documentation (/docs, /id/docs), imported only by layouts/docs.vue.
-   Same theme as the dashboard: it defines no palette of its own and reads the
-   dashboard tokens (dashboard.css :root: colours, focus, shadows, z-order),
-   its type (Plus Jakarta Sans; JetBrains Mono for code) and its shape family
-   (6–18px radii), so light and dark follow the same switch.
-   Its own structure, apart from the dashboard's floating glass sidebar and
-   panel grid: a full-width header, the numbered contents as a flat column on
-   the canvas, and each page on one white sheet. Dense: the reader should see
-   the endpoint, the request and the next section without scrolling far.
-   Shared controls come straight from dashboard.css: .brand, .icon-button,
-   .segmented. This file is unlayered, so it wins over dashboard.css (layer
-   components) wherever both style the same element. */
-
 .datasheet {
-  /* The header's height: the contents stick under it, anchors scroll clear of it. */
   --ds-head-height: 56px;
   --ds-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
   min-height: 100vh;
@@ -23,7 +9,6 @@
   line-height: 1.6;
 }
 
-/* Labels: the dashboard's uppercase tracked label (table heads, metric labels). */
 .ds-title__cell dt,
 .ds-figure__caption,
 .ds-table th,
@@ -37,7 +22,6 @@
   text-transform: uppercase;
 }
 
-/* Header: full width, solid canvas, one hairline. */
 .ds-head {
   position: sticky;
   top: 0;
@@ -47,7 +31,6 @@
   align-items: center;
   gap: 20px;
   height: var(--ds-head-height);
-  /* Its edges line up with the body's, which stops widening at 1320px. */
   padding-inline: max(20px, calc((100% - 1320px) / 2 + 20px));
   border-bottom: 1px solid var(--line);
   background: var(--paper);
@@ -109,7 +92,6 @@
   display: none;
 }
 
-/* The search trigger reads as the dashboard's search field. */
 .ds-search-trigger {
   display: flex;
   align-items: center;
@@ -151,7 +133,6 @@
   font-weight: 600;
 }
 
-/* Language: the dashboard's segmented control; its options are links. */
 .ds-language__option {
   display: inline-flex;
   align-items: center;
@@ -174,7 +155,6 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-/* Dashboard / Sign in: the dashboard's primary button, at header height. */
 .ds-cell-link {
   display: inline-flex;
   align-items: center;
@@ -200,7 +180,6 @@
   transform: scale(0.97);
 }
 
-/* Body: the flat contents column beside the sheet. */
 .datasheet__body {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
@@ -225,7 +204,6 @@
   padding: 16px 0 28px;
 }
 
-/* Contents: a flat list on the canvas; the current page lifts like a segmented thumb. */
 .ds-contents {
   padding: 18px 0 24px;
 }
@@ -289,7 +267,6 @@
 .ds-contents__page--current .ds-contents__number {
   color: var(--ink-2);
 }
-/* The current page's sections hang from a hairline guide. */
 .ds-contents__sections {
   display: grid;
   margin: 4px 0 8px 19px;
@@ -326,7 +303,6 @@
   color: var(--ink-2);
 }
 
-/* The sheet: every page on one white panel. */
 .ds-sheet {
   max-width: 980px;
   padding: 26px 36px 22px;
@@ -341,7 +317,6 @@
   font-size: 13px;
 }
 
-/* Title block: the heading, then its data cells as one ruled row. */
 .ds-title h1 {
   margin: 0;
   color: var(--ink);
@@ -397,7 +372,6 @@
   padding-right: 0;
   border-left: 0;
 }
-/* Copy page: the dashboard's button, compact. */
 .ds-title__copy {
   display: inline-flex;
   align-items: center;
@@ -445,7 +419,6 @@
 .ds-title__recovery:hover {
   text-decoration-thickness: 2px;
 }
-/* Too narrow for the cells in one row: the endpoint takes a whole row. */
 @container ds-main (width < 700px) {
   .ds-title__cells {
     flex-wrap: wrap;
@@ -465,8 +438,6 @@
   }
 }
 
-/* Article: numbered sections at a reading measure; figures and tables run the sheet's width.
-   The counters are reset on the article (DocsPage), with the page's number. */
 .ds-article {
   margin-top: 18px;
 }
@@ -481,7 +452,6 @@
 .ds-prose p {
   margin: 0 0 12px;
 }
-/* The lede: the page's introduction, before its first section. */
 .ds-prose > p:not(h2 ~ p) {
   color: var(--ink-2);
   font-size: 16px;
@@ -551,7 +521,6 @@ h3.ds-heading {
   vertical-align: 0.18em;
   font-variant-numeric: tabular-nums;
 }
-/* Numbered like the contents and the figures: page, section, subsection. */
 h2.ds-heading::before {
   min-width: 2.2em;
   content: counter(ds-page) "." counter(ds-section);
@@ -585,14 +554,12 @@ h3.ds-heading::before {
   background: var(--control-hover);
   color: var(--ink);
 }
-/* Touch screens have no hover: the anchor stays visible. */
 @media (hover: none) {
   .ds-heading__anchor {
     opacity: 1;
   }
 }
 
-/* Code figures: a recessed box on the sheet, no shadow. */
 .ds-figure {
   margin: 12px 0 18px;
   overflow: hidden;
@@ -682,7 +649,6 @@ h3.ds-heading::before {
   content: " " counter(ds-page, decimal-leading-zero) "-" counter(ds-figure);
 }
 
-/* Tables: the dashboard's data table in a 12px box. */
 .ds-table {
   margin: 12px 0 18px;
   overflow-x: auto;
@@ -691,8 +657,6 @@ h3.ds-heading::before {
 }
 .ds-table table {
   width: 100%;
-  /* A narrow main column scrolls the table rather than crushing its columns;
-     phones stack it into records instead (below). */
   min-width: 34rem;
   border-collapse: collapse;
   font-size: 13px;
@@ -726,7 +690,6 @@ h3.ds-heading::before {
   white-space: nowrap;
 }
 
-/* Pager: previous and next at the foot of the sheet, then the imprint. */
 .ds-pager {
   margin-top: 32px;
 }
@@ -780,7 +743,6 @@ a.ds-pager__link:hover {
   font-size: 11px;
 }
 
-/* Search: a native modal dialog, shaped like the dashboard's sheets. */
 .ds-search {
   width: min(620px, calc(100vw - 32px));
   max-width: none;
@@ -796,7 +758,6 @@ a.ds-pager__link:hover {
   line-height: 1.5;
   box-shadow: var(--shadow-float);
 }
-/* ::backdrop may not inherit the page's variables, so the scrim is spelled out. */
 .ds-search::backdrop {
   background: rgba(0, 0, 0, 0.25);
   -webkit-backdrop-filter: blur(2px);
@@ -928,7 +889,6 @@ a.ds-pager__link:hover {
   color: var(--danger-ink);
 }
 
-/* Narrower screens: a slimmer contents column and sheet inset. */
 @media (max-width: 1100px) {
   .ds-head {
     grid-template-columns: auto minmax(160px, 1fr) auto;
@@ -945,7 +905,6 @@ a.ds-pager__link:hover {
   }
 }
 
-/* Phones: the contents become a drawer that also takes the settings; the sheet runs edge to edge. */
 @media (max-width: 760px) {
   .ds-head {
     display: flex;
@@ -1081,8 +1040,6 @@ a.ds-pager__link:hover {
   .ds-search__input {
     font-size: 16px;
   }
-  /* Tables stack into records: one block per row, each cell under its
-     column's header (data-label, set by ProseTable). */
   .ds-table {
     position: relative;
   }
@@ -1117,8 +1074,6 @@ a.ds-pager__link:hover {
   .ds-table td:first-child {
     white-space: normal;
   }
-  /* With three or more columns, the first two cells head the record on one
-     line (400 · invalid_request); the rest keep their labels. */
   .ds-table tr:has(td:nth-child(3)) td:is(:first-child, :nth-child(2)) {
     display: inline;
     color: var(--ink);

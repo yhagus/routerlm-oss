@@ -1,7 +1,5 @@
 <script setup lang="ts">
-/** One table row with a centred spinner while a list loads. Use inside `<tbody>`. */
 defineProps<{
-  /** How many columns the row spans. */
   columns: number;
   label?: string;
 }>();

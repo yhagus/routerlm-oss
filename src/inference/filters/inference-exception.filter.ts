@@ -19,12 +19,6 @@ import { UsageMeter } from "@/inference/models/usage-meter.js";
 const INFERENCE_PATH_PREFIX = "/v1/";
 const MULTIPART_CONTENT_TYPE = "multipart/form-data";
 
-/**
- * Answers every error on `/v1/*` in the error contract (spec "Error
- * contract"), in the client Protocol's envelope. Registered globally because
- * some of these errors (a body over the size limit) happen before routing.
- * Other paths, and errors outside the contract (bugs), keep Nest's default handling.
- */
 @Catch()
 export class InferenceExceptionFilter implements ExceptionFilter {
   constructor(
@@ -34,7 +28,7 @@ export class InferenceExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost): void {
     if (exception instanceof ClientCancelledError) {
-      return; // Nobody is left to answer.
+      return;
     }
     const http = host.switchToHttp();
     const request = http.getRequest<IncomingMessage>();
@@ -43,7 +37,6 @@ export class InferenceExceptionFilter implements ExceptionFilter {
       host.getType() === "http" && path.startsWith(INFERENCE_PATH_PREFIX)
         ? gatewayErrorOf(exception, request)
         : null;
-    // The adapter only exists once the app is created, after this filter is.
     const { httpAdapter } = this.adapterHost;
     if (!error) {
       new BaseExceptionFilter(httpAdapter).catch(exception, host);
@@ -52,8 +45,6 @@ export class InferenceExceptionFilter implements ExceptionFilter {
     const protocol = clientProtocolOf(path);
     const converter = CLIENT_PROTOCOL_CONVERTERS[protocol] ?? openAiChatClientConverter;
     const envelope = converter.writeError(error);
-    // RunInferenceHandler records the requests it saw; these were refused before
-    // reaching it (bad API Key, unreadable or oversized body).
     if (!(exception instanceof GatewayError) && request.method === "POST") {
       const meter = new UsageMeter(
         { kind: "unidentified" },
@@ -67,7 +58,6 @@ export class InferenceExceptionFilter implements ExceptionFilter {
   }
 }
 
-/** The error contract's view of an exception; null for anything it doesn't cover (a bug: 500). */
 function gatewayErrorOf(exception: unknown, request: IncomingMessage): GatewayError | null {
   if (exception instanceof GatewayError) {
     return exception;
@@ -105,7 +95,6 @@ function isMultipart(request: IncomingMessage): boolean {
   return request.headers["content-type"]?.toLowerCase().startsWith(MULTIPART_CONTENT_TYPE) ?? false;
 }
 
-/** Which client Protocol a path speaks, so its errors use that Protocol's envelope. */
 function clientProtocolOf(path: string): ClientProtocol {
   if (path.startsWith("/v1/messages")) {
     return "anthropic-messages";

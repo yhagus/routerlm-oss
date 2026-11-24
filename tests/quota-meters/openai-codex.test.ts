@@ -43,11 +43,9 @@ const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" 
 const RESPONSES_PATH = "/v1/responses";
 const HOUR_SECONDS = 3600;
 const HOUR_MS = HOUR_SECONDS * 1000;
-/** Under the 300 seconds below which every OAuth Login is refreshed. */
 const SHORT_LIFETIME_SECONDS = 60;
 const REFRESH_TOKEN = "codex-refresh-token-0123";
 
-// The Codex backend always answers as a stream (the Catalog's alwaysStreams quirk).
 const STREAMED_RESPONSE: FakeReply = {
   kind: "stream",
   events: openAiResponsesFixture("upstream-stream-tool-call.sse"),
@@ -71,7 +69,6 @@ function usageLimitReached(resetsAt: Date): FakeReply {
 describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
-  // Plays the Codex backend, `wham/usage` included, and OpenAI's auth host.
   let openAi: FakeUpstream;
   let catalogCodex: CatalogProvider;
   let apiKey: string;
@@ -92,8 +89,6 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
     openAi.reset();
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
-    // The Provider as the Catalog seeds it, but at the fake upstream. Its API
-    // key account is the backup: the OAuth Login account runs first.
     ({ providerId } = await insertOpenAiResponsesModel(app, db, {
       modelName: "smart",
       baseUrl: openAi.baseUrl,
@@ -146,7 +141,6 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
     return openAi.requests.filter((received) => received.path === path);
   }
 
-  /** The credential each Attempt sent, in order. */
   function attemptedCredentials(): string[] {
     return callsTo(RESPONSES_PATH).map((received) =>
       String(received.headers.authorization).replace("Bearer ", ""),
@@ -229,7 +223,6 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
           scope: null,
         },
       ],
-      // OpenAI said nothing about resets, so none were fetched.
       usageResets: [],
     });
   });
@@ -267,7 +260,6 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
   it("marks the account Exhausted until resets_at on usage_limit_reached, reads its quota and falls back", async () => {
     const accountId = await addLoginAccount();
     const resetsAt = new Date(Math.floor((Date.now() + 3 * HOUR_MS) / 1000) * 1000);
-    // A failed reading leaves the end the refusal set.
     openAi.replyTo(USAGE_PATH, { kind: "json", status: 500, body: {} });
     openAi.reply(usageLimitReached(resetsAt));
     openAi.reply(STREAMED_RESPONSE);

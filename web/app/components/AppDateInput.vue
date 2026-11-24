@@ -21,19 +21,13 @@ import {
   DatePickerTrigger,
 } from "reka-ui";
 
-// A typed YYYY-MM-DD field with a calendar popover. The value is the
-// "YYYY-MM-DD" string the API speaks, or "" when no date is set.
 const props = defineProps<{
-  /** The control's accessible name. */
   label: string;
-  /** The earliest date that can be picked, as YYYY-MM-DD. */
   min?: string;
 }>();
 const model = defineModel<string>({ required: true });
 const open = ref(false);
 
-// en-CA formats dates as YYYY-MM-DD, so the typed segments read in the same
-// order as the value stored and shown everywhere else.
 const LOCALE = "en-CA";
 
 const dateValue = computed<DateValue | undefined>({

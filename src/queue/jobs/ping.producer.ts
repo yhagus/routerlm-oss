@@ -12,7 +12,6 @@ export class PingProducer {
 
   constructor(@InjectQueue(PING_QUEUE) private readonly pingQueue: Queue) {}
 
-  /** Asks the worker to report its process id. Undefined when Redis is unreachable. */
   ping(): Promise<PingJob | undefined> {
     return addJobOrLog(this.pingQueue, this.logger, "ping", {}, { removeOnComplete: true });
   }

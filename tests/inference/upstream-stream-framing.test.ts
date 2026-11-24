@@ -14,15 +14,11 @@ import {
 import { createTestApp } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-/** Served by an openai-chat Provider, whose stream events have no names. */
 const CHAT_MODEL = "via-chat";
-/** Served by an anthropic-messages Provider, whose stream events are named. */
 const MESSAGES_MODEL = "via-messages";
 
-/** Small enough that the cuts fall inside event names, field names and data. */
 const PIECE_LENGTH = 300;
 
-/** One Chat Completions stream chunk, as an openai-chat upstream sends it. */
 function chatChunkData(delta: object, finishReason: string | null = null): string {
   return JSON.stringify({
     id: "chatcmpl-upstream-1",
@@ -41,7 +37,6 @@ function piecesOf(text: string): string[] {
   return pieces;
 }
 
-/** The text deltas of a Chat Completions stream, joined. */
 function streamedContentOf(text: string): string {
   return text
     .trim()
@@ -69,7 +64,6 @@ describe("Reading an upstream's server-sent events (e2e)", () => {
     await insertOpenAiChatModel(app, db, { modelName: CHAT_MODEL, baseUrl: upstream.baseUrl });
     await insertAnthropicMessagesModel(app, db, {
       modelName: MESSAGES_MODEL,
-      // The Protocol appends /v1/messages to the Provider's base URL.
       baseUrl: new URL(upstream.baseUrl).origin,
     });
     ({ key: apiKey } = await insertApiKey(app, db));

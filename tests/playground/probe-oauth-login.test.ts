@@ -21,7 +21,6 @@ import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const GLOBAL_TOKEN_PATH = `/global${TOKEN_PATH}`;
 const HOUR_SECONDS = 3600;
-/** Under the 300 seconds below which every OAuth Login is refreshed. */
 const SHORT_LIFETIME_SECONDS = 60;
 const RENEWED = { accessToken: "access-token-2", refreshToken: "refresh-token-2" };
 
@@ -53,7 +52,6 @@ interface ProbeResultBody {
 describe("Probe of an Upstream Model with an OAuth Login account (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
-  // Plays the Provider's API and its auth host.
   let kimi: FakeUpstream;
   let adaCookie: string;
   let providerId: string;
@@ -75,7 +73,6 @@ describe("Probe of an Upstream Model with an OAuth Login account (e2e)", () => {
     }));
     await offerOauthLogin(db, providerId, kimi.origin);
     [{ id: upstreamModelRowId }] = await db.select({ id: upstreamModels.id }).from(upstreamModels);
-    // The API key account is probed too, in parallel.
     kimi.replyWithCredential(UPSTREAM_KEY, COMPLETION);
   });
 

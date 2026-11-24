@@ -38,18 +38,13 @@ import {
 } from "~/lib/playgroundSpeech";
 import { formatCost } from "~/lib/usage";
 
-// The Playground's speech tab: text in, audio out.
-
 const { $dashboardApi } = useNuxtApp();
 const { source, modelDetail, canTry, requestModel, requestPath } = usePlaygroundTarget("speech");
-
-// Settings
 
 const voice = ref("");
 const format = ref<AudioFormat>(DEFAULT_AUDIO_FORMAT);
 const isSettingsSheetOpen = ref(false);
 
-/** The settings to send, or what is missing from them. */
 function readSettings(): { settings: PlaygroundSpeechSettings } | { problem: string } {
   const target = requestModel();
   if ("problem" in target) return target;
@@ -57,8 +52,6 @@ function readSettings(): { settings: PlaygroundSpeechSettings } | { problem: str
   if (typedVoice === "") return { problem: "Enter a voice in Settings." };
   return { settings: { model: target.model, voice: typedVoice, format: format.value } };
 }
-
-// History: lives in this tab only, and is gone on reload.
 
 const exchanges = ref<SpeechExchange[]>([]);
 let nextExchangeId = 1;
@@ -74,7 +67,6 @@ const canSend = computed(
   () => !isSending.value && canTry.value && promptInput.textInput.value.trim() !== "",
 );
 
-/** The composer's submit. Throwing hands the text back to the composer and shows the problem. */
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSending.value) return;
   const text = message.text.trim();
@@ -82,13 +74,11 @@ async function submit(message: PromptInputMessage): Promise<void> {
   const read = readSettings();
   if ("problem" in read) throw new Error(read.problem);
   composerError.value = "";
-  // The audio arrives in the background; the composer is free again at once.
   void send(read.settings, text);
 }
 
 async function send(settings: PlaygroundSpeechSettings, text: string): Promise<void> {
   const isDirect = source.value === "upstream";
-  // Reactive, so the tab shows the audio when it arrives.
   const exchange = reactive<SpeechExchange>({
     id: nextExchangeId++,
     text,
@@ -137,7 +127,6 @@ function clearHistory(): void {
   exchanges.value = [];
 }
 
-/** Totals over every request in this tab, so a run of test sends adds up. */
 const totals = computed(() => {
   let clips = 0;
   let cost: number | null = null;

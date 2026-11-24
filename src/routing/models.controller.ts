@@ -36,7 +36,6 @@ export class ModelsController {
     return this.queryBus.execute(new ListModelsQuery());
   }
 
-  /** The Model with its Routes, in the order the gateway tries them. */
   @Get(":id")
   getModel(@Param("id", ParseUUIDPipe) modelId: string): Promise<ModelDetail> {
     return this.queryBus.execute(new GetModelQuery(modelId));
@@ -47,7 +46,6 @@ export class ModelsController {
     return this.commandBus.execute(new CreateModelCommand(newModel));
   }
 
-  /** Renames, enables or disables the Model. */
   @Patch(":id")
   updateModel(
     @Param("id", ParseUUIDPipe) modelId: string,

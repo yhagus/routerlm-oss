@@ -22,20 +22,15 @@ import { portOf } from "@tests/support/port-of.js";
 import { createTestApp } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-/** Served by an openai-chat Provider. */
 const CHAT_MODEL = "via-chat";
-/** Served by an anthropic-messages Provider. */
 const MESSAGES_MODEL = "via-messages";
 
 const SIGNATURE = "EqQBCgIYAhIM1gbcDa9GJwZA2b3h";
 
 const RESPONSE_ID_PREFIX = "resp_";
-/** The request id the client fixtures were recorded with. */
 const FIXTURE_REQUEST_ID = "ours1";
-/** The Model name the client fixtures were recorded with, served by an anthropic-messages Provider. */
 const FIXTURE_MODEL = "smart";
 
-/** The settings `client-response.json` echoes. */
 const FIXTURE_SETTINGS = {
   tools: [
     {
@@ -52,7 +47,6 @@ const FIXTURE_SETTINGS = {
   temperature: 0.5,
 };
 
-/** The anthropic-messages answer `client-response.json` was recorded from. */
 const FIXTURE_UPSTREAM_MESSAGE = {
   id: "msg_upstream_1",
   type: "message",
@@ -117,7 +111,6 @@ const EVERY_FEATURE_REQUEST = {
   truncation: "auto",
 };
 
-/** One named server-sent event as the gateway wrote it. */
 interface NamedEvent {
   event: string;
   data: { type: string; item?: Record<string, unknown>; response?: Record<string, unknown> };
@@ -153,7 +146,6 @@ describe("Responses (e2e)", () => {
     await insertOpenAiChatModel(app, db, { modelName: CHAT_MODEL, baseUrl: upstream.baseUrl });
     await insertAnthropicMessagesModel(app, db, {
       modelName: MESSAGES_MODEL,
-      // The Protocol appends /v1/messages to the Provider's base URL.
       baseUrl: new URL(upstream.baseUrl).origin,
     });
     ({ key: apiKey } = await insertApiKey(app, db));
@@ -221,7 +213,6 @@ describe("Responses (e2e)", () => {
           arguments: '{"city":"Paris"}',
         },
       ],
-      // 120 prompt tokens, 100 of them read from the cache.
       usage: { input_tokens: 120, input_tokens_details: { cached_tokens: 100 }, output_tokens: 40 },
     });
     expect(response.body.id).toMatch(/^resp_/);
@@ -343,7 +334,6 @@ describe("Responses (e2e)", () => {
       model: MESSAGES_MODEL,
     }).expect(200);
 
-    // The cache markers are the ones the gateway adds for an anthropic-messages upstream.
     expect(upstream.lastRequest.body).toEqual({
       model: UPSTREAM_MODEL_ID,
       max_tokens: 1024,

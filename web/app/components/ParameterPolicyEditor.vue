@@ -13,13 +13,10 @@ import {
   SERVICE_TIERS,
 } from "~/lib/parameterPolicy";
 
-// The Parameter Policy form, for a Model or a Route override. It checks the
-// policy before emitting `save`; the backend checks it again.
 const props = defineProps<{
   policy: ParameterPolicy | null;
   isSaving: boolean;
   submitLabel: string;
-  /** The backend's message when the last save failed. */
   error: string;
 }>();
 const emit = defineEmits<{ save: [policy: ParameterPolicy] }>();

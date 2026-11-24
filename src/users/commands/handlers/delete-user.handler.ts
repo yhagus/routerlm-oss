@@ -13,7 +13,6 @@ export class DeleteUserHandler implements ICommandHandler<DeleteUserCommand> {
 
   async execute({ userId }: DeleteUserCommand): Promise<void> {
     await this.db.transaction(async (tx) => {
-      // Two Users deleting each other at once must not leave none.
       await lockUsers(tx);
       const [target] = await tx.select({ id: users.id }).from(users).where(eq(users.id, userId));
       if (!target) {

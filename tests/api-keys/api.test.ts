@@ -72,7 +72,6 @@ describe("API Keys (e2e)", () => {
     return created.body;
   }
 
-  /** Signs in with the key the way an inference route would, through ApiKeyAuth. */
   function authenticateWith(key: string): Promise<unknown> {
     const httpRequest = { headers: { authorization: `Bearer ${key}` } };
     return app.get(ApiKeyAuth).authenticate(new ExecutionContextHost([httpRequest]));
@@ -103,7 +102,6 @@ describe("API Keys (e2e)", () => {
       .update(apiKeys)
       .set({ expiresAt: new Date(Date.now() - 1000) })
       .where(eq(apiKeys.id, created.id));
-    // A direct database write, so refresh the in-memory snapshot as a dashboard write would.
     await app.get(SnapshotService).changed();
 
     await expect(authenticateWith(created.key)).rejects.toThrow("api key expired");

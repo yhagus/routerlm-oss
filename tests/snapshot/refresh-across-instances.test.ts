@@ -12,7 +12,6 @@ import { deleteAllPricingWindows } from "@tests/support/pricing-windows.js";
 import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// Lets a test make the next snapshot reloads fail, as a database hiccup would.
 const reloads = vi.hoisted(() => ({ failuresLeft: 0 }));
 
 vi.mock("@/snapshot/models/load-snapshot.js", async (importOriginal) => {
@@ -29,16 +28,12 @@ vi.mock("@/snapshot/models/load-snapshot.js", async (importOriginal) => {
   };
 });
 
-// Spec "Inference path": a dashboard change takes effect within about a second.
 const PROPAGATION_LIMIT_MS = 1000;
 const POLL_INTERVAL_MS = 50;
-// The app reads its env when AppModule is imported, so this must run before the imports.
-// Far shorter than the production default, so the interval reload fits the limit above.
 vi.hoisted(() => {
   process.env.SNAPSHOT_RELOAD_INTERVAL_MS = "200";
 });
 
-/** Retries `check` until it passes or the propagation limit is over. */
 async function eventually(check: () => Promise<void>): Promise<void> {
   const deadline = Date.now() + PROPAGATION_LIMIT_MS;
   for (;;) {
@@ -55,8 +50,6 @@ async function eventually(check: () => Promise<void>): Promise<void> {
 }
 
 describe("Snapshot refresh across backend instances (e2e)", () => {
-  // Two backend instances sharing PostgreSQL and Redis: the dashboard writes
-  // through one, clients call the other.
   let dashboardInstance: NestNodeApplication;
   let inferenceInstance: NestNodeApplication;
   let db: Database;
@@ -197,7 +190,6 @@ describe("Snapshot refresh across backend instances (e2e)", () => {
 
   it("retries a failed reload until the revoking instance refuses the key too", async () => {
     const { app: revokingInstance } = await createTestApp();
-    // No interval reload, so only the retry after the failed reload can fix this instance.
     revokingInstance.get(SchedulerRegistry).deleteInterval("snapshot-reload");
     try {
       const { key, id } = await insertApiKey(revokingInstance, db);

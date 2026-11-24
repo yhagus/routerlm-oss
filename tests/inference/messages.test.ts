@@ -22,9 +22,7 @@ import { portOf } from "@tests/support/port-of.js";
 import { createTestApp } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-/** Served by an openai-chat Provider. */
 const CHAT_MODEL = "via-chat";
-/** Served by an anthropic-messages Provider. */
 const MESSAGES_MODEL = "via-messages";
 
 const EVERY_FEATURE_REQUEST = {
@@ -75,14 +73,11 @@ const EVERY_FEATURE_REQUEST = {
 };
 
 const MESSAGE_ID_PREFIX = "msg_";
-/** The request id the client fixtures were recorded with. */
 const FIXTURE_REQUEST_ID = "ours-1";
 const MINIMAL_REQUEST = { max_tokens: 256, messages: [{ role: "user", content: "Hi" }] };
 
-/** The Model name the client fixtures were recorded with, served by an anthropic-messages Provider. */
 const FIXTURE_MODEL = "smart";
 
-/** One named server-sent event as the gateway wrote it. */
 interface NamedEvent {
   event: string;
   data: { type: string; delta?: Record<string, unknown>; message?: { id: string } };
@@ -122,7 +117,6 @@ describe("Messages (e2e)", () => {
     }));
     await insertAnthropicMessagesModel(app, db, {
       modelName: MESSAGES_MODEL,
-      // The Protocol appends /v1/messages to the Provider's base URL.
       baseUrl: new URL(upstream.baseUrl).origin,
     });
     ({ key: apiKey } = await insertApiKey(app, db));
@@ -178,7 +172,6 @@ describe("Messages (e2e)", () => {
         { type: "tool_use", id: "call_def456", name: "get_weather", input: { city: "Paris" } },
       ],
       stop_reason: "tool_use",
-      // 120 prompt tokens, 100 of them read from the cache.
       usage: { input_tokens: 20, cache_read_input_tokens: 100, output_tokens: 40 },
     });
     expect(response.body.id).toMatch(/^msg_/);

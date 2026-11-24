@@ -16,12 +16,8 @@ import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-
 import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
 import type { TranscriptionFile } from "./openai-transcription-form.js";
 
-// OpenAI's transcription API, `POST /v1/audio/transcriptions`, a multipart
-// upload.
-
 const PLAIN_TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 
-/** The audio file format of each content type a client may give its upload. */
 const FORMATS_BY_CONTENT_TYPE: Record<string, AudioFileFormat> = {
   "audio/aac": "aac",
   "audio/amr": "amr",
@@ -51,7 +47,6 @@ const fileSchema = z.object({
   dataUri: z.string(),
 }) satisfies z.ZodType<TranscriptionFile>;
 
-// A plain (non-strict) object: unknown fields, such as `prompt`, are dropped (ADR 0002).
 const requestSchema = z.object({
   model: z.string().min(1),
   file: fileSchema,
@@ -83,17 +78,15 @@ function parseRequest(body: unknown): TranscriptionRequest {
   };
 }
 
-/** Subtitle and verbose formats need timestamps no upstream returns yet, and transcripts don't stream yet. */
 function refuseUnsupportedFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
   if (!features.success) {
-    return; // Malformed: the full schema explains it.
+    return;
   }
   const { response_format, stream } = features.data;
   if (typeof response_format === "string" && !isTranscriptFormat(response_format)) {
     throw unsupported(`the response_format "${response_format}"`);
   }
-  // A form field arrives as the string "true".
   if (stream === true || stream === "true") {
     throw unsupported("`stream`");
   }
@@ -103,10 +96,6 @@ function isTranscriptFormat(format: string): boolean {
   return TRANSCRIPT_FORMATS.some((known) => known === format);
 }
 
-/**
- * The upload's format, from its content type, or from its file name when the
- * client sent a generic type such as `application/octet-stream`.
- */
 function audioFileFormatOf({ contentType, fileName }: TranscriptionFile): AudioFileFormat {
   const byContentType = FORMATS_BY_CONTENT_TYPE[contentType.toLowerCase()];
   if (byContentType) {
@@ -137,7 +126,6 @@ export const openAiTranscriptionClientContract: MediaClientContract<
 > = {
   protocol: "openai-transcription",
   parseRequest,
-  // A transcription Upstream Model has no limit the gateway checks before sending.
   unservableReason: () => null,
   upstreamProtocols: { "dashscope-transcription": dashScopeTranscriptionProtocol },
   writeResponse,

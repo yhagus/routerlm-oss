@@ -49,10 +49,8 @@ const {
 
 const isLoadingProviders = computed(() => providersStatus.value === "pending" && !providers.value);
 
-/** Cooldowns are judged as of the last load. */
 const loadedAt = ref(Date.now());
 
-/** Deleting a Provider deletes its accounts and models, so every list reloads. */
 async function refresh(): Promise<void> {
   await Promise.all([refreshProviders(), refreshAccounts(), refreshModels()]);
   loadedAt.value = Date.now();
@@ -63,7 +61,6 @@ const isLoadingStats = computed(
     (accountsStatus.value === "pending" && !accounts.value) ||
     (modelsStatus.value === "pending" && !models.value),
 );
-/** Row stats need both lists; without them a row shows its configuration only. */
 const hasStatsError = computed(() => Boolean(accountsError.value || modelsError.value));
 const hasStats = computed(() => !isLoadingStats.value && !hasStatsError.value);
 
@@ -95,8 +92,6 @@ const summary = computed(() => {
   };
 });
 
-// Held in the URL (?protocol=…&status=…) so a refresh or a link keeps them. The
-// DataTable holds the search and page the same way.
 const PROVIDER_STATUSES = ["enabled", "disabled", "attention"] as const;
 type ProviderStatus = (typeof PROVIDER_STATUSES)[number];
 const protocolFilter = useQueryList("protocol", {
@@ -113,7 +108,6 @@ const statusFilterOptions = [
   { label: "Needs attention", value: "attention" },
 ] satisfies { label: string; value: ProviderStatus }[];
 
-/** Whether a row is in `status`; "attention" overlaps the other two. */
 function hasStatus(provider: Provider, stats: ProviderStats, status: ProviderStatus): boolean {
   if (status === "enabled") return provider.isEnabled;
   if (status === "disabled") return !provider.isEnabled;
@@ -125,7 +119,6 @@ const activeFilters = computed<ActiveFilter[]>(() => [
   ...listFilterTokens("Status", statusFilter, statusFilterOptions),
 ]);
 
-/** Rows the Protocol and status filters keep; the DataTable applies the search. */
 const filteredRows = computed(() =>
   rows.value.filter(({ provider, stats }) => {
     const protocols = provider.endpoints.map((endpoint) => endpoint.protocol);
@@ -152,7 +145,6 @@ const columns: DataTableColumn<ProviderRow>[] = [
     id: "provider",
     header: "Provider",
     enableHiding: false,
-    // What the search matches: name, slug or any endpoint's base URL.
     accessorFn: ({ provider }) =>
       [provider.name, provider.slug, ...provider.endpoints.map(({ baseUrl }) => baseUrl)].join(
         "\n",

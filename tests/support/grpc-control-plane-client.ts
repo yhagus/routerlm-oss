@@ -16,15 +16,11 @@ import type { ControlPlaneClient, ControlPlaneOutcome } from "./control-plane-cl
 const READY_TIMEOUT_MS = 20_000;
 const CONTROL_PLANE_SERVICE_NAME = "routerlm.integration.v1.ControlPlane";
 
-// Unlike the worker, the client fills in proto3 defaults (0, false, "", []),
-// which the HTTP adapter's JSON always carries too.
 const CLIENT_LOADER_OPTIONS = { keepCase: false, longs: String, defaults: true, oneofs: false };
 
-/** The ControlPlane service of control_plane.proto: its methods by name, such as `CreateKey`. */
 function controlPlaneService(): ServiceDefinition {
   const definitions = loadSync(CONTROL_PLANE_PROTO_PATH, CLIENT_LOADER_OPTIONS);
   const service = definitions[CONTROL_PLANE_SERVICE_NAME];
-  // Message and enum definitions have a `format`; a service has none.
   if (!service || "format" in service) {
     throw new Error(`control_plane.proto declares no ${CONTROL_PLANE_SERVICE_NAME}`);
   }
@@ -53,11 +49,6 @@ function isEmptyMap(value: unknown): boolean {
   );
 }
 
-/**
- * Rewrites a response message, innermost fields first, into proto3 JSON as
- * the HTTP adapter answers it: Timestamps as RFC 3339 strings, and unset
- * fields (an unset message, an empty string or map) left out.
- */
 function protoJsonReviver(_name: string, value: unknown): unknown {
   if (isTimestamp(value)) {
     return timestampOf(value).toISOString();
@@ -68,7 +59,6 @@ function protoJsonReviver(_name: string, value: unknown): unknown {
   return value;
 }
 
-/** A request in proto3 JSON as a message: an RFC 3339 `expiresAt` becomes a Timestamp. */
 function keySettingsMessageOf(settings: object): object {
   const entries = Object.entries(settings)
     .filter(([, field]) => field !== null)
@@ -84,10 +74,6 @@ function keySettingsMessageOf(settings: object): object {
 const snakeCaseOf = (name: string): string =>
   name.replaceAll(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
-/**
- * The control plane over its gRPC adapter, served by a worker at `address`.
- * Resolves once the channel is connected.
- */
 export async function grpcControlPlaneClient(
   address: string,
 ): Promise<{ client: ControlPlaneClient; close: () => Promise<void> }> {

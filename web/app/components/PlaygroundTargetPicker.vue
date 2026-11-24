@@ -3,7 +3,6 @@ import { Route } from "@lucide/vue";
 import { computed } from "vue";
 import type { PlaygroundSource } from "~/composables/usePlaygroundTarget";
 
-/** The bench bar's source switch and the Model or Upstream Model it sends to. */
 const {
   source,
   modelName,

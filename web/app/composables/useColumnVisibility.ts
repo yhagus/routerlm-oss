@@ -27,17 +27,9 @@ function writeStored(key: string, visibility: ColumnVisibilityState): void {
   try {
     if (Object.keys(visibility).length === 0) localStorage.removeItem(key);
     else localStorage.setItem(key, JSON.stringify(visibility));
-  } catch {
-    // Storage blocked: the choice still holds for this page view.
-  }
+  } catch {}
 }
 
-/**
- * Which columns of one table are hidden, remembered per browser under
- * `routerlm:columns:<tableId>`. Columns absent from the state are visible, so
- * an empty state is the default layout. Storage is read after mount, so the
- * first render never depends on the browser.
- */
 export function useColumnVisibility(tableId: string): ShallowRef<ColumnVisibilityState> {
   const key = `${STORAGE_PREFIX}${tableId}`;
   const visibility = shallowRef<ColumnVisibilityState>({});

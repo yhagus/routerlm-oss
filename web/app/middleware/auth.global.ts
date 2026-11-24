@@ -2,13 +2,8 @@ import type { User } from "~/lib/users";
 
 const LOGIN_PATH = "/login";
 const SETUP_PATH = "/setup";
-/** The client documentation, in English and Indonesian, is public: client developers have no dashboard login. */
 const DOCS_PATHS = ["/docs", "/id/docs"];
 
-/**
- * Every page needs a signed-in User, except login, setup and the docs. While
- * no User exists at all, every other page leads to setup.
- */
 export default defineNuxtRouteMiddleware(async (to) => {
   if (isDocsPath(to.path)) {
     return undefined;

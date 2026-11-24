@@ -157,9 +157,7 @@ describe("Parameter Policy (e2e)", () => {
   });
 
   describe("on each parameter", () => {
-    /** Served by an openai-chat Provider. */
     const CHAT_MODEL = "via-chat";
-    /** Served by an anthropic-messages Provider, which takes a thinking budget. */
     const MESSAGES_MODEL = "via-messages";
 
     let key: string;

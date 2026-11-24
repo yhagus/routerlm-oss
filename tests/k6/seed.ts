@@ -14,18 +14,6 @@ import {
 } from "@/db/schemas/index.js";
 import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
 
-// Run by the `seed` service of tests/k6/docker-compose.yml, after migrations
-// and before the backend starts (so the backend's snapshot already holds
-// everything). Every Provider is the fake upstream; its URL path picks how it
-// behaves (see fake-upstream.js):
-//   perf-*      /paced    realistic latency and token speed
-//   perf-large  /paced    the same, with a 1M-token context, for the 900K-token cases
-//   raw-*       /instant  answers at once: the gateway alone
-//   fault-*     /fault/*  one Route to an upstream that misbehaves
-//   failover-*  /fault/*  that same fault first, then a healthy /paced Route
-// The fake upstream is plain http on the Compose network, so the seed also
-// turns on the Allow private upstreams Setting (ADR 0019).
-
 const API_KEY_PATTERN = /^rlm_([0-9a-f]{16})_[A-Za-z0-9_-]{43}$/;
 
 function required(name: string): string {
@@ -41,7 +29,6 @@ const keyMatch = API_KEY_PATTERN.exec(apiKey);
 if (!keyMatch) {
   throw new Error("PERF_API_KEY must look like rlm_<16 hex>_<43 base64url characters>");
 }
-// Ends in /v1; the Provider's protocol path is appended to it.
 const upstreamOrigin = required("UPSTREAM_ORIGIN");
 const cipher = new ProviderKeyCipher(required("ENCRYPTION_KEY"));
 
@@ -53,30 +40,20 @@ const OPENAI_CHAT: Speaks = { protocol: "openai-chat", authStyle: "bearer" };
 const ANTHROPIC_MESSAGES: Speaks = { protocol: "anthropic-messages", authStyle: "x-api-key" };
 const OPENAI_RESPONSES: Speaks = { protocol: "openai-responses", authStyle: "bearer" };
 
-/**
- * Two Provider Accounts per healthy Provider, as a real deployment has: one
- * timeout puts a single account into Cooldown, and with only one the whole
- * Model would go offline. The fault Providers keep one, so a broken upstream
- * is the whole story.
- */
 const ACCOUNTS_PER_PROVIDER = 2;
 
 const DEFAULT_CONTEXT = 128_000;
 const LARGE_CONTEXT = 1_000_000;
 
-/** A fault Route gives up on a silent upstream after this long, so a hung one ends. */
 const FAULT_ROUTE_TIMEOUTS = { firstTokenTimeoutMs: 2000, totalTimeoutMs: 5000 };
 
-/** The kinds of fault fake-upstream.js knows. */
 const FAULT_KINDS = ["5xx", "429", "timeout", "reset", "midstream", "malformed", "flap"];
-/** The kinds that make sense to fall back from: not a lone broken stream. */
 const FAILOVER_KINDS = ["5xx", "429", "timeout", "reset", "flap"];
 
 const pool = new Pool({ connectionString: required("DATABASE_URL") });
 try {
   const db = drizzle({ client: pool });
   await db.transaction(async (tx) => {
-    /** A Provider at the fake upstream with one account and one Upstream Model; returns the Upstream Model's id. */
     async function addProvider(
       slug: string,
       speaks: Speaks,
@@ -131,7 +108,6 @@ try {
       await tx.insert(routes).values({ modelId, upstreamModelId, priority, ...timeouts });
     }
 
-    /** One Model with one Route to a Provider of its own. */
     async function simpleModel(
       name: string,
       speaks: Speaks,

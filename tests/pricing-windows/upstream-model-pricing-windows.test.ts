@@ -31,7 +31,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
   let providerId: string;
   let chatModelId: string;
 
-  // In this zone the wall clock reads 12:xx right now.
   const { timeZone, today } = zoneAtNoonNow();
   const ACTIVE_NOW = [{ weekdays: [today], start: "11:00", end: "14:00" }];
   const ANOTHER_DAY = today === 1 ? 2 : 1;
@@ -268,7 +267,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
         { timeZone: "UTC" },
       );
 
-      // Friday's off-peak range crosses midnight into Saturday (ADR 0038).
       const refused = await putWindowPrices(chatModelId, [
         { pricingWindowId: offPeakId, inputPrice: 0.5 },
         { pricingWindowId: allSaturdayId, inputPrice: 0.7 },
@@ -293,7 +291,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     });
 
     it("refuses windows in two time zones that only overlap while one of them is on summer time", async () => {
-      // 09:00 in London is 09:00 UTC in winter and 08:00 UTC in summer.
       const londonMorningId = await createWindow(
         "London Morning",
         [{ weekdays: [1], start: "09:00", end: "10:00" }],
@@ -356,7 +353,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
         { pricingWindowId: weekendId, inputPrice: 0.7 },
       ]).expect(200);
 
-      // Friday 22:00 in New York is Saturday 03:00 UTC.
       await patchWindow(lateFridayId, { timeZone: "America/New_York" }).expect(400);
     });
   });
@@ -414,8 +410,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       });
       const utcId = await createWindow("UTC Evenings", LATE_ON_ANOTHER_DAY, { timeZone: "UTC" });
 
-      // 10:00 in Auckland (UTC+13) is 21:00 UTC the day before, so it starts
-      // first although its wall-clock text sorts after 05:00.
       await putWindowPrices(chatModelId, [
         { pricingWindowId: utcId, inputPrice: 0.7, validFrom: "2030-01-01T05:00" },
         { pricingWindowId: aucklandId, inputPrice: 0.5, validFrom: "2030-01-01T10:00" },
@@ -436,7 +430,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
 
       const windowPrices = await windowPricesOf(chatModelId);
       expect(windowPrices).toEqual([expect.objectContaining({ status: "inactive" })]);
-      // `status` says it all here; only the Pricing Window list has `isActiveNow`.
       expect(windowPrices).toEqual([
         expect.not.objectContaining({ isActiveNow: expect.anything() }),
       ]);
@@ -515,7 +508,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       );
       const wholeWeekId = await createWholeWeekWindow();
 
-      // Wednesday 2 December 2026, 09:00 to 15:00 UTC: between two off-peak stretches.
       await putWindowPrices(chatModelId, [
         { pricingWindowId: offPeakId, inputPrice: 0.5 },
         {
@@ -535,7 +527,6 @@ describe("Window Prices on Upstream Models (e2e)", () => {
         { pricingWindowId: januaryId, inputPrice: 0.7, validFrom: "2027-01-01T00:00" },
       ]).expect(200);
 
-      // Midnight in New York is 05:00 UTC, five hours into January.
       const refused = await patchWindow(decemberId, { timeZone: "America/New_York" }).expect(400);
 
       expect(refused.body.message).toBe(

@@ -60,7 +60,6 @@ import { UsageModule } from "@/usage/usage.module.js";
     HealthModule,
   ],
   controllers: [AppController],
-  // Validates every `@Body({ schema })`, `@Param({ schema })`… against its zod schema.
   providers: [{ provide: APP_PIPE, useClass: StandardSchemaValidationPipe }],
 })
 export class AppModule {}

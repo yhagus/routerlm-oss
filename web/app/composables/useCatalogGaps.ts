@@ -2,10 +2,6 @@ import { CATALOG_GAPS_PATH, type CatalogGap, type CatalogGapsResponse } from "~/
 
 const CHECKED_STORAGE_KEY = "catalog-gaps-checked";
 
-/**
- * The new models (Catalog Gaps) found once per browser session, for the layout
- * to announce. A failed check shows nothing: the notice is a courtesy, not a page.
- */
 export function useCatalogGaps() {
   const gaps = useState<CatalogGap[]>("catalog-gaps", () => []);
   const { $dashboardApi } = useNuxtApp();

@@ -14,7 +14,6 @@ import {
 
 useHead({ title: "Settings" });
 
-/** A shortening that will delete Error Captures, waiting for the User to confirm. */
 interface PendingShortening {
   days: number;
   deleteCount: number;
@@ -84,7 +83,6 @@ async function putTermsRiskAllowed(allowed: boolean): Promise<void> {
   }
 }
 
-/** Turning on asks first; the switch only moves once the saved value changes. */
 function handleTermsRiskToggle(event: Event): void {
   if (!(event.target instanceof HTMLInputElement) || !termsRisk.value) return;
   const allowed = event.target.checked;
@@ -125,7 +123,6 @@ async function putPrivateUpstreamsAllowed(allowed: boolean): Promise<void> {
   }
 }
 
-/** Turning on asks first; the switch only moves once the saved value changes. */
 function handlePrivateUpstreamsToggle(event: Event): void {
   if (!(event.target instanceof HTMLInputElement) || !privateUpstreams.value) return;
   const allowed = event.target.checked;
@@ -144,7 +141,6 @@ const isConfirmOpen = computed({
   },
 });
 
-/** Saves at once unless the new value is shorter and would delete Error Captures. */
 async function requestChange(days: number, apply: () => Promise<void>): Promise<void> {
   if (!retention.value) return;
   isBusy.value = true;

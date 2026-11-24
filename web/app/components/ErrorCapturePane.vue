@@ -5,10 +5,6 @@ import { computed, ref, useTemplateRef } from "vue";
 import { copyShortcut, useCopyFeedback } from "~/composables/useCopyFeedback";
 import { readableBody } from "~/lib/errorCaptures";
 
-/**
- * One captured message, the client's request or the upstream's response: its
- * body first, its headers a tab away, and a button that copies what is shown.
- */
 const props = defineProps<{
   title: string;
   description: string;
@@ -31,7 +27,6 @@ const isShownEmpty = computed(() =>
   tab.value === "body" ? props.body.trim() === "" : headerEntries.value.length === 0,
 );
 const copyLabel = computed(() => (tab.value === "body" ? "Copy body" : "Copy headers"));
-/** What the button says: its result for a moment after a click, "Copy" otherwise. */
 const copyText = computed(() => {
   if (state.value === "copied") return "Copied";
   if (state.value === "failed") return "Couldn't copy";
@@ -39,7 +34,6 @@ const copyText = computed(() => {
   return "Copy";
 });
 
-/** When the clipboard refuses, the shown text is selected so the reader can copy it by key. */
 function copyShown(): void {
   const isBody = tab.value === "body";
   void copy(

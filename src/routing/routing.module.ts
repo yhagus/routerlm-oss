@@ -5,7 +5,6 @@ import { ModelsController } from "./models.controller.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
 import { RoutesController } from "./routes.controller.js";
 
-/** Dashboard management of Models and their Routes. */
 @Module({
   imports: [SnapshotModule],
   controllers: [ModelsController, RoutesController],

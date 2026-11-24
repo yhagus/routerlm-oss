@@ -5,7 +5,6 @@ import type { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher
 
 const KEY_HINT_LENGTH = 4;
 
-/** Every column except the encrypted key and the OAuth Login's tokens: what the dashboard API may return. */
 export const providerAccountColumns = {
   id: providerAccounts.id,
   providerId: providerAccounts.providerId,
@@ -27,12 +26,6 @@ export const providerAccountColumns = {
   updatedAt: providerAccounts.updatedAt,
 };
 
-/**
- * A Provider Account as the dashboard API returns it: which credential it
- * holds, but never the key (only its last four characters) nor an OAuth
- * Login's tokens. `keyLastFour` is null for an OAuth Login, `oauthRegion` for
- * an API key, `oauthEmail` and `oauthPlanType` for all but an OpenAI Codex login.
- */
 export type ProviderAccount = Omit<
   typeof providerAccounts.$inferSelect,
   | "encryptedKey"
@@ -47,20 +40,14 @@ export type ProviderAccount = Omit<
 
 type StoredKey = { encryptedKey: string; keyLastFour: string };
 
-/** The columns that store a Provider Account key: encrypted, plus its last four characters. */
 export function storedKey(keyCipher: ProviderKeyCipher, key: string): StoredKey {
   return { encryptedKey: keyCipher.encrypt(key), keyLastFour: key.slice(-KEY_HINT_LENGTH) };
 }
 
-/** The tokens a Provider's auth host grants, and how long the access token lasts. */
 export interface OauthTokens {
   accessToken: string;
   refreshToken: string;
   expiresInSeconds: number;
-  /**
-   * OpenAI Codex only: the id_token granted with them and what it says.
-   * Absent from a refresh that returned no id_token, which keeps the stored one.
-   */
   codexAccount?: CodexAccount;
 }
 
@@ -75,10 +62,6 @@ type StoredOauthTokens = {
   oauthPlanType?: string;
 };
 
-/**
- * The columns that store an OAuth Login's tokens, granted at `grantedAt`:
- * every token encrypted, and whatever of the Codex account the id_token names.
- */
 export function storedOauthTokens(
   keyCipher: ProviderKeyCipher,
   tokens: OauthTokens,
@@ -94,8 +77,6 @@ export function storedOauthTokens(
   if (codexAccount === undefined) {
     return stored;
   }
-  // A refreshed id_token may leave out a claim: the stored value stays, so the
-  // account id sent as `chatgpt-account-id` is never lost.
   return {
     ...stored,
     oauthEncryptedIdToken: keyCipher.encrypt(codexAccount.idToken),

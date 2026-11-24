@@ -28,7 +28,6 @@ export class RotateCustomerApiKeyHandler implements ICommandHandler<RotateCustom
     await findUnrevokedCustomerApiKey(this.db, integrationId, id, REVOKED_MESSAGE);
     const { key, id: keyId, hash } = this.apiKeyAuth.generate();
     await this.db.transaction(async (tx) => {
-      // Locked and guarded again on revokedAt, as the dashboard's rotation does.
       const [current] = await tx
         .select({ keyId: apiKeys.keyId })
         .from(apiKeys)
@@ -44,12 +43,10 @@ export class RotateCustomerApiKeyHandler implements ICommandHandler<RotateCustom
         throw new ControlPlaneError("FAILED_PRECONDITION", REVOKED_MESSAGE);
       }
       await tx.update(apiKeys).set({ keyId, hash }).where(eq(apiKeys.id, id));
-      // No User rotated it: the Integration did.
       await tx
         .insert(apiKeyRotations)
         .values({ apiKeyId: id, rotatedById: null, previousKeyId: current.keyId, newKeyId: keyId });
     });
-    // Sign-in looks keys up by keyId in the snapshot: the old one is gone from it from now on.
     await this.snapshot.changed();
     const apiKey = await findCustomerApiKey(this.db, integrationId, id);
     return { apiKey, key };

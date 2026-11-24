@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-/** Every Setting: adding one is one entry here and one in SETTING_VALUE_SCHEMAS. */
 export const SETTING_DEFINITIONS = {
   errorCaptureRetentionDays: { default: 7, min: 1, max: 365 },
   allowTermsRiskProviders: { default: false },
@@ -9,7 +8,6 @@ export const SETTING_DEFINITIONS = {
 
 const { min: retentionMin, max: retentionMax } = SETTING_DEFINITIONS.errorCaptureRetentionDays;
 
-/** The values a Setting accepts: an integer inside its range, or a boolean. */
 const SETTING_VALUE_SCHEMAS = {
   errorCaptureRetentionDays: z.int().min(retentionMin).max(retentionMax),
   allowTermsRiskProviders: z.boolean(),

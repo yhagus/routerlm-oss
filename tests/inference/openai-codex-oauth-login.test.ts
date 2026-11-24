@@ -33,7 +33,6 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
 const RESPONSES_PATH = "/v1/responses";
 const HOUR_SECONDS = 3600;
-/** Under the 300 seconds below which every OAuth Login is refreshed. */
 const SHORT_LIFETIME_SECONDS = 60;
 const REFRESH_TOKEN = "codex-refresh-token-0123";
 
@@ -52,7 +51,6 @@ const UNAUTHORIZED: FakeReply = {
 describe("Inference from an OpenAI Codex OAuth Login (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
-  // Plays the Codex backend and OpenAI's auth host.
   let openAi: FakeUpstream;
   let apiKey: string;
   let cookie: string;
@@ -67,7 +65,6 @@ describe("Inference from an OpenAI Codex OAuth Login (e2e)", () => {
     openAi.reset();
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
-    // Its API key account is the backup: the OAuth Login account runs first.
     ({ providerId } = await insertOpenAiResponsesModel(app, db, {
       modelName: "smart",
       baseUrl: openAi.baseUrl,
@@ -100,7 +97,6 @@ describe("Inference from an OpenAI Codex OAuth Login (e2e)", () => {
     return openAi.requests.filter((received) => received.path === RESPONSES_PATH);
   }
 
-  /** The credential each Attempt sent, in order. */
   function attemptedCredentials(): string[] {
     return responsesCalls().map((received) =>
       String(received.headers.authorization).replace("Bearer ", ""),
@@ -151,7 +147,6 @@ describe("Inference from an OpenAI Codex OAuth Login (e2e)", () => {
         idToken: idToken({ accountId: "chatgpt-account-2" }),
       }),
     );
-    // This refresh rotates no refresh token and no id_token: the stored ones stay.
     openAi.replyTo(TOKEN_PATH, tokensReply({ accessToken: renewedAgain }));
     openAi.reply(RESPONSE);
     openAi.reply(RESPONSE);

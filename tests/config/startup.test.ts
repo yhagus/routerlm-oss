@@ -9,20 +9,11 @@ const runFile = promisify(execFile);
 const STARTUP_TIMEOUT_MS = 30_000;
 const KEY_HELP = "generate one with `openssl rand -base64 32`";
 const API_ENTRY_POINT = fileURLToPath(new URL("../../src/main.ts", import.meta.url));
-// Bun reads tsconfig.json (decorators, the @/ alias) from the working directory, which is elsewhere.
 const TSCONFIG = fileURLToPath(new URL("../../tsconfig.json", import.meta.url));
-// Port 0, so a process that wrongly starts never clashes with a running gateway.
 const ANY_FREE_PORT = "0";
 
-/**
- * Starts the API process with `ENCRYPTION_KEY` set as given (or unset), and
- * returns what it logged once it exited. A process still running at
- * the timeout started, which these tests count as a failure.
- */
 async function logOfStartupWith(encryptionKey: string | undefined): Promise<string> {
   const { ENCRYPTION_KEY: _testKey, ...env } = process.env;
-  // ConfigModule reads .env from the working directory; an empty one keeps
-  // the developer's .env from supplying a key.
   const workingDirectory = await mkdtemp(join(tmpdir(), "startup-"));
   try {
     await runFile("bun", [`--tsconfig-override=${TSCONFIG}`, API_ENTRY_POINT], {
@@ -45,7 +36,6 @@ async function logOfStartupWith(encryptionKey: string | undefined): Promise<stri
   throw new Error("The API process exited cleanly instead of refusing to start");
 }
 
-// Booting with a valid key is what every other e2e test does.
 describe("Startup configuration (e2e)", () => {
   it(
     "refuses to start without ENCRYPTION_KEY and says how to generate one",

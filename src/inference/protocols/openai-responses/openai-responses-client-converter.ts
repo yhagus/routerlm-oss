@@ -25,9 +25,6 @@ import {
 } from "@/inference/protocols/client-protocol-converter.js";
 import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter.js";
 
-// The Responses client Protocol (`POST /v1/responses`), stateless only (ADR 0002).
-// Schemas are plain (non-strict) zod objects: unknown fields are dropped.
-
 const inputTextSchema = z.object({ type: z.literal("input_text"), text: z.string() });
 const inputImageSchema = z.object({
   type: z.literal("input_image"),
@@ -46,7 +43,6 @@ const assistantContentSchema = z.union([
   z.array(z.discriminatedUnion("type", [outputTextSchema, inputTextSchema, refusalSchema])),
 ]);
 
-// A message's `type` is optional on the wire, so messages are told apart by role.
 const messageItemSchema = z.discriminatedUnion("role", [
   z.object({
     type: z.literal("message").optional(),
@@ -95,7 +91,6 @@ type InputItem = z.infer<typeof inputItemSchema>;
 const CLIENT_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
 type ClientEffort = (typeof CLIENT_EFFORTS)[number];
 
-/** `max` has no higher internal level than `xhigh`. */
 const CLIENT_EFFORT_LEVELS = {
   none: "none",
   minimal: "minimal",
@@ -149,7 +144,6 @@ const requestSchema = z.object({
   temperature: z.number().min(0).max(2).nullish(),
   top_p: z.number().min(0).max(1).nullish(),
   prompt_cache_key: z.string().min(1).nullish(),
-  // Any string: values that name no Service Tier ask for none.
   service_tier: z.string().nullish(),
   stream: z.boolean().nullish(),
 });
@@ -195,15 +189,10 @@ const SUPPORTED_INPUT_ITEMS = new Set([
 const SUPPORTED_CONTENT_PARTS = new Set(["input_text", "input_image", "output_text", "refusal"]);
 const SEND_THE_CONVERSATION = "the gateway is stateless, so send the whole conversation in `input`";
 
-/**
- * Features ADR 0002 keeps out of v1 get a 400 that names them, rather than
- * being dropped: stateful features (the gateway stores no responses) and
- * anything the internal format can't carry, such as provider-hosted tools.
- */
 function refuseOutOfScopeFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
   if (!features.success) {
-    return; // Malformed: the full schema explains it.
+    return;
   }
   const { store, previous_response_id, conversation, background, prompt, tools, input } =
     features.data;
@@ -238,7 +227,7 @@ function refuseUnsupportedItem(item: { type: unknown; content: unknown; output: 
     throw unsupported(`input items of type \`${String(item.type)}\``);
   }
   if (item.type === "reasoning") {
-    return; // Its content parts are reasoning text, not message content.
+    return;
   }
   const parts = z
     .array(typedSchema)
@@ -267,7 +256,6 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
   const messages: InferenceMessage[] = [];
   for (const item of items) {
     if (isInstruction(item)) {
-      // Instructions inside the input are hoisted, in order, like `instructions`.
       system.push(...textParts(item.content));
     } else {
       appendItem(messages, item);
@@ -284,7 +272,6 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
       parameters: tool.parameters ?? EMPTY_PARAMETERS_SCHEMA,
       ...(tool.strict != null && { strict: tool.strict }),
     })),
-    // The Protocol always reports usage in its last stream event.
     stream: request.stream ? { includeUsage: true } : null,
   };
   if (request.tool_choice !== undefined) {
@@ -325,11 +312,6 @@ function isInstruction(item: InputItem): item is InstructionItem {
   return "role" in item && (item.role === "system" || item.role === "developer");
 }
 
-/**
- * Adds one input item to the conversation. The Protocol lists an assistant
- * turn's reasoning, text and function calls as separate items, so consecutive
- * ones are gathered into one assistant message.
- */
 function appendItem(messages: InferenceMessage[], item: ConversationItem): void {
   if ("role" in item && item.role === "user") {
     messages.push({ role: "user", content: userContent(item.content) });
@@ -362,7 +344,6 @@ function assistantParts(
   if (item.type === "function_call") {
     return [{ type: "tool-call", id: item.call_id, name: item.name, arguments: item.arguments }];
   }
-  // Raw reasoning text when the item has it, else its summary.
   const texts = item.content?.length ? item.content : (item.summary ?? []);
   return [
     {
@@ -423,13 +404,11 @@ const ITEM_ID_PREFIXES = { message: "msg_", reasoning: "rs_", function_call: "fc
 type OutputItemType = keyof typeof ITEM_ID_PREFIXES;
 type ItemStatus = "in_progress" | "completed";
 
-/** Why a response stopped early; any other stop reason completes it. */
 const INCOMPLETE_REASONS: Partial<Record<StopReason, string>> = {
   "max-tokens": "max_output_tokens",
   "content-filter": "content_filter",
 };
 
-/** How a response ended; null while a stream is still running. */
 type ResponseEnding = { stopReason: StopReason; usage: TokenUsage } | null;
 
 function writeResponse(
@@ -451,7 +430,6 @@ function writeResponse(
   return responseObject(request, context, output, response);
 }
 
-/** The Protocol's message item holds a whole run of text, so adjacent text parts become one. */
 function mergeTextParts(content: AssistantContentPart[]): AssistantContentPart[] {
   const merged: AssistantContentPart[] = [];
   for (const part of content) {
@@ -476,7 +454,6 @@ function outputItemTypeOf(part: AssistantContentPart): OutputItemType {
   }
 }
 
-/** Item ids are ours: the response id plus the item's position in the output. */
 function outputItemId(context: ResponseContext, type: OutputItemType, outputIndex: number): string {
   return `${ITEM_ID_PREFIXES[type]}${context.requestId}_${outputIndex}`;
 }
@@ -495,11 +472,6 @@ function outputTextPart(text: string): Record<string, unknown> {
   return { type: "output_text", text, annotations: [], logprobs: [] };
 }
 
-/**
- * Upstream reasoning is the model's raw thinking, so it goes in `content` as
- * reasoning text, not in `summary`. A signature travels as `encrypted_content`,
- * which clients send back with the item.
- */
 function reasoningItem(
   id: string,
   status: ItemStatus,
@@ -534,10 +506,6 @@ function functionCallItem(
   };
 }
 
-/**
- * The response object. Settings are echoed from the parsed request; the
- * gateway stores nothing, so `store` is always false.
- */
 function responseObject(
   request: InferenceRequest,
   context: ResponseContext,
@@ -608,7 +576,6 @@ function writeResponseFormat(format: ResponseFormat | undefined): Record<string,
   }
 }
 
-/** The Protocol's input count includes the cached input; counts never reported are written as 0. */
 function writeUsage(usage: TokenUsage): Record<string, unknown> {
   const cacheReadTokens = usage.cacheReadTokens ?? 0;
   const cacheWriteTokens = usage.cacheWriteTokens ?? 0;
@@ -627,12 +594,6 @@ function startStream(request: InferenceRequest, context: ResponseContext): Clien
   return new OpenAiResponsesStreamWriter(request, context);
 }
 
-/**
- * Stream events are the Protocol's numbered events: the response is created,
- * each output item is added, filled with deltas and done before the next one
- * starts, and the whole response comes last. The stop reason and usage arrive
- * in any order, so both are held until the stream ends.
- */
 class OpenAiResponsesStreamWriter implements ClientStreamWriter {
   private readonly items: ResponseEventWriter;
   private stopReason: StopReason = "end";
@@ -661,7 +622,6 @@ class OpenAiResponsesStreamWriter implements ClientStreamWriter {
   }
 
   end(): string {
-    // The open item's done events take their sequence numbers before the final response's.
     const closing = this.items.closeOpenItem();
     const ending = { stopReason: this.stopReason, usage: this.usage };
     const lifecycleType =
@@ -685,21 +645,13 @@ type OpenFunctionCall = OpenItemPosition & {
 };
 type OpenItem = OpenMessage | OpenReasoning | OpenFunctionCall;
 
-/** An item made open, with the events that closed the previous item and announced this one. */
 interface Opened<Item> {
   written: string;
   item: Item;
 }
 
-/** The only content part of a message or reasoning item the gateway writes. */
 const CONTENT_INDEX = 0;
 
-/**
- * Turns internal deltas into the Protocol's output items and numbers every
- * event. Finished items are kept for the response that ends the stream.
- * Events are numbered as they are built, so each method builds them in the
- * order the client receives them.
- */
 class ResponseEventWriter {
   private sequenceNumber = 0;
   private open: OpenItem | null = null;
@@ -743,7 +695,6 @@ class ResponseEventWriter {
         );
       }
       case "reasoning-signature": {
-        // The signature goes out with the item once it is done.
         const { written, item: reasoning } = this.unsignedReasoning();
         reasoning.signature = event.signature;
         return written;
@@ -753,8 +704,6 @@ class ResponseEventWriter {
       case "tool-call-delta": {
         const call = this.open;
         if (call?.type !== "function_call" || call.toolIndex !== event.index) {
-          // A done item can't be reopened. Upstreams finish one call's
-          // arguments before starting the next, so this means a broken stream.
           throw new GatewayError(
             "upstream_error",
             "The upstream interleaved tool call arguments",
@@ -820,7 +769,6 @@ class ResponseEventWriter {
     );
   }
 
-  /** The open message, or a new one when another kind of item (or none) is open. */
   private openMessage(): Opened<OpenMessage> {
     if (this.open?.type === "message") {
       return { written: "", item: this.open };
@@ -838,7 +786,6 @@ class ResponseEventWriter {
     return { written, item: message };
   }
 
-  /** A signature ends a reasoning item, so reasoning after it starts a new one. */
   private unsignedReasoning(): Opened<OpenReasoning> {
     if (this.open?.type === "reasoning" && this.open.signature === undefined) {
       return { written: "", item: this.open };
@@ -881,7 +828,6 @@ class ResponseEventWriter {
     );
   }
 
-  /** The position of an item opened after the last one closed: the following output index. */
   private nextPosition(type: OutputItemType): OpenItemPosition {
     const outputIndex = this.finishedItems.length;
     return { id: outputItemId(this.context, type, outputIndex), outputIndex };
@@ -906,15 +852,10 @@ function namedEvent(name: string, data: unknown): string {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-/** The Responses API answers errors in the same envelope as Chat Completions. */
 function writeError(error: GatewayError): unknown {
   return openAiChatClientConverter.writeError(error);
 }
 
-/**
- * The Protocol's `error` stream event. It carries no `sequence_number`: the
- * hook gets only the error, and the official SDK raises on the event name.
- */
 function writeStreamError(error: GatewayError): string {
   return namedEvent("error", {
     type: "error",

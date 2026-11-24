@@ -5,14 +5,8 @@ import type { Database } from "@/db/schemas/relations.js";
 import { providerAccounts } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 
-// Enough to tell failures apart on the dashboard; the rest is in the logs.
 const LAST_ERROR_MAX_LENGTH = 500;
 
-/**
- * What the gateway writes about a Provider Account after a failed Attempt.
- * Called without awaiting from the inference path, so these never throw:
- * the request goes on (or has already ended) whatever happens here.
- */
 @Injectable()
 export class ProviderAccountHealth {
   private readonly logger = new Logger(ProviderAccountHealth.name);
@@ -22,7 +16,6 @@ export class ProviderAccountHealth {
     private readonly snapshot: SnapshotService,
   ) {}
 
-  /** Keeps the failure as the Provider Account's last error, for the dashboard. */
   async recordFailure(providerAccountId: string, lastError: string): Promise<void> {
     try {
       await this.db
@@ -36,10 +29,6 @@ export class ProviderAccountHealth {
     }
   }
 
-  /**
-   * Disables the Provider Account until an operator re-enables it on the
-   * dashboard, and refreshes every instance's snapshot so no request uses it.
-   */
   async disable(providerAccountId: string, reason: string, lastError: string): Promise<void> {
     try {
       await this.db

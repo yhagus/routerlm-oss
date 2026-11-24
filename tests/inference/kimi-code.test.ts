@@ -22,7 +22,6 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
 const GATEWAY_VERSION: unknown = JSON.parse(readFileSync("./package.json", "utf8")).version;
 
-/** A Kimi Code answer: thinking in `reasoning_content`, then the text. */
 const COMPLETION: FakeReply = {
   kind: "json",
   status: 200,
@@ -41,7 +40,6 @@ const COMPLETION: FakeReply = {
   },
 };
 
-/** The same answer streamed, with the usage inside the last chunk's choice as Kimi sends it. */
 const COMPLETION_STREAM: FakeReply = {
   kind: "stream",
   events: [
@@ -63,7 +61,6 @@ const COMPLETION_STREAM: FakeReply = {
     .join(""),
 };
 
-/** Kimi's refusal once the plan's quota is used up. */
 function quotaExceeded(body: unknown): FakeReply {
   return { kind: "json", status: 429, body };
 }
@@ -111,10 +108,6 @@ describe("Inference from Kimi Code with an API key (e2e)", () => {
     await app.close();
   });
 
-  /**
-   * Makes the Model "smart" reach `upstreamModelId` at a Provider with the
-   * Catalog's Kimi Code quirks, whose base URL is the fake upstream.
-   */
   async function serveUpstreamModel(upstreamModelId: string): Promise<void> {
     await db
       .update(upstreamModels)
@@ -138,7 +131,6 @@ describe("Inference from Kimi Code with an API key (e2e)", () => {
     return list.body.find((account: { id: string }) => account.id === primaryAccountId);
   }
 
-  /** Which Provider Account each Attempt used, by the key it sent. */
   function attemptedKeys(): string[] {
     return upstream.requests.map((received) =>
       String(received.headers.authorization).replace("Bearer ", ""),

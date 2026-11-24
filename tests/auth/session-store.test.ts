@@ -5,9 +5,6 @@ import { DrizzleSessionStore } from "@/auth/providers/drizzle-session.store.js";
 import { type Database, relations } from "@/db/schemas/relations.js";
 import { users } from "@/db/schemas/index.js";
 
-// The contract's user ids are `user-<uuid>`, while `sessions.user_id` is a
-// uuid referencing `users`. This store strips the prefix on the way in, adds
-// it back on the way out, and creates each User before its first session.
 const CONTRACT_USER_PREFIX = "user-";
 
 class StoreForContractUsers extends DrizzleSessionStore {

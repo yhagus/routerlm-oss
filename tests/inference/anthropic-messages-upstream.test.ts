@@ -12,7 +12,6 @@ import {
 import { createTestApp } from "@tests/support/test-app.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-/** A second turn: the client sends back the tool call it got and the tool's result. */
 const TOOL_RESULT_TURN_REQUEST = {
   model: "smart",
   messages: [
@@ -60,10 +59,6 @@ const TOOL_RESULT_TURN_REQUEST = {
 const SIGNATURE = "EqQBCgIYAhIM1gbcDa9GJwZA2b3h";
 const CITY_PARAMETERS = { type: "object", properties: { city: { type: "string" } } };
 
-/**
- * The Messages request the anthropic-messages `upstream-request.json` fixture
- * was recorded from, but asking for a stream.
- */
 const FIXTURE_CLIENT_REQUEST = {
   model: "smart",
   max_tokens: 512,
@@ -84,7 +79,6 @@ const FIXTURE_CLIENT_REQUEST = {
       role: "assistant",
       content: [
         { type: "thinking", thinking: "Need the weather and the time.", signature: SIGNATURE },
-        // Reasoning another Provider produced has no signature; the upstream would refuse it.
         { type: "thinking", thinking: "Thought from an openai-chat Provider.", signature: "" },
         { type: "text", text: "Checking." },
         { type: "tool_use", id: "toolu_01weather", name: "get_weather", input: { city: "Paris" } },
@@ -137,7 +131,6 @@ const HELLO_REQUEST = {
   messages: [{ role: "user", content: "Hello" }],
 };
 
-/** The parts of a streamed chunk these tests read. */
 interface ChatCompletionChunk {
   choices: {
     delta: {
@@ -164,7 +157,6 @@ describe("An anthropic-messages upstream (e2e)", () => {
     await deleteAllUpstreamData(db);
     await insertAnthropicMessagesModel(app, db, {
       modelName: "smart",
-      // The Protocol appends /v1/messages to the Provider's base URL.
       baseUrl: new URL(upstream.baseUrl).origin,
     });
     ({ key: apiKey } = await insertApiKey(app, db));
@@ -248,7 +240,6 @@ describe("An anthropic-messages upstream (e2e)", () => {
           finish_reason: "tool_calls",
         },
       ],
-      // 20 uncached + 100 read from + 30 written to the cache.
       usage: { prompt_tokens: 150, completion_tokens: 40 },
     });
   });
@@ -366,14 +357,12 @@ describe("An anthropic-messages upstream (e2e)", () => {
     expect(response.body.error.code).toBe("upstream_error");
   });
 
-  /** The recorded stream up to its first text, as an upstream that breaks off would send it. */
   function streamUpToFirstText(): string {
     const events = anthropicMessagesFixture("upstream-stream-tool-call.sse").split("\n\n");
     const firstText = events.findIndex((event) => event.includes('"text_delta"'));
     return `${events.slice(0, firstText + 1).join("\n\n")}\n\n`;
   }
 
-  // After the first text has reached the client, so the failure can only end its stream.
   it.each([
     [
       "reports an error",

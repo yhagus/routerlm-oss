@@ -4,17 +4,9 @@ import { apiErrorMessage } from "~/lib/api";
 import { checkedAgo, usageResetCount } from "~/lib/quotaMeters";
 import type { ProviderAccount, ProviderAccountQuota } from "~/lib/upstream";
 
-/**
- * A Provider Account's Quota Meters, how fresh they are, the last reading's
- * error, and a Refresh button that reads them now. Scoped meters, which count
- * one model group, sit under a disclosure. When its Provider has Usage Resets,
- * their count and a picker that spends one.
- */
 const props = defineProps<{
   account: ProviderAccount;
-  /** The time countdowns count from, in epoch milliseconds. */
   now: number;
-  /** Reloads the account list once a reading is stored. */
   refresh: () => Promise<unknown>;
 }>();
 

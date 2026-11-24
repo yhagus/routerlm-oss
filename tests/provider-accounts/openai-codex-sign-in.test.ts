@@ -35,7 +35,6 @@ import {
 } from "@tests/support/openai-codex-oauth.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${((process.pid + 7) % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -44,7 +43,6 @@ const { WorkerModule } = await import("@/worker.module.js");
 const { OAUTH_SIGN_INS_QUEUE } = await import("@/queue/models/queue-names.js");
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
-// Short, so a test sees several polls without waiting; OpenAI says 5 seconds.
 const POLL_INTERVAL = "0.1";
 const WAIT_TIMEOUT_MS = 5_000;
 const WAIT_STEP_MS = 25;
@@ -79,7 +77,6 @@ describe("Signing in to OpenAI Codex as the Codex CLI (e2e)", () => {
   });
 
   beforeEach(async () => {
-    // A poll left over from the last test must not take this test's replies.
     await pollQueue.obliterate({ force: true });
     openAi.reset();
     await deleteAllUpstreamData(db);
@@ -111,7 +108,6 @@ describe("Signing in to OpenAI Codex as the Codex CLI (e2e)", () => {
     await openAi.close();
   });
 
-  /** Queues OpenAI's answers: the user code, then each device token poll in turn. */
   function openAiAnswers(...polls: FakeReply[]): void {
     openAi.replyTo(USER_CODE_PATH, userCodeReply(POLL_INTERVAL));
     for (const poll of polls) {
@@ -148,7 +144,6 @@ describe("Signing in to OpenAI Codex as the Codex CLI (e2e)", () => {
     return openAi.requests.filter((received) => received.path === path);
   }
 
-  /** Starts a sign-in the User approves at the first poll, and returns it once it ended. */
   async function approvedSignIn(body?: object): Promise<SignIn> {
     openAiAnswers(APPROVED_REPLY);
     openAi.replyTo(
@@ -247,7 +242,6 @@ describe("Signing in to OpenAI Codex as the Codex CLI (e2e)", () => {
       oauthEmail: EMAIL,
       oauthPlanType: PLAN_TYPE,
     });
-    // The access token's JWT `exp` is an hour away.
     const lifetimeMs = (stored.oauthExpiresAt?.getTime() ?? 0) - Date.now();
     expect(lifetimeMs).toBeGreaterThan((HOUR_SECONDS - 30) * 1000);
     expect(lifetimeMs).toBeLessThanOrEqual(HOUR_SECONDS * 1000);

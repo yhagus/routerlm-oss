@@ -37,7 +37,6 @@ export class SendPlaygroundTranscriptionHandler implements ICommandHandler<SendP
   }
 }
 
-/** The Playground shows the transcript alone, so it always asks for plain text. */
 function asksForPlainText(body: unknown): unknown {
   return typeof body === "object" && body !== null ? { ...body, response_format: "text" } : body;
 }

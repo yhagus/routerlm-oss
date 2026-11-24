@@ -2,7 +2,6 @@
 import { attemptOutcomeLabel } from "~/lib/errorCaptures";
 import { formatDuration, type UsageLogAttempt } from "~/lib/usage";
 
-/** A Usage Log's Attempts, in the order the gateway tried them. */
 defineProps<{
   attempts: UsageLogAttempt[];
 }>();

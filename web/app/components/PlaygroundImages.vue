@@ -40,9 +40,6 @@ import {
 } from "~/lib/playgroundImages";
 import { formatCost } from "~/lib/usage";
 
-// The Playground's image tab: a prompt alone generates images, a prompt with
-// attached images edits them.
-
 const { $dashboardApi } = useNuxtApp();
 const {
   source,
@@ -54,15 +51,12 @@ const {
   requestPath,
 } = usePlaygroundTarget("image");
 
-// Settings
-
 const size = ref(AUTOMATIC_SIZE);
 const count = ref("");
 const negativePrompt = ref("");
 const seed = ref("");
 const isSettingsSheetOpen = ref(false);
 
-/** The sizes the target lists: the Upstream Model's, or every size one of the Model's Routes lists. */
 const targetSizes = computed(() => {
   if (source.value === "upstream") return selectedUpstreamModel.value?.sizes ?? [];
   const routedIds = new Set(
@@ -90,14 +84,12 @@ watch(sizeOptions, (options) => {
   }
 });
 
-/** A whole number field: undefined when empty, null when it isn't one in range. */
 function wholeNumberField(text: string, min: number, max: number): number | undefined | null {
   if (text.trim() === "") return undefined;
   const value = Number(text);
   return Number.isInteger(value) && value >= min && value <= max ? value : null;
 }
 
-/** The settings to send, or what is wrong with them. */
 function readSettings(): { settings: PlaygroundImageSettings } | { problem: string } {
   const target = requestModel();
   if ("problem" in target) return target;
@@ -119,7 +111,6 @@ function readSettings(): { settings: PlaygroundImageSettings } | { problem: stri
   };
 }
 
-/** The parameters this tab sends, shown in the bar so they're visible without the rail. */
 const sentParameters = computed(() => {
   const parameters: string[] = [];
   const typedSize = size.value.trim();
@@ -129,8 +120,6 @@ const sentParameters = computed(() => {
   if (seed.value.trim() !== "") parameters.push(`Seed ${seed.value}`);
   return parameters;
 });
-
-// History: lives in this tab only, and is gone on reload.
 
 const exchanges = ref<ImageExchange[]>([]);
 let nextExchangeId = 1;
@@ -152,10 +141,8 @@ const promptInput = usePromptInputProvider({
 const canSend = computed(
   () => !isSending.value && canTry.value && promptInput.textInput.value.trim() !== "",
 );
-/** The composer takes files dropped anywhere, so it goes while another tab shows. */
 const isActivated = useIsActivated();
 
-/** The composer's submit. Throwing hands the prompt back to the composer and shows the problem. */
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSending.value) return;
   const prompt = message.text.trim();
@@ -163,7 +150,6 @@ async function submit(message: PromptInputMessage): Promise<void> {
   const read = readSettings();
   if ("problem" in read) throw new Error(read.problem);
   composerError.value = "";
-  // The images arrive in the background; the composer is free again at once.
   void send(
     read.settings,
     prompt,
@@ -178,7 +164,6 @@ async function send(
 ): Promise<void> {
   const { operation, endpoint, body } = imageRequestOf(settings, prompt, inputImageUrls);
   const isDirect = source.value === "upstream";
-  // Reactive, so the tab shows the images when they arrive.
   const exchange = reactive<ImageExchange>({
     id: nextExchangeId++,
     prompt,
@@ -227,7 +212,6 @@ function clearHistory(): void {
   exchanges.value = [];
 }
 
-/** Totals over every request in this tab, so a run of test sends adds up. */
 const totals = computed(() => {
   let images = 0;
   let cost: number | null = null;

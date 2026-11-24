@@ -26,7 +26,6 @@ const {
   refresh,
 } = useDashboardApi<User[]>("/users");
 
-/** Only the first load shows placeholders; a refresh keeps the current rows until it lands. */
 const isLoadingUsers = computed(() => usersStatus.value === "pending" && !users.value);
 
 const emailById = computed(() => new Map((users.value ?? []).map((user) => [user.id, user.email])));
@@ -109,7 +108,6 @@ async function runAction(): Promise<void> {
 }
 
 async function afterAction(done: UserAction): Promise<void> {
-  // Deleting yourself ends your own session.
   if (done.kind === "delete" && done.user.id === currentUser.value?.id) {
     currentUser.value = null;
     await navigateTo("/login");

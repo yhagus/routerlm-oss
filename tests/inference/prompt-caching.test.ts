@@ -35,7 +35,6 @@ const SECOND_TURN = [
   { role: "user", content: [{ type: "tool_result", tool_use_id: "toolu_01", content: "14:05" }] },
 ];
 
-/** The text both strings start with. */
 function sharedPrefixOf(first: string, second: string): string {
   let length = 0;
   while (length < first.length && first[length] === second[length]) {
@@ -115,7 +114,6 @@ describe("Prompt caching (e2e)", () => {
       .expect(200);
   }
 
-  /** Creates an openai-chat Model whose Provider accepts a prompt cache key, and returns its id. */
   async function insertCacheKeyModel(modelName: string): Promise<string> {
     const { modelId, providerId } = await insertOpenAiChatModel(app, db, {
       modelName,
@@ -154,7 +152,6 @@ describe("Prompt caching (e2e)", () => {
       ],
       tools: [{ name: "get_time", cache_control: { type: "ephemeral" } }],
     });
-    // The two requests differ only from where the first turn's marker sat.
     expect(sharedPrefixOf(first.rawBody, second.rawBody)).toMatch(
       /"messages":\[\{"role":"user","content":\[\{"type":"text","text":"What time is it in Paris\?"$/,
     );

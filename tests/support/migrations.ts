@@ -4,11 +4,6 @@ import { join } from "node:path";
 
 export const MIGRATIONS_FOLDER = "./drizzle";
 
-/**
- * Copies every migration that precedes the one whose folder name ends in
- * `migrationSuffix` into a temporary folder, to migrate a database to how an
- * install looked before it. Returns the folder, which the caller removes.
- */
 export async function copyMigrationsBefore(migrationSuffix: string): Promise<string> {
   const migrationNames = (await readdir(MIGRATIONS_FOLDER)).sort();
   const migrationIndex = migrationNames.findIndex((name) => name.endsWith(migrationSuffix));

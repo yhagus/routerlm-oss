@@ -31,14 +31,12 @@ describe("Deleting an Integration (e2e)", () => {
     await app.close();
   });
 
-  /** An API Key the Integration issued to a Customer. Until the control plane exists, a dashboard key handed to it. */
   async function issueApiKey(integrationId: string): Promise<{ id: string; key: string }> {
     const issued = await createApiKey(app, adaCookie, { name: "customer key" });
     await db
       .update(apiKeys)
       .set({ integrationId, customerId: "customer-42" })
       .where(eq(apiKeys.id, issued.id));
-    // A direct database write, so refresh the in-memory snapshot as a dashboard write would.
     await app.get(SnapshotService).changed();
     return issued;
   }

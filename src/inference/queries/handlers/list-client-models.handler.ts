@@ -31,6 +31,5 @@ function combinedCapabilities(model: SnapshotModel): Capability[] {
   for (const route of model.routes.filter(isRouteUsable)) {
     route.upstreamModel.capabilities.forEach((capability) => offered.add(capability));
   }
-  // In the Catalog's order, not the order Routes happen to list them.
   return CAPABILITIES.filter((capability) => offered.has(capability));
 }

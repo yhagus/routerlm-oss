@@ -34,7 +34,6 @@ export class ListIntegrationModelsHandler implements IQueryHandler<ListIntegrati
 }
 
 function integrationModelOf(model: SnapshotModel, now: Date): IntegrationModel {
-  // Routes come in the order the gateway tries them.
   const servingRoutes = model.routes.filter(isRouteUsable);
   const firstUpstreamModel = servingRoutes.at(0)?.upstreamModel;
   return {
@@ -50,7 +49,6 @@ function integrationModelOf(model: SnapshotModel, now: Date): IntegrationModel {
 
 function combinedCapabilities(servingRoutes: SnapshotRoute[]): Capability[] {
   const offered = new Set(servingRoutes.flatMap((route) => route.upstreamModel.capabilities));
-  // In the Catalog's order, not the order Routes happen to list them.
   return CAPABILITIES.filter((capability) => offered.has(capability));
 }
 
@@ -58,11 +56,6 @@ function pricesOf(upstreamModel: SnapshotUpstreamModel): ModelPrices {
   return { ...standardPricesOf(upstreamModel), unitPrices: upstreamModel.unitPrices };
 }
 
-/**
- * The snapshot holds only the enabled windows, ordered by Validity Period
- * start, then window name. Window Prices whose period has ended by `now` are
- * left out; those yet to start stay in, so an Integration can show them.
- */
 function pricingWindowsOf(
   upstreamModel: SnapshotUpstreamModel,
   now: Date,

@@ -34,11 +34,7 @@ type ReasoningAsThinking = NonNullable<CatalogProviderQuirks["reasoningAsThinkin
 
 const CHAT_COMPLETIONS_PATH = "/chat/completions";
 const STREAM_END = "[DONE]";
-// Some Providers reject an empty `reasoning_content` on a turn that must carry one.
 const REASONING_PLACEHOLDER = " ";
-
-// Key order here is the order on the wire: keep it fixed so the same request
-// always gives the same bytes (upstream prompt caches compare prefixes).
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
   const { quirks } = target;
@@ -64,7 +60,6 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (request.responseFormat) {
     body.response_format = writeResponseFormat(request.responseFormat);
   }
-  // Chat Completions has no thinking budget; only an effort level survives.
   if (quirks.reasoningAsThinking) {
     body.thinking = writeThinking(request.reasoning?.effort, target, quirks.reasoningAsThinking);
   } else if (request.reasoning?.effort) {
@@ -102,11 +97,6 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   };
 }
 
-/**
- * Reasoning for a Provider that takes a `thinking` object. Thinking stays
- * enabled whatever the client asked: the Provider's models cannot turn it
- * off. Without an effort the Provider's own default for the model applies.
- */
 function writeThinking(
   effort: ReasoningEffort | undefined,
   target: UpstreamTarget,
@@ -136,11 +126,6 @@ function writeMessage(
   }
 }
 
-/**
- * A lone text part goes as a plain string, which every openai-chat Provider
- * accepts, unless it carries a cache marker the Provider keeps: a marker
- * needs a content part to sit on.
- */
 function writeUserContent(
   content: UserContentPart[],
   quirks: CatalogProviderQuirks,
@@ -160,7 +145,6 @@ function writeUserContent(
   );
 }
 
-/** Whether the Provider keeps client cache markers and one of these parts carries one. */
 function keepsCacheMarkers(
   quirks: CatalogProviderQuirks,
   parts: { cacheMarker?: CacheMarker }[],
@@ -175,12 +159,6 @@ function writeTextPart(
   return withCacheControl({ type: "text", text: part.text }, part.cacheMarker, quirks);
 }
 
-/**
- * Writes the client's cache marker as `cache_control` when the Provider keeps
- * markers (spec "Cache behavior"); otherwise it is dropped. Alibaba Model
- * Studio documents only the `ephemeral` type with a fixed lifetime, so a
- * client's TTL is not sent.
- */
 function withCacheControl(
   part: Record<string, unknown>,
   marker: CacheMarker | undefined,
@@ -222,7 +200,6 @@ function writeAssistantMessage(
   return message;
 }
 
-/** Text parts are joined into one string, unless a cache marker the Provider keeps needs them as parts. */
 function writeAssistantText(
   content: AssistantContentPart[],
   quirks: CatalogProviderQuirks,
@@ -280,8 +257,6 @@ function writeResponseFormat(format: ResponseFormat): Record<string, unknown> {
   }
 }
 
-// Responses are read leniently: only the fields the internal format needs.
-
 const toolCallSchema = z.object({
   id: z.string(),
   function: z.object({ name: z.string(), arguments: z.string() }),
@@ -297,7 +272,6 @@ const completionSchema = z.object({
           tool_calls: z.array(toolCallSchema).nullish(),
         }),
         finish_reason: openAiFinishReasonSchema,
-        // Kimi Code may report usage here instead of at the top level.
         usage: usageSchema.nullish(),
       }),
     )
@@ -365,7 +339,6 @@ const chunkSchema = z.object({
 
 const streamErrorSchema = z.object({ error: z.unknown() });
 
-/** A body that ends without `[DONE]` ends normally: not every Provider sends it. */
 class ChatStreamParser implements UpstreamStreamParser {
   isDone = false;
 
@@ -395,15 +368,7 @@ function parseJson(data: string): unknown {
   }
 }
 
-/**
- * The events of a chunk that only carries text or reasoning (most of a
- * stream), read without running two zod schemas on every token. Undefined for
- * any other chunk, which takes the schema path: this accepts only chunks that
- * streamErrorSchema rejects and chunkSchema accepts, and gives the events
- * eventsOfChunk would.
- */
 function eventsOfTokenChunk(json: unknown): InferenceStreamEvent[] | undefined {
-  // streamErrorSchema matches any object with an `error` key, whatever its value.
   if (!isJsonObject(json) || "error" in json || !Array.isArray(json.choices)) {
     return undefined;
   }
@@ -489,7 +454,6 @@ function* eventsOfChunk(json: unknown): Iterable<InferenceStreamEvent> {
   }
 }
 
-/** The `openai-chat` upstream Protocol: OpenAI Chat Completions and the Providers that copy it. */
 export const openAiChatUpstreamConverter: UpstreamProtocolConverter = {
   protocol: "openai-chat",
   writeRequest,

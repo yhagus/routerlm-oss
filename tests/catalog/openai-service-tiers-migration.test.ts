@@ -34,7 +34,6 @@ describe("OpenAI Service Tiers migration (e2e)", () => {
     await rm(migrationsBefore, { recursive: true, force: true });
   });
 
-  /** The OpenAI Provider and its gpt-6-sol as the seeder created them before Service Tiers. */
   async function insertSeededOpenAi(): Promise<void> {
     const { rows } = await pool.query<{ id: string }>(
       `insert into providers (slug, name, protocol, base_url, auth_style, is_from_catalog)

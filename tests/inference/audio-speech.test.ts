@@ -68,7 +68,6 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
       });
   }
 
-  /** The recorded DashScope answer, its audio URL pointing at the fake, which serves AUDIO there. */
   function answerWithAudio(): void {
     const answer = dashScopeSpeechFixture("upstream-response.json").replace(
       /https:\/\/[^"]*speech\.mp3[^"]*/,
@@ -78,7 +77,6 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
     upstream.replyTo(AUDIO_PATH, {
       kind: "binary",
       status: 200,
-      // OSS serves generated files without a precise audio type.
       contentType: "application/octet-stream",
       body: AUDIO,
     });

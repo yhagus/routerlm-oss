@@ -8,7 +8,6 @@ import {
   videoFileName,
 } from "~/lib/playgroundVideo";
 
-/** One Video Job in the tab's history: the prompt and parameters, then its progress, video or error. */
 defineProps<{ exchange: VideoExchange }>();
 
 const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget();

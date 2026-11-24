@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { PanelLeft, Search } from "@lucide/vue";
 
-/**
- * The docs' header, full width over the contents and the sheet: the brand
- * and where the reader is (Client API, page counter) on the left, search in
- * the middle, the reader's settings on the right. On a phone the settings
- * move into the contents drawer, which opens from the button on the left.
- */
 const emit = defineEmits<{ openSearch: []; openContents: [] }>();
 
 const { docsRoot, t } = useDocsLocale();

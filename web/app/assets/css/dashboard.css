@@ -55,8 +55,6 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 6px 20px rgba(0, 0, 0, 0.04);
   --shadow-float: 0 1px 1px rgba(0, 0, 0, 0.04), 0 12px 32px rgba(0, 0, 0, 0.08);
   --shadow-pop-color: rgba(0, 0, 0, 0.14);
-  /* Stacking order, bottom to top. Popovers sit above dialogs because selects,
-     menus and date pickers open from fields inside dialogs and sheets. */
   --z-raised: 3;
   --z-sticky: 10;
   --z-nav-scrim: 14;
@@ -67,8 +65,6 @@
   --z-toast: 80;
   --z-tooltip: 90;
 }
-/* Apple-style neutrals: grouped gray canvas, white cards, one blue accent,
-   system green/orange/red for state. Glass only where content passes behind. */
 :root[data-theme="dark"] {
   color-scheme: dark;
   --ink: #f5f5f7;
@@ -212,13 +208,10 @@ select {
 button {
   cursor: pointer;
 }
-/* Links carry no underline at rest; plain links show one on hover or keyboard focus.
-   Classed links (nav, table entities, counts) style their own hover. */
 a {
   text-decoration: none;
   text-underline-offset: 3px;
 }
-/* Menus (sidebar) never underline, whatever classes the router adds. */
 :is(a:not([class]), a[class=""]):not(nav a, aside a):is(:hover, :focus-visible) {
   text-decoration-line: underline;
 }
@@ -242,7 +235,6 @@ select:focus-visible {
   display: flex;
   background: var(--paper);
 }
-/* Floating glass sidebar, inset from the window like a macOS source list. */
 .sidebar {
   width: 240px;
   min-height: 0;
@@ -567,7 +559,6 @@ select:focus-visible {
   color: var(--muted);
 }
 .app-select-content {
-  /* Portalled to <body> and placed by reka-ui's popper, so no ancestor clips it. */
   z-index: var(--z-popover);
   width: var(--reka-popover-trigger-width);
   min-width: var(--reka-popover-trigger-width);
@@ -607,7 +598,6 @@ select:focus-visible {
 .app-select-item__indicator {
   color: var(--accent-ink);
 }
-/* Searchable: a filter field above a list that scrolls on its own, wide enough for long ids. */
 .app-select-content--searchable {
   display: flex;
   flex-direction: column;
@@ -662,7 +652,6 @@ select:focus-visible {
     font-size: 16px;
   }
 }
-/* Multi-select: a checkbox per row, and the menu may grow wider than its trigger for long names. */
 .app-select-content--multi {
   width: max-content;
   max-width: min(260px, calc(100vw - 32px));
@@ -673,7 +662,6 @@ select:focus-visible {
   gap: 9px;
   padding: 0 10px;
 }
-/* An option's label, with what its `option-leading` slot puts before it */
 .app-select-item__content {
   display: flex;
   align-items: center;
@@ -779,7 +767,6 @@ select:focus-visible {
 .button:active {
   transform: scale(0.97);
 }
-/* Primary action: a clear edge and restrained depth keep it readable in both themes. */
 .button--primary {
   border: 1px solid var(--primary-outline);
   border-radius: 10px;
@@ -796,7 +783,6 @@ select:focus-visible {
 .button--quiet {
   height: 38px;
 }
-/* The time zones button: the offset beside a globe, a menu for the detail. */
 .topbar__zone {
   display: inline-flex;
   flex: none;
@@ -987,7 +973,6 @@ select:focus-visible {
   font-size: 23px;
   letter-spacing: -0.035em;
 }
-/* A stat that opens the page behind it (the Overview's error origin tiles). */
 a.executive-band__stat {
   color: inherit;
   text-decoration: none;
@@ -1211,7 +1196,6 @@ a.executive-band__stat:hover {
 .empty-state--error .empty-state__icon {
   color: var(--danger-ink);
 }
-/* Loading: one small ring in the muted tone, beside a short label. */
 .spinner {
   display: inline-block;
   flex: none;
@@ -1242,14 +1226,12 @@ a.executive-band__stat:hover {
   padding-block: 28px;
   text-align: center;
 }
-/* A whole page section that is still loading: centred, with the panel's breathing room. */
 .loading-panel {
   display: grid;
   place-items: center;
   min-height: 160px;
 }
 
-/* Page transitions: the old page fades out quickly, the new one rises in. */
 .page-enter-active {
   transition:
     opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
@@ -1574,7 +1556,6 @@ tbody tr:hover {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
-  /* A spinner frozen mid-turn reads as broken: keep it turning, slowly. */
   .spinner {
     animation-duration: 1.6s !important;
     animation-iteration-count: infinite !important;
@@ -1674,7 +1655,6 @@ tbody tr:hover {
   .topbar__theme-select {
     flex-basis: 32px;
   }
-  /* Phones keep the globe and open the menu for the detail. */
   .topbar__zone {
     width: 32px;
     justify-content: center;
@@ -1804,12 +1784,6 @@ tbody tr:hover {
   }
 }
 
-/* ---------- Charts ----------
-   Provider identity uses series-1..4 (blue, orange, aqua, yellow); token
-   categories use a violet/magenta pair so they never read as a provider.
-   Both sets were checked for colorblind separation against the panel surface;
-   the lighter light-mode steps sit below 3:1, so every chart keeps a legend
-   with values or a table nearby. */
 :root {
   --series-1: #2a78d6;
   --series-2: #eb6834;
@@ -1913,7 +1887,6 @@ tbody tr:hover {
   align-items: center;
   gap: 7px;
 }
-/* A legend entry that hides or shows its series; a hidden one fades out. */
 .chart-legend__toggle {
   padding: 2px 0;
   border: 0;
@@ -1980,7 +1953,6 @@ tbody tr:hover {
   border-top: 1px solid var(--line-soft);
 }
 
-/* Sparkline under a metric */
 .sparkline {
   position: relative;
   width: 100%;
@@ -2029,7 +2001,6 @@ tbody tr:hover {
   letter-spacing: 0;
 }
 
-/* Single stacked bar showing parts of a whole */
 .segment-chart {
   display: grid;
   gap: 12px;
@@ -2093,7 +2064,6 @@ tbody tr:hover {
   text-align: right;
 }
 
-/* Horizontal bars, one row per entity */
 .bar-list {
   display: grid;
   gap: 14px;
@@ -2156,7 +2126,6 @@ tbody tr:hover {
   font-size: 10px;
 }
 
-/* Chart panels */
 .panel--full {
   grid-column: 1 / -1;
 }
@@ -2227,7 +2196,6 @@ tbody tr:hover {
   padding-top: 18px;
 }
 
-/* ---- Sign-in screens, forms and dialogs ---- */
 .auth-screen {
   display: grid;
   place-items: center;
@@ -2293,7 +2261,6 @@ tbody tr:hover {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
-/* A line of guidance under a field's control */
 .field__note {
   color: var(--muted);
   font-size: 11px;
@@ -2311,14 +2278,10 @@ tbody tr:hover {
     border-color 0.15s,
     box-shadow 0.15s;
 }
-/* A secret typed into a plain text input, shown as dots: a password input would
-   make browsers offer saved logins. */
 .text-input--masked {
   -webkit-text-security: disc;
   text-security: disc;
 }
-/* Number fields: grouped digits (1 048 576) in tabular figures; token fields
-   show their size inside the right edge. */
 .number-input {
   position: relative;
   display: block;
@@ -2355,7 +2318,6 @@ tbody tr:hover {
   transform: translateY(-50%);
   white-space: nowrap;
 }
-/* Too narrow to share the line: the size moves under the value. */
 @container (max-width: 199px) {
   .number-input--noted > input {
     padding-right: 11px;
@@ -2370,8 +2332,6 @@ tbody tr:hover {
     top: 17px;
   }
 }
-/* Date field: typed YYYY-MM-DD segments that read like a text input, with the
-   calendar a click or Alt+Down away. */
 .date-input {
   display: flex;
   align-items: center;
@@ -2491,8 +2451,6 @@ tbody tr:hover {
   opacity: 0.4;
   cursor: default;
 }
-/* The grid is a table for screen readers; it lays out as blocks so global
-   table styles (header bands, row lines) stay out of the calendar. */
 .date-calendar__grid,
 .date-calendar__grid thead,
 .date-calendar__grid tbody {
@@ -2590,8 +2548,6 @@ tbody tr:hover {
   background: var(--control-hover);
   color: var(--ink);
 }
-/* Text fields focus quietly: a firmer border and a soft halo hugging the field,
-   instead of the detached ring buttons use. */
 .text-input:focus-visible,
 .search-control:focus-within {
   outline: none;
@@ -2677,7 +2633,6 @@ tbody tr:hover {
   color: var(--muted);
   font-size: 12px;
 }
-/* API Keys and Integrations: a row that is no longer in use recedes; its status still reads in full. */
 .row--receded td:not(:has(.status-badge)):not(:last-child) {
   opacity: 0.55;
 }
@@ -2696,7 +2651,6 @@ tbody tr:hover {
 .form--full-width-selects .select-control {
   width: 100%;
 }
-/* Last rotated: a date that opens the key's rotation history */
 .api-key-rotated {
   padding: 0;
   border: 0;
@@ -2713,7 +2667,6 @@ tbody tr:hover {
 .value-never {
   color: var(--muted);
 }
-/* Rotation history: newest first, a thin rail joining each entry to the key's creation */
 .rotation-log {
   display: grid;
   margin: 0;
@@ -2802,7 +2755,6 @@ tbody tr:hover {
   gap: 10px;
   padding: 18px 0;
 }
-/* A row-menu entry with a line under its label, such as why it is unavailable */
 .row-action-item {
   display: grid;
   gap: 2px;
@@ -2821,7 +2773,6 @@ tbody tr:hover {
   flex: 1;
   min-width: 0;
 }
-/* An Integration Secret is shown once: the warning under it reads as a caution, not an error */
 .secret-warning {
   display: flex;
   align-items: center;
@@ -2830,7 +2781,6 @@ tbody tr:hover {
   color: var(--warning-ink);
   font-size: 12px;
 }
-/* Signing in to a Provider: the region choice, then the link to its verification page */
 .sign-in__regions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2841,7 +2791,6 @@ tbody tr:hover {
   justify-content: center;
 }
 
-/* Probe results: one entry per Provider Account, hairlines between them */
 .probe-results {
   display: grid;
   margin: 0;
@@ -2883,7 +2832,6 @@ tbody tr:hover {
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
-/* Longer forms: Providers, Upstream Models, Provider Accounts */
 .dialog--wide {
   width: min(620px, calc(100vw - 32px));
   max-height: calc(100dvh - 32px);
@@ -2913,7 +2861,6 @@ tbody tr:hover {
   margin-bottom: 4px;
   padding: 0;
 }
-/* Kind, Protocol, Base URL and remove share one column grid with their header. */
 .endpoint-list__head,
 .endpoint-list__row {
   display: grid;
@@ -2948,7 +2895,6 @@ tbody tr:hover {
   justify-self: start;
   margin-top: 2px;
 }
-/* A Pricing Window's ranges: weekday toggles, start, end and remove share one grid with their header. */
 .range-list {
   display: grid;
   gap: 8px;
@@ -3000,7 +2946,6 @@ tbody tr:hover {
     flex-wrap: wrap;
   }
 }
-/* An Upstream Model's attached Pricing Windows, in the order the API lists them. */
 .window-prices {
   display: grid;
   gap: 10px;
@@ -3025,7 +2970,6 @@ tbody tr:hover {
   gap: 2px;
   margin-left: auto;
 }
-/* The offer to split open-ended Window Prices around a new Validity Period. */
 .split-offer {
   display: grid;
   gap: 12px;
@@ -3081,8 +3025,6 @@ tbody tr:hover {
   justify-self: start;
   margin-top: 2px;
 }
-/* Narrow: Kind and Protocol share a line, the base URL takes the next. Each
-   endpoint becomes a small block, so the column header no longer applies. */
 @media (max-width: 560px) {
   .endpoint-list__head {
     display: none;
@@ -3097,7 +3039,6 @@ tbody tr:hover {
     grid-row: 2;
   }
 }
-/* A Provider's endpoints on one line: one icon chip per Kind, named in a tooltip. */
 .endpoint-summary {
   display: inline-flex;
   flex: none;
@@ -3150,7 +3091,6 @@ tbody tr:hover {
 .check-field input {
   accent-color: var(--ink);
 }
-/* A field with the Provider's mark before it, as a preview of its logo */
 .field__with-mark {
   display: flex;
   align-items: center;
@@ -3163,7 +3103,6 @@ tbody tr:hover {
 .logo-select-menu .app-select-options {
   max-height: 260px;
 }
-/* Compact rows for the logo list: a smaller mark and a shorter row than other selects */
 .logo-select-menu .app-select-item {
   min-height: 43px;
 }
@@ -3182,7 +3121,6 @@ tbody tr:hover {
 .logo-select-menu .provider-mark--xs.provider-mark--monogram {
   font-size: 11px;
 }
-/* The Provider form's rarely needed settings, folded under a hairline */
 .form-advanced {
   border-top: 1px solid var(--line-soft);
   padding-top: 12px;
@@ -3215,7 +3153,6 @@ tbody tr:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-/* Tags typed into one field: Enter or a comma adds one */
 .tag-list-input {
   display: flex;
   flex-wrap: wrap;
@@ -3268,8 +3205,6 @@ tbody tr:hover {
   font-size: 11px;
   white-space: normal;
 }
-/* Usage page */
-/* One panel, hairline dividers drawn by the 1px gap over the line-coloured background. */
 .usage-summary {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -3325,7 +3260,6 @@ tbody tr:hover {
   color: var(--danger-ink);
   font-weight: 650;
 }
-/* Who caused a failed request, beside its status badge. */
 .status-badge--origin {
   margin-left: 6px;
   color: var(--muted);
@@ -3334,7 +3268,6 @@ tbody tr:hover {
   color: var(--warning-ink);
   font-weight: 650;
 }
-/* Three over two on tablets, then two per row; the odd stat spans the row so no gap shows. */
 @media (max-width: 1100px) {
   .usage-summary {
     grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -3362,8 +3295,6 @@ tbody tr:hover {
   }
 }
 
-/* Playground: a test bench. The chat panel fills the window under the page
-   heading; settings sit in a rail on wide screens and in a sheet below 1100px. */
 .bench {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
@@ -3394,7 +3325,6 @@ tbody tr:hover {
   }
 }
 
-/* Model bar: what this tab sends, and what it has spent. */
 .bench-bar {
   display: flex;
   flex-wrap: wrap;
@@ -3408,7 +3338,6 @@ tbody tr:hover {
   flex: 0 1 260px;
   min-width: 180px;
 }
-/* Upstream Model source: Provider first, then one of its Upstream Models. */
 .bench-bar__upstream {
   display: flex;
   flex: 0 1 460px;
@@ -3473,7 +3402,6 @@ tbody tr:hover {
   padding: 0 11px;
 }
 
-/* Session totals card */
 .session-card {
   padding: 12px 14px;
 }
@@ -3511,7 +3439,6 @@ tbody tr:hover {
   font-weight: 650;
 }
 
-/* Conversation */
 .bench__log {
   min-height: 0;
 }
@@ -3527,8 +3454,6 @@ tbody tr:hover {
   color: var(--ink);
   overflow-wrap: anywhere;
 }
-/* vue-stream-markdown reads shadcn's variable names; they mean other things in
-   this stylesheet, so they're mapped only on its own root. */
 .bench__log .stream-markdown {
   --border: var(--line);
   --background: var(--panel);
@@ -3568,7 +3493,6 @@ tbody tr:hover {
   font-size: 12px;
 }
 
-/* Receipt: who served the answer, then what it cost. */
 .receipt {
   display: grid;
   gap: 10px;
@@ -3623,7 +3547,6 @@ tbody tr:hover {
   font-size: 12px;
 }
 
-/* Route preview: what a send will do, before anything is sent. */
 .route-preview {
   display: grid;
   gap: 26px;
@@ -3753,7 +3676,6 @@ tbody tr:hover {
   gap: 10px 28px;
   margin: 12px 0 0;
 }
-/* Starters sit above the composer until the first send, whatever the preview's length. */
 .starters {
   display: flex;
   flex-wrap: wrap;
@@ -3775,7 +3697,6 @@ tbody tr:hover {
   text-transform: none;
 }
 
-/* Images in messages and the composer */
 .playground-images {
   display: flex;
   flex-wrap: wrap;
@@ -3809,7 +3730,6 @@ tbody tr:hover {
   background: var(--panel);
 }
 
-/* The image tab's results: each image at a readable size, with its download. */
 .image-results {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -3831,7 +3751,6 @@ tbody tr:hover {
   background: var(--panel-2);
 }
 
-/* The speech tab's result: the player, then its download. */
 .speech-result {
   display: grid;
   gap: 6px;
@@ -3841,7 +3760,6 @@ tbody tr:hover {
   width: min(100%, 420px);
 }
 
-/* The video tab's result: the player, then its download. */
 .video-result {
   display: grid;
   gap: 6px;
@@ -3855,7 +3773,6 @@ tbody tr:hover {
   background: var(--panel-2);
 }
 
-/* Composer */
 .composer {
   display: grid;
   gap: 6px;
@@ -3867,7 +3784,6 @@ tbody tr:hover {
   font-size: 11px;
 }
 
-/* The transcription tab's composer: the chosen file, then Transcribe. */
 .transcription-composer {
   display: flex;
   align-items: center;
@@ -3887,7 +3803,6 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
-/* Settings: one column in the rail and the sheet. */
 .playground-settings__grid {
   display: grid;
   gap: 14px;
@@ -3953,7 +3868,6 @@ tbody tr:hover {
   }
 }
 
-/* Request as code */
 .segmented {
   display: inline-flex;
   gap: 2px;
@@ -3979,7 +3893,6 @@ tbody tr:hover {
 }
 
 @media (max-width: 760px) {
-  /* The heading shrinks to one row so the composer stays on screen. */
   .page-wrap:has(.playground-page) {
     padding-bottom: 12px;
   }
@@ -4008,7 +3921,6 @@ tbody tr:hover {
   .bench-bar {
     padding: 10px 12px;
   }
-  /* Row one: the source and the tools; row two: what to send to. */
   .bench-bar__source {
     order: 0;
   }
@@ -4039,7 +3951,6 @@ tbody tr:hover {
   .bench-bar__tool span {
     display: none;
   }
-  /* Row three: what this tab sends, then what it has spent. */
   .bench-bar::after {
     content: "";
     order: 4;
@@ -4107,12 +4018,10 @@ tbody tr:hover {
   }
 }
 
-/* Error Captures */
 .filter-note {
   margin: 0 0 12px;
   color: var(--muted);
 }
-/* The summary: where it failed, what the client got, and what the Provider said. */
 .capture-summary {
   margin-bottom: 12px;
   padding: 16px 21px 14px;
@@ -4134,7 +4043,6 @@ tbody tr:hover {
   color: var(--muted);
   font-size: 12px;
 }
-/* "Client got" beside the outcome it labels. */
 .capture-outcome {
   display: flex;
   flex: none;
@@ -4190,7 +4098,6 @@ tbody tr:hover {
 .capture-facts dd {
   margin: 2px 0 0;
   font-size: 12px;
-  /* A User-Agent can be long and has few spaces. */
   overflow-wrap: anywhere;
 }
 .capture-link {
@@ -4203,7 +4110,6 @@ tbody tr:hover {
   text-decoration-color: var(--ink);
 }
 
-/* The request and the response side by side, so both are in view while diagnosing. */
 .capture-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4246,7 +4152,6 @@ tbody tr:hover {
   color: var(--muted);
   font-size: 11px;
 }
-/* As tall as the segmented control beside it (26px options in 2px padding). */
 .capture-pane__copy {
   display: inline-flex;
   align-items: center;
@@ -4287,7 +4192,6 @@ tbody tr:hover {
 }
 .capture-body,
 .capture-headers {
-  /* Fills what is left of the screen below the summary, so the page itself does not scroll. */
   max-height: clamp(220px, calc(100vh - 480px), 640px);
   margin: 0;
   overflow: auto;
@@ -4348,7 +4252,6 @@ tbody tr:hover {
   }
 }
 
-/* Overview page */
 .overview-charts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4375,7 +4278,6 @@ tbody tr:hover {
   }
 }
 
-/* Parameter Policy editor: on the Model page panel and in the Route override dialog */
 .text-area {
   height: auto;
   min-height: 34px;
@@ -4399,7 +4301,6 @@ tbody tr:hover {
   min-width: 110px;
 }
 
-/* Icons keep their declared size inside flex rows instead of shrinking with them. */
 svg.lucide {
   flex: none;
 }
@@ -4407,7 +4308,6 @@ svg.lucide {
   flex: none;
 }
 
-/* Providers page */
 .executive-band--providers {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
@@ -4437,7 +4337,6 @@ svg.lucide {
 .empty-state--standalone {
   border-top: 0;
 }
-/* Providers inventory: one row per Provider, stat labels once in the header. */
 .provider-table table {
   min-width: 760px;
 }
@@ -4571,7 +4470,6 @@ svg.lucide {
 .provider-table__row--off .account-bar {
   opacity: 0.55;
 }
-/* Upstream Models: model, Provider under it, capability icons, prices with cache notes. */
 .model-sort .select-control {
   gap: 7px;
 }
@@ -4664,8 +4562,6 @@ svg.lucide {
   font-size: 10.5px;
   white-space: nowrap;
 }
-/* The Price column: the amount over its unit, the same shape for every Kind. */
-/* The price, with the Pricing Window that sets it now beneath. */
 .model-table__price {
   display: inline-grid;
   justify-items: end;
@@ -4747,7 +4643,6 @@ svg.lucide {
   text-decoration-color: var(--line);
   text-underline-offset: 3px;
 }
-/* The name and its copy button share a line; the name truncates first. */
 .model-table__title {
   display: flex;
   align-items: center;
@@ -4761,7 +4656,6 @@ svg.lucide {
   flex: none;
   width: 18px;
   height: 18px;
-  /* Overhangs the text line instead of growing it, so the note sits close. */
   margin-block: -4px;
   border-radius: 5px;
 }
@@ -4769,7 +4663,6 @@ svg.lucide {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-/* Upstream Model details dialog */
 .model-details {
   display: grid;
   gap: 18px;
@@ -4885,8 +4778,6 @@ svg.lucide {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-/* A group's first two Provider marks overlap diagonally inside the same
-   28px box a single mark takes, so names stay aligned across rows. */
 .model-table__group-logos {
   position: relative;
   flex: none;
@@ -4918,8 +4809,6 @@ svg.lucide {
 .model-table .model-table__group-logos .provider-mark--monogram {
   font-size: 8px;
 }
-/* An open group and its Providers' rows share a tint and an edge, so the
-   hierarchy reads without shifting any column. */
 .model-table__row--open > td,
 .data-table__sub-row > td {
   background: var(--panel-2);
@@ -4961,7 +4850,6 @@ svg.lucide {
   white-space: normal;
 }
 
-/* Quota Meters on the Provider Accounts panel */
 .account-quota {
   display: grid;
   gap: 8px;
@@ -5032,7 +4920,6 @@ svg.lucide {
   justify-content: space-between;
   gap: 8px;
 }
-/* Picking a Usage Reset to spend: one radio row per reset, hairlines between them */
 .usage-reset-choices {
   display: grid;
   margin: 0;
@@ -5066,7 +4953,6 @@ svg.lucide {
   }
 }
 
-/* Provider detail */
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -5136,8 +5022,6 @@ svg.lucide {
   margin: 0 7px;
   color: var(--faint);
 }
-/* Phone: the name may take two lines, and the meta stacks without separators;
-   the slug drops out here because the Configuration tab lists it. */
 @media (max-width: 560px) {
   .provider-hero__title h1 {
     display: -webkit-box;
@@ -5167,7 +5051,6 @@ svg.lucide {
 .provider-hero__actions .status-badge {
   margin-right: 6px;
 }
-/* Integration detail: reuses the Provider hero */
 .integration-overview__tools {
   display: flex;
   align-items: center;
@@ -5178,7 +5061,6 @@ svg.lucide {
 .secret-history {
   padding: 18px 21px 21px;
 }
-/* One line above a table panel's rows, in place of a heading the tab already gives. */
 .panel-note {
   margin: 0;
   padding: 12px 21px;
@@ -5416,7 +5298,6 @@ svg.lucide {
   }
 }
 
-/* ---- DataTable: toolbar as the panel's header row, rows, paginator ---- */
 .data-table__toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -5445,7 +5326,6 @@ svg.lucide {
   margin: -4px 0 0;
   padding: 0 18px 12px;
 }
-/* The paginator sits in the toolbar; on phones it moves here, under the rows. */
 .data-table__footer {
   display: none;
 }
@@ -5473,7 +5353,6 @@ svg.lucide {
   background: var(--control-hover);
   color: var(--ink);
 }
-/* The field draws the browser's own clear button too; one is enough. */
 .data-table-search input::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
@@ -5548,7 +5427,6 @@ svg.lucide {
   min-width: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  /* Like the spinner: keep turning, slowly, so a refresh in flight still reads as one. */
   .data-table-tool--spinning svg {
     animation-duration: 1.6s !important;
     animation-iteration-count: infinite !important;
@@ -5587,7 +5465,6 @@ svg.lucide {
     font-weight: 650;
     line-height: 1;
   }
-  /* Icon-only on phones; the label stays as the button's accessible name. */
   .data-table-tool__label {
     position: absolute;
     width: 1px;
@@ -5608,7 +5485,6 @@ svg.lucide {
   }
 }
 
-/* ---- Error page: an unknown address, a missing record, or a crash ---- */
 .error-view {
   display: grid;
   gap: 18px;

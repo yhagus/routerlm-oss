@@ -4,7 +4,6 @@ import type { Database } from "@/db/schemas/relations.js";
 import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors.js";
 import { models, routes, upstreamModels } from "@/db/schemas/index.js";
 
-/** Names of the Models that have a Route to an Upstream Model matching `upstreamModelFilter`. */
 async function findModelsRoutingTo(
   db: Database,
   upstreamModelFilter: SQL | undefined,
@@ -19,10 +18,6 @@ async function findModelsRoutingTo(
   return rows.map((row) => row.name);
 }
 
-/**
- * Deletes something Routes may point at. Refuses with the Models whose Routes
- * still use it, also when a Route was added between the check and the delete.
- */
 export async function deleteUnlessRouted(
   db: Database,
   what: string,

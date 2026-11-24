@@ -2,20 +2,12 @@ import type { ModelKind, UpstreamModel } from "~/lib/upstream";
 import { rangeOf } from "~/lib/upstreamModelGroups";
 import { type DetailLine, unitPriceFormat, unitPriceLines } from "~/lib/upstreamModelMedia";
 
-/**
- * What the Price column shows for any Kind: an amount, the unit it is charged
- * in, and every price line behind it for the tooltip.
- */
 export interface PriceSummary {
-  /** "$3 / $15" for chat; "$0.04" or "$0.05–$0.1" for a media Kind. */
   value: string;
-  /** "in / out per 1M tokens", "per image" and so on. */
   unit: string;
-  /** Every published price; empty for a group row, whose members differ. */
   lines: DetailLine[];
 }
 
-/** Token prices are per million tokens and stop at four decimals. */
 const tokenPriceFormat = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -35,7 +27,6 @@ function compareNumbers(first: number, second: number): number {
   return first - second;
 }
 
-/** "min–max", one value when they agree, or null when none is set. */
 function formatRange(values: (number | null)[], format: Intl.NumberFormat): string | null {
   const range = rangeOf(values, compareNumbers);
   if (range === null) return null;
@@ -44,7 +35,6 @@ function formatRange(values: (number | null)[], format: Intl.NumberFormat): stri
   return min === max ? min : `${min}–${max}`;
 }
 
-/** The prices a media model is charged per output unit, across its sizes or resolutions. */
 function outputUnitPrices(model: UpstreamModel): (number | null)[] {
   switch (model.kind) {
     case "image":
@@ -73,10 +63,6 @@ function tokenPriceLines(model: UpstreamModel): DetailLine[] {
   );
 }
 
-/**
- * The Price column's content for one model, or for a group of models that share
- * an id (then ranges, and no lines). Null when no price is known.
- */
 export function priceSummary(
   models: readonly UpstreamModel[],
   kind: ModelKind,

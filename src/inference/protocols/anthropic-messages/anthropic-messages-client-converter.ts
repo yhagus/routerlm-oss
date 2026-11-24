@@ -22,9 +22,6 @@ import {
   type ResponseContext,
 } from "@/inference/protocols/client-protocol-converter.js";
 
-// The Anthropic Messages client Protocol (`POST /v1/messages`).
-// Schemas are plain (non-strict) zod objects: unknown fields are dropped (ADR 0002).
-
 const cacheControlSchema = z.object({
   type: z.literal("ephemeral"),
   ttl: z.enum(["5m", "1h"]).optional(),
@@ -59,7 +56,6 @@ const userBlockSchema = z.discriminatedUnion("type", [
 const assistantBlockSchema = z.discriminatedUnion("type", [
   textBlockSchema,
   z.object({ type: z.literal("thinking"), thinking: z.string(), signature: z.string() }),
-  // Opaque to every other Protocol, so the internal format can't hold it.
   z.object({ type: z.literal("redacted_thinking") }),
   z.object({
     type: z.literal("tool_use"),
@@ -80,7 +76,6 @@ type ClientMessage = z.infer<typeof messageSchema>;
 
 const CLIENT_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
 type ClientEffort = (typeof CLIENT_EFFORTS)[number];
-/** "max" has no internal counterpart above "xhigh". */
 const CLIENT_EFFORT_LEVELS: Record<ClientEffort, ReasoningEffort> = {
   low: "low",
   medium: "medium",
@@ -142,9 +137,7 @@ const requestSchema = z.object({
 type ClientRequest = z.infer<typeof requestSchema>;
 
 const MESSAGE_ID_PREFIX = "msg_";
-/** The Protocol's JSON schema output has no name; other Protocols need one. */
 const RESPONSE_FORMAT_NAME = "response";
-/** What the Protocol's adaptive thinking does when the client sets no effort. */
 const DEFAULT_ADAPTIVE_EFFORT: ReasoningEffort = "high";
 
 function parseRequest(body: unknown): InferenceRequest {
@@ -177,11 +170,10 @@ const SUPPORTED_BLOCKS = new Set([
 ]);
 const SUPPORTED_IMAGE_SOURCES = new Set(["base64", "url"]);
 
-/** Features ADR 0002 keeps out of v1 get a 400 that names them, rather than being dropped. */
 function refuseOutOfScopeFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
   if (!features.success) {
-    return; // Malformed: the full schema explains it.
+    return;
   }
   const { mcp_servers, tools, messages } = features.data;
   if (mcp_servers !== undefined) {
@@ -204,7 +196,7 @@ function refuseOutOfScopeFeatures(body: unknown): void {
 function refuseUnsupportedBlocks(content: unknown): void {
   const blocks = typedBlocksSchema.safeParse(content);
   if (!blocks.success) {
-    return; // A string, or malformed: the full schema explains it.
+    return;
   }
   for (const block of blocks.data) {
     if (typeof block.type === "string" && !SUPPORTED_BLOCKS.has(block.type)) {
@@ -239,7 +231,6 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
       ...(tool.cache_control && { cacheMarker: cacheMarkerOf(tool.cache_control) }),
     })),
     maxOutputTokens: request.max_tokens,
-    // The Protocol always reports usage in a stream.
     stream: request.stream ? { includeUsage: true } : null,
   };
   if (request.tool_choice !== undefined) {
@@ -307,10 +298,6 @@ function toUserContentPart(
   };
 }
 
-/**
- * A user turn can carry tool results and text together; the internal format
- * has one tool message per result, so the turn splits in its original order.
- */
 function toInferenceMessages(message: ClientMessage): InferenceMessage[] {
   if (typeof message.content === "string") {
     const content = [{ type: "text" as const, text: message.content }];
@@ -342,7 +329,6 @@ function toInferenceMessages(message: ClientMessage): InferenceMessage[] {
   return messages;
 }
 
-/** A marker on the tool result itself moves to its last part, which ends the same prefix. */
 function toolResultContent(block: z.infer<typeof toolResultBlockSchema>): UserContentPart[] {
   const content =
     typeof block.content === "string"
@@ -362,8 +348,6 @@ function toAssistantContentPart(
     case "text":
       return [toTextPart(block)];
     case "thinking":
-      // An empty signature is what this gateway writes for reasoning from a
-      // Protocol without signatures; it proves nothing, so it isn't kept.
       return [
         {
           type: "reasoning",
@@ -385,11 +369,10 @@ function toAssistantContentPart(
   }
 }
 
-/** Top-level `cache_control` asks for a breakpoint on the last block of the conversation. */
 function markLastBlock(messages: InferenceMessage[], marker: CacheMarker): void {
   const last = messages.at(-1);
   if (last?.role === "assistant") {
-    return; // Assistant content parts carry no markers in the internal format.
+    return;
   }
   const lastPart = last?.content.at(-1);
   if (lastPart && lastPart.cacheMarker === undefined) {
@@ -410,11 +393,6 @@ function toToolChoice(choice: NonNullable<ClientRequest["tool_choice"]>): ToolCh
   }
 }
 
-/**
- * A fixed budget wins over an effort level. Adaptive thinking (or no thinking
- * setting) follows `output_config.effort`; adaptive thinking without one runs
- * at the Protocol's default effort.
- */
 function toReasoning(request: ClientRequest): InferenceRequest["reasoning"] {
   const effort = request.output_config?.effort;
   switch (request.thinking?.type) {
@@ -447,7 +425,6 @@ function writeResponse(
   return {
     ...messageHeader(context),
     content: response.content.map(writeContentBlock),
-    // The internal format doesn't say which stop sequence matched.
     stop_reason: STOP_REASONS[response.stopReason],
     stop_sequence: null,
     usage: writeUsage(response.usage),
@@ -468,15 +445,12 @@ function writeContentBlock(part: AssistantContentPart): Record<string, unknown> 
     case "text":
       return { type: "text", text: part.text };
     case "reasoning":
-      // Reasoning from a Protocol without signatures gets an empty one, which
-      // parseRequest drops again when the client sends it back.
       return { type: "thinking", thinking: part.text, signature: part.signature ?? "" };
     case "tool-call":
       return { type: "tool_use", id: part.id, name: part.name, input: toolInputOf(part.arguments) };
   }
 }
 
-/** The Protocol carries tool input as an object; arguments the model left malformed become `{}`. */
 function toolInputOf(toolArguments: string): unknown {
   try {
     const input: unknown = JSON.parse(toolArguments);
@@ -486,7 +460,6 @@ function toolInputOf(toolArguments: string): unknown {
   }
 }
 
-/** The Protocol's counts are required numbers, except the cache counts. */
 function writeUsage(usage: TokenUsage): Record<string, unknown> {
   return {
     input_tokens: usage.inputTokens ?? 0,
@@ -500,16 +473,10 @@ function startStream(_request: InferenceRequest, context: ResponseContext): Clie
   return new AnthropicMessagesStreamWriter(context);
 }
 
-/** The event that ends a stream which failed after its first chunk reached the client. */
 function writeStreamError(error: GatewayError): string {
   return namedEvent("error", writeError(error));
 }
 
-/**
- * Stream events are written as the Protocol's named events. The stop reason
- * and usage arrive in any order, so both are held until the stream ends and
- * go out together in `message_delta`.
- */
 class AnthropicMessagesStreamWriter implements ClientStreamWriter {
   private readonly blocks = new ContentBlockWriter();
   private stopReason: StopReason = "end";
@@ -560,10 +527,6 @@ type OpenBlock =
   | { type: "thinking"; isSigned: boolean }
   | { type: "tool_use"; toolIndex: number };
 
-/**
- * Turns internal deltas into the Protocol's content blocks: each block is
- * started, filled with deltas, and stopped before the next one starts.
- */
 class ContentBlockWriter {
   private index = -1;
   private open: OpenBlock | null = null;
@@ -596,8 +559,6 @@ class ContentBlockWriter {
         );
       case "tool-call-delta":
         if (this.open?.type !== "tool_use" || this.open.toolIndex !== event.index) {
-          // A stopped block can't be reopened. Upstreams finish one call's
-          // arguments before starting the next, so this means a broken stream.
           throw new GatewayError(
             "upstream_error",
             "The upstream interleaved tool call arguments",
@@ -616,7 +577,6 @@ class ContentBlockWriter {
     return namedEvent("content_block_stop", { type: "content_block_stop", index: this.index });
   }
 
-  /** A signature ends a thinking block, so reasoning after it starts a new one. */
   private startThinkingUnlessOpen(): string {
     if (this.open?.type === "thinking" && !this.open.isSigned) {
       return "";
@@ -654,7 +614,6 @@ function namedEvent(name: string, data: unknown): string {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-/** The Protocol's error types; the gateway's own code travels next to them. */
 const ERROR_TYPES = {
   invalid_request: "invalid_request_error",
   no_capable_route: "invalid_request_error",
@@ -667,7 +626,6 @@ const ERROR_TYPES = {
   upstream_rate_limited: "rate_limit_error",
   upstream_error: "api_error",
   upstream_timeout: "api_error",
-  // Video codes never reach this Protocol's endpoint, but every code needs a type.
   video_not_found: "not_found_error",
   video_not_ready: "invalid_request_error",
 } as const satisfies Record<GatewayErrorCode, string>;

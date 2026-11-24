@@ -17,7 +17,6 @@ import { SummarizeUsageQuery } from "@/usage/queries/impl/summarize-usage.query.
 const MEDIAN = 0.5;
 const P95 = 0.95;
 
-/** Every count, sum and percentile runs in one aggregate query. */
 @QueryHandler(SummarizeUsageQuery)
 export class SummarizeUsageHandler implements IQueryHandler<SummarizeUsageQuery> {
   constructor(@InjectDrizzle() private readonly db: Database) {}
@@ -58,12 +57,10 @@ function countWhere(condition: SQL | undefined): SQL<number> {
   return sql<number>`count(*) filter (where ${condition})`.mapWith(Number);
 }
 
-/** The sum of a nullable column; nulls (unreported, unknown) count as 0. */
 function summed(column: AnyPgColumn): SQL<number> {
   return sql<number>`coalesce(sum(${column}), 0)`.mapWith(Number);
 }
 
-/** The interpolated percentile of a column's non-null values, or null when it has none. */
 function percentile(fraction: number, column: AnyPgColumn): SQL<number | null> {
   return sql<
     number | null

@@ -37,7 +37,6 @@ function isUniqueViolation(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false;
   }
-  // Drizzle wraps the driver error in `cause`.
   const driverError = error.cause ?? error;
   return (
     typeof driverError === "object" &&

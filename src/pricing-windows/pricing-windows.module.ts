@@ -5,7 +5,6 @@ import { PricingWindowsController } from "./pricing-windows.controller.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
 import { UpstreamModelPricingWindowsController } from "./upstream-model-pricing-windows.controller.js";
 
-/** Dashboard management of Pricing Windows and the Window Prices Upstream Models give them (ADR 0038). */
 @Module({
   imports: [SnapshotModule],
   controllers: [PricingWindowsController, UpstreamModelPricingWindowsController],

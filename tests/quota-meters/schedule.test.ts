@@ -17,7 +17,6 @@ import { remainsAtPercentReply } from "@tests/support/minimax-m-plan-remains.js"
 import { allowPrivateUpstreams } from "@tests/support/private-upstreams.js";
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
-// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -42,8 +41,6 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
   beforeAll(async () => {
     worker = await Test.createTestingModule({ imports: [WorkerModule] }).compile();
     await worker.init();
-    // The fake upstream listens on localhost, so this file turns the Setting on
-    // itself rather than rely on another file having left it on.
     await allowPrivateUpstreams(worker, true);
     db = worker.get<Database>(getDrizzleToken());
     queue = worker.get<Queue>(getQueueToken(QUOTA_METERS_QUEUE));
@@ -72,7 +69,6 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
       .values({
         slug: `plan-${quotaReader ?? "none"}`,
         name: "Plan",
-        // Where the Kimi Code reader asks; the MiniMax M Plan one asks the quirk's URL.
         endpoints: [
           { kind: "chat", protocol: "anthropic-messages", baseUrl: fakeUpstream.baseUrl },
         ],
@@ -95,13 +91,11 @@ describe("Scheduled Quota Meter readings (e2e)", () => {
     return account.id;
   }
 
-  /** Runs one tick of the reading schedule in the worker, as its job scheduler would. */
   async function runReadingTick(): Promise<void> {
     const job = await queue.add("read-due-accounts", {});
     await job.waitUntilFinished(queueEvents);
   }
 
-  /** Moves the account's last reading into the past, as if that much time had gone by. */
   async function lastReadMinutesAgo(providerAccountId: string, minutes: number): Promise<void> {
     await db
       .update(providerAccounts)

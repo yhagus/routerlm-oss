@@ -11,8 +11,6 @@ import {
   remainsReply,
 } from "@tests/support/minimax-m-plan-remains.js";
 
-// The reader's timeout comes from the environment, which ConfigModule reads
-// when the app module is first imported.
 process.env.QUOTA_READER_TIMEOUT_MS = "300";
 const fakeUpstream = await FakeUpstream.start();
 const { allowPrivateUpstreams } = await import("@tests/support/private-upstreams.js");

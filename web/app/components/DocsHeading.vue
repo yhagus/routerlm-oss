@@ -2,10 +2,6 @@
 import { Check, Link } from "@lucide/vue";
 import { pickHeading } from "~/composables/useActiveHeading";
 
-/**
- * A docs section heading with a link icon on hover or focus. The link copies
- * the section's URL and moves the address bar to it.
- */
 const props = defineProps<{ level: 2 | 3; id?: string }>();
 
 const { t } = useDocsLocale();

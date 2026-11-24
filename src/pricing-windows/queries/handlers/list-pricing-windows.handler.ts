@@ -15,7 +15,6 @@ export class ListPricingWindowsHandler implements IQueryHandler<ListPricingWindo
     const rows = await this.db
       .select({
         ...getColumns(pricingWindows),
-        // A model may attach one window several times (ADR 0040).
         attachedUpstreamModelCount: countDistinct(upstreamModelPricingWindows.upstreamModelId),
       })
       .from(pricingWindows)

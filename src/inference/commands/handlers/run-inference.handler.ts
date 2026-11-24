@@ -75,7 +75,6 @@ import type {
 } from "@/inference/models/inference.js";
 import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.command.js";
 
-/** What one Attempt needs besides the request and its target. */
 interface AttemptOptions {
   destination: Destination;
   cacheKey: string;
@@ -84,20 +83,12 @@ interface AttemptOptions {
   meter: UsageMeter;
 }
 
-/** What a successful Attempt hands back, before it is written for the client. */
 type AttemptResult =
   | { kind: "response"; body: unknown }
   | { kind: "stream"; upstream: UpstreamStream; writer: ClientStreamWriter; target: AttemptTarget };
 
 const HTTP_OK = 200;
 
-/**
- * The inference path (spec "Inference path" steps 2 to 8) for any client
- * Protocol: parse, resolve the Model (or, for a direct Upstream Model test,
- * the Upstream Model), select the capable Routes, then make
- * Attempts with Fallback until one answers, and translate back. Reads only
- * the in-memory snapshot and a local copy of the Cooldown state in Redis.
- */
 @CommandHandler(RunInferenceCommand)
 export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand> {
   constructor(
@@ -197,7 +188,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     }
   }
 
-  /** The Model the request names, with its capable Routes (spec steps 3 to 5). */
   private resolveNamedModel(
     clientRequest: InferenceRequest,
     kind: ModelKind,
@@ -207,8 +197,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     const model = usableModel(this.snapshot.current, clientRequest.model, caller);
     meter.modelResolved(model.id, model.name);
     assertKindServedHere(`Model "${model.name}"`, model.kind, kind);
-    // Routes are selected under the Model's policy (spec step 4 before 5); a
-    // Route override applies only to the Attempts on its own Route.
     const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));
     if (routes.length === 0) {
       throw new GatewayError(
@@ -226,10 +214,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     };
   }
 
-  /**
-   * The Upstream Model a direct Upstream Model test names by row id, if it
-   * can serve the request as sent.
-   */
   private resolveUpstreamModel(
     upstreamModelRowId: string,
     kind: ModelKind,
@@ -252,10 +236,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     };
   }
 
-  /**
-   * One upstream call. Throws AttemptFailedError while Fallback is still
-   * possible: for a stream, until its first event has arrived.
-   */
   private async attempt(
     converter: ClientProtocolConverter,
     request: InferenceRequest,
@@ -289,7 +269,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     const endpoint = endpointOf(upstreamModel);
     const converter = endpoint && UPSTREAM_PROTOCOL_CONVERTERS[endpoint.protocol];
     if (!endpoint || !converter) {
-      // canServe() already skips these Upstream Models.
       throw new Error(
         `The Provider ${provider.slug} has no ${upstreamModel.kind} endpoint the gateway can call`,
       );
@@ -319,13 +298,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     };
   }
 
-  /**
-   * Relays an open upstream stream to the client: the events of one network
-   * read go out as one chunk. A failure after the first chunk reached the
-   * client gets no Fallback (spec "Fallback"): the client Protocol's error
-   * event ends the stream instead. Records the usage job however it ends;
-   * the status went out with the first chunk.
-   */
   private async *relayStream(
     { upstream, writer, target }: Extract<AttemptResult, { kind: "stream" }>,
     converter: ClientProtocolConverter,
@@ -356,9 +328,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
           return;
         }
         if (error instanceof GatewayError) {
-          // The writer refused what the upstream sent (interleaved tool call
-          // arguments): the stream is broken, but the client still gets the
-          // Protocol's error event instead of a torn connection.
           meter.attemptInterrupted();
           meter.failedWith(error);
           text += converter.writeStreamError(error);
@@ -384,12 +353,6 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   }
 }
 
-/**
- * What the upstream gets for one Attempt. The Parameter Policy is applied on
- * the internal format, before any upstream translation, so it works the same
- * for every client and upstream Protocol. A direct Upstream Model test has no
- * Model, so its request goes upstream as the Playground sent it.
- */
 function upstreamRequestFor(
   clientRequest: InferenceRequest,
   model: SnapshotModel | null,
@@ -405,11 +368,6 @@ function upstreamRequestFor(
   return withCacheBreakpointsFor(model, upstreamModel, policed);
 }
 
-/**
- * Spec "Cache behavior": automatic breakpoints are for anthropic-messages
- * upstreams, when the Model has them on. Added after the Parameter Policy, so
- * its system prompt counts as part of the system prompt.
- */
 function withCacheBreakpointsFor(
   model: SnapshotModel,
   upstreamModel: SnapshotUpstreamModel,

@@ -5,12 +5,6 @@ import { X } from "@lucide/vue";
 import { nextTick, shallowRef, useTemplateRef, watch } from "vue";
 import type { DocsLocale } from "~/lib/docsMessages";
 
-/**
- * The client docs: a full-width header, the numbered contents as a flat
- * column on the canvas, and every page on one sheet beside it. The
- * dashboard's tokens and shapes, in a structure of its own (see
- * assets/css/docs.css). On a phone the contents open as a drawer.
- */
 const route = useRoute();
 const { locale, t } = useDocsLocale();
 
@@ -42,7 +36,6 @@ function handleContentsKeydown(event: KeyboardEvent): void {
   if (event.key === "Escape") closeContents();
 }
 
-// Search engines and readers learn of the page's other language; English is the default.
 const origin = useRequestURL().origin;
 const pageUrlIn = (target: DocsLocale): string =>
   `${origin}${docsPathIn(target, docsPagePathOf(route.path))}`;

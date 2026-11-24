@@ -17,7 +17,6 @@ import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
-/** OpenAI's wire values, as the Catalog maps them. */
 const OPENAI_TIER_VALUES = { fast: "priority", flex: "flex" };
 
 describe("Service Tier (e2e)", () => {

@@ -1,12 +1,3 @@
-/* Tailwind CSS 4.3.5 preflight, scoped. The dashboard's own styles were written
-   against browser defaults (UnoCSS ran without a preflight), so Tailwind's global
-   reset is left out. shadcn-vue and AI Elements components do expect it: they get
-   it inside any element with data-slot (every components/ui component) or the
-   .tw-scope class (put it on the root of AI Elements used in a page).
-   Generated from node_modules/tailwindcss/preflight.css by prefixing each selector
-   with :where(.tw-scope, [data-slot]) for descendants and the element itself, and
-   mapping html/:host to the scope. :where() keeps preflight's zero specificity.
-   Regenerate it when Tailwind's preflight changes. */
 @layer base {
   :where(.tw-scope, [data-slot]) *,
   :where(.tw-scope, [data-slot]),

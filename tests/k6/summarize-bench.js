@@ -1,12 +1,9 @@
-// Prints the two benchmark tables from the results benchmark.sh left in results/:
-// bench-<scenario>.json (k6 summary) and bench-<scenario>.stats.log (docker stats).
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const results = join(dirname(fileURLToPath(import.meta.url)), "results");
 
-// The gateway's containers and spec in each TOPOLOGY of run.sh.
 const GATEWAY_BY_TOPOLOGY = {
   dual: { containers: /backend-[ab]-1/, spec: "2 CPU / 2 GB (2 replicas x 1 CPU / 1 GB)" },
   single: { containers: /-backend-1/, spec: "2 CPU / 2 GB (1 process)" },
@@ -15,7 +12,6 @@ const GATEWAY_BY_TOPOLOGY = {
 const gateway = GATEWAY_BY_TOPOLOGY[process.env.TOPOLOGY ?? "dual"];
 if (!gateway) throw new Error("TOPOLOGY must be dual, single or cluster");
 
-// The spec each node runs with: keep in step with docker-compose.yml.
 const NODES = [
   { label: "Gateway (app)", ...gateway, cpuLimit: 2, memLimitMiB: 2048 },
   { label: "Worker", containers: /worker-1/, spec: "1 CPU / 1 GB", cpuLimit: 1, memLimitMiB: 1024 },
@@ -67,14 +63,12 @@ const SCENARIOS = [
 
 const MEM_UNITS = { B: 1 / 1048576, KiB: 1 / 1024, MiB: 1, GiB: 1024 };
 
-/** Average CPU (cores) and memory (MiB) per node over the samples taken while k6 ran. */
 function averages(statsPath) {
   const sums = new Map(NODES.map((node) => [node.label, { cpu: 0, mem: 0, samples: 0 }]));
   if (!existsSync(statsPath)) return sums;
   const blocks = readFileSync(statsPath, "utf8").split(/^\d\d:\d\d:\d\d$/m);
   for (const block of blocks) {
     const lines = block.split("\n").filter((line) => line.includes(" cpu="));
-    // Skip samples from before or after k6 ran.
     if (!lines.some((line) => /k6-run/.test(line))) continue;
     for (const node of NODES) {
       let cpu = 0;
@@ -101,7 +95,6 @@ function averages(statsPath) {
 const ms = (value) => (value >= 1000 ? `${(value / 1000).toFixed(2)} s` : `${value.toFixed(0)} ms`);
 const count = (value) => Math.round(value).toLocaleString("en-US");
 
-/** A measured amount, with its share of the node's limit when the node has one. */
 function usageCell(value, limit, format) {
   if (value === undefined) return "-";
   if (!limit) return format(value);

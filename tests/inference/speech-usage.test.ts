@@ -10,8 +10,6 @@ import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 import { writtenUsageLog } from "@tests/support/usage-logs.js";
 
-// Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
-// files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -58,7 +56,6 @@ describe("Usage Logs of speech (e2e)", () => {
   });
 
   it("records the characters DashScope counted and their Cost at the price per million", async () => {
-    // DashScope counts the 22 characters of "Hello from the gateway".
     const answer = dashScopeSpeechFixture("upstream-response.json").replace(
       /https:\/\/[^"]*speech\.mp3[^"]*/,
       upstream.mediaUrl("/media/speech.mp3"),

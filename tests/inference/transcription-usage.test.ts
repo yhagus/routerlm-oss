@@ -11,8 +11,6 @@ import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 import { writtenUsageLog } from "@tests/support/usage-logs.js";
 
-// Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
-// files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -59,7 +57,6 @@ describe("Usage Logs of transcription (e2e)", () => {
   });
 
   it("records the audio seconds DashScope billed and their Cost at the price per second", async () => {
-    // The recorded answer bills 4 seconds of audio.
     upstream.replyTo(GENERATION_PATH, {
       kind: "json",
       status: 200,

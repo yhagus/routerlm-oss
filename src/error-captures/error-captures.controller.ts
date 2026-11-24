@@ -9,7 +9,6 @@ import {
   errorCapturePageQuerySchema,
 } from "./schemas/error-capture-page-query.schema.js";
 
-/** The Error Captures page. Only a User's session gets in: captures hold prompts. */
 @DashboardController("error-captures")
 export class ErrorCapturesController {
   constructor(private readonly queryBus: QueryBus) {}

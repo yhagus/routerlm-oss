@@ -1,11 +1,6 @@
-// A media request's body as its Error Capture keeps it: every data URI, which
-// is also how an uploaded file reaches the client contract, becomes a short
-// placeholder naming its type and size. The prompt and every other field stay.
-
 const DATA_URI = /^data:([^;,]*)((?:;[^;,]*)*),(.*)$/s;
 const BYTES_PER_KB = 1024;
 
-/** `body` with each data URI in it replaced by a placeholder like `<image/png, 182 KB>`. */
 export function withMediaPlaceholders(body: unknown): unknown {
   if (typeof body === "string") {
     return placeholderOf(body) ?? body;

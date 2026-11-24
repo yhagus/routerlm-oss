@@ -27,7 +27,6 @@ describe("A deleted Integration's records (e2e)", () => {
     await app.close();
   });
 
-  /** A failed request of a Customer key, recorded with an Error Capture, then the Integration deleted. */
   async function recordFailedCustomerRequestThenDeleteIntegration(): Promise<{
     integrationId: string;
     usageLogId: string;

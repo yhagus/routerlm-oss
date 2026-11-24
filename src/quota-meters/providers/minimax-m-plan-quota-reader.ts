@@ -15,9 +15,7 @@ import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
 
 const REMAINS_PATH = "token_plan/remains";
 
-/** The entry that counts every model; any other entry counts one model group. */
 const GENERAL_MODEL_GROUP = "general";
-/** A window status of 3 means unlimited (MiniMax Code's `matrix-account-client.ts`). */
 const UNLIMITED_STATUS = 3;
 const MS_PER_SECOND = 1000;
 
@@ -38,16 +36,13 @@ const remainsEntrySchema = z.object({
 });
 type RemainsEntry = z.infer<typeof remainsEntrySchema>;
 
-// Errors come back as HTTP 200 with a non-zero status code and no model_remains.
 const remainsResponseSchema = z.object({
   base_resp: z.object({ status_code: z.number(), status_msg: z.string() }),
   model_remains: z.array(remainsEntrySchema).optional(),
 });
 
-// Every field but model_name is a number.
 type EntryField = Exclude<keyof RemainsEntry, "model_name">;
 
-/** Where one of the plan's two windows keeps its numbers in a remains entry. */
 interface PlanWindow {
   key: string;
   label: string;
@@ -82,10 +77,6 @@ const PLAN_WINDOWS = [
   },
 ] as const satisfies PlanWindow[];
 
-/**
- * Reads MiniMax M Plan's 5-hour and weekly windows from `GET
- * <quotaBaseUrl>/token_plan/remains`, which takes the M Plan key as a Bearer token.
- */
 @Injectable()
 export class MiniMaxMPlanQuotaReader implements QuotaReader {
   constructor(@InjectHttpClient(QUOTA_READER_HTTP_CLIENT) private readonly http: HttpClient) {}

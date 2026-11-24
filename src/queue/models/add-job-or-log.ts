@@ -1,11 +1,6 @@
 import type { Logger } from "@nestjs/common";
 import type { Job, JobsOptions, Queue } from "bullmq";
 
-/**
- * Enqueues a job without ever failing the caller: a request must not fail
- * because Redis is down. Returns undefined, after logging, when the job could
- * not be added.
- */
 export async function addJobOrLog<Data>(
   queue: Queue,
   logger: Logger,

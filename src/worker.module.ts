@@ -27,10 +27,6 @@ import { UpstreamModule } from "@/upstream/upstream.module.js";
 import { UsageWriter } from "@/usage/providers/usage-writer.js";
 import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
 
-/**
- * Root module of the worker process (src/worker.ts). Queue processors are
- * providers here and never in AppModule, so jobs run outside the backend.
- */
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
@@ -44,8 +40,6 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],
-      // Unlike the backend's producer connection, workers keep BullMQ's
-      // defaults so they wait and reconnect while Redis is down.
       useFactory: (config: ConfigService<Env, true>) => ({
         connection: { url: config.get("REDIS_URL", { infer: true }) },
       }),
@@ -53,11 +47,8 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
     BullModule.registerQueue(...QUEUE_NAMES.map((name) => ({ name }))),
     CqrsModule.forRoot(),
     LibsModule,
-    // Quota readings mark Provider Accounts Exhausted through UpstreamModule,
-    // which also holds what polling for a sign-in needs.
     QuotaMetersModule,
     SettingsModule,
-    // The usage writer flags API Keys that reached their Spend Limit.
     SpendLimitsModule,
     UpstreamModule,
   ],
@@ -73,11 +64,6 @@ import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
   ],
 })
 export class WorkerModule {
-  /**
-   * The worker serving the control plane's gRPC adapter too (ADR 0033), for
-   * when CONTROL_PLANE_PORT is set. Its guard takes Integration Secrets only:
-   * the worker signs no User in, so it needs no session store.
-   */
   static withControlPlane(): DynamicModule {
     return {
       module: WorkerModule,

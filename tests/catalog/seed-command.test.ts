@@ -25,7 +25,6 @@ const oauthLogin = {
   cliVersion: "1.2.3",
 };
 
-// Carried by a chat model here: the seeder copies them whatever the Kind.
 const UNIT_PRICES_AND_LIMITS = {
   pricePerImage: 0.03,
   pricePerImageBySize: { "1K": 0.04, "2K": 0.075 },
@@ -114,7 +113,6 @@ function windowedModel(
   };
 }
 
-/** A Provider whose models price the Night window, as first shipped. */
 const windowedCatalog: CatalogProvider[] = [
   {
     ...catalog[0],
@@ -130,7 +128,6 @@ const windowedCatalog: CatalogProvider[] = [
   },
 ];
 
-/** The same Provider after a later Catalog adds the Lunch window. */
 const windowedCatalogWithLunch: CatalogProvider[] = [
   {
     ...windowedCatalog[0],
@@ -163,8 +160,6 @@ describe("Seed Catalog command (e2e)", () => {
     db = drizzle({ client: pool, relations });
     await migrate(db, { migrationsFolder: "./drizzle" });
 
-    // ConfigModule.forRoot reads the environment when the module file is
-    // evaluated, so the module is imported only after DATABASE_URL is set.
     process.env.DATABASE_URL = databaseUrl;
     const { CatalogSeedModule } = await import("@/catalog/catalog-seed.module.js");
     moduleRef = await Test.createTestingModule({ imports: [CatalogSeedModule] }).compile();
@@ -431,7 +426,6 @@ describe("Seed Catalog command (e2e)", () => {
   });
 
   describe("Pricing Windows", () => {
-    /** The Pricing Windows an Upstream Model attaches, by window name. */
     async function windowPricesOf(upstreamModelId: string) {
       return db
         .select({

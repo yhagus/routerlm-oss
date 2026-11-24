@@ -93,8 +93,6 @@ export const relations = defineRelations(schema, (r) => ({
   },
 }));
 
-/** Inject with `@InjectDrizzle() private readonly db: Database`. */
 export type Database = NodePgDatabase<typeof relations>;
 
-/** The `tx` a `Database.transaction` callback receives. */
 export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];

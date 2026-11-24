@@ -8,9 +8,6 @@ import { DemoModule } from "@/demo/demo.module.js";
 import { SeedDemoCommand } from "@/demo/commands/impl/seed-demo.command.js";
 import { assertDemoDatabase } from "@/demo/models/demo-database.js";
 
-// `bun run db:seed:demo`: wipes a database whose name ends in `_demo` and
-// fills it with a fictional install for the README screenshots. Re-runnable.
-
 assertDemoDatabase(process.env.DATABASE_URL);
 
 const catalog = await loadCatalog(CATALOG_DIRECTORY);

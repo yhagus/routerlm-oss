@@ -1,15 +1,3 @@
-// Calls Alibaba's live DashScope API through the gateway's own dashscope-*
-// Protocols, so a request shape or response shape the Protocols assume is
-// checked against the real thing. Each answer is saved next to the Protocol's
-// test fixture as `fixtures/recorded/<name>.json` to compare with it by eye;
-// the test fixtures themselves stay untouched.
-//
-//   DASHSCOPE_API_KEY=sk-... bun scripts/record-dashscope.ts [--video]
-//
-// Optional: DASHSCOPE_BASE_URL (default https://dashscope-intl.aliyuncs.com/api/v1,
-// or your per-workspace host). Every run is billed: image, speech and
-// transcription cost cents. A Video Job costs more (3 s at 480P), so it runs
-// only with --video.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type {
@@ -33,7 +21,6 @@ const PROTOCOLS_DIR = "src/inference/protocols";
 const VIDEO_POLL_MS = 10_000;
 const VIDEO_TIMEOUT_MS = 10 * 60_000;
 
-/** Saves `body` as a recorded answer beside a Protocol's fixtures. */
 function save(protocolDir: string, name: string, body: unknown): void {
   const path = join(PROTOCOLS_DIR, protocolDir, "fixtures", "recorded", `${name}.json`);
   mkdirSync(dirname(path), { recursive: true });
@@ -50,7 +37,6 @@ async function answerOf(response: Response): Promise<unknown> {
   return answer;
 }
 
-/** The real calls, recording each JSON answer under the next name in `names`. */
 function recordingExchange(protocolDir: string, names: string[]): MediaExchange {
   const authorization = { Authorization: `Bearer ${apiKey}` };
   const record = (body: unknown): unknown => {
@@ -86,7 +72,6 @@ function targetOf(upstreamModelId: string): MediaUpstreamTarget {
   return { baseUrl, upstreamModelId, isWatermarked: false };
 }
 
-/** Runs one check, printing its outcome; returns whether it passed. */
 async function check(label: string, run: () => Promise<string>): Promise<boolean> {
   console.log(`${label}:`);
   try {
@@ -138,8 +123,6 @@ outcomes.push(
   }),
 );
 
-// Open point of spec #62: does 3.0 TTS take `instruction`? The gateway doesn't
-// send it today; this raw call answers whether it could.
 outcomes.push(
   await check("qwen-audio-3.0-tts-plus with input.instruction (raw probe)", async () => {
     const answer = await recordingExchange("dashscope-speech", ["probe-instruction"]).postJson(

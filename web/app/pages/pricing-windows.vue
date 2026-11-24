@@ -29,7 +29,6 @@ const {
   refresh,
 } = useDashboardApi<PricingWindow[]>("/pricing-windows");
 
-/** Only the first load shows placeholders; a refresh keeps the current rows until it lands. */
 const isLoading = computed(() => status.value === "pending" && !pricingWindows.value);
 
 const columns: DataTableColumn<PricingWindow>[] = [
@@ -95,12 +94,10 @@ function handleRowAction(id: RowActionId, pricingWindow: PricingWindow): void {
   openDialog({ kind: id, pricingWindow });
 }
 
-/** Every zone with its offset now, read once: the list is long and offsets barely move. */
 const allTimeZoneOptions = ianaTimeZones().map((zone) => ({
   label: `${zone} (${utcOffsetLabel(zone, new Date())})`,
   value: zone,
 }));
-/** A zone the browser doesn't list (an older engine, a rare alias) stays pickable when stored. */
 const timeZoneOptions = computed(() =>
   allTimeZoneOptions.some((option) => option.value === form.value.timeZone)
     ? allTimeZoneOptions
@@ -134,7 +131,6 @@ function deletePricingWindow(pricingWindow: PricingWindow): Promise<void> {
   return deleteRow(pricingWindow, pricingWindow.name, "Couldn't delete the Pricing Window.");
 }
 
-/** What deleting takes with it, named in the confirmation. */
 function deleteDescription(pricingWindow: PricingWindow): string {
   const count = pricingWindow.attachedUpstreamModelCount;
   const reach =

@@ -3,12 +3,6 @@ import { Check, Copy } from "@lucide/vue";
 import { computed, useTemplateRef } from "vue";
 import { type CodeExample, labelOf } from "~/lib/docsCode";
 
-/**
- * A docs code block as a numbered figure: a header naming the language with a
- * copy cell, the code, and a caption. Given several examples (a curl command
- * and its SDK equivalent), the header shows them as tabs, and the reader's
- * choice applies on every page.
- */
 const props = defineProps<{ examples: CodeExample[] }>();
 
 const { t } = useDocsLocale();
@@ -40,7 +34,6 @@ const copyAnnouncement = computed(() => {
   return "";
 });
 
-/** The caption names the example's language, and confirms a copy while the copy cell does. */
 const captionLabel = computed(() =>
   copyState.value === "copied" ? t("copied") : (visibleTab.value?.label ?? ""),
 );
@@ -78,9 +71,7 @@ async function handleCopy(): Promise<void> {
       </button>
       <span class="sr-only" role="status">{{ copyAnnouncement }}</span>
     </div>
-    <!-- Focusable so a keyboard can scroll a long line sideways. -->
     <pre tabindex="0"><code ref="code">{{ visibleTab.code }}</code></pre>
-    <!-- The figure number comes from CSS counters: the page's number, then the figure's. -->
     <figcaption class="ds-figure__caption">
       <span class="ds-figure__number">{{ t("figure") }}</span> · {{ captionLabel }}
     </figcaption>

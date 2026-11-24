@@ -1,8 +1,6 @@
 import type { WritableComputedRef } from "vue";
 
-/** One removable token in the active-filters row, such as "Capability: Vision". */
 export interface ActiveFilter {
-  /** Unique within the row; used as the list key. */
   key: string;
   group: string;
   label: string;
@@ -14,7 +12,6 @@ interface FilterOption<Value extends string> {
   value: Value;
 }
 
-/** One token per value picked in a multi-value filter. */
 export function listFilterTokens<Value extends string>(
   group: string,
   list: WritableComputedRef<Value[]>,
@@ -30,7 +27,6 @@ export function listFilterTokens<Value extends string>(
   }));
 }
 
-/** The search text as one token, or none while the search is empty. */
 export function searchFilterTokens(search: WritableComputedRef<string>): ActiveFilter[] {
   const text = search.value.trim();
   if (!text) return [];
@@ -46,7 +42,6 @@ export function searchFilterTokens(search: WritableComputedRef<string>): ActiveF
   ];
 }
 
-/** One token for a filter typed as text, such as a Customer id, or none while it is empty. */
 export function textFilterTokens(group: string, text: WritableComputedRef<string>): ActiveFilter[] {
   if (text.value === "") return [];
   return [

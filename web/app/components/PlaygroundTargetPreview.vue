@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { Boxes, CloudOff } from "@lucide/vue";
 
-/**
- * The top of a Playground tab's log: why nothing can be sent, or, before the
- * first send, what a send will reach.
- */
 defineProps<{ isLogEmpty: boolean }>();
 
 const {

@@ -20,10 +20,6 @@ useMissingResource(() => isNotFound(loadError.value), "Usage Log");
 
 useHead({ title: "Usage Log" });
 
-/**
- * Back goes to the list the reader came from, with its filters, search and
- * page, and to the plain list when they arrived by a direct link.
- */
 const backTo = computed(() => {
   const previous: unknown = window.history.state?.back;
   return typeof previous === "string" && /^\/usage(\?|$)/.test(previous) ? previous : "/usage";

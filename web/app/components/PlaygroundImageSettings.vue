@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { MAX_IMAGES_PER_REQUEST, MAX_SEED } from "~/lib/playgroundImages";
 
-/**
- * The image tab's request parameters, in the side rail and the narrow-screen
- * sheet alike. Empty fields aren't sent, so the model decides.
- */
 defineProps<{
-  /** The sizes the target lists, `auto` first; empty when it lists none, so any can be typed. */
   sizeOptions: { value: string; label: string }[];
 }>();
 

@@ -11,7 +11,6 @@ import type { Database } from "@/db/schemas/relations.js";
 import { allowPrivateUpstreams } from "./private-upstreams.js";
 import { truncateTables } from "./truncate.js";
 
-// The production cost (logN 17) takes ~128 MiB and a noticeable time per hash.
 const CHEAP_PASSWORD_HASHER = new PasswordHasher({ logN: 10 });
 
 export interface TestApp {
@@ -19,12 +18,6 @@ export interface TestApp {
   db: Database;
 }
 
-/**
- * Boots the whole AppModule with cheap password hashing, against the e2e
- * database or, when given, against `database` (whose connection the caller closes).
- * Private upstreams are allowed unless `allowsPrivateUpstreams` is false, so
- * the fake upstream on localhost is reachable.
- */
 export async function createTestApp(
   database?: Database,
   { allowsPrivateUpstreams = true }: { allowsPrivateUpstreams?: boolean } = {},
@@ -41,12 +34,10 @@ export async function createTestApp(
   return { app, db: app.get<Database>(getDrizzleToken()) };
 }
 
-/** Deletes every User, and with them their sessions. */
 export async function deleteAllUsers(db: Database): Promise<void> {
   await truncateTables(db, sql.raw("users"));
 }
 
-/** The `name=value` pair of the session cookie a response set, to send back as a `Cookie` header. */
 export function sessionCookieOf(response: Response): string {
   const setCookie = response.get("Set-Cookie") ?? [];
   const sessionCookie = setCookie.find((cookie) => cookie.startsWith("__Host-sid="));
@@ -56,7 +47,6 @@ export function sessionCookieOf(response: Response): string {
   return sessionCookie.split(";")[0];
 }
 
-/** Runs first-run setup and returns the new User's session cookie. */
 export async function setUpFirstUser(
   app: NestNodeApplication,
   credentials: { email: string; password: string },

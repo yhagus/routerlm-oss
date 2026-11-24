@@ -86,7 +86,6 @@ describe("Playground (e2e)", () => {
     const [summaryName, summaryData] = (events.at(-1) ?? "").split("\n");
     expect(summaryName).toBe("event: summary");
     const summary = JSON.parse(summaryData.slice("data: ".length));
-    // The fixture reports 120 prompt tokens, 100 of them cache reads.
     expect(summary).toMatchObject({
       usage: {
         inputTokens: 20,
@@ -99,7 +98,6 @@ describe("Playground (e2e)", () => {
       upstreamModel: { providerSlug: "acme-smart", upstreamModelId: UPSTREAM_MODEL_ID },
       providerAccount: { id: providerAccountId, name: "main" },
     });
-    // (20 x 2 + 40 x 8 + 100 x 0.5) per million tokens.
     expect(summary.cost).toBeCloseTo(0.00041, 10);
   });
 

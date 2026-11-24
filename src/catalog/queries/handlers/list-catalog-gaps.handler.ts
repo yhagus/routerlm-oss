@@ -8,14 +8,6 @@ import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js
 import { ModelsDevReader } from "@/catalog/providers/models-dev-reader.js";
 import { ListCatalogGapsQuery } from "@/catalog/queries/impl/list-catalog-gaps.query.js";
 
-/**
- * Compares models.dev with the Upstream Models in the database, not the
- * shipped files: an operator may have added or removed models since seeding.
- * The shipped files say which models.dev provider each Provider slug maps to.
- * A Provider missing from the database is skipped: it was removed on purpose.
- * Only the five newest models across those registered Providers are checked,
- * so a report never holds more than five gaps.
- */
 const NEWEST_MODELS_CHECKED = 5;
 
 @QueryHandler(ListCatalogGapsQuery)

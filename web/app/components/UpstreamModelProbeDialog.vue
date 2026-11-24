@@ -6,7 +6,6 @@ import type { ProbeResult } from "~/lib/probe";
 import { upstreamModelLabel } from "~/lib/upstream";
 import { formatCost, formatDuration } from "~/lib/usage";
 
-/** A finished Probe: one result per Provider Account, or the backend's refusal. */
 const props = defineProps<{
   probe: UpstreamModelProbe;
 }>();
@@ -14,7 +13,6 @@ const isOpen = defineModel<boolean>("open", { required: true });
 
 const title = computed(() => `Probe of ${upstreamModelLabel(props.probe.upstreamModel)}`);
 
-/** What the Provider said went wrong, read out of its JSON error body when it is one. */
 function errorText(result: ProbeResult): string | null {
   if (result.errorMessage === null) return null;
   return upstreamErrorMessage(result.errorMessage) ?? result.errorMessage;

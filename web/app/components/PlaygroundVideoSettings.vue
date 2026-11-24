@@ -6,14 +6,8 @@ import {
   type ResolutionChoice,
 } from "~/lib/playgroundVideo";
 
-/**
- * The video tab's request parameters, in the side rail and the narrow-screen
- * sheet alike. Empty fields aren't sent, so the gateway's defaults apply.
- */
 defineProps<{
-  /** The resolutions the target takes, "Model default" first. */
   resolutionOptions: { value: ResolutionChoice; label: string }[];
-  /** What the duration field suggests, such as the target's range. */
   durationPlaceholder: string;
 }>();
 

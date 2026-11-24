@@ -103,7 +103,6 @@ describe("Usage Log snapshots migration (e2e)", () => {
       routeId,
       providerAccountId: backupAccountId,
     });
-    // Fallback: the first Attempt went to another Provider Account than the one that served.
     await insertAttempt({
       usageLogId: resolvedLogId,
       startedAt: "2026-11-10T10:00:00Z",
@@ -116,7 +115,6 @@ describe("Usage Log snapshots migration (e2e)", () => {
       routeId,
       providerAccountId: backupAccountId,
     });
-    // Its configuration is deleted before this migration, which clears its links.
     const orphanLogId = await insertUsageLog({
       createdAt: "2026-11-10T11:00:00Z",
       apiKeyId: null,

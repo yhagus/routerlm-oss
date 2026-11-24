@@ -8,7 +8,6 @@ import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/te
 const ADA = { email: "ada@example.com", password: "ada's password" };
 
 type NewUsageLog = typeof usageLogs.$inferInsert;
-/** A Model's or API Key's id with the name a Usage Log copies of it (ADR 0024). */
 type ModelColumns = Pick<NewUsageLog, "modelId" | "modelName">;
 type ApiKeyColumns = Pick<NewUsageLog, "apiKeyId" | "apiKeyName">;
 

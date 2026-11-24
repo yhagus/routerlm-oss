@@ -57,7 +57,6 @@ describe("Image edits on /v1/images/edits (e2e)", () => {
       .set("Authorization", `Bearer ${apiKey}`);
   }
 
-  /** DashScope answers with two images, which the fake then serves. */
   function answerWithTwoImages(): void {
     const body = dashScopeImageFixture("upstream-response.json")
       .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))

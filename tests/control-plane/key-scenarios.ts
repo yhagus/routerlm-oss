@@ -14,14 +14,9 @@ const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
 const NEXT_YEAR = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 const SNAPSHOT_NOTICE_TIMEOUT_MS = 5_000;
 
-/**
- * Retries `assertion` until it passes. Over gRPC a key changes in the worker,
- * and reaches this app's snapshot through the change notice a moment later (ADR 0020).
- */
 const eventually = (assertion: () => Promise<unknown>): Promise<unknown> =>
   vi.waitFor(assertion, { timeout: SNAPSHOT_NOTICE_TIMEOUT_MS });
 
-/** How a test file reaches the control plane over one transport. */
 export interface ControlPlaneTransport {
   name: string;
   connect(
@@ -29,10 +24,6 @@ export interface ControlPlaneTransport {
   ): Promise<{ client: ControlPlaneClient; close: () => Promise<void> }>;
 }
 
-/**
- * The control plane's API Key scenarios. Each transport's test file runs
- * them; passing on every transport is how the adapters prove parity (ADR 0033).
- */
 export function describeKeyScenarios(transport: ControlPlaneTransport): void {
   describe(`Control plane API Keys over ${transport.name} (e2e)`, () => {
     let app: NestNodeApplication;
@@ -59,7 +50,6 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
       await app.close();
     });
 
-    /** Creates a key for `customerId` and returns it, failing the test if the call fails. */
     async function issueKey(customerId: string, settings: object = {}) {
       const created = await client.createKey(acme.secret, { customerId, ...settings });
       if (!created.ok) throw new Error(`createKey failed with ${created.code}`);

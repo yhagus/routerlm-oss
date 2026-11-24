@@ -19,10 +19,8 @@ const WINDOW_TIME_ZONE = "Asia/Jakarta";
 const WEEKEND = [{ weekdays: [6, 7], start: "00:00", end: "24:00" }];
 const WEEKDAY_LUNCH = [{ weekdays: [1, 2, 3, 4, 5], start: "12:00", end: "13:00" }];
 const WEEKDAY_NIGHT = [{ weekdays: [1, 2, 3, 4, 5], start: "01:00", end: "05:00" }];
-// The Models here are only listed, never called.
 const UNUSED_BASE_URL = "http://127.0.0.1:1/v1";
 
-/** The control plane's List Models scenarios. */
 export function describeModelScenarios(transport: ControlPlaneTransport): void {
   describe(`Control plane Models over ${transport.name} (e2e)`, () => {
     let app: NestNodeApplication;
@@ -49,7 +47,6 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
       await app.close();
     });
 
-    /** Sets the token prices of the Upstream Model behind a Route, then refreshes the snapshot. */
     async function setTokenPrices(
       routeId: string,
       prices: { inputPrice: number; outputPrice: number; cacheReadPrice?: number },
@@ -209,7 +206,6 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
       });
       await setTokenPrices(chat.routeId, { inputPrice: 3, outputPrice: 15 });
       const weekendId = await createPricingWindow("Weekend", WEEKEND);
-      // Bounds are wall-clock times in Asia/Jakarta, seven hours ahead of UTC.
       await attachPricingWindows(await upstreamModelIdOf(chat.routeId), [
         {
           pricingWindowId: weekendId,

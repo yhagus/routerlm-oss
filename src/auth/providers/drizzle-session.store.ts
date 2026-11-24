@@ -12,11 +12,6 @@ import { userColumns } from "@/users/models/user.js";
 
 type SessionRow = typeof sessions.$inferSelect;
 
-/**
- * Dashboard sessions in PostgreSQL, as @nestjs/authentication's Drizzle
- * example stores them. Reading a session joins its User, so a session whose
- * User was deleted reads as unknown (and the FK cascade deletes it anyway).
- */
 @Injectable()
 export class DrizzleSessionStore implements SessionStore {
   constructor(
@@ -39,7 +34,6 @@ export class DrizzleSessionStore implements SessionStore {
   }
 
   async createSession(record: SessionRecord): Promise<void> {
-    // Times come from SessionService's clock, so the new session's creation is "now".
     await this.db.delete(sessions).where(lt(sessions.expiresAt, record.createdAt));
     await this.db.insert(sessions).values({
       id: record.id,

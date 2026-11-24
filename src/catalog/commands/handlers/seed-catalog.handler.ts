@@ -26,12 +26,10 @@ import {
 
 type NamedWindowPricesTiming = WindowPricesTiming & { name: string };
 
-/** Keeps the stored price, or takes the Catalog's when the stored one is empty. */
 function fillPrice(column: AnyColumn, catalogPrice: number | null): SQL {
   return sql`coalesce(${column}, ${catalogPrice}::numeric)`;
 }
 
-/** As fillPrice, for a value of another SQL type; one parameter even for an array. */
 function fillEmpty(
   column: AnyColumn,
   catalogValue: unknown,
@@ -42,7 +40,6 @@ function fillEmpty(
   return sql`coalesce(${column}, ${sql.param(value ?? null)}::${sql.raw(sqlType)})`;
 }
 
-/** The Upstream Model columns a seed fills when they are empty (ADR 0003). */
 const FILLED_WHEN_EMPTY: AnyColumn[] = [
   upstreamModels.name,
   upstreamModels.releaseDate,
@@ -108,7 +105,6 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         if (provider === undefined) {
           throw new Error(`Provider "${entry.slug}" vanished while seeding`);
         }
-        // The fill-empty exception below (ADR 0003) covers the Provider's logo too.
         if (entry.logo !== undefined) {
           await tx
             .update(providers)
@@ -120,9 +116,6 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
           entry.pricingWindows ?? [],
         );
         result.createdPricingWindows += createdWindowNames.size;
-        // Endpoints are never added to an existing Provider: an operator may
-        // have deleted one (ADR 0026). A model of a Kind with no endpoint
-        // could not be served, so it is not seeded either.
         const servedKinds = new Set(provider.endpoints.map((endpoint) => endpoint.kind));
         const servableModels = entry.upstreamModels.filter((model) =>
           servedKinds.has(model.kind ?? "chat"),
@@ -166,10 +159,6 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
           .returning({ upstreamModelId: upstreamModels.upstreamModelId });
         result.createdUpstreamModels += createdModels.length;
 
-        // The one exception to never changing existing rows (ADR 0003): an
-        // empty name, Release Date, max output, price or media limit gets the Catalog's value, so rows seeded
-        // before the Catalog knew it catch up. A value that is already set,
-        // Catalog or operator, is left alone.
         for (const model of servableModels) {
           await tx
             .update(upstreamModels)
@@ -248,11 +237,6 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
     return result;
   }
 
-  /**
-   * Creates, enabled, the Catalog's Pricing Windows that no row has the name
-   * of, and returns the names it created. An existing window is never
-   * changed (ADR 0039).
-   */
   private async createMissingPricingWindows(
     tx: Transaction,
     windows: readonly CatalogPricingWindow[],
@@ -274,13 +258,6 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
     return new Set(created.map((window) => window.name));
   }
 
-  /**
-   * Attaches the Catalog Window Prices that `isNew` accepts and returns how
-   * many it attached and skipped. Only new Upstream Models or new windows
-   * qualify, so an operator's detached or edited attachment is never brought
-   * back (ADR 0039). An entry that would overlap one of the model's
-   * attachments is skipped and logged, so an operator's sale stays (ADR 0040).
-   */
   private async attachNewWindowPrices(
     tx: Transaction,
     providerId: string,
@@ -336,7 +313,6 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         if (storedWindow === undefined) {
           throw new Error(`Pricing Window "${entry.pricingWindow}" vanished while seeding`);
         }
-        // The Catalog ships no Validity Periods (ADR 0040).
         const window: NamedWindowPricesTiming = {
           ...storedWindow,
           validFrom: null,

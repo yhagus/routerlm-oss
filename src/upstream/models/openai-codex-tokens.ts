@@ -4,13 +4,10 @@ import { SECOND_MS } from "@/libs/models/duration.js";
 const OPENAI_AUTH_CLAIM = "https://api.openai.com/auth";
 const OPENAI_PROFILE_CLAIM = "https://api.openai.com/profile";
 
-/** Who signed in to OpenAI Codex, as the id_token's claims say (ADR 0013). */
 export interface CodexAccount {
   idToken: string;
-  /** Sent as `chatgpt-account-id` on every call to Codex; null when the token names none. */
   accountId: string | null;
   email: string | null;
-  /** The ChatGPT plan, such as `plus` or `pro`. */
   planType: string | null;
 }
 
@@ -27,11 +24,6 @@ const idTokenClaimsSchema = z.object({
 
 const accessTokenClaimsSchema = z.object({ exp: z.number() });
 
-/**
- * The claims of a JWT, read without checking its signature, as the Codex
- * CLI does: the gateway only learns from them, it never trusts them for
- * access. Null for a token that is not a JWT.
- */
 function jwtClaimsOf(token: string): unknown {
   const [, payload] = token.split(".");
   if (payload === undefined) {
@@ -44,7 +36,6 @@ function jwtClaimsOf(token: string): unknown {
   }
 }
 
-/** The account an id_token names. Null when it is not a JWT of the expected shape. */
 export function codexAccountOf(idToken: string): CodexAccount | null {
   const claims = idTokenClaimsSchema.safeParse(jwtClaimsOf(idToken));
   if (!claims.success) {
@@ -59,7 +50,6 @@ export function codexAccountOf(idToken: string): CodexAccount | null {
   };
 }
 
-/** How long an access token has left by its JWT `exp`, from `now`. Null when it states no expiry. */
 export function secondsUntilExpiryOf(accessToken: string, now: Date): number | null {
   const claims = accessTokenClaimsSchema.safeParse(jwtClaimsOf(accessToken));
   if (!claims.success) {

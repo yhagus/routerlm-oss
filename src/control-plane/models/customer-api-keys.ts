@@ -21,10 +21,8 @@ const customerApiKeyColumns = {
   requestRate: apiKeys.requestRate,
 };
 
-/** The newest first order of an Integration's keys; the id breaks ties, for page tokens. */
 const NEWEST_KEYS_FIRST = [desc(apiKeys.createdAt), desc(apiKeys.id)];
 
-/** The Integration's API Keys, newest first, narrowed by `where`: never another Integration's or an operator's. */
 export async function selectCustomerApiKeys(
   db: Database,
   integrationId: string,
@@ -36,20 +34,14 @@ export async function selectCustomerApiKeys(
     .where(and(eq(apiKeys.integrationId, integrationId), where))
     .orderBy(...NEWEST_KEYS_FIRST);
   const rows = limit === undefined ? await query : await query.limit(limit);
-  // Every key an Integration issues has a Customer id (enforced on create).
   return rows.map((row) => ({ ...row, customerId: row.customerId ?? "" }));
 }
 
-/**
- * One of the Integration's API Keys, revoked or not. NOT_FOUND for any other
- * id, another Integration's key or an operator's alike, so neither is revealed.
- */
 export async function findCustomerApiKey(
   db: Database,
   integrationId: string,
   id: string,
 ): Promise<CustomerApiKey> {
-  // Over gRPC the id is any string: one that is no uuid names no key.
   if (!z.uuid().safeParse(id).success) {
     throw apiKeyNotFound();
   }
@@ -60,7 +52,6 @@ export async function findCustomerApiKey(
   return found;
 }
 
-/** As findCustomerApiKey, refusing a revoked key with FAILED_PRECONDITION and `revokedMessage`. */
 export async function findUnrevokedCustomerApiKey(
   db: Database,
   integrationId: string,
@@ -74,10 +65,6 @@ export async function findUnrevokedCustomerApiKey(
   return found;
 }
 
-/**
- * Refuses allowed Model ids outside the Integration's allowed Models (its
- * ceiling), or naming no Model. A ceiling that is empty allows every Model.
- */
 export async function assertWithinCeiling(
   db: Database,
   integration: IntegrationPrincipal,

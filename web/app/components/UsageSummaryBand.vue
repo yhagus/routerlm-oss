@@ -4,24 +4,17 @@ import { compactNumber, percent } from "~/lib/chart";
 import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from "~/lib/errorOrigins";
 import { formatCost, formatCount, formatDuration, type UsageSummary } from "~/lib/usage";
 
-/**
- * One row of statistics over the filtered Usage Logs. Without a summary (loading or failed) it
- * keeps its shape and shows "—", so the log table below doesn't jump.
- */
 const props = defineProps<{
   summary: UsageSummary | null | undefined;
-  /** True while the summary request is in flight; a failed request leaves it false. */
   isLoading: boolean;
 }>();
 
 const NO_DATA = "—";
 
-/** Percentiles are interpolated, so they can land between whole milliseconds. */
 function formatLatency(ms: number | null): string {
   return formatDuration(ms === null ? null : Math.round(ms));
 }
 
-/** The notes only make sense once there is at least one request to describe. */
 const described = computed(() =>
   props.summary && props.summary.requestCount > 0 ? props.summary : null,
 );
@@ -30,10 +23,6 @@ const totalTokens = computed(() =>
   props.summary ? props.summary.inputTokens + props.summary.outputTokens : null,
 );
 
-/**
- * The failed requests split by who caused them, origins with none left out:
- * "2 client · 5 upstream". Failures recorded without an origin are in no part.
- */
 const failedByOriginNote = computed(() => {
   const failedByOrigin = described.value?.failedByOrigin;
   if (!failedByOrigin) return null;

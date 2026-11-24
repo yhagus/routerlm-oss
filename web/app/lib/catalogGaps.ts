@@ -1,5 +1,3 @@
-// Catalog Gaps: models the public models.dev listing has that the Catalog doesn't, as the dashboard API returns them.
-
 export interface CatalogGap {
   providerSlug: string;
   providerName: string;
@@ -15,7 +13,6 @@ export interface CatalogGapsResponse {
 
 export const CATALOG_GAPS_PATH = "/catalog/gaps";
 
-/** How many gaps the notice lists before it folds the rest into "and N more". */
 export const MAX_LISTED_GAPS = 5;
 
 export function describeCatalogGap(gap: CatalogGap): string {

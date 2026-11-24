@@ -14,24 +14,17 @@ import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-c
 import { AttemptDeadlines, type AttemptTimeouts } from "./upstream-client.js";
 import { MediaFetcher } from "./media-fetcher.js";
 
-/** How one media Attempt reaches the Provider: its credential, deadline and error codes. */
 export interface MediaConnection {
-  /** The Provider Account's credential, from `upstreamAuthHeaders`, with an OAuth Login's identity. */
   authHeaders: Record<string, string>;
-  /** Only `totalMs` applies: a media answer arrives whole, and its files are fetched within it. */
   timeouts: AttemptTimeouts;
-  /** Aborts when the client disconnects. */
   clientSignal: AbortSignal;
-  /** The Fallback reason of a non-2xx answer (the Protocol's `failureReasonOf`). */
   failureReasonOf(status: number, body: string): AttemptFailureReason;
 }
 
-/** A media Attempt's outcome, with the first request id the Provider returned (null when none). */
 export interface AnsweredMediaAttempt<Result> extends MediaOutcome<Result> {
   upstreamRequestId: string | null;
 }
 
-/** Everything one media Attempt needs: what to send, where, and with which credentials. */
 export interface MediaUpstreamCall<Request, Result> extends Omit<
   MediaConnection,
   "failureReasonOf"
@@ -41,19 +34,12 @@ export interface MediaUpstreamCall<Request, Result> extends Omit<
   target: MediaUpstreamTarget;
 }
 
-/** One HTTP call a media Protocol makes to its upstream. */
 interface MediaHttpRequest {
   method: "GET" | "POST";
   body?: string;
   headers: Record<string, string>;
 }
 
-/**
- * Makes one media Attempt: lets the Protocol call its upstream and fetch the
- * files it generated, all under the Attempt's deadline. Throws
- * AttemptFailedError (with the Fallback reason) or ClientCancelledError;
- * never retries.
- */
 @Injectable()
 export class MediaUpstreamClient {
   constructor(
@@ -73,10 +59,6 @@ export class MediaUpstreamClient {
     return { ...answer, upstreamRequestId };
   }
 
-  /**
-   * Runs `use` with the I/O of one Attempt, under its deadline. Also how a
-   * Video Job's poll makes its one call, outside the Fallback loop.
-   */
   async exchange<Answer>(
     connection: MediaConnection,
     use: (exchange: MediaExchange) => Promise<Answer>,
@@ -85,7 +67,6 @@ export class MediaUpstreamClient {
     return answer;
   }
 
-  /** As `exchange`, capturing the first request id the Provider returned (null when none). */
   private async exchangeCapturingRequestId<Answer>(
     connection: MediaConnection,
     use: (exchange: MediaExchange) => Promise<Answer>,
@@ -136,7 +117,6 @@ export class MediaUpstreamClient {
       },
       responseType: "response",
       signal,
-      // Fallback across Provider Accounts and Routes is the gateway's job.
       retry: false,
       throwOnHttpError: false,
       redirect: "error",

@@ -3,27 +3,15 @@ import type { Snapshot, SnapshotRoute } from "@/snapshot/models/snapshot.js";
 import type { MediaUnits, UsageJob } from "@/usage/models/usage-job.js";
 import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
 
-/**
- * What the Playground shows after each response (spec "Playground"). It goes
- * out as the stream's last event, so nothing about the conversation is stored.
- */
 export interface PlaygroundSummary {
   usage: TokenUsage;
-  /** What a media Kind counted (images, tier); null for chat. */
   units: MediaUnits | null;
-  /** USD, from the Upstream Model's prices at request time; null when unknown. */
   cost: number | null;
-  /**
-   * Null when no Attempt answered, the Route was deleted meanwhile, or the
-   * request was a direct Upstream Model test, which goes through no Route.
-   */
   route: { id: string; providerSlug: string; upstreamModelId: string } | null;
-  /** The Upstream Model that answered; null when none did, or it was deleted meanwhile. */
   upstreamModel: { id: string; upstreamModelId: string; providerSlug: string } | null;
   providerAccount: { id: string; name: string } | null;
 }
 
-/** The summary of a finished Playground request, named from the current snapshot. */
 export function playgroundSummaryOf(job: UsageJob, snapshot: Snapshot): PlaygroundSummary {
   const measurements = usageMeasurementsOf(job.servedBy, job.usage);
   const { inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens, reasoningTokens } =

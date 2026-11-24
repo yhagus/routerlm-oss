@@ -15,7 +15,6 @@ import {
 import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
-// Needs Redis at REDIS_URL, in its own database (see tests/usage/records.test.ts).
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();

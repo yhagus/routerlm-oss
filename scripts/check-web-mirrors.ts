@@ -30,13 +30,9 @@ import { AUDIO_FORMATS } from "@/inference/models/speech-synthesis.js";
 import { VIDEO_RATIOS, VIDEO_RESOLUTIONS } from "@/inference/models/video-generation.js";
 
 interface Mirror {
-  /** The exported constant's name in web/; the backend's when `backendName` is unset. */
   name: string;
-  /** The backend constant's name, when web/ names its copy differently. */
   backendName?: string;
-  /** The web file that holds the copy, relative to the repo root. */
   webFile: string;
-  /** The backend's value, flattened to `key` or `key=value` entries, or one number as a string. */
   backend: readonly string[];
 }
 
@@ -89,15 +85,12 @@ const MIRRORS: Mirror[] = [
 ];
 
 interface TypeMirror {
-  /** The web interface, in `webFile`. */
   name: string;
   webFile: string;
-  /** The backend interface it copies, when named differently. */
   backendName?: string;
   backendFile: string;
 }
 
-/** Web response types copied from the backend's; compared by field name, not by field type. */
 const TYPE_MIRRORS: TypeMirror[] = [
   ...["UsageLogSummary", "UsageLogAttempt", "UsageLogDetail", "UsageLogPage", "UsageSummary"].map(
     (name) => ({ name, webFile: "web/app/lib/usage.ts", backendFile: "src/usage/models/usage.ts" }),
@@ -110,7 +103,6 @@ const TYPE_MIRRORS: TypeMirror[] = [
   },
 ];
 
-/** The field names of each mirrored interface, keyed by `file#name`, with web's `~/` alias resolved. */
 function fieldNamesOf(mirrors: readonly TypeMirror[]): Map<string, string[] | undefined> {
   const files = mirrors.flatMap((mirror) => [mirror.webFile, mirror.backendFile]);
   const program = ts.createProgram([...new Set(files)], {
@@ -148,18 +140,12 @@ function fieldNamesOf(mirrors: readonly TypeMirror[]): Map<string, string[] | un
 
 const WEB_LIB = "web/app/lib";
 
-/**
- * The entries of `export const <name> = [...]` or `= {...}` in `source`: each
- * quoted string of an array, or `key=value` for each property of an object.
- * A numeric constant such as `25 * 1024 * 1024` gives its value as one entry.
- */
 function webEntriesOf(source: string, name: string): string[] | undefined {
   const declaration = new RegExp(`export const ${name}\\b[^=]*=\\s*([[{])`).exec(source);
   if (!declaration) return numericEntryOf(source, name);
   const opener = declaration[1];
   const closer = opener === "[" ? "]" : "}";
   const start = declaration.index + declaration[0].length;
-  // Comments may hold quotes and brackets of their own, so drop them first.
   const rest = source.slice(start).replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, "");
   const body = rest.slice(0, rest.indexOf(closer));
   if (opener === "[") {
@@ -170,7 +156,6 @@ function webEntriesOf(source: string, name: string): string[] | undefined {
   );
 }
 
-/** The value of `export const <name> = <digits joined by * or +>;` as one entry. */
 function numericEntryOf(source: string, name: string): string[] | undefined {
   const declaration = new RegExp(`export const ${name}\\b[^=]*=\\s*([\\d_\\s*+]+);`).exec(source);
   const expression = declaration?.[1];

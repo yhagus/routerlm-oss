@@ -63,20 +63,12 @@ import { priceSummary } from "~/lib/upstreamModelPrice";
 import { activePricingWindowOf } from "~/lib/pricingWindows";
 import { probeBlockReason } from "~/lib/probe";
 
-/**
- * Upstream Models with filters, sorting and editing. With `provider` it shows
- * only that Provider's models and drops the Provider filter and column note.
- * Without it, Upstream Models that share an id across Providers show as one
- * expandable group row.
- */
 const props = defineProps<{
   providers: Provider[];
   upstreamModels: UpstreamModel[];
   refresh: () => Promise<unknown>;
   provider?: Provider;
-  /** The models haven't arrived yet: placeholder rows instead of the empty state. */
   isLoading?: boolean;
-  /** A failed load; the table shows it with Retry, which calls `refresh`. */
   error?: unknown;
 }>();
 
@@ -87,7 +79,6 @@ type UpstreamModelDialog =
   | { kind: "delete"; upstreamModel: UpstreamModel }
   | { kind: "pricing-windows"; upstreamModel: UpstreamModel };
 
-/** What each icon means, shown in its tooltip. */
 const CAPABILITY_HINTS: Record<Capability, string> = {
   vision: "Image input (vision)",
   tools: "Tool calls (function calling)",
@@ -143,9 +134,6 @@ const SORT_ORDERS = [
 
 const MODEL_STATUSES = ["enabled", "disabled"] as const;
 
-// Held in the URL (?provider=anthropic,openai&context=128000&released=90&capability=vision,tools&status=…&sort=…)
-// so a refresh or a link keeps them. A Provider is its slug, readable and stable. The
-// DataTable holds the search and page the same way.
 const providerSlugs = computed(() => props.providers.map((each) => each.slug));
 const providerFilter = useQueryList("provider", {
   isValid: anyText,
@@ -179,12 +167,10 @@ const sortOrder = useQueryParam("sort", {
 const providerBySlug = computed(() => new Map(props.providers.map((each) => [each.slug, each])));
 const providerFilterOptions = computed(() => [
   ...props.providers.map((each) => ({ label: each.name, value: each.slug })),
-  // A link can name a Provider since deleted: show it so it can be unchecked.
   ...providerFilter.value
     .filter((slug) => !providerBySlug.value.has(slug))
     .map((slug) => ({ label: `${slug} (not found)`, value: slug })),
 ]);
-/** Smallest context window a model must have. */
 const contextFilterOptions = [
   { label: "Any context", value: "" },
   { label: "32K+ context", value: "32000" },
@@ -193,7 +179,6 @@ const contextFilterOptions = [
   { label: "256K+ context", value: "256000" },
   { label: "1M+ context", value: "1000000" },
 ];
-/** How recently a model must have been released, in days. */
 const releasedFilterOptions = [
   { label: "Any release date", value: "" },
   { label: "Released in 30 days", value: "30" },
@@ -224,7 +209,6 @@ function providerName(model: UpstreamModel): string {
   return providerById.value.get(model.providerId)?.name ?? "—";
 }
 
-/** Compares two optional numbers, such as prices; models without one always sort last. */
 function compareOptionalNumbers(
   first: number | null,
   second: number | null,
@@ -235,7 +219,6 @@ function compareOptionalNumbers(
   return (first - second) * direction;
 }
 
-/** Compares two optional Release Dates; models without one always sort last. */
 function compareReleaseDates(
   first: string | null,
   second: string | null,
@@ -243,11 +226,9 @@ function compareReleaseDates(
 ): number {
   if (first === null || second === null)
     return (first === null ? 1 : 0) - (second === null ? 1 : 0);
-  // "YYYY-MM-DD" strings order the same as the dates they name.
   return first.localeCompare(second) * direction;
 }
 
-/** The "YYYY-MM-DD" day a given number of days before today, in UTC. */
 function daysAgo(days: number): string {
   return new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
 }
@@ -276,7 +257,6 @@ function compareModels(first: UpstreamModel, second: UpstreamModel): number {
   }
 }
 
-/** Models the filters keep, before the search. */
 const filteredModels = computed(() => {
   const minContext = Number(contextFilter.value || 0);
   const releasedSince = releasedFilter.value ? daysAgo(Number(releasedFilter.value)) : null;
@@ -284,11 +264,8 @@ const filteredModels = computed(() => {
     const slug = providerById.value.get(model.providerId)?.slug ?? "";
     if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
     if (kindFilter.value.length && !kindFilter.value.includes(model.kind)) return false;
-    // A model without a known context size can't be shown to reach the minimum.
     if ((model.contextSize ?? 0) < minContext) return false;
-    // A model without a Release Date can't be shown to fall inside the window.
     if (releasedSince !== null && (model.releaseDate ?? "") < releasedSince) return false;
-    // A model must have every picked capability.
     if (!capabilityFilter.value.every((capability) => model.capabilities.includes(capability))) {
       return false;
     }
@@ -297,22 +274,13 @@ const filteredModels = computed(() => {
   });
 });
 
-/** What the search matches: the model's id, its name, or its Provider's name. */
 function searchTextOf(model: UpstreamModel): string {
   return [model.upstreamModelId, model.name ?? "", providerName(model)].join("\n");
 }
 
 const search = useQuerySearch();
-/** The committed search as the DataTable matches it: trimmed, any case. */
 const searchQuery = computed(() => search.value.trim().toLowerCase());
 
-/**
- * The rows the DataTable shows, in the picked order. On a Provider's page they
- * are the filtered models, and the DataTable applies the search. Across
- * Providers, the search runs here first so a group forms only from the
- * Upstream Models it keeps: an id with one left is a plain row. The DataTable's
- * own search then keeps every row, since each matches.
- */
 const tableRows = computed<UpstreamModelRow[]>(() => {
   if (props.provider) return filteredModels.value.toSorted(compareModels);
   const matching = filteredModels.value.filter((model) =>
@@ -325,7 +293,6 @@ function rowIdOf(row: UpstreamModelRow): string {
   return isUpstreamModelGroup(row) ? `group:${row.upstreamModelId}` : row.id;
 }
 
-/** How many Upstream Models the filters keep for each id, before the search. */
 const filteredCountById = computed(() => {
   const counts = new Map<string, number>();
   for (const model of filteredModels.value) {
@@ -334,15 +301,12 @@ const filteredCountById = computed(() => {
   return counts;
 });
 
-/** The search dropped some of the id's Upstream Models: the group opens so the matches show. */
 function isNarrowedBySearch(group: UpstreamModelGroup): boolean {
   if (searchQuery.value === "") return false;
   return (filteredCountById.value.get(group.upstreamModelId) ?? 0) > group.members.length;
 }
 
-/** Groups the reader opened or closed; the others follow `isNarrowedBySearch`. */
 const toggledGroups = shallowRef<Record<string, boolean>>({});
-// A new search starts over from the groups it narrows.
 watch(searchQuery, () => {
   toggledGroups.value = {};
 });
@@ -356,9 +320,6 @@ const expandedGroups = computed<Record<string, boolean>>({
           toggledGroups.value[rowIdOf(group)] ?? isNarrowedBySearch(group),
         ]),
     ),
-  // The table drops a closed row's id rather than storing false, so record
-  // each change against what is shown; otherwise a group the search opened
-  // would reopen as soon as it was closed.
   set: (next) => {
     const toggled = { ...toggledGroups.value };
     for (const [id, isOpen] of Object.entries(expandedGroups.value)) {
@@ -369,7 +330,6 @@ const expandedGroups = computed<Record<string, boolean>>({
   },
 });
 
-/** "214 Upstream Models · 202 model ids" while groups merge some, "214 Upstream Models" otherwise; a Provider's page keeps the usual count. */
 const countLabel = computed(() => {
   const idCount = tableRows.value.length;
   const modelCount = tableRows.value.reduce(
@@ -381,7 +341,6 @@ const countLabel = computed(() => {
   return `${formatCount(modelCount)} Upstream Models · ${formatCount(idCount)} model ${idCount === 1 ? "id" : "ids"}`;
 });
 
-/** The picked option of a one-value filter as a token, or none while it is at "" (any). */
 function selectFilterTokens(
   group: string,
   selected: WritableComputedRef<string>,
@@ -423,7 +382,6 @@ const columns: DataTableColumn<UpstreamModelRow>[] = [
     id: "upstreamModel",
     header: "Upstream Model",
     enableHiding: false,
-    // The DataTable's search matches this; a group matches through its members' rows.
     accessorFn: (row) =>
       isUpstreamModelGroup(row) ? row.members.map(searchTextOf).join("\n") : searchTextOf(row),
   },
@@ -438,7 +396,6 @@ const columns: DataTableColumn<UpstreamModelRow>[] = [
 ];
 
 const NUMERIC_COLUMNS = new Set(["context", "maxOutput", "price", "released"]);
-/** Columns faded in a disabled model's row, found by id so hiding a column doesn't shift them. */
 const FADED_WHEN_OFF_COLUMNS = new Set(["capabilities", "context", "maxOutput", "price"]);
 
 function columnClass(columnId: string): Record<string, boolean> {
@@ -449,11 +406,9 @@ function columnClass(columnId: string): Record<string, boolean> {
   };
 }
 
-/** Token counts in full with digit grouping, "1,048,576". */
 const tokenFormat = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
-/** The short form, "1M", beside the full count in the details dialog. */
 const compactTokenFormat = new Intl.NumberFormat("en-US", {
   notation: "compact",
   maximumFractionDigits: 1,
@@ -476,7 +431,6 @@ function compareTexts(first: string, second: string): number {
   return first.localeCompare(second);
 }
 
-/** A group's values as "min–max", one value when they agree, or "—" when none is set. */
 function formatRange<Value>(
   values: (Value | null)[],
   compare: (first: Value, second: Value) => number,
@@ -508,12 +462,10 @@ function groupReleaseRange(group: UpstreamModelGroup): string {
   );
 }
 
-/** A group's Kind is its first member's: models sharing an id almost always share a Kind. */
 function rowKind(row: UpstreamModelRow): ModelKind {
   return isUpstreamModelGroup(row) ? row.members[0].kind : row.kind;
 }
 
-/** The Pricing Window whose prices a model charges now; a group row has none of its own. */
 function activeWindowName(row: UpstreamModelRow): string | undefined {
   if (isUpstreamModelGroup(row)) return undefined;
   return activePricingWindowOf(row.pricingWindows)?.name;
@@ -528,7 +480,6 @@ const shareFormat = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
 });
 
-/** A cache price as a share of its group's price, "2.5% of input"; empty without both. */
 function shareOf(price: number | null, base: number | null, baseName: string): string {
   if (price === null || base === null || base === 0) return "";
   return `${shareFormat.format(price / base)} of ${baseName}`;
@@ -558,15 +509,12 @@ const {
   toggleRow,
 } = useEditableList<UpstreamModelDialog>("/upstream-models", props.refresh);
 
-/** Number inputs hold a number, or "" when empty. */
 type NumberInput = number | string;
 
 interface UpstreamModelForm {
   providerId: string;
   upstreamModelId: string;
-  /** The display name, or "" when it has none. */
   name: string;
-  /** Its Provider needs an endpoint for it. */
   kind: ModelKind;
   capabilities: Capability[];
   contextSize: NumberInput;
@@ -575,12 +523,9 @@ interface UpstreamModelForm {
   outputPrice: NumberInput;
   cacheReadPrice: NumberInput;
   cacheWritePrice: NumberInput;
-  /** "YYYY-MM-DD" from the date input, or "" when empty. */
   releaseDate: string;
   serviceTiers: ServiceTier[];
-  /** Each accepted tier's prices; an empty field means the standard price. */
   tierPrices: Record<ServiceTier, TierPriceFields>;
-  /** The unit prices and limits of the media Kinds. */
   media: MediaForm;
 }
 
@@ -602,7 +547,6 @@ function tierPriceFields(prices: TierPrices | undefined): TierPriceFields {
   };
 }
 
-/** Prices for the accepted tiers only, each with just the prices typed in. */
 function tierPricesFromForm(form: UpstreamModelForm): Partial<Record<ServiceTier, TierPrices>> {
   const tierPrices: Partial<Record<ServiceTier, TierPrices>> = {};
   for (const tier of form.serviceTiers) {
@@ -622,7 +566,6 @@ function emptyForm(): UpstreamModelForm {
   return {
     providerId:
       props.provider?.id ||
-      // With one Provider filtered, a new model most likely belongs to it.
       (providerFilter.value.length === 1
         ? providerBySlug.value.get(providerFilter.value[0] ?? "")?.id
         : undefined) ||
@@ -667,10 +610,6 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
   };
 }
 
-/**
- * The Kinds the form offers: those the Provider has an endpoint for, plus
- * the model's own, so an edit never shows a blank Kind.
- */
 const formKindOptions = computed(() => {
   const endpointKinds = providerById.value
     .get(form.value.providerId)
@@ -688,7 +627,6 @@ function openDialog(next: UpstreamModelDialog): void {
   if (next.kind === "edit") form.value = formFor(next.upstreamModel);
 }
 
-/** The token prices and Service Tiers only chat has; cleared for the other Kinds. */
 function chatFieldsFromForm(current: UpstreamModelForm) {
   const isChat = current.kind === "chat";
   return {
@@ -709,7 +647,6 @@ async function saveUpstreamModel(): Promise<void> {
     upstreamModelId: form.value.upstreamModelId,
     name: form.value.name.trim() || null,
     kind: form.value.kind,
-    // Capabilities, token prices and Service Tiers of another Kind are hidden, so they are cleared.
     capabilities: form.value.capabilities.filter((capability) =>
       formCapabilities.value.includes(capability),
     ),
@@ -754,7 +691,6 @@ function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
   return toggleRow(upstreamModel, upstreamModelLabel(upstreamModel));
 }
 
-// Only to tell, before the click, that a Provider has no enabled Provider Account to probe with.
 const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>("/provider-accounts");
 const {
   shownProbe,
@@ -763,7 +699,6 @@ const {
   runProbe,
 } = useUpstreamModelProbe();
 
-/** Why the row's Probe action is unavailable, shown as its tooltip; null when it is available. */
 function probeUnavailableReason(upstreamModel: UpstreamModel): string | null {
   if (isProbing(upstreamModel)) return "Probing…";
   return probeBlockReason(upstreamModel, providerAccounts.value);
@@ -774,7 +709,6 @@ function handleProbeClick(upstreamModel: UpstreamModel): void {
   void runProbe(upstreamModel);
 }
 
-/** The model the details dialog shows, read fresh from the list so a toggle shows at once. */
 const detailsModel = computed(() => {
   const current = dialog.value;
   if (current?.kind !== "details") return undefined;
@@ -995,7 +929,6 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     <template #cell-released="{ row }">{{
       isUpstreamModelGroup(row) ? groupReleaseRange(row) : (row.releaseDate ?? "—")
     }}</template>
-    <!-- A group row has no status or actions of its own: its Providers' rows do. -->
     <template #cell-status="{ row }">
       <span
         v-if="!isUpstreamModelGroup(row)"
@@ -1006,7 +939,6 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     </template>
     <template #cell-actions="{ row }">
       <div v-if="!isUpstreamModelGroup(row)" class="row-actions provider-table__actions">
-        <!-- aria-disabled, not disabled: a disabled button shows no tooltip, and the tooltip says why. -->
         <button
           class="icon-action"
           type="button"

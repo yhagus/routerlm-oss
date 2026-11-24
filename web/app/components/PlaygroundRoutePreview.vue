@@ -10,19 +10,13 @@ import {
 import type { ModelDetail, RouteSummary } from "~/lib/routing";
 import { formatCount } from "~/lib/usage";
 
-/**
- * What a send will do before anything is sent: the selected Model's Routes in
- * the order the gateway tries them, and its Parameter Policy.
- */
 const props = defineProps<{
   model: ModelDetail | null;
   isLoading: boolean;
   hasError: boolean;
-  /** Provider logos by slug: a Route names its Provider without one. */
   providerLogos: Map<string, string | null>;
 }>();
 
-/** Why a Route can't serve requests, or null when it can. */
 function blockerOf(route: RouteSummary): string | null {
   if (!route.isEnabled) return "Route disabled";
   if (!route.provider.isEnabled) return "Provider disabled";
@@ -44,7 +38,6 @@ function formatValue(name: keyof ParameterValues, values: ParameterValues): stri
   return String(value);
 }
 
-/** Every rule the Model's Parameter Policy sets, as "Temperature · Default · 0.7". */
 function policyRules(policy: ParameterPolicy): { key: string; label: string; value: string }[] {
   const rules: { key: string; label: string; value: string }[] = [];
   for (const { kind, label: kindLabel } of RULE_KINDS) {

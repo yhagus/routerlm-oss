@@ -15,20 +15,11 @@ import { UsageResetTargets } from "./providers/usage-reset-targets.js";
 import { QueryHandlers } from "./queries/handlers/index.js";
 import { UpstreamModule } from "@/upstream/upstream.module.js";
 
-/**
- * Quota Meters: the quota readers, reading a Provider Account's meters now
- * from the dashboard, the meters the dashboard lists, and the Usage Resets
- * an operator spends. The worker imports
- * it too, for the reading schedule. Exhausted state and credentials are UpstreamModule's.
- */
 @Module({
   imports: [
     HttpClientModule.registerAsync({
       name: QUOTA_READER_HTTP_CLIENT,
       inject: [ConfigService, OutboundFetch],
-      // No retries: the next scheduled reading is the retry. No base URL: each
-      // reader takes its Provider's, or the `quotaBaseUrl` quirk. A redirect
-      // fails rather than carry the key elsewhere.
       useFactory: (config: ConfigService<Env, true>, outbound: OutboundFetch) => ({
         timeout: config.get("QUOTA_READER_TIMEOUT_MS", { infer: true }),
         retry: false,

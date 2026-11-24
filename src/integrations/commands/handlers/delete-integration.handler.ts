@@ -16,8 +16,6 @@ export class DeleteIntegrationHandler implements ICommandHandler<DeleteIntegrati
 
   async execute({ id }: DeleteIntegrationCommand): Promise<void> {
     await this.db.transaction(async (tx) => {
-      // Revoked as RevokeApiKeyCommand revokes, before the delete clears integrationId
-      // and the keys could no longer be told apart from operator keys.
       await tx
         .update(apiKeys)
         .set({ revokedAt: sql`coalesce(${apiKeys.revokedAt}, now())`, encryptedKey: null })

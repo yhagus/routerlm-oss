@@ -1,10 +1,5 @@
 import type { RecordedIntegration } from "~/lib/integrations";
 
-/**
- * What failed: the client's request to the gateway, or one
- * Attempt from the gateway to a Provider Account. Names are null once that
- * Provider Account or Provider is deleted.
- */
 export type FailedHop =
   | { kind: "client-to-gateway" }
   | {
@@ -13,14 +8,11 @@ export type FailedHop =
       providerAccountId: string | null;
       providerAccountName: string | null;
       providerName: string | null;
-      /** Null when no response arrived. */
       upstreamStatus: number | null;
       failureReason: string | null;
-      /** The request id the Provider returned; null when it returned none or no response arrived. */
       upstreamRequestId: string | null;
     };
 
-/** An Error Capture as `GET /api/error-captures` lists it: no headers or bodies. */
 export interface ErrorCaptureSummary extends RecordedIntegration {
   id: string;
   createdAt: string;
@@ -31,17 +23,14 @@ export interface ErrorCaptureSummary extends RecordedIntegration {
   clientProtocol: string;
   httpStatus: number;
   errorCode: string | null;
-  /** Who sent the request and from where; null on captures recorded before they were. */
   userAgent: string | null;
   clientIp: string | null;
   failedHop: FailedHop;
 }
 
-/** One Error Capture whole, from `GET /api/error-captures/:id`. Credentials are already redacted. */
 export interface ErrorCaptureDetail extends ErrorCaptureSummary {
   requestHeaders: Record<string, string>;
   requestBody: string;
-  /** Null for a capture of the client request alone, and for an Attempt that got no response. */
   responseHeaders: Record<string, string> | null;
   responseBody: string | null;
 }
@@ -83,7 +72,6 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-/** What failed, in words: "Client → gateway", or "Gateway → <Provider> · <Provider Account>". */
 export function failedHopLabel(hop: FailedHop): string {
   if (hop.kind === "client-to-gateway") return "Client → gateway";
   const provider = hop.providerName ?? "Deleted Provider";
@@ -91,16 +79,10 @@ export function failedHopLabel(hop: FailedHop): string {
   return `Gateway → ${provider} · ${account}`;
 }
 
-/** Why an Attempt failed, in words. */
 export function failureReasonLabel(reason: string): string {
   return FAILURE_REASON_LABELS[reason] ?? reason;
 }
 
-/**
- * How an Attempt ended, with the upstream's status when it answered:
- * "Timed out · no response", "Answered · HTTP 200". `labelWithoutReason`
- * names the outcome when no failure reason was recorded.
- */
 export function attemptOutcomeLabel(
   attempt: { failureReason: string | null; upstreamStatus: number | null },
   labelWithoutReason: string,
@@ -113,10 +95,6 @@ export function attemptOutcomeLabel(
     : `${reason} · HTTP ${attempt.upstreamStatus}`;
 }
 
-/**
- * What the client received, as a badge. A captured Attempt that Fallback
- * recovered from leaves the client with a success, which is not an error.
- */
 export function clientOutcome(capture: Pick<ErrorCaptureSummary, "httpStatus" | "errorCode">): {
   label: string;
   badgeClass: "status-badge--good" | "status-badge--bad";
@@ -130,11 +108,6 @@ export function clientOutcome(capture: Pick<ErrorCaptureSummary, "httpStatus" | 
   };
 }
 
-/**
- * The message an upstream error body carries, which is what the Provider said
- * went wrong: `error.message` (OpenAI, Anthropic), `error` as a string, or a
- * top-level `message`. Null when the body is not JSON or has none.
- */
 export function upstreamErrorMessage(body: string | null): string | null {
   if (body === null) return null;
   let parsed: unknown;
@@ -152,7 +125,6 @@ export function upstreamErrorMessage(body: string | null): string | null {
   return "message" in parsed && typeof parsed.message === "string" ? parsed.message : null;
 }
 
-/** A JSON body indented for reading; any other text (a truncated body, HTML) as it is. */
 export function readableBody(body: string): string {
   try {
     return JSON.stringify(JSON.parse(body), null, 2);

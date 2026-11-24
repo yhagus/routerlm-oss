@@ -49,7 +49,6 @@ describe("Changing a Provider's quota reader (e2e)", () => {
     await app.close();
   });
 
-  /** What the previous reader left: one meter, and a failed reading after it. */
   async function recordReading(accountId: string): Promise<void> {
     await db.insert(quotaMeters).values({
       providerAccountId: accountId,

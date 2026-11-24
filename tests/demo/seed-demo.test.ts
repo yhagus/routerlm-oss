@@ -13,7 +13,6 @@ import { MIGRATIONS_FOLDER } from "@tests/support/migrations.js";
 import { createTestApp, sessionCookieOf } from "@tests/support/test-app.js";
 
 const runFile = promisify(execFile);
-// Bun startup, the Catalog, one production-cost password hash and the bulk inserts.
 const SEED_TIMEOUT_MS = 60_000;
 
 const DEMO_CREDENTIALS = { email: "admin@example.com", password: "routerlm-demo" };
@@ -27,7 +26,6 @@ describe("db:seed:demo script (e2e)", () => {
   let app: NestNodeApplication | undefined;
 
   function seedDemo(targetUrl: string) {
-    // A DATABASE_URL in the environment wins over the one in the developer's .env.
     return runFile("bun", ["src/seed-demo.ts"], {
       env: { ...process.env, DATABASE_URL: targetUrl },
       timeout: SEED_TIMEOUT_MS,
@@ -119,7 +117,6 @@ describe("db:seed:demo script (e2e)", () => {
     expect(overview.body.totals.cost).toBeGreaterThan(0);
     expect(overview.body.totals.errorRate).toBeGreaterThan(0);
     expect(overview.body.totals.errorRate).toBeLessThan(0.05);
-    // Every demo failure is the upstream's, as its error code says.
     expect(overview.body.totals.errorsByOrigin.upstream.count).toBe(
       overview.body.totals.failedCount,
     );

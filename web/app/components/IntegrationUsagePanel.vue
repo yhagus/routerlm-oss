@@ -16,7 +16,6 @@ import {
   usageStatusOf,
 } from "~/lib/usage";
 
-/** The newest Usage Logs of the Integration's Customers; the Usage page has the rest. */
 const props = defineProps<{ integrationId: string }>();
 
 const NEWEST_LOG_COUNT = 20;
@@ -32,7 +31,6 @@ const {
 
 const isLoading = computed(() => status.value === "pending" && !usagePage.value);
 
-/** The Usage page's columns, less Integration: every row here has the same one. */
 const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: "time", header: "Time", enableHiding: false },
   { id: "model", header: "Model", accessorFn: (log) => log.modelName ?? "" },

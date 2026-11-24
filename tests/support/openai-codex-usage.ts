@@ -1,17 +1,13 @@
 import type { FakeReply } from "./fake-upstream.js";
 
-/** Where the OpenAI Codex quota reader asks, on the Provider's origin. */
 export const USAGE_PATH = "/backend-api/wham/usage";
-/** Where it lists the account's Usage Resets, which OpenAI calls rate limit reset credits. */
 export const RESET_CREDITS_PATH = "/backend-api/wham/rate-limit-reset-credits";
-/** Where it spends one. */
 export const CONSUME_PATH = "/backend-api/wham/rate-limit-reset-credits/consume";
 
 export const FIVE_HOURS_IN_SECONDS = 18_000;
 export const WEEK_IN_SECONDS = 604_800;
 const DAY_MS = 86_400_000;
 
-/** One window of a `wham/usage` answer; `reset_at` is in epoch seconds. */
 export interface UsageWindow {
   used_percent: number;
   limit_window_seconds: number;
@@ -26,7 +22,6 @@ export interface UsageRateLimit {
   secondary_window: UsageWindow | null;
 }
 
-/** A window of `windowSeconds` used up to `usedPercent`, resetting at `resetsAt`. */
 export function usageWindow(
   usedPercent: number,
   windowSeconds: number,
@@ -53,11 +48,9 @@ export function rateLimitOf(windows: {
   };
 }
 
-/** A successful `wham/usage` answer, in the shape the Codex CLI's backend client reads. */
 export function usageReply(answer: {
   rateLimit: UsageRateLimit | null;
   additionalRateLimits?: Array<{ limit_name: string; rate_limit: UsageRateLimit | null }>;
-  /** How many Usage Resets OpenAI says the account has; left out of the answer when unset. */
   usageResetCount?: number;
 }): FakeReply {
   return {
@@ -78,7 +71,6 @@ export function usageReply(answer: {
   };
 }
 
-/** A `wham/usage` answer with both windows used up to `usedPercent`, resetting at `resetsAt`. */
 export function usageAtPercentReply(
   usedPercent: number,
   resetsAt: Date,
@@ -95,7 +87,6 @@ export function usageAtPercentReply(
 
 export type ResetCreditStatus = "available" | "redeeming" | "redeemed";
 
-/** One entry of a `rate-limit-reset-credits` answer, as the Codex CLI's backend client reads it. */
 export interface ResetCredit {
   id: string;
   reset_type: string;
@@ -106,7 +97,6 @@ export interface ResetCredit {
   description: string;
 }
 
-/** An available reset named `id`, granted a day ago, expiring at `expiresAt` (null: never). */
 export function resetCredit(
   id: string,
   expiresAt: Date | null,
@@ -123,7 +113,6 @@ export function resetCredit(
   };
 }
 
-/** A successful `rate-limit-reset-credits` answer listing `credits`. */
 export function resetCreditsReply(credits: ResetCredit[]): FakeReply {
   const availableCount = credits.filter((credit) => credit.status === "available").length;
   return {
@@ -135,7 +124,6 @@ export function resetCreditsReply(credits: ResetCredit[]): FakeReply {
 
 export type ConsumeCode = "reset" | "nothing_to_reset" | "no_credit" | "already_redeemed";
 
-/** The answer to spending a reset, with OpenAI's `code`. */
 export function consumeReply(code: ConsumeCode): FakeReply {
   return {
     kind: "json",

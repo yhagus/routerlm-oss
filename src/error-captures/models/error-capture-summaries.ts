@@ -8,7 +8,6 @@ import {
 } from "@/db/schemas/index.js";
 import type { ErrorCaptureSummary, FailedHop } from "./error-capture.js";
 
-/** The columns a summary is made of: no headers or bodies, so the list stays light. */
 const summaryColumns = {
   id: errorCaptures.id,
   createdAt: errorCaptures.createdAt,
@@ -33,11 +32,6 @@ const summaryColumns = {
   upstreamRequestId: attempts.upstreamRequestId,
 };
 
-/**
- * Each capture with its Usage Log and, for a failed Attempt, the Provider
- * Account it went to, by the names copied at request time (ADR 0024). Map the
- * rows with `summaryOf`.
- */
 export function selectSummaryRows(db: Database) {
   return db
     .select(summaryColumns)
@@ -46,7 +40,6 @@ export function selectSummaryRows(db: Database) {
     .leftJoin(attempts, eq(attempts.id, errorCaptures.attemptId));
 }
 
-/** A row of `summaryColumns`: the Attempt's columns are null for a client-to-gateway capture. */
 interface SummaryRow extends Omit<ErrorCaptureSummary, "failedHop"> {
   attemptId: string | null;
   providerAccountId: string | null;

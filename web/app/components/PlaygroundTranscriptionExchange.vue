@@ -3,7 +3,6 @@ import { Message, MessageContent } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import type { TranscriptionExchange } from "~/lib/playgroundTranscription";
 
-/** One transcription request in the tab's history: the file, then the transcript or error. */
 defineProps<{ exchange: TranscriptionExchange }>();
 
 const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget();

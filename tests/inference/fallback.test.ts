@@ -19,7 +19,6 @@ import { endCooldownElsewhere, startCooldownElsewhere } from "@tests/support/red
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
-// Short Route timeouts, so the timeout cases take a fraction of a second.
 const FAST_TIMEOUTS = { connectTimeoutMs: 300, firstTokenTimeoutMs: 300, totalTimeoutMs: 600 };
 
 const SUCCESS: FakeReply = {
@@ -82,7 +81,6 @@ describe("Fallback (e2e)", () => {
       .send(body);
   }
 
-  /** Which Provider Account each Attempt used, by the key it sent. */
   function attemptedKeys(): string[] {
     return upstream.requests.map((received) =>
       String(received.headers.authorization).replace("Bearer ", ""),
@@ -338,8 +336,6 @@ describe("Fallback (e2e)", () => {
     return account;
   }
 
-  // Stands in for waiting out the Cooldown, which doubles with each failure.
-  /** Ends the Cooldown in Redis, as another process would, and waits until this one sees it. */
   async function endCooldown(providerAccountId: string): Promise<void> {
     await endCooldownElsewhere(app, providerAccountId);
     await sleep(LOCAL_COPY_MAX_AGE_MS);
@@ -372,7 +368,6 @@ describe("Fallback (e2e)", () => {
     expect(upstream.requests).toHaveLength(0);
   });
 
-  /** Adds Provider Accounts after the primary and backup ones, up to `total` in all. */
   async function addProviderAccountsUpTo(total: number): Promise<void> {
     for (let priority = 2; priority < total; priority += 1) {
       await addProviderAccount(app, db, providerId, { key: `${BACKUP_KEY}-${priority}`, priority });

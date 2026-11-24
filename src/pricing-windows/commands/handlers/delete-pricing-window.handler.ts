@@ -15,7 +15,6 @@ export class DeletePricingWindowHandler implements ICommandHandler<DeletePricing
   ) {}
 
   async execute({ pricingWindowId }: DeletePricingWindowCommand): Promise<void> {
-    // The Window Prices go with it: the link cascades.
     const deleted = await this.db
       .delete(pricingWindows)
       .where(eq(pricingWindows.id, pricingWindowId))

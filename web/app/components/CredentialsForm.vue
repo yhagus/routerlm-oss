@@ -9,7 +9,6 @@ export interface Credentials {
 
 const props = defineProps<{
   submitLabel: string;
-  /** "new-password" when the password is being chosen (setup, new User). */
   passwordAutocomplete: "current-password" | "new-password";
   isSubmitting: boolean;
   errorMessage: string;

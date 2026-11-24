@@ -23,7 +23,6 @@ export class EnableIntegrationHandler implements ICommandHandler<EnableIntegrati
     if (enabled.length === 0) {
       throw integrationNotFound();
     }
-    // Its API Keys sign in from the snapshot, which must take them back.
     await this.snapshot.changed();
   }
 }

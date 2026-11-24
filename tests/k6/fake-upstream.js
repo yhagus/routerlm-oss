@@ -1,20 +1,3 @@
-// A stand-in for every Provider. The URL's first segment picks how it behaves:
-//   /instant/v1/...        answers at once, no pacing: measures the gateway alone
-//   /paced/v1/...          realistic: UPSTREAM_LATENCY_MS to the first token, then
-//                          TOKENS_PER_SECOND, OUTPUT_TOKENS per answer
-//   /fault/<kind>/v1/...   misbehaves, see FAULTS below; kinds that only fail some
-//                          calls answer the rest as /paced does
-// The last segments are the protocol's own path (chat/completions, messages,
-// responses). Runs on Bun (see docker-compose.yml). It checks nothing about the
-// request, except two markers in its text:
-//   [perf:slow]         waits 10 s before answering
-//   [perf:long-stream]  streams 2000 tokens at 5 ms each
-//
-//   PORT                   port to listen on (4000)
-//   UPSTREAM_LATENCY_MS    paced: wait before the answer or the first stream event (200)
-//   TOKENS_PER_SECOND      paced: speed of the stream, and of a non-stream answer (100)
-//   OUTPUT_TOKENS          paced: tokens per answer (200)
-//   INSTANT_OUTPUT_TOKENS  instant: tokens per answer (20)
 import { createServer } from "node:http";
 import { setTimeout as sleep } from "node:timers/promises";
 
@@ -37,7 +20,6 @@ const FLAP_FAILS_PER_10 = 3;
 const sse = (event, data) =>
   (event ? `event: ${event}\n` : "") + `data: ${JSON.stringify(data)}\n\n`;
 
-// A protocol builds its answer from `tokens` and a per-stream `ctx`.
 const chat = {
   json: (tokens) => ({
     id: "chatcmpl-perf",
@@ -245,18 +227,15 @@ const responses = {
 
 const PROTOCOLS = { "chat/completions": chat, messages, responses };
 
-/** The mode and fault kind the URL's first segments ask for, and the protocol its path ends in. */
 function targetOf(url) {
   const path = url.split("?")[0];
   const parts = path.split("/").filter(Boolean);
   const mode = parts[0];
   const fault = mode === "fault" ? parts[1] : null;
-  // The suffix, because a protocol may add its own /v1 to the Provider's base URL.
   const endpoint = Object.keys(PROTOCOLS).find((suffix) => path.endsWith(`/${suffix}`));
   return { mode, fault, protocol: endpoint ? PROTOCOLS[endpoint] : undefined };
 }
 
-/** How long an answer takes: wait `latencyMs`, then one token per `delayMs` (0: all at once). */
 function planOf(mode, raw) {
   const plan =
     mode === "instant"
@@ -312,24 +291,16 @@ const error = (response, status, headers = {}) => {
   response.end(JSON.stringify({ error: { message: `upstream said ${status}`, type: "perf" } }));
 };
 
-// What each kind of fault does. Returns true when it answered; false to
-// let the request be answered as /paced does.
 let flapCalls = 0;
 const FAULTS = {
-  // Always 503.
   "5xx": (response) => (error(response, 503), true),
-  // Always 429 with a Retry-After.
   429: (response) => (error(response, 429, { "retry-after": "5" }), true),
-  // Never answers: the Route's first-token timeout has to end it.
   timeout: () => true,
-  // Drops the connection before any answer.
   reset: (response) => (response.destroy(), true),
-  // Streams five tokens, then drops the connection.
   midstream: (response, { protocol, plan }) => (
     void streamTo(response, protocol, plan, { cutAfter: 5 }),
     true
   ),
-  // Answers 200 with a body that is not what it claims to be.
   malformed: (response, { wantsStream }) => {
     response.writeHead(200, {
       "content-type": wantsStream ? "text/event-stream" : "application/json",
@@ -337,7 +308,6 @@ const FAULTS = {
     response.end(wantsStream ? "data: {not json\n\ndata: [DONE]\n\n" : "{not json");
     return true;
   },
-  // 3 calls in 10 fail with a 503, deterministically; the rest are served.
   flap: (response) => (flapCalls++ % 10 < FLAP_FAILS_PER_10 ? (error(response, 503), true) : false),
 };
 
@@ -359,9 +329,7 @@ createServer((request, response) => {
     let wantsStream = false;
     try {
       wantsStream = JSON.parse(raw).stream === true;
-    } catch {
-      // Not JSON: answer as a non-stream request.
-    }
+    } catch {}
     const plan = planOf(target.mode === "instant" ? "instant" : "paced", raw);
     const { protocol } = target;
     if (target.mode === "fault") {

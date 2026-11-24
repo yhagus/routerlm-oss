@@ -9,7 +9,6 @@ import type { ControlPlaneTransport } from "./key-scenarios.js";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 
-/** When an Integration Secret was last used, as the dashboard shows it after control plane calls. */
 export function describeLastUsedScenarios(transport: ControlPlaneTransport): void {
   describe(`Integration Secret last use over ${transport.name} (e2e)`, () => {
     let app: NestNodeApplication;

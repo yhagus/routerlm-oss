@@ -36,7 +36,6 @@ import {
   newApiKeySchema,
 } from "./schemas/api-key.schema.js";
 
-// A dashboard controller: only a User's session gets in, so an API Key can't manage API Keys.
 @DashboardController("api-keys")
 export class ApiKeysController {
   constructor(
@@ -44,7 +43,6 @@ export class ApiKeysController {
     private readonly queryBus: QueryBus,
   ) {}
 
-  /** Optionally only one Integration's keys, or one Customer's. */
   @Get()
   listApiKeys(
     @Query({ schema: apiKeyListQuerySchema }) filter: ApiKeyListQuery,
@@ -52,7 +50,6 @@ export class ApiKeysController {
     return this.queryBus.execute(new ListApiKeysQuery(filter));
   }
 
-  /** The Models a new key can be restricted to. */
   @Get("model-choices")
   listModelChoices(): Promise<ModelChoice[]> {
     return this.queryBus.execute(new ListModelChoicesQuery());
@@ -66,13 +63,11 @@ export class ApiKeysController {
     return this.commandBus.execute(new CreateApiKeyCommand(newKey, creator.id));
   }
 
-  /** The whole key again, for the dashboard's Copy. */
   @Get(":id/key")
   revealApiKey(@Param("id", ParseUUIDPipe) id: string): Promise<{ key: string }> {
     return this.queryBus.execute(new RevealApiKeyQuery(id));
   }
 
-  /** Refused with 409 for a key an Integration issued. */
   @Patch(":id")
   updateApiKey(
     @Param("id", ParseUUIDPipe) id: string,
@@ -81,8 +76,6 @@ export class ApiKeysController {
     return this.commandBus.execute(new UpdateApiKeyCommand(id, changes));
   }
 
-  // 201 like POST /api-keys: both answer with a newly made key. Refused with
-  // 409 for a key an Integration issued.
   @Post(":id/rotate")
   rotateApiKey(
     @Param("id", ParseUUIDPipe) id: string,
@@ -91,7 +84,6 @@ export class ApiKeysController {
     return this.commandBus.execute(new RotateApiKeyCommand(id, rotator.id));
   }
 
-  /** Every rotation of the key, newest first; revoked keys keep theirs. */
   @Get(":id/rotations")
   listApiKeyRotations(@Param("id", ParseUUIDPipe) id: string): Promise<ApiKeyRotation[]> {
     return this.queryBus.execute(new ListApiKeyRotationsQuery(id));

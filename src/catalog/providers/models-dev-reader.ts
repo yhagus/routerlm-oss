@@ -9,7 +9,6 @@ import { MODELS_DEV_HTTP_CLIENT } from "./models-dev-http-client.js";
 const NEWEST_MODEL_COUNT = 5;
 const CACHE_LIFETIME_MS = 6 * 60 * 60 * 1000;
 
-// Loose, and models without a date left out below: models.dev is not ours to police.
 const modelsDevApiSchema = z.record(
   z.string(),
   z.looseObject({
@@ -22,11 +21,6 @@ const modelsDevApiSchema = z.record(
   }),
 );
 
-/**
- * Reads the newest models of every models.dev provider. The answer is several
- * MB, so only the newest few models per provider are kept, for six hours. A
- * failed read is not kept: the next call tries again.
- */
 @Injectable()
 export class ModelsDevReader {
   private readonly logger = new Logger(ModelsDevReader.name);
@@ -37,7 +31,6 @@ export class ModelsDevReader {
     private readonly config: ConfigService<Env, true>,
   ) {}
 
-  /** Null when models.dev cannot be reached or answers something unreadable. */
   async readNewestModels(): Promise<ModelsDevSnapshot | null> {
     if (this.cached && Date.now() - this.cached.checkedAt.getTime() < CACHE_LIFETIME_MS) {
       return this.cached;

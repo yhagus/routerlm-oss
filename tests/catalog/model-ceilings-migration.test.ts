@@ -35,7 +35,6 @@ describe("Catalog model ceilings migration (e2e)", () => {
     await rm(migrationsBefore, { recursive: true, force: true });
   });
 
-  /** A Provider as the seeder created it, holding `models` by their id at the Provider. */
   async function insertProvider(
     slug: string,
     models: Record<string, SeededModel>,

@@ -11,11 +11,6 @@ import type {
   MediaRequest,
 } from "@/inference/models/media-kind.js";
 
-/**
- * Serves a request of a media Kind through the Kind's client contract, with
- * the same Attempts, Fallback and usage job as chat. `onUsage` sees the job too; `target` is the Model
- * the body names unless a direct Upstream Model test or a Probe says otherwise.
- */
 export class RunMediaInferenceCommand<
   Request extends MediaRequest = MediaRequest,
   Result = unknown,

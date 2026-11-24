@@ -13,23 +13,18 @@ const CORRECTION_MIGRATION_SUFFIX = "_correct_kimi_code_base_url_and_context_siz
 const OAUTH_LOGIN_OFFER_MIGRATION_SUFFIX = "_offer_kimi_code_oauth_login";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 
-// What the Catalog shipped for Kimi Code before the correction.
 const OLD_BASE_URL = "https://api.kimi.ai/coding/v1";
 const OLD_CONTEXT_SIZE = 1048576;
 
 type OldKimiCode = {
   baseUrl: string;
   contextSizes: Record<string, number>;
-  /** `{}`, as the Catalog shipped them, when not given. */
   quirks?: Record<string, unknown>;
-  /** None, as the Catalog shipped it, when not given. */
   quotaReader?: string;
-  /** What an operator set once Providers could hold OAuth Login data; none when not given. */
   oauthLogin?: Record<string, unknown>;
 };
 type KimiCodeFromApi = {
   id: string;
-  /** The chat endpoint's. */
   baseUrl: string | undefined;
   contextSizes: Record<string, number>;
   quirks: Record<string, unknown>;
@@ -60,12 +55,6 @@ describe("Kimi Code correction migration (e2e)", () => {
     }
   });
 
-  /**
-   * Upgrades an install that holds `oldKimiCode`: migrates a database up to the
-   * correction, inserts the Provider, then applies the remaining migrations
-   * (pausing where an operator could first set its OAuth Login data, to set it).
-   * Returns the upgraded database and the Provider's id.
-   */
   async function upgradeInstallHolding(
     oldKimiCode: OldKimiCode,
   ): Promise<{ db: Database; providerId: string }> {
@@ -191,13 +180,11 @@ describe("Kimi Code correction migration (e2e)", () => {
   });
 });
 
-/** The OAuth Login data today's Catalog ships for Kimi Code. */
 async function catalogKimiCodeOauthLogin(): Promise<unknown> {
   const catalog = await loadCatalog(CATALOG_DIRECTORY);
   return catalog.find((provider) => provider.slug === "kimi-code")?.oauthLogin;
 }
 
-/** The quirks today's Catalog ships for Kimi Code. */
 async function catalogKimiCodeQuirks(): Promise<Record<string, unknown>> {
   const catalog = await loadCatalog(CATALOG_DIRECTORY);
   const kimiCode = catalog.find((provider) => provider.slug === "kimi-code");
@@ -205,13 +192,10 @@ async function catalogKimiCodeQuirks(): Promise<Record<string, unknown>> {
   return kimiCode.quirks;
 }
 
-/** The Kimi Code Provider as the seeder created it before the correction. Returns its id. */
 async function insertKimiCode(
   pool: Pool,
   { baseUrl, contextSizes, quirks = {}, quotaReader }: OldKimiCode,
 ): Promise<string> {
-  // Plain SQL: Drizzle names every column of today's schema in an insert,
-  // and later migrations may add columns this database doesn't have yet.
   const { rows } = await pool.query<{ id: string }>(
     `insert into providers
        (slug, name, protocol, base_url, auth_style, quirks, quota_reader, is_from_catalog)
@@ -232,7 +216,6 @@ async function insertKimiCode(
   return providerId;
 }
 
-/** Boots the gateway on the database and reads Kimi Code as the dashboard API returns it. */
 async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
   const { app } = await createTestApp(db);
   try {

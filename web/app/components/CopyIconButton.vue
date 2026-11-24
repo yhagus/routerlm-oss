@@ -3,10 +3,8 @@ import { Check, Copy, X } from "@lucide/vue";
 import { computed } from "vue";
 import { useCopyFeedback } from "~/composables/useCopyFeedback";
 
-/** A small icon button that copies `text` and shows the result in place. */
 const props = defineProps<{
   text: string;
-  /** What is copied, for the button's label: "model id". */
   label: string;
 }>();
 

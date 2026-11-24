@@ -16,8 +16,6 @@ import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { writtenUsageLogs } from "@tests/support/usage-logs.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
-// Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
-// files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -26,7 +24,6 @@ const { WorkerModule } = await import("@/worker.module.js");
 const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
-// 160 tokens at 1000 USD per million tokens each way: one request costs 0.16 USD.
 const PRICE_PER_MILLION_TOKENS = 1000;
 const REPORTED_USAGE = { prompt_tokens: 120, completion_tokens: 40 };
 const REQUEST_COST = 0.16;
@@ -109,7 +106,6 @@ describe("Spend Limit of an API Key (e2e)", () => {
     upstream.reply({ kind: "json", status: 200, body: { ...answer, usage: REPORTED_USAGE } });
   }
 
-  /** One served request, counted by the worker. */
   async function spendOneRequest(key: string): Promise<void> {
     upstreamAnswers();
     await chat(key).expect(200);
@@ -163,7 +159,6 @@ describe("Spend Limit of an API Key (e2e)", () => {
 
   it("refuses a key already over its Spend Limit even when no flag says so", async () => {
     const { id, key } = await controlPlane().issueKey(1);
-    // Spent without the worker, so nothing ever flagged the key.
     await db.update(apiKeys).set({ spent: 5 }).where(eq(apiKeys.id, id));
 
     await chat(key).expect(402);
@@ -171,7 +166,6 @@ describe("Spend Limit of an API Key (e2e)", () => {
 
   it("serves a key under its Spend Limit even when a stale flag says it reached it", async () => {
     const { id, key } = await controlPlane().issueKey(1);
-    // As a flag left over from before the limit was raised, by a write that raced the raise.
     await app.get(SpendLimitFlags).write(id, true);
 
     upstreamAnswers();

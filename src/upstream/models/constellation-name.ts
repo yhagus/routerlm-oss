@@ -1,10 +1,5 @@
 import { randomInt } from "node:crypto";
 
-/**
- * The IAU constellations whose Latin name is a single word. The two-word ones
- * (Canis Major, Ursa Minor, ...) are left out so every generated name is
- * exactly two words.
- */
 export const CONSTELLATIONS = [
   "Andromeda",
   "Antlia",
@@ -88,19 +83,13 @@ export const CONSTELLATIONS = [
 const RANDOM_ATTEMPTS = 5;
 const FIRST_NUMBER_SUFFIX = 2;
 
-/** Two different constellations joined by a space, such as "Lyra Orion". */
 export function randomConstellationName(): string {
   const firstIndex = randomInt(CONSTELLATIONS.length);
-  // Drawing from one fewer and skipping past the first pick keeps the two different.
   const offset = randomInt(1, CONSTELLATIONS.length);
   const secondIndex = (firstIndex + offset) % CONSTELLATIONS.length;
   return `${CONSTELLATIONS[firstIndex]} ${CONSTELLATIONS[secondIndex]}`;
 }
 
-/**
- * A generated name that isn't in `takenNames`. After a few random draws that
- * all clash, the last one gets the lowest free number appended ("Lyra Orion 2").
- */
 export function unusedConstellationName(
   takenNames: ReadonlySet<string>,
   generateName: () => string = randomConstellationName,

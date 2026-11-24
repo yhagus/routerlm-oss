@@ -145,7 +145,6 @@ describe("Usage API: summary totals (e2e)", () => {
       { ...SERVED_REQUEST, createdAt, modelId: smartId, ...clientFailure },
       { ...SERVED_REQUEST, createdAt, modelId: smartId, ...clientFailure },
       { ...SERVED_REQUEST, createdAt, modelId: smartId, ...upstreamFailure },
-      // Recorded before Error Origins were: failed, but of no origin.
       { ...SERVED_REQUEST, createdAt, modelId: smartId, httpStatus: 502 },
       { ...SERVED_REQUEST, createdAt, ...upstreamFailure },
     ]);

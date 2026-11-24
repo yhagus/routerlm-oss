@@ -11,14 +11,7 @@ import {
 } from "~/lib/api-keys";
 import { formatCost } from "~/lib/usage";
 
-/**
- * Creates an API Key, or edits one's name, expiry, allowed Models, Spend Limit
- * and Request Rate. Only a key a User created is edited here. An edit
- * sends only the fields that changed, so an expired key's past expiry is never
- * sent back as if it were new.
- */
 const props = defineProps<{
-  /** The key to edit; absent to create one. */
   apiKey?: ApiKeySummary;
   modelChoices: ModelChoice[] | undefined;
   isLoadingModelChoices: boolean;
@@ -31,7 +24,6 @@ const { $dashboardApi } = useNuxtApp();
 const name = ref("");
 const expiryDate = ref("");
 const allowedModelIds = ref<string[]>([]);
-// NumberInput values: the plain number as text, "" for no limit.
 const spendLimit = ref("");
 const requestRate = ref("");
 const isSaving = ref(false);
@@ -54,10 +46,6 @@ watch(
   { immediate: true },
 );
 
-/**
- * The Models offered, plus any deleted Model the key is still restricted to,
- * so an edit can drop it instead of silently keeping it.
- */
 const modelOptions = computed(() => {
   const options = (props.modelChoices ?? []).map((model) => ({
     label: model.name,
@@ -92,7 +80,6 @@ function sameIds(first: string[], second: string[]): boolean {
   return first.length === second.length && first.every((id) => second.includes(id));
 }
 
-/** The fields an edit changes; empty when nothing did. */
 const changes = computed(() => {
   const original = props.apiKey;
   if (!original) return {};

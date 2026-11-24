@@ -39,14 +39,12 @@ const COMPLETION: FakeReply = {
   },
 };
 
-/** Z.ai's answer once a Coding Plan's usage limit is used up: the code is a string. */
 const USAGE_LIMIT_REACHED: FakeReply = {
   kind: "json",
   status: 429,
   body: { error: { code: "1308", message: "Usage limit reached for 5 hour." } },
 };
 
-/** Z.ai's answer to too many concurrent requests: a rate limit, not a used-up plan. */
 const RATE_LIMITED: FakeReply = {
   kind: "json",
   status: 429,
@@ -95,7 +93,6 @@ describe("Inference from the Z.ai GLM Coding Plan (e2e)", () => {
     await app.close();
   });
 
-  /** The path of the Coding Plan's base URL, served by the fake upstream's origin. */
   function codingBasePath(): string {
     const endpoint = chatEndpointOf(codingPlan.endpoints);
     if (!endpoint) throw new Error("the Z.ai GLM Coding Plan has no chat endpoint");

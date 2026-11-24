@@ -17,8 +17,6 @@ import { deleteAllUpstreamData } from "@tests/support/upstream.js";
 import { writtenUsageLog } from "@tests/support/usage-logs.js";
 import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
 
-// Needs Redis at REDIS_URL. Its own Redis database keeps jobs that other test
-// files enqueued (with no worker running) out of this worker's way.
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
@@ -29,8 +27,6 @@ const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hello" }] };
 
-// The fixture reports 20 uncached input tokens, 40 output tokens and 100 cache reads.
-// At the standard prices (2, 8, 0.5 per million) that is 0.00041.
 const STANDARD_COST = 0.00041;
 
 describe("Cost of a request in a Pricing Window (e2e)", () => {
@@ -44,7 +40,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
   let providerId: string;
   let upstreamModelId: string;
 
-  // In this zone the wall clock reads 12:xx right now.
   const { timeZone, today } = zoneAtNoonNow();
   const ACTIVE_NOW = [{ weekdays: [today], start: "11:00", end: "14:00" }];
   const NEVER_TODAY = [{ weekdays: [today === 1 ? 2 : 1], start: "00:00", end: "24:00" }];
@@ -61,7 +56,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
 
   beforeEach(async () => {
     upstream.reset();
-    // The previous test's job must not land after the tables are emptied.
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     await deleteAllPricingWindows(db);
@@ -118,7 +112,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     });
   }
 
-  /** Sends a chat request and returns its Usage Log as the dashboard shows it. */
   async function chatAndWaitForUsageLog(body: object = CHAT_REQUEST) {
     upstreamAnswers();
     return chatAnsweredAndWaitForUsageLog(body);
@@ -161,7 +154,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
 
     const usageLog = await chatAndWaitForUsageLog();
 
-    // (20 x 1 + 40 x 4) at Window Prices, plus 100 cache reads x 0.5 at the standard price, per million.
     expect(usageLog.cost).toBeCloseTo(0.00023, 10);
     expect(usageLog.pricingWindowName).toBe("Off-peak");
     const listed = await request(app.getHttpServer())
@@ -201,7 +193,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
 
     const usageLog = await chatAndWaitForUsageLog();
 
-    // (20 x 0.5 + 40 x 1 + 100 x 0.5) per million tokens.
     expect(usageLog.cost).toBeCloseTo(0.0001, 10);
     expect(usageLog.pricingWindowName).toBe("Happy hour");
   });
@@ -270,7 +261,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
 
     const usageLog = await chatAndWaitForUsageLog({ ...CHAT_REQUEST, service_tier: "flex" });
 
-    // (20 x 1 + 40 x 4) at flex, plus 100 cache reads x 0.5 at the standard price, per million.
     expect(usageLog.cost).toBeCloseTo(0.00023, 10);
     expect(usageLog.pricingWindowName).toBeNull();
   });
@@ -283,7 +273,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
 
     const usageLog = await chatAnsweredAndWaitForUsageLog();
 
-    // (20 x 1 + 40 x 4) at flex, plus 100 cache reads x 0.5 at the standard price, per million.
     expect(usageLog.cost).toBeCloseTo(0.00023, 10);
     expect(usageLog.pricingWindowName).toBeNull();
   });
@@ -299,7 +288,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
       service_tier: "flex",
     });
 
-    // (20 x 0.5 + 40 x 1 + 100 x 0.5) per million tokens.
     expect(usageLog.cost).toBeCloseTo(0.0001, 10);
     expect(usageLog.pricingWindowName).toBe("Happy hour");
   });
@@ -307,7 +295,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
   it("prices a Playground request in an active window at its Window Prices", async () => {
     const offPeakId = await createWindow("Off-peak", ACTIVE_NOW);
     await attachWindows([{ pricingWindowId: offPeakId, inputPrice: 1, outputPrice: 4 }]);
-    // The Playground only streams; this stream reports the same tokens as the JSON answer.
     upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
 
     await request(app.getHttpServer())
@@ -319,7 +306,6 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     const { id } = await writtenUsageLog(db);
     const usageLog = await shownUsageLog(id);
     expect(usageLog).toMatchObject({ isPlayground: true, pricingWindowName: "Off-peak" });
-    // (20 x 1 + 40 x 4) at Window Prices, plus 100 cache reads x 0.5 at the standard price, per million.
     expect(usageLog.cost).toBeCloseTo(0.00023, 10);
   });
 

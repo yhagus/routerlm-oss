@@ -12,10 +12,6 @@ import type {
 import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
 import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
 
-// DashScope's native speech synthesis API: one
-// synchronous call that answers with the URL of the audio, which the gateway
-// fetches.
-
 const SYNTHESIZER_PATH = "/services/audio/tts/SpeechSynthesizer";
 
 const responseSchema = z.object({
@@ -23,7 +19,6 @@ const responseSchema = z.object({
   usage: z.object({ characters: z.int().nonnegative() }),
 });
 
-/** The request body DashScope takes; `rate` is OpenAI's `speed`. */
 function requestBodyOf(request: SpeechSynthesisRequest, upstreamModelId: string): unknown {
   return {
     model: upstreamModelId,

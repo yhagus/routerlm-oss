@@ -62,7 +62,6 @@ useMissingResource(() => Boolean(providers.value) && !provider.value, "Provider"
 
 useHead({ title: () => provider.value?.name ?? "Provider" });
 
-/** Cooldowns are judged as of the last load. */
 const loadedAt = ref(Date.now());
 
 async function refresh(): Promise<void> {
@@ -82,7 +81,6 @@ const readyAccounts = computed(
 );
 const enabledModels = computed(() => ownModels.value.filter((model) => model.isEnabled).length);
 
-/** The open tab lives in `?tab=` so the Providers list can link straight to it. */
 const activeTab = useQueryParam<Tab>("tab", { default: "accounts", isValid: oneOf(TABS) });
 
 const isEditOpen = ref(false);
@@ -132,7 +130,6 @@ const REASONING_LABELS: Record<string, string> = {
   "tool-call-turns": "Turns with tool calls",
 };
 
-/** The request fields an openai-chat Provider takes, as the form names them. */
 function requestFields(target: Provider): string {
   const fields = [
     target.quirks.acceptsCacheControl ? "cache_control markers" : null,

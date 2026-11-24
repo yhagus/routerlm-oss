@@ -30,8 +30,6 @@ export class RotateApiKeyHandler implements ICommandHandler<RotateApiKeyCommand>
     assertUserOwnsKey(await findUnrevokedApiKey(this.db, id, REVOKED_MESSAGE));
     const { key, id: keyId, hash } = this.apiKeyAuth.generate();
     await this.db.transaction(async (tx) => {
-      // Locked and guarded again on revokedAt: a key revoked since the check must
-      // not get a new copy, and a concurrent rotation must not record the same previous key.
       const [current] = await tx
         .select({ keyId: apiKeys.keyId })
         .from(apiKeys)
@@ -48,7 +46,6 @@ export class RotateApiKeyHandler implements ICommandHandler<RotateApiKeyCommand>
         .insert(apiKeyRotations)
         .values({ apiKeyId: id, rotatedById, previousKeyId: current.keyId, newKeyId: keyId });
     });
-    // Sign-in looks keys up by keyId in the snapshot: the old one is gone from it from now on.
     await this.snapshot.changed();
     const [summary] = await selectApiKeySummaries(this.db, eq(apiKeys.id, id));
     return { ...summary, key };

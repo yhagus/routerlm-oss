@@ -15,10 +15,8 @@ watch(
   () => (isMobileNavOpen.value = false),
 );
 
-/** The sidebar item the current page belongs to; detail pages like /providers/<id> count. */
 const activeItem = computed(() => findNavigationItem(route.path));
 const pageError = useError();
-/** On the error page an address outside every section still needs a crumb. */
 const pageTitle = computed(() => {
   if (activeItem.value) return activeItem.value.label;
   if (!pageError.value) return "";

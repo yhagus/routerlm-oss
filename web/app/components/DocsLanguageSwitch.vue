@@ -2,10 +2,6 @@
 import { computed } from "vue";
 import type { DocsLocale } from "~/lib/docsMessages";
 
-/**
- * EN | ID: links to the current docs page in each language. The section hash
- * is dropped, because heading ids differ between the languages.
- */
 const route = useRoute();
 const { locale, t } = useDocsLocale();
 

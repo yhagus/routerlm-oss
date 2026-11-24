@@ -18,7 +18,6 @@ import { formatCost, formatCount } from "~/lib/usage";
 useHead({ title: "Overview" });
 
 const SERIES_COLOR = "var(--series-1)";
-// Floors for the y-axis, so a quiet range isn't stretched to the full height.
 const REQUESTS_SCALE_FLOOR = 4;
 const COST_SCALE_FLOOR = 0.01;
 const ERROR_RATE_SCALE_FLOOR = 0.05;
@@ -44,7 +43,6 @@ const {
   query: computed(() => ({ range: range.value })),
 });
 
-/** The stats a single-series chart plots: every one but the per-origin split. */
 type SingleStatKey = Exclude<keyof OverviewStats, "errorsByOrigin">;
 
 interface OverviewChart {
@@ -100,7 +98,6 @@ const ORIGIN_SERIES: ChartSeries[] = ERROR_ORIGINS.map((origin) => ({
   color: ORIGIN_COLORS[origin],
 }));
 
-/** Each bucket's error rate per origin, in `ERROR_ORIGINS` order, for the stacked chart. */
 const originPoints = computed<ChartPoint[]>(() => {
   const current = overview.value;
   if (!current) return [];
@@ -110,7 +107,6 @@ const originPoints = computed<ChartPoint[]>(() => {
   }));
 });
 
-/** The band's figures; a `null` value is still loading and shows a placeholder. */
 const bandStats = computed(() => {
   const totals = overview.value?.totals;
   return [
@@ -121,7 +117,6 @@ const bandStats = computed(() => {
   ];
 });
 
-/** One tile per origin, opening the Usage page on that origin's failed requests in the same range. */
 const originTiles = computed(() => {
   const totals = overview.value?.totals;
   return ERROR_ORIGINS.map((origin) => {

@@ -1,9 +1,7 @@
 import type { FakeReply } from "./fake-upstream.js";
 
-/** Where the MiniMax M Plan quota reader asks, relative to the fake upstream's base URL. */
 export const REMAINS_PATH = "/v1/token_plan/remains";
 
-/** The `general` entry of the remains payload observed in issue #23. */
 export const GENERAL_REMAINS = {
   start_time: 1794723370993,
   end_time: 1794741370993,
@@ -22,7 +20,6 @@ export const GENERAL_REMAINS = {
   current_weekly_remaining_percent: 48,
 };
 
-/** A successful remains answer with the given `model_remains` entries. */
 export function remainsReply(modelRemains: object[] = [GENERAL_REMAINS]): FakeReply {
   return {
     kind: "json",
@@ -31,14 +28,12 @@ export function remainsReply(modelRemains: object[] = [GENERAL_REMAINS]): FakeRe
   };
 }
 
-/** MiniMax's auth failure: HTTP 200 with a non-zero `base_resp.status_code`. */
 export const INVALID_KEY_REPLY: FakeReply = {
   kind: "json",
   status: 200,
   body: { base_resp: { status_code: 1004, status_msg: "invalid api key" } },
 };
 
-/** A remains answer for the account at `percent` in both of its unscoped windows. */
 export function remainsAtPercentReply(percent: number): FakeReply {
   return remainsReply([
     {

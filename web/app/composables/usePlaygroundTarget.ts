@@ -9,18 +9,12 @@ import {
   upstreamModelLabel,
 } from "~/lib/upstream";
 
-/** A Model (routed, under its policy) or one Upstream Model, sent directly. */
 export type PlaygroundSource = "model" | "upstream";
 
 export type PlaygroundTarget = ReturnType<typeof createPlaygroundTarget>;
 
 const TARGET_KEY: InjectionKey<PlaygroundTarget> = Symbol("playground-target");
 
-/**
- * What one Playground tab sends to: a Model or an Upstream Model of `kind`.
- * Provided to the tab's picker and preview, which read it with
- * `useInjectedPlaygroundTarget`.
- */
 export function usePlaygroundTarget(kind: ModelKind): PlaygroundTarget {
   const target = createPlaygroundTarget(kind);
   provide(TARGET_KEY, target);
@@ -33,7 +27,6 @@ export function useInjectedPlaygroundTarget(): PlaygroundTarget {
   return target;
 }
 
-/** Keeps `selected` on one of `options`, falling back to the first when it drops out. */
 function keepSelectionIn(selected: { value: string }, options: () => { value: string }[]): void {
   watch(
     options,
@@ -51,8 +44,6 @@ function createPlaygroundTarget(kind: ModelKind) {
   const kindLabel = MODEL_KIND_LABELS[kind].toLowerCase();
   const source = ref<PlaygroundSource>("model");
 
-  // Models
-
   const {
     data: models,
     error: modelsError,
@@ -68,15 +59,12 @@ function createPlaygroundTarget(kind: ModelKind) {
   const modelName = ref("");
   keepSelectionIn(modelName, () => modelOptions.value);
 
-  // Upstream Models
-
   const {
     data: providers,
     error: providersError,
     status: providersStatus,
   } = useDashboardApi<Provider[]>("/providers");
   const { isBlocked } = useTermsRiskAllowed();
-  /** A Route summary doesn't carry Terms Risk, so it is looked up from the Provider list. */
   const blockedProviderIds = computed(
     () => new Set((providers.value ?? []).filter(isBlocked).map((provider) => provider.id)),
   );
@@ -93,11 +81,9 @@ function createPlaygroundTarget(kind: ModelKind) {
   );
   const upstreamError = computed(() => providersError.value ?? upstreamModelsError.value);
 
-  /** Every Upstream Model of this Kind, enabled or not, such as for a Route's limits. */
   const upstreamModelsOfKind = computed(() =>
     (upstreamModels.value ?? []).filter((upstreamModel) => upstreamModel.kind === kind),
   );
-  /** Enabled Upstream Models of usable Providers: the ones a direct test can reach. */
   const testableUpstreamModels = computed(() => {
     const enabledProviderIds = new Set(
       (providers.value ?? [])
@@ -141,14 +127,11 @@ function createPlaygroundTarget(kind: ModelKind) {
     () =>
       testableUpstreamModels.value.find((model) => model.id === upstreamModelRowId.value) ?? null,
   );
-  /** The selected Provider's accounts, in the order the gateway tries them. */
   const selectedProviderAccounts = computed(() =>
     (providerAccounts.value ?? [])
       .filter((account) => account.providerId === providerId.value)
       .toSorted((first, second) => first.priority - second.priority),
   );
-
-  // The selected Model's Routes and Parameter Policy, for the preview before a send.
 
   const modelDetail = ref<ModelDetail | null>(null);
   const modelDetailState = ref<"idle" | "loading" | "failed">("idle");
@@ -166,7 +149,6 @@ function createPlaygroundTarget(kind: ModelKind) {
       modelDetailState.value = "loading";
       try {
         const detail = await $dashboardApi<ModelDetail>(`/models/${id}`);
-        // A slow answer for a Model the user has since switched away from is dropped.
         if (selectedModelId.value !== id) return;
         modelDetail.value = detail;
         modelDetailState.value = "idle";
@@ -186,7 +168,6 @@ function createPlaygroundTarget(kind: ModelKind) {
     source.value === "model" ? isLoadingModels.value : isLoadingUpstream.value,
   );
 
-  /** What the request's `model` names, or what is missing to send one. */
   function requestModel(): { model: string } | { problem: string } {
     if (source.value === "model") {
       return modelName.value === "" ? { problem: "Pick a Model." } : { model: modelName.value };
@@ -197,7 +178,6 @@ function createPlaygroundTarget(kind: ModelKind) {
       : { problem: "Pick an Upstream Model." };
   }
 
-  /** The Playground path for a client endpoint, such as `images/generations`, under this source. */
   function requestPath(endpoint: string): string {
     const upstreamModel = selectedUpstreamModel.value;
     return source.value === "upstream" && upstreamModel

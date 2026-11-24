@@ -26,7 +26,6 @@ const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
 const HOUR_MS = 60 * 60_000;
 
-/** What Node's fetch adds to every request; no reader chooses these. */
 const FETCH_OWN_HEADERS = new Set([
   "accept-encoding",
   "accept-language",
@@ -56,7 +55,6 @@ const COMPLETION: FakeReply = {
   },
 };
 
-/** Kimi's refusal once the plan's quota is used up. */
 const QUOTA_EXCEEDED: FakeReply = {
   kind: "json",
   status: 429,
@@ -66,7 +64,6 @@ const QUOTA_EXCEEDED: FakeReply = {
 describe("Quota Meters of a Kimi Code Provider Account (e2e)", () => {
   let app: NestNodeApplication;
   let db: Database;
-  // Kimi serves inference and `/usages` under one base URL, so one fake upstream is both.
   let kimi: FakeUpstream;
   let catalogKimiCode: CatalogProvider;
   let apiKey: string;
@@ -87,7 +84,6 @@ describe("Quota Meters of a Kimi Code Provider Account (e2e)", () => {
     kimi.reset();
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
-    // The Provider as the Catalog seeds it, but at the fake upstream.
     const inserted = await insertOpenAiChatModel(app, db, {
       modelName: "smart",
       baseUrl: kimi.baseUrl,
@@ -129,7 +125,6 @@ describe("Quota Meters of a Kimi Code Provider Account (e2e)", () => {
     return list.body.find((account: { id: string }) => account.id === primaryAccountId);
   }
 
-  /** Which Provider Account each Attempt used, by the key it sent. */
   function attemptedKeys(): string[] {
     return kimi.requests
       .filter((received) => received.path !== USAGES_PATH)

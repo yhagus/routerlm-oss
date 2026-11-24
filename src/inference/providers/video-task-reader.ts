@@ -12,17 +12,11 @@ import { MediaUpstreamClient } from "./media-upstream-client.js";
 import { DEFAULT_TIMEOUTS } from "./upstream-client.js";
 import { VideoHandles, type VideoJobHandle } from "./video-handles.js";
 
-/** A Video Job as its upstream task stands now. */
 export interface ReadVideoJob {
   handle: VideoJobHandle;
   state: VideoTaskState;
 }
 
-/**
- * Reads a Video Job's state from its upstream task: one call to the Provider
- * Account its id names, with no Fallback and no Cooldown on failure (ADR
- * 0027). Writes no Usage Log: the job was counted when it was submitted.
- */
 @Injectable()
 export class VideoTaskReader {
   constructor(
@@ -32,7 +26,6 @@ export class VideoTaskReader {
     private readonly upstream: MediaUpstreamClient,
   ) {}
 
-  /** Throws `video_not_found` for an id `caller` wasn't issued, or whose Provider Account is gone or disabled. */
   async read(
     videoId: string,
     caller: InferenceCaller,
@@ -69,7 +62,6 @@ export class VideoTaskReader {
             {
               baseUrl: endpoint.baseUrl,
               upstreamModelId: upstreamModel.upstreamModelId,
-              // Decided at submit; reading the task generates nothing.
               isWatermarked: false,
             },
             exchange,

@@ -40,7 +40,6 @@ export class ProvidersController {
     return this.commandBus.execute(new CreateProviderCommand(newProvider));
   }
 
-  /** Edits a Provider, including enabling or disabling it. */
   @Patch(":id")
   updateProvider(
     @Param("id", ParseUUIDPipe) providerId: string,

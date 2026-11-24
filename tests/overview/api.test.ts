@@ -45,7 +45,6 @@ const NO_ERRORS_BY_ORIGIN = {
   gateway: { count: 0, rate: null },
 };
 
-/** The start of the bucket `size` wide that holds now, aligned to UTC like the Overview's buckets. */
 function currentBucketStart(sizeMs: number): number {
   return Math.floor(Date.now() / sizeMs) * sizeMs;
 }
@@ -103,7 +102,6 @@ describe("Overview API (e2e)", () => {
       start: new Date(threeHoursAgo).toISOString(),
       requestCount: 2,
       cost: 0.25,
-      // 300 cache-read tokens out of 100 input + 300 cache-read + 100 cache-write.
       cacheHitRate: 0.6,
       errorRate: 0.5,
     });
@@ -123,7 +121,6 @@ describe("Overview API (e2e)", () => {
       { ...FAILED_REQUEST, errorOrigin: "client", createdAt: new Date(twoHoursAgo) },
       { ...FAILED_REQUEST, errorOrigin: "upstream", createdAt: new Date(twoHoursAgo) },
       { ...FAILED_REQUEST, errorOrigin: "upstream", createdAt: new Date(twoHoursAgo) },
-      // Recorded before Error Origins existed: a failure with no origin.
       { ...FAILED_REQUEST, errorOrigin: null, createdAt: new Date(twoHoursAgo) },
       { ...SERVED_REQUEST, createdAt: new Date(currentHour) },
       { ...FAILED_REQUEST, errorOrigin: "gateway", createdAt: new Date(currentHour) },

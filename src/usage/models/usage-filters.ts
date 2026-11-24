@@ -5,7 +5,6 @@ import type { UsageFilter, UsageStatus } from "@/usage/schemas/usage.schema.js";
 
 const FIRST_ERROR_STATUS = 400;
 
-/** The Usage Logs a UsageFilter selects, as a WHERE condition. */
 export function whereFilter(filter: UsageFilter): SQL | undefined {
   return and(
     filter.from === undefined ? undefined : gte(usageLogs.createdAt, filter.from),
@@ -24,10 +23,6 @@ export function whereFilter(filter: UsageFilter): SQL | undefined {
   );
 }
 
-/**
- * The Usage Logs whose Model name, API Key name, error code, User-Agent or client IP
- * contains `text`, or whose id is `text`.
- */
 function searchCondition(text: string): SQL | undefined {
   const isUsageLogId = z.uuid().safeParse(text).success;
   const pattern = containing(text);
@@ -39,10 +34,6 @@ function searchCondition(text: string): SQL | undefined {
   );
 }
 
-/**
- * The Usage Logs whose Model name, API Key name or error code contains `text`, ignoring
- * case. The names are the ones copied at request time (ADR 0024).
- */
 export function namesOrErrorCodeContain(text: string): SQL | undefined {
   const pattern = containing(text);
   return or(
@@ -52,25 +43,18 @@ export function namesOrErrorCodeContain(text: string): SQL | undefined {
   );
 }
 
-/** An ILIKE pattern matching values that contain `text` literally. */
 export function containing(text: string): string {
   return `%${escapeLikeWildcards(text)}%`;
 }
 
-/** A LIKE pattern matching values that start with `text` literally. */
 export function startingWith(text: string): string {
   return `${escapeLikeWildcards(text)}%`;
 }
 
-/** Makes `%`, `_` and `\` match themselves: `\` is Postgres's default LIKE escape. */
 function escapeLikeWildcards(text: string): string {
   return text.replace(/[\\%_]/g, (wildcard) => `\\${wildcard}`);
 }
 
-/**
- * Who sent the request. The Usage page's API Key filter offers the Playground beside the
- * real keys, so picking both means either: listed keys OR the Playground.
- */
 export function callerCondition({
   apiKeyId,
   isPlayground,
@@ -85,7 +69,6 @@ export function callerCondition({
     : and(listedKeysCondition, playgroundCondition);
 }
 
-/** The Usage Logs of these Integrations' or this Customer's API Keys, copied at request time. */
 export function customerCondition({
   integrationId,
   customerId,
@@ -96,10 +79,6 @@ export function customerCondition({
   );
 }
 
-/**
- * Failed Usage Logs of one Error Origin. Failures recorded before Error
- * Origins existed have none, so they match no origin.
- */
 export function failedWithOriginCondition(origin: ErrorOrigin): SQL | undefined {
   return and(statusCondition("failed"), eq(usageLogs.errorOrigin, origin));
 }

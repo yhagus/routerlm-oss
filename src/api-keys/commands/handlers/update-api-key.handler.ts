@@ -30,7 +30,6 @@ export class UpdateApiKeyHandler implements ICommandHandler<UpdateApiKeyCommand>
     if (changes.allowedModelIds) {
       await assertModelsExist(this.db, changes.allowedModelIds);
     }
-    // Guarded again on revokedAt: the key may have been revoked since the check.
     const updated = await this.db
       .update(apiKeys)
       .set(changes)
@@ -40,10 +39,8 @@ export class UpdateApiKeyHandler implements ICommandHandler<UpdateApiKeyCommand>
       throw new ConflictException(REVOKED_MESSAGE);
     }
     if (changes.spendLimit !== undefined) {
-      // So a raised or cleared limit serves the key at once, and a lowered one stops it.
       await this.spendLimitFlags.recompute(id);
     }
-    // Name, allowed Models, Spend Limit and Request Rate are what sign-in reads from the snapshot.
     await this.snapshot.changed();
     const [summary] = await selectApiKeySummaries(this.db, eq(apiKeys.id, id));
     return summary;
