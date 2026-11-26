@@ -1,6 +1,6 @@
 import { Authenticate } from "@nestjs/authentication";
 import { applyDecorators, Controller } from "@nestjs/common";
-import { SessionAuth } from "@/auth/providers/session-auth.js";
+import { SessionAuth } from "@/auth/providers/session-auth";
 
 export const DASHBOARD_API_PREFIX = "api";
 

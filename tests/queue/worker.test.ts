@@ -6,9 +6,9 @@ import { type Queue, QueueEvents } from "bullmq";
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { AppModule } = await import("@/app.module.js");
-const { PingProducer } = await import("@/queue/jobs/ping.producer.js");
-const { PING_QUEUE } = await import("@/queue/models/queue-names.js");
+const { AppModule } = await import("@/app.module");
+const { PingProducer } = await import("@/queue/jobs/ping.producer");
+const { PING_QUEUE } = await import("@/queue/models/queue-names");
 
 const WORKER_STARTUP_AND_JOB_TIMEOUT_MS = 20_000;
 

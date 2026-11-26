@@ -5,8 +5,8 @@ import type {
   GatewayErrorCode,
   RecordedAttemptFailure,
   UpstreamProtocol,
-} from "@/db/schemas/index.js";
-import type { ServiceTier, TokenUsage } from "@/inference/models/internal-format.js";
+} from "@/db/schemas";
+import type { ServiceTier, TokenUsage } from "@/inference/models/internal-format";
 
 export interface MediaUnits {
   imagesOut?: number;

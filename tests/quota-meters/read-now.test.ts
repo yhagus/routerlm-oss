@@ -1,21 +1,21 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providers } from "@/db/schemas/index.js";
-import { FakeUpstream } from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { providers } from "@/db/schemas";
+import { FakeUpstream } from "@tests/support/fake-upstream";
 import {
   GENERAL_REMAINS,
   INVALID_KEY_REPLY,
   REMAINS_PATH,
   remainsAtPercentReply,
   remainsReply,
-} from "@tests/support/minimax-m-plan-remains.js";
+} from "@tests/support/minimax-m-plan-remains";
 
 process.env.QUOTA_READER_TIMEOUT_MS = "300";
 const fakeUpstream = await FakeUpstream.start();
-const { allowPrivateUpstreams } = await import("@tests/support/private-upstreams.js");
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
-const { deleteAllUpstreamData } = await import("@tests/support/upstream.js");
+const { allowPrivateUpstreams } = await import("@tests/support/private-upstreams");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
+const { deleteAllUpstreamData } = await import("@tests/support/upstream");
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const M_PLAN_KEY = "sk-cp-0123456789abcdefWXYZ";

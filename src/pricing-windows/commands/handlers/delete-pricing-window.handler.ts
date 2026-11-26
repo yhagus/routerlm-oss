@@ -2,10 +2,10 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { pricingWindows } from "@/db/schemas/index.js";
-import { DeletePricingWindowCommand } from "@/pricing-windows/commands/impl/delete-pricing-window.command.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations";
+import { pricingWindows } from "@/db/schemas";
+import { DeletePricingWindowCommand } from "@/pricing-windows/commands/impl/delete-pricing-window.command";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 
 @CommandHandler(DeletePricingWindowCommand)
 export class DeletePricingWindowHandler implements ICommandHandler<DeletePricingWindowCommand> {

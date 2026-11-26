@@ -2,14 +2,14 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { routes } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ModelDetail } from "@/routing/models/model.js";
-import { findModelDetail } from "@/routing/models/model-detail.js";
-import { assertRouteKindFits } from "@/routing/models/route-kind.js";
-import { toRouteWriteError } from "@/routing/models/write-errors.js";
-import { UpdateRouteCommand } from "@/routing/commands/impl/update-route.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { routes } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { ModelDetail } from "@/routing/models/model";
+import { findModelDetail } from "@/routing/models/model-detail";
+import { assertRouteKindFits } from "@/routing/models/route-kind";
+import { toRouteWriteError } from "@/routing/models/write-errors";
+import { UpdateRouteCommand } from "@/routing/commands/impl/update-route.command";
 
 @CommandHandler(UpdateRouteCommand)
 export class UpdateRouteHandler implements ICommandHandler<UpdateRouteCommand> {

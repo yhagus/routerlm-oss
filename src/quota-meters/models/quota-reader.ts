@@ -1,9 +1,9 @@
 import { HttpClientError, HttpResponseError, HttpTimeoutError } from "@nestjs/http-client";
-import { chatEndpointOf, providerQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
-import type { ProviderEndpoint } from "@/db/schemas/index.js";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
-import type { QuotaMeterReading } from "./quota-meter.js";
-import type { UsageResetPort } from "./usage-reset.js";
+import { chatEndpointOf, providerQuirksSchema } from "@/catalog/schemas/catalog.schema";
+import type { ProviderEndpoint } from "@/db/schemas";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
+import type { QuotaMeterReading } from "./quota-meter";
+import type { UsageResetPort } from "./usage-reset";
 
 export interface QuotaReader {
   read(credential: ProviderAccountCredential, provider: QuotaReaderProvider): Promise<QuotaReading>;

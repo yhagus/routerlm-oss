@@ -1,11 +1,11 @@
 import { and, asc, eq, isNull, or } from "drizzle-orm";
-import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema.js";
-import type { Database } from "@/db/schemas/relations.js";
+import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema";
+import type { Database } from "@/db/schemas/relations";
 import {
   type AttachedPricingWindowRow,
   selectAttachedPricingWindows,
-} from "@/pricing-windows/models/upstream-model-pricing-windows.js";
-import { SettingsStore } from "@/settings/providers/settings-store.js";
+} from "@/pricing-windows/models/upstream-model-pricing-windows";
+import { SettingsStore } from "@/settings/providers/settings-store";
 import {
   apiKeys,
   type CredentialKind,
@@ -16,7 +16,7 @@ import {
   providers,
   routes,
   upstreamModels,
-} from "@/db/schemas/index.js";
+} from "@/db/schemas";
 import type {
   Snapshot,
   SnapshotApiKey,
@@ -26,8 +26,8 @@ import type {
   SnapshotProvider,
   SnapshotProviderAccount,
   SnapshotUpstreamModel,
-} from "./snapshot.js";
-import { providerIsUsable } from "./provider-usability.js";
+} from "./snapshot";
+import { providerIsUsable } from "./provider-usability";
 
 export async function loadSnapshot(db: Database): Promise<Snapshot> {
   const [

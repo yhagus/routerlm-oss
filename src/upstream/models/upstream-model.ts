@@ -3,21 +3,21 @@ import {
   kindsWithoutEndpoint,
   serviceTiersWithoutWireValue,
   tierPricesWithoutListedTier,
-} from "@/catalog/schemas/catalog.schema.js";
-import type { ModelKind, ProviderEndpoint, ServiceTierValues } from "@/db/schemas/index.js";
-import type { ServiceTier } from "@/inference/models/internal-format.js";
+} from "@/catalog/schemas/catalog.schema";
+import type { ModelKind, ProviderEndpoint, ServiceTierValues } from "@/db/schemas";
+import type { ServiceTier } from "@/inference/models/internal-format";
 import {
   FOREIGN_KEY_VIOLATION,
   hasPostgresErrorCode,
   UNIQUE_VIOLATION,
-} from "@/libs/models/postgres-errors.js";
+} from "@/libs/models/postgres-errors";
 import {
   kindOf,
   type ProtocolListing,
   protocolsWithoutEndpoint,
-} from "@/libs/models/provider-protocols.js";
-import type { upstreamModels } from "@/db/schemas/index.js";
-import type { AttachedPricingWindow } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
+} from "@/libs/models/provider-protocols";
+import type { upstreamModels } from "@/db/schemas";
+import type { AttachedPricingWindow } from "@/pricing-windows/models/upstream-model-pricing-windows";
 
 export type UpstreamModel = typeof upstreamModels.$inferSelect;
 

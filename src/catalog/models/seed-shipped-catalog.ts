@@ -1,9 +1,9 @@
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { CommandBus } from "@nestjs/cqrs";
-import { CatalogSeedModule } from "@/catalog/catalog-seed.module.js";
-import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command.js";
-import { CATALOG_DIRECTORY, loadCatalog } from "./load-catalog.js";
+import { CatalogSeedModule } from "@/catalog/catalog-seed.module";
+import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command";
+import { CATALOG_DIRECTORY, loadCatalog } from "./load-catalog";
 
 export async function seedShippedCatalog(): Promise<void> {
   const catalog = await loadCatalog(CATALOG_DIRECTORY);

@@ -1,14 +1,14 @@
-import { mayUseModel } from "@/api-keys/models/api-key.js";
-import type { ModelKind } from "@/db/schemas/index.js";
+import { mayUseModel } from "@/api-keys/models/api-key";
+import type { ModelKind } from "@/db/schemas";
 import {
   isUpstreamModelUsable,
   type Snapshot,
   type SnapshotModel,
   type SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot.js";
-import { GatewayError } from "./gateway-error.js";
-import type { InferenceCaller, ProbeTarget } from "./inference.js";
-import type { AttemptPath, AttemptTarget } from "./route-selection.js";
+} from "@/snapshot/models/snapshot";
+import { GatewayError } from "./gateway-error";
+import type { InferenceCaller, ProbeTarget } from "./inference";
+import type { AttemptPath, AttemptTarget } from "./route-selection";
 
 export type Destination = FallbackDestination | ProbeDestination;
 

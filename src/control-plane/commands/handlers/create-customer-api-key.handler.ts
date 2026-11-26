@@ -1,15 +1,12 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { IssuedCustomerApiKey } from "@/control-plane/models/customer-api-key.js";
-import {
-  assertWithinCeiling,
-  findCustomerApiKey,
-} from "@/control-plane/models/customer-api-keys.js";
-import { CreateCustomerApiKeyCommand } from "@/control-plane/commands/impl/create-customer-api-key.command.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { IssuedCustomerApiKey } from "@/control-plane/models/customer-api-key";
+import { assertWithinCeiling, findCustomerApiKey } from "@/control-plane/models/customer-api-keys";
+import { CreateCustomerApiKeyCommand } from "@/control-plane/commands/impl/create-customer-api-key.command";
 
 @CommandHandler(CreateCustomerApiKeyCommand)
 export class CreateCustomerApiKeyHandler implements ICommandHandler<CreateCustomerApiKeyCommand> {

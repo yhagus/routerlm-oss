@@ -1,7 +1,7 @@
-import type { TokenUsage } from "@/inference/models/internal-format.js";
-import type { Snapshot, SnapshotRoute } from "@/snapshot/models/snapshot.js";
-import type { MediaUnits, UsageJob } from "@/usage/models/usage-job.js";
-import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
+import type { TokenUsage } from "@/inference/models/internal-format";
+import type { Snapshot, SnapshotRoute } from "@/snapshot/models/snapshot";
+import type { MediaUnits, UsageJob } from "@/usage/models/usage-job";
+import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements";
 
 export interface PlaygroundSummary {
   usage: TokenUsage;

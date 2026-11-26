@@ -1,8 +1,8 @@
 import { Command } from "@nestjs/cqrs";
-import type { InferenceTarget } from "@/inference/models/inference.js";
-import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type { User } from "@/users/models/user.js";
-import type { PlaygroundSpeech } from "@/playground/models/playground-speech.js";
+import type { InferenceTarget } from "@/inference/models/inference";
+import type { ClientConnection } from "@/libs/models/client-connection";
+import type { User } from "@/users/models/user";
+import type { PlaygroundSpeech } from "@/playground/models/playground-speech";
 
 export class SendPlaygroundSpeechCommand extends Command<PlaygroundSpeech> {
   constructor(

@@ -1,5 +1,5 @@
-import { usageLogs } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
+import { usageLogs } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
 
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;

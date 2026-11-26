@@ -1,11 +1,11 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { type OauthRegion, providerAccounts, providers } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { storedOauthTokens } from "@/upstream/models/provider-account.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import type { FakeReply } from "./fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { type OauthRegion, providerAccounts, providers } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { storedOauthTokens } from "@/upstream/models/provider-account";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import type { FakeReply } from "./fake-upstream";
 
 export const DEVICE_AUTHORIZATION_PATH = "/api/oauth/device_authorization";
 export const TOKEN_PATH = "/api/oauth/token";

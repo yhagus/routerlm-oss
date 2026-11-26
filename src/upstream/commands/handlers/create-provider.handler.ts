@@ -1,16 +1,16 @@
 import { ConflictException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import { hasPostgresErrorCode, UNIQUE_VIOLATION } from "@/libs/models/postgres-errors.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { providers } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { hasPostgresErrorCode, UNIQUE_VIOLATION } from "@/libs/models/postgres-errors";
+import type { Database } from "@/db/schemas/relations";
+import { providers } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   assertQuirksFitEndpoints,
   assertServiceTierValuesFitEndpoints,
   type Provider,
-} from "@/upstream/models/provider.js";
-import { CreateProviderCommand } from "@/upstream/commands/impl/create-provider.command.js";
+} from "@/upstream/models/provider";
+import { CreateProviderCommand } from "@/upstream/commands/impl/create-provider.command";
 
 @CommandHandler(CreateProviderCommand)
 export class CreateProviderHandler implements ICommandHandler<CreateProviderCommand> {

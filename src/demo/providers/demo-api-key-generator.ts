@@ -1,6 +1,6 @@
 import { ApiKeyProvider, type ApiKeyRecord } from "@nestjs/authentication";
 import { Injectable } from "@nestjs/common";
-import { API_KEY_PREFIX } from "@/api-keys/providers/api-key-auth.js";
+import { API_KEY_PREFIX } from "@/api-keys/providers/api-key-auth";
 
 @Injectable()
 export class DemoApiKeyGenerator extends ApiKeyProvider<never> {

@@ -10,12 +10,12 @@ import {
   Put,
 } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { AddRouteCommand } from "./commands/impl/add-route.command.js";
-import { RemoveRouteCommand } from "./commands/impl/remove-route.command.js";
-import { ReorderRoutesCommand } from "./commands/impl/reorder-routes.command.js";
-import { UpdateRouteCommand } from "./commands/impl/update-route.command.js";
-import type { ModelDetail } from "./models/model.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { AddRouteCommand } from "./commands/impl/add-route.command";
+import { RemoveRouteCommand } from "./commands/impl/remove-route.command";
+import { ReorderRoutesCommand } from "./commands/impl/reorder-routes.command";
+import { UpdateRouteCommand } from "./commands/impl/update-route.command";
+import type { ModelDetail } from "./models/model";
 import {
   type NewRoute,
   newRouteSchema,
@@ -23,7 +23,7 @@ import {
   routeChangesSchema,
   type RouteOrder,
   routeOrderSchema,
-} from "./schemas/routing.schema.js";
+} from "./schemas/routing.schema";
 
 @DashboardController("models/:modelId")
 export class RoutesController {

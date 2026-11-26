@@ -1,4 +1,4 @@
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
 
 export function codexBackendRequestOf(
   { secret, identityHeaders }: ProviderAccountCredential,

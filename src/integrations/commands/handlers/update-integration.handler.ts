@@ -1,14 +1,14 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import { assertModelsExist } from "@/libs/models/allowed-models.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { integrations } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { IntegrationSummary } from "@/integrations/models/integration.js";
-import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
-import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries.js";
-import { UpdateIntegrationCommand } from "@/integrations/commands/impl/update-integration.command.js";
+import { assertModelsExist } from "@/libs/models/allowed-models";
+import type { Database } from "@/db/schemas/relations";
+import { integrations } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { IntegrationSummary } from "@/integrations/models/integration";
+import { integrationNotFound } from "@/integrations/models/integration-not-found";
+import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries";
+import { UpdateIntegrationCommand } from "@/integrations/commands/impl/update-integration.command";
 
 @CommandHandler(UpdateIntegrationCommand)
 export class UpdateIntegrationHandler implements ICommandHandler<UpdateIntegrationCommand> {

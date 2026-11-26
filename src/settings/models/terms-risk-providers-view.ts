@@ -1,6 +1,6 @@
-import type { SettingValue } from "@/settings/providers/settings-store.js";
-import type { TermsRiskProvidersSetting } from "./terms-risk-providers.js";
-import { SETTING_DEFINITIONS } from "./setting-definitions.js";
+import type { SettingValue } from "@/settings/providers/settings-store";
+import type { TermsRiskProvidersSetting } from "./terms-risk-providers";
+import { SETTING_DEFINITIONS } from "./setting-definitions";
 
 const { default: defaultAllowed } = SETTING_DEFINITIONS.allowTermsRiskProviders;
 

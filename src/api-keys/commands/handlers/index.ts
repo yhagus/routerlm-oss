@@ -1,7 +1,7 @@
-import { CreateApiKeyHandler } from "./create-api-key.handler.js";
-import { RevokeApiKeyHandler } from "./revoke-api-key.handler.js";
-import { RotateApiKeyHandler } from "./rotate-api-key.handler.js";
-import { UpdateApiKeyHandler } from "./update-api-key.handler.js";
+import { CreateApiKeyHandler } from "./create-api-key.handler";
+import { RevokeApiKeyHandler } from "./revoke-api-key.handler";
+import { RotateApiKeyHandler } from "./rotate-api-key.handler";
+import { UpdateApiKeyHandler } from "./update-api-key.handler";
 
 export const CommandHandlers = [
   CreateApiKeyHandler,

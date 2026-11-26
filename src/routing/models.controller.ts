@@ -10,19 +10,19 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { CreateModelCommand } from "./commands/impl/create-model.command.js";
-import { DeleteModelCommand } from "./commands/impl/delete-model.command.js";
-import { UpdateModelCommand } from "./commands/impl/update-model.command.js";
-import type { Model, ModelDetail, ModelSummary } from "./models/model.js";
-import { GetModelQuery } from "./queries/impl/get-model.query.js";
-import { ListModelsQuery } from "./queries/impl/list-models.query.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { CreateModelCommand } from "./commands/impl/create-model.command";
+import { DeleteModelCommand } from "./commands/impl/delete-model.command";
+import { UpdateModelCommand } from "./commands/impl/update-model.command";
+import type { Model, ModelDetail, ModelSummary } from "./models/model";
+import { GetModelQuery } from "./queries/impl/get-model.query";
+import { ListModelsQuery } from "./queries/impl/list-models.query";
 import {
   type ModelChanges,
   modelChangesSchema,
   type NewModel,
   newModelSchema,
-} from "./schemas/routing.schema.js";
+} from "./schemas/routing.schema";
 
 @DashboardController("models")
 export class ModelsController {

@@ -3,27 +3,22 @@ import { getDrizzleToken } from "@nestjs/drizzle";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { type Queue, QueueEvents } from "bullmq";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import {
-  type QuotaReaderName,
-  providerAccounts,
-  providers,
-  quotaMeters,
-} from "@/db/schemas/index.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { FakeUpstream } from "@tests/support/fake-upstream.js";
-import { USAGES_PATH, usagesReply } from "@tests/support/kimi-code-usages.js";
-import { remainsAtPercentReply } from "@tests/support/minimax-m-plan-remains.js";
-import { allowPrivateUpstreams } from "@tests/support/private-upstreams.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { type QuotaReaderName, providerAccounts, providers, quotaMeters } from "@/db/schemas";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { FakeUpstream } from "@tests/support/fake-upstream";
+import { USAGES_PATH, usagesReply } from "@tests/support/kimi-code-usages";
+import { remainsAtPercentReply } from "@tests/support/minimax-m-plan-remains";
+import { allowPrivateUpstreams } from "@tests/support/private-upstreams";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
 const fakeUpstream = await FakeUpstream.start();
-const { WorkerModule } = await import("@/worker.module.js");
-const { QUOTA_METERS_QUEUE } = await import("@/queue/models/queue-names.js");
-const { QUOTA_READING_SCHEDULER } = await import("@/quota-meters/jobs/quota-reading-schedule.js");
+const { WorkerModule } = await import("@/worker.module");
+const { QUOTA_METERS_QUEUE } = await import("@/queue/models/queue-names");
+const { QUOTA_READING_SCHEDULER } = await import("@/quota-meters/jobs/quota-reading-schedule");
 
 const MINUTE_MS = 60 * 1000;
 

@@ -1,4 +1,4 @@
-import type { ErrorOrigin } from "@/db/schemas/index.js";
+import type { ErrorOrigin } from "@/db/schemas";
 
 const HOUR_SECONDS = 3600;
 const DAY_SECONDS = 24 * HOUR_SECONDS;

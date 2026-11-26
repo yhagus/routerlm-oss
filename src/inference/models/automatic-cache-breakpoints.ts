@@ -1,4 +1,4 @@
-import type { InferenceMessage, InferenceRequest, UserContentPart } from "./internal-format.js";
+import type { InferenceMessage, InferenceRequest, UserContentPart } from "./internal-format";
 
 export const DEFAULT_CACHE_MARKER_LIMIT = 4;
 

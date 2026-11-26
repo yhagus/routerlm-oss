@@ -2,9 +2,9 @@ import { rm } from "node:fs/promises";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations.js";
+import { relations } from "@/db/schemas/relations";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
 
 const QUOTA_READER_MIGRATION_SUFFIX = "_give_openai_codex_its_quota_reader";
 const SEEDED_QUIRKS = { alwaysStreams: true };

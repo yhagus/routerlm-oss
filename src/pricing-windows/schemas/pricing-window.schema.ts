@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { IsoWeekday, PricingWindowRange } from "@/db/schemas/index.js";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
-import { parseWallClock } from "@/pricing-windows/models/wall-clock.js";
+import type { IsoWeekday, PricingWindowRange } from "@/db/schemas";
+import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
+import { parseWallClock } from "@/pricing-windows/models/wall-clock";
 
 const TIME_OF_DAY = /^([01]\d|2[0-3]):[0-5]\d$/;
 const END_OF_DAY = "24:00";

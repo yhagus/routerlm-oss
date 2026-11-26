@@ -1,7 +1,7 @@
 import { asc, eq, inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, quotaMeters } from "@/db/schemas/index.js";
-import type { UsageReset } from "./usage-reset.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, quotaMeters } from "@/db/schemas";
+import type { UsageReset } from "./usage-reset";
 
 export type QuotaMeterReading = Omit<
   typeof quotaMeters.$inferSelect,

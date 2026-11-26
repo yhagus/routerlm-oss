@@ -1,7 +1,7 @@
 import { isIPv4, isIPv6 } from "node:net";
 import { z } from "zod";
-import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy.js";
-import { bareHostname } from "@/libs/models/url.js";
+import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy";
+import { bareHostname } from "@/libs/models/url";
 
 interface Ipv4Range {
   firstOctet: number;

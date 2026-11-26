@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { OAUTH_REGIONS } from "@/db/schemas/index.js";
+import { OAUTH_REGIONS } from "@/db/schemas";
 
 export const newOauthSignInSchema = z.strictObject({
   providerId: z.uuid(),

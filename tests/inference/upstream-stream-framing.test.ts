@@ -1,18 +1,18 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations";
 import {
   anthropicMessagesFixture,
   FakeUpstream,
   openAiChatFixture,
-} from "@tests/support/fake-upstream.js";
+} from "@tests/support/fake-upstream";
 import {
   insertAnthropicMessagesModel,
   insertApiKey,
   insertOpenAiChatModel,
-} from "@tests/support/inference.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { createTestApp } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const CHAT_MODEL = "via-chat";
 const MESSAGES_MODEL = "via-messages";

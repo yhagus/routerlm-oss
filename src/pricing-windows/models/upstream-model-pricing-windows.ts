@@ -1,10 +1,10 @@
 import { eq, type SQL } from "drizzle-orm";
-import type { PricingWindowRange } from "@/db/schemas/index.js";
-import { pricingWindows, upstreamModelPricingWindows } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
-import { type WindowPricesStatus, windowPricesStatusAt } from "./pricing-window-activity.js";
-import { type ValidityPeriod, validityInstantsOf } from "./validity-period.js";
+import type { PricingWindowRange } from "@/db/schemas";
+import { pricingWindows, upstreamModelPricingWindows } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import type { UpstreamModelPrices } from "@/usage/models/usage-job";
+import { type WindowPricesStatus, windowPricesStatusAt } from "./pricing-window-activity";
+import { type ValidityPeriod, validityInstantsOf } from "./validity-period";
 
 export interface AttachedPricingWindow extends UpstreamModelPrices, ValidityPeriod {
   pricingWindowId: string;

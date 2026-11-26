@@ -2,20 +2,20 @@ import { readFileSync } from "node:fs";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { upstreamModels } from "@/db/schemas/index.js";
-import { type FakeReply, FakeUpstream } from "@tests/support/fake-upstream.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema";
+import type { Database } from "@/db/schemas/relations";
+import { upstreamModels } from "@/db/schemas";
+import { type FakeReply, FakeUpstream } from "@tests/support/fake-upstream";
 import {
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   setProviderQuirks,
   UPSTREAM_KEY,
-} from "@tests/support/inference.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };

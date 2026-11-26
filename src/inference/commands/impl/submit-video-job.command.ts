@@ -1,11 +1,7 @@
 import { Command } from "@nestjs/cqrs";
-import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type {
-  InferenceCaller,
-  InferenceTarget,
-  UsageListener,
-} from "@/inference/models/inference.js";
-import type { MediaReply } from "@/inference/models/media-kind.js";
+import type { ClientConnection } from "@/libs/models/client-connection";
+import type { InferenceCaller, InferenceTarget, UsageListener } from "@/inference/models/inference";
+import type { MediaReply } from "@/inference/models/media-kind";
 
 export class SubmitVideoJobCommand extends Command<MediaReply> {
   constructor(

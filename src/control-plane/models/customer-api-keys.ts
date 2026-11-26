@@ -1,11 +1,11 @@
 import { and, desc, eq, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { assertModelsExist } from "@/libs/models/allowed-models.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys } from "@/db/schemas/index.js";
-import type { IntegrationPrincipal } from "@/integrations/models/integration.js";
-import { apiKeyNotFound, ControlPlaneError } from "./control-plane-error.js";
-import type { CustomerApiKey } from "./customer-api-key.js";
+import { assertModelsExist } from "@/libs/models/allowed-models";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys } from "@/db/schemas";
+import type { IntegrationPrincipal } from "@/integrations/models/integration";
+import { apiKeyNotFound, ControlPlaneError } from "./control-plane-error";
+import type { CustomerApiKey } from "./customer-api-key";
 
 const customerApiKeyColumns = {
   id: apiKeys.id,

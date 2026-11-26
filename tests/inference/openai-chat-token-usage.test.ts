@@ -3,19 +3,19 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
+import type { Database } from "@/db/schemas/relations";
+import { usageLogs } from "@/db/schemas";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;

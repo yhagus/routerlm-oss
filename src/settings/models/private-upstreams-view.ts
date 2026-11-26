@@ -1,6 +1,6 @@
-import type { SettingValue } from "@/settings/providers/settings-store.js";
-import type { PrivateUpstreamsSetting } from "./private-upstreams.js";
-import { SETTING_DEFINITIONS } from "./setting-definitions.js";
+import type { SettingValue } from "@/settings/providers/settings-store";
+import type { PrivateUpstreamsSetting } from "./private-upstreams";
+import { SETTING_DEFINITIONS } from "./setting-definitions";
 
 const { default: defaultAllowed } = SETTING_DEFINITIONS.allowPrivateUpstreams;
 

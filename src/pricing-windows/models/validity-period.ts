@@ -1,4 +1,4 @@
-import { instantOfWallClock } from "./wall-clock.js";
+import { instantOfWallClock } from "./wall-clock";
 
 export interface ValidityPeriod {
   validFrom: string | null;

@@ -1,11 +1,11 @@
 import { ConflictException } from "@nestjs/common";
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key.js";
-import { findUnrevokedApiKey } from "@/api-keys/models/find-unrevoked-api-key.js";
-import { RevealApiKeyQuery } from "@/api-keys/queries/impl/reveal-api-key.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key";
+import { findUnrevokedApiKey } from "@/api-keys/models/find-unrevoked-api-key";
+import { RevealApiKeyQuery } from "@/api-keys/queries/impl/reveal-api-key.query";
 
 @QueryHandler(RevealApiKeyQuery)
 export class RevealApiKeyHandler implements IQueryHandler<RevealApiKeyQuery> {

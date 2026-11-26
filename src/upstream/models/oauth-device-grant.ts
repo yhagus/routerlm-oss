@@ -1,6 +1,6 @@
-import type { OauthRegion, ProviderOauthLogin } from "@/db/schemas/index.js";
-import type { CliIdentity } from "./cli-identity.js";
-import type { OauthTokens } from "./provider-account.js";
+import type { OauthRegion, ProviderOauthLogin } from "@/db/schemas";
+import type { CliIdentity } from "./cli-identity";
+import type { OauthTokens } from "./provider-account";
 
 export type OauthLoginEndpoint =
   | { flow: "kimi-code"; authHost: string; clientId: string; identity: CliIdentity }

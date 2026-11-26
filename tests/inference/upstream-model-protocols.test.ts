@@ -1,18 +1,18 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providers, type UpstreamProtocol, upstreamModels } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations";
+import { providers, type UpstreamProtocol, upstreamModels } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   anthropicMessagesFixture,
   type FakeReply,
   FakeUpstream,
   openAiChatFixture,
-} from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const ANTHROPIC_PATH_PREFIX = "/anthropic";

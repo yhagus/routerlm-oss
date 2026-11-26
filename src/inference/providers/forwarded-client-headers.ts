@@ -1,5 +1,5 @@
 import type { IncomingHttpHeaders } from "node:http";
-import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
+import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema";
 
 export function forwardedClientHeadersOf(
   quirks: CatalogProviderQuirks,

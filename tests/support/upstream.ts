@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { models, routes } from "@/db/schemas/index.js";
-import { truncateTables } from "./truncate.js";
+import type { Database } from "@/db/schemas/relations";
+import { models, routes } from "@/db/schemas";
+import { truncateTables } from "./truncate";
 
 export async function deleteAllUpstreamData(db: Database): Promise<void> {
   await truncateTables(db, sql.raw("users, models, routes, providers, usage_logs"));

@@ -3,19 +3,19 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertDashScopeSpeechModel } from "@tests/support/inference.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
-import { writtenUsageLog } from "@tests/support/usage-logs.js";
+import type { Database } from "@/db/schemas/relations";
+import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream";
+import { insertApiKey, insertDashScopeSpeechModel } from "@tests/support/inference";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
+import { writtenUsageLog } from "@tests/support/usage-logs";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";
 

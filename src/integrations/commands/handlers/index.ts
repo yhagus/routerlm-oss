@@ -1,9 +1,9 @@
-import { CreateIntegrationHandler } from "./create-integration.handler.js";
-import { DeleteIntegrationHandler } from "./delete-integration.handler.js";
-import { DisableIntegrationHandler } from "./disable-integration.handler.js";
-import { EnableIntegrationHandler } from "./enable-integration.handler.js";
-import { RotateIntegrationSecretHandler } from "./rotate-integration-secret.handler.js";
-import { UpdateIntegrationHandler } from "./update-integration.handler.js";
+import { CreateIntegrationHandler } from "./create-integration.handler";
+import { DeleteIntegrationHandler } from "./delete-integration.handler";
+import { DisableIntegrationHandler } from "./disable-integration.handler";
+import { EnableIntegrationHandler } from "./enable-integration.handler";
+import { RotateIntegrationSecretHandler } from "./rotate-integration-secret.handler";
+import { UpdateIntegrationHandler } from "./update-integration.handler";
 
 export const CommandHandlers = [
   CreateIntegrationHandler,

@@ -1,11 +1,11 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys, integrations } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
-import { DeleteIntegrationCommand } from "@/integrations/commands/impl/delete-integration.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys, integrations } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { integrationNotFound } from "@/integrations/models/integration-not-found";
+import { DeleteIntegrationCommand } from "@/integrations/commands/impl/delete-integration.command";
 
 @CommandHandler(DeleteIntegrationCommand)
 export class DeleteIntegrationHandler implements ICommandHandler<DeleteIntegrationCommand> {

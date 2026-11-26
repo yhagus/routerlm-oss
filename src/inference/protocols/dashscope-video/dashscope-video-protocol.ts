@@ -3,15 +3,15 @@ import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind.js";
+} from "@/inference/models/media-kind";
 import type {
   SubmittedVideoJob,
   VideoGenerationRequest,
   VideoTaskState,
   VideoUpstreamProtocol,
-} from "@/inference/models/video-generation.js";
-import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/models/video-generation";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
 
 const SYNTHESIS_PATH = "/services/aigc/video-generation/video-synthesis";
 const TASKS_PATH = "/tasks";

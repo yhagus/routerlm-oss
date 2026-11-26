@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers, upstreamModels } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers, upstreamModels } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
 import {
   addProviderAccount,
   insertApiKey,
@@ -14,9 +14,9 @@ import {
   setProviderQuirks,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 vi.hoisted(() => {
   process.env.PROBE_TIMEOUT_MS = "500";

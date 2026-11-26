@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { GatewayError } from "@/inference/models/gateway-error.js";
-import { serviceTierOfOpenAiClient } from "@/inference/models/service-tier.js";
+import { GatewayError } from "@/inference/models/gateway-error";
+import { serviceTierOfOpenAiClient } from "@/inference/models/service-tier";
 import {
   type AssistantContentPart,
   type InferenceMessage,
@@ -17,13 +17,13 @@ import {
   type ToolChoice,
   UNREPORTED_USAGE,
   type UserContentPart,
-} from "@/inference/models/internal-format.js";
+} from "@/inference/models/internal-format";
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "@/inference/protocols/client-protocol-converter.js";
-import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter.js";
+} from "@/inference/protocols/client-protocol-converter";
+import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter";
 
 const inputTextSchema = z.object({ type: z.literal("input_text"), text: z.string() });
 const inputImageSchema = z.object({

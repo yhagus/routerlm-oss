@@ -3,15 +3,15 @@ import { Controller, UseFilters } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { GrpcMethod, Payload } from "@nestjs/microservices";
 import { z } from "zod";
-import type { IntegrationPrincipal } from "@/integrations/models/integration.js";
-import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth.js";
-import { CreateCustomerApiKeyCommand } from "./commands/impl/create-customer-api-key.command.js";
-import { RevokeCustomerApiKeyCommand } from "./commands/impl/revoke-customer-api-key.command.js";
-import { RotateCustomerApiKeyCommand } from "./commands/impl/rotate-customer-api-key.command.js";
-import { UpdateCustomerApiKeyCommand } from "./commands/impl/update-customer-api-key.command.js";
-import { ControlPlaneGrpcExceptionFilter } from "./filters/control-plane-grpc-exception.filter.js";
-import { ControlPlaneError } from "./models/control-plane-error.js";
-import { CONTROL_PLANE_SERVICE } from "./models/control-plane-grpc.js";
+import type { IntegrationPrincipal } from "@/integrations/models/integration";
+import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth";
+import { CreateCustomerApiKeyCommand } from "./commands/impl/create-customer-api-key.command";
+import { RevokeCustomerApiKeyCommand } from "./commands/impl/revoke-customer-api-key.command";
+import { RotateCustomerApiKeyCommand } from "./commands/impl/rotate-customer-api-key.command";
+import { UpdateCustomerApiKeyCommand } from "./commands/impl/update-customer-api-key.command";
+import { ControlPlaneGrpcExceptionFilter } from "./filters/control-plane-grpc-exception.filter";
+import { ControlPlaneError } from "./models/control-plane-error";
+import { CONTROL_PLANE_SERVICE } from "./models/control-plane-grpc";
 import {
   type ApiKeyMessage,
   apiKeyMessageOf,
@@ -30,17 +30,17 @@ import {
   listUsageLogsResponseMessageOf,
   newKeyJsonOf,
   type UpdateKeyRequest,
-} from "./models/proto-grpc.js";
-import { GetCustomerApiKeyQuery } from "./queries/impl/get-customer-api-key.query.js";
-import { ListCustomerApiKeysQuery } from "./queries/impl/list-customer-api-keys.query.js";
-import { ListIntegrationModelsQuery } from "./queries/impl/list-integration-models.query.js";
-import { ListIntegrationUsageLogsQuery } from "./queries/impl/list-integration-usage-logs.query.js";
+} from "./models/proto-grpc";
+import { GetCustomerApiKeyQuery } from "./queries/impl/get-customer-api-key.query";
+import { ListCustomerApiKeysQuery } from "./queries/impl/list-customer-api-keys.query";
+import { ListIntegrationModelsQuery } from "./queries/impl/list-integration-models.query";
+import { ListIntegrationUsageLogsQuery } from "./queries/impl/list-integration-usage-logs.query";
 import {
   customerApiKeyChangesSchema,
   customerApiKeyPageQuerySchema,
   newCustomerApiKeySchema,
-} from "./schemas/customer-api-key.schema.js";
-import { usageLogPageQuerySchema } from "./schemas/usage-log.schema.js";
+} from "./schemas/customer-api-key.schema";
+import { usageLogPageQuerySchema } from "./schemas/usage-log.schema";
 
 function parsedRequest<Schema extends z.ZodType>(
   schema: Schema,

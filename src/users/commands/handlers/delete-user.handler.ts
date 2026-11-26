@@ -2,10 +2,10 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { count, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { users } from "@/db/schemas/index.js";
-import { lockUsers } from "@/users/models/lock-users.js";
-import { DeleteUserCommand } from "@/users/commands/impl/delete-user.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { users } from "@/db/schemas";
+import { lockUsers } from "@/users/models/lock-users";
+import { DeleteUserCommand } from "@/users/commands/impl/delete-user.command";
 
 @CommandHandler(DeleteUserCommand)
 export class DeleteUserHandler implements ICommandHandler<DeleteUserCommand> {

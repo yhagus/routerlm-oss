@@ -1,17 +1,13 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { providers } from "@/db/schemas/index.js";
-import {
-  type FakeReply,
-  FakeUpstream,
-  type ReceivedRequest,
-} from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { ALL_LIMITS, USAGES_PATH, usagesReply } from "@tests/support/kimi-code-usages.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import type { CatalogProvider } from "@/catalog/schemas/catalog.schema";
+import type { Database } from "@/db/schemas/relations";
+import { providers } from "@/db/schemas";
+import { type FakeReply, FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { ALL_LIMITS, USAGES_PATH, usagesReply } from "@tests/support/kimi-code-usages";
 import {
   ACCESS_TOKEN,
   addOauthLoginAccount,
@@ -19,9 +15,9 @@ import {
   refreshedTokensReply,
   REFRESH_TOKEN,
   TOKEN_PATH,
-} from "@tests/support/kimi-oauth.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/kimi-oauth";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

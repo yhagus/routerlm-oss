@@ -2,11 +2,11 @@ import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { CommandBus } from "@nestjs/cqrs";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import { DEMO_USER } from "@/demo/data/demo-fixtures.js";
-import { DemoModule } from "@/demo/demo.module.js";
-import { SeedDemoCommand } from "@/demo/commands/impl/seed-demo.command.js";
-import { assertDemoDatabase } from "@/demo/models/demo-database.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import { DEMO_USER } from "@/demo/data/demo-fixtures";
+import { DemoModule } from "@/demo/demo.module";
+import { SeedDemoCommand } from "@/demo/commands/impl/seed-demo.command";
+import { assertDemoDatabase } from "@/demo/models/demo-database";
 
 assertDemoDatabase(process.env.DATABASE_URL);
 

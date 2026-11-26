@@ -1,12 +1,12 @@
 import { type DynamicModule, Module } from "@nestjs/common";
-import { ApiKeysModule } from "@/api-keys/api-keys.module.js";
-import { IntegrationsModule } from "@/integrations/integrations.module.js";
-import { SnapshotModule } from "@/snapshot/snapshot.module.js";
-import { SpendLimitsModule } from "@/spend-limits/spend-limits.module.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { ControlPlaneGrpcController } from "./control-plane-grpc.controller.js";
-import { ControlPlaneController } from "./control-plane.controller.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
+import { ApiKeysModule } from "@/api-keys/api-keys.module";
+import { IntegrationsModule } from "@/integrations/integrations.module";
+import { SnapshotModule } from "@/snapshot/snapshot.module";
+import { SpendLimitsModule } from "@/spend-limits/spend-limits.module";
+import { CommandHandlers } from "./commands/handlers";
+import { ControlPlaneGrpcController } from "./control-plane-grpc.controller";
+import { ControlPlaneController } from "./control-plane.controller";
+import { QueryHandlers } from "./queries/handlers";
 
 @Module({
   imports: [ApiKeysModule, IntegrationsModule, SnapshotModule, SpendLimitsModule],

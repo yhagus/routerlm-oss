@@ -2,20 +2,20 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { pricingWindows, upstreamModelPricingWindows, upstreamModels } from "@/db/schemas/index.js";
-import { ReplaceUpstreamModelPricingWindowsCommand } from "@/pricing-windows/commands/impl/replace-upstream-model-pricing-windows.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { pricingWindows, upstreamModelPricingWindows, upstreamModels } from "@/db/schemas";
+import { ReplaceUpstreamModelPricingWindowsCommand } from "@/pricing-windows/commands/impl/replace-upstream-model-pricing-windows.command";
 import {
   type AttachedPricingWindow,
   readPricingWindowsOf,
-} from "@/pricing-windows/models/upstream-model-pricing-windows.js";
-import { describeValidityPeriod } from "@/pricing-windows/models/validity-period.js";
+} from "@/pricing-windows/models/upstream-model-pricing-windows";
+import { describeValidityPeriod } from "@/pricing-windows/models/validity-period";
 import {
   findOverlappingWindowPrices,
   type WindowPricesTiming,
-} from "@/pricing-windows/models/window-prices-overlap.js";
-import type { WindowPricesEntry } from "@/pricing-windows/schemas/pricing-window.schema.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+} from "@/pricing-windows/models/window-prices-overlap";
+import type { WindowPricesEntry } from "@/pricing-windows/schemas/pricing-window.schema";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 
 type NamedWindowHours = Pick<WindowPricesTiming, "timeZone" | "ranges"> & { name: string };
 type NamedWindowPricesTiming = WindowPricesTiming & { name: string };

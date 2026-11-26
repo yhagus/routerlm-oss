@@ -3,9 +3,9 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { users } from "@/db/schemas/index.js";
-import { ResetPasswordCommand } from "@/users/commands/impl/reset-password.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { users } from "@/db/schemas";
+import { ResetPasswordCommand } from "@/users/commands/impl/reset-password.command";
 
 @CommandHandler(ResetPasswordCommand)
 export class ResetPasswordHandler implements ICommandHandler<ResetPasswordCommand> {

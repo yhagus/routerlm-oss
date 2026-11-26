@@ -1,7 +1,7 @@
 import { boolean, index, integer, jsonb, pgTable, text, uuid } from "drizzle-orm/pg-core";
-import { createdAt, id, updatedAt } from "./columns.js";
-import type { ReasoningEffort, ServiceTier } from "@/inference/models/internal-format.js";
-import { MODEL_KINDS, upstreamModels } from "./upstream.js";
+import { createdAt, id, updatedAt } from "./columns";
+import type { ReasoningEffort, ServiceTier } from "@/inference/models/internal-format";
+import { MODEL_KINDS, upstreamModels } from "./upstream";
 
 export type ParameterValues = {
   temperature?: number;

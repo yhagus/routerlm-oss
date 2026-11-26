@@ -3,11 +3,11 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import { type Database, relations } from "@/db/schemas/relations.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import { type Database, relations } from "@/db/schemas/relations";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
 
 const CORRECTION_MIGRATION_SUFFIX = "_correct_kimi_code_base_url_and_context_sizes";
 const OAUTH_LOGIN_OFFER_MIGRATION_SUFFIX = "_offer_kimi_code_oauth_login";

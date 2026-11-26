@@ -1,8 +1,8 @@
-import { doWindowPricesApplyAt } from "@/pricing-windows/models/pricing-window-activity.js";
-import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices.js";
-import { type SnapshotUpstreamModel, standardPricesOf } from "@/snapshot/models/snapshot.js";
-import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
-import type { ServiceTier } from "./internal-format.js";
+import { doWindowPricesApplyAt } from "@/pricing-windows/models/pricing-window-activity";
+import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices";
+import { type SnapshotUpstreamModel, standardPricesOf } from "@/snapshot/models/snapshot";
+import type { UpstreamModelPrices } from "@/usage/models/usage-job";
+import type { ServiceTier } from "./internal-format";
 
 export interface RequestPrices {
   prices: UpstreamModelPrices;

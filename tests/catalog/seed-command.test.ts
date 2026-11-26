@@ -5,16 +5,16 @@ import { asc, count, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command.js";
+import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command";
 import type {
   CatalogPricingWindow,
   CatalogProvider,
   CatalogUpstreamModel,
-} from "@/catalog/schemas/catalog.schema.js";
-import { type Database, relations } from "@/db/schemas/relations.js";
-import * as schema from "@/db/schemas/index.js";
-import type { PricingWindowRange } from "@/db/schemas/index.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
+} from "@/catalog/schemas/catalog.schema";
+import { type Database, relations } from "@/db/schemas/relations";
+import * as schema from "@/db/schemas";
+import type { PricingWindowRange } from "@/db/schemas";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
 
 const source = { urls: ["https://example.com/pricing"], retrievedOn: "2026-11-15" };
 
@@ -161,7 +161,7 @@ describe("Seed Catalog command (e2e)", () => {
     await migrate(db, { migrationsFolder: "./drizzle" });
 
     process.env.DATABASE_URL = databaseUrl;
-    const { CatalogSeedModule } = await import("@/catalog/catalog-seed.module.js");
+    const { CatalogSeedModule } = await import("@/catalog/catalog-seed.module");
     moduleRef = await Test.createTestingModule({ imports: [CatalogSeedModule] }).compile();
     await moduleRef.init();
     commandBus = moduleRef.get(CommandBus);

@@ -1,20 +1,20 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
 import {
   asQuotaReadError,
   type QuotaReaderProvider,
   QuotaReadError,
-} from "@/quota-meters/models/quota-reader.js";
+} from "@/quota-meters/models/quota-reader";
 import type {
   UsageResetOutcome,
   UsageResetPort,
   UsageResetReading,
   UsageResetToSpend,
-} from "@/quota-meters/models/usage-reset.js";
-import { codexBackendRequestOf } from "./openai-codex-backend.js";
-import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
+} from "@/quota-meters/models/usage-reset";
+import { codexBackendRequestOf } from "./openai-codex-backend";
+import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client";
 
 const RESET_CREDITS_PATH = "/backend-api/wham/rate-limit-reset-credits";
 const CONSUME_PATH = `${RESET_CREDITS_PATH}/consume`;

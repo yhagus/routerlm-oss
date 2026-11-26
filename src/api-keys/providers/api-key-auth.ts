@@ -1,7 +1,7 @@
 import { ApiKeyProvider, type ApiKeyRecord, AuthenticationRegistry } from "@nestjs/authentication";
 import { Injectable } from "@nestjs/common";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { ApiKeyPrincipal } from "@/api-keys/models/api-key";
 
 export const API_KEY_PREFIX = "rlm";
 

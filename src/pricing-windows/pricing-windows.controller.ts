@@ -10,18 +10,18 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { CreatePricingWindowCommand } from "./commands/impl/create-pricing-window.command.js";
-import { DeletePricingWindowCommand } from "./commands/impl/delete-pricing-window.command.js";
-import { UpdatePricingWindowCommand } from "./commands/impl/update-pricing-window.command.js";
-import type { PricingWindow, PricingWindowSummary } from "./models/pricing-window.js";
-import { ListPricingWindowsQuery } from "./queries/impl/list-pricing-windows.query.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { CreatePricingWindowCommand } from "./commands/impl/create-pricing-window.command";
+import { DeletePricingWindowCommand } from "./commands/impl/delete-pricing-window.command";
+import { UpdatePricingWindowCommand } from "./commands/impl/update-pricing-window.command";
+import type { PricingWindow, PricingWindowSummary } from "./models/pricing-window";
+import { ListPricingWindowsQuery } from "./queries/impl/list-pricing-windows.query";
 import {
   type NewPricingWindow,
   newPricingWindowSchema,
   type PricingWindowChanges,
   pricingWindowChangesSchema,
-} from "./schemas/pricing-window.schema.js";
+} from "./schemas/pricing-window.schema";
 
 @DashboardController("pricing-windows")
 export class PricingWindowsController {

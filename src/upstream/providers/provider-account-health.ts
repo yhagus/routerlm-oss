@@ -1,9 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 
 const LAST_ERROR_MAX_LENGTH = 500;
 

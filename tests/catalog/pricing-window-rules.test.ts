@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
 
 interface CatalogFile {
   slug: string;

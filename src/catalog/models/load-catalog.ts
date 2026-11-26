@@ -10,12 +10,12 @@ import {
   serviceTierValuesForeignToEndpoints,
   serviceTiersWithoutWireValue,
   tierPricesWithoutListedTier,
-} from "@/catalog/schemas/catalog.schema.js";
+} from "@/catalog/schemas/catalog.schema";
 import {
   describeProtocols,
   kindOf,
   protocolsWithoutEndpoint,
-} from "@/libs/models/provider-protocols.js";
+} from "@/libs/models/provider-protocols";
 
 export const CATALOG_DIRECTORY = fileURLToPath(new URL("../data", import.meta.url));
 

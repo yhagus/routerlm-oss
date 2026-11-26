@@ -1,14 +1,14 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import pg from "pg";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { models } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations";
+import { models } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   FakeUpstream,
   openAiChatFixture,
   UPSTREAM_ONLY_HEADER,
-} from "@tests/support/fake-upstream.js";
+} from "@tests/support/fake-upstream";
 import {
   fixtureAsServed,
   insertApiKey,
@@ -16,10 +16,10 @@ import {
   setProviderQuirks,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference.js";
-import { portOf } from "@tests/support/port-of.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { portOf } from "@tests/support/port-of";
+import { createTestApp } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const EVERY_FEATURE_REQUEST = {
   model: "smart",

@@ -1,10 +1,10 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { allowPrivateUpstreams } from "@tests/support/private-upstreams.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import type { Database } from "@/db/schemas/relations";
+import { allowPrivateUpstreams } from "@tests/support/private-upstreams";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 

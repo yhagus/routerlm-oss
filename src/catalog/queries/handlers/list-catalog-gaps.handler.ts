@@ -1,12 +1,12 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, inArray } from "drizzle-orm";
-import { providers, upstreamModels } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import type { CatalogGap, CatalogGapReport } from "@/catalog/models/catalog-gap.js";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import { ModelsDevReader } from "@/catalog/providers/models-dev-reader.js";
-import { ListCatalogGapsQuery } from "@/catalog/queries/impl/list-catalog-gaps.query.js";
+import { providers, upstreamModels } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import type { CatalogGap, CatalogGapReport } from "@/catalog/models/catalog-gap";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import { ModelsDevReader } from "@/catalog/providers/models-dev-reader";
+import { ListCatalogGapsQuery } from "@/catalog/queries/impl/list-catalog-gaps.query";
 
 const NEWEST_MODELS_CHECKED = 5;
 

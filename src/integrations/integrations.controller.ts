@@ -12,37 +12,37 @@ import {
   Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import type { ListModelsResponseJson } from "@/control-plane/models/proto-json.js";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import type { User } from "@/users/models/user.js";
-import { CreateIntegrationCommand } from "./commands/impl/create-integration.command.js";
-import { DeleteIntegrationCommand } from "./commands/impl/delete-integration.command.js";
-import { DisableIntegrationCommand } from "./commands/impl/disable-integration.command.js";
-import { EnableIntegrationCommand } from "./commands/impl/enable-integration.command.js";
-import { RotateIntegrationSecretCommand } from "./commands/impl/rotate-integration-secret.command.js";
-import { UpdateIntegrationCommand } from "./commands/impl/update-integration.command.js";
+import type { ListModelsResponseJson } from "@/control-plane/models/proto-json";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import type { User } from "@/users/models/user";
+import { CreateIntegrationCommand } from "./commands/impl/create-integration.command";
+import { DeleteIntegrationCommand } from "./commands/impl/delete-integration.command";
+import { DisableIntegrationCommand } from "./commands/impl/disable-integration.command";
+import { EnableIntegrationCommand } from "./commands/impl/enable-integration.command";
+import { RotateIntegrationSecretCommand } from "./commands/impl/rotate-integration-secret.command";
+import { UpdateIntegrationCommand } from "./commands/impl/update-integration.command";
 import type {
   CreatedIntegration,
   IntegrationCustomerPage,
   IntegrationDetail,
   IntegrationRotation,
   IntegrationSummary,
-} from "./models/integration.js";
-import { GetIntegrationQuery } from "./queries/impl/get-integration.query.js";
-import { ListIntegrationCustomersQuery } from "./queries/impl/list-integration-customers.query.js";
-import { ListIntegrationOfferedModelsQuery } from "./queries/impl/list-integration-offered-models.query.js";
-import { ListIntegrationRotationsQuery } from "./queries/impl/list-integration-rotations.query.js";
-import { ListIntegrationsQuery } from "./queries/impl/list-integrations.query.js";
+} from "./models/integration";
+import { GetIntegrationQuery } from "./queries/impl/get-integration.query";
+import { ListIntegrationCustomersQuery } from "./queries/impl/list-integration-customers.query";
+import { ListIntegrationOfferedModelsQuery } from "./queries/impl/list-integration-offered-models.query";
+import { ListIntegrationRotationsQuery } from "./queries/impl/list-integration-rotations.query";
+import { ListIntegrationsQuery } from "./queries/impl/list-integrations.query";
 import {
   type IntegrationCustomersQuery,
   integrationCustomersQuerySchema,
-} from "./schemas/integration-customers-query.schema.js";
+} from "./schemas/integration-customers-query.schema";
 import {
   type IntegrationChanges,
   integrationChangesSchema,
   type NewIntegration,
   newIntegrationSchema,
-} from "./schemas/integration.schema.js";
+} from "./schemas/integration.schema";
 
 @DashboardController("integrations")
 export class IntegrationsController {

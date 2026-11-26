@@ -2,10 +2,10 @@ import { NotFoundException } from "@nestjs/common";
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { desc, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeyRotations, apiKeys, users } from "@/db/schemas/index.js";
-import type { ApiKeyRotation } from "@/api-keys/models/api-key.js";
-import { ListApiKeyRotationsQuery } from "@/api-keys/queries/impl/list-api-key-rotations.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeyRotations, apiKeys, users } from "@/db/schemas";
+import type { ApiKeyRotation } from "@/api-keys/models/api-key";
+import { ListApiKeyRotationsQuery } from "@/api-keys/queries/impl/list-api-key-rotations.query";
 
 @QueryHandler(ListApiKeyRotationsQuery)
 export class ListApiKeyRotationsHandler implements IQueryHandler<ListApiKeyRotationsQuery> {

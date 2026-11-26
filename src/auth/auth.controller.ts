@@ -11,12 +11,12 @@ import {
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { ThrottlerGuard } from "@nestjs/throttler";
 import { z } from "zod";
-import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command.js";
-import type { User } from "@/users/models/user.js";
-import { FindUserByCredentialsQuery } from "@/users/queries/impl/find-user-by-credentials.query.js";
-import { IsSetupRequiredQuery } from "@/users/queries/impl/is-setup-required.query.js";
-import { type NewUser, newUserSchema } from "@/users/schemas/new-user.schema.js";
-import { DashboardController } from "./decorators/dashboard-controller.decorator.js";
+import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command";
+import type { User } from "@/users/models/user";
+import { FindUserByCredentialsQuery } from "@/users/queries/impl/find-user-by-credentials.query";
+import { IsSetupRequiredQuery } from "@/users/queries/impl/is-setup-required.query";
+import { type NewUser, newUserSchema } from "@/users/schemas/new-user.schema";
+import { DashboardController } from "./decorators/dashboard-controller.decorator";
 
 const MAX_EMAIL_LENGTH = 254;
 const MAX_PASSWORD_LENGTH = 1_024;

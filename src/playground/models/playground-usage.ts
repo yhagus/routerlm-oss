@@ -1,6 +1,6 @@
-import type { Snapshot } from "@/snapshot/models/snapshot.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
-import { type PlaygroundSummary, playgroundSummaryOf } from "./playground-summary.js";
+import type { Snapshot } from "@/snapshot/models/snapshot";
+import type { UsageJob } from "@/usage/models/usage-job";
+import { type PlaygroundSummary, playgroundSummaryOf } from "./playground-summary";
 
 export class PlaygroundUsage {
   private reportedJob: UsageJob | undefined;

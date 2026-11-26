@@ -4,24 +4,24 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { asc } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { attempts, errorCaptures, usageLogs } from "@/db/schemas/index.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { attempts, errorCaptures, usageLogs } from "@/db/schemas";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
 import {
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   UPSTREAM_KEY,
-} from "@tests/support/inference.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
+} from "@tests/support/inference";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const PROMPT_TEXT = "Which umbrella should I pack for Lisbon?";
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: PROMPT_TEXT }] };

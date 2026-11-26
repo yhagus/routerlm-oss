@@ -1,13 +1,13 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { ControlPlaneErrorCode } from "@/control-plane/models/control-plane-error.js";
+import type { ControlPlaneErrorCode } from "@/control-plane/models/control-plane-error";
 import type {
   ApiKeyJson,
   IssuedKeyJson,
   ListKeysResponseJson,
   ListModelsResponseJson,
   ListUsageLogsResponseJson,
-} from "@/control-plane/models/proto-json.js";
+} from "@/control-plane/models/proto-json";
 
 export type ControlPlaneOutcome<T> =
   | { ok: true; body: T }

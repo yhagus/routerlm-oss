@@ -1,8 +1,8 @@
 import { Get } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import type { ServerTimeZone } from "./models/server-time-zone.js";
-import { ShowTimeZoneQuery } from "./queries/impl/show-time-zone.query.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import type { ServerTimeZone } from "./models/server-time-zone";
+import { ShowTimeZoneQuery } from "./queries/impl/show-time-zone.query";
 
 @DashboardController("time-zone")
 export class TimeZoneController {

@@ -4,11 +4,11 @@ import type {
   FetchedMedia,
   MediaExchange,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind.js";
-import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol.js";
-import { dashScopeSpeechProtocol } from "@/inference/protocols/dashscope-speech/dashscope-speech-protocol.js";
-import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol.js";
-import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/dashscope-video-protocol.js";
+} from "@/inference/models/media-kind";
+import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol";
+import { dashScopeSpeechProtocol } from "@/inference/protocols/dashscope-speech/dashscope-speech-protocol";
+import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol";
+import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/dashscope-video-protocol";
 
 const apiKey = process.env.DASHSCOPE_API_KEY;
 if (!apiKey) {

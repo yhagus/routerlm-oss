@@ -1,17 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
-import { withoutTrailingSlash } from "@/libs/models/url.js";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
-import type { QuotaMeterReading } from "@/quota-meters/models/quota-meter.js";
+import { withoutTrailingSlash } from "@/libs/models/url";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
+import type { QuotaMeterReading } from "@/quota-meters/models/quota-meter";
 import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
   type QuotaReading,
   QuotaReadError,
-} from "@/quota-meters/models/quota-reader.js";
-import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
+} from "@/quota-meters/models/quota-reader";
+import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client";
 
 const USAGES_PATH = "usages";
 

@@ -1,11 +1,11 @@
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
 import {
   codeBlocksOf,
   type DocsPage,
   DOCS_ID_DIRECTORY,
   proseOf,
   readDocsPages,
-} from "@tests/support/docs-examples.js";
+} from "@tests/support/docs-examples";
 
 const englishPages = readDocsPages();
 const indonesianPages = readDocsPages(DOCS_ID_DIRECTORY);

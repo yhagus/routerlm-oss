@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { type LockAcquireResult, type LockStore, LocksStorage } from "@nestjs/locks";
 import type { Redis } from "ioredis";
-import { RedisConnection } from "./redis-connection.js";
+import { RedisConnection } from "./redis-connection";
 
 const LOCK_KEY_PREFIX = "routerlm:lock:";
 const FENCING_COUNTER_KEY = "routerlm:lock-fencing-token";

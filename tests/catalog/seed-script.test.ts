@@ -4,9 +4,9 @@ import { and, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { type Database, relations } from "@/db/schemas/relations.js";
-import { providers, upstreamModels } from "@/db/schemas/index.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
+import { type Database, relations } from "@/db/schemas/relations";
+import { providers, upstreamModels } from "@/db/schemas";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
 
 const runFile = promisify(execFile);
 const SEED_TIMEOUT_MS = 30_000;

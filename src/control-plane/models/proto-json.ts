@@ -1,10 +1,6 @@
-import type {
-  CustomerApiKey,
-  CustomerApiKeyPage,
-  IssuedCustomerApiKey,
-} from "./customer-api-key.js";
-import type { IntegrationModel, IntegrationPricingWindow } from "./integration-model.js";
-import type { IntegrationUsageLog, IntegrationUsageLogPage } from "./integration-usage-log.js";
+import type { CustomerApiKey, CustomerApiKeyPage, IssuedCustomerApiKey } from "./customer-api-key";
+import type { IntegrationModel, IntegrationPricingWindow } from "./integration-model";
+import type { IntegrationUsageLog, IntegrationUsageLogPage } from "./integration-usage-log";
 
 export interface ApiKeyJson {
   id: string;

@@ -2,9 +2,9 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { providers } from "@/db/schemas/index.js";
-import { type Database, relations } from "@/db/schemas/relations.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
+import { providers } from "@/db/schemas";
+import { type Database, relations } from "@/db/schemas/relations";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
 
 const runFile = promisify(execFile);
 const MIGRATE_TIMEOUT_MS = 60_000;

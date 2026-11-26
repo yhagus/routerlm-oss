@@ -1,15 +1,11 @@
 import { Command } from "@nestjs/cqrs";
-import type { ClientConnection } from "@/libs/models/client-connection.js";
+import type { ClientConnection } from "@/libs/models/client-connection";
 import type {
   InferenceCaller,
   RunInferenceTarget,
   UsageListener,
-} from "@/inference/models/inference.js";
-import type {
-  MediaClientContract,
-  MediaReply,
-  MediaRequest,
-} from "@/inference/models/media-kind.js";
+} from "@/inference/models/inference";
+import type { MediaClientContract, MediaReply, MediaRequest } from "@/inference/models/media-kind";
 
 export class RunMediaInferenceCommand<
   Request extends MediaRequest = MediaRequest,

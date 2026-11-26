@@ -3,16 +3,16 @@ import type {
   GeneratedImages,
   ImageGenerationRequest,
   ImageSize,
-} from "@/inference/models/image-generation.js";
-import { providerSizeOf, sizeTierOf } from "@/inference/models/image-generation.js";
+} from "@/inference/models/image-generation";
+import { providerSizeOf, sizeTierOf } from "@/inference/models/image-generation";
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind.js";
-import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/models/media-kind";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
 
 const GENERATION_PATH = "/services/aigc/multimodal-generation/generation";
 

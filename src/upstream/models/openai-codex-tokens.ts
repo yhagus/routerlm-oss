@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SECOND_MS } from "@/libs/models/duration.js";
+import { SECOND_MS } from "@/libs/models/duration";
 
 const OPENAI_AUTH_CLAIM = "https://api.openai.com/auth";
 const OPENAI_PROFILE_CLAIM = "https://api.openai.com/profile";

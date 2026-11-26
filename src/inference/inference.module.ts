@@ -6,23 +6,23 @@ import {
 } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
 import { HttpClientModule } from "@nestjs/http-client";
-import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
-import { SnapshotModule } from "@/snapshot/snapshot.module.js";
-import { SpendLimitsModule } from "@/spend-limits/spend-limits.module.js";
-import { UpstreamModule } from "@/upstream/upstream.module.js";
-import { UsageModule } from "@/usage/usage.module.js";
-import { ApiKeyHeaderMiddleware } from "./middleware/api-key-header.middleware.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { InferenceExceptionFilter } from "./filters/inference-exception.filter.js";
-import { INFERENCE_API_PREFIX, InferenceController } from "./inference.controller.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
-import { AttemptRunner } from "./providers/attempt-runner.js";
-import { CallerLimits } from "./providers/caller-limits.js";
-import { MediaFetcher } from "./providers/media-fetcher.js";
-import { MediaUpstreamClient } from "./providers/media-upstream-client.js";
-import { UpstreamClient } from "./providers/upstream-client.js";
-import { VideoHandles } from "./providers/video-handles.js";
-import { VideoTaskReader } from "./providers/video-task-reader.js";
+import { OutboundFetch } from "@/libs/providers/outbound-fetch";
+import { SnapshotModule } from "@/snapshot/snapshot.module";
+import { SpendLimitsModule } from "@/spend-limits/spend-limits.module";
+import { UpstreamModule } from "@/upstream/upstream.module";
+import { UsageModule } from "@/usage/usage.module";
+import { ApiKeyHeaderMiddleware } from "./middleware/api-key-header.middleware";
+import { CommandHandlers } from "./commands/handlers";
+import { InferenceExceptionFilter } from "./filters/inference-exception.filter";
+import { INFERENCE_API_PREFIX, InferenceController } from "./inference.controller";
+import { QueryHandlers } from "./queries/handlers";
+import { AttemptRunner } from "./providers/attempt-runner";
+import { CallerLimits } from "./providers/caller-limits";
+import { MediaFetcher } from "./providers/media-fetcher";
+import { MediaUpstreamClient } from "./providers/media-upstream-client";
+import { UpstreamClient } from "./providers/upstream-client";
+import { VideoHandles } from "./providers/video-handles";
+import { VideoTaskReader } from "./providers/video-task-reader";
 
 @Module({
   imports: [

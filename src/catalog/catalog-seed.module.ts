@@ -3,10 +3,10 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { CqrsModule } from "@nestjs/cqrs";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { type Env, envSchema } from "@/config/schemas/env.schema.js";
-import { relations } from "@/db/schemas/relations.js";
-import { LibsModule } from "@/libs/libs.module.js";
-import { CatalogModule } from "./catalog.module.js";
+import { type Env, envSchema } from "@/config/schemas/env.schema";
+import { relations } from "@/db/schemas/relations";
+import { LibsModule } from "@/libs/libs.module";
+import { CatalogModule } from "./catalog.module";
 
 const seedEnvSchema = envSchema.pick({ DATABASE_URL: true });
 

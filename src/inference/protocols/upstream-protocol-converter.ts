@@ -1,11 +1,11 @@
-import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
-import type { UpstreamProtocol } from "@/db/schemas/index.js";
+import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema";
+import type { UpstreamProtocol } from "@/db/schemas";
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "@/inference/models/internal-format.js";
-import { type ServerSentEvent, ServerSentEventDecoder } from "./server-sent-events.js";
+} from "@/inference/models/internal-format";
+import { type ServerSentEvent, ServerSentEventDecoder } from "./server-sent-events";
 
 export class UpstreamProtocolError extends Error {
   constructor(message: string, options?: ErrorOptions) {

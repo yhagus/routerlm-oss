@@ -2,9 +2,9 @@ import { rm } from "node:fs/promises";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations.js";
+import { relations } from "@/db/schemas/relations";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
 
 const MEDIA_ENDPOINTS_MIGRATION_SUFFIX = "_give_alibaba_its_media_endpoints";
 const NATIVE_API = "https://dashscope-intl.aliyuncs.com/api/v1";

@@ -5,13 +5,13 @@ import type {
   InferenceStreamEvent,
   StopReason,
   TokenUsage,
-} from "@/inference/models/internal-format.js";
-import { isJsonObject } from "@/inference/protocols/json-object.js";
-import type { ServerSentEvent } from "@/inference/protocols/server-sent-events.js";
+} from "@/inference/models/internal-format";
+import { isJsonObject } from "@/inference/protocols/json-object";
+import type { ServerSentEvent } from "@/inference/protocols/server-sent-events";
 import {
   UpstreamProtocolError,
   type UpstreamStreamParser,
-} from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/protocols/upstream-protocol-converter";
 
 const usageSchema = z.object({
   input_tokens: z.number().nullish(),

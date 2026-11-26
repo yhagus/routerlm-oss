@@ -1,14 +1,10 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import {
-  dashScopeVideoFixture,
-  type FakeReply,
-  FakeUpstream,
-} from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { dashScopeVideoFixture, type FakeReply, FakeUpstream } from "@tests/support/fake-upstream";
 import {
   addDashScopeVideoRoute,
   addProviderAccount,
@@ -16,9 +12,9 @@ import {
   insertDashScopeVideoModel,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { createTestApp } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const VIDEO = new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 1, 2, 3]);

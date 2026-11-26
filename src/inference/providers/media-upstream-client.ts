@@ -1,18 +1,18 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient } from "@nestjs/http-client";
-import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version.js";
-import { AttemptFailedError } from "@/inference/models/attempt-failure.js";
-import type { AttemptFailureReason } from "@/db/schemas/index.js";
+import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version";
+import { AttemptFailedError } from "@/inference/models/attempt-failure";
+import type { AttemptFailureReason } from "@/db/schemas";
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind.js";
-import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id.js";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
-import { AttemptDeadlines, type AttemptTimeouts } from "./upstream-client.js";
-import { MediaFetcher } from "./media-fetcher.js";
+} from "@/inference/models/media-kind";
+import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
+import { AttemptDeadlines, type AttemptTimeouts } from "./upstream-client";
+import { MediaFetcher } from "./media-fetcher";
 
 export interface MediaConnection {
   authHeaders: Record<string, string>;

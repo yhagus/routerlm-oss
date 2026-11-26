@@ -1,11 +1,11 @@
 import { type IQueryHandler, QueryBus, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { upstreamModels } from "@/db/schemas/index.js";
-import { ListAttachedPricingWindowsQuery } from "@/pricing-windows/queries/impl/list-attached-pricing-windows.query.js";
-import type { ListedUpstreamModel } from "@/upstream/models/upstream-model.js";
-import { ListUpstreamModelsQuery } from "@/upstream/queries/impl/list-upstream-models.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { upstreamModels } from "@/db/schemas";
+import { ListAttachedPricingWindowsQuery } from "@/pricing-windows/queries/impl/list-attached-pricing-windows.query";
+import type { ListedUpstreamModel } from "@/upstream/models/upstream-model";
+import { ListUpstreamModelsQuery } from "@/upstream/queries/impl/list-upstream-models.query";
 
 @QueryHandler(ListUpstreamModelsQuery)
 export class ListUpstreamModelsHandler implements IQueryHandler<ListUpstreamModelsQuery> {

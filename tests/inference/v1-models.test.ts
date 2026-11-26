@@ -1,12 +1,12 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { models } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { models } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { createTestApp } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 describe("GET /v1/models (e2e)", () => {
   let app: NestNodeApplication;

@@ -3,8 +3,8 @@ import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
-import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command.js";
-import type { Database } from "@/db/schemas/relations.js";
+import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command";
+import type { Database } from "@/db/schemas/relations";
 import {
   apiKeys,
   attempts,
@@ -18,11 +18,11 @@ import {
   upstreamModels,
   usageLogs,
   users,
-} from "@/db/schemas/index.js";
-import { SECOND_MS } from "@/libs/models/duration.js";
-import { storedKey } from "@/upstream/models/provider-account.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { normalizeEmail } from "@/users/models/user.js";
+} from "@/db/schemas";
+import { SECOND_MS } from "@/libs/models/duration";
+import { storedKey } from "@/upstream/models/provider-account";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { normalizeEmail } from "@/users/models/user";
 import {
   DEMO_CALLERS,
   DEMO_MODELS,
@@ -30,16 +30,16 @@ import {
   DEMO_QUOTA_METERS,
   DEMO_USER,
   type DemoModelName,
-} from "@/demo/data/demo-fixtures.js";
+} from "@/demo/data/demo-fixtures";
 import {
   generateDemoTraffic,
   type TrafficCaller,
   type TrafficModel,
   type TrafficProviderAccount,
-} from "@/demo/models/demo-traffic.js";
-import { DemoApiKeyGenerator } from "@/demo/providers/demo-api-key-generator.js";
-import { SeedDemoCommand, type SeedDemoResult } from "@/demo/commands/impl/seed-demo.command.js";
-import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key.js";
+} from "@/demo/models/demo-traffic";
+import { DemoApiKeyGenerator } from "@/demo/providers/demo-api-key-generator";
+import { SeedDemoCommand, type SeedDemoResult } from "@/demo/commands/impl/seed-demo.command";
+import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key";
 
 const APP_TABLES: PgTable[] = [
   errorCaptures,

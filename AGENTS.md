@@ -51,7 +51,7 @@ Every module in `src/` uses `@nestjs/cqrs`. Only the `<module>.module.ts` and co
 
 ### Backend: imports and shared code
 
-No import climbs with `../`, inside a module or out of it: code in `src/` is imported through `@/` (`@/db/schemas/index.js`), code in `tests/` through `@tests/` (`@tests/support/test-app.js`). Only a same-folder import (`./x.js`) stays relative. oxlint enforces this; see `docs/adr/0037-no-parent-relative-imports.md`. Code that several modules share and that belongs to no module's domain goes into `src/libs/`, laid out like any other module. Shared injectables are registered in its global `LibsModule`. The build is `nest build`, which rewrites the alias; it needs TypeScript 6 until 7.1. See `docs/adr/0008-at-alias-imports-and-typescript-6-for-nest-build.md`.
+No import climbs with `../`, inside a module or out of it: code in `src/` is imported through `@/` (`@/db/schemas/index`), code in `tests/` through `@tests/` (`@tests/support/test-app`). Only a same-folder import (`./x`) stays relative. oxlint enforces this; see `docs/adr/0037-no-parent-relative-imports.md`. Imports carry no file extension and no `/index` (`@/x/commands/handlers`, not `@/x/commands/handlers/index.js`); oxlint `import/extensions` and `no-restricted-imports` enforce it, see `docs/adr/0096-imports-carry-no-extension-or-index-and-quotes-are-single.md`. Code that several modules share and that belongs to no module's domain goes into `src/libs/`, laid out like any other module. Shared injectables are registered in its global `LibsModule`. The build is `nest build`, which rewrites the alias; it needs TypeScript 6 until 7.1. See `docs/adr/0008-at-alias-imports-and-typescript-6-for-nest-build.md`.
 
 ### Web: Nuxt first-party first
 

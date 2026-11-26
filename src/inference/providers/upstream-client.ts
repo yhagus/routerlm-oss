@@ -1,17 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, type HttpResponse } from "@nestjs/http-client";
-import type { AttemptFailureReason } from "@/db/schemas/index.js";
-import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version.js";
-import { AttemptFailedError, ClientCancelledError } from "@/inference/models/attempt-failure.js";
+import type { AttemptFailureReason } from "@/db/schemas";
+import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version";
+import { AttemptFailedError, ClientCancelledError } from "@/inference/models/attempt-failure";
 import {
   type ExhaustedErrorCode,
   isQuotaExhaustedError,
-} from "@/inference/models/quota-exhausted-error.js";
+} from "@/inference/models/quota-exhausted-error";
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "@/inference/models/internal-format.js";
+} from "@/inference/models/internal-format";
 import {
   parseUpstreamStream,
   type UpstreamHttpRequest,
@@ -19,15 +19,15 @@ import {
   UpstreamProtocolError,
   type UpstreamStreamParser,
   type UpstreamTarget,
-} from "@/inference/protocols/upstream-protocol-converter.js";
-import type { Destination } from "@/inference/models/destination.js";
-import type { SnapshotRoute } from "@/snapshot/models/snapshot.js";
-import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id.js";
-import { gatherStream } from "@/inference/protocols/gather-stream.js";
+} from "@/inference/protocols/upstream-protocol-converter";
+import type { Destination } from "@/inference/models/destination";
+import type { SnapshotRoute } from "@/snapshot/models/snapshot";
+import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id";
+import { gatherStream } from "@/inference/protocols/gather-stream";
 import {
   type ServerSentEvent,
   ServerSentEventDecoder,
-} from "@/inference/protocols/server-sent-events.js";
+} from "@/inference/protocols/server-sent-events";
 
 export const DEFAULT_TIMEOUTS: AttemptTimeouts = {
   connectMs: 10_000,

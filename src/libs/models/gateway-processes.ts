@@ -1,6 +1,6 @@
 import cluster, { type Worker } from "node:cluster";
 import { Logger } from "@nestjs/common";
-import { SECOND_MS } from "./duration.js";
+import { SECOND_MS } from "./duration";
 
 const MAX_UNEXPECTED_EXITS = 5;
 const UNEXPECTED_EXIT_WINDOW_MS = 60 * SECOND_MS;

@@ -1,10 +1,10 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc, count, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { models, routes } from "@/db/schemas/index.js";
-import type { ModelSummary } from "@/routing/models/model.js";
-import { ListModelsQuery } from "@/routing/queries/impl/list-models.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { models, routes } from "@/db/schemas";
+import type { ModelSummary } from "@/routing/models/model";
+import { ListModelsQuery } from "@/routing/queries/impl/list-models.query";
 
 @QueryHandler(ListModelsQuery)
 export class ListModelsHandler implements IQueryHandler<ListModelsQuery> {

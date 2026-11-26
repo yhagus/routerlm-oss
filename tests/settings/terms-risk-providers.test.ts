@@ -1,8 +1,8 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import type { Database } from "@/db/schemas/relations";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const BLOCKED_BY_DEFAULT = { allowed: false, defaultAllowed: false, isDefault: true };

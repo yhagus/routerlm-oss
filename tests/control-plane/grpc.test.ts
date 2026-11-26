@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { once } from "node:events";
 import { createServer } from "node:net";
 import { vi } from "vitest";
-import type { ControlPlaneTransport } from "./key-scenarios.js";
+import type { ControlPlaneTransport } from "./key-scenarios";
 
 const WORKER_STARTUP_TIMEOUT_MS = 30_000;
 vi.setConfig({ hookTimeout: WORKER_STARTUP_TIMEOUT_MS });
@@ -10,12 +10,12 @@ vi.setConfig({ hookTimeout: WORKER_STARTUP_TIMEOUT_MS });
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { portOf } = await import("@tests/support/port-of.js");
-const { grpcControlPlaneClient } = await import("@tests/support/grpc-control-plane-client.js");
-const { describeKeyScenarios } = await import("./key-scenarios.js");
-const { describeLastUsedScenarios } = await import("./last-used-scenarios.js");
-const { describeModelScenarios } = await import("./model-scenarios.js");
-const { describeUsageScenarios } = await import("./usage-scenarios.js");
+const { portOf } = await import("@tests/support/port-of");
+const { grpcControlPlaneClient } = await import("@tests/support/grpc-control-plane-client");
+const { describeKeyScenarios } = await import("./key-scenarios");
+const { describeLastUsedScenarios } = await import("./last-used-scenarios");
+const { describeModelScenarios } = await import("./model-scenarios");
+const { describeUsageScenarios } = await import("./usage-scenarios");
 
 async function freePort(): Promise<number> {
   const server = createServer().listen(0);

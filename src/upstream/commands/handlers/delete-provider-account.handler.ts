@@ -2,10 +2,10 @@ import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { DeleteProviderAccountCommand } from "@/upstream/commands/impl/delete-provider-account.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { DeleteProviderAccountCommand } from "@/upstream/commands/impl/delete-provider-account.command";
 
 @CommandHandler(DeleteProviderAccountCommand)
 export class DeleteProviderAccountHandler implements ICommandHandler<DeleteProviderAccountCommand> {

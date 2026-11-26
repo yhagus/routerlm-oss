@@ -1,18 +1,18 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, count, gte, lt, type SQL, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
-import { byErrorOrigin } from "@/usage/models/by-error-origin.js";
-import { failedWithOriginCondition, statusCondition } from "@/usage/models/usage-filters.js";
+import type { Database } from "@/db/schemas/relations";
+import { type ErrorOrigin, usageLogs } from "@/db/schemas";
+import { byErrorOrigin } from "@/usage/models/by-error-origin";
+import { failedWithOriginCondition, statusCondition } from "@/usage/models/usage-filters";
 import {
   OVERVIEW_BUCKETS,
   type Overview,
   type OverviewBucket,
   type OriginErrors,
   type OverviewStats,
-} from "@/overview/models/overview.js";
-import { ShowOverviewQuery } from "@/overview/queries/impl/show-overview.query.js";
+} from "@/overview/models/overview";
+import { ShowOverviewQuery } from "@/overview/queries/impl/show-overview.query";
 
 const MS_PER_SECOND = 1000;
 

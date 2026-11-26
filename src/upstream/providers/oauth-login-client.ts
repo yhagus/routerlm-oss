@@ -6,10 +6,10 @@ import type {
   PendingDeviceCode,
   TokenPoll,
   TokenRefresh,
-} from "@/upstream/models/oauth-device-grant.js";
-import { KimiCodeLoginClient } from "./kimi-code-login-client.js";
-import type { OauthFlowLoginClient } from "./oauth-flow-login-client.js";
-import { OpenAiCodexLoginClient } from "./openai-codex-login-client.js";
+} from "@/upstream/models/oauth-device-grant";
+import { KimiCodeLoginClient } from "./kimi-code-login-client";
+import type { OauthFlowLoginClient } from "./oauth-flow-login-client";
+import { OpenAiCodexLoginClient } from "./openai-codex-login-client";
 
 type OauthLoginFlow = OauthLoginEndpoint["flow"];
 type EndpointOf<Flow extends OauthLoginFlow> = Extract<OauthLoginEndpoint, { flow: Flow }>;

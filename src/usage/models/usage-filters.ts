@@ -1,7 +1,7 @@
 import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
-import type { UsageFilter, UsageStatus } from "@/usage/schemas/usage.schema.js";
+import { type ErrorOrigin, usageLogs } from "@/db/schemas";
+import type { UsageFilter, UsageStatus } from "@/usage/schemas/usage.schema";
 
 const FIRST_ERROR_STATUS = 400;
 

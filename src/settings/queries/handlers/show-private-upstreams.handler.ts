@@ -1,8 +1,8 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { toPrivateUpstreamsSetting } from "@/settings/models/private-upstreams-view.js";
-import type { PrivateUpstreamsSetting } from "@/settings/models/private-upstreams.js";
-import { SettingsStore } from "@/settings/providers/settings-store.js";
-import { ShowPrivateUpstreamsQuery } from "@/settings/queries/impl/show-private-upstreams.query.js";
+import { toPrivateUpstreamsSetting } from "@/settings/models/private-upstreams-view";
+import type { PrivateUpstreamsSetting } from "@/settings/models/private-upstreams";
+import { SettingsStore } from "@/settings/providers/settings-store";
+import { ShowPrivateUpstreamsQuery } from "@/settings/queries/impl/show-private-upstreams.query";
 
 @QueryHandler(ShowPrivateUpstreamsQuery)
 export class ShowPrivateUpstreamsHandler implements IQueryHandler<ShowPrivateUpstreamsQuery> {

@@ -1,10 +1,10 @@
 import { Body, Get, Param, ParseUUIDPipe, Put } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { ReplaceUpstreamModelPricingWindowsCommand } from "./commands/impl/replace-upstream-model-pricing-windows.command.js";
-import type { AttachedPricingWindow } from "./models/upstream-model-pricing-windows.js";
-import { ListUpstreamModelPricingWindowsQuery } from "./queries/impl/list-upstream-model-pricing-windows.query.js";
-import { type WindowPricesEntry, windowPricesListSchema } from "./schemas/pricing-window.schema.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { ReplaceUpstreamModelPricingWindowsCommand } from "./commands/impl/replace-upstream-model-pricing-windows.command";
+import type { AttachedPricingWindow } from "./models/upstream-model-pricing-windows";
+import { ListUpstreamModelPricingWindowsQuery } from "./queries/impl/list-upstream-model-pricing-windows.query";
+import { type WindowPricesEntry, windowPricesListSchema } from "./schemas/pricing-window.schema";
 
 @DashboardController("upstream-models")
 export class UpstreamModelPricingWindowsController {

@@ -1,6 +1,6 @@
 import { Command } from "@nestjs/cqrs";
-import type { UpstreamModel } from "@/upstream/models/upstream-model.js";
-import type { UpstreamModelChanges } from "@/upstream/schemas/upstream.schema.js";
+import type { UpstreamModel } from "@/upstream/models/upstream-model";
+import type { UpstreamModelChanges } from "@/upstream/schemas/upstream.schema";
 
 export class UpdateUpstreamModelCommand extends Command<UpstreamModel> {
   constructor(

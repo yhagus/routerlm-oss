@@ -1,21 +1,21 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
 import {
   addOpenAiChatRoute,
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   UPSTREAM_KEY,
-} from "@tests/support/inference.js";
-import { LOCAL_COPY_MAX_AGE_MS } from "@/upstream/providers/cooldown-store.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { endCooldownElsewhere, startCooldownElsewhere } from "@tests/support/redis-state.js";
+} from "@tests/support/inference";
+import { LOCAL_COPY_MAX_AGE_MS } from "@/upstream/providers/cooldown-store";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { endCooldownElsewhere, startCooldownElsewhere } from "@tests/support/redis-state";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

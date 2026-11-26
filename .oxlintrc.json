@@ -1,5 +1,11 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "import"
+  ],
   "jsPlugins": [
     "./scripts/lint/no-comments.mjs"
   ],
@@ -28,7 +34,10 @@
             "group": [
               "@/*/commands/handlers/*",
               "@/*/queries/handlers/*",
-              "@/*/events/handlers/*"
+              "@/*/events/handlers/*",
+              "@/*/commands/handlers",
+              "@/*/queries/handlers",
+              "@/*/events/handlers"
             ],
             "message": "Another module's handler is its private implementation: dispatch its command, query or event through the bus instead (ADR 0007)."
           },
@@ -38,9 +47,20 @@
               "../**"
             ],
             "message": "Import through an alias instead of climbing out of the folder: @/ for src/, @tests/ for tests/ (ADR 0037)."
+          },
+          {
+            "group": [
+              "**/index",
+              "./index"
+            ],
+            "message": "Import the folder, not its index file: @/x/handlers, not @/x/handlers/index."
           }
         ]
       }
+    ],
+    "import/extensions": [
+      "error",
+      "never"
     ]
   },
   "env": {

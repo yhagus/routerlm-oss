@@ -1,7 +1,7 @@
-import { CreatePricingWindowHandler } from "./create-pricing-window.handler.js";
-import { DeletePricingWindowHandler } from "./delete-pricing-window.handler.js";
-import { ReplaceUpstreamModelPricingWindowsHandler } from "./replace-upstream-model-pricing-windows.handler.js";
-import { UpdatePricingWindowHandler } from "./update-pricing-window.handler.js";
+import { CreatePricingWindowHandler } from "./create-pricing-window.handler";
+import { DeletePricingWindowHandler } from "./delete-pricing-window.handler";
+import { ReplaceUpstreamModelPricingWindowsHandler } from "./replace-upstream-model-pricing-windows.handler";
+import { UpdatePricingWindowHandler } from "./update-pricing-window.handler";
 
 export const CommandHandlers = [
   CreatePricingWindowHandler,

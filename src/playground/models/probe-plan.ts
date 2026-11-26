@@ -1,10 +1,10 @@
-import type { ModelKind } from "@/db/schemas/index.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { ModelKind } from "@/db/schemas";
+import { GatewayError } from "@/inference/models/gateway-error";
 import type {
   Snapshot,
   SnapshotProviderAccount,
   SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot.js";
+} from "@/snapshot/models/snapshot";
 
 const PROBED_KINDS = ["chat", "image", "speech", "transcription"] as const;
 export type ProbedKind = (typeof PROBED_KINDS)[number];

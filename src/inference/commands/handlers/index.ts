@@ -1,6 +1,6 @@
-import { RunInferenceHandler } from "./run-inference.handler.js";
-import { RunMediaInferenceHandler } from "./run-media-inference.handler.js";
-import { SubmitVideoJobHandler } from "./submit-video-job.handler.js";
+import { RunInferenceHandler } from "./run-inference.handler";
+import { RunMediaInferenceHandler } from "./run-media-inference.handler";
+import { SubmitVideoJobHandler } from "./submit-video-job.handler";
 
 export const CommandHandlers = [
   RunInferenceHandler,

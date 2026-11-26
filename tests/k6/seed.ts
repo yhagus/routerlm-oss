@@ -11,8 +11,8 @@ import {
   settings,
   type UpstreamProtocol,
   upstreamModels,
-} from "@/db/schemas/index.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+} from "@/db/schemas";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
 
 const API_KEY_PATTERN = /^rlm_([0-9a-f]{16})_[A-Za-z0-9_-]{43}$/;
 

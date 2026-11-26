@@ -1,19 +1,19 @@
 import { NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations";
 import { eq } from "drizzle-orm";
-import { providers, upstreamModels } from "@/db/schemas/index.js";
-import { kindOf } from "@/libs/models/provider-protocols.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { providers, upstreamModels } from "@/db/schemas";
+import { kindOf } from "@/libs/models/provider-protocols";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   assertProtocolsFitProvider,
   assertProviderServesKind,
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
   type UpstreamModel,
-} from "@/upstream/models/upstream-model.js";
-import { CreateUpstreamModelCommand } from "@/upstream/commands/impl/create-upstream-model.command.js";
+} from "@/upstream/models/upstream-model";
+import { CreateUpstreamModelCommand } from "@/upstream/commands/impl/create-upstream-model.command";
 
 @CommandHandler(CreateUpstreamModelCommand)
 export class CreateUpstreamModelHandler implements ICommandHandler<CreateUpstreamModelCommand> {

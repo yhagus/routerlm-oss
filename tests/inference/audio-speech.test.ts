@@ -1,10 +1,10 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { routes } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { routes } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream";
 import {
   addProviderAccount,
   insertApiKey,
@@ -12,9 +12,9 @@ import {
   insertDashScopeSpeechModel,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { createTestApp } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";
 const AUDIO_PATH = "/media/speech.bin";

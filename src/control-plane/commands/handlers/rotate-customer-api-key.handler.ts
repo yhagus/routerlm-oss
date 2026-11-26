@@ -1,17 +1,17 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, isNull } from "drizzle-orm";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeyRotations, apiKeys } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { ControlPlaneError } from "@/control-plane/models/control-plane-error.js";
-import type { IssuedCustomerApiKey } from "@/control-plane/models/customer-api-key.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeyRotations, apiKeys } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { ControlPlaneError } from "@/control-plane/models/control-plane-error";
+import type { IssuedCustomerApiKey } from "@/control-plane/models/customer-api-key";
 import {
   findCustomerApiKey,
   findUnrevokedCustomerApiKey,
-} from "@/control-plane/models/customer-api-keys.js";
-import { RotateCustomerApiKeyCommand } from "@/control-plane/commands/impl/rotate-customer-api-key.command.js";
+} from "@/control-plane/models/customer-api-keys";
+import { RotateCustomerApiKeyCommand } from "@/control-plane/commands/impl/rotate-customer-api-key.command";
 
 const REVOKED_MESSAGE = "A revoked API Key can't be rotated.";
 

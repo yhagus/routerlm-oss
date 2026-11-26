@@ -1,4 +1,4 @@
-import type { MediaRequest } from "./media-kind.js";
+import type { MediaRequest } from "./media-kind";
 
 export const AUDIO_FILE_FORMATS = [
   "aac",

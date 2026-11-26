@@ -1,9 +1,9 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { toTermsRiskProvidersSetting } from "@/settings/models/terms-risk-providers-view.js";
-import type { TermsRiskProvidersSetting } from "@/settings/models/terms-risk-providers.js";
-import { SettingsStore } from "@/settings/providers/settings-store.js";
-import { ChangeTermsRiskProvidersCommand } from "@/settings/commands/impl/change-terms-risk-providers.command.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { toTermsRiskProvidersSetting } from "@/settings/models/terms-risk-providers-view";
+import type { TermsRiskProvidersSetting } from "@/settings/models/terms-risk-providers";
+import { SettingsStore } from "@/settings/providers/settings-store";
+import { ChangeTermsRiskProvidersCommand } from "@/settings/commands/impl/change-terms-risk-providers.command";
 
 @CommandHandler(ChangeTermsRiskProvidersCommand)
 export class ChangeTermsRiskProvidersHandler implements ICommandHandler<ChangeTermsRiskProvidersCommand> {

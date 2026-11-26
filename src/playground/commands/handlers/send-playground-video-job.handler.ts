@@ -1,9 +1,9 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { SubmitVideoJobCommand } from "@/inference/commands/impl/submit-video-job.command.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { PlaygroundVideoJob } from "@/playground/models/playground-video-job.js";
-import { PlaygroundUsage } from "@/playground/models/playground-usage.js";
-import { SendPlaygroundVideoJobCommand } from "@/playground/commands/impl/send-playground-video-job.command.js";
+import { SubmitVideoJobCommand } from "@/inference/commands/impl/submit-video-job.command";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { PlaygroundVideoJob } from "@/playground/models/playground-video-job";
+import { PlaygroundUsage } from "@/playground/models/playground-usage";
+import { SendPlaygroundVideoJobCommand } from "@/playground/commands/impl/send-playground-video-job.command";
 
 const decoder = new TextDecoder();
 

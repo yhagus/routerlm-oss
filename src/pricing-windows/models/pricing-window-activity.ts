@@ -1,10 +1,6 @@
-import type { IsoWeekday, PricingWindowRange } from "@/db/schemas/index.js";
-import {
-  isWithinValidityPeriod,
-  type ValidityPeriod,
-  validityInstantsOf,
-} from "./validity-period.js";
-import { minuteOfDayOf, wallClockAt } from "./wall-clock.js";
+import type { IsoWeekday, PricingWindowRange } from "@/db/schemas";
+import { isWithinValidityPeriod, type ValidityPeriod, validityInstantsOf } from "./validity-period";
+import { minuteOfDayOf, wallClockAt } from "./wall-clock";
 
 export interface PricingWindowSchedule {
   timeZone: string;

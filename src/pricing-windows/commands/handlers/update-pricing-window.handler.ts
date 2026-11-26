@@ -2,21 +2,21 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc, eq, inArray } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations.js";
+import type { Database, Transaction } from "@/db/schemas/relations";
 import {
   pricingWindows,
   providers,
   upstreamModelPricingWindows,
   upstreamModels,
-} from "@/db/schemas/index.js";
-import { UpdatePricingWindowCommand } from "@/pricing-windows/commands/impl/update-pricing-window.command.js";
+} from "@/db/schemas";
+import { UpdatePricingWindowCommand } from "@/pricing-windows/commands/impl/update-pricing-window.command";
 import {
   type PricingWindow,
   toPricingWindowWriteError,
-} from "@/pricing-windows/models/pricing-window.js";
-import { selectAttachmentsByUpstreamModelId } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
-import { findOverlappingWindowPrices } from "@/pricing-windows/models/window-prices-overlap.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+} from "@/pricing-windows/models/pricing-window";
+import { selectAttachmentsByUpstreamModelId } from "@/pricing-windows/models/upstream-model-pricing-windows";
+import { findOverlappingWindowPrices } from "@/pricing-windows/models/window-prices-overlap";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 
 @CommandHandler(UpdatePricingWindowCommand)
 export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricingWindowCommand> {

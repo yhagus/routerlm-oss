@@ -2,9 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HttpClient, HttpClientError, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
-import type { Env } from "@/config/schemas/env.schema.js";
-import type { ModelsDevModel, ModelsDevSnapshot } from "@/catalog/models/models-dev.js";
-import { MODELS_DEV_HTTP_CLIENT } from "./models-dev-http-client.js";
+import type { Env } from "@/config/schemas/env.schema";
+import type { ModelsDevModel, ModelsDevSnapshot } from "@/catalog/models/models-dev";
+import { MODELS_DEV_HTTP_CLIENT } from "./models-dev-http-client";
 
 const NEWEST_MODEL_COUNT = 5;
 const CACHE_LIFETIME_MS = 6 * 60 * 60 * 1000;

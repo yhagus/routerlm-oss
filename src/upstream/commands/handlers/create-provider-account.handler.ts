@@ -2,18 +2,18 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { unusedConstellationName } from "@/upstream/models/constellation-name.js";
+import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { unusedConstellationName } from "@/upstream/models/constellation-name";
 import {
   type ProviderAccount,
   providerAccountColumns,
   storedKey,
-} from "@/upstream/models/provider-account.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { CreateProviderAccountCommand } from "@/upstream/commands/impl/create-provider-account.command.js";
+} from "@/upstream/models/provider-account";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { CreateProviderAccountCommand } from "@/upstream/commands/impl/create-provider-account.command";
 
 @CommandHandler(CreateProviderAccountCommand)
 export class CreateProviderAccountHandler implements ICommandHandler<CreateProviderAccountCommand> {

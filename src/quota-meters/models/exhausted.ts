@@ -1,4 +1,4 @@
-import type { QuotaMeterReading } from "./quota-meter.js";
+import type { QuotaMeterReading } from "./quota-meter";
 
 export type ExhaustedState = { isExhausted: false } | { isExhausted: true; until: Date | null };
 

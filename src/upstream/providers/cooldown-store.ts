@@ -1,8 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import type { Redis } from "ioredis";
-import { ATTEMPT_FAILURE_REASONS, type AttemptFailureReason } from "@/db/schemas/index.js";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { cooldownDurationMs } from "@/upstream/models/cooldown.js";
+import { ATTEMPT_FAILURE_REASONS, type AttemptFailureReason } from "@/db/schemas";
+import { RedisConnection } from "@/redis/providers/redis-connection";
+import { cooldownDurationMs } from "@/upstream/models/cooldown";
 
 export const COOLDOWN_KEY_PREFIX = "routerlm:cooldown:";
 const FAILURE_STREAK_KEY_PREFIX = "routerlm:cooldown-streak:";

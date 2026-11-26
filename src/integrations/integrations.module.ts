@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { SnapshotModule } from "@/snapshot/snapshot.module.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { IntegrationsController } from "./integrations.controller.js";
-import { IntegrationSecretAuth } from "./providers/integration-secret-auth.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
+import { SnapshotModule } from "@/snapshot/snapshot.module";
+import { CommandHandlers } from "./commands/handlers";
+import { IntegrationsController } from "./integrations.controller";
+import { IntegrationSecretAuth } from "./providers/integration-secret-auth";
+import { QueryHandlers } from "./queries/handlers";
 
 @Module({
   imports: [SnapshotModule],

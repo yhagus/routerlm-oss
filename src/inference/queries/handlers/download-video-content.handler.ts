@@ -1,9 +1,9 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { AttemptFailedError, gatewayErrorFor } from "@/inference/models/attempt-failure.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
-import { MediaFetcher } from "@/inference/providers/media-fetcher.js";
-import { VideoTaskReader, videoNotFound } from "@/inference/providers/video-task-reader.js";
-import { DownloadVideoContentQuery } from "@/inference/queries/impl/download-video-content.query.js";
+import { AttemptFailedError, gatewayErrorFor } from "@/inference/models/attempt-failure";
+import { GatewayError } from "@/inference/models/gateway-error";
+import { MediaFetcher } from "@/inference/providers/media-fetcher";
+import { VideoTaskReader, videoNotFound } from "@/inference/providers/video-task-reader";
+import { DownloadVideoContentQuery } from "@/inference/queries/impl/download-video-content.query";
 
 const VIDEO_CONTENT_TYPE = "video/mp4";
 

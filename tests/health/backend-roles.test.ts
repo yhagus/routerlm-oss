@@ -1,6 +1,6 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import { createTestApp } from "@tests/support/test-app.js";
+import { createTestApp } from "@tests/support/test-app";
 
 function unknownRouteBody(path: string): Record<string, unknown> {
   return { statusCode: 404, error: "Not Found", message: `Cannot GET ${path}` };

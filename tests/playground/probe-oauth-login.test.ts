@@ -1,22 +1,18 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { upstreamModels } from "@/db/schemas/index.js";
-import {
-  type FakeReply,
-  FakeUpstream,
-  type ReceivedRequest,
-} from "@tests/support/fake-upstream.js";
-import { insertOpenAiChatModel, UPSTREAM_KEY } from "@tests/support/inference.js";
+import type { Database } from "@/db/schemas/relations";
+import { upstreamModels } from "@/db/schemas";
+import { type FakeReply, FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream";
+import { insertOpenAiChatModel, UPSTREAM_KEY } from "@tests/support/inference";
 import {
   ACCESS_TOKEN,
   addOauthLoginAccount,
   offerOauthLogin,
   refreshedTokensReply,
   TOKEN_PATH,
-} from "@tests/support/kimi-oauth.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/kimi-oauth";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const GLOBAL_TOKEN_PATH = `/global${TOKEN_PATH}`;

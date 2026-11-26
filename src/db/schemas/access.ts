@@ -8,7 +8,7 @@ import {
   text,
   uuid,
 } from "drizzle-orm/pg-core";
-import { at, createdAt, id } from "./columns.js";
+import { at, createdAt, id } from "./columns";
 
 export const users = pgTable("users", {
   id: id(),

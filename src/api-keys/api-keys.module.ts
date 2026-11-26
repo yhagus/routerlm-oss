@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
-import { SnapshotModule } from "@/snapshot/snapshot.module.js";
-import { SpendLimitsModule } from "@/spend-limits/spend-limits.module.js";
-import { providerKeyCipherProvider } from "@/upstream/providers/provider-key-cipher.js";
-import { ApiKeyAuth } from "./providers/api-key-auth.js";
-import { ApiKeysController } from "./api-keys.controller.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
+import { SnapshotModule } from "@/snapshot/snapshot.module";
+import { SpendLimitsModule } from "@/spend-limits/spend-limits.module";
+import { providerKeyCipherProvider } from "@/upstream/providers/provider-key-cipher";
+import { ApiKeyAuth } from "./providers/api-key-auth";
+import { ApiKeysController } from "./api-keys.controller";
+import { CommandHandlers } from "./commands/handlers";
+import { QueryHandlers } from "./queries/handlers";
 
 @Module({
   imports: [SnapshotModule, SpendLimitsModule],

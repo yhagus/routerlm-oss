@@ -5,12 +5,12 @@ import { Test } from "@nestjs/testing";
 import { sql } from "drizzle-orm";
 import type { Response } from "supertest";
 import request from "supertest";
-import { AppModule } from "@/app.module.js";
-import type { BackendRole } from "@/config/schemas/env.schema.js";
-import { configureApp, createNodeAdapter } from "@/configure-app.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { allowPrivateUpstreams } from "./private-upstreams.js";
-import { truncateTables } from "./truncate.js";
+import { AppModule } from "@/app.module";
+import type { BackendRole } from "@/config/schemas/env.schema";
+import { configureApp, createNodeAdapter } from "@/configure-app";
+import type { Database } from "@/db/schemas/relations";
+import { allowPrivateUpstreams } from "./private-upstreams";
+import { truncateTables } from "./truncate";
 
 const CHEAP_PASSWORD_HASHER = new PasswordHasher({ logN: 10 });
 

@@ -1,9 +1,9 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
-import { errorCaptures, usageLogs } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import { errorCaptures, usageLogs } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const DAY_MS = 24 * 60 * 60 * 1000;

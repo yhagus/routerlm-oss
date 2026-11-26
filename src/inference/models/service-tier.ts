@@ -1,7 +1,7 @@
-import { sendsServiceTiers } from "@/libs/models/provider-protocols.js";
-import type { ServiceTierValues, UpstreamProtocol } from "@/db/schemas/index.js";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import type { ServiceTier } from "./internal-format.js";
+import { sendsServiceTiers } from "@/libs/models/provider-protocols";
+import type { ServiceTierValues, UpstreamProtocol } from "@/db/schemas";
+import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
+import type { ServiceTier } from "./internal-format";
 
 const OPENAI_CLIENT_TIERS: ReadonlyMap<string, ServiceTier> = new Map([
   ["priority", "fast"],

@@ -1,6 +1,6 @@
 import { Command } from "@nestjs/cqrs";
-import type { ProviderAccount } from "@/upstream/models/provider-account.js";
-import type { ProviderAccountChanges } from "@/upstream/schemas/upstream.schema.js";
+import type { ProviderAccount } from "@/upstream/models/provider-account";
+import type { ProviderAccountChanges } from "@/upstream/schemas/upstream.schema";
 
 export class UpdateProviderAccountCommand extends Command<ProviderAccount> {
   constructor(

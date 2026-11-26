@@ -1,4 +1,4 @@
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
 
 describe("The DeepSeek Catalog file", () => {
   async function shipped() {

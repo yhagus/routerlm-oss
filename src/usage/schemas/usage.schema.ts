@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ERROR_ORIGINS } from "@/db/schemas/index.js";
-import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
+import { ERROR_ORIGINS } from "@/db/schemas";
+import { SERVICE_TIERS } from "@/inference/models/internal-format";
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;

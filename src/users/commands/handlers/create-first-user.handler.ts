@@ -2,11 +2,11 @@ import { PasswordHasher } from "@nestjs/authentication";
 import { ConflictException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations.js";
-import { users } from "@/db/schemas/index.js";
-import { lockUsers } from "@/users/models/lock-users.js";
-import { normalizeEmail, type User, userColumns } from "@/users/models/user.js";
-import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { users } from "@/db/schemas";
+import { lockUsers } from "@/users/models/lock-users";
+import { normalizeEmail, type User, userColumns } from "@/users/models/user";
+import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command";
 
 @CommandHandler(CreateFirstUserCommand)
 export class CreateFirstUserHandler implements ICommandHandler<CreateFirstUserCommand> {

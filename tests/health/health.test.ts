@@ -2,8 +2,8 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import request from "supertest";
-import { relations } from "@/db/schemas/relations.js";
-import { createTestApp } from "@tests/support/test-app.js";
+import { relations } from "@/db/schemas/relations";
+import { createTestApp } from "@tests/support/test-app";
 
 const UNREACHABLE_DATABASE_URL = "postgres://routerlm:routerlm@127.0.0.1:1/routerlm";
 

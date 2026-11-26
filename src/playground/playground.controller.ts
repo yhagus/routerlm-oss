@@ -16,39 +16,39 @@ import {
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-node";
-import { MEDIA_UPLOAD_OPTIONS, type MediaUpload } from "@/inference/models/media-upload.js";
+import { MEDIA_UPLOAD_OPTIONS, type MediaUpload } from "@/inference/models/media-upload";
 import {
   TRANSCRIPTION_FILE_FIELD,
   transcriptionBodyOf,
-} from "@/inference/protocols/openai-transcription/openai-transcription-form.js";
+} from "@/inference/protocols/openai-transcription/openai-transcription-form";
 import {
   IMAGE_EDIT_FILE_FIELDS,
   type ImageEditFiles,
   imageEditBodyOf,
-} from "@/inference/protocols/openai-images/openai-image-edits-form.js";
+} from "@/inference/protocols/openai-images/openai-image-edits-form";
 import {
   openAiImageEditsClientContract,
   openAiImagesClientContract,
-} from "@/inference/protocols/openai-images/openai-images-client-contract.js";
-import { DownloadVideoContentQuery } from "@/inference/queries/impl/download-video-content.query.js";
-import { RetrieveVideoJobQuery } from "@/inference/queries/impl/retrieve-video-job.query.js";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { clientConnectionOf } from "@/libs/models/client-connection.js";
-import { eventStreamResponse } from "@/libs/models/event-stream-response.js";
-import type { User } from "@/users/models/user.js";
-import { PlaygroundExceptionFilter } from "./filters/playground-exception.filter.js";
-import { type PlaygroundRequest, playgroundRequestSchema } from "./schemas/playground.schema.js";
-import { SendPlaygroundChatCompletionCommand } from "./commands/impl/send-playground-chat-completion.command.js";
-import { SendPlaygroundImageGenerationCommand } from "./commands/impl/send-playground-image-generation.command.js";
-import { SendPlaygroundSpeechCommand } from "./commands/impl/send-playground-speech.command.js";
-import { SendPlaygroundVideoJobCommand } from "./commands/impl/send-playground-video-job.command.js";
-import type { PlaygroundImageGeneration } from "./models/playground-image-generation.js";
-import type { PlaygroundSpeech } from "./models/playground-speech.js";
-import { SendPlaygroundTranscriptionCommand } from "./commands/impl/send-playground-transcription.command.js";
-import type { PlaygroundTranscription } from "./models/playground-transcription.js";
-import type { PlaygroundVideoJob } from "./models/playground-video-job.js";
-import { ProbeUpstreamModelCommand } from "./commands/impl/probe-upstream-model.command.js";
-import type { ProbeResults } from "./models/probe-result.js";
+} from "@/inference/protocols/openai-images/openai-images-client-contract";
+import { DownloadVideoContentQuery } from "@/inference/queries/impl/download-video-content.query";
+import { RetrieveVideoJobQuery } from "@/inference/queries/impl/retrieve-video-job.query";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { clientConnectionOf } from "@/libs/models/client-connection";
+import { eventStreamResponse } from "@/libs/models/event-stream-response";
+import type { User } from "@/users/models/user";
+import { PlaygroundExceptionFilter } from "./filters/playground-exception.filter";
+import { type PlaygroundRequest, playgroundRequestSchema } from "./schemas/playground.schema";
+import { SendPlaygroundChatCompletionCommand } from "./commands/impl/send-playground-chat-completion.command";
+import { SendPlaygroundImageGenerationCommand } from "./commands/impl/send-playground-image-generation.command";
+import { SendPlaygroundSpeechCommand } from "./commands/impl/send-playground-speech.command";
+import { SendPlaygroundVideoJobCommand } from "./commands/impl/send-playground-video-job.command";
+import type { PlaygroundImageGeneration } from "./models/playground-image-generation";
+import type { PlaygroundSpeech } from "./models/playground-speech";
+import { SendPlaygroundTranscriptionCommand } from "./commands/impl/send-playground-transcription.command";
+import type { PlaygroundTranscription } from "./models/playground-transcription";
+import type { PlaygroundVideoJob } from "./models/playground-video-job";
+import { ProbeUpstreamModelCommand } from "./commands/impl/probe-upstream-model.command";
+import type { ProbeResults } from "./models/probe-result";
 
 @DashboardController("playground")
 @UseFilters(PlaygroundExceptionFilter)

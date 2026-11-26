@@ -1,4 +1,4 @@
-import { users } from "@/db/schemas/index.js";
+import { users } from "@/db/schemas";
 
 export type User = Omit<typeof users.$inferSelect, "passwordHash">;
 

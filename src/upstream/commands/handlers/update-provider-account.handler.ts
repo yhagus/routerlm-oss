@@ -2,16 +2,16 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   type ProviderAccount,
   providerAccountColumns,
   storedKey,
-} from "@/upstream/models/provider-account.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { UpdateProviderAccountCommand } from "@/upstream/commands/impl/update-provider-account.command.js";
+} from "@/upstream/models/provider-account";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { UpdateProviderAccountCommand } from "@/upstream/commands/impl/update-provider-account.command";
 
 @CommandHandler(UpdateProviderAccountCommand)
 export class UpdateProviderAccountHandler implements ICommandHandler<UpdateProviderAccountCommand> {

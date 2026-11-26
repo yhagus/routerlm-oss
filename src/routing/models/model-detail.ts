@@ -1,8 +1,8 @@
 import { NotFoundException } from "@nestjs/common";
 import { and, asc, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { models, providerAccounts, providers, routes, upstreamModels } from "@/db/schemas/index.js";
-import type { ModelDetail, RouteSummary } from "./model.js";
+import type { Database } from "@/db/schemas/relations";
+import { models, providerAccounts, providers, routes, upstreamModels } from "@/db/schemas";
+import type { ModelDetail, RouteSummary } from "./model";
 
 export async function findModelDetail(db: Database, modelId: string): Promise<ModelDetail> {
   const [model] = await db.select().from(models).where(eq(models.id, modelId));

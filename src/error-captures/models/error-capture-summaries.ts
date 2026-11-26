@@ -1,12 +1,7 @@
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import {
-  type RecordedAttemptFailure,
-  attempts,
-  errorCaptures,
-  usageLogs,
-} from "@/db/schemas/index.js";
-import type { ErrorCaptureSummary, FailedHop } from "./error-capture.js";
+import type { Database } from "@/db/schemas/relations";
+import { type RecordedAttemptFailure, attempts, errorCaptures, usageLogs } from "@/db/schemas";
+import type { ErrorCaptureSummary, FailedHop } from "./error-capture";
 
 const summaryColumns = {
   id: errorCaptures.id,

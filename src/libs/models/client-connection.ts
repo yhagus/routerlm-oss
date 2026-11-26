@@ -1,7 +1,7 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "node:http";
 import { NodeRequest } from "@nestjs/platform-node";
-import { USER_AGENT_MAX_LENGTH } from "@/db/schemas/index.js";
-import { clientDisconnectSignal } from "./event-stream-response.js";
+import { USER_AGENT_MAX_LENGTH } from "@/db/schemas";
+import { clientDisconnectSignal } from "./event-stream-response";
 
 export interface ClientConnection {
   signal: AbortSignal;

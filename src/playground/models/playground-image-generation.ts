@@ -1,4 +1,4 @@
-import type { PlaygroundSummary } from "./playground-summary.js";
+import type { PlaygroundSummary } from "./playground-summary";
 
 export interface PlaygroundImageGeneration {
   response: unknown;

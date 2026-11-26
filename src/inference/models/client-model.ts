@@ -1,4 +1,4 @@
-import type { Capability, ModelKind } from "@/db/schemas/index.js";
+import type { Capability, ModelKind } from "@/db/schemas";
 
 export interface ClientModel {
   id: string;

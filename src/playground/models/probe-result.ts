@@ -1,7 +1,7 @@
-import type { ErrorOrigin, RecordedAttemptFailure } from "@/db/schemas/index.js";
-import type { Snapshot, SnapshotProviderAccount } from "@/snapshot/models/snapshot.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
-import { playgroundSummaryOf } from "./playground-summary.js";
+import type { ErrorOrigin, RecordedAttemptFailure } from "@/db/schemas";
+import type { Snapshot, SnapshotProviderAccount } from "@/snapshot/models/snapshot";
+import type { UsageJob } from "@/usage/models/usage-job";
+import { playgroundSummaryOf } from "./playground-summary";
 
 const HTTP_OK = 200;
 const ERROR_MESSAGE_MAX_LENGTH = 500;

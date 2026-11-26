@@ -10,18 +10,18 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { CreateProviderCommand } from "./commands/impl/create-provider.command.js";
-import { DeleteProviderCommand } from "./commands/impl/delete-provider.command.js";
-import { UpdateProviderCommand } from "./commands/impl/update-provider.command.js";
-import type { Provider } from "./models/provider.js";
-import { ListProvidersQuery } from "./queries/impl/list-providers.query.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { CreateProviderCommand } from "./commands/impl/create-provider.command";
+import { DeleteProviderCommand } from "./commands/impl/delete-provider.command";
+import { UpdateProviderCommand } from "./commands/impl/update-provider.command";
+import type { Provider } from "./models/provider";
+import { ListProvidersQuery } from "./queries/impl/list-providers.query";
 import {
   type NewProvider,
   newProviderSchema,
   type ProviderChanges,
   providerChangesSchema,
-} from "./schemas/upstream.schema.js";
+} from "./schemas/upstream.schema";
 
 @DashboardController("providers")
 export class ProvidersController {

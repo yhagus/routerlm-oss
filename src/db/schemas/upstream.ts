@@ -14,8 +14,8 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { SERVICE_TIERS, type ServiceTier } from "@/inference/models/internal-format.js";
-import { at, createdAt, id, updatedAt } from "./columns.js";
+import { SERVICE_TIERS, type ServiceTier } from "@/inference/models/internal-format";
+import { at, createdAt, id, updatedAt } from "./columns";
 
 export const UPSTREAM_PROTOCOLS = [
   "openai-chat",

@@ -1,4 +1,4 @@
-import type { Capability, ClientProtocol, UpstreamProtocol } from "@/db/schemas/index.js";
+import type { Capability, ClientProtocol, UpstreamProtocol } from "@/db/schemas";
 import {
   isUpstreamModelUsable,
   type SnapshotEndpoint,
@@ -6,9 +6,9 @@ import {
   type SnapshotProviderAccount,
   type SnapshotRoute,
   type SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot.js";
-import type { InferenceRequest } from "./internal-format.js";
-import { UPSTREAM_PROTOCOL_CONVERTERS } from "@/inference/protocols/converters.js";
+} from "@/snapshot/models/snapshot";
+import type { InferenceRequest } from "./internal-format";
+import { UPSTREAM_PROTOCOL_CONVERTERS } from "@/inference/protocols/converters";
 
 const CHARACTERS_PER_TOKEN = 4;
 

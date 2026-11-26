@@ -1,36 +1,36 @@
 import { Body, Delete, Get, Put, Query } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { ChangeErrorCaptureRetentionCommand } from "./commands/impl/change-error-capture-retention.command.js";
-import { ChangePrivateUpstreamsCommand } from "./commands/impl/change-private-upstreams.command.js";
-import { ChangeTermsRiskProvidersCommand } from "./commands/impl/change-terms-risk-providers.command.js";
-import { ResetErrorCaptureRetentionCommand } from "./commands/impl/reset-error-capture-retention.command.js";
-import { ResetPrivateUpstreamsCommand } from "./commands/impl/reset-private-upstreams.command.js";
-import { ResetTermsRiskProvidersCommand } from "./commands/impl/reset-terms-risk-providers.command.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { ChangeErrorCaptureRetentionCommand } from "./commands/impl/change-error-capture-retention.command";
+import { ChangePrivateUpstreamsCommand } from "./commands/impl/change-private-upstreams.command";
+import { ChangeTermsRiskProvidersCommand } from "./commands/impl/change-terms-risk-providers.command";
+import { ResetErrorCaptureRetentionCommand } from "./commands/impl/reset-error-capture-retention.command";
+import { ResetPrivateUpstreamsCommand } from "./commands/impl/reset-private-upstreams.command";
+import { ResetTermsRiskProvidersCommand } from "./commands/impl/reset-terms-risk-providers.command";
 import type {
   ErrorCaptureRetention,
   ErrorCaptureRetentionImpact,
-} from "./models/error-capture-retention.js";
-import type { PrivateUpstreamsSetting } from "./models/private-upstreams.js";
-import type { TermsRiskProvidersSetting } from "./models/terms-risk-providers.js";
-import { CountCapturesExpiredByQuery } from "./queries/impl/count-captures-expired-by.query.js";
-import { ShowErrorCaptureRetentionQuery } from "./queries/impl/show-error-capture-retention.query.js";
-import { ShowPrivateUpstreamsQuery } from "./queries/impl/show-private-upstreams.query.js";
-import { ShowTermsRiskProvidersQuery } from "./queries/impl/show-terms-risk-providers.query.js";
+} from "./models/error-capture-retention";
+import type { PrivateUpstreamsSetting } from "./models/private-upstreams";
+import type { TermsRiskProvidersSetting } from "./models/terms-risk-providers";
+import { CountCapturesExpiredByQuery } from "./queries/impl/count-captures-expired-by.query";
+import { ShowErrorCaptureRetentionQuery } from "./queries/impl/show-error-capture-retention.query";
+import { ShowPrivateUpstreamsQuery } from "./queries/impl/show-private-upstreams.query";
+import { ShowTermsRiskProvidersQuery } from "./queries/impl/show-terms-risk-providers.query";
 import {
   type NewPrivateUpstreams,
   newPrivateUpstreamsSchema,
-} from "./schemas/private-upstreams.schema.js";
+} from "./schemas/private-upstreams.schema";
 import {
   type NewRetention,
   newRetentionSchema,
   type RetentionImpactQuery,
   retentionImpactQuerySchema,
-} from "./schemas/retention-days.schema.js";
+} from "./schemas/retention-days.schema";
 import {
   type NewTermsRiskProviders,
   newTermsRiskProvidersSchema,
-} from "./schemas/terms-risk-providers.schema.js";
+} from "./schemas/terms-risk-providers.schema";
 
 @DashboardController("settings")
 export class SettingsController {

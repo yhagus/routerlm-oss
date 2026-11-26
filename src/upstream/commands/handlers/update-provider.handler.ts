@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, NotFoundException } from "@nest
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, count, eq, inArray } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations.js";
+import type { Database, Transaction } from "@/db/schemas/relations";
 import {
   type ProviderEndpoint,
   providerAccounts,
@@ -10,16 +10,16 @@ import {
   quotaMeters,
   type ServiceTierValues,
   upstreamModels,
-} from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { serviceTiersWithoutWireValue } from "@/catalog/schemas/catalog.schema.js";
-import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols.js";
+} from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { serviceTiersWithoutWireValue } from "@/catalog/schemas/catalog.schema";
+import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols";
 import {
   assertQuirksFitEndpoints,
   assertServiceTierValuesFitEndpoints,
   type Provider,
-} from "@/upstream/models/provider.js";
-import { UpdateProviderCommand } from "@/upstream/commands/impl/update-provider.command.js";
+} from "@/upstream/models/provider";
+import { UpdateProviderCommand } from "@/upstream/commands/impl/update-provider.command";
 
 @CommandHandler(UpdateProviderCommand)
 export class UpdateProviderHandler implements ICommandHandler<UpdateProviderCommand> {

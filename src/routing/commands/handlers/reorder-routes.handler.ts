@@ -2,12 +2,12 @@ import { BadRequestException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { routes } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ModelDetail } from "@/routing/models/model.js";
-import { findModelDetail } from "@/routing/models/model-detail.js";
-import { ReorderRoutesCommand } from "@/routing/commands/impl/reorder-routes.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { routes } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { ModelDetail } from "@/routing/models/model";
+import { findModelDetail } from "@/routing/models/model-detail";
+import { ReorderRoutesCommand } from "@/routing/commands/impl/reorder-routes.command";
 
 @CommandHandler(ReorderRoutesCommand)
 export class ReorderRoutesHandler implements ICommandHandler<ReorderRoutesCommand> {

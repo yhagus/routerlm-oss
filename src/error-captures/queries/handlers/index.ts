@@ -1,4 +1,4 @@
-import { ListErrorCapturesHandler } from "./list-error-captures.handler.js";
-import { ShowErrorCaptureHandler } from "./show-error-capture.handler.js";
+import { ListErrorCapturesHandler } from "./list-error-captures.handler";
+import { ShowErrorCaptureHandler } from "./show-error-capture.handler";
 
 export const QueryHandlers = [ListErrorCapturesHandler, ShowErrorCaptureHandler];

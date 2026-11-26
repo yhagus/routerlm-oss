@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { StopReason, TokenUsage } from "@/inference/models/internal-format.js";
+import type { StopReason, TokenUsage } from "@/inference/models/internal-format";
 
 export const usageSchema = z.object({
   prompt_tokens: z.number().nullish(),

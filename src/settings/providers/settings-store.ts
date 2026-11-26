@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import { settings } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
+import { settings } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
 import {
   type BooleanSettingKey,
   type IntegerSettingKey,
@@ -10,7 +10,7 @@ import {
   type SettingKey,
   type SettingValueOf,
   settingValueSchema,
-} from "@/settings/models/setting-definitions.js";
+} from "@/settings/models/setting-definitions";
 
 export interface SettingValue<Value = number> {
   value: Value;

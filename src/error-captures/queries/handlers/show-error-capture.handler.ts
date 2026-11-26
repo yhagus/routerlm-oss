@@ -2,11 +2,11 @@ import { NotFoundException } from "@nestjs/common";
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { errorCaptures } from "@/db/schemas/index.js";
-import type { ErrorCaptureDetail } from "@/error-captures/models/error-capture.js";
-import { selectSummaryRows, summaryOf } from "@/error-captures/models/error-capture-summaries.js";
-import { ShowErrorCaptureQuery } from "@/error-captures/queries/impl/show-error-capture.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { errorCaptures } from "@/db/schemas";
+import type { ErrorCaptureDetail } from "@/error-captures/models/error-capture";
+import { selectSummaryRows, summaryOf } from "@/error-captures/models/error-capture-summaries";
+import { ShowErrorCaptureQuery } from "@/error-captures/queries/impl/show-error-capture.query";
 
 @QueryHandler(ShowErrorCaptureQuery)
 export class ShowErrorCaptureHandler implements IQueryHandler<ShowErrorCaptureQuery> {

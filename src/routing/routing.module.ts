@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { SnapshotModule } from "@/snapshot/snapshot.module.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { ModelsController } from "./models.controller.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
-import { RoutesController } from "./routes.controller.js";
+import { SnapshotModule } from "@/snapshot/snapshot.module";
+import { CommandHandlers } from "./commands/handlers";
+import { ModelsController } from "./models.controller";
+import { QueryHandlers } from "./queries/handlers";
+import { RoutesController } from "./routes.controller";
 
 @Module({
   imports: [SnapshotModule],

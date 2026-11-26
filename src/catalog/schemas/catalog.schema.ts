@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { providerUrlSchema } from "@/libs/schemas/provider-url.schema.js";
+import { providerUrlSchema } from "@/libs/schemas/provider-url.schema";
 import {
   AUTH_STYLES,
   CAPABILITIES,
@@ -15,18 +15,18 @@ import {
   type ServiceTierValues,
   type TierPrices,
   UPSTREAM_PROTOCOLS,
-} from "@/db/schemas/index.js";
+} from "@/db/schemas";
 import {
   REASONING_EFFORTS,
   SERVICE_TIERS,
   type ServiceTier,
-} from "@/inference/models/internal-format.js";
+} from "@/inference/models/internal-format";
 import {
   protocolsOf,
   quirksUnderstoodBy,
   sendsServiceTiers,
-} from "@/libs/models/provider-protocols.js";
-import { isIanaTimeZone, rangeSchema } from "@/pricing-windows/schemas/pricing-window.schema.js";
+} from "@/libs/models/provider-protocols";
+import { isIanaTimeZone, rangeSchema } from "@/pricing-windows/schemas/pricing-window.schema";
 
 const UNFORWARDABLE_CLIENT_HEADERS = [
   "authorization",

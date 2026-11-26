@@ -1,11 +1,11 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { integrations } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
-import { DisableIntegrationCommand } from "@/integrations/commands/impl/disable-integration.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { integrations } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { integrationNotFound } from "@/integrations/models/integration-not-found";
+import { DisableIntegrationCommand } from "@/integrations/commands/impl/disable-integration.command";
 
 @CommandHandler(DisableIntegrationCommand)
 export class DisableIntegrationHandler implements ICommandHandler<DisableIntegrationCommand> {

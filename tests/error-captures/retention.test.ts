@@ -3,16 +3,16 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { eq, sql } from "drizzle-orm";
 import { getDrizzleToken } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations.js";
-import { errorCaptures, settings, usageLogs } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { errorCaptures, settings, usageLogs } from "@/db/schemas";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { WorkerModule } = await import("@/worker.module.js");
-const { ERROR_CAPTURES_QUEUE } = await import("@/queue/models/queue-names.js");
+const { WorkerModule } = await import("@/worker.module");
+const { ERROR_CAPTURES_QUEUE } = await import("@/queue/models/queue-names");
 const { ErrorCaptureRetention, ERROR_CAPTURE_RETENTION_SCHEDULER } =
-  await import("@/error-captures/jobs/error-capture-retention.js");
+  await import("@/error-captures/jobs/error-capture-retention");
 
 const NOW = new Date("2026-11-15T12:00:00Z");
 const DAY_MS = 24 * 60 * 60 * 1000;

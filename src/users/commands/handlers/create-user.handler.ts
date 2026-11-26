@@ -2,10 +2,10 @@ import { PasswordHasher } from "@nestjs/authentication";
 import { ConflictException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations.js";
-import { users } from "@/db/schemas/index.js";
-import { normalizeEmail, type User, userColumns } from "@/users/models/user.js";
-import { CreateUserCommand } from "@/users/commands/impl/create-user.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { users } from "@/db/schemas";
+import { normalizeEmail, type User, userColumns } from "@/users/models/user";
+import { CreateUserCommand } from "@/users/commands/impl/create-user.command";
 
 const UNIQUE_VIOLATION = "23505";
 

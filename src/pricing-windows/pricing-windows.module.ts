@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { SnapshotModule } from "@/snapshot/snapshot.module.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { PricingWindowsController } from "./pricing-windows.controller.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
-import { UpstreamModelPricingWindowsController } from "./upstream-model-pricing-windows.controller.js";
+import { SnapshotModule } from "@/snapshot/snapshot.module";
+import { CommandHandlers } from "./commands/handlers";
+import { PricingWindowsController } from "./pricing-windows.controller";
+import { QueryHandlers } from "./queries/handlers";
+import { UpstreamModelPricingWindowsController } from "./upstream-model-pricing-windows.controller";
 
 @Module({
   imports: [SnapshotModule],

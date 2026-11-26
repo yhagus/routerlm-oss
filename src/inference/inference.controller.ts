@@ -15,42 +15,39 @@ import {
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
 import { FileFieldsInterceptor, FileInterceptor } from "@nestjs/platform-node";
-import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
-import { clientConnectionOf } from "@/libs/models/client-connection.js";
-import { eventStreamResponse } from "@/libs/models/event-stream-response.js";
-import type { ClientModelList } from "./models/client-model.js";
-import type { InferenceResult } from "./models/inference.js";
-import type { MediaReply } from "./models/media-kind.js";
-import { RunInferenceCommand } from "./commands/impl/run-inference.command.js";
-import { RunMediaInferenceCommand } from "./commands/impl/run-media-inference.command.js";
-import { SubmitVideoJobCommand } from "./commands/impl/submit-video-job.command.js";
-import { DownloadVideoContentQuery } from "./queries/impl/download-video-content.query.js";
-import { ListClientModelsQuery } from "./queries/impl/list-client-models.query.js";
-import { RetrieveVideoJobQuery } from "./queries/impl/retrieve-video-job.query.js";
-import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter.js";
-import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter.js";
-import { MEDIA_UPLOAD_OPTIONS, type MediaUpload } from "./models/media-upload.js";
+import type { ApiKeyPrincipal } from "@/api-keys/models/api-key";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
+import { clientConnectionOf } from "@/libs/models/client-connection";
+import { eventStreamResponse } from "@/libs/models/event-stream-response";
+import type { ClientModelList } from "./models/client-model";
+import type { InferenceResult } from "./models/inference";
+import type { MediaReply } from "./models/media-kind";
+import { RunInferenceCommand } from "./commands/impl/run-inference.command";
+import { RunMediaInferenceCommand } from "./commands/impl/run-media-inference.command";
+import { SubmitVideoJobCommand } from "./commands/impl/submit-video-job.command";
+import { DownloadVideoContentQuery } from "./queries/impl/download-video-content.query";
+import { ListClientModelsQuery } from "./queries/impl/list-client-models.query";
+import { RetrieveVideoJobQuery } from "./queries/impl/retrieve-video-job.query";
+import { anthropicMessagesClientConverter } from "./protocols/anthropic-messages/anthropic-messages-client-converter";
+import { openAiChatClientConverter } from "./protocols/openai-chat/openai-chat-client-converter";
+import { MEDIA_UPLOAD_OPTIONS, type MediaUpload } from "./models/media-upload";
 import {
   IMAGE_EDIT_FILE_FIELDS,
   type ImageEditFiles,
   imageEditBodyOf,
-} from "./protocols/openai-images/openai-image-edits-form.js";
+} from "./protocols/openai-images/openai-image-edits-form";
 import {
   openAiImageEditsClientContract,
   openAiImagesClientContract,
-} from "./protocols/openai-images/openai-images-client-contract.js";
-import {
-  VIDEO_FIRST_FRAME_FIELD,
-  videoBodyOf,
-} from "./protocols/openai-videos/openai-video-form.js";
-import { openAiSpeechClientContract } from "./protocols/openai-speech/openai-speech-client-contract.js";
+} from "./protocols/openai-images/openai-images-client-contract";
+import { VIDEO_FIRST_FRAME_FIELD, videoBodyOf } from "./protocols/openai-videos/openai-video-form";
+import { openAiSpeechClientContract } from "./protocols/openai-speech/openai-speech-client-contract";
 import {
   TRANSCRIPTION_FILE_FIELD,
   transcriptionBodyOf,
-} from "./protocols/openai-transcription/openai-transcription-form.js";
-import { openAiTranscriptionClientContract } from "./protocols/openai-transcription/openai-transcription-client-contract.js";
-import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter.js";
+} from "./protocols/openai-transcription/openai-transcription-form";
+import { openAiTranscriptionClientContract } from "./protocols/openai-transcription/openai-transcription-client-contract";
+import { openAiResponsesClientConverter } from "./protocols/openai-responses/openai-responses-client-converter";
 
 const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
 

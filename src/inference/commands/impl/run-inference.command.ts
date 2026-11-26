@@ -1,12 +1,12 @@
 import { Command } from "@nestjs/cqrs";
-import type { ClientConnection } from "@/libs/models/client-connection.js";
+import type { ClientConnection } from "@/libs/models/client-connection";
 import type {
   InferenceCaller,
   InferenceResult,
   RunInferenceTarget,
   UsageListener,
-} from "@/inference/models/inference.js";
-import type { ClientProtocolConverter } from "@/inference/protocols/client-protocol-converter.js";
+} from "@/inference/models/inference";
+import type { ClientProtocolConverter } from "@/inference/protocols/client-protocol-converter";
 
 export class RunInferenceCommand extends Command<InferenceResult> {
   constructor(

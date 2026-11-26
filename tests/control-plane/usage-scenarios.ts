@@ -1,12 +1,12 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
-import { usageLogs } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { createApiKey } from "@tests/support/api-keys.js";
-import type { ControlPlaneClient } from "@tests/support/control-plane-client.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
-import type { ControlPlaneTransport } from "./key-scenarios.js";
+import { usageLogs } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import { createApiKey } from "@tests/support/api-keys";
+import type { ControlPlaneClient } from "@tests/support/control-plane-client";
+import { createIntegration } from "@tests/support/integrations";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import type { ControlPlaneTransport } from "./key-scenarios";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const RECEIVED_AT = new Date("2026-11-20T09:30:00.000Z");

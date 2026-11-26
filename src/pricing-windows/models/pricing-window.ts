@@ -1,6 +1,6 @@
 import { ConflictException } from "@nestjs/common";
-import type { pricingWindows } from "@/db/schemas/index.js";
-import { hasPostgresErrorCode, UNIQUE_VIOLATION } from "@/libs/models/postgres-errors.js";
+import type { pricingWindows } from "@/db/schemas";
+import { hasPostgresErrorCode, UNIQUE_VIOLATION } from "@/libs/models/postgres-errors";
 
 export type PricingWindow = typeof pricingWindows.$inferSelect;
 

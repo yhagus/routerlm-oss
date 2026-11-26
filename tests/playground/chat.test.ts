@@ -2,15 +2,15 @@ import { getQueueToken } from "@nestjs/bullmq";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import type { Queue } from "bullmq";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { upstreamModels } from "@/db/schemas/index.js";
-import { USAGE_QUEUE } from "@/queue/models/queue-names.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
-import { insertOpenAiChatModel, UPSTREAM_MODEL_ID } from "@tests/support/inference.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { upstreamModels } from "@/db/schemas";
+import { USAGE_QUEUE } from "@/queue/models/queue-names";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { UsageJob } from "@/usage/models/usage-job";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import { insertOpenAiChatModel, UPSTREAM_MODEL_ID } from "@tests/support/inference";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

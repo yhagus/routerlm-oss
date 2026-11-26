@@ -4,21 +4,21 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { eq, sql } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { attempts } from "@/db/schemas/index.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
-import { insertOpenAiChatModel } from "@tests/support/inference.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { writtenUsageLog } from "@tests/support/usage-logs.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
+import type { Database } from "@/db/schemas/relations";
+import { attempts } from "@/db/schemas";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import { insertOpenAiChatModel } from "@tests/support/inference";
+import { createIntegration } from "@tests/support/integrations";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { writtenUsageLog } from "@tests/support/usage-logs";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

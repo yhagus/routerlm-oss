@@ -1,10 +1,7 @@
 import type { INestApplicationContext } from "@nestjs/common";
-import { THROTTLE_KEY_PREFIX } from "@/libs/providers/redis-throttler-storage.js";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import {
-  COOLDOWN_KEY_PREFIX,
-  COOLDOWN_VALUE_SEPARATOR,
-} from "@/upstream/providers/cooldown-store.js";
+import { THROTTLE_KEY_PREFIX } from "@/libs/providers/redis-throttler-storage";
+import { RedisConnection } from "@/redis/providers/redis-connection";
+import { COOLDOWN_KEY_PREFIX, COOLDOWN_VALUE_SEPARATOR } from "@/upstream/providers/cooldown-store";
 
 export async function forgetThrottleCounts(app: INestApplicationContext): Promise<void> {
   const { client } = app.get(RedisConnection);

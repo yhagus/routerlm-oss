@@ -40,7 +40,7 @@ RUN bun install --frozen-lockfile --ignore-scripts
 
 COPY . .
 RUN bun run build \
-    && if grep -rlF '"@/' dist; then echo "nest build left @/ imports in dist" >&2; exit 1; fi
+    && if grep -rlE "[\"']@/" dist; then echo "nest build left @/ imports in dist" >&2; exit 1; fi
 
 FROM oven/bun:1.4-slim AS production
 

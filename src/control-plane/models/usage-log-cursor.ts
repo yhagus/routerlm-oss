@@ -1,4 +1,4 @@
-import { ControlPlaneError } from "./control-plane-error.js";
+import { ControlPlaneError } from "./control-plane-error";
 
 export interface UsageLogPosition {
   transactionId: string;

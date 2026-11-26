@@ -5,27 +5,27 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { CqrsModule } from "@nestjs/cqrs";
 import { DrizzleModule } from "@nestjs/drizzle";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { type Env, envSchema } from "@/config/schemas/env.schema.js";
-import { ControlPlaneModule } from "@/control-plane/control-plane.module.js";
-import { relations } from "@/db/schemas/relations.js";
+import { type Env, envSchema } from "@/config/schemas/env.schema";
+import { ControlPlaneModule } from "@/control-plane/control-plane.module";
+import { relations } from "@/db/schemas/relations";
 import {
   ErrorCaptureRetention,
   ErrorCaptureRetentionProcessor,
-} from "@/error-captures/jobs/error-capture-retention.js";
-import { LibsModule } from "@/libs/libs.module.js";
-import { PingProcessor } from "@/queue/jobs/ping.processor.js";
-import { QUEUE_NAMES } from "@/queue/models/queue-names.js";
+} from "@/error-captures/jobs/error-capture-retention";
+import { LibsModule } from "@/libs/libs.module";
+import { PingProcessor } from "@/queue/jobs/ping.processor";
+import { QUEUE_NAMES } from "@/queue/models/queue-names";
 import {
   QuotaReadingSchedule,
   QuotaReadingScheduleProcessor,
-} from "@/quota-meters/jobs/quota-reading-schedule.js";
-import { QuotaMetersModule } from "@/quota-meters/quota-meters.module.js";
-import { SettingsModule } from "@/settings/settings.module.js";
-import { SpendLimitsModule } from "@/spend-limits/spend-limits.module.js";
-import { OauthSignInPollingProcessor } from "@/upstream/jobs/oauth-sign-in-polling.js";
-import { UpstreamModule } from "@/upstream/upstream.module.js";
-import { UsageWriter } from "@/usage/providers/usage-writer.js";
-import { UsageProcessor } from "@/usage/jobs/usage.processor.js";
+} from "@/quota-meters/jobs/quota-reading-schedule";
+import { QuotaMetersModule } from "@/quota-meters/quota-meters.module";
+import { SettingsModule } from "@/settings/settings.module";
+import { SpendLimitsModule } from "@/spend-limits/spend-limits.module";
+import { OauthSignInPollingProcessor } from "@/upstream/jobs/oauth-sign-in-polling";
+import { UpstreamModule } from "@/upstream/upstream.module";
+import { UsageWriter } from "@/usage/providers/usage-writer";
+import { UsageProcessor } from "@/usage/jobs/usage.processor";
 
 @Module({
   imports: [

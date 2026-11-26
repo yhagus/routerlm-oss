@@ -1,7 +1,7 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
-import type { Database } from "@/db/schemas/relations.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
+import type { Database } from "@/db/schemas/relations";
 import {
   apiKeys,
   type AuthStyle,
@@ -13,10 +13,10 @@ import {
   routes,
   type UpstreamProtocol,
   upstreamModels,
-} from "@/db/schemas/index.js";
-import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+} from "@/db/schemas";
+import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
 
 export const UPSTREAM_KEY = "sk-upstream-secret-0123456789";
 export const UPSTREAM_MODEL_ID = "acme-large-2026";

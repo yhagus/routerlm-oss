@@ -1,6 +1,6 @@
 import { getTableColumns } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
-import { attempts, usageLogs } from "@/db/schemas/index.js";
+import { attempts, usageLogs } from "@/db/schemas";
 
 const SNAPSHOT_NAME_COLUMNS = [
   "model_name",

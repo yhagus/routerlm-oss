@@ -12,16 +12,16 @@ import type {
   TokenUsage,
   ToolChoice,
   UserContentPart,
-} from "@/inference/models/internal-format.js";
-import { isJsonObject } from "@/inference/protocols/json-object.js";
-import type { ServerSentEvent } from "@/inference/protocols/server-sent-events.js";
+} from "@/inference/models/internal-format";
+import { isJsonObject } from "@/inference/protocols/json-object";
+import type { ServerSentEvent } from "@/inference/protocols/server-sent-events";
 import {
   type UpstreamHttpRequest,
   UpstreamProtocolError,
   type UpstreamProtocolConverter,
   type UpstreamStreamParser,
   type UpstreamTarget,
-} from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/protocols/upstream-protocol-converter";
 
 const RESPONSES_PATH = "/responses";
 const ENCRYPTED_REASONING = "reasoning.encrypted_content";

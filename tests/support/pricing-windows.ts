@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
-import type { IsoWeekday } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { truncateTables } from "./truncate.js";
+import type { IsoWeekday } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import { truncateTables } from "./truncate";
 
 export async function deleteAllPricingWindows(db: Database): Promise<void> {
   await truncateTables(db, sql.raw("pricing_windows"));

@@ -1,6 +1,6 @@
 import type { INestApplicationContext } from "@nestjs/common";
-import { SettingsStore } from "@/settings/providers/settings-store.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { SettingsStore } from "@/settings/providers/settings-store";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 
 export async function allowPrivateUpstreams(
   app: INestApplicationContext,

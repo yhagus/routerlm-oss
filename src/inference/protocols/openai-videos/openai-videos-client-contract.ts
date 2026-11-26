@@ -1,12 +1,12 @@
 import { z } from "zod";
-import type { UpstreamProtocol } from "@/db/schemas/index.js";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { UpstreamProtocol } from "@/db/schemas";
+import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
+import { GatewayError } from "@/inference/models/gateway-error";
 import {
   jsonReply,
   type MediaClientContract,
   type MediaResponseContext,
-} from "@/inference/models/media-kind.js";
+} from "@/inference/models/media-kind";
 import {
   requiredCapabilitiesOf,
   type SubmittedVideoJob,
@@ -19,15 +19,15 @@ import {
   type VideoTaskState,
   type VideoUpstreamProtocol,
   videoFormatOfSize,
-} from "@/inference/models/video-generation.js";
+} from "@/inference/models/video-generation";
 import {
   type VideoHandles,
   type VideoJobHandle,
   videoJobOwnerOf,
-} from "@/inference/providers/video-handles.js";
-import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/dashscope-video-protocol.js";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
-import { inputImageCheck } from "@/inference/protocols/openai-images/openai-images-client-contract.js";
+} from "@/inference/providers/video-handles";
+import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/dashscope-video-protocol";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
+import { inputImageCheck } from "@/inference/protocols/openai-images/openai-images-client-contract";
 
 const DEFAULT_SECONDS = 5;
 const DEFAULT_RESOLUTION: VideoResolution = "720P";

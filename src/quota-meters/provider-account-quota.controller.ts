@@ -1,10 +1,10 @@
 import { Body, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { ReadProviderAccountQuotaCommand } from "./commands/impl/read-provider-account-quota.command.js";
-import { UseUsageResetCommand } from "./commands/impl/use-usage-reset.command.js";
-import type { ProviderAccountQuota } from "./models/quota-meter.js";
-import { type UsageResetSpend, usageResetSpendSchema } from "./schemas/usage-reset-spend.schema.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { ReadProviderAccountQuotaCommand } from "./commands/impl/read-provider-account-quota.command";
+import { UseUsageResetCommand } from "./commands/impl/use-usage-reset.command";
+import type { ProviderAccountQuota } from "./models/quota-meter";
+import { type UsageResetSpend, usageResetSpendSchema } from "./schemas/usage-reset-spend.schema";
 
 @DashboardController("provider-accounts")
 export class ProviderAccountQuotaController {

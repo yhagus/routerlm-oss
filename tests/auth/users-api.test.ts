@@ -1,12 +1,12 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations";
 import {
   createTestApp,
   deleteAllUsers,
   sessionCookieOf,
   setUpFirstUser,
-} from "@tests/support/test-app.js";
+} from "@tests/support/test-app";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const GRACE = { email: "grace@example.com", password: "grace's password" };

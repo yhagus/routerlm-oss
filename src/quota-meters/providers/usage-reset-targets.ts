@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers } from "@/db/schemas";
 import {
   type QuotaReaderProvider,
   quotaReaderProviderOf,
-} from "@/quota-meters/models/quota-reader.js";
-import type { UsageResetPort } from "@/quota-meters/models/usage-reset.js";
-import { QuotaReaders } from "./quota-readers.js";
+} from "@/quota-meters/models/quota-reader";
+import type { UsageResetPort } from "@/quota-meters/models/usage-reset";
+import { QuotaReaders } from "./quota-readers";
 
 export interface UsageResetTarget {
   port: UsageResetPort;

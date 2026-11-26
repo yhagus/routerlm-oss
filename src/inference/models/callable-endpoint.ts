@@ -1,6 +1,6 @@
-import type { UpstreamProtocol } from "@/db/schemas/index.js";
-import { endpointOf } from "@/inference/models/route-selection.js";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
+import type { UpstreamProtocol } from "@/db/schemas";
+import { endpointOf } from "@/inference/models/route-selection";
+import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
 
 export interface CallableEndpoint<Adapter> {
   protocol: UpstreamProtocol;

@@ -4,7 +4,7 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { asc, eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations";
 import {
   apiKeys,
   attempts,
@@ -13,30 +13,30 @@ import {
   upstreamModels,
   usageLogs,
   users,
-} from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+} from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   anthropicMessagesFixture,
   FakeUpstream,
   openAiChatFixture,
-} from "@tests/support/fake-upstream.js";
+} from "@tests/support/fake-upstream";
 import {
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   setProviderQuirks,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference.js";
-import { portOf } from "@tests/support/port-of.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
+} from "@tests/support/inference";
+import { portOf } from "@tests/support/port-of";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const PROMPT_TEXT = "Which umbrella should I pack for Lisbon?";
 const RESPONSE_TEXT = "Checking the weather.";

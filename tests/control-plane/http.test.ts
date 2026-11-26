@@ -1,14 +1,14 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { httpControlPlaneClient } from "@tests/support/control-plane-client.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
-import { type ControlPlaneTransport, describeKeyScenarios } from "./key-scenarios.js";
-import { describeLastUsedScenarios } from "./last-used-scenarios.js";
-import { describeModelScenarios } from "./model-scenarios.js";
-import { describeUsageScenarios } from "./usage-scenarios.js";
+import type { Database } from "@/db/schemas/relations";
+import { httpControlPlaneClient } from "@tests/support/control-plane-client";
+import { createIntegration } from "@tests/support/integrations";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import { type ControlPlaneTransport, describeKeyScenarios } from "./key-scenarios";
+import { describeLastUsedScenarios } from "./last-used-scenarios";
+import { describeModelScenarios } from "./model-scenarios";
+import { describeUsageScenarios } from "./usage-scenarios";
 
 const HTTP_TRANSPORT: ControlPlaneTransport = {
   name: "HTTP",

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { type Lock, Locks } from "@nestjs/locks";
-import { CredentialUnavailableError } from "@/upstream/models/provider-account-credential.js";
+import { CredentialUnavailableError } from "@/upstream/models/provider-account-credential";
 
 const LOCK_KEY_PREFIX = "oauth-refresh:";
 const LOCK_WAIT = "45s";

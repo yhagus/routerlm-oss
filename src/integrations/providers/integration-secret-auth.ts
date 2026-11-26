@@ -9,9 +9,9 @@ import {
 import { type ExecutionContext, Injectable, Logger } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { integrations } from "@/db/schemas/index.js";
-import type { IntegrationPrincipal } from "@/integrations/models/integration.js";
+import type { Database } from "@/db/schemas/relations";
+import { integrations } from "@/db/schemas";
+import type { IntegrationPrincipal } from "@/integrations/models/integration";
 
 export const INTEGRATION_SECRET_PREFIX = "rlmi";
 

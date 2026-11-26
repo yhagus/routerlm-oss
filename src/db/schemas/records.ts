@@ -11,9 +11,9 @@ import {
   text,
   uuid,
 } from "drizzle-orm/pg-core";
-import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
-import { at, createdAt, id } from "./columns.js";
-import { MODEL_KINDS, type ModelKind, UPSTREAM_PROTOCOLS } from "./upstream.js";
+import { SERVICE_TIERS } from "@/inference/models/internal-format";
+import { at, createdAt, id } from "./columns";
+import { MODEL_KINDS, type ModelKind, UPSTREAM_PROTOCOLS } from "./upstream";
 
 export const CLIENT_PROTOCOLS = [
   "openai-chat",

@@ -1,27 +1,27 @@
 import { BullModule } from "@nestjs/bullmq";
 import { Module } from "@nestjs/common";
 import { HttpClientModule } from "@nestjs/http-client";
-import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
-import { OAUTH_SIGN_INS_QUEUE } from "@/queue/models/queue-names.js";
-import { RedisModule } from "@/redis/redis.module.js";
-import { SnapshotModule } from "@/snapshot/snapshot.module.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { OauthSignInPolling } from "./jobs/oauth-sign-in-polling.js";
-import { ProviderAccountSignInsController } from "./provider-account-sign-ins.controller.js";
-import { CooldownStore } from "./providers/cooldown-store.js";
-import { KimiCodeLoginClient } from "./providers/kimi-code-login-client.js";
-import { OauthLoginClient } from "./providers/oauth-login-client.js";
-import { OAUTH_LOGIN_HTTP_CLIENT, OAUTH_LOGIN_TIMEOUT_MS } from "./providers/oauth-login-http.js";
-import { OpenAiCodexLoginClient } from "./providers/openai-codex-login-client.js";
-import { OauthRefreshLock } from "./providers/oauth-refresh-lock.js";
-import { OauthSignInStore } from "./providers/oauth-sign-in-store.js";
-import { ProviderAccountCredentials } from "./providers/provider-account-credentials.js";
-import { ProviderAccountHealth } from "./providers/provider-account-health.js";
-import { ProviderAccountsController } from "./provider-accounts.controller.js";
-import { ProviderKeyCipher, providerKeyCipherProvider } from "./providers/provider-key-cipher.js";
-import { ProvidersController } from "./providers.controller.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
-import { UpstreamModelsController } from "./upstream-models.controller.js";
+import { OutboundFetch } from "@/libs/providers/outbound-fetch";
+import { OAUTH_SIGN_INS_QUEUE } from "@/queue/models/queue-names";
+import { RedisModule } from "@/redis/redis.module";
+import { SnapshotModule } from "@/snapshot/snapshot.module";
+import { CommandHandlers } from "./commands/handlers";
+import { OauthSignInPolling } from "./jobs/oauth-sign-in-polling";
+import { ProviderAccountSignInsController } from "./provider-account-sign-ins.controller";
+import { CooldownStore } from "./providers/cooldown-store";
+import { KimiCodeLoginClient } from "./providers/kimi-code-login-client";
+import { OauthLoginClient } from "./providers/oauth-login-client";
+import { OAUTH_LOGIN_HTTP_CLIENT, OAUTH_LOGIN_TIMEOUT_MS } from "./providers/oauth-login-http";
+import { OpenAiCodexLoginClient } from "./providers/openai-codex-login-client";
+import { OauthRefreshLock } from "./providers/oauth-refresh-lock";
+import { OauthSignInStore } from "./providers/oauth-sign-in-store";
+import { ProviderAccountCredentials } from "./providers/provider-account-credentials";
+import { ProviderAccountHealth } from "./providers/provider-account-health";
+import { ProviderAccountsController } from "./provider-accounts.controller";
+import { ProviderKeyCipher, providerKeyCipherProvider } from "./providers/provider-key-cipher";
+import { ProvidersController } from "./providers.controller";
+import { QueryHandlers } from "./queries/handlers";
+import { UpstreamModelsController } from "./upstream-models.controller";
 
 @Module({
   imports: [

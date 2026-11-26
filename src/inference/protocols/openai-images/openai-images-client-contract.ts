@@ -1,21 +1,21 @@
 import { z } from "zod";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
+import { GatewayError } from "@/inference/models/gateway-error";
 import {
   clientSizeOf,
   type GeneratedImages,
   type ImageGenerationRequest,
   type ImageSize,
   providerSizeOf,
-} from "@/inference/models/image-generation.js";
+} from "@/inference/models/image-generation";
 import {
   jsonReply,
   type MediaClientContract,
   type MediaReply,
   type MediaResponseContext,
-} from "@/inference/models/media-kind.js";
-import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol.js";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
+} from "@/inference/models/media-kind";
+import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
 
 const MAX_IMAGES_PER_REQUEST = 10;
 export const MAX_INPUT_IMAGES_PER_EDIT = 16;

@@ -1,9 +1,9 @@
-import type { UsageJob } from "@/usage/models/usage-job.js";
-import { ClientCancelledError } from "./attempt-failure.js";
-import { GatewayError } from "./gateway-error.js";
-import type { InferenceCaller } from "./inference.js";
-import type { PromptCacheKeyOwner } from "./prompt-cache-key.js";
-import type { UsageMeter } from "./usage-meter.js";
+import type { UsageJob } from "@/usage/models/usage-job";
+import { ClientCancelledError } from "./attempt-failure";
+import { GatewayError } from "./gateway-error";
+import type { InferenceCaller } from "./inference";
+import type { PromptCacheKeyOwner } from "./prompt-cache-key";
+import type { UsageMeter } from "./usage-meter";
 
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 const CLIENT_CLOSED_REQUEST = 499;

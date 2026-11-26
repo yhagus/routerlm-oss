@@ -1,8 +1,8 @@
 import { ConflictException } from "@nestjs/common";
 import { asc, eq, type SQL } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors.js";
-import { models, routes, upstreamModels } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors";
+import { models, routes, upstreamModels } from "@/db/schemas";
 
 async function findModelsRoutingTo(
   db: Database,

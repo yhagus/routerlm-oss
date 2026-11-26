@@ -1,18 +1,18 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, asc, eq, type SQL, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { usageLogs } from "@/db/schemas";
 import type {
   IntegrationUsageLog,
   IntegrationUsageLogPage,
-} from "@/control-plane/models/integration-usage-log.js";
+} from "@/control-plane/models/integration-usage-log";
 import {
   cursorOf,
   positionOf,
   type UsageLogPosition,
-} from "@/control-plane/models/usage-log-cursor.js";
-import { ListIntegrationUsageLogsQuery } from "@/control-plane/queries/impl/list-integration-usage-logs.query.js";
+} from "@/control-plane/models/usage-log-cursor";
+import { ListIntegrationUsageLogsQuery } from "@/control-plane/queries/impl/list-integration-usage-logs.query";
 
 const INTEGRATION_USAGE_LOG_COLUMNS = {
   id: usageLogs.id,

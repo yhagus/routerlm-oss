@@ -6,8 +6,8 @@ import {
   InjectHttpClient,
 } from "@nestjs/http-client";
 import { z } from "zod";
-import { withoutTrailingSlash } from "@/libs/models/url.js";
-import { codexCliHeaders } from "@/upstream/models/codex-cli-identity.js";
+import { withoutTrailingSlash } from "@/libs/models/url";
+import { codexCliHeaders } from "@/upstream/models/codex-cli-identity";
 import {
   type DeviceAuthorization,
   type OauthLoginEndpoint,
@@ -15,11 +15,11 @@ import {
   type PendingDeviceCode,
   type TokenPoll,
   type TokenRefresh,
-} from "@/upstream/models/oauth-device-grant.js";
-import { codexAccountOf, secondsUntilExpiryOf } from "@/upstream/models/openai-codex-tokens.js";
-import type { OauthTokens } from "@/upstream/models/provider-account.js";
-import type { OauthFlowLoginClient } from "./oauth-flow-login-client.js";
-import { OAUTH_LOGIN_HTTP_CLIENT, REFRESH_RETRY } from "./oauth-login-http.js";
+} from "@/upstream/models/oauth-device-grant";
+import { codexAccountOf, secondsUntilExpiryOf } from "@/upstream/models/openai-codex-tokens";
+import type { OauthTokens } from "@/upstream/models/provider-account";
+import type { OauthFlowLoginClient } from "./oauth-flow-login-client";
+import { OAUTH_LOGIN_HTTP_CLIENT, REFRESH_RETRY } from "./oauth-login-http";
 
 type OpenAiCodexEndpoint = Extract<OauthLoginEndpoint, { flow: "openai-codex" }>;
 

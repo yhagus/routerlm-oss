@@ -1,6 +1,6 @@
 import { defineRelations } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import * as schema from "./index.js";
+import * as schema from "@/db/schemas";
 
 export const relations = defineRelations(schema, (r) => ({
   users: {

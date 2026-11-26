@@ -1,4 +1,4 @@
-import type { FakeReply } from "./fake-upstream.js";
+import type { FakeReply } from "./fake-upstream";
 
 export const REMAINS_PATH = "/v1/token_plan/remains";
 

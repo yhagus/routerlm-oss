@@ -1,21 +1,21 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { CAPABILITIES, type Capability } from "@/db/schemas/index.js";
+import { CAPABILITIES, type Capability } from "@/db/schemas";
 import {
   isRouteUsable,
   type SnapshotModel,
   type SnapshotRoute,
   type SnapshotUpstreamModel,
   standardPricesOf,
-} from "@/snapshot/models/snapshot.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices.js";
-import { validityInstantsOf } from "@/pricing-windows/models/validity-period.js";
+} from "@/snapshot/models/snapshot";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { resolvedWindowPrices } from "@/pricing-windows/models/resolved-window-prices";
+import { validityInstantsOf } from "@/pricing-windows/models/validity-period";
 import type {
   IntegrationModel,
   IntegrationPricingWindow,
   ModelPrices,
-} from "@/control-plane/models/integration-model.js";
-import { ListIntegrationModelsQuery } from "@/control-plane/queries/impl/list-integration-models.query.js";
+} from "@/control-plane/models/integration-model";
+import { ListIntegrationModelsQuery } from "@/control-plane/queries/impl/list-integration-models.query";
 
 @QueryHandler(ListIntegrationModelsQuery)
 export class ListIntegrationModelsHandler implements IQueryHandler<ListIntegrationModelsQuery> {

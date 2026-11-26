@@ -1,12 +1,12 @@
 import { and, asc, gt, inArray, isNull, or, type SQL } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { usageResets } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { usageResets } from "@/db/schemas";
 import {
   CredentialUnavailableError,
   OauthLoginRefusedError,
   type ProviderAccountCredential,
-} from "@/upstream/models/provider-account-credential.js";
-import { type QuotaReaderProvider, QuotaReadError } from "./quota-reader.js";
+} from "@/upstream/models/provider-account-credential";
+import { type QuotaReaderProvider, QuotaReadError } from "./quota-reader";
 
 export type UsageResetReading = Omit<
   typeof usageResets.$inferSelect,

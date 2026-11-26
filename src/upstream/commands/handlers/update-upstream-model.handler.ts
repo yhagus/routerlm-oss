@@ -2,18 +2,18 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providers, routes, upstreamModels } from "@/db/schemas/index.js";
-import { attachedPricingWindowNames } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import type { Database } from "@/db/schemas/relations";
+import { providers, routes, upstreamModels } from "@/db/schemas";
+import { attachedPricingWindowNames } from "@/pricing-windows/models/upstream-model-pricing-windows";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   assertProtocolsFitProvider,
   assertProviderServesKind,
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
   type UpstreamModel,
-} from "@/upstream/models/upstream-model.js";
-import { UpdateUpstreamModelCommand } from "@/upstream/commands/impl/update-upstream-model.command.js";
+} from "@/upstream/models/upstream-model";
+import { UpdateUpstreamModelCommand } from "@/upstream/commands/impl/update-upstream-model.command";
 
 @CommandHandler(UpdateUpstreamModelCommand)
 export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstreamModelCommand> {

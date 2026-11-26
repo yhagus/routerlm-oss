@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { z } from "zod";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import type { InferenceCaller } from "@/inference/models/inference.js";
-import { VIDEO_RESOLUTIONS } from "@/inference/models/video-generation.js";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import type { InferenceCaller } from "@/inference/models/inference";
+import { VIDEO_RESOLUTIONS } from "@/inference/models/video-generation";
 
 const VIDEO_ID_PREFIX = "video_";
 const VIDEO_HANDLE_PURPOSE = "video-handle";

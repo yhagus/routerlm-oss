@@ -1,19 +1,19 @@
 import { Injectable } from "@nestjs/common";
 import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
 import { z } from "zod";
-import { SECOND_MS } from "@/libs/models/duration.js";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
-import type { QuotaMeterReading } from "@/quota-meters/models/quota-meter.js";
+import { SECOND_MS } from "@/libs/models/duration";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
+import type { QuotaMeterReading } from "@/quota-meters/models/quota-meter";
 import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
   type QuotaReading,
   QuotaReadError,
-} from "@/quota-meters/models/quota-reader.js";
-import { codexBackendRequestOf } from "./openai-codex-backend.js";
-import { OpenAiCodexUsageResets } from "./openai-codex-usage-resets.js";
-import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client.js";
+} from "@/quota-meters/models/quota-reader";
+import { codexBackendRequestOf } from "./openai-codex-backend";
+import { OpenAiCodexUsageResets } from "./openai-codex-usage-resets";
+import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client";
 
 const USAGE_PATH = "/backend-api/wham/usage";
 

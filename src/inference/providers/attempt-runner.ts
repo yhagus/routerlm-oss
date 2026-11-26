@@ -1,37 +1,37 @@
 import { HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
-import type { UpstreamProtocol } from "@/db/schemas/index.js";
-import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot.js";
-import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
-import { SIGN_IN_AGAIN_REASON } from "@/upstream/models/oauth-login.js";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command";
+import type { UpstreamProtocol } from "@/db/schemas";
+import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot";
+import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command";
+import { SIGN_IN_AGAIN_REASON } from "@/upstream/models/oauth-login";
 import {
   apiKeyCredential,
   CredentialUnavailableError,
   OauthLoginRefusedError,
   type ProviderAccountCredential,
-} from "@/upstream/models/provider-account-credential.js";
-import { CooldownStore } from "@/upstream/providers/cooldown-store.js";
+} from "@/upstream/models/provider-account-credential";
+import { CooldownStore } from "@/upstream/providers/cooldown-store";
 import {
   type CredentialReadOptions,
   ProviderAccountCredentials,
-} from "@/upstream/providers/provider-account-credentials.js";
-import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
+} from "@/upstream/providers/provider-account-credentials";
+import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
 import {
   AttemptFailedError,
   exhaustionError,
   gatewayErrorFor,
-} from "@/inference/models/attempt-failure.js";
-import { exhaustedUntilOf } from "@/inference/models/quota-exhausted-error.js";
+} from "@/inference/models/attempt-failure";
+import { exhaustedUntilOf } from "@/inference/models/quota-exhausted-error";
 import {
   type AttemptPath,
   type AttemptTarget,
   attemptTargets,
-} from "@/inference/models/route-selection.js";
-import type { Destination } from "@/inference/models/destination.js";
-import type { SentServiceTier } from "@/inference/models/service-tier.js";
-import type { UsageMeter } from "@/inference/models/usage-meter.js";
+} from "@/inference/models/route-selection";
+import type { Destination } from "@/inference/models/destination";
+import type { SentServiceTier } from "@/inference/models/service-tier";
+import type { UsageMeter } from "@/inference/models/usage-meter";
 
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 

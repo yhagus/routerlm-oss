@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
+import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
 import {
   catalogProviderSchema,
   providerLogoSchema,
@@ -9,8 +9,8 @@ import {
   serviceTiersSchema,
   serviceTierValuesSchema,
   upstreamModelProtocolsSchema,
-} from "@/catalog/schemas/catalog.schema.js";
-import { QUOTA_READERS } from "@/db/schemas/index.js";
+} from "@/catalog/schemas/catalog.schema";
+import { QUOTA_READERS } from "@/db/schemas";
 
 const providerFieldsSchema = catalogProviderSchema
   .pick({ slug: true, name: true, endpoints: true, authStyle: true, quirks: true })

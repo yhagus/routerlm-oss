@@ -1,6 +1,6 @@
-import type { Capability, ModelKind, PricingWindowRange } from "@/db/schemas/index.js";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
+import type { Capability, ModelKind, PricingWindowRange } from "@/db/schemas";
+import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
+import type { UpstreamModelPrices } from "@/usage/models/usage-job";
 
 export type ModelPrices = Pick<
   SnapshotUpstreamModel,

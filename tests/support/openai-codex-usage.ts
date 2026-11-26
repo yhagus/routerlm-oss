@@ -1,4 +1,4 @@
-import type { FakeReply } from "./fake-upstream.js";
+import type { FakeReply } from "./fake-upstream";
 
 export const USAGE_PATH = "/backend-api/wham/usage";
 export const RESET_CREDITS_PATH = "/backend-api/wham/rate-limit-reset-credits";

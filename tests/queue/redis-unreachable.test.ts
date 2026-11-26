@@ -1,14 +1,14 @@
 import { Logger } from "@nestjs/common";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 process.env.REDIS_URL = "redis://localhost:1";
-const { createTestApp } = await import("@tests/support/test-app.js");
-const { PingProducer } = await import("@/queue/jobs/ping.producer.js");
+const { createTestApp } = await import("@tests/support/test-app");
+const { PingProducer } = await import("@/queue/jobs/ping.producer");
 
 describe("Queue with Redis unreachable (e2e)", () => {
   let app: NestNodeApplication;

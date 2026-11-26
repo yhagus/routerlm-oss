@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
+import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
 
 const MAX_NAME_LENGTH = 100;
 const MAX_ALLOWED_MODELS = 500;

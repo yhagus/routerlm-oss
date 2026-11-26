@@ -1,10 +1,10 @@
-import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
+import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema";
 import {
   type ModelKind,
   PROTOCOLS_WITH_SERVICE_TIERS,
   type ProviderEndpoint,
   type UpstreamProtocol,
-} from "@/db/schemas/index.js";
+} from "@/db/schemas";
 
 type QuirkKey = keyof StoredProviderQuirks;
 

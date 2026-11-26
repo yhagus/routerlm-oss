@@ -2,30 +2,30 @@ import { BadRequestException, Logger, NotFoundException } from "@nestjs/common";
 import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, type AnyColumn, eq, notInArray, type SQL, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations";
 import {
   type ProviderEndpoint,
   type QuotaReaderName,
   providerAccounts,
   providers,
   quotaMeters,
-} from "@/db/schemas/index.js";
-import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end-provider-account-exhausted.command.js";
-import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
-import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query.js";
-import { exhaustedStateOf } from "@/quota-meters/models/exhausted.js";
+} from "@/db/schemas";
+import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end-provider-account-exhausted.command";
+import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command";
+import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query";
+import { exhaustedStateOf } from "@/quota-meters/models/exhausted";
 import {
   overwrittenQuotaMeterColumns,
   type ProviderAccountQuota,
   type QuotaMeterReading,
   recordQuotaError,
   selectQuotaMeters,
-} from "@/quota-meters/models/quota-meter.js";
-import { type QuotaReading, quotaReaderProviderOf } from "@/quota-meters/models/quota-reader.js";
-import { selectUsageResets, type UsageReset } from "@/quota-meters/models/usage-reset.js";
-import { QuotaReaders } from "@/quota-meters/providers/quota-readers.js";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
-import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command.js";
+} from "@/quota-meters/models/quota-meter";
+import { type QuotaReading, quotaReaderProviderOf } from "@/quota-meters/models/quota-reader";
+import { selectUsageResets, type UsageReset } from "@/quota-meters/models/usage-reset";
+import { QuotaReaders } from "@/quota-meters/providers/quota-readers";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command";
+import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command";
 
 type ReadingOutcome = { kind: "read"; reading: QuotaReading } | { kind: "failed"; error: string };
 

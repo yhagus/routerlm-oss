@@ -1,12 +1,12 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { countDistinct, eq, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys, integrations } from "@/db/schemas/index.js";
-import type { IntegrationDetail } from "@/integrations/models/integration.js";
-import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
-import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries.js";
-import { GetIntegrationQuery } from "@/integrations/queries/impl/get-integration.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys, integrations } from "@/db/schemas";
+import type { IntegrationDetail } from "@/integrations/models/integration";
+import { integrationNotFound } from "@/integrations/models/integration-not-found";
+import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries";
+import { GetIntegrationQuery } from "@/integrations/queries/impl/get-integration.query";
 
 @QueryHandler(GetIntegrationQuery)
 export class GetIntegrationHandler implements IQueryHandler<GetIntegrationQuery> {

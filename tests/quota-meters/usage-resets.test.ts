@@ -2,18 +2,18 @@ import { randomUUID } from "node:crypto";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream.js";
-import { insertOpenAiResponsesModel } from "@tests/support/inference.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import type { CatalogProvider } from "@/catalog/schemas/catalog.schema";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers } from "@/db/schemas";
+import { FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream";
+import { insertOpenAiResponsesModel } from "@tests/support/inference";
 import {
   ACCOUNT_ID,
   accessToken,
   addCodexLoginAccount,
   offerCodexOauthLogin,
-} from "@tests/support/openai-codex-oauth.js";
+} from "@tests/support/openai-codex-oauth";
 import {
   CONSUME_PATH,
   consumeReply,
@@ -22,9 +22,9 @@ import {
   resetCreditsReply,
   USAGE_PATH,
   usageAtPercentReply,
-} from "@tests/support/openai-codex-usage.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/openai-codex-usage";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const HOUR_SECONDS = 3600;

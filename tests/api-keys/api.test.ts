@@ -1,13 +1,13 @@
 import { AuthenticationError } from "@nestjs/authentication";
-import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host.js";
+import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq, sql } from "drizzle-orm";
 import request from "supertest";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys, models } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys, models } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

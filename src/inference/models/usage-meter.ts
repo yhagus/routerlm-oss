@@ -1,16 +1,11 @@
 import { randomUUID } from "node:crypto";
-import type {
-  ClientProtocol,
-  ErrorOrigin,
-  GatewayErrorCode,
-  UpstreamProtocol,
-} from "@/db/schemas/index.js";
+import type { ClientProtocol, ErrorOrigin, GatewayErrorCode, UpstreamProtocol } from "@/db/schemas";
 import {
   capturedBody,
   capturedHeaders,
   type RawHeaders,
-} from "@/error-captures/models/captured-content.js";
-import type { RequestSender } from "@/libs/models/client-connection.js";
+} from "@/error-captures/models/captured-content";
+import type { RequestSender } from "@/libs/models/client-connection";
 import type {
   AttemptRecord,
   CapturedMessage,
@@ -20,13 +15,13 @@ import type {
   ServingTarget,
   UsageCaller,
   UsageJob,
-} from "@/usage/models/usage-job.js";
-import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-failure.js";
-import type { GatewayError } from "./gateway-error.js";
-import type { TokenUsage } from "./internal-format.js";
-import type { AttemptTarget } from "./route-selection.js";
-import { pricesForRequest } from "./request-prices.js";
-import { type SentServiceTier, serviceTierOfWireValue } from "./service-tier.js";
+} from "@/usage/models/usage-job";
+import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-failure";
+import type { GatewayError } from "./gateway-error";
+import type { TokenUsage } from "./internal-format";
+import type { AttemptTarget } from "./route-selection";
+import { pricesForRequest } from "./request-prices";
+import { type SentServiceTier, serviceTierOfWireValue } from "./service-tier";
 
 const ANSWERED_UPSTREAM_STATUS = 200;
 const FIRST_ERROR_STATUS = 400;

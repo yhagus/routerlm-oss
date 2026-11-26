@@ -2,9 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, sql } from "drizzle-orm";
 import type { Redis } from "ioredis";
-import { apiKeys } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
+import { apiKeys } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import { RedisConnection } from "@/redis/providers/redis-connection";
 
 const FLAG_KEY_PREFIX = "routerlm:spend-limit-reached:";
 const REACHED = "1";

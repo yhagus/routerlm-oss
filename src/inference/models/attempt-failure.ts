@@ -1,6 +1,6 @@
-import type { AttemptFailureReason } from "@/db/schemas/index.js";
-import { GatewayError } from "./gateway-error.js";
-import { upstreamRequestIdOf } from "./upstream-request-id.js";
+import type { AttemptFailureReason } from "@/db/schemas";
+import { GatewayError } from "./gateway-error";
+import { upstreamRequestIdOf } from "./upstream-request-id";
 
 export interface UpstreamFailureResponse {
   headers: Record<string, string>;

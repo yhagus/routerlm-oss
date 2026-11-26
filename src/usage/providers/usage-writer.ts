@@ -2,15 +2,9 @@ import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq, sql } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations.js";
-import {
-  apiKeys,
-  attempts,
-  CLIENT_PROTOCOL_KINDS,
-  errorCaptures,
-  usageLogs,
-} from "@/db/schemas/index.js";
-import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
+import type { Database, Transaction } from "@/db/schemas/relations";
+import { apiKeys, attempts, CLIENT_PROTOCOL_KINDS, errorCaptures, usageLogs } from "@/db/schemas";
+import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags";
 import type {
   ErrorCaptureRecord,
   MediaUnits,
@@ -20,8 +14,8 @@ import type {
   UsageCaller,
   UsageCustomer,
   UsageJob,
-} from "@/usage/models/usage-job.js";
-import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
+} from "@/usage/models/usage-job";
+import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements";
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
 type StoredServingTarget = { [Field in keyof ServingTarget]: ServingTarget[Field] | null };

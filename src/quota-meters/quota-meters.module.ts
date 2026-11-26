@@ -1,19 +1,19 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HttpClientModule } from "@nestjs/http-client";
-import type { Env } from "@/config/schemas/env.schema.js";
-import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
-import { CommandHandlers } from "./commands/handlers/index.js";
-import { ProviderAccountQuotaController } from "./provider-account-quota.controller.js";
-import { KimiCodeQuotaReader } from "./providers/kimi-code-quota-reader.js";
-import { MiniMaxMPlanQuotaReader } from "./providers/minimax-m-plan-quota-reader.js";
-import { OpenAiCodexQuotaReader } from "./providers/openai-codex-quota-reader.js";
-import { OpenAiCodexUsageResets } from "./providers/openai-codex-usage-resets.js";
-import { QUOTA_READER_HTTP_CLIENT } from "./providers/quota-reader-http-client.js";
-import { QuotaReaders } from "./providers/quota-readers.js";
-import { UsageResetTargets } from "./providers/usage-reset-targets.js";
-import { QueryHandlers } from "./queries/handlers/index.js";
-import { UpstreamModule } from "@/upstream/upstream.module.js";
+import type { Env } from "@/config/schemas/env.schema";
+import { OutboundFetch } from "@/libs/providers/outbound-fetch";
+import { CommandHandlers } from "./commands/handlers";
+import { ProviderAccountQuotaController } from "./provider-account-quota.controller";
+import { KimiCodeQuotaReader } from "./providers/kimi-code-quota-reader";
+import { MiniMaxMPlanQuotaReader } from "./providers/minimax-m-plan-quota-reader";
+import { OpenAiCodexQuotaReader } from "./providers/openai-codex-quota-reader";
+import { OpenAiCodexUsageResets } from "./providers/openai-codex-usage-resets";
+import { QUOTA_READER_HTTP_CLIENT } from "./providers/quota-reader-http-client";
+import { QuotaReaders } from "./providers/quota-readers";
+import { UsageResetTargets } from "./providers/usage-reset-targets";
+import { QueryHandlers } from "./queries/handlers";
+import { UpstreamModule } from "@/upstream/upstream.module";
 
 @Module({
   imports: [

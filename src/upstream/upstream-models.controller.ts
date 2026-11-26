@@ -10,18 +10,18 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { CreateUpstreamModelCommand } from "./commands/impl/create-upstream-model.command.js";
-import { DeleteUpstreamModelCommand } from "./commands/impl/delete-upstream-model.command.js";
-import { UpdateUpstreamModelCommand } from "./commands/impl/update-upstream-model.command.js";
-import type { ListedUpstreamModel, UpstreamModel } from "./models/upstream-model.js";
-import { ListUpstreamModelsQuery } from "./queries/impl/list-upstream-models.query.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { CreateUpstreamModelCommand } from "./commands/impl/create-upstream-model.command";
+import { DeleteUpstreamModelCommand } from "./commands/impl/delete-upstream-model.command";
+import { UpdateUpstreamModelCommand } from "./commands/impl/update-upstream-model.command";
+import type { ListedUpstreamModel, UpstreamModel } from "./models/upstream-model";
+import { ListUpstreamModelsQuery } from "./queries/impl/list-upstream-models.query";
 import {
   type NewUpstreamModel,
   newUpstreamModelSchema,
   type UpstreamModelChanges,
   upstreamModelChangesSchema,
-} from "./schemas/upstream.schema.js";
+} from "./schemas/upstream.schema";
 
 @DashboardController("upstream-models")
 export class UpstreamModelsController {

@@ -1,10 +1,10 @@
-import type { Capability } from "@/db/schemas/index.js";
+import type { Capability } from "@/db/schemas";
 import type {
   MediaExchange,
   MediaRequest,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "./media-kind.js";
+} from "./media-kind";
 
 export const VIDEO_RESOLUTIONS = ["480P", "720P", "1080P"] as const;
 export type VideoResolution = (typeof VIDEO_RESOLUTIONS)[number];

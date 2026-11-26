@@ -3,11 +3,11 @@ import type {
   ClientProtocol,
   ParameterPolicy,
   UpstreamProtocol,
-} from "@/db/schemas/index.js";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
-import type { MediaUnits } from "@/usage/models/usage-job.js";
-import type { GatewayError } from "./gateway-error.js";
-import type { InferenceCaller } from "./inference.js";
+} from "@/db/schemas";
+import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
+import type { MediaUnits } from "@/usage/models/usage-job";
+import type { GatewayError } from "./gateway-error";
+import type { InferenceCaller } from "./inference";
 
 export interface MediaRequest {
   model: string;

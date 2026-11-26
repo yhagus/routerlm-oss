@@ -1,6 +1,6 @@
-import { ReadProviderAccountQuotaHandler } from "./read-provider-account-quota.handler.js";
-import { RefreshUsageResetsHandler } from "./refresh-usage-resets.handler.js";
-import { UseUsageResetHandler } from "./use-usage-reset.handler.js";
+import { ReadProviderAccountQuotaHandler } from "./read-provider-account-quota.handler";
+import { RefreshUsageResetsHandler } from "./refresh-usage-resets.handler";
+import { UseUsageResetHandler } from "./use-usage-reset.handler";
 
 export const CommandHandlers = [
   ReadProviderAccountQuotaHandler,

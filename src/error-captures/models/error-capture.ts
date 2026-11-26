@@ -3,7 +3,7 @@ import type {
   GatewayErrorCode,
   RecordedAttemptFailure,
   UpstreamProtocol,
-} from "@/db/schemas/index.js";
+} from "@/db/schemas";
 
 export type FailedHop =
   | { kind: "client-to-gateway" }

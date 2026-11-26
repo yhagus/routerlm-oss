@@ -1,7 +1,7 @@
 import { ConflictException, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys } from "@/db/schemas";
 
 export async function findUnrevokedApiKey(
   db: Database,

@@ -1,6 +1,6 @@
 import { type MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
-import { DASHBOARD_API_PREFIX } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { UnservedRouteMiddleware } from "./middleware/unserved-route.middleware.js";
+import { DASHBOARD_API_PREFIX } from "@/auth/decorators/dashboard-controller.decorator";
+import { UnservedRouteMiddleware } from "./middleware/unserved-route.middleware";
 
 @Module({})
 export class ClosedDashboardApiModule implements NestModule {

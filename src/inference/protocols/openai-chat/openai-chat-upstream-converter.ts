@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
+import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema";
 import type {
   AssistantContentPart,
   CacheMarker,
@@ -12,23 +12,23 @@ import type {
   ResponseFormat,
   ToolChoice,
   UserContentPart,
-} from "@/inference/models/internal-format.js";
-import { isJsonObject } from "@/inference/protocols/json-object.js";
-import type { ServerSentEvent } from "@/inference/protocols/server-sent-events.js";
+} from "@/inference/models/internal-format";
+import { isJsonObject } from "@/inference/protocols/json-object";
+import type { ServerSentEvent } from "@/inference/protocols/server-sent-events";
 import {
   type UpstreamHttpRequest,
   UpstreamProtocolError,
   type UpstreamProtocolConverter,
   type UpstreamStreamParser,
   type UpstreamTarget,
-} from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/protocols/upstream-protocol-converter";
 import {
   type OpenAiUsage,
   openAiFinishReasonSchema,
   stopReasonOf,
   tokenUsageOf,
   usageSchema,
-} from "./openai-chat-usage.js";
+} from "./openai-chat-usage";
 
 type ReasoningAsThinking = NonNullable<CatalogProviderQuirks["reasoningAsThinking"]>;
 

@@ -2,12 +2,12 @@ import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, type SQL, sql } from "drizzle-orm";
 import { z } from "zod";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys } from "@/db/schemas/index.js";
-import { ControlPlaneError } from "@/control-plane/models/control-plane-error.js";
-import type { CustomerApiKeyPage } from "@/control-plane/models/customer-api-key.js";
-import { selectCustomerApiKeys } from "@/control-plane/models/customer-api-keys.js";
-import { ListCustomerApiKeysQuery } from "@/control-plane/queries/impl/list-customer-api-keys.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys } from "@/db/schemas";
+import { ControlPlaneError } from "@/control-plane/models/control-plane-error";
+import type { CustomerApiKeyPage } from "@/control-plane/models/customer-api-key";
+import { selectCustomerApiKeys } from "@/control-plane/models/customer-api-keys";
+import { ListCustomerApiKeysQuery } from "@/control-plane/queries/impl/list-customer-api-keys.query";
 
 @QueryHandler(ListCustomerApiKeysQuery)
 export class ListCustomerApiKeysHandler implements IQueryHandler<ListCustomerApiKeysQuery> {

@@ -4,7 +4,7 @@ import {
   type InferenceStreamEvent,
   type StopReason,
   UNREPORTED_USAGE,
-} from "@/inference/models/internal-format.js";
+} from "@/inference/models/internal-format";
 
 export async function gatherStream(
   events: AsyncIterable<InferenceStreamEvent>,

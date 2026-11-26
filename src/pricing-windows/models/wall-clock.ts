@@ -1,4 +1,4 @@
-import type { IsoWeekday } from "@/db/schemas/index.js";
+import type { IsoWeekday } from "@/db/schemas";
 
 export const MILLISECONDS_PER_MINUTE = 60 * 1000;
 export const MINUTES_PER_HOUR = 60;

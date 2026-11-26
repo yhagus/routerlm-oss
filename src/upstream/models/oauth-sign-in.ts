@@ -1,5 +1,5 @@
 import { ServiceUnavailableException } from "@nestjs/common";
-import type { ProviderAccount } from "./provider-account.js";
+import type { ProviderAccount } from "./provider-account";
 
 export function signInNeedsRedis(cause: unknown): ServiceUnavailableException {
   return new ServiceUnavailableException("Sign-in needs Redis, which is unreachable", { cause });

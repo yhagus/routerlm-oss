@@ -2,7 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { once } from "node:events";
 import { createServer } from "node:net";
 import { vi } from "vitest";
-import { portOf } from "@tests/support/port-of.js";
+import { portOf } from "@tests/support/port-of";
 
 const PROCESS_COUNT = 2;
 const STARTUP_TIMEOUT_MS = 30_000;

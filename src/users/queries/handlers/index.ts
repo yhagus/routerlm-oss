@@ -1,6 +1,6 @@
-import { FindUserByCredentialsHandler } from "./find-user-by-credentials.handler.js";
-import { IsSetupRequiredHandler } from "./is-setup-required.handler.js";
-import { ListUsersHandler } from "./list-users.handler.js";
+import { FindUserByCredentialsHandler } from "./find-user-by-credentials.handler";
+import { IsSetupRequiredHandler } from "./is-setup-required.handler";
+import { ListUsersHandler } from "./list-users.handler";
 
 export const QueryHandlers = [
   IsSetupRequiredHandler,

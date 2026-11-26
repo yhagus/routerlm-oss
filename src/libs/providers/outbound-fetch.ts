@@ -1,8 +1,8 @@
 import { lookup } from "node:dns/promises";
 import { Injectable } from "@nestjs/common";
-import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy.js";
-import { bareHostname } from "@/libs/models/url.js";
-import { isPrivateAddress, isPublicHttpsUrl } from "@/libs/schemas/provider-url.schema.js";
+import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy";
+import { bareHostname } from "@/libs/models/url";
+import { isPrivateAddress, isPublicHttpsUrl } from "@/libs/schemas/provider-url.schema";
 
 export class PrivateUpstreamError extends Error {
   constructor(hostname: string, reason: string) {

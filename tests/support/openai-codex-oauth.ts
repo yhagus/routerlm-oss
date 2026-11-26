@@ -1,12 +1,12 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { codexAccountOf, secondsUntilExpiryOf } from "@/upstream/models/openai-codex-tokens.js";
-import { storedOauthTokens } from "@/upstream/models/provider-account.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import type { FakeReply } from "./fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { codexAccountOf, secondsUntilExpiryOf } from "@/upstream/models/openai-codex-tokens";
+import { storedOauthTokens } from "@/upstream/models/provider-account";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import type { FakeReply } from "./fake-upstream";
 
 export const ISSUER_PATH = "/auth";
 export const USER_CODE_PATH = `${ISSUER_PATH}/api/accounts/deviceauth/usercode`;

@@ -4,8 +4,8 @@ import { Logger } from "@nestjs/common";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { seedShippedCatalog } from "@/catalog/models/seed-shipped-catalog.js";
-import { envSchema } from "@/config/schemas/env.schema.js";
+import { seedShippedCatalog } from "@/catalog/models/seed-shipped-catalog";
+import { envSchema } from "@/config/schemas/env.schema";
 
 const MIGRATIONS_FOLDER = fileURLToPath(new URL("../drizzle", import.meta.url));
 

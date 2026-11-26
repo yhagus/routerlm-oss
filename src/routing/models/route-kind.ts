@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { type ModelKind, upstreamModels } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { type ModelKind, upstreamModels } from "@/db/schemas";
 
 export async function assertRouteKindFits(
   db: Database,

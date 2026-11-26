@@ -17,17 +17,17 @@ import {
   MODEL_KINDS,
   PROTOCOL_KINDS,
   UPSTREAM_PROTOCOLS,
-} from "@/db/schemas/upstream.js";
-import { MAX_REQUEST_RATE, MAX_SPEND_LIMIT_USD } from "@/api-keys/schemas/api-key.schema.js";
-import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas/records.js";
+} from "@/db/schemas/upstream";
+import { MAX_REQUEST_RATE, MAX_SPEND_LIMIT_USD } from "@/api-keys/schemas/api-key.schema";
+import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas/records";
 import {
   CAPTURE_OUTCOMES,
   FAILED_HOPS,
-} from "@/error-captures/schemas/error-capture-page-query.schema.js";
-import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload.js";
-import { WINDOW_PRICES_STATUSES } from "@/pricing-windows/models/pricing-window-activity.js";
-import { AUDIO_FORMATS } from "@/inference/models/speech-synthesis.js";
-import { VIDEO_RATIOS, VIDEO_RESOLUTIONS } from "@/inference/models/video-generation.js";
+} from "@/error-captures/schemas/error-capture-page-query.schema";
+import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload";
+import { WINDOW_PRICES_STATUSES } from "@/pricing-windows/models/pricing-window-activity";
+import { AUDIO_FORMATS } from "@/inference/models/speech-synthesis";
+import { VIDEO_RATIOS, VIDEO_RESOLUTIONS } from "@/inference/models/video-generation";
 
 interface Mirror {
   name: string;
@@ -149,9 +149,9 @@ function webEntriesOf(source: string, name: string): string[] | undefined {
   const rest = source.slice(start).replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, "");
   const body = rest.slice(0, rest.indexOf(closer));
   if (opener === "[") {
-    return [...body.matchAll(/"([^"]+)"/g)].map((match) => match[1] ?? "");
+    return [...body.matchAll(/["']([^"']+)["']/g)].map((match) => match[1] ?? "");
   }
-  return [...body.matchAll(/"?([\w-]+)"?\s*:\s*"([^"]+)"/g)].map(
+  return [...body.matchAll(/["']?([\w-]+)["']?\s*:\s*["']([^"']+)["']/g)].map(
     (match) => `${match[1]}=${match[2]}`,
   );
 }

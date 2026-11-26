@@ -1,6 +1,6 @@
-import { ListAttachedPricingWindowsHandler } from "./list-attached-pricing-windows.handler.js";
-import { ListPricingWindowsHandler } from "./list-pricing-windows.handler.js";
-import { ListUpstreamModelPricingWindowsHandler } from "./list-upstream-model-pricing-windows.handler.js";
+import { ListAttachedPricingWindowsHandler } from "./list-attached-pricing-windows.handler";
+import { ListPricingWindowsHandler } from "./list-pricing-windows.handler";
+import { ListUpstreamModelPricingWindowsHandler } from "./list-upstream-model-pricing-windows.handler";
 
 export const QueryHandlers = [
   ListAttachedPricingWindowsHandler,

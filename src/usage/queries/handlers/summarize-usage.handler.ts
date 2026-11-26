@@ -2,17 +2,17 @@ import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { count, type SQL, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import type { Database } from "@/db/schemas/relations.js";
-import { type ErrorOrigin, usageLogs } from "@/db/schemas/index.js";
-import type { UsageSummary } from "@/usage/models/usage.js";
-import { byErrorOrigin } from "@/usage/models/by-error-origin.js";
+import type { Database } from "@/db/schemas/relations";
+import { type ErrorOrigin, usageLogs } from "@/db/schemas";
+import type { UsageSummary } from "@/usage/models/usage";
+import { byErrorOrigin } from "@/usage/models/by-error-origin";
 import {
   failedWithOriginCondition,
   statusCondition,
   whereFilter,
-} from "@/usage/models/usage-filters.js";
-import type { UsageStatus } from "@/usage/schemas/usage.schema.js";
-import { SummarizeUsageQuery } from "@/usage/queries/impl/summarize-usage.query.js";
+} from "@/usage/models/usage-filters";
+import type { UsageStatus } from "@/usage/schemas/usage.schema";
+import { SummarizeUsageQuery } from "@/usage/queries/impl/summarize-usage.query";
 
 const MEDIAN = 0.5;
 const P95 = 0.95;

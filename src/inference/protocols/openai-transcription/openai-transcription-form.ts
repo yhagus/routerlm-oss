@@ -1,4 +1,4 @@
-import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload.js";
+import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload";
 
 export const TRANSCRIPTION_FILE_FIELD = "file";
 

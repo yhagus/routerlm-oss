@@ -2,15 +2,12 @@ import { Logger } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { usageResets } from "@/db/schemas/index.js";
-import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query.js";
-import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command.js";
-import {
-  isUsageResetCallFailure,
-  type UsageResetReading,
-} from "@/quota-meters/models/usage-reset.js";
-import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets.js";
+import type { Database } from "@/db/schemas/relations";
+import { usageResets } from "@/db/schemas";
+import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query";
+import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command";
+import { isUsageResetCallFailure, type UsageResetReading } from "@/quota-meters/models/usage-reset";
+import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets";
 
 @CommandHandler(RefreshUsageResetsCommand)
 export class RefreshUsageResetsHandler implements ICommandHandler<RefreshUsageResetsCommand> {

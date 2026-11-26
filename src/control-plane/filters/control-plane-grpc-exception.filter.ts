@@ -4,7 +4,7 @@ import { type Observable, throwError } from "rxjs";
 import {
   CONTROL_PLANE_ERRORS,
   controlPlaneErrorOf,
-} from "@/control-plane/models/control-plane-error.js";
+} from "@/control-plane/models/control-plane-error";
 
 @Catch()
 export class ControlPlaneGrpcExceptionFilter implements RpcExceptionFilter {

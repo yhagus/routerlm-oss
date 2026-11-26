@@ -1,10 +1,10 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
-import { openAiSpeechClientContract } from "@/inference/protocols/openai-speech/openai-speech-client-contract.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { PlaygroundSpeech } from "@/playground/models/playground-speech.js";
-import { PlaygroundUsage } from "@/playground/models/playground-usage.js";
-import { SendPlaygroundSpeechCommand } from "@/playground/commands/impl/send-playground-speech.command.js";
+import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command";
+import { openAiSpeechClientContract } from "@/inference/protocols/openai-speech/openai-speech-client-contract";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { PlaygroundSpeech } from "@/playground/models/playground-speech";
+import { PlaygroundUsage } from "@/playground/models/playground-usage";
+import { SendPlaygroundSpeechCommand } from "@/playground/commands/impl/send-playground-speech.command";
 
 @CommandHandler(SendPlaygroundSpeechCommand)
 export class SendPlaygroundSpeechHandler implements ICommandHandler<SendPlaygroundSpeechCommand> {

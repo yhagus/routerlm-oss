@@ -1,13 +1,13 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import { assertModelsExist } from "@/libs/models/allowed-models.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { integrations } from "@/db/schemas/index.js";
-import type { CreatedIntegration } from "@/integrations/models/integration.js";
-import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries.js";
-import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth.js";
-import { CreateIntegrationCommand } from "@/integrations/commands/impl/create-integration.command.js";
+import { assertModelsExist } from "@/libs/models/allowed-models";
+import type { Database } from "@/db/schemas/relations";
+import { integrations } from "@/db/schemas";
+import type { CreatedIntegration } from "@/integrations/models/integration";
+import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries";
+import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth";
+import { CreateIntegrationCommand } from "@/integrations/commands/impl/create-integration.command";
 
 @CommandHandler(CreateIntegrationCommand)
 export class CreateIntegrationHandler implements ICommandHandler<CreateIntegrationCommand> {

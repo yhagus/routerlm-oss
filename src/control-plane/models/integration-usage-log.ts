@@ -1,4 +1,4 @@
-import type { usageLogs } from "@/db/schemas/index.js";
+import type { usageLogs } from "@/db/schemas";
 
 export type IntegrationUsageLog = Pick<
   typeof usageLogs.$inferSelect,

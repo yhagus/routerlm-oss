@@ -1,4 +1,4 @@
-import { usageLogs } from "@/db/schemas/index.js";
+import { usageLogs } from "@/db/schemas";
 
 export const usageLogSummaryColumns = {
   id: usageLogs.id,

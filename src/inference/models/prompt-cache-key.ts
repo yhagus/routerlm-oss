@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { UsageCaller } from "@/usage/models/usage-job.js";
+import type { UsageCaller } from "@/usage/models/usage-job";
 
 export type PromptCacheKeyOwner = Exclude<UsageCaller, { kind: "unidentified" }>;
 

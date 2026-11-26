@@ -1,9 +1,9 @@
-import { ProbeUpstreamModelHandler } from "./probe-upstream-model.handler.js";
-import { SendPlaygroundChatCompletionHandler } from "./send-playground-chat-completion.handler.js";
-import { SendPlaygroundImageGenerationHandler } from "./send-playground-image-generation.handler.js";
-import { SendPlaygroundVideoJobHandler } from "./send-playground-video-job.handler.js";
-import { SendPlaygroundSpeechHandler } from "./send-playground-speech.handler.js";
-import { SendPlaygroundTranscriptionHandler } from "./send-playground-transcription.handler.js";
+import { ProbeUpstreamModelHandler } from "./probe-upstream-model.handler";
+import { SendPlaygroundChatCompletionHandler } from "./send-playground-chat-completion.handler";
+import { SendPlaygroundImageGenerationHandler } from "./send-playground-image-generation.handler";
+import { SendPlaygroundVideoJobHandler } from "./send-playground-video-job.handler";
+import { SendPlaygroundSpeechHandler } from "./send-playground-speech.handler";
+import { SendPlaygroundTranscriptionHandler } from "./send-playground-transcription.handler";
 
 export const CommandHandlers = [
   SendPlaygroundChatCompletionHandler,

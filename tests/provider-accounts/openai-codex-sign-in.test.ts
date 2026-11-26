@@ -4,14 +4,10 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import {
-  FakeUpstream,
-  type FakeReply,
-  type ReceivedRequest,
-} from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { FakeUpstream, type FakeReply, type ReceivedRequest } from "@tests/support/fake-upstream";
 import {
   ACCOUNT_ID,
   accessToken,
@@ -32,15 +28,15 @@ import {
   USER_CODE,
   USER_CODE_PATH,
   userCodeReply,
-} from "@tests/support/openai-codex-oauth.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/openai-codex-oauth";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${((process.pid + 7) % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { OAUTH_SIGN_INS_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { OAUTH_SIGN_INS_QUEUE } = await import("@/queue/models/queue-names");
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const POLL_INTERVAL = "0.1";

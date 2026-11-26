@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { models } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { models } from "@/db/schemas";
 
 export async function assertModelsExist(db: Database, modelIds: string[]): Promise<void> {
   if (modelIds.length === 0) {

@@ -4,7 +4,7 @@ import type {
   PendingDeviceCode,
   TokenPoll,
   TokenRefresh,
-} from "@/upstream/models/oauth-device-grant.js";
+} from "@/upstream/models/oauth-device-grant";
 
 export interface OauthFlowLoginClient<Endpoint extends OauthLoginEndpoint> {
   authorizeDevice(endpoint: Endpoint): Promise<DeviceAuthorization>;

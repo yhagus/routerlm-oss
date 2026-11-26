@@ -1,4 +1,4 @@
-import type { ClientProtocol } from "@/db/schemas/index.js";
+import type { ClientProtocol } from "@/db/schemas";
 
 export const DEMO_USER = { email: "admin@example.com", password: "routerlm-demo" } as const;
 

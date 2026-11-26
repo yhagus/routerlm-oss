@@ -1,13 +1,13 @@
 import type { ConfigService } from "@nestjs/config";
 import type { NestNodeApplication } from "@nestjs/platform-node";
-import { type BackendRole, type Env, envSchema } from "@/config/schemas/env.schema.js";
-import { runGatewayProcesses } from "@/libs/models/gateway-processes.js";
+import { type BackendRole, type Env, envSchema } from "@/config/schemas/env.schema";
+import { runGatewayProcesses } from "@/libs/models/gateway-processes";
 
 async function bootstrap(role: BackendRole): Promise<void> {
   const { ConfigService: ConfigServiceToken } = await import("@nestjs/config");
   const { NestFactory } = await import("@nestjs/core");
-  const { AppModule } = await import("@/app.module.js");
-  const { configureApp, createNodeAdapter } = await import("@/configure-app.js");
+  const { AppModule } = await import("@/app.module");
+  const { configureApp, createNodeAdapter } = await import("@/configure-app");
   const app = await NestFactory.create<NestNodeApplication>(
     AppModule.forRole(role),
     createNodeAdapter(),

@@ -1,12 +1,12 @@
 import { AuthenticationModule } from "@nestjs/authentication";
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import type { Env } from "@/config/schemas/env.schema.js";
-import { UsersModule } from "@/users/users.module.js";
-import { AuthController } from "./auth.controller.js";
-import "./models/authentication-types.js";
-import { DrizzleSessionStore } from "./providers/drizzle-session.store.js";
-import { SessionAuth } from "./providers/session-auth.js";
+import type { Env } from "@/config/schemas/env.schema";
+import { UsersModule } from "@/users/users.module";
+import { AuthController } from "./auth.controller";
+import "./models/authentication-types";
+import { DrizzleSessionStore } from "./providers/drizzle-session.store";
+import { SessionAuth } from "./providers/session-auth";
 
 @Module({
   imports: [

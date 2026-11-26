@@ -4,13 +4,13 @@ import type {
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind.js";
+} from "@/inference/models/media-kind";
 import type {
   SpeechSynthesisRequest,
   SynthesizedSpeech,
-} from "@/inference/models/speech-synthesis.js";
-import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/models/speech-synthesis";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
 
 const SYNTHESIZER_PATH = "/services/audio/tts/SpeechSynthesizer";
 

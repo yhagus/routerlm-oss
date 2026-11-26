@@ -1,16 +1,16 @@
 import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
-import { attempts, errorCaptures, usageLogs } from "@/db/schemas/index.js";
+import { attempts, errorCaptures, usageLogs } from "@/db/schemas";
 import {
   callerCondition,
   containing,
   customerCondition,
   namesOrErrorCodeContain,
-} from "@/usage/models/usage-filters.js";
+} from "@/usage/models/usage-filters";
 import type {
   CaptureOutcome,
   ErrorCapturePageQuery,
   FailedHopKind,
-} from "@/error-captures/schemas/error-capture-page-query.schema.js";
+} from "@/error-captures/schemas/error-capture-page-query.schema";
 
 const FIRST_ERROR_STATUS = 400;
 

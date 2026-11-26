@@ -2,20 +2,20 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import request from "supertest";
 import { vi } from "vitest";
-import { upstreamModels } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { httpControlPlaneClient } from "@tests/support/control-plane-client.js";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { deleteAllPricingWindows } from "@tests/support/pricing-windows.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { upstreamModels } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import { RedisConnection } from "@/redis/providers/redis-connection";
+import { httpControlPlaneClient } from "@tests/support/control-plane-client";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { createIntegration } from "@tests/support/integrations";
+import { deleteAllPricingWindows } from "@tests/support/pricing-windows";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const reloads = vi.hoisted(() => ({ failuresLeft: 0 }));
 
-vi.mock("@/snapshot/models/load-snapshot.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/snapshot/models/load-snapshot.js")>();
+vi.mock("@/snapshot/models/load-snapshot", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/snapshot/models/load-snapshot")>();
   return {
     ...actual,
     loadSnapshot: async (...args: Parameters<typeof actual.loadSnapshot>) => {

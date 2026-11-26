@@ -1,5 +1,5 @@
 import { Command } from "@nestjs/cqrs";
-import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
+import type { CatalogProvider } from "@/catalog/schemas/catalog.schema";
 
 export type SeedDemoResult = { usageLogCount: number; errorCaptureCount: number };
 

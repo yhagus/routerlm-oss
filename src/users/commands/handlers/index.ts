@@ -1,7 +1,7 @@
-import { CreateFirstUserHandler } from "./create-first-user.handler.js";
-import { CreateUserHandler } from "./create-user.handler.js";
-import { DeleteUserHandler } from "./delete-user.handler.js";
-import { ResetPasswordHandler } from "./reset-password.handler.js";
+import { CreateFirstUserHandler } from "./create-first-user.handler";
+import { CreateUserHandler } from "./create-user.handler";
+import { DeleteUserHandler } from "./delete-user.handler";
+import { ResetPasswordHandler } from "./reset-password.handler";
 
 export const CommandHandlers = [
   CreateFirstUserHandler,

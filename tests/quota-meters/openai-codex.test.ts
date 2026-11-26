@@ -1,22 +1,18 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import type { CatalogProvider } from "@/catalog/schemas/catalog.schema.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import type { CatalogProvider } from "@/catalog/schemas/catalog.schema";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
 import {
   type FakeReply,
   FakeUpstream,
   openAiResponsesFixture,
   type ReceivedRequest,
-} from "@tests/support/fake-upstream.js";
-import {
-  insertApiKey,
-  insertOpenAiResponsesModel,
-  UPSTREAM_KEY,
-} from "@tests/support/inference.js";
+} from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiResponsesModel, UPSTREAM_KEY } from "@tests/support/inference";
 import {
   ACCOUNT_ID,
   accessToken,
@@ -25,7 +21,7 @@ import {
   offerCodexOauthLogin,
   TOKEN_PATH,
   tokensReply,
-} from "@tests/support/openai-codex-oauth.js";
+} from "@tests/support/openai-codex-oauth";
 import {
   FIVE_HOURS_IN_SECONDS,
   rateLimitOf,
@@ -34,9 +30,9 @@ import {
   usageReply,
   usageWindow,
   WEEK_IN_SECONDS,
-} from "@tests/support/openai-codex-usage.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/openai-codex-usage";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

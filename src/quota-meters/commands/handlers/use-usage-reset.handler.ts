@@ -2,19 +2,19 @@ import { BadGatewayException, ConflictException, NotFoundException } from "@nest
 import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { usageResets } from "@/db/schemas/index.js";
-import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query.js";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
-import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command.js";
-import { UseUsageResetCommand } from "@/quota-meters/commands/impl/use-usage-reset.command.js";
-import { type ProviderAccountQuota, recordQuotaError } from "@/quota-meters/models/quota-meter.js";
+import type { Database } from "@/db/schemas/relations";
+import { usageResets } from "@/db/schemas";
+import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command";
+import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command";
+import { UseUsageResetCommand } from "@/quota-meters/commands/impl/use-usage-reset.command";
+import { type ProviderAccountQuota, recordQuotaError } from "@/quota-meters/models/quota-meter";
 import {
   isUnexpired,
   isUsageResetCallFailure,
   type UsageResetOutcome,
-} from "@/quota-meters/models/usage-reset.js";
-import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets.js";
+} from "@/quota-meters/models/usage-reset";
+import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets";
 
 const UNSUPPORTED_MESSAGE = "The Provider of this Provider Account has no usage resets";
 const NOTHING_TO_RESET_MESSAGE = "No meter is low enough to reset yet";

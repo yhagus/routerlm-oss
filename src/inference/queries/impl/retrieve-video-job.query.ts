@@ -1,5 +1,5 @@
 import { Query } from "@nestjs/cqrs";
-import type { InferenceCaller } from "@/inference/models/inference.js";
+import type { InferenceCaller } from "@/inference/models/inference";
 
 export class RetrieveVideoJobQuery extends Query<unknown> {
   constructor(

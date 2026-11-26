@@ -1,4 +1,4 @@
-import type { UpstreamModelPrices } from "@/usage/models/usage-job.js";
+import type { UpstreamModelPrices } from "@/usage/models/usage-job";
 
 export function resolvedWindowPrices(
   standard: UpstreamModelPrices,

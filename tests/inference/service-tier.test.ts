@@ -1,19 +1,19 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { ParameterPolicy } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
+import type { ParameterPolicy } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
 import {
   FakeUpstream,
   openAiChatFixture,
   openAiResponsesFixture,
-} from "@tests/support/fake-upstream.js";
+} from "@tests/support/fake-upstream";
 import {
   insertApiKey,
   insertOpenAiChatModel,
   insertOpenAiResponsesModel,
-} from "@tests/support/inference.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

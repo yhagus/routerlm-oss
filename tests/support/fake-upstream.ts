@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { text as readBody } from "node:stream/consumers";
-import { portOf } from "./port-of.js";
+import { portOf } from "./port-of";
 
 export type FakeReply =
   | {

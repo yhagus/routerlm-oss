@@ -1,11 +1,11 @@
-import type { PricingWindowRange } from "@/db/schemas/index.js";
-import { type ValidityPeriod, validityInstantsOf } from "./validity-period.js";
+import type { PricingWindowRange } from "@/db/schemas";
+import { type ValidityPeriod, validityInstantsOf } from "./validity-period";
 import {
   MILLISECONDS_PER_MINUTE,
   MINUTES_PER_HOUR,
   minuteOfDayOf,
   utcOffsetMinutesAt,
-} from "./wall-clock.js";
+} from "./wall-clock";
 
 export interface WindowPricesTiming extends ValidityPeriod {
   timeZone: string;

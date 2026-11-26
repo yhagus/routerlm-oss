@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import type { FactoryProvider } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import type { Env } from "@/config/schemas/env.schema.js";
+import type { Env } from "@/config/schemas/env.schema";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_BYTES = 12;

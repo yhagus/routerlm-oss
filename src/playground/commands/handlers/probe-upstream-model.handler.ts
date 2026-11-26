@@ -1,21 +1,21 @@
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import type { Env } from "@/config/schemas/env.schema.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
-import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { User } from "@/users/models/user.js";
-import { PlaygroundUsage } from "@/playground/models/playground-usage.js";
-import { type ProbePlan, probePlanFor } from "@/playground/models/probe-plan.js";
-import { probeCommandFor } from "@/playground/models/probe-requests.js";
+import type { Env } from "@/config/schemas/env.schema";
+import { GatewayError } from "@/inference/models/gateway-error";
+import type { ClientConnection } from "@/libs/models/client-connection";
+import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { User } from "@/users/models/user";
+import { PlaygroundUsage } from "@/playground/models/playground-usage";
+import { type ProbePlan, probePlanFor } from "@/playground/models/probe-plan";
+import { probeCommandFor } from "@/playground/models/probe-requests";
 import {
   type ProbeResult,
   type ProbeResults,
   probeResultOf,
-} from "@/playground/models/probe-result.js";
-import { ProbeUpstreamModelCommand } from "@/playground/commands/impl/probe-upstream-model.command.js";
+} from "@/playground/models/probe-result";
+import { ProbeUpstreamModelCommand } from "@/playground/commands/impl/probe-upstream-model.command";
 
 @CommandHandler(ProbeUpstreamModelCommand)
 export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamModelCommand> {

@@ -7,9 +7,9 @@ import { like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { type Database, relations } from "@/db/schemas/relations.js";
-import * as schema from "@/db/schemas/index.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
+import { type Database, relations } from "@/db/schemas/relations";
+import * as schema from "@/db/schemas";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
 
 const runFile = promisify(execFile);
 const MIGRATIONS_FOLDER = "./drizzle";

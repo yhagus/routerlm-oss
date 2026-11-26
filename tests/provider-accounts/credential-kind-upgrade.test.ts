@@ -3,10 +3,10 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 import request from "supertest";
-import { type Database, relations } from "@/db/schemas/relations.js";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database.js";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
+import { type Database, relations } from "@/db/schemas/relations";
+import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
 
 const CREDENTIAL_KINDS_MIGRATION_SUFFIX = "_provider_account_credential_kinds";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };

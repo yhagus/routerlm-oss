@@ -1,19 +1,15 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
 import { eq } from "drizzle-orm";
-import { providers } from "@/db/schemas/index.js";
-import {
-  insertApiKey,
-  insertOpenAiChatModel,
-  setProviderQuirks,
-} from "@tests/support/inference.js";
-import { addOauthLoginAccount, offerOauthLogin } from "@tests/support/kimi-oauth.js";
-import { allowPrivateUpstreams } from "@tests/support/private-upstreams.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { providers } from "@/db/schemas";
+import { insertApiKey, insertOpenAiChatModel, setProviderQuirks } from "@tests/support/inference";
+import { addOauthLoginAccount, offerOauthLogin } from "@tests/support/kimi-oauth";
+import { allowPrivateUpstreams } from "@tests/support/private-upstreams";
+import { createTestApp } from "@tests/support/test-app";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
 const SUCCESS: FakeReply = {

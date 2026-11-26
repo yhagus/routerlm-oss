@@ -2,12 +2,12 @@ import { AuthenticationError } from "@nestjs/authentication";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq, sql } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { authenticateWithApiKey, createApiKey } from "@tests/support/api-keys.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { authenticateWithApiKey, createApiKey } from "@tests/support/api-keys";
+import { createIntegration } from "@tests/support/integrations";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { GatewayErrorCode } from "@/db/schemas/index.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
+import type { GatewayErrorCode } from "@/db/schemas";
+import { GatewayError } from "@/inference/models/gateway-error";
 import {
   type AssistantContentPart,
   type CacheMarker,
@@ -15,12 +15,12 @@ import {
   type ToolChoice,
   UNREPORTED_USAGE,
   type UserContentPart,
-} from "@/inference/models/internal-format.js";
+} from "@/inference/models/internal-format";
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "@/inference/protocols/client-protocol-converter.js";
+} from "@/inference/protocols/client-protocol-converter";
 
 const cacheControlSchema = z.object({
   type: z.literal("ephemeral"),

@@ -1,13 +1,13 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { integrationRotations, integrations } from "@/db/schemas/index.js";
-import type { CreatedIntegration } from "@/integrations/models/integration.js";
-import { integrationNotFound } from "@/integrations/models/integration-not-found.js";
-import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries.js";
-import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth.js";
-import { RotateIntegrationSecretCommand } from "@/integrations/commands/impl/rotate-integration-secret.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { integrationRotations, integrations } from "@/db/schemas";
+import type { CreatedIntegration } from "@/integrations/models/integration";
+import { integrationNotFound } from "@/integrations/models/integration-not-found";
+import { selectIntegrationSummaries } from "@/integrations/models/integration-summaries";
+import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth";
+import { RotateIntegrationSecretCommand } from "@/integrations/commands/impl/rotate-integration-secret.command";
 
 @CommandHandler(RotateIntegrationSecretCommand)
 export class RotateIntegrationSecretHandler implements ICommandHandler<RotateIntegrationSecretCommand> {

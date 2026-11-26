@@ -8,22 +8,22 @@ import {
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { type ProviderOauthLogin, providerAccounts, providers } from "@/db/schemas/index.js";
-import { SECOND_MS } from "@/libs/models/duration.js";
-import { OauthSignInPolling } from "@/upstream/jobs/oauth-sign-in-polling.js";
+import type { Database } from "@/db/schemas/relations";
+import { type ProviderOauthLogin, providerAccounts, providers } from "@/db/schemas";
+import { SECOND_MS } from "@/libs/models/duration";
+import { OauthSignInPolling } from "@/upstream/jobs/oauth-sign-in-polling";
 import {
   type DeviceAuthorization,
   type OauthLoginEndpoint,
   OauthLoginError,
   oauthLoginEndpointOf,
   signInNeedsRegion,
-} from "@/upstream/models/oauth-device-grant.js";
-import type { OauthSignIn } from "@/upstream/models/oauth-sign-in.js";
-import { OauthLoginClient } from "@/upstream/providers/oauth-login-client.js";
-import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store.js";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher.js";
-import { StartOauthSignInCommand } from "@/upstream/commands/impl/start-oauth-sign-in.command.js";
+} from "@/upstream/models/oauth-device-grant";
+import type { OauthSignIn } from "@/upstream/models/oauth-sign-in";
+import { OauthLoginClient } from "@/upstream/providers/oauth-login-client";
+import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store";
+import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { StartOauthSignInCommand } from "@/upstream/commands/impl/start-oauth-sign-in.command";
 
 @CommandHandler(StartOauthSignInCommand)
 export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignInCommand> {

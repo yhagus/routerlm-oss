@@ -1,7 +1,7 @@
-import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host.js";
+import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth.js";
+import { IntegrationSecretAuth } from "@/integrations/providers/integration-secret-auth";
 
 export async function createIntegration(
   app: NestNodeApplication,

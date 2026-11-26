@@ -1,6 +1,6 @@
 import type { z } from "zod";
-import type { KeyCustomer } from "@/api-keys/models/api-key.js";
-import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema.js";
+import type { KeyCustomer } from "@/api-keys/models/api-key";
+import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema";
 import type {
   AuthStyle,
   Capability,
@@ -9,10 +9,10 @@ import type {
   ServiceTierValues,
   TierPrices,
   UpstreamProtocol,
-} from "@/db/schemas/index.js";
-import type { ServiceTier } from "@/inference/models/internal-format.js";
-import type { WindowPricesHours } from "@/pricing-windows/models/pricing-window-activity.js";
-import type { UpstreamModelPrices, UpstreamModelUnitPrices } from "@/usage/models/usage-job.js";
+} from "@/db/schemas";
+import type { ServiceTier } from "@/inference/models/internal-format";
+import type { WindowPricesHours } from "@/pricing-windows/models/pricing-window-activity";
+import type { UpstreamModelPrices, UpstreamModelUnitPrices } from "@/usage/models/usage-job";
 
 export interface SnapshotApiKey {
   id: string;

@@ -1,10 +1,10 @@
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { asc } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providers } from "@/db/schemas/index.js";
-import type { Provider } from "@/upstream/models/provider.js";
-import { ListProvidersQuery } from "@/upstream/queries/impl/list-providers.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { providers } from "@/db/schemas";
+import type { Provider } from "@/upstream/models/provider";
+import { ListProvidersQuery } from "@/upstream/queries/impl/list-providers.query";
 
 @QueryHandler(ListProvidersQuery)
 export class ListProvidersHandler implements IQueryHandler<ListProvidersQuery> {

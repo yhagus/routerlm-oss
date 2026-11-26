@@ -1,19 +1,19 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { routes } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { routes } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
 import {
   addOpenAiChatRoute,
   ALL_CAPABILITIES,
   insertApiKey,
   insertOpenAiChatModel,
   type UpstreamModelLimits,
-} from "@tests/support/inference.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { createTestApp } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const SUCCESS: FakeReply = {
   kind: "json",

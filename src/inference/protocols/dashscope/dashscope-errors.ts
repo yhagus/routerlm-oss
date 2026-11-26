@@ -1,5 +1,5 @@
-import type { AttemptFailureReason } from "@/db/schemas/index.js";
-import { failureReasonOfStatus } from "@/inference/providers/upstream-client.js";
+import type { AttemptFailureReason } from "@/db/schemas";
+import { failureReasonOfStatus } from "@/inference/providers/upstream-client";
 
 export function dashScopeFailureReasonOf(status: number, body: string): AttemptFailureReason {
   const code = errorCodeOf(body);

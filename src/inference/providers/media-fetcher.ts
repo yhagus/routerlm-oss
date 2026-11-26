@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import { OutboundFetch } from "@/libs/providers/outbound-fetch.js";
-import { AttemptFailedError } from "@/inference/models/attempt-failure.js";
-import type { FetchedMedia } from "@/inference/models/media-kind.js";
+import { OutboundFetch } from "@/libs/providers/outbound-fetch";
+import { AttemptFailedError } from "@/inference/models/attempt-failure";
+import type { FetchedMedia } from "@/inference/models/media-kind";
 
 export interface StreamedMedia {
   body: ReadableStream<Uint8Array>;

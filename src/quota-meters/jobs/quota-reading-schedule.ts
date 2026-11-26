@@ -4,10 +4,10 @@ import { CommandBus } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Job, Queue } from "bullmq";
 import { and, eq, exists, isNotNull, isNull, lt, lte, or } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers, quotaMeters } from "@/db/schemas/index.js";
-import { QUOTA_METERS_QUEUE } from "@/queue/models/queue-names.js";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers, quotaMeters } from "@/db/schemas";
+import { QUOTA_METERS_QUEUE } from "@/queue/models/queue-names";
+import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command";
 
 export const QUOTA_READING_SCHEDULER = "quota-reading";
 const READ_DUE_ACCOUNTS_JOB = "read-due-accounts";

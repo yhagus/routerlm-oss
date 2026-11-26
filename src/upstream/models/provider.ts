@@ -2,14 +2,9 @@ import { BadRequestException } from "@nestjs/common";
 import {
   quirksForeignToEndpoints,
   serviceTierValuesForeignToEndpoints,
-} from "@/catalog/schemas/catalog.schema.js";
-import { describeProtocols } from "@/libs/models/provider-protocols.js";
-import type {
-  ProviderEndpoint,
-  ProviderQuirks,
-  providers,
-  ServiceTierValues,
-} from "@/db/schemas/index.js";
+} from "@/catalog/schemas/catalog.schema";
+import { describeProtocols } from "@/libs/models/provider-protocols";
+import type { ProviderEndpoint, ProviderQuirks, providers, ServiceTierValues } from "@/db/schemas";
 
 export type Provider = typeof providers.$inferSelect;
 

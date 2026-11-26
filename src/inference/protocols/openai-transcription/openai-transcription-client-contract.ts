@@ -5,16 +5,16 @@ import {
   TRANSCRIPT_FORMATS,
   type Transcript,
   type TranscriptionRequest,
-} from "@/inference/models/audio-transcription.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
+} from "@/inference/models/audio-transcription";
+import { GatewayError } from "@/inference/models/gateway-error";
 import {
   jsonReply,
   type MediaClientContract,
   type MediaReply,
-} from "@/inference/models/media-kind.js";
-import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol.js";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
-import type { TranscriptionFile } from "./openai-transcription-form.js";
+} from "@/inference/models/media-kind";
+import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
+import type { TranscriptionFile } from "./openai-transcription-form";
 
 const PLAIN_TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
 

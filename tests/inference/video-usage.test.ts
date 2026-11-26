@@ -3,19 +3,19 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { dashScopeVideoFixture, FakeUpstream } from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertDashScopeVideoModel } from "@tests/support/inference.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
-import { writtenUsageLogs } from "@tests/support/usage-logs.js";
+import type { Database } from "@/db/schemas/relations";
+import { dashScopeVideoFixture, FakeUpstream } from "@tests/support/fake-upstream";
+import { insertApiKey, insertDashScopeVideoModel } from "@tests/support/inference";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
+import { writtenUsageLogs } from "@tests/support/usage-logs";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const SYNTHESIS_PATH = "/api/v1/services/aigc/video-generation/video-synthesis";
 const TASK_PATH = "/api/v1/tasks/0385dc79-5ff8-4d82-bcb6-6f2a8e5c1d21";

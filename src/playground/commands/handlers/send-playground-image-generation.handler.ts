@@ -1,9 +1,9 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { PlaygroundImageGeneration } from "@/playground/models/playground-image-generation.js";
-import { PlaygroundUsage } from "@/playground/models/playground-usage.js";
-import { SendPlaygroundImageGenerationCommand } from "@/playground/commands/impl/send-playground-image-generation.command.js";
+import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { PlaygroundImageGeneration } from "@/playground/models/playground-image-generation";
+import { PlaygroundUsage } from "@/playground/models/playground-usage";
+import { SendPlaygroundImageGenerationCommand } from "@/playground/commands/impl/send-playground-image-generation.command";
 
 const decoder = new TextDecoder();
 

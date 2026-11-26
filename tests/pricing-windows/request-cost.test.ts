@@ -3,26 +3,26 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { upstreamModels } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
+import type { Database } from "@/db/schemas/relations";
+import { upstreamModels } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
 import {
   deleteAllPricingWindows,
   utcWallClockInDays,
   zoneAtNoonNow,
-} from "@tests/support/pricing-windows.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { writtenUsageLog } from "@tests/support/usage-logs.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
+} from "@tests/support/pricing-windows";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { writtenUsageLog } from "@tests/support/usage-logs";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hello" }] };

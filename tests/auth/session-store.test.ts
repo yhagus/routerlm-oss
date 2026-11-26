@@ -1,9 +1,9 @@
 import { AuthenticationStorage, type SessionRecord } from "@nestjs/authentication";
 import { authenticationStoreContract } from "@nestjs/authentication/testing";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { DrizzleSessionStore } from "@/auth/providers/drizzle-session.store.js";
-import { type Database, relations } from "@/db/schemas/relations.js";
-import { users } from "@/db/schemas/index.js";
+import { DrizzleSessionStore } from "@/auth/providers/drizzle-session.store";
+import { type Database, relations } from "@/db/schemas/relations";
+import { users } from "@/db/schemas";
 
 const CONTRACT_USER_PREFIX = "user-";
 

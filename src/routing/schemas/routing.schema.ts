@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
-import { MODEL_KINDS, type ParameterPolicy } from "@/db/schemas/index.js";
+import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
+import { MODEL_KINDS, type ParameterPolicy } from "@/db/schemas";
 import {
   REASONING_EFFORTS,
   type ReasoningEffort,
   SERVICE_TIERS,
-} from "@/inference/models/internal-format.js";
+} from "@/inference/models/internal-format";
 
 const capSchemas = {
   temperature: z.number().min(0).max(2),

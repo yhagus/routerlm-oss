@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import type { Redis } from "ioredis";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { signInNeedsRedis } from "@/upstream/models/oauth-sign-in.js";
+import { RedisConnection } from "@/redis/providers/redis-connection";
+import { signInNeedsRedis } from "@/upstream/models/oauth-sign-in";
 import {
   type StoredOauthSignIn,
   storedOauthSignInSchema,
-} from "@/upstream/schemas/oauth-sign-in.schema.js";
+} from "@/upstream/schemas/oauth-sign-in.schema";
 
 const SIGN_IN_KEY_PREFIX = "routerlm:oauth-sign-in:";
 const ENDED_RETENTION_MS = 10 * 60_000;

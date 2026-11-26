@@ -1,11 +1,11 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import type { ControlPlaneClient } from "@tests/support/control-plane-client.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
-import type { ControlPlaneTransport } from "./key-scenarios.js";
+import type { Database } from "@/db/schemas/relations";
+import type { ControlPlaneClient } from "@tests/support/control-plane-client";
+import { createIntegration } from "@tests/support/integrations";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import type { ControlPlaneTransport } from "./key-scenarios";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

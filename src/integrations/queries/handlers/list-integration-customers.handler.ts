@@ -2,12 +2,12 @@ import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, asc, countDistinct, eq, isNotNull, like, max, type SQL, sql } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys, usageLogs } from "@/db/schemas/index.js";
-import { startingWith } from "@/usage/models/usage-filters.js";
-import type { IntegrationCustomerPage } from "@/integrations/models/integration.js";
-import { assertIntegrationExists } from "@/integrations/models/integration-exists.js";
-import { ListIntegrationCustomersQuery } from "@/integrations/queries/impl/list-integration-customers.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys, usageLogs } from "@/db/schemas";
+import { startingWith } from "@/usage/models/usage-filters";
+import type { IntegrationCustomerPage } from "@/integrations/models/integration";
+import { assertIntegrationExists } from "@/integrations/models/integration-exists";
+import { ListIntegrationCustomersQuery } from "@/integrations/queries/impl/list-integration-customers.query";
 
 @QueryHandler(ListIntegrationCustomersQuery)
 export class ListIntegrationCustomersHandler implements IQueryHandler<ListIntegrationCustomersQuery> {

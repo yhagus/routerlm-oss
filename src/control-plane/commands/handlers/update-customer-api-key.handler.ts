@@ -1,18 +1,18 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, eq, isNull } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { apiKeys } from "@/db/schemas/index.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags.js";
-import { ControlPlaneError } from "@/control-plane/models/control-plane-error.js";
-import type { CustomerApiKey } from "@/control-plane/models/customer-api-key.js";
+import type { Database } from "@/db/schemas/relations";
+import { apiKeys } from "@/db/schemas";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags";
+import { ControlPlaneError } from "@/control-plane/models/control-plane-error";
+import type { CustomerApiKey } from "@/control-plane/models/customer-api-key";
 import {
   assertWithinCeiling,
   findCustomerApiKey,
   findUnrevokedCustomerApiKey,
-} from "@/control-plane/models/customer-api-keys.js";
-import { UpdateCustomerApiKeyCommand } from "@/control-plane/commands/impl/update-customer-api-key.command.js";
+} from "@/control-plane/models/customer-api-keys";
+import { UpdateCustomerApiKeyCommand } from "@/control-plane/commands/impl/update-customer-api-key.command";
 
 const REVOKED_MESSAGE = "A revoked API Key can't be changed.";
 

@@ -1,15 +1,15 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq, sql } from "drizzle-orm";
 import request from "supertest";
-import { apiKeys, usageLogs } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
+import { apiKeys, usageLogs } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
 import {
   type ControlPlaneClient,
   httpControlPlaneClient,
-} from "@tests/support/control-plane-client.js";
-import { insertOpenAiChatModel } from "@tests/support/inference.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+} from "@tests/support/control-plane-client";
+import { insertOpenAiChatModel } from "@tests/support/inference";
+import { createIntegration } from "@tests/support/integrations";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";

@@ -1,5 +1,5 @@
 import { Command } from "@nestjs/cqrs";
-import type { ProviderAccountQuota } from "@/quota-meters/models/quota-meter.js";
+import type { ProviderAccountQuota } from "@/quota-meters/models/quota-meter";
 
 export class UseUsageResetCommand extends Command<ProviderAccountQuota> {
   constructor(

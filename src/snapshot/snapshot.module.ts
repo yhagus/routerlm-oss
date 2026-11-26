@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ScheduleModule } from "@nestjs/schedule";
-import { RedisModule } from "@/redis/redis.module.js";
-import { SnapshotService } from "./providers/snapshot.service.js";
+import { RedisModule } from "@/redis/redis.module";
+import { SnapshotService } from "./providers/snapshot.service";
 
 @Module({
   imports: [RedisModule, ScheduleModule.forRoot()],

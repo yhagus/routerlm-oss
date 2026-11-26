@@ -1,7 +1,7 @@
-import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host.js";
+import { ExecutionContextHost } from "@nestjs/core/helpers/execution-context-host";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth.js";
+import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
 
 export async function createApiKey(
   app: NestNodeApplication,

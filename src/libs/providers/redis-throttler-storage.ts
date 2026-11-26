@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { z } from "zod";
 import type { ThrottlerStorage } from "@nestjs/throttler";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
+import { RedisConnection } from "@/redis/providers/redis-connection";
 
 type ThrottlerStorageRecord = Awaited<ReturnType<ThrottlerStorage["increment"]>>;
 

@@ -2,7 +2,7 @@ import { Logger } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { type AnyColumn, and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations.js";
+import type { Database, Transaction } from "@/db/schemas/relations";
 import {
   pricingWindows,
   type ProviderEndpoint,
@@ -10,22 +10,19 @@ import {
   upstreamModelPricingWindows,
   upstreamModels,
   type UpstreamProtocol,
-} from "@/db/schemas/index.js";
-import {
-  SeedCatalogCommand,
-  type SeedResult,
-} from "@/catalog/commands/impl/seed-catalog.command.js";
+} from "@/db/schemas";
+import { SeedCatalogCommand, type SeedResult } from "@/catalog/commands/impl/seed-catalog.command";
 import {
   type CatalogPricingWindow,
   type CatalogUpstreamModel,
   type CatalogWindowPrices,
-} from "@/catalog/schemas/catalog.schema.js";
-import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols.js";
-import { selectAttachedPricingWindows } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
+} from "@/catalog/schemas/catalog.schema";
+import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols";
+import { selectAttachedPricingWindows } from "@/pricing-windows/models/upstream-model-pricing-windows";
 import {
   doWindowPricesOverlap,
   type WindowPricesTiming,
-} from "@/pricing-windows/models/window-prices-overlap.js";
+} from "@/pricing-windows/models/window-prices-overlap";
 
 type NamedWindowPricesTiming = WindowPricesTiming & { name: string };
 

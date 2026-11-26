@@ -9,12 +9,12 @@ import { ConfigService } from "@nestjs/config";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import type { Redis } from "ioredis";
-import type { Env } from "@/config/schemas/env.schema.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { publishPrivateUpstreamsAllowed } from "@/libs/models/private-upstreams-policy.js";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { loadSnapshot } from "@/snapshot/models/load-snapshot.js";
-import { EMPTY_SNAPSHOT, type Snapshot } from "@/snapshot/models/snapshot.js";
+import type { Env } from "@/config/schemas/env.schema";
+import type { Database } from "@/db/schemas/relations";
+import { publishPrivateUpstreamsAllowed } from "@/libs/models/private-upstreams-policy";
+import { RedisConnection } from "@/redis/providers/redis-connection";
+import { loadSnapshot } from "@/snapshot/models/load-snapshot";
+import { EMPTY_SNAPSHOT, type Snapshot } from "@/snapshot/models/snapshot";
 
 export const SNAPSHOT_CHANGED_CHANNEL = "routerlm:snapshot-changed";
 

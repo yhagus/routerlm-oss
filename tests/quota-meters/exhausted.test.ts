@@ -1,28 +1,24 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers } from "@/db/schemas/index.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers } from "@/db/schemas";
 import {
   anthropicMessagesFixture,
   type FakeReply,
   FakeUpstream,
-} from "@tests/support/fake-upstream.js";
+} from "@tests/support/fake-upstream";
 import {
   addProviderAccount,
   insertAnthropicMessagesModel,
   insertApiKey,
   setProviderQuirks,
   UPSTREAM_KEY,
-} from "@tests/support/inference.js";
-import {
-  GENERAL_REMAINS,
-  REMAINS_PATH,
-  remainsReply,
-} from "@tests/support/minimax-m-plan-remains.js";
+} from "@tests/support/inference";
+import { GENERAL_REMAINS, REMAINS_PATH, remainsReply } from "@tests/support/minimax-m-plan-remains";
 
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const OPERATOR = { email: "ops@example.com", password: "ops password" };

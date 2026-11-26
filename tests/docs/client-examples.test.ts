@@ -1,10 +1,10 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { NestNodeApplication } from "@nestjs/platform-node";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { GATEWAY_ERROR_CODES } from "@/db/schemas/index.js";
-import { GATEWAY_ERROR_STATUS } from "@/inference/models/gateway-error.js";
+import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import type { Database } from "@/db/schemas/relations";
+import { GATEWAY_ERROR_CODES } from "@/db/schemas";
+import { GATEWAY_ERROR_STATUS } from "@/inference/models/gateway-error";
 import {
   type CodeBlock,
   codeBlocksOf,
@@ -19,14 +19,14 @@ import {
   parseCurl,
   proseOf,
   readDocsPages,
-} from "@tests/support/docs-examples.js";
-import { httpControlPlaneClient } from "@tests/support/control-plane-client.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { portOf } from "@tests/support/port-of.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/docs-examples";
+import { httpControlPlaneClient } from "@tests/support/control-plane-client";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { createIntegration } from "@tests/support/integrations";
+import { portOf } from "@tests/support/port-of";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const pages = readDocsPages();
 const codeBlocks = pages.flatMap(codeBlocksOf);

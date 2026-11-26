@@ -1,82 +1,78 @@
 import { randomUUID } from "node:crypto";
 import type { IncomingHttpHeaders } from "node:http";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { CLIENT_PROTOCOL_KINDS, type ModelKind } from "@/db/schemas/index.js";
-import { quirksSentThrough } from "@/libs/models/provider-protocols.js";
+import { CLIENT_PROTOCOL_KINDS, type ModelKind } from "@/db/schemas";
+import { quirksSentThrough } from "@/libs/models/provider-protocols";
 import {
   type SnapshotModel,
   type SnapshotUpstreamModel,
   validQuirksOf,
-} from "@/snapshot/models/snapshot.js";
-import type { ClientConnection } from "@/libs/models/client-connection.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
-import { UsageProducer } from "@/usage/jobs/usage.producer.js";
+} from "@/snapshot/models/snapshot";
+import type { ClientConnection } from "@/libs/models/client-connection";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
+import type { UsageJob } from "@/usage/models/usage-job";
+import { UsageProducer } from "@/usage/jobs/usage.producer";
 import {
   AttemptFailedError,
   ClientCancelledError,
   gatewayErrorFor,
-} from "@/inference/models/attempt-failure.js";
+} from "@/inference/models/attempt-failure";
 import {
   DEFAULT_CACHE_MARKER_LIMIT,
   withAutomaticCacheBreakpoints,
-} from "@/inference/models/automatic-cache-breakpoints.js";
+} from "@/inference/models/automatic-cache-breakpoints";
 import {
   assertKindServedHere,
   type Destination,
   probeDestination,
   upstreamModelServedHere,
   usableModel,
-} from "@/inference/models/destination.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
-import type { InferenceRequest } from "@/inference/models/internal-format.js";
+} from "@/inference/models/destination";
+import { GatewayError } from "@/inference/models/gateway-error";
+import type { InferenceRequest } from "@/inference/models/internal-format";
 import {
   applyParameterPolicy,
   effectiveParameterPolicy,
-} from "@/inference/models/parameter-policy.js";
-import { promptCacheKey } from "@/inference/models/prompt-cache-key.js";
-import {
-  encodedFor,
-  failedRequestUsage,
-  requestOwnerOf,
-} from "@/inference/models/request-usage.js";
+} from "@/inference/models/parameter-policy";
+import { promptCacheKey } from "@/inference/models/prompt-cache-key";
+import { encodedFor, failedRequestUsage, requestOwnerOf } from "@/inference/models/request-usage";
 import type {
   ClientProtocolConverter,
   ClientStreamWriter,
   ResponseContext,
-} from "@/inference/protocols/client-protocol-converter.js";
-import type { UpstreamProtocolConverter } from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/protocols/client-protocol-converter";
+import type { UpstreamProtocolConverter } from "@/inference/protocols/upstream-protocol-converter";
 import {
   UPSTREAM_PROTOCOL_CONVERTERS,
   upstreamAuthHeaders,
-} from "@/inference/protocols/converters.js";
+} from "@/inference/protocols/converters";
 import {
   type AttemptTarget,
   canServe,
   capableRoutes,
   routePath,
   UPSTREAM_PROTOCOL_SPOKEN_BY_CLIENT,
-} from "@/inference/models/route-selection.js";
-import { type CallableEndpoint, callableEndpointOf } from "@/inference/models/callable-endpoint.js";
-import { AttemptRunner } from "@/inference/providers/attempt-runner.js";
-import { CallerLimits } from "@/inference/providers/caller-limits.js";
+} from "@/inference/models/route-selection";
+import { type CallableEndpoint, callableEndpointOf } from "@/inference/models/callable-endpoint";
+import { AttemptRunner } from "@/inference/providers/attempt-runner";
+import { CallerLimits } from "@/inference/providers/caller-limits";
 import {
   DEFAULT_TIMEOUTS,
   type UpstreamCall,
   UpstreamClient,
   type UpstreamStream,
   totalTimeoutMsOf,
-} from "@/inference/providers/upstream-client.js";
-import { serviceTierSentTo } from "@/inference/models/service-tier.js";
-import { forwardedClientHeadersOf } from "@/inference/providers/forwarded-client-headers.js";
-import { UsageMeter } from "@/inference/models/usage-meter.js";
+} from "@/inference/providers/upstream-client";
+import { serviceTierSentTo } from "@/inference/models/service-tier";
+import { forwardedClientHeadersOf } from "@/inference/providers/forwarded-client-headers";
+import { UsageMeter } from "@/inference/models/usage-meter";
 import type {
   InferenceCaller,
   InferenceResult,
   RunInferenceTarget,
-} from "@/inference/models/inference.js";
-import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.command.js";
+} from "@/inference/models/inference";
+import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.command";
 
 interface AttemptOptions {
   destination: Destination;

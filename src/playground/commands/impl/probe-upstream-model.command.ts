@@ -1,7 +1,7 @@
 import { Command } from "@nestjs/cqrs";
-import type { ClientConnection } from "@/libs/models/client-connection.js";
-import type { User } from "@/users/models/user.js";
-import type { ProbeResults } from "@/playground/models/probe-result.js";
+import type { ClientConnection } from "@/libs/models/client-connection";
+import type { User } from "@/users/models/user";
+import type { ProbeResults } from "@/playground/models/probe-result";
 
 export class ProbeUpstreamModelCommand extends Command<ProbeResults> {
   constructor(

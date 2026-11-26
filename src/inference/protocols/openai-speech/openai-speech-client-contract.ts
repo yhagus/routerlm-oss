@@ -1,15 +1,15 @@
 import { z } from "zod";
-import type { ParameterPolicy } from "@/db/schemas/index.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
-import type { MediaClientContract, MediaReply } from "@/inference/models/media-kind.js";
+import type { ParameterPolicy } from "@/db/schemas";
+import { GatewayError } from "@/inference/models/gateway-error";
+import type { MediaClientContract, MediaReply } from "@/inference/models/media-kind";
 import {
   AUDIO_FORMATS,
   type AudioFormat,
   type SpeechSynthesisRequest,
   type SynthesizedSpeech,
-} from "@/inference/models/speech-synthesis.js";
-import { dashScopeSpeechProtocol } from "@/inference/protocols/dashscope-speech/dashscope-speech-protocol.js";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error.js";
+} from "@/inference/models/speech-synthesis";
+import { dashScopeSpeechProtocol } from "@/inference/protocols/dashscope-speech/dashscope-speech-protocol";
+import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
 
 const MIN_SPEED = 0.25;
 const MAX_SPEED = 4;

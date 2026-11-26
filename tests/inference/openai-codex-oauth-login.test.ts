@@ -1,17 +1,13 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations";
 import {
   type FakeReply,
   FakeUpstream,
   openAiResponsesFixture,
   type ReceivedRequest,
-} from "@tests/support/fake-upstream.js";
-import {
-  insertApiKey,
-  insertOpenAiResponsesModel,
-  UPSTREAM_KEY,
-} from "@tests/support/inference.js";
+} from "@tests/support/fake-upstream";
+import { insertApiKey, insertOpenAiResponsesModel, UPSTREAM_KEY } from "@tests/support/inference";
 import {
   ACCOUNT_ID,
   accessToken,
@@ -25,9 +21,9 @@ import {
   PLAN_TYPE,
   TOKEN_PATH,
   tokensReply,
-} from "@tests/support/openai-codex-oauth.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/openai-codex-oauth";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };

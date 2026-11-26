@@ -1,9 +1,5 @@
-import type { ParameterCaps, ParameterPolicy, ParameterValues } from "@/db/schemas/index.js";
-import {
-  type InferenceRequest,
-  REASONING_EFFORTS,
-  type ReasoningEffort,
-} from "./internal-format.js";
+import type { ParameterCaps, ParameterPolicy, ParameterValues } from "@/db/schemas";
+import { type InferenceRequest, REASONING_EFFORTS, type ReasoningEffort } from "./internal-format";
 
 export const POLICY_PARAMETERS = [
   "temperature",

@@ -1,5 +1,5 @@
 import { Query } from "@nestjs/cqrs";
-import type { UsageReset } from "@/quota-meters/models/usage-reset.js";
+import type { UsageReset } from "@/quota-meters/models/usage-reset";
 
 export type { UsageReset };
 

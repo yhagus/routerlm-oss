@@ -5,19 +5,19 @@ import type {
   errorCaptures,
   GatewayErrorCode,
   usageLogs,
-} from "@/db/schemas/index.js";
-import type { TokenUsage } from "@/inference/models/internal-format.js";
-import { REDACTED } from "@/error-captures/models/captured-content.js";
-import { SECOND_MS } from "@/libs/models/duration.js";
-import { usageMeasurementsOf } from "@/usage/models/usage-measurements.js";
-import type { RequestNames, ServingTarget, UpstreamModelPrices } from "@/usage/models/usage-job.js";
+} from "@/db/schemas";
+import type { TokenUsage } from "@/inference/models/internal-format";
+import { REDACTED } from "@/error-captures/models/captured-content";
+import { SECOND_MS } from "@/libs/models/duration";
+import { usageMeasurementsOf } from "@/usage/models/usage-measurements";
+import type { RequestNames, ServingTarget, UpstreamModelPrices } from "@/usage/models/usage-job";
 import {
   type DemoCaller,
   DEMO_MODEL_NAMES,
   type DemoModelName,
   type TrafficProfile,
-} from "@/demo/data/demo-fixtures.js";
-import { between, logNormal, pickWeighted, type Random, seededRandom } from "./seeded-random.js";
+} from "@/demo/data/demo-fixtures";
+import { between, logNormal, pickWeighted, type Random, seededRandom } from "./seeded-random";
 
 type NewUsageLog = typeof usageLogs.$inferInsert;
 type NewAttempt = typeof attempts.$inferInsert;

@@ -1,7 +1,7 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { sql } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
+import type { Database } from "@/db/schemas/relations";
 import {
   apiKeys,
   attempts,
@@ -10,8 +10,8 @@ import {
   providerAccounts,
   providers,
   usageLogs,
-} from "@/db/schemas/index.js";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app.js";
+} from "@/db/schemas";
+import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 const RECEIVED_AT = new Date("2026-11-10T10:00:00Z");

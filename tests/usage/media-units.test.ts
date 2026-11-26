@@ -4,17 +4,17 @@ import type { NestNodeApplication } from "@nestjs/platform-node";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { usageLogs } from "@/db/schemas/index.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
+import type { Database } from "@/db/schemas/relations";
+import { usageLogs } from "@/db/schemas";
+import type { UsageJob } from "@/usage/models/usage-job";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
-const { UsageProducer } = await import("@/usage/jobs/usage.producer.js");
+const { createTestApp } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
+const { UsageProducer } = await import("@/usage/jobs/usage.producer");
 
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;

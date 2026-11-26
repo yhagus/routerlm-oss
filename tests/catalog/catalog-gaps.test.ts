@@ -1,14 +1,14 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import { providers, upstreamModels } from "@/db/schemas/index.js";
-import type { Database } from "@/db/schemas/relations.js";
-import { FakeUpstream } from "@tests/support/fake-upstream.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import { providers, upstreamModels } from "@/db/schemas";
+import type { Database } from "@/db/schemas/relations";
+import { FakeUpstream } from "@tests/support/fake-upstream";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const modelsDev = await FakeUpstream.start();
 process.env.MODELS_DEV_API_URL = `${modelsDev.origin}/api.json`;
 process.env.MODELS_DEV_TIMEOUT_MS = "1000";
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
 
 const OPERATOR = { email: "ops@example.com", password: "ops password" };
 

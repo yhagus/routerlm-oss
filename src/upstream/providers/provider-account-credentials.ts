@@ -1,30 +1,30 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts, providers } from "@/db/schemas/index.js";
-import { cliIdentityHeaders } from "@/upstream/models/cli-identity.js";
-import { codexInferenceHeaders } from "@/upstream/models/codex-cli-identity.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts, providers } from "@/db/schemas";
+import { cliIdentityHeaders } from "@/upstream/models/cli-identity";
+import { codexInferenceHeaders } from "@/upstream/models/codex-cli-identity";
 import {
   type OauthLoginEndpoint,
   oauthLoginEndpointOf,
-} from "@/upstream/models/oauth-device-grant.js";
+} from "@/upstream/models/oauth-device-grant";
 import {
   needsRefresh,
   type OauthLoginLifetime,
   SIGN_IN_AGAIN_REASON,
-} from "@/upstream/models/oauth-login.js";
+} from "@/upstream/models/oauth-login";
 import {
   apiKeyCredential,
   CredentialUnavailableError,
   OauthLoginRefusedError,
   type ProviderAccountCredential,
-} from "@/upstream/models/provider-account-credential.js";
-import { storedOauthTokens } from "@/upstream/models/provider-account.js";
-import { OauthLoginClient } from "./oauth-login-client.js";
-import { OauthRefreshLock } from "./oauth-refresh-lock.js";
-import { ProviderAccountHealth } from "./provider-account-health.js";
-import { ProviderKeyCipher } from "./provider-key-cipher.js";
+} from "@/upstream/models/provider-account-credential";
+import { storedOauthTokens } from "@/upstream/models/provider-account";
+import { OauthLoginClient } from "./oauth-login-client";
+import { OauthRefreshLock } from "./oauth-refresh-lock";
+import { ProviderAccountHealth } from "./provider-account-health";
+import { ProviderKeyCipher } from "./provider-key-cipher";
 
 interface StoredLogin extends OauthLoginLifetime {
   accessToken: string;

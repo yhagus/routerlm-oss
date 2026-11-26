@@ -11,14 +11,14 @@ import {
   Put,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { CreateUserCommand } from "./commands/impl/create-user.command.js";
-import { DeleteUserCommand } from "./commands/impl/delete-user.command.js";
-import { ResetPasswordCommand } from "./commands/impl/reset-password.command.js";
-import type { User } from "./models/user.js";
-import { ListUsersQuery } from "./queries/impl/list-users.query.js";
-import { type NewUser, newUserSchema } from "./schemas/new-user.schema.js";
-import { type PasswordReset, passwordResetSchema } from "./schemas/password-reset.schema.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { CreateUserCommand } from "./commands/impl/create-user.command";
+import { DeleteUserCommand } from "./commands/impl/delete-user.command";
+import { ResetPasswordCommand } from "./commands/impl/reset-password.command";
+import type { User } from "./models/user";
+import { ListUsersQuery } from "./queries/impl/list-users.query";
+import { type NewUser, newUserSchema } from "./schemas/new-user.schema";
+import { type PasswordReset, passwordResetSchema } from "./schemas/password-reset.schema";
 
 @DashboardController("users")
 export class UsersController {

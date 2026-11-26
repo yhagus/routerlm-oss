@@ -1,44 +1,41 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { CLIENT_PROTOCOL_KINDS, type ModelKind, type ParameterPolicy } from "@/db/schemas/index.js";
+import { CLIENT_PROTOCOL_KINDS, type ModelKind, type ParameterPolicy } from "@/db/schemas";
 import {
   isUpstreamModelUsable,
   type SnapshotRoute,
   type SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
-import { UsageProducer } from "@/usage/jobs/usage.producer.js";
+} from "@/snapshot/models/snapshot";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
+import type { UsageJob } from "@/usage/models/usage-job";
+import { UsageProducer } from "@/usage/jobs/usage.producer";
 import {
   assertKindServedHere,
   type Destination,
   probeDestination,
   upstreamModelServedHere,
   usableModel,
-} from "@/inference/models/destination.js";
-import { GatewayError } from "@/inference/models/gateway-error.js";
-import type { InferenceCaller } from "@/inference/models/inference.js";
+} from "@/inference/models/destination";
+import { GatewayError } from "@/inference/models/gateway-error";
+import type { InferenceCaller } from "@/inference/models/inference";
 import type {
   MediaClientContract,
   MediaReply,
   MediaRequest,
   MediaUpstreamProtocol,
-} from "@/inference/models/media-kind.js";
-import { withMediaPlaceholders } from "@/inference/models/media-placeholders.js";
-import {
-  effectiveParameterPolicy,
-  isWatermarkedUnder,
-} from "@/inference/models/parameter-policy.js";
-import { failedRequestUsage, requestOwnerOf } from "@/inference/models/request-usage.js";
-import { type AttemptTarget, endpointOf, routePath } from "@/inference/models/route-selection.js";
-import { UsageMeter } from "@/inference/models/usage-meter.js";
-import { type CallableEndpoint, callableEndpointOf } from "@/inference/models/callable-endpoint.js";
-import { upstreamAuthHeaders } from "@/inference/protocols/converters.js";
-import { AttemptRunner } from "@/inference/providers/attempt-runner.js";
-import { CallerLimits } from "@/inference/providers/caller-limits.js";
-import { MediaUpstreamClient } from "@/inference/providers/media-upstream-client.js";
-import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "@/inference/providers/upstream-client.js";
-import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
+} from "@/inference/models/media-kind";
+import { withMediaPlaceholders } from "@/inference/models/media-placeholders";
+import { effectiveParameterPolicy, isWatermarkedUnder } from "@/inference/models/parameter-policy";
+import { failedRequestUsage, requestOwnerOf } from "@/inference/models/request-usage";
+import { type AttemptTarget, endpointOf, routePath } from "@/inference/models/route-selection";
+import { UsageMeter } from "@/inference/models/usage-meter";
+import { type CallableEndpoint, callableEndpointOf } from "@/inference/models/callable-endpoint";
+import { upstreamAuthHeaders } from "@/inference/protocols/converters";
+import { AttemptRunner } from "@/inference/providers/attempt-runner";
+import { CallerLimits } from "@/inference/providers/caller-limits";
+import { MediaUpstreamClient } from "@/inference/providers/media-upstream-client";
+import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "@/inference/providers/upstream-client";
+import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command";
 
 const HTTP_OK = 200;
 

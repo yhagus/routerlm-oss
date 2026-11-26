@@ -1,5 +1,5 @@
-import type { ApiKeyPrincipal } from "@/api-keys/models/api-key.js";
-import type { UsageJob } from "@/usage/models/usage-job.js";
+import type { ApiKeyPrincipal } from "@/api-keys/models/api-key";
+import type { UsageJob } from "@/usage/models/usage-job";
 
 export type InferenceResult =
   | { kind: "response"; json: Uint8Array }

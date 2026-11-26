@@ -1,9 +1,9 @@
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { toPrivateUpstreamsSetting } from "@/settings/models/private-upstreams-view.js";
-import type { PrivateUpstreamsSetting } from "@/settings/models/private-upstreams.js";
-import { SettingsStore } from "@/settings/providers/settings-store.js";
-import { ChangePrivateUpstreamsCommand } from "@/settings/commands/impl/change-private-upstreams.command.js";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { toPrivateUpstreamsSetting } from "@/settings/models/private-upstreams-view";
+import type { PrivateUpstreamsSetting } from "@/settings/models/private-upstreams";
+import { SettingsStore } from "@/settings/providers/settings-store";
+import { ChangePrivateUpstreamsCommand } from "@/settings/commands/impl/change-private-upstreams.command";
 
 @CommandHandler(ChangePrivateUpstreamsCommand)
 export class ChangePrivateUpstreamsHandler implements ICommandHandler<ChangePrivateUpstreamsCommand> {

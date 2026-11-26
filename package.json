@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "check:mirrors": "bun scripts/check-web-mirrors.ts",
     "check": "bun run lint && bun run format:check && bun run typecheck && bun run check:mirrors && bun run check:redis-keys",
-    "check:redis-keys": "! grep -rnE --include='*.ts' '[\"`]routerlm:[a-z]' tests --exclude-dir=support || (echo 'check:redis-keys: a test spells a Redis key; use the helpers in tests/support/redis-state.ts' && false)",
+    "check:redis-keys": "! grep -rnE --include='*.ts' \"[\\\"'\\`]routerlm:[a-z]\" tests --exclude-dir=support || (echo 'check:redis-keys: a test spells a Redis key; use the helpers in tests/support/redis-state.ts' && false)",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",

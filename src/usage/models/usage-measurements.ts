@@ -1,10 +1,10 @@
-import type { TokenUsage } from "@/inference/models/internal-format.js";
+import type { TokenUsage } from "@/inference/models/internal-format";
 import type {
   MediaUnits,
   ServedBy,
   UpstreamModelPrices,
   UpstreamModelUnitPrices,
-} from "./usage-job.js";
+} from "./usage-job";
 
 export interface UsageMeasurements extends TokenUsage {
   cost: number | null;

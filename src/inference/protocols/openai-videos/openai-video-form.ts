@@ -1,4 +1,4 @@
-import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload.js";
+import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload";
 
 export const VIDEO_FIRST_FRAME_FIELD = "input_reference";
 

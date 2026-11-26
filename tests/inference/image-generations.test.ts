@@ -1,13 +1,9 @@
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import { eq } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import {
-  dashScopeImageFixture,
-  type FakeReply,
-  FakeUpstream,
-} from "@tests/support/fake-upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import { dashScopeImageFixture, type FakeReply, FakeUpstream } from "@tests/support/fake-upstream";
 import {
   addDashScopeImageRoute,
   addProviderAccount,
@@ -16,10 +12,10 @@ import {
   insertOpenAiChatModel,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference.js";
-import { allowPrivateUpstreams } from "@tests/support/private-upstreams.js";
-import { createTestApp } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+} from "@tests/support/inference";
+import { allowPrivateUpstreams } from "@tests/support/private-upstreams";
+import { createTestApp } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 const BACKUP_KEY = "sk-backup-secret-9876543210";
 const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";

@@ -4,14 +4,14 @@ import {
   CONTROL_PLANE_ERROR_CODES,
   CONTROL_PLANE_ERRORS,
   type ControlPlaneErrorCode,
-} from "@/control-plane/models/control-plane-error.js";
-import { CONTROL_PLANE_PROTO_PATH } from "@/control-plane/models/control-plane-grpc.js";
+} from "@/control-plane/models/control-plane-error";
+import { CONTROL_PLANE_PROTO_PATH } from "@/control-plane/models/control-plane-grpc";
 import {
   type TimestampMessage,
   timestampMessageOf,
   timestampOf,
-} from "@/control-plane/models/proto-grpc.js";
-import type { ControlPlaneClient, ControlPlaneOutcome } from "./control-plane-client.js";
+} from "@/control-plane/models/proto-grpc";
+import type { ControlPlaneClient, ControlPlaneOutcome } from "./control-plane-client";
 
 const READY_TIMEOUT_MS = 20_000;
 const CONTROL_PLANE_SERVICE_NAME = "routerlm.integration.v1.ControlPlane";

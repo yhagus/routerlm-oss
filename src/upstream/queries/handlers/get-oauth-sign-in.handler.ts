@@ -2,15 +2,12 @@ import { NotFoundException } from "@nestjs/common";
 import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations.js";
-import { providerAccounts } from "@/db/schemas/index.js";
-import type { OauthSignIn } from "@/upstream/models/oauth-sign-in.js";
-import {
-  type ProviderAccount,
-  providerAccountColumns,
-} from "@/upstream/models/provider-account.js";
-import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store.js";
-import { GetOauthSignInQuery } from "@/upstream/queries/impl/get-oauth-sign-in.query.js";
+import type { Database } from "@/db/schemas/relations";
+import { providerAccounts } from "@/db/schemas";
+import type { OauthSignIn } from "@/upstream/models/oauth-sign-in";
+import { type ProviderAccount, providerAccountColumns } from "@/upstream/models/provider-account";
+import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store";
+import { GetOauthSignInQuery } from "@/upstream/queries/impl/get-oauth-sign-in.query";
 
 @QueryHandler(GetOauthSignInQuery)
 export class GetOauthSignInHandler implements IQueryHandler<GetOauthSignInQuery> {

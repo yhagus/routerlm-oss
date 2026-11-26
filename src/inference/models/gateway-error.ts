@@ -1,4 +1,4 @@
-import type { ErrorOrigin, GatewayErrorCode } from "@/db/schemas/index.js";
+import type { ErrorOrigin, GatewayErrorCode } from "@/db/schemas";
 
 export const GATEWAY_ERROR_STATUS = {
   invalid_request: 400,

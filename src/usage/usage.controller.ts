@@ -1,16 +1,16 @@
 import { Get, Param, ParseUUIDPipe, Query } from "@nestjs/common";
 import { QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import type { UsageLogDetail, UsageLogPage, UsageSummary } from "./models/usage.js";
-import { ListUsageLogsQuery } from "./queries/impl/list-usage-logs.query.js";
-import { ShowUsageLogQuery } from "./queries/impl/show-usage-log.query.js";
-import { SummarizeUsageQuery } from "./queries/impl/summarize-usage.query.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import type { UsageLogDetail, UsageLogPage, UsageSummary } from "./models/usage";
+import { ListUsageLogsQuery } from "./queries/impl/list-usage-logs.query";
+import { ShowUsageLogQuery } from "./queries/impl/show-usage-log.query";
+import { SummarizeUsageQuery } from "./queries/impl/summarize-usage.query";
 import {
   type UsageFilter,
   usageFilterSchema,
   type UsagePageQuery,
   usagePageQuerySchema,
-} from "./schemas/usage.schema.js";
+} from "./schemas/usage.schema";
 
 @DashboardController("usage")
 export class UsageController {

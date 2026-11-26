@@ -1,10 +1,10 @@
 import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
-import { openAiTranscriptionClientContract } from "@/inference/protocols/openai-transcription/openai-transcription-client-contract.js";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import type { PlaygroundTranscription } from "@/playground/models/playground-transcription.js";
-import { PlaygroundUsage } from "@/playground/models/playground-usage.js";
-import { SendPlaygroundTranscriptionCommand } from "@/playground/commands/impl/send-playground-transcription.command.js";
+import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command";
+import { openAiTranscriptionClientContract } from "@/inference/protocols/openai-transcription/openai-transcription-client-contract";
+import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { PlaygroundTranscription } from "@/playground/models/playground-transcription";
+import { PlaygroundUsage } from "@/playground/models/playground-usage";
+import { SendPlaygroundTranscriptionCommand } from "@/playground/commands/impl/send-playground-transcription.command";
 
 @CommandHandler(SendPlaygroundTranscriptionCommand)
 export class SendPlaygroundTranscriptionHandler implements ICommandHandler<SendPlaygroundTranscriptionCommand> {

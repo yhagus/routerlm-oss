@@ -1,4 +1,4 @@
-import type { ErrorOrigin } from "@/db/schemas/index.js";
+import type { ErrorOrigin } from "@/db/schemas";
 
 export function byErrorOrigin<Value>(
   valueOf: (origin: ErrorOrigin) => Value,

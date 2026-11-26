@@ -1,9 +1,9 @@
 import type * as Crypto from "node:crypto";
 import type { NestNodeApplication } from "@nestjs/platform-node";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
+import type { Database } from "@/db/schemas/relations";
+import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
 
 vi.mock("node:crypto", async (importOriginal) => {
   const crypto = await importOriginal<typeof Crypto>();

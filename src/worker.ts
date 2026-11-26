@@ -1,7 +1,7 @@
 import { NestFactory } from "@nestjs/core";
-import { controlPlanePortSchema } from "@/config/schemas/env.schema.js";
-import { controlPlaneGrpcOptions } from "@/control-plane/models/control-plane-grpc.js";
-import { WorkerModule } from "@/worker.module.js";
+import { controlPlanePortSchema } from "@/config/schemas/env.schema";
+import { controlPlaneGrpcOptions } from "@/control-plane/models/control-plane-grpc";
+import { WorkerModule } from "@/worker.module";
 
 const controlPlanePort = controlPlanePortSchema.parse(process.env.CONTROL_PLANE_PORT);
 

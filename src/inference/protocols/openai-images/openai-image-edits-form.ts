@@ -1,4 +1,4 @@
-import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload.js";
+import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload";
 
 export const IMAGE_EDIT_FILE_FIELDS = [
   { name: "image", maxCount: 1 },

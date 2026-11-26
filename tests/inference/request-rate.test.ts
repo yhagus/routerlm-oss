@@ -4,23 +4,23 @@ import { Test, type TestingModule } from "@nestjs/testing";
 import type { Queue } from "bullmq";
 import { sql } from "drizzle-orm";
 import request from "supertest";
-import type { Database } from "@/db/schemas/relations.js";
-import { RedisConnection } from "@/redis/providers/redis-connection.js";
-import { createApiKey } from "@tests/support/api-keys.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
-import { insertOpenAiChatModel } from "@tests/support/inference.js";
-import { createIntegration } from "@tests/support/integrations.js";
-import { deleteAllUpstreamData } from "@tests/support/upstream.js";
-import { writtenUsageLogs } from "@tests/support/usage-logs.js";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue.js";
-import { forgetThrottleCounts } from "@tests/support/redis-state.js";
+import type { Database } from "@/db/schemas/relations";
+import { RedisConnection } from "@/redis/providers/redis-connection";
+import { createApiKey } from "@tests/support/api-keys";
+import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import { insertOpenAiChatModel } from "@tests/support/inference";
+import { createIntegration } from "@tests/support/integrations";
+import { deleteAllUpstreamData } from "@tests/support/upstream";
+import { writtenUsageLogs } from "@tests/support/usage-logs";
+import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
+import { forgetThrottleCounts } from "@tests/support/redis-state";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app.js");
-const { WorkerModule } = await import("@/worker.module.js");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names.js");
+const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
+const { WorkerModule } = await import("@/worker.module");
+const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
 
 const ADA = { email: "ada@example.com", password: "ada's password" };
 

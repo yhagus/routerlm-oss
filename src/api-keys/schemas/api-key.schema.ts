@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema.js";
+import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
 
 export const MAX_NAME_LENGTH = 100;
 export const MAX_CUSTOMER_ID_LENGTH = 200;

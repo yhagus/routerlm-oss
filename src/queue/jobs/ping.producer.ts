@@ -1,8 +1,8 @@
 import { InjectQueue } from "@nestjs/bullmq";
 import { Injectable, Logger } from "@nestjs/common";
 import type { Job, Queue } from "bullmq";
-import { addJobOrLog } from "@/queue/models/add-job-or-log.js";
-import { PING_QUEUE } from "@/queue/models/queue-names.js";
+import { addJobOrLog } from "@/queue/models/add-job-or-log";
+import { PING_QUEUE } from "@/queue/models/queue-names";
 
 export type PingJob = Job<Record<string, never>>;
 

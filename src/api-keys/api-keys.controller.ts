@@ -11,22 +11,17 @@ import {
   Query,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import type { User } from "@/users/models/user.js";
-import { CreateApiKeyCommand } from "./commands/impl/create-api-key.command.js";
-import { RevokeApiKeyCommand } from "./commands/impl/revoke-api-key.command.js";
-import { RotateApiKeyCommand } from "./commands/impl/rotate-api-key.command.js";
-import { UpdateApiKeyCommand } from "./commands/impl/update-api-key.command.js";
-import type {
-  ApiKeyRotation,
-  ApiKeySummary,
-  CreatedApiKey,
-  ModelChoice,
-} from "./models/api-key.js";
-import { ListApiKeyRotationsQuery } from "./queries/impl/list-api-key-rotations.query.js";
-import { ListApiKeysQuery } from "./queries/impl/list-api-keys.query.js";
-import { ListModelChoicesQuery } from "./queries/impl/list-model-choices.query.js";
-import { RevealApiKeyQuery } from "./queries/impl/reveal-api-key.query.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import type { User } from "@/users/models/user";
+import { CreateApiKeyCommand } from "./commands/impl/create-api-key.command";
+import { RevokeApiKeyCommand } from "./commands/impl/revoke-api-key.command";
+import { RotateApiKeyCommand } from "./commands/impl/rotate-api-key.command";
+import { UpdateApiKeyCommand } from "./commands/impl/update-api-key.command";
+import type { ApiKeyRotation, ApiKeySummary, CreatedApiKey, ModelChoice } from "./models/api-key";
+import { ListApiKeyRotationsQuery } from "./queries/impl/list-api-key-rotations.query";
+import { ListApiKeysQuery } from "./queries/impl/list-api-keys.query";
+import { ListModelChoicesQuery } from "./queries/impl/list-model-choices.query";
+import { RevealApiKeyQuery } from "./queries/impl/reveal-api-key.query";
 import {
   type ApiKeyChanges,
   apiKeyChangesSchema,
@@ -34,7 +29,7 @@ import {
   apiKeyListQuerySchema,
   type NewApiKey,
   newApiKeySchema,
-} from "./schemas/api-key.schema.js";
+} from "./schemas/api-key.schema";
 
 @DashboardController("api-keys")
 export class ApiKeysController {

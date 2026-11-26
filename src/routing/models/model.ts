@@ -1,4 +1,4 @@
-import type { models, providers, routes, upstreamModels } from "@/db/schemas/index.js";
+import type { models, providers, routes, upstreamModels } from "@/db/schemas";
 
 export type Model = typeof models.$inferSelect;
 

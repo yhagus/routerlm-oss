@@ -1,13 +1,13 @@
 import { z } from "zod";
-import type { Transcript, TranscriptionRequest } from "@/inference/models/audio-transcription.js";
+import type { Transcript, TranscriptionRequest } from "@/inference/models/audio-transcription";
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind.js";
-import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors.js";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter.js";
+} from "@/inference/models/media-kind";
+import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors";
+import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
 
 const GENERATION_PATH = "/services/aigc/multimodal-generation/generation";
 

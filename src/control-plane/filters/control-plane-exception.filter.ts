@@ -3,8 +3,8 @@ import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
 import {
   CONTROL_PLANE_ERRORS,
   controlPlaneErrorOf,
-} from "@/control-plane/models/control-plane-error.js";
-import type { ErrorJson } from "@/control-plane/models/proto-json.js";
+} from "@/control-plane/models/control-plane-error";
+import type { ErrorJson } from "@/control-plane/models/proto-json";
 
 @Catch()
 export class ControlPlaneExceptionFilter implements ExceptionFilter {

@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas/index.js";
+import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas";
 import {
   commaSeparated,
   customerIdFilterSchema,
   instant,
   searchTextSchema,
-} from "@/usage/schemas/usage.schema.js";
+} from "@/usage/schemas/usage.schema";
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;

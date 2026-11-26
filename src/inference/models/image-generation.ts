@@ -1,4 +1,4 @@
-import type { FetchedMedia, MediaRequest } from "./media-kind.js";
+import type { FetchedMedia, MediaRequest } from "./media-kind";
 
 export interface ImageSize {
   width: number;

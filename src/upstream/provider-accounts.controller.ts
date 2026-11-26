@@ -10,21 +10,21 @@ import {
   Post,
 } from "@nestjs/common";
 import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator.js";
-import { CreateProviderAccountCommand } from "./commands/impl/create-provider-account.command.js";
-import { DeleteProviderAccountCommand } from "./commands/impl/delete-provider-account.command.js";
-import { UpdateProviderAccountCommand } from "./commands/impl/update-provider-account.command.js";
-import type { ProviderAccount } from "./models/provider-account.js";
+import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
+import { CreateProviderAccountCommand } from "./commands/impl/create-provider-account.command";
+import { DeleteProviderAccountCommand } from "./commands/impl/delete-provider-account.command";
+import { UpdateProviderAccountCommand } from "./commands/impl/update-provider-account.command";
+import type { ProviderAccount } from "./models/provider-account";
 import {
   type ListedProviderAccount,
   ListProviderAccountsQuery,
-} from "./queries/impl/list-provider-accounts.query.js";
+} from "./queries/impl/list-provider-accounts.query";
 import {
   type NewProviderAccount,
   newProviderAccountSchema,
   type ProviderAccountChanges,
   providerAccountChangesSchema,
-} from "./schemas/upstream.schema.js";
+} from "./schemas/upstream.schema";
 
 @DashboardController("provider-accounts")
 export class ProviderAccountsController {
