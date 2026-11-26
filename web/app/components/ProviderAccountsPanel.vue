@@ -3,11 +3,14 @@ import { KeyRound, LogIn, Pencil, Plus, Power, Trash2 } from '@lucide/vue';
 import { resetCountdown, usageResetCount } from '~/lib/quotaMeters';
 import {
   acceptsApiKey,
+  AUTO_PLAN_CHOICE,
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
   needsNewSignIn,
   OAUTH_REGION_LABELS,
+  offersPlanChoice,
   offersSignIn,
   optionalNumber,
+  planChoiceOptions,
   type Provider,
   type ProviderAccount,
 } from '~/lib/upstream';
@@ -35,8 +38,10 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
 const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: 'medium' });
 
 const hasQuota = computed(() => props.provider.quotaReader !== null);
-const hasPlan = computed(() => props.provider.planReader !== null);
-const columnCount = computed(() => 6 + Number(hasQuota.value) + Number(hasPlan.value));
+const hasPlanReader = computed(() => props.provider.planReader !== null);
+const hasPlanChoice = computed(() => offersPlanChoice(props.provider));
+const hasPlanColumn = computed(() => hasPlanReader.value || hasPlanChoice.value);
+const columnCount = computed(() => 6 + Number(hasQuota.value) + Number(hasPlanColumn.value));
 
 const COUNTDOWN_TICK_MS = 30_000;
 const now = ref(Date.now());
@@ -125,6 +130,7 @@ interface ProviderAccountForm {
   priority: number | string;
   continueWhenExhausted: boolean;
   paysBeyondPlan: boolean;
+  planChoice: string;
 }
 
 const EMPTY_FORM: ProviderAccountForm = {
@@ -133,6 +139,7 @@ const EMPTY_FORM: ProviderAccountForm = {
   priority: 0,
   continueWhenExhausted: false,
   paysBeyondPlan: false,
+  planChoice: AUTO_PLAN_CHOICE,
 };
 
 const form = ref<ProviderAccountForm>({ ...EMPTY_FORM });
@@ -141,10 +148,19 @@ function openDialog(next: ProviderAccountDialog): void {
   showDialog(next);
   if (next.kind === 'create') form.value = { ...EMPTY_FORM };
   if (next.kind === 'edit') {
-    const { name, priority, continueWhenExhausted, paysBeyondPlan } = next.account;
-    form.value = { name, key: '', priority, continueWhenExhausted, paysBeyondPlan };
+    const { name, priority, continueWhenExhausted, paysBeyondPlan, planChoice } = next.account;
+    form.value = { name, key: '', priority, continueWhenExhausted, paysBeyondPlan, planChoice };
   }
 }
+
+const planSelectOptions = computed(() => {
+  const options = planChoiceOptions(props.provider);
+  const current = dialog.value;
+  if (current?.kind !== 'edit') return options;
+  const savedChoice = current.account.planChoice;
+  if (options.some((option) => option.value === savedChoice)) return options;
+  return [...options, { label: `${savedChoice} (no longer listed)`, value: savedChoice }];
+});
 
 const editsOauthLogin = computed(() => {
   const current = dialog.value;
@@ -169,7 +185,8 @@ async function saveAccount(): Promise<void> {
   const quotaFields = hasQuota.value
     ? { continueWhenExhausted: form.value.continueWhenExhausted }
     : {};
-  const planFields = hasPlan.value ? { paysBeyondPlan: form.value.paysBeyondPlan } : {};
+  const planFields = hasPlanReader.value ? { paysBeyondPlan: form.value.paysBeyondPlan } : {};
+  const planChoiceFields = hasPlanChoice.value ? { planChoice: form.value.planChoice } : {};
   const fields = {
     name: form.value.name,
     priority: optionalNumber(form.value.priority) ?? 0,
@@ -190,6 +207,7 @@ async function saveAccount(): Promise<void> {
             priority: fields.priority,
             ...quotaFields,
             ...planFields,
+            ...planChoiceFields,
             ...(name ? { name } : {}),
           },
         });
@@ -202,11 +220,13 @@ async function saveAccount(): Promise<void> {
     return;
   }
   const key = form.value.key === '' ? {} : { key: form.value.key };
+  const changedPlanChoice =
+    form.value.planChoice === current.account.planChoice ? {} : planChoiceFields;
   await submitDialog(
     async () => {
       await $dashboardApi(`/provider-accounts/${current.account.id}`, {
         method: 'PATCH',
-        body: { ...fields, ...key },
+        body: { ...fields, ...key, ...changedPlanChoice },
       });
       form.value.key = '';
     },
@@ -266,7 +286,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
             <th>Credential</th>
             <th>Priority</th>
             <th>Status</th>
-            <th v-if="hasPlan">Plan</th>
+            <th v-if="hasPlanColumn">Plan</th>
             <th v-if="hasQuota">Quota</th>
             <th>Last error</th>
             <th><span class="sr-only">Actions</span></th>
@@ -296,7 +316,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
               <span v-if="hasQuota && account.continueWhenExhausted" class="cell-note"
                 >Continues on Credits when exhausted</span
               >
-              <span v-if="hasPlan && account.paysBeyondPlan" class="cell-note"
+              <span v-if="hasPlanReader && account.paysBeyondPlan" class="cell-note"
                 >Pays beyond its Plan</span
               >
               <button
@@ -309,8 +329,13 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
                 <LogIn :size="12" /> Sign in again
               </button>
             </td>
-            <td v-if="hasPlan">
-              <ProviderAccountPlan :account="account" :now="now" :refresh="refresh" />
+            <td v-if="hasPlanColumn">
+              <ProviderAccountPlan
+                :provider="provider"
+                :account="account"
+                :now="now"
+                :refresh="refresh"
+              />
             </td>
             <td v-if="hasQuota">
               <ProviderAccountQuota :account="account" :now="now" :refresh="refresh" />
@@ -420,7 +445,11 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
         ><input v-model="form.continueWhenExhausted" type="checkbox" /> Continue on Credits when
         exhausted</label
       >
-      <template v-if="hasPlan">
+      <div v-if="hasPlanChoice" class="field">
+        <span class="field__label">Plan</span>
+        <AppSelect v-model="form.planChoice" :options="planSelectOptions" label="Plan" />
+      </div>
+      <template v-if="hasPlanReader">
         <label class="check-field"
           ><input v-model="form.paysBeyondPlan" type="checkbox" /> Pays beyond plan</label
         >

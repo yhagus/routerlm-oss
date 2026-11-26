@@ -217,6 +217,11 @@ export interface TierPrices {
   cacheWritePrice?: number;
 }
 
+export interface ProviderPlan {
+  value: string;
+  name: string;
+}
+
 export interface Provider {
   id: string;
   slug: string;
@@ -233,6 +238,8 @@ export interface Provider {
   isFromCatalog: boolean;
   quotaReader: QuotaReader | null;
   planReader: PlanReader | null;
+  plans: ProviderPlan[];
+  allowsNoPlan: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -322,6 +329,7 @@ export interface ProviderAccount {
   oauthRegion: OauthRegion | null;
   oauthEmail?: string | null;
   plan: string | null;
+  planChoice: string;
   planCheckedAt: string | null;
   paysBeyondPlan: boolean;
   priority: number;
@@ -361,6 +369,25 @@ export function needsNewSignIn(account: ProviderAccount): boolean {
     !account.isEnabled &&
     account.disabledReason !== null
   );
+}
+
+export const AUTO_PLAN_CHOICE = 'auto';
+export const NO_PLAN_CHOICE = 'none';
+
+export function offersPlanChoice(provider: Provider): boolean {
+  return provider.plans.length > 0;
+}
+
+export function planChoiceOptions(provider: Provider): { label: string; value: string }[] {
+  return [
+    { label: 'Auto', value: AUTO_PLAN_CHOICE },
+    ...(provider.allowsNoPlan ? [{ label: 'None (pay as you go)', value: NO_PLAN_CHOICE }] : []),
+    ...provider.plans.map((plan) => ({ label: plan.name, value: plan.value })),
+  ];
+}
+
+export function listedPlanName(provider: Provider, value: string): string | null {
+  return provider.plans.find((plan) => plan.value === value)?.name ?? null;
 }
 
 export function acceptsApiKey(provider: Provider): boolean {
