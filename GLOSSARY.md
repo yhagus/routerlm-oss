@@ -52,7 +52,7 @@ A sign-in to a Provider that a User grants the gateway, which the gateway keeps 
 _Avoid_: Token, session, OAuth account
 
 **Subscription Provider**:
-A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code, MiniMax M Plan or OpenAI Codex. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot, MiniMax API or OpenAI.
+A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code, MiniMax M Plan or OpenAI Codex. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot, MiniMax API or OpenAI. A Provider that sells plans alongside per-token prices behind the same key, such as TokenHarbor, is a pay-as-you-go Provider: its plans only lower what is paid and have no Quota Meters.
 _Avoid_: Coding plan, token plan, membership
 
 **Quota Meter**:

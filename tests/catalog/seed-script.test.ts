@@ -54,6 +54,7 @@ describe('db:seed script (e2e)', () => {
         'openai',
         'openai-codex',
         'opencode-go',
+        'tokenharbor',
         'tokenrouter-com',
         'tokenrouter-io',
         'xiaomi-mimo',

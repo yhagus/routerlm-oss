@@ -1,0 +1,1974 @@
+{
+  "slug": "tokenharbor",
+  "name": "TokenHarbor",
+  "logo": "tokenharbor",
+  "termsRisk": false,
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://tokenharbor.ai/v1"
+    },
+    {
+      "kind": "chat",
+      "protocol": "anthropic-messages",
+      "baseUrl": "https://tokenharbor.ai"
+    },
+    {
+      "kind": "chat",
+      "protocol": "openai-responses",
+      "baseUrl": "https://tokenharbor.ai/v1"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {},
+  "credentialKinds": ["api-key"],
+  "source": {
+    "urls": [
+      "https://tokenharbor.ai/docs",
+      "https://tokenharbor.ai/docs/api/curl",
+      "https://tokenharbor.ai/docs/api/models",
+      "https://tokenharbor.ai/pricing",
+      "https://tokenharbor.ai/terms",
+      "https://tokenharbor.ai/v1/models"
+    ],
+    "retrievedOn": "2026-11-26"
+  },
+  "notes": "Reseller with a pay-as-you-go wallet plus optional Passes (Agent, Office and Frontier, each a 7-day allowance), all behind one API key. It is modelled as pay-as-you-go: Cost is the list price from GET /v1/models (USD per million tokens, retrieved 2026-11-26), Pass discounts are not reflected, and there are no Quota Meters because TokenHarbor has no quota API. Terms: §3 \"Proxy Reselling\" forbids building \"a direct, white-labeled proxy alternative to Token Harbor\" without enterprise authorization. It is not flagged Terms Risk, because the operator uses their own key through external tools, which TokenHarbor allows (§2.1 mentions downstream end-users of your applications). A Provider Account on a Pass without wallet balance gets HTTP 402 model_not_in_plan for models outside its Pass: that is an invalid request with no Fallback, so top up the wallet or route only Pass-covered models to it. A 429 (with Retry-After, or spend_limit_exceeded for a per-key cap set in the TokenHarbor dashboard) stays a Cooldown; the error for an empty wallet is undocumented, so there are no exhaustedErrorCodes. TokenHarbor serves every model on three chat endpoints, all checked live with bearer auth: chat completions, Anthropic Messages and Responses. Claude models list Anthropic Messages first and GPT models list Responses first (ADR 0095); the others use chat completions. Cached tokens are reported on chat completions (prompt_tokens_details.cached_tokens) and on Anthropic Messages (cache_read_input_tokens). Where TokenHarbor publishes no cache read or cache write price, the price is left empty, as for the other resellers in the Catalog. The DeepSeek V4 Pro, V4 Flash, V4.1 Flash and V4.1 Flash 1017 models have lower prices in the TokenHarbor Off-Peak window (14:00-00:00 UTC every day). Long-context prices of the GPT-6 family and Claude Haiku 5.5 are in each model's notes only, so Cost understates very long prompts. Release dates are the day each model was first released by any Provider, copied from the original Provider's Catalog file or from models.dev; a -fast or -ultrafast variant takes its base model's release date and capabilities. Not shipped: the four :free models (TokenHarbor rotates its free list), and image generation, since /v1/images/generations has no Protocol here.",
+  "pricingWindows": [
+    {
+      "name": "TokenHarbor Off-Peak",
+      "timeZone": "UTC",
+      "ranges": [
+        {
+          "weekdays": [1, 2, 3, 4, 5, 6, 7],
+          "start": "14:00",
+          "end": "24:00"
+        }
+      ],
+      "notes": "TokenHarbor's off-peak window, 14:00-00:00 UTC every day, as GET /v1/models states it on each discounted model."
+    }
+  ],
+  "upstreamModels": [
+    {
+      "upstreamModelId": "gemini-4-neon-fast",
+      "name": "Gemini 4 Neon Fast",
+      "releaseDate": "2026-11-18",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 5.4,
+      "outputPrice": 27,
+      "cacheReadPrice": 0.27,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://aistudio.google.com/docs/models/gemini-4-neon",
+          "https://aistudio.google.com/docs/pricing#gemini-4-neon",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gemini-4-neon at its own price; release date, max output and capabilities are those of gemini-4-neon, from the google-gemini Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gemini-4-neon",
+      "name": "Gemini 4 Neon",
+      "releaseDate": "2026-11-18",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://aistudio.google.com/docs/models/gemini-4-neon",
+          "https://aistudio.google.com/docs/pricing#gemini-4-neon",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the google-gemini Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gpt-6.2-sol-fast",
+      "name": "GPT-6.2 Sol Fast",
+      "releaseDate": "2026-11-17",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-6.2-sol at its own price; release date, max output and capabilities are those of gpt-6.2-sol, from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 8, output 30, cache read 0.4, cache write 10."
+    },
+    {
+      "upstreamModelId": "gpt-6.2-sol",
+      "name": "GPT-6.2 Sol",
+      "releaseDate": "2026-11-17",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 4, output 15, cache read 0.2, cache write 5."
+    },
+    {
+      "upstreamModelId": "gpt-6.2-astra-fast",
+      "name": "GPT-6.2 Astra Fast",
+      "releaseDate": "2026-11-17",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 16,
+      "outputPrice": 80,
+      "cacheReadPrice": 0.8,
+      "cacheWritePrice": 20,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-6.2-astra at its own price; release date, max output and capabilities are those of gpt-6.2-astra, from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 32, output 120, cache read 1.6, cache write 40."
+    },
+    {
+      "upstreamModelId": "gpt-6.2-astra",
+      "name": "GPT-6.2 Astra",
+      "releaseDate": "2026-11-17",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 10,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 16, output 60, cache read 0.8, cache write 20."
+    },
+    {
+      "upstreamModelId": "qwen4-max",
+      "name": "Qwen4 Max",
+      "releaseDate": "2026-11-16",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.5,
+      "outputPrice": 4.5,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": 1.875,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/qwen4-max",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://www.alibabacloud.com/press-room/alibaba-unveils-qwen4-max"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-token-plan Catalog file."
+    },
+    {
+      "upstreamModelId": "gemini-4-hydrogen",
+      "name": "Gemini 4 Hydrogen",
+      "releaseDate": "2026-11-12",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 1.5,
+      "outputPrice": 7.5,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the google-gemini Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gemini-4-carbon",
+      "name": "Gemini 4 Carbon",
+      "releaseDate": "2026-11-10",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 32768,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the google-gemini Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "muse-ember",
+      "name": "Muse Ember 1.0",
+      "releaseDate": "2026-11-09",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 524288,
+      "inputPrice": 0.1,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.004,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the meta-ai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "claude-fable-5.2-fast",
+      "name": "Claude Fable 5.2 Fast",
+      "releaseDate": "2026-11-09",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 16,
+      "outputPrice": 80,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 20,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/fable-5-2/overview",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of claude-fable-5.2 at its own price; release date, max output and capabilities are those of claude-fable-5.2, from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "claude-fable-5.2",
+      "name": "Claude Fable 5.2",
+      "releaseDate": "2026-11-09",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 10,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/fable-5-2/overview",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "inkling-2-small",
+      "name": "Inkling 2 Small",
+      "releaseDate": "2026-11-05",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.3,
+      "outputPrice": 1,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its openrouter listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "glm-5.3-flashx-legal",
+      "name": "GLM-5.3-FlashX-Legal",
+      "releaseDate": "2026-11-02",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.37,
+      "outputPrice": 1.25,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its zai listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "ling-3.1-flash-1019",
+      "name": "Ling 3.1 Flash 1019",
+      "releaseDate": "2026-10-30",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.3,
+      "outputPrice": 0.9,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its vercel listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gpt-6.1-terra-fast",
+      "name": "GPT-6.1 Terra Fast",
+      "releaseDate": "2026-10-26",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-6.1-terra at its own price; release date, max output and capabilities are those of gpt-6.1-terra, from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 4, output 15, cache read 0.2, cache write 5."
+    },
+    {
+      "upstreamModelId": "gpt-6.1-terra",
+      "name": "GPT-6.1 Terra",
+      "releaseDate": "2026-10-26",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1,
+      "outputPrice": 5,
+      "cacheReadPrice": 0.05,
+      "cacheWritePrice": 1.25,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 2, output 7.5, cache read 0.1, cache write 2.5."
+    },
+    {
+      "upstreamModelId": "kimi-k3.1-pro",
+      "name": "Kimi K3.1 Pro",
+      "releaseDate": "2026-10-23",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 1048576,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.kimi.ai/docs/models.md",
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://platform.kimi.ai/docs/api/chat",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the moonshot Catalog file."
+    },
+    {
+      "upstreamModelId": "minimax-m3.1-flash",
+      "name": "MiniMax-M3.1-Flash",
+      "releaseDate": "2026-10-19",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 524288,
+      "inputPrice": 0.15,
+      "outputPrice": 0.6,
+      "cacheReadPrice": 0.015,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.minimax.io/docs/guides/pricing",
+          "https://platform.minimax.io/docs/guides/text-generation",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the minimax-api Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "deepseek-v4.1-flash-1017-ultrafast",
+      "name": "DeepSeek V4.1 Flash 1017 Ultrafast",
+      "releaseDate": "2026-10-17",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
+      "inputPrice": 2.4,
+      "outputPrice": 9.6,
+      "cacheReadPrice": 0.048,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://api-docs.deepseek.com/quick_start/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of deepseek-v4.1-flash-1017 at its own price; release date, max output and capabilities are those of deepseek-v4.1-flash-1017, from the deepseek Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "deepseek-v4.1-flash-1017-fast",
+      "name": "DeepSeek V4.1 Flash 1017 Fast",
+      "releaseDate": "2026-10-17",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
+      "inputPrice": 0.6,
+      "outputPrice": 2.4,
+      "cacheReadPrice": 0.014,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://api-docs.deepseek.com/quick_start/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of deepseek-v4.1-flash-1017 at its own price; release date, max output and capabilities are those of deepseek-v4.1-flash-1017, from the deepseek Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "deepseek-v4.1-flash-1017",
+      "name": "DeepSeek V4.1 Flash 1017",
+      "releaseDate": "2026-10-17",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
+      "inputPrice": 0.15,
+      "outputPrice": 0.6,
+      "cacheReadPrice": 0.003,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://api-docs.deepseek.com/quick_start/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the deepseek Catalog file. Off-peak prices are in the TokenHarbor Off-Peak window. TokenHarbor publishes no cache write price for this model.",
+      "windowPrices": [
+        {
+          "pricingWindow": "TokenHarbor Off-Peak",
+          "inputPrice": 0.075,
+          "outputPrice": 0.3,
+          "cacheReadPrice": 0.0015
+        }
+      ]
+    },
+    {
+      "upstreamModelId": "gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "releaseDate": "2026-10-13",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 32768,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the google-gemini Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "muse-wonder-1.0",
+      "name": "Muse Wonder 1.0",
+      "releaseDate": "2026-10-12",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the meta-ai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "claude-haiku-5.5",
+      "name": "Claude Haiku 5.5",
+      "releaseDate": "2026-10-07",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.1,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": 0.125,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/haiku-5-5/overview",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file. Over 100,000 prompt tokens: input 0.5, output 2.5, cache read 0.05, cache write 0.625."
+    },
+    {
+      "upstreamModelId": "mistral-large-4",
+      "name": "Mistral Large 4",
+      "releaseDate": "2026-10-05",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.7,
+      "outputPrice": 2.1,
+      "cacheReadPrice": 0.07,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its mistral listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "ling-3.1-flash",
+      "name": "Ling 3.1 Flash",
+      "releaseDate": "2026-09-29",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.3,
+      "outputPrice": 0.9,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its openrouter listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gpt-6.1-sol-fast",
+      "name": "GPT-6.1 Sol Fast",
+      "releaseDate": "2026-09-29",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-6.1-sol at its own price; release date, max output and capabilities are those of gpt-6.1-sol, from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 8, output 30, cache read 0.4, cache write 10."
+    },
+    {
+      "upstreamModelId": "gpt-6.1-sol",
+      "name": "GPT-6.1 Sol",
+      "releaseDate": "2026-09-29",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 4, output 15, cache read 0.2, cache write 5."
+    },
+    {
+      "upstreamModelId": "claude-sonnet-5.5",
+      "name": "Claude Sonnet 5.5",
+      "releaseDate": "2026-09-28",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "mimo-v2.6-pro",
+      "name": "MiMo-V2.6-Pro",
+      "releaseDate": "2026-09-22",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.435,
+      "outputPrice": 0.87,
+      "cacheReadPrice": 0.0036,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the xiaomi-mimo Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "mimo-v2.6-flash",
+      "name": "MiMo-V2.6-Flash",
+      "releaseDate": "2026-09-22",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.14,
+      "outputPrice": 0.28,
+      "cacheReadPrice": 0.0028,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the xiaomi-mimo Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gpt-6-sol-fast",
+      "name": "GPT-6 Sol Fast",
+      "releaseDate": "2026-09-22",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6-sol",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-6-sol at its own price; release date, max output and capabilities are those of gpt-6-sol, from the openai Catalog file. Over 271,999 prompt tokens: input 8, output 30, cache read 0.8, cache write 10."
+    },
+    {
+      "upstreamModelId": "gpt-6-sol",
+      "name": "GPT-6 Sol",
+      "releaseDate": "2026-09-22",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6-sol",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file. Over 271,999 prompt tokens: input 4, output 15, cache read 0.4, cache write 5."
+    },
+    {
+      "upstreamModelId": "gpt-6-luna-fast",
+      "name": "GPT-6 Luna Fast",
+      "releaseDate": "2026-09-22",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.2,
+      "outputPrice": 1,
+      "cacheReadPrice": 0.02,
+      "cacheWritePrice": 0.25,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6-luna",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-6-luna at its own price; release date, max output and capabilities are those of gpt-6-luna, from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on chat completions only with reasoning_effort none. Over 271,999 prompt tokens: input 0.4, output 1.5, cache read 0.04, cache write 0.5."
+    },
+    {
+      "upstreamModelId": "gpt-6-luna",
+      "name": "GPT-6 Luna",
+      "releaseDate": "2026-09-22",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.1,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": 0.125,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6-luna",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on chat completions only with reasoning_effort none. Over 271,999 prompt tokens: input 0.2, output 0.75, cache read 0.02, cache write 0.25."
+    },
+    {
+      "upstreamModelId": "claude-opus-5.5-fast",
+      "name": "Claude Opus 5.5 Fast",
+      "releaseDate": "2026-09-22",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 10,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of claude-opus-5.5 at its own price; release date, max output and capabilities are those of claude-opus-5.5, from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "claude-opus-5.5",
+      "name": "Claude Opus 5.5",
+      "releaseDate": "2026-09-22",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "grok-4.7",
+      "name": "Grok 4.7",
+      "releaseDate": "2026-09-21",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 500000,
+      "maxOutputTokens": 500000,
+      "inputPrice": 2,
+      "outputPrice": 6,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its xai listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "glm-5.3-flashx",
+      "name": "GLM-5.3-FlashX",
+      "releaseDate": "2026-09-18",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.37,
+      "outputPrice": 1.25,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the zai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "releaseDate": "2026-09-10",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.0015,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the tokenrouter-com Catalog file. Off-peak prices are in the TokenHarbor Off-Peak window. TokenHarbor publishes no cache write price for this model.",
+      "windowPrices": [
+        {
+          "pricingWindow": "TokenHarbor Off-Peak",
+          "inputPrice": 0.15,
+          "outputPrice": 0.6,
+          "cacheReadPrice": 0.00075
+        }
+      ]
+    },
+    {
+      "upstreamModelId": "gpt-6-astra-fast",
+      "name": "GPT-6 Astra Fast",
+      "releaseDate": "2026-09-04",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 20,
+      "outputPrice": 100,
+      "cacheReadPrice": 2,
+      "cacheWritePrice": 25,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-6-astra at its own price; release date, max output and capabilities are those of gpt-6-astra, from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 40, output 150, cache read 4, cache write 50."
+    },
+    {
+      "upstreamModelId": "gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "releaseDate": "2026-09-04",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 1,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file. No tools, as in the openai Catalog file: OpenAI serves function calling for this model on the Responses API only, and a chat completions request goes out on chat completions (ADR 0095). Over 271,999 prompt tokens: input 20, output 75, cache read 2, cache write 25."
+    },
+    {
+      "upstreamModelId": "muse-spark-1-3",
+      "name": "Muse Spark 1.3",
+      "releaseDate": "2026-09-02",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.25,
+      "outputPrice": 4.25,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the meta-ai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "releaseDate": "2026-09-02",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.75,
+      "outputPrice": 3.75,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the google-gemini Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "claude-fable-5.1",
+      "name": "Claude Fable 5.1",
+      "releaseDate": "2026-09-01",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "qwen3.8-flash",
+      "name": "Qwen3.8 Flash",
+      "releaseDate": "2026-08-26",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.47,
+      "cacheReadPrice": 0.016,
+      "cacheWritePrice": 0.2,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-model-studio-intl Catalog file."
+    },
+    {
+      "upstreamModelId": "glm-5.3-flash",
+      "name": "GLM-5.3-Flash",
+      "releaseDate": "2026-08-26",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": 0,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the zai Catalog file."
+    },
+    {
+      "upstreamModelId": "qwen3.8-27b",
+      "name": "Qwen3.8 27B",
+      "releaseDate": "2026-08-14",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.35,
+      "outputPrice": 2.1,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 0.4375,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its openrouter listing)."
+    },
+    {
+      "upstreamModelId": "glm-5.3-fast",
+      "name": "GLM-5.3 Fast",
+      "releaseDate": "2026-08-14",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2.1,
+      "outputPrice": 6.6,
+      "cacheReadPrice": 0.21,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of glm-5.3 at its own price; release date, max output and capabilities are those of glm-5.3, from the zai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "glm-5.3",
+      "name": "GLM-5.3",
+      "releaseDate": "2026-08-14",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 200000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.283,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the zai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "gemini-3.7-flash",
+      "name": "Gemini 3.7 Flash",
+      "releaseDate": "2026-08-13",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.75,
+      "outputPrice": 3.75,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the google-gemini Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "grok-4.6",
+      "name": "Grok 4.6",
+      "releaseDate": "2026-08-12",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 500000,
+      "maxOutputTokens": 500000,
+      "inputPrice": 2,
+      "outputPrice": 6,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its xai listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "muse-spark-1.2",
+      "name": "Muse Spark 1.2",
+      "releaseDate": "2026-08-05",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.25,
+      "outputPrice": 4.25,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the meta-ai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "qwen3.8-max",
+      "name": "Qwen3.8 Max",
+      "releaseDate": "2026-08-03",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2,
+      "outputPrice": 6,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-model-studio-intl Catalog file."
+    },
+    {
+      "upstreamModelId": "claude-opus-5-fast",
+      "name": "Claude Opus 5 Fast",
+      "releaseDate": "2026-07-24",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 1,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of claude-opus-5 at its own price; release date, max output and capabilities are those of claude-opus-5, from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "claude-opus-5",
+      "name": "Claude Opus 5",
+      "releaseDate": "2026-07-24",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "gemini-3.6-flash",
+      "name": "Gemini 3.6 Flash",
+      "releaseDate": "2026-07-21",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.75,
+      "outputPrice": 3.75,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its google listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "kimi-k3-fast",
+      "name": "Kimi K3 Fast",
+      "releaseDate": "2026-07-16",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 1048576,
+      "inputPrice": 6,
+      "outputPrice": 22.5,
+      "cacheReadPrice": 0.6,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.kimi.ai/docs/models.md",
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://platform.kimi.ai/docs/api/chat",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of kimi-k3 at its own price; release date, max output and capabilities are those of kimi-k3, from the moonshot Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "kimi-k3",
+      "name": "Kimi K3",
+      "releaseDate": "2026-07-16",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 1048576,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.kimi.ai/docs/models.md",
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://platform.kimi.ai/docs/api/chat",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the moonshot Catalog file."
+    },
+    {
+      "upstreamModelId": "qwen3.7-flash",
+      "name": "Qwen3.7 Flash",
+      "releaseDate": "2026-07-15",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.03,
+      "outputPrice": 0.13,
+      "cacheReadPrice": 0.006,
+      "cacheWritePrice": 0.038,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-model-studio-intl Catalog file. TokenHarbor lists no context length, so it is taken from the alibaba-model-studio-intl Catalog file."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-terra-fast",
+      "name": "GPT-5.6 Terra Fast",
+      "releaseDate": "2026-07-09",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 24,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-5.6-terra at its own price; release date, max output and capabilities are those of gpt-5.6-terra, from the openai Catalog file."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-terra",
+      "name": "GPT-5.6 Terra",
+      "releaseDate": "2026-07-09",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 12,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-sol-fast",
+      "name": "GPT-5.6 Sol Fast",
+      "releaseDate": "2026-07-09",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.8,
+      "cacheWritePrice": 10,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-5.6-sol at its own price; release date, max output and capabilities are those of gpt-5.6-sol, from the openai Catalog file."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-sol",
+      "name": "GPT-5.6 Sol",
+      "releaseDate": "2026-07-09",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-luna-fast",
+      "name": "GPT-5.6 Luna Fast",
+      "releaseDate": "2026-07-09",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.4,
+      "outputPrice": 2.4,
+      "cacheReadPrice": 0.04,
+      "cacheWritePrice": 0.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "A faster-serving variant of gpt-5.6-luna at its own price; release date, max output and capabilities are those of gpt-5.6-luna, from the openai Catalog file."
+    },
+    {
+      "upstreamModelId": "gpt-5.6-luna",
+      "name": "GPT-5.6 Luna",
+      "releaseDate": "2026-07-09",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.2,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.02,
+      "cacheWritePrice": 0.25,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the openai Catalog file."
+    },
+    {
+      "upstreamModelId": "grok-4.5",
+      "name": "Grok 4.5",
+      "releaseDate": "2026-07-08",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 500000,
+      "maxOutputTokens": 500000,
+      "inputPrice": 2,
+      "outputPrice": 6,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its xai listing). TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "claude-sonnet-5",
+      "name": "Claude Sonnet 5",
+      "releaseDate": "2026-06-29",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "glm-5.2",
+      "name": "GLM-5.2",
+      "releaseDate": "2026-06-13",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.28,
+      "cacheWritePrice": 0,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://docs.z.ai/guides/llm/glm-5.2",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the zai Catalog file."
+    },
+    {
+      "upstreamModelId": "claude-fable-5",
+      "name": "Claude Fable 5",
+      "releaseDate": "2026-06-07",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 1,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "claude-opus-4.8",
+      "name": "Claude Opus 4.8",
+      "releaseDate": "2026-05-28",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file. TokenHarbor lists no context length, so it is taken from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "qwen3.7-max",
+      "name": "Qwen3.7 Max",
+      "releaseDate": "2026-05-21",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 2.5,
+      "outputPrice": 7.5,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 3.125,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-model-studio-intl Catalog file. TokenHarbor lists no context length, so it is taken from the alibaba-model-studio-intl Catalog file."
+    },
+    {
+      "upstreamModelId": "qwen3.6-flash",
+      "name": "Qwen3.6 Flash",
+      "releaseDate": "2026-04-27",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.25,
+      "outputPrice": 1.5,
+      "cacheReadPrice": 0.025,
+      "cacheWritePrice": 0.3125,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-model-studio-intl Catalog file. TokenHarbor lists no context length, so it is taken from the alibaba-model-studio-intl Catalog file."
+    },
+    {
+      "upstreamModelId": "deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
+      "releaseDate": "2026-04-24",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 1.32,
+      "outputPrice": 3.96,
+      "cacheReadPrice": 0.132,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
+          "https://www.alibabacloud.com/help/en/model-studio/token-plan-personal-quick-start",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-token-plan Catalog file. TokenHarbor lists no context length, so it is taken from the alibaba-token-plan Catalog file. Off-peak prices are in the TokenHarbor Off-Peak window. TokenHarbor publishes no cache write price for this model.",
+      "windowPrices": [
+        {
+          "pricingWindow": "TokenHarbor Off-Peak",
+          "inputPrice": 0.66,
+          "outputPrice": 1.98,
+          "cacheReadPrice": 0.066
+        }
+      ]
+    },
+    {
+      "upstreamModelId": "deepseek-v4-flash",
+      "name": "DeepSeek V4 Flash",
+      "releaseDate": "2026-04-24",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.44,
+      "outputPrice": 1.32,
+      "cacheReadPrice": 0.044,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://commandcode.ai/docs/resources/pricing-limits#models",
+          "https://api.commandcode.ai/provider/v1/models",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the commandcode Catalog file. Off-peak prices are in the TokenHarbor Off-Peak window. TokenHarbor publishes no cache write price for this model.",
+      "windowPrices": [
+        {
+          "pricingWindow": "TokenHarbor Off-Peak",
+          "inputPrice": 0.22,
+          "outputPrice": 0.66,
+          "cacheReadPrice": 0.022
+        }
+      ]
+    },
+    {
+      "upstreamModelId": "qwen3.6-27b",
+      "name": "Qwen3.6 27B",
+      "releaseDate": "2026-04-22",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.6,
+      "outputPrice": 3.6,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-model-studio-intl Catalog file. TokenHarbor lists no context length, so it is taken from the alibaba-model-studio-intl Catalog file. TokenHarbor publishes no cache prices for this model."
+    },
+    {
+      "upstreamModelId": "mimo-v2.5-pro",
+      "name": "MiMo-V2.5-Pro",
+      "releaseDate": "2026-04-22",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.435,
+      "outputPrice": 0.87,
+      "cacheReadPrice": 0.0036,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the tokenrouter-com Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "mimo-v2.5",
+      "name": "MiMo-V2.5",
+      "releaseDate": "2026-04-22",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.14,
+      "outputPrice": 0.28,
+      "cacheReadPrice": 0.0028,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the tokenrouter-com Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "kimi-k2.6",
+      "name": "Kimi K2.6",
+      "releaseDate": "2026-04-20",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262000,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.95,
+      "outputPrice": 4,
+      "cacheReadPrice": 0.16,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://platform.kimi.ai/docs/models.md",
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the moonshot Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "muse-spark-1.1",
+      "name": "Muse Spark 1.1",
+      "releaseDate": "2026-04-08",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.25,
+      "outputPrice": 4.25,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://dev.meta.ai/docs/models",
+          "https://dev.meta.ai/docs/pricing-rate-limits",
+          "https://models.dev/providers/meta"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the meta-ai Catalog file. TokenHarbor publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "glm-5.1",
+      "name": "GLM-5.1",
+      "releaseDate": "2026-04-07",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 200000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": 1.031,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the zai Catalog file. TokenHarbor lists no context length, so it is taken from the zai Catalog file."
+    },
+    {
+      "upstreamModelId": "qwen3.5-27b",
+      "name": "Qwen3.5 27B",
+      "releaseDate": "2026-02-23",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.3,
+      "outputPrice": 2.4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the alibaba-model-studio-intl Catalog file. TokenHarbor lists no context length, so it is taken from the alibaba-model-studio-intl Catalog file. TokenHarbor publishes no cache prices for this model."
+    },
+    {
+      "upstreamModelId": "claude-sonnet-4.6",
+      "name": "Claude Sonnet 4.6",
+      "releaseDate": "2026-02-17",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3.75,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the anthropic Catalog file. TokenHarbor lists no context length, so it is taken from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "mistral-large-2512",
+      "name": "Mistral Large 3",
+      "releaseDate": "2025-12-02",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 524288,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.5,
+      "outputPrice": 1.5,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its mistral listing). TokenHarbor publishes no cache prices for this model."
+    },
+    {
+      "upstreamModelId": "deepseek-v3.2",
+      "name": "DeepSeek V3.2",
+      "releaseDate": "2025-12-01",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": 64000,
+      "inputPrice": 0.62,
+      "outputPrice": 1.85,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://tokenharbor.ai/v1/models",
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from the tokenrouter-com Catalog file. TokenHarbor publishes no cache prices for this model."
+    },
+    {
+      "upstreamModelId": "deepseek-r1-0528",
+      "name": "DeepSeek R1 0528",
+      "releaseDate": "2025-05-28",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": 32000,
+      "inputPrice": 1.35,
+      "outputPrice": 5.4,
+      "cacheReadPrice": 0.405,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://tokenharbor.ai/v1/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its openrouter listing). TokenHarbor publishes no cache write price for this model."
+    }
+  ]
+}

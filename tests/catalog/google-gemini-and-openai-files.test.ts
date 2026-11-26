@@ -70,6 +70,7 @@ describe('The Google Gemini and OpenAI Catalog files', () => {
       'openai-codex': undefined,
       openai: 'openai',
       'opencode-go': 'opencode-go',
+      tokenharbor: undefined,
       'tokenrouter-com': 'tokenrouter',
       'tokenrouter-io': undefined,
       'xiaomi-mimo': 'xiaomi',
