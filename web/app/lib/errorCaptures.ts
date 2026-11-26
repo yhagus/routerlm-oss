@@ -70,6 +70,7 @@ const FAILURE_REASON_LABELS: Record<string, string> = {
   bad_request: 'Bad request',
   stream_interrupted: 'Stream interrupted',
   exhausted: 'Exhausted',
+  not_in_plan: 'Not in plan',
   cancelled: 'Cancelled',
 };
 

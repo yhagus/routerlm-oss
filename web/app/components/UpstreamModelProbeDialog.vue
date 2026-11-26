@@ -43,6 +43,12 @@ const results = computed(() =>
             :class="result.ok ? 'status-badge--good' : 'status-badge--bad'"
             >{{ attemptOutcomeLabel(result, result.ok ? 'Succeeded' : 'Failed') }}</span
           >
+          <span
+            v-if="result.notInPlan"
+            class="status-badge status-badge--warn"
+            title="Routing skips this account for this model unless it pays beyond its Plan."
+            >Not in plan</span
+          >
         </p>
         <p class="probe-result__facts tabular">
           <span>Latency {{ formatDuration(result.latencyMs) }}</span>

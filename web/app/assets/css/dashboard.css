@@ -4891,6 +4891,13 @@ svg.lucide {
   white-space: normal;
 }
 
+.account-plan {
+  display: grid;
+  gap: 4px;
+  min-width: 160px;
+  white-space: normal;
+}
+
 .account-quota {
   display: grid;
   gap: 8px;
@@ -4955,7 +4962,8 @@ svg.lucide {
   color: var(--danger);
   font-size: 11px;
 }
-.account-quota__footer {
+.account-quota__footer,
+.account-plan__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;

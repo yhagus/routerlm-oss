@@ -267,6 +267,8 @@ export interface UpstreamModel {
   serviceTiers: ServiceTier[];
   tierPrices: Partial<Record<ServiceTier, TierPrices>>;
   releaseDate: string | null;
+  planCoverage: string[] | null;
+  planCoverageCheckedAt: string | null;
   isEnabled: boolean;
   pricingWindows: AttachedPricingWindow[];
   createdAt: string;
@@ -275,6 +277,12 @@ export interface UpstreamModel {
 
 export function upstreamModelLabel(model: Pick<UpstreamModel, 'name' | 'upstreamModelId'>): string {
   return model.name === null ? model.upstreamModelId : `${model.name} (${model.upstreamModelId})`;
+}
+
+export function planCoverageNote(model: Pick<UpstreamModel, 'planCoverage'>): string | null {
+  if (model.planCoverage === null) return null;
+  if (model.planCoverage.length === 0) return 'No plan covers this model';
+  return `In plans: ${model.planCoverage.join(', ')}`;
 }
 
 export type QuotaMeterUnit = 'percent' | 'count' | 'tokens' | 'usd';

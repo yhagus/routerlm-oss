@@ -38,6 +38,7 @@ import {
   type ProviderAccount,
   type TierPrices,
   type UpstreamModel,
+  planCoverageNote,
   upstreamModelLabel,
   type UpstreamProtocol,
 } from '~/lib/upstream';
@@ -881,6 +882,7 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
             :to="`/providers/${row.providerId}?tab=models`"
             >{{ providerName(row) }}</NuxtLink
           >
+          <span v-if="planCoverageNote(row)" class="cell-note">{{ planCoverageNote(row) }}</span>
         </span>
       </div>
     </template>

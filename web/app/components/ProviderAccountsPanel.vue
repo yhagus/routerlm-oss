@@ -35,6 +35,8 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
 const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: 'medium' });
 
 const hasQuota = computed(() => props.provider.quotaReader !== null);
+const hasPlan = computed(() => props.provider.planReader !== null);
+const columnCount = computed(() => 6 + Number(hasQuota.value) + Number(hasPlan.value));
 
 const COUNTDOWN_TICK_MS = 30_000;
 const now = ref(Date.now());
@@ -122,6 +124,7 @@ interface ProviderAccountForm {
   key: string;
   priority: number | string;
   continueWhenExhausted: boolean;
+  paysBeyondPlan: boolean;
 }
 
 const EMPTY_FORM: ProviderAccountForm = {
@@ -129,6 +132,7 @@ const EMPTY_FORM: ProviderAccountForm = {
   key: '',
   priority: 0,
   continueWhenExhausted: false,
+  paysBeyondPlan: false,
 };
 
 const form = ref<ProviderAccountForm>({ ...EMPTY_FORM });
@@ -137,8 +141,8 @@ function openDialog(next: ProviderAccountDialog): void {
   showDialog(next);
   if (next.kind === 'create') form.value = { ...EMPTY_FORM };
   if (next.kind === 'edit') {
-    const { name, priority, continueWhenExhausted } = next.account;
-    form.value = { name, key: '', priority, continueWhenExhausted };
+    const { name, priority, continueWhenExhausted, paysBeyondPlan } = next.account;
+    form.value = { name, key: '', priority, continueWhenExhausted, paysBeyondPlan };
   }
 }
 
@@ -165,10 +169,12 @@ async function saveAccount(): Promise<void> {
   const quotaFields = hasQuota.value
     ? { continueWhenExhausted: form.value.continueWhenExhausted }
     : {};
+  const planFields = hasPlan.value ? { paysBeyondPlan: form.value.paysBeyondPlan } : {};
   const fields = {
     name: form.value.name,
     priority: optionalNumber(form.value.priority) ?? 0,
     ...quotaFields,
+    ...planFields,
   };
   const failureMessage = "Couldn't save the Provider Account.";
   if (current.kind === 'create') {
@@ -183,6 +189,7 @@ async function saveAccount(): Promise<void> {
             key: form.value.key,
             priority: fields.priority,
             ...quotaFields,
+            ...planFields,
             ...(name ? { name } : {}),
           },
         });
@@ -259,13 +266,14 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
             <th>Credential</th>
             <th>Priority</th>
             <th>Status</th>
+            <th v-if="hasPlan">Plan</th>
             <th v-if="hasQuota">Quota</th>
             <th>Last error</th>
             <th><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-          <LoadingRow v-if="isLoading" :columns="hasQuota ? 7 : 6" />
+          <LoadingRow v-if="isLoading" :columns="columnCount" />
           <tr v-for="{ account, status, credential } in accountRows" :key="account.id">
             <td>
               <strong>{{ account.name }}</strong>
@@ -288,6 +296,9 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
               <span v-if="hasQuota && account.continueWhenExhausted" class="cell-note"
                 >Continues on Credits when exhausted</span
               >
+              <span v-if="hasPlan && account.paysBeyondPlan" class="cell-note"
+                >Pays beyond its Plan</span
+              >
               <button
                 v-if="needsNewSignIn(account)"
                 class="text-button"
@@ -297,6 +308,9 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
               >
                 <LogIn :size="12" /> Sign in again
               </button>
+            </td>
+            <td v-if="hasPlan">
+              <ProviderAccountPlan :account="account" :now="now" :refresh="refresh" />
             </td>
             <td v-if="hasQuota">
               <ProviderAccountQuota :account="account" :now="now" :refresh="refresh" />
@@ -406,6 +420,12 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
         ><input v-model="form.continueWhenExhausted" type="checkbox" /> Continue on Credits when
         exhausted</label
       >
+      <template v-if="hasPlan">
+        <label class="check-field"
+          ><input v-model="form.paysBeyondPlan" type="checkbox" /> Pays beyond plan</label
+        >
+        <p class="form__hint">Serve models outside this account's Plan, paid from its wallet.</p>
+      </template>
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
       <div class="dialog__actions">
         <button class="button" type="button" @click="closeDialog">Cancel</button>

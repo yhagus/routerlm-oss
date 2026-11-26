@@ -62,9 +62,9 @@ export function usageResetExpiry(expiresAt: string | null, now: number): string 
   return days === 1 ? 'expires in 1 day' : `expires in ${days} days`;
 }
 
-export function checkedAgo(quotaCheckedAt: string | null, now: number): string {
-  if (quotaCheckedAt === null) return 'Never checked';
-  const elapsedMs = now - new Date(quotaCheckedAt).getTime();
+export function checkedAgo(checkedAt: string | null, now: number): string {
+  if (checkedAt === null) return 'Never checked';
+  const elapsedMs = now - new Date(checkedAt).getTime();
   if (elapsedMs < MINUTE_MS) return 'Checked just now';
   return `Checked ${shortDuration(elapsedMs)} ago`;
 }
