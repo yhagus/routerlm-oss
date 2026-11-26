@@ -3101,9 +3101,6 @@ tbody tr:hover {
   gap: 1px;
   text-align: left;
 }
-.endpoint-tooltip__host {
-  opacity: 0.7;
-}
 .form__hint {
   margin: 0;
   color: var(--muted);
