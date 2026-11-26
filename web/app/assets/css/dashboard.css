@@ -4816,35 +4816,35 @@ svg.lucide {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.model-table__group-logos {
+.model-table__stack-logos {
   position: relative;
   flex: none;
   width: 28px;
   height: 28px;
 }
-.model-table .model-table__group-logos .provider-mark {
+.model-table .model-table__stack-logos .provider-mark {
   position: absolute;
   width: 20px;
   height: 20px;
   border-radius: 6px;
 }
-.model-table .model-table__group-logos .provider-mark:first-child {
+.model-table .model-table__stack-logos .provider-mark:first-child {
   top: 0;
   left: 0;
 }
-.model-table .model-table__group-logos .provider-mark + .provider-mark {
+.model-table .model-table__stack-logos .provider-mark + .provider-mark {
   right: 0;
   bottom: 0;
   box-shadow: 0 0 0 2px var(--panel);
 }
-.model-table__row--open .model-table__group-logos .provider-mark + .provider-mark {
+.model-table__row--open .model-table__stack-logos .provider-mark + .provider-mark {
   box-shadow: 0 0 0 2px var(--panel-2);
 }
-.model-table .model-table__group-logos .provider-mark svg {
+.model-table .model-table__stack-logos .provider-mark svg {
   width: 11px;
   height: 11px;
 }
-.model-table .model-table__group-logos .provider-mark--monogram {
+.model-table .model-table__stack-logos .provider-mark--monogram {
   font-size: 8px;
 }
 .model-table__row--open > td,

@@ -1,17 +1,17 @@
 import { CAPABILITIES, type Capability, type UpstreamModel } from '~/lib/upstream';
 
-export interface UpstreamModelGroup {
+export interface UpstreamModelStack {
   upstreamModelId: string;
   members: [UpstreamModel, ...UpstreamModel[]];
 }
 
-export type UpstreamModelRow = UpstreamModel | UpstreamModelGroup;
+export type UpstreamModelRow = UpstreamModel | UpstreamModelStack;
 
-export function isUpstreamModelGroup(row: UpstreamModelRow): row is UpstreamModelGroup {
+export function isUpstreamModelStack(row: UpstreamModelRow): row is UpstreamModelStack {
   return 'members' in row;
 }
 
-export function groupBySharedId(
+export function stackBySharedId(
   models: UpstreamModel[],
   compare: (first: UpstreamModel, second: UpstreamModel) => number,
 ): UpstreamModelRow[] {
@@ -28,17 +28,17 @@ export function groupBySharedId(
     rows.push(rest.length === 0 ? first : { upstreamModelId, members: [first, ...rest] });
   }
   const leadOf = (row: UpstreamModelRow): UpstreamModel =>
-    isUpstreamModelGroup(row) ? row.members[0] : row;
+    isUpstreamModelStack(row) ? row.members[0] : row;
   return rows.toSorted((first, second) => compare(leadOf(first), leadOf(second)));
 }
 
-export function groupName(group: UpstreamModelGroup): string | null {
-  return group.members.find((model) => model.name !== null)?.name ?? null;
+export function stackName(stack: UpstreamModelStack): string | null {
+  return stack.members.find((model) => model.name !== null)?.name ?? null;
 }
 
-export function groupCapabilities(group: UpstreamModelGroup): Capability[] {
+export function stackCapabilities(stack: UpstreamModelStack): Capability[] {
   return CAPABILITIES.filter((capability) =>
-    group.members.some((model) => model.capabilities.includes(capability)),
+    stack.members.some((model) => model.capabilities.includes(capability)),
   );
 }
 

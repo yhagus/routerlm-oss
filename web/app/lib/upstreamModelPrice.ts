@@ -1,5 +1,5 @@
 import type { ModelKind, UpstreamModel } from '~/lib/upstream';
-import { rangeOf } from '~/lib/upstreamModelGroups';
+import { rangeOf } from '~/lib/upstreamModelStacks';
 import { type DetailLine, unitPriceFormat, unitPriceLines } from '~/lib/upstreamModelMedia';
 
 export interface PriceSummary {

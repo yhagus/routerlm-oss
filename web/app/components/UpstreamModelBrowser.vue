@@ -47,14 +47,14 @@ import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
 import { formatNumberInput } from '~/lib/numberInput';
 import { SERVICE_TIER_LABELS, SERVICE_TIERS, type ServiceTier } from '~/lib/parameterPolicy';
 import {
-  groupBySharedId,
-  groupCapabilities,
-  groupName,
-  isUpstreamModelGroup,
+  stackBySharedId,
+  stackCapabilities,
+  stackName,
+  isUpstreamModelStack,
   rangeOf,
-  type UpstreamModelGroup,
+  type UpstreamModelStack,
   type UpstreamModelRow,
-} from '~/lib/upstreamModelGroups';
+} from '~/lib/upstreamModelStacks';
 import { formatCount } from '~/lib/usage';
 import {
   type MediaForm,
@@ -290,11 +290,11 @@ const tableRows = computed<UpstreamModelRow[]>(() => {
   const matching = filteredModels.value.filter((model) =>
     searchTextOf(model).toLowerCase().includes(searchQuery.value),
   );
-  return groupBySharedId(matching, compareModels);
+  return stackBySharedId(matching, compareModels);
 });
 
 function rowIdOf(row: UpstreamModelRow): string {
-  return isUpstreamModelGroup(row) ? `group:${row.upstreamModelId}` : row.id;
+  return isUpstreamModelStack(row) ? `stack:${row.upstreamModelId}` : row.id;
 }
 
 const filteredCountById = computed(() => {
@@ -305,39 +305,39 @@ const filteredCountById = computed(() => {
   return counts;
 });
 
-function isNarrowedBySearch(group: UpstreamModelGroup): boolean {
+function isNarrowedBySearch(stack: UpstreamModelStack): boolean {
   if (searchQuery.value === '') return false;
-  return (filteredCountById.value.get(group.upstreamModelId) ?? 0) > group.members.length;
+  return (filteredCountById.value.get(stack.upstreamModelId) ?? 0) > stack.members.length;
 }
 
-const toggledGroups = shallowRef<Record<string, boolean>>({});
+const toggledStacks = shallowRef<Record<string, boolean>>({});
 watch(searchQuery, () => {
-  toggledGroups.value = {};
+  toggledStacks.value = {};
 });
-const expandedGroups = computed<Record<string, boolean>>({
+const expandedStacks = computed<Record<string, boolean>>({
   get: () =>
     Object.fromEntries(
       tableRows.value
-        .filter(isUpstreamModelGroup)
-        .map((group) => [
-          rowIdOf(group),
-          toggledGroups.value[rowIdOf(group)] ?? isNarrowedBySearch(group),
+        .filter(isUpstreamModelStack)
+        .map((stack) => [
+          rowIdOf(stack),
+          toggledStacks.value[rowIdOf(stack)] ?? isNarrowedBySearch(stack),
         ]),
     ),
   set: (next) => {
-    const toggled = { ...toggledGroups.value };
-    for (const [id, isOpen] of Object.entries(expandedGroups.value)) {
+    const toggled = { ...toggledStacks.value };
+    for (const [id, isOpen] of Object.entries(expandedStacks.value)) {
       const isOpenNext = next[id] === true;
       if (isOpenNext !== isOpen) toggled[id] = isOpenNext;
     }
-    toggledGroups.value = toggled;
+    toggledStacks.value = toggled;
   },
 });
 
 const countLabel = computed(() => {
   const idCount = tableRows.value.length;
   const modelCount = tableRows.value.reduce(
-    (count, row) => count + (isUpstreamModelGroup(row) ? row.members.length : 1),
+    (count, row) => count + (isUpstreamModelStack(row) ? row.members.length : 1),
     0,
   );
   if (props.provider) return undefined;
@@ -387,7 +387,7 @@ const columns: DataTableColumn<UpstreamModelRow>[] = [
     header: 'Upstream Model',
     enableHiding: false,
     accessorFn: (row) =>
-      isUpstreamModelGroup(row) ? row.members.map(searchTextOf).join('\n') : searchTextOf(row),
+      isUpstreamModelStack(row) ? row.members.map(searchTextOf).join('\n') : searchTextOf(row),
   },
   { id: 'kind', header: 'Kind' },
   { id: 'capabilities', header: 'Capabilities' },
@@ -447,36 +447,36 @@ function formatRange<Value>(
   return min === max ? min : `${min}–${max}`;
 }
 
-function groupTokenRange(
-  group: UpstreamModelGroup,
+function stackTokenRange(
+  stack: UpstreamModelStack,
   tokens: 'contextSize' | 'maxOutputTokens',
 ): string {
   return formatRange(
-    group.members.map((model) => model[tokens]),
+    stack.members.map((model) => model[tokens]),
     compareNumbers,
     (value) => tokenFormat.format(value),
   );
 }
 
-function groupReleaseRange(group: UpstreamModelGroup): string {
+function stackReleaseRange(stack: UpstreamModelStack): string {
   return formatRange(
-    group.members.map((model) => model.releaseDate),
+    stack.members.map((model) => model.releaseDate),
     compareTexts,
     (value) => value,
   );
 }
 
 function rowKind(row: UpstreamModelRow): ModelKind {
-  return isUpstreamModelGroup(row) ? row.members[0].kind : row.kind;
+  return isUpstreamModelStack(row) ? row.members[0].kind : row.kind;
 }
 
 function activeWindowName(row: UpstreamModelRow): string | undefined {
-  if (isUpstreamModelGroup(row)) return undefined;
+  if (isUpstreamModelStack(row)) return undefined;
   return activePricingWindowOf(row.pricingWindows)?.name;
 }
 
 function rowCapabilities(row: UpstreamModelRow): Capability[] {
-  return isUpstreamModelGroup(row) ? groupCapabilities(row) : row.capabilities;
+  return isUpstreamModelStack(row) ? stackCapabilities(row) : row.capabilities;
 }
 
 const shareFormat = new Intl.NumberFormat('en-US', {
@@ -751,15 +751,15 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
     label="Upstream Models"
     :search-placeholder="provider ? 'Search models' : 'Search models or Providers'"
     :columns="columns"
-    v-model:expanded="expandedGroups"
+    v-model:expanded="expandedStacks"
     :rows="tableRows"
     :get-row-id="rowIdOf"
-    :get-sub-rows="(row) => (isUpstreamModelGroup(row) ? row.members : undefined)"
+    :get-sub-rows="(row) => (isUpstreamModelStack(row) ? row.members : undefined)"
     :count-label="countLabel"
     :row-class="
       (row) => ({
-        'model-table__row--off': !isUpstreamModelGroup(row) && !row.isEnabled,
-        'model-table__row--open': isUpstreamModelGroup(row) && expandedGroups[rowIdOf(row)],
+        'model-table__row--off': !isUpstreamModelStack(row) && !row.isEnabled,
+        'model-table__row--open': isUpstreamModelStack(row) && expandedStacks[rowIdOf(row)],
       })
     "
     :column-class="columnClass"
@@ -831,8 +831,8 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
       </div>
     </template>
     <template #cell-upstreamModel="{ row, isExpanded, toggleExpanded }">
-      <div v-if="isUpstreamModelGroup(row)" class="table-entity model-table__entity">
-        <span class="model-table__group-logos">
+      <div v-if="isUpstreamModelStack(row)" class="table-entity model-table__entity">
+        <span class="model-table__stack-logos">
           <ProviderLogo
             v-for="model in row.members.slice(0, 2)"
             :key="model.id"
@@ -850,7 +850,7 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
               :title="`${isExpanded ? 'Hide' : 'Show'} ${row.members.length} Providers`"
               @click="toggleExpanded"
             >
-              {{ groupName(row) ?? row.upstreamModelId }}
+              {{ stackName(row) ?? row.upstreamModelId }}
             </button>
             <CopyIconButton :text="row.upstreamModelId" label="model id" />
           </span>
@@ -918,16 +918,16 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
       </TooltipProvider>
     </template>
     <template #cell-context="{ row }">
-      <template v-if="isUpstreamModelGroup(row)">{{
-        groupTokenRange(row, 'contextSize')
+      <template v-if="isUpstreamModelStack(row)">{{
+        stackTokenRange(row, 'contextSize')
       }}</template>
       <template v-else>{{
         row.contextSize === null ? '—' : tokenFormat.format(row.contextSize)
       }}</template>
     </template>
     <template #cell-maxOutput="{ row }">
-      <template v-if="isUpstreamModelGroup(row)">{{
-        groupTokenRange(row, 'maxOutputTokens')
+      <template v-if="isUpstreamModelStack(row)">{{
+        stackTokenRange(row, 'maxOutputTokens')
       }}</template>
       <template v-else>{{
         row.maxOutputTokens === null ? '—' : tokenFormat.format(row.maxOutputTokens)
@@ -936,7 +936,7 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
     <template #cell-price="{ row }">
       <span class="model-table__price">
         <UpstreamModelPrice
-          :summary="priceSummary(isUpstreamModelGroup(row) ? row.members : [row], rowKind(row))"
+          :summary="priceSummary(isUpstreamModelStack(row) ? row.members : [row], rowKind(row))"
         />
         <span
           v-if="activeWindowName(row)"
@@ -948,18 +948,18 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
       </span>
     </template>
     <template #cell-released="{ row }">{{
-      isUpstreamModelGroup(row) ? groupReleaseRange(row) : (row.releaseDate ?? '—')
+      isUpstreamModelStack(row) ? stackReleaseRange(row) : (row.releaseDate ?? '—')
     }}</template>
     <template #cell-status="{ row }">
       <span
-        v-if="!isUpstreamModelGroup(row)"
+        v-if="!isUpstreamModelStack(row)"
         class="status-badge"
         :class="row.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
         >{{ row.isEnabled ? 'Enabled' : 'Disabled' }}</span
       >
     </template>
     <template #cell-actions="{ row }">
-      <div v-if="!isUpstreamModelGroup(row)" class="row-actions provider-table__actions">
+      <div v-if="!isUpstreamModelStack(row)" class="row-actions provider-table__actions">
         <button
           class="icon-action"
           type="button"
