@@ -106,6 +106,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
                 credential,
                 priority: account.priority,
                 isEnabled: account.isEnabled,
+                plan: account.plan,
+                paysBeyondPlan: account.paysBeyondPlan,
               },
             ];
           },
@@ -153,6 +155,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         resolutions: upstreamModel.resolutions,
         minDurationSeconds: upstreamModel.minDurationSeconds,
         maxDurationSeconds: upstreamModel.maxDurationSeconds,
+        planCoverage: upstreamModel.planCoverage,
         isEnabled: upstreamModel.isEnabled,
         provider,
       });

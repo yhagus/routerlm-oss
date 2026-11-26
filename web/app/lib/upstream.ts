@@ -309,7 +309,9 @@ export interface ProviderAccount {
   keyLastFour: string | null;
   oauthRegion: OauthRegion | null;
   oauthEmail?: string | null;
-  oauthPlanType?: string | null;
+  plan: string | null;
+  planCheckedAt: string | null;
+  paysBeyondPlan: boolean;
   priority: number;
   isEnabled: boolean;
   disabledReason: string | null;

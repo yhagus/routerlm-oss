@@ -35,6 +35,8 @@ export interface SnapshotProviderAccount {
   credential: SnapshotCredential;
   priority: number;
   isEnabled: boolean;
+  plan: string | null;
+  paysBeyondPlan: boolean;
 }
 
 export interface SnapshotEndpoint {
@@ -89,6 +91,7 @@ export interface SnapshotUpstreamModel {
   resolutions: string[] | null;
   minDurationSeconds: number | null;
   maxDurationSeconds: number | null;
+  planCoverage: string[] | null;
   isEnabled: boolean;
   provider: SnapshotProvider;
 }

@@ -206,7 +206,7 @@ describe('Signing in to OpenAI Codex as the Codex CLI (e2e)', () => {
         credentialKind: 'oauth-login',
         oauthRegion: null,
         oauthEmail: EMAIL,
-        oauthPlanType: PLAN_TYPE,
+        plan: PLAN_TYPE,
         isEnabled: true,
       }),
     });
@@ -236,7 +236,7 @@ describe('Signing in to OpenAI Codex as the Codex CLI (e2e)', () => {
     expect(stored).toMatchObject({
       oauthAccountId: ACCOUNT_ID,
       oauthEmail: EMAIL,
-      oauthPlanType: PLAN_TYPE,
+      plan: PLAN_TYPE,
     });
     const lifetimeMs = (stored.oauthExpiresAt?.getTime() ?? 0) - Date.now();
     expect(lifetimeMs).toBeGreaterThan((HOUR_SECONDS - 30) * 1000);

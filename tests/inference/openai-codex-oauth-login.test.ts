@@ -190,7 +190,7 @@ describe('Inference from an OpenAI Codex OAuth Login (e2e)', () => {
     ]);
     expect(await listedAccount(accountId)).toMatchObject({
       oauthEmail: EMAIL,
-      oauthPlanType: PLAN_TYPE,
+      plan: PLAN_TYPE,
     });
   });
 

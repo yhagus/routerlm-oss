@@ -13,7 +13,9 @@ export const providerAccountColumns = {
   keyLastFour: providerAccounts.keyLastFour,
   oauthRegion: providerAccounts.oauthRegion,
   oauthEmail: providerAccounts.oauthEmail,
-  oauthPlanType: providerAccounts.oauthPlanType,
+  plan: providerAccounts.plan,
+  planCheckedAt: providerAccounts.planCheckedAt,
+  paysBeyondPlan: providerAccounts.paysBeyondPlan,
   priority: providerAccounts.priority,
   isEnabled: providerAccounts.isEnabled,
   disabledReason: providerAccounts.disabledReason,
@@ -59,7 +61,8 @@ type StoredOauthTokens = {
   oauthEncryptedIdToken?: string;
   oauthAccountId?: string;
   oauthEmail?: string;
-  oauthPlanType?: string;
+  plan?: string;
+  planCheckedAt?: Date;
 };
 
 export function storedOauthTokens(
@@ -82,6 +85,8 @@ export function storedOauthTokens(
     oauthEncryptedIdToken: keyCipher.encrypt(codexAccount.idToken),
     ...(codexAccount.accountId === null ? {} : { oauthAccountId: codexAccount.accountId }),
     ...(codexAccount.email === null ? {} : { oauthEmail: codexAccount.email }),
-    ...(codexAccount.planType === null ? {} : { oauthPlanType: codexAccount.planType }),
+    ...(codexAccount.planType === null
+      ? {}
+      : { plan: codexAccount.planType, planCheckedAt: grantedAt }),
   };
 }

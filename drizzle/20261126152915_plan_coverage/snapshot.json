@@ -1,0 +1,175 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "324b2258-c519-4dcc-a46f-a45ec6543229",
+  "prevIds": [
+    "c190b4e4-0bb2-451e-9c71-735108234f7d"
+  ],
+  "footprints": [
+    {
+      "statementType": "rename_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "oauth_plan_type"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.oauth_plan_type",
+        "n|col|public.provider_accounts.oauth_plan_type",
+        "s|col|public.provider_accounts.plan",
+        "n|col|public.provider_accounts.plan"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "plan_checked_at"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.plan_checked_at",
+        "n|col|public.provider_accounts.plan_checked_at",
+        "e|col|public.provider_accounts.plan_checked_at"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "pays_beyond_plan"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.pays_beyond_plan",
+        "n|col|public.provider_accounts.pays_beyond_plan",
+        "e|col|public.provider_accounts.pays_beyond_plan"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "plan_coverage"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.plan_coverage",
+        "n|col|public.upstream_models.plan_coverage",
+        "e|col|public.upstream_models.plan_coverage"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "plan_coverage_checked_at"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.plan_coverage_checked_at",
+        "n|col|public.upstream_models.plan_coverage_checked_at",
+        "e|col|public.upstream_models.plan_coverage_checked_at"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "rename",
+      "key": "columns\u0000[\"public\",\"provider_accounts\",\"oauth_plan_type\"]",
+      "set": {
+        "name": "plan"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "plan_checked_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "pays_beyond_plan",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "plan_coverage",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 1,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "plan_coverage_checked_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

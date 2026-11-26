@@ -70,7 +70,7 @@ function accountStatus(account: ProviderAccount): AccountStatus {
 
 function oauthLoginNote(account: ProviderAccount): string | null {
   if (account.oauthRegion) return OAUTH_REGION_LABELS[account.oauthRegion];
-  const identity = [account.oauthEmail, account.oauthPlanType].filter(Boolean);
+  const identity = [account.oauthEmail, account.plan].filter(Boolean);
   return identity.length > 0 ? identity.join(' · ') : null;
 }
 
