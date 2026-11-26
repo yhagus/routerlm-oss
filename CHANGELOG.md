@@ -1,3 +1,112 @@
+# v6.3.0 (2026-11-27)
+
+#### Notable changes
+
+**Upgrade**
+* Run the 9 new data and schema migrations; they apply on start. Nothing blocks them and no operator input is needed – [ebfc429](https://github.com/yhagus/routerlm-oss/commit/ebfc429f1dc1afc8455fc4b7c81af104504c47ad), [52a4604](https://github.com/yhagus/routerlm-oss/commit/52a4604c59ffb833b1160008f8ee1a28d2297d9f), [a553904](https://github.com/yhagus/routerlm-oss/commit/a5539044a297eb4cc699f848fa13842f52c11549), [6b9bffe](https://github.com/yhagus/routerlm-oss/commit/6b9bffef85bbefdc12d85c270123f15094a4be17), [2ae2ce4](https://github.com/yhagus/routerlm-oss/commit/2ae2ce40949a8fc081cc9772576d1cbb78e84f9c), [cfd4d73](https://github.com/yhagus/routerlm-oss/commit/cfd4d73a0afa629ced90ef702c065aff41ad3fcc), [01bcbd3](https://github.com/yhagus/routerlm-oss/commit/01bcbd307f8bac00b3599ba4be266624d05fdbaa)
+* The seven Providers `alibaba-token-plan`, `clinepass`, `meta-ai`, `minimax-m-plan`, `tokenrouter-com`, `xiaomi-mimo-token-plan` and `zai-coding-plan` lose their Terms Risk flag on every existing install (ADR 0099: Terms Risk now marks only Providers the gateway uses by posing as their own client). They become usable by default; if you relied on the flag to keep one off, disable that Provider yourself after upgrading – [cfd4d73](https://github.com/yhagus/routerlm-oss/commit/cfd4d73a0afa629ced90ef702c065aff41ad3fcc)
+* The shipped Plan lists are filled in for existing installs: TokenHarbor, OpenAI Codex, OpenCode Go, Kimi Code, MiniMax M Plan, Z.ai Coding Plan, Alibaba Token Plan and Xiaomi MiMo Token Plan get their Plans, and TokenHarbor also gets its plan reader and its `model_not_in_plan` error code. Each update skips a Provider where an operator already set a plan reader, a Plan list or not-in-plan codes – [01bcbd3](https://github.com/yhagus/routerlm-oss/commit/01bcbd307f8bac00b3599ba4be266624d05fdbaa), [6b9bffe](https://github.com/yhagus/routerlm-oss/commit/6b9bffef85bbefdc12d85c270123f15094a4be17), [2ae2ce4](https://github.com/yhagus/routerlm-oss/commit/2ae2ce40949a8fc081cc9772576d1cbb78e84f9c)
+* New columns: `provider_accounts.plan_choice` (default `auto`, so every Provider Account keeps reading its Plan from the Provider), `plan_checked_at` and `pays_beyond_plan` (default off), `providers.plans`, `allows_no_plan` and `plan_reader`, `upstream_models.plan_coverage`, `plan_coverage_checked_at` and `protocols`, and `upstream_protocol` on Usage Logs and Error Captures. `provider_accounts.oauth_plan_type` is renamed `plan`, and the Dashboard API field `oauthPlanType` is now `plan` – [a553904](https://github.com/yhagus/routerlm-oss/commit/a5539044a297eb4cc699f848fa13842f52c11549), [01bcbd3](https://github.com/yhagus/routerlm-oss/commit/01bcbd307f8bac00b3599ba4be266624d05fdbaa), [6b9bffe](https://github.com/yhagus/routerlm-oss/commit/6b9bffef85bbefdc12d85c270123f15094a4be17), [52a4604](https://github.com/yhagus/routerlm-oss/commit/52a4604c59ffb833b1160008f8ee1a28d2297d9f)
+* Docker Compose installs: the single `backend` container is split into `inference` and `admin` roles behind Caddy, the edge proxy that is now the only service on the host ports. Upgrade with `docker compose pull && docker compose up -d --remove-orphans` to drop the old `backend` container; the compose network is recreated with a fixed subnet. A reverse proxy of your own must now point at Caddy's ports 3000 and 3001, or be replaced by Caddy with hostnames – [762b494](https://github.com/yhagus/routerlm-oss/commit/762b49405b67b0f9ef7d50febfe7ecb3e00e12fc)
+* New env variables, all optional: `BACKEND_ROLE` (`all`, `inference` or `admin`; default `all`), and for Compose `ROUTERLM_API_ADDRESS`, `ROUTERLM_DASHBOARD_ADDRESS`, `INFERENCE_PROCESSES`, `ADMIN_PROCESSES`, `ROUTERLM_SUBNET`, `HTTP_PORT` and `HTTPS_PORT`. In Compose, `BACKEND_PROCESSES` and `TRUST_PROXY` are replaced by `INFERENCE_PROCESSES`, `ADMIN_PROCESSES` and the subnet. Set `ROUTERLM_API_ADDRESS` and `ROUTERLM_DASHBOARD_ADDRESS` to hostnames for HTTPS, and `WEB_ORIGIN` and `NUXT_PUBLIC_GATEWAY_URL` to match – [762b494](https://github.com/yhagus/routerlm-oss/commit/762b49405b67b0f9ef7d50febfe7ecb3e00e12fc)
+* The split TokenRouter.com Providers were added and replaced by one Provider (`tokenrouter-com`) within this range, so no released install has them and there is nothing to delete – [1c3de4c](https://github.com/yhagus/routerlm-oss/commit/1c3de4c9bbf9b994fc7f1553ed858c8eed6534ef), [52a4604](https://github.com/yhagus/routerlm-oss/commit/52a4604c59ffb833b1160008f8ee1a28d2297d9f)
+* New personal data kept: none. Usage Resets of Codex accounts are stored in a new `usage_resets` table with the Provider's raw grant payload – [ebfc429](https://github.com/yhagus/routerlm-oss/commit/ebfc429f1dc1afc8455fc4b7c81af104504c47ad)
+
+**Plans**
+* Operators choose a Plan per Provider Account (the Plan Choice): Auto, one of the Plans the Provider sells, or None where the Provider also charges per token – [01bcbd3](https://github.com/yhagus/routerlm-oss/commit/01bcbd307f8bac00b3599ba4be266624d05fdbaa), [60bf760](https://github.com/yhagus/routerlm-oss/commit/60bf7609d633bc3ace58dfbf70c4a4987bdfead4), [8d371f7](https://github.com/yhagus/routerlm-oss/commit/8d371f79af1c1ed98f526e85149863e8d02e2487)
+* The gateway reads the Plan of a TokenHarbor Provider Account and the Plan Coverage of its Upstream Models live from the Provider, on a schedule and when an account is added – [ab2fc62](https://github.com/yhagus/routerlm-oss/commit/ab2fc6229f054c534295467ff7ad1cabf199af67), [4ac104c](https://github.com/yhagus/routerlm-oss/commit/4ac104c30caf693e6dc9fc55240aafbfa68728f3)
+* A Provider Account serves only the Upstream Models its Plan covers, and the gateway falls back to another route on `model_not_in_plan`. An operator can let an account pay per token beyond its Plan (Pays beyond plan) – [2ae2ce4](https://github.com/yhagus/routerlm-oss/commit/2ae2ce40949a8fc081cc9772576d1cbb78e84f9c), [93f9041](https://github.com/yhagus/routerlm-oss/commit/93f9041a3e41cc39e3b9124be1a44e9722daf7d8), [a553904](https://github.com/yhagus/routerlm-oss/commit/a5539044a297eb4cc699f848fa13842f52c11549)
+* The dashboard shows Plans, Plan Coverage and Pays beyond plan on Provider Accounts, Upstream Models and the probe dialog – [21d9934](https://github.com/yhagus/routerlm-oss/commit/21d9934e9da10c21cdbd645ece93be6359fb8e2a)
+
+**Usage Resets**
+* Codex Provider Accounts store their Usage Resets and an operator can spend one from the dashboard; a retry of a spend reuses its idempotency key, and OpenAI Codex is now listed among the Quota readers – [ebfc429](https://github.com/yhagus/routerlm-oss/commit/ebfc429f1dc1afc8455fc4b7c81af104504c47ad), [b045868](https://github.com/yhagus/routerlm-oss/commit/b045868e3c08ee61762e461da5becf91bf8beb0f), [842df9f](https://github.com/yhagus/routerlm-oss/commit/842df9fc32066c2fa22013faacf3e35995947264), [b199aef](https://github.com/yhagus/routerlm-oss/commit/b199aef297c874fe7071b186178e9ee59f7e817a), [102306a](https://github.com/yhagus/routerlm-oss/commit/102306a1b55d8d3cede9c592033be47376c3103f)
+
+**Catalog**
+* New Providers: TokenHarbor and TokenRouter.com, plus TokenRouter.io – [e7de715](https://github.com/yhagus/routerlm-oss/commit/e7de7155e031a9c36adf091885b1cb2c40fb23c8), [1c3de4c](https://github.com/yhagus/routerlm-oss/commit/1c3de4c9bbf9b994fc7f1553ed858c8eed6534ef)
+* Providers can name a plan reader – [6b9bffe](https://github.com/yhagus/routerlm-oss/commit/6b9bffef85bbefdc12d85c270123f15094a4be17)
+* Terms Risk is flagged only where the gateway poses as a client; seven Providers ship unflagged – [cfd4d73](https://github.com/yhagus/routerlm-oss/commit/cfd4d73a0afa629ced90ef702c065aff41ad3fcc)
+* An Upstream Model names the Provider endpoints (protocols) it supports, and Usage Logs and Error Captures record the upstream protocol used – [52a4604](https://github.com/yhagus/routerlm-oss/commit/52a4604c59ffb833b1160008f8ee1a28d2297d9f)
+
+**Deploy**
+* Inference and admin run as separate backend roles behind Caddy, so dashboard work no longer competes with Customer traffic; Caddy serves HTTPS with its own certificates when given hostnames – [762b494](https://github.com/yhagus/routerlm-oss/commit/762b49405b67b0f9ef7d50febfe7ecb3e00e12fc)
+
+**Dashboard**
+* Provider endpoints show one icon per kind, with its protocols on hover – [3ddb883](https://github.com/yhagus/routerlm-oss/commit/3ddb8833f1fc99e17e9253befb25b0fa9f573882)
+* TokenHarbor and TokenRouter provider logos – [6f8920e](https://github.com/yhagus/routerlm-oss/commit/6f8920e6c2a058da1065651336ebe2d3afc537d7)
+
+**Other improvements**
+* Local `bun run test:changed` runs only the feature tests for files changed since `main`; code comments are banned by lint with a per-file baseline; imports drop extensions and use single quotes – [cb7331f](https://github.com/yhagus/routerlm-oss/commit/cb7331fae09b01520ea9ba31e7891d479df2a3f2), [f249804](https://github.com/yhagus/routerlm-oss/commit/f24980477a68d25ff99e05e5ce827be3a6fc7842), [32f8a37](https://github.com/yhagus/routerlm-oss/commit/32f8a37269e223cf11f6858174a00fcbe7b20357), [3a591dd](https://github.com/yhagus/routerlm-oss/commit/3a591dd1ffb44d84276be038630e0edbd60c4124)
+
+#### Features
+* `catalog`
+  * [6b9bffe](https://github.com/yhagus/routerlm-oss/commit/6b9bffef85bbefdc12d85c270123f15094a4be17) feat(catalog): name a plan reader on providers
+  * [e7de715](https://github.com/yhagus/routerlm-oss/commit/e7de7155e031a9c36adf091885b1cb2c40fb23c8) feat(catalog): add tokenharbor provider
+  * [1c3de4c](https://github.com/yhagus/routerlm-oss/commit/1c3de4c9bbf9b994fc7f1553ed858c8eed6534ef) feat(catalog): add tokenrouter.com and tokenrouter.io providers
+* `deploy`
+  * [762b494](https://github.com/yhagus/routerlm-oss/commit/762b49405b67b0f9ef7d50febfe7ecb3e00e12fc) feat(deploy): split backend into inference and admin roles behind caddy
+* `inference`
+  * [2ae2ce4](https://github.com/yhagus/routerlm-oss/commit/2ae2ce40949a8fc081cc9772576d1cbb78e84f9c) feat(inference): route around plan coverage and fall back on model_not_in_plan
+* `plans`
+  * [01bcbd3](https://github.com/yhagus/routerlm-oss/commit/01bcbd307f8bac00b3599ba4be266624d05fdbaa) feat(plans): let operators choose a plan per provider account
+  * [ab2fc62](https://github.com/yhagus/routerlm-oss/commit/ab2fc6229f054c534295467ff7ad1cabf199af67) feat(plans): read tokenharbor plans and plan coverage
+* `quota-meters`
+  * [ebfc429](https://github.com/yhagus/routerlm-oss/commit/ebfc429f1dc1afc8455fc4b7c81af104504c47ad) feat(quota-meters): store and spend usage resets of codex accounts
+* `upstream`
+  * [93f9041](https://github.com/yhagus/routerlm-oss/commit/93f9041a3e41cc39e3b9124be1a44e9722daf7d8) feat(upstream): let an operator set pays beyond plan on a provider account
+  * [a553904](https://github.com/yhagus/routerlm-oss/commit/a5539044a297eb4cc699f848fa13842f52c11549) feat(upstream): add plan and plan coverage columns
+  * [52a4604](https://github.com/yhagus/routerlm-oss/commit/52a4604c59ffb833b1160008f8ee1a28d2297d9f) feat(upstream): let upstream models name the provider endpoints they support
+* `web`
+  * [60bf760](https://github.com/yhagus/routerlm-oss/commit/60bf7609d633bc3ace58dfbf70c4a4987bdfead4) feat(web): choose a plan on provider accounts
+  * [3ddb883](https://github.com/yhagus/routerlm-oss/commit/3ddb8833f1fc99e17e9253befb25b0fa9f573882) feat(web): show one endpoint icon per kind with its protocols on hover
+  * [6f8920e](https://github.com/yhagus/routerlm-oss/commit/6f8920e6c2a058da1065651336ebe2d3afc537d7) feat(web): add tokenharbor and tokenrouter provider logos
+  * [21d9934](https://github.com/yhagus/routerlm-oss/commit/21d9934e9da10c21cdbd645ece93be6359fb8e2a) feat(web): show plans, plan coverage and pays beyond plan
+  * [b045868](https://github.com/yhagus/routerlm-oss/commit/b045868e3c08ee61762e461da5becf91bf8beb0f) feat(web): show and use usage resets of provider accounts
+
+#### Bug fixes
+* `catalog`
+  * [cfd4d73](https://github.com/yhagus/routerlm-oss/commit/cfd4d73a0afa629ced90ef702c065aff41ad3fcc) fix(catalog): flag terms risk only where the gateway poses as a client
+* `web`
+  * [842df9f](https://github.com/yhagus/routerlm-oss/commit/842df9fc32066c2fa22013faacf3e35995947264) fix(web): reuse the idempotency key when retrying a usage reset
+  * [b199aef](https://github.com/yhagus/routerlm-oss/commit/b199aef297c874fe7071b186178e9ee59f7e817a) fix(web): list openai codex among quota readers
+
+#### Refactors
+* `general`
+  * [3a591dd](https://github.com/yhagus/routerlm-oss/commit/3a591dd1ffb44d84276be038630e0edbd60c4124) refactor: drop .js extensions and /index from imports
+  * [738184a](https://github.com/yhagus/routerlm-oss/commit/738184ad2cc3c601db43d8189dcb7cf69a66a3dd) refactor: delete code comments
+* `quota-meters`
+  * [76cd9fa](https://github.com/yhagus/routerlm-oss/commit/76cd9fac3a9605262750ac836d65d805c56a2145) refactor(quota-meters): share usage reset and quota error code paths
+
+#### Docs
+* `adr`
+  * [4ac104c](https://github.com/yhagus/routerlm-oss/commit/4ac104c30caf693e6dc9fc55240aafbfa68728f3) docs(adr): read plan coverage live from the provider
+  * [28ba4a1](https://github.com/yhagus/routerlm-oss/commit/28ba4a1b012e16878a784333c089f4cc4437929f) docs(adr): index ADRs by area and surface them through a hook
+  * [ca3d462](https://github.com/yhagus/routerlm-oss/commit/ca3d462d508ddfe9c35b21b20125e5bc9b66e7af) docs(adr): record decisions that lived in code comments
+* `general`
+  * [102306a](https://github.com/yhagus/routerlm-oss/commit/102306a1b55d8d3cede9c592033be47376c3103f) docs: define usage reset and record how its list is refreshed
+* `plans`
+  * [8d371f7](https://github.com/yhagus/routerlm-oss/commit/8d371f79af1c1ed98f526e85149863e8d02e2487) docs(plans): let operators choose a plan from a per-provider list
+* `readme`
+  * [7d69774](https://github.com/yhagus/routerlm-oss/commit/7d69774715792b0230bd94c691e9ef0bbf56f419) docs(readme): sketch the inference hot path and clarify the benchmark setup
+
+#### Tests
+* `quota-meters`
+  * [fcff7a5](https://github.com/yhagus/routerlm-oss/commit/fcff7a5bb1a056c8169088796aa51ff67782d7f7) test(quota-meters): cover failed and unsupported usage reset spends
+
+#### Build and CI
+* `lint`
+  * [f249804](https://github.com/yhagus/routerlm-oss/commit/f24980477a68d25ff99e05e5ce827be3a6fc7842) build(lint): ban code comments with a per-file ratchet baseline
+* `test`
+  * [cb7331f](https://github.com/yhagus/routerlm-oss/commit/cb7331fae09b01520ea9ba31e7891d479df2a3f2) build(test): run only the feature tests for changed files locally
+
+#### Chores
+* `general`
+  * [32f8a37](https://github.com/yhagus/routerlm-oss/commit/32f8a37269e223cf11f6858174a00fcbe7b20357) style: switch to single quotes
+* `skills`
+  * [e4fc678](https://github.com/yhagus/routerlm-oss/commit/e4fc67830696b986d4b18dece282a03dab71983e) chore(skills): move /delete-comment to the global skills
+  * [85982e4](https://github.com/yhagus/routerlm-oss/commit/85982e4f599611839e93495bc85fc7fa4a412c58) chore(skills): add /delete-comment to repeat the comment sweep
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v6.2.0...v6.3.0
+
 # v6.2.0 (2026-11-23)
 
 #### Notable changes
