@@ -52,8 +52,16 @@ A sign-in to a Provider that a User grants the gateway, which the gateway keeps 
 _Avoid_: Token, session, OAuth account
 
 **Subscription Provider**:
-A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code, MiniMax M Plan or OpenAI Codex. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot, MiniMax API or OpenAI. A Provider that sells plans alongside per-token prices behind the same key, such as TokenHarbor, is a pay-as-you-go Provider: its plans only lower what is paid and have no Quota Meters.
+A Provider sold as a plan with usage limits rather than per-token prices, such as Kimi Code, MiniMax M Plan or OpenAI Codex. Its pay-as-you-go counterpart is a separate Provider, such as Moonshot, MiniMax API or OpenAI. A Provider that sells Plans alongside per-token prices behind the same key, such as TokenHarbor, is a pay-as-you-go Provider: its Plans have no Quota Meters, though their Plan Coverage decides which Upstream Models a Provider Account serves.
 _Avoid_: Coding plan, token plan, membership
+
+**Plan**:
+The tier a Provider Account holds at its Provider, under the Provider's own name, such as a TokenHarbor Pass or a ChatGPT plan. The gateway reads it from the Provider and never sets it; a Provider Account with no Plan pays per token.
+_Avoid_: Pass, tier, subscription, plan type
+
+**Plan Coverage**:
+The Plans whose allowance pays for one Upstream Model, as its Provider reports it. A Provider Account with a Plan serves only the Upstream Models its Plan covers, unless an operator lets it pay per token beyond its Plan; an Upstream Model whose coverage is unknown is served by every Provider Account.
+_Avoid_: Plan models, included models, allowlist
 
 **Quota Meter**:
 One usage limit of a Provider Account at a Subscription Provider, such as a 5-hour or weekly window, with how much is used and when it resets. A meter may apply to only one Model Kind, such as an image generation limit.

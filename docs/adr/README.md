@@ -43,6 +43,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0067 Reads from third-party hosts fail on a redirect and are not retried](0067-reads-from-third-party-hosts-fail-on-a-redirect-and-are-not.md)
 - [0068 Catalog Gaps are computed against the database and only the five newest models are checked](0068-catalog-gaps-are-computed-against-the-database-and-only-the-five-newest.md)
 - [0069 Provider quirk flags have fixed precedence and lookup rules](0069-provider-quirk-flags-have-fixed-precedence-and-lookup-rules.md)
+- [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
 
 ## control-plane
 
@@ -96,6 +97,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0059 The inference path reads Cooldown state from a one second local copy of Redis](0059-the-inference-path-reads-cooldown-state-from-a-one-second-local-copy.md)
 - [0069 Provider quirk flags have fixed precedence and lookup rules](0069-provider-quirk-flags-have-fixed-precedence-and-lookup-rules.md)
 - [0095 An Upstream Model names the Provider Endpoints it supports](0095-an-upstream-model-names-the-provider-endpoints-it-supports.md)
+- [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
 
 ## integrations
 
@@ -193,6 +195,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0060 A sign-in poll is safe to run twice, and a login that cannot be stored ends the sign-in](0060-a-sign-in-poll-is-safe-to-run-twice-and-a-login.md)
 - [0061 OAuth sign-in secrets are stored encrypted, kept out of errors and never sent to another host](0061-oauth-sign-in-secrets-are-stored-encrypted-kept-out-of-errors-and.md)
 - [0095 An Upstream Model names the Provider Endpoints it supports](0095-an-upstream-model-names-the-provider-endpoints-it-supports.md)
+- [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
 
 ## usage
 
