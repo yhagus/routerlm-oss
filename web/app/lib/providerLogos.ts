@@ -4,25 +4,25 @@ export interface ProviderLogoMark {
 }
 
 const LABEL_OVERRIDES: Record<string, string> = {
-  alibabacloud: "Alibaba Cloud",
-  bedrock: "Amazon Bedrock",
-  huggingface: "Hugging Face",
-  minimax: "MiniMax",
-  moonshot: "Moonshot AI",
-  nvidia: "NVIDIA",
-  together: "Together AI",
-  xai: "xAI",
-  xiaomimimo: "Xiaomi MiMo",
-  yi: "01.AI Yi",
+  alibabacloud: 'Alibaba Cloud',
+  bedrock: 'Amazon Bedrock',
+  huggingface: 'Hugging Face',
+  minimax: 'MiniMax',
+  moonshot: 'Moonshot AI',
+  nvidia: 'NVIDIA',
+  together: 'Together AI',
+  xai: 'xAI',
+  xiaomimimo: 'Xiaomi MiMo',
+  yi: '01.AI Yi',
 };
 
 const SVG_FILES: Record<string, string> = import.meta.glob<string>(
-  "../assets/provider-logos/*.svg",
-  { query: "?raw", import: "default", eager: true },
+  '../assets/provider-logos/*.svg',
+  { query: '?raw', import: 'default', eager: true },
 );
 
 function keyOf(path: string): string {
-  return path.slice(path.lastIndexOf("/") + 1, -".svg".length);
+  return path.slice(path.lastIndexOf('/') + 1, -'.svg'.length);
 }
 
 function titleOf(svg: string): string | undefined {

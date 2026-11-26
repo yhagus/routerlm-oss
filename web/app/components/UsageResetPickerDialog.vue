@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { apiErrorMessage } from "~/lib/api";
-import { usageResetExpiry } from "~/lib/quotaMeters";
-import type { ProviderAccount, ProviderAccountQuota } from "~/lib/upstream";
+import { apiErrorMessage } from '~/lib/api';
+import { usageResetExpiry } from '~/lib/quotaMeters';
+import type { ProviderAccount, ProviderAccountQuota } from '~/lib/upstream';
 
 const props = defineProps<{
   account: ProviderAccount;
   now: number;
   refresh: () => Promise<unknown>;
 }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
@@ -20,13 +20,13 @@ const chosenResetId = computed(() => {
   return isPickListed ? pickedResetId.value : (usageResets.value[0]?.id ?? null);
 });
 const isUsing = ref(false);
-const useError = ref("");
+const useError = ref('');
 const idempotencyKeys = new Map<string, string>();
 
 watch(isOpen, (open) => {
   if (!open) return;
   pickedResetId.value = null;
-  useError.value = "";
+  useError.value = '';
   idempotencyKeys.clear();
 });
 
@@ -39,11 +39,11 @@ function idempotencyKeyFor(resetId: string): string {
 async function handleUse(): Promise<void> {
   if (chosenResetId.value === null || isUsing.value) return;
   isUsing.value = true;
-  useError.value = "";
+  useError.value = '';
   try {
     await $dashboardApi<ProviderAccountQuota>(
       `/provider-accounts/${props.account.id}/usage-resets/${chosenResetId.value}/use`,
-      { method: "POST", body: { idempotencyKey: idempotencyKeyFor(chosenResetId.value) } },
+      { method: 'POST', body: { idempotencyKey: idempotencyKeyFor(chosenResetId.value) } },
     );
     await props.refresh();
     isOpen.value = false;

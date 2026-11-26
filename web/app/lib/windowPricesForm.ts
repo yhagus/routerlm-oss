@@ -3,22 +3,22 @@ import {
   type PricingWindow,
   type WindowPrices,
   type WindowPricesStatus,
-} from "~/lib/pricingWindows";
-import { numberField, optionalNumber } from "~/lib/upstream";
+} from '~/lib/pricingWindows';
+import { numberField, optionalNumber } from '~/lib/upstream';
 import {
   hasOpenBound,
   mayApplyTogether,
   periodsAround,
   type ValidityPeriod,
   type WindowPricesTiming,
-} from "~/lib/validityPeriods";
+} from '~/lib/validityPeriods';
 
 export interface AttachedWindowForm {
   key: number;
   pricingWindowId: string;
   name: string;
   timeZone: string;
-  ranges: PricingWindow["ranges"];
+  ranges: PricingWindow['ranges'];
   isEnabled: boolean;
   status: WindowPricesStatus | undefined;
   savedPeriod: ValidityPeriod | undefined;
@@ -44,8 +44,8 @@ export function attachedWindowFormOf(entry: AttachedPricingWindow): AttachedWind
     isEnabled: entry.isEnabled,
     status: entry.status,
     savedPeriod: { validFrom: entry.validFrom, validUntil: entry.validUntil },
-    validFrom: entry.validFrom ?? "",
-    validUntil: entry.validUntil ?? "",
+    validFrom: entry.validFrom ?? '',
+    validUntil: entry.validUntil ?? '',
     prices: {
       inputPrice: numberField(entry.inputPrice),
       outputPrice: numberField(entry.outputPrice),
@@ -65,16 +65,16 @@ export function newAttachedWindowForm(window: PricingWindow): AttachedWindowForm
     isEnabled: window.isEnabled,
     status: undefined,
     savedPeriod: undefined,
-    validFrom: "",
-    validUntil: "",
-    prices: { inputPrice: "", outputPrice: "", cacheReadPrice: "", cacheWritePrice: "" },
+    validFrom: '',
+    validUntil: '',
+    prices: { inputPrice: '', outputPrice: '', cacheReadPrice: '', cacheWritePrice: '' },
   };
 }
 
 export function validityPeriodOf(entry: AttachedWindowForm): ValidityPeriod {
   return {
-    validFrom: entry.validFrom === "" ? null : entry.validFrom,
-    validUntil: entry.validUntil === "" ? null : entry.validUntil,
+    validFrom: entry.validFrom === '' ? null : entry.validFrom,
+    validUntil: entry.validUntil === '' ? null : entry.validUntil,
   };
 }
 
@@ -96,7 +96,7 @@ export function emptyPeriodEntryOf(
 ): AttachedWindowForm | undefined {
   return entries.find(
     (entry) =>
-      entry.validFrom !== "" && entry.validUntil !== "" && entry.validFrom >= entry.validUntil,
+      entry.validFrom !== '' && entry.validUntil !== '' && entry.validFrom >= entry.validUntil,
   );
 }
 
@@ -137,8 +137,8 @@ function splitPiecesOf(entry: AttachedWindowForm, cut: AttachedWindowForm): Atta
     key: index === 0 ? entry.key : nextKey(),
     status: undefined,
     savedPeriod: index === 0 ? entry.savedPeriod : undefined,
-    validFrom: period.validFrom ?? "",
-    validUntil: period.validUntil ?? "",
+    validFrom: period.validFrom ?? '',
+    validUntil: period.validUntil ?? '',
     prices: { ...entry.prices },
   }));
 }

@@ -1,11 +1,11 @@
-import { z } from "zod";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
-import { MODEL_KINDS, type ParameterPolicy } from "@/db/schemas";
+import { z } from 'zod';
+import { hasAnyField, nothingToChange } from '@/libs/schemas/partial-update.schema';
+import { MODEL_KINDS, type ParameterPolicy } from '@/db/schemas';
 import {
   REASONING_EFFORTS,
   type ReasoningEffort,
   SERVICE_TIERS,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 
 const capSchemas = {
   temperature: z.number().min(0).max(2),
@@ -34,8 +34,8 @@ export const parameterPolicySchema = z
   })
   .superRefine((policy, context) => {
     const kinds = [
-      ["default", policy.defaults],
-      ["forced", policy.forced],
+      ['default', policy.defaults],
+      ['forced', policy.forced],
     ] as const;
     for (const [kind, values] of kinds) {
       for (const parameter of CAPPED_PARAMETERS) {
@@ -43,8 +43,8 @@ export const parameterPolicySchema = z
         const cap = policy.caps?.[parameter];
         if (value !== undefined && cap !== undefined && rank(value) > rank(cap)) {
           context.addIssue({
-            code: "custom",
-            path: [kind === "default" ? "defaults" : "forced", parameter],
+            code: 'custom',
+            path: [kind === 'default' ? 'defaults' : 'forced', parameter],
             message: `The ${kind} ${parameter} (${value}) is above its cap (${cap})`,
           });
         }
@@ -53,7 +53,7 @@ export const parameterPolicySchema = z
   }) satisfies z.ZodType<ParameterPolicy>;
 
 function rank(value: number | ReasoningEffort): number {
-  return typeof value === "number" ? value : REASONING_EFFORTS.indexOf(value);
+  return typeof value === 'number' ? value : REASONING_EFFORTS.indexOf(value);
 }
 
 const modelFieldsSchema = z.strictObject({
@@ -99,7 +99,7 @@ export type RouteChanges = z.infer<typeof routeChangesSchema>;
 
 export const routeOrderSchema = z.strictObject({
   routeIds: z.array(z.uuid()).refine((routeIds) => new Set(routeIds).size === routeIds.length, {
-    error: "List each Route once",
+    error: 'List each Route once',
   }),
 });
 export type RouteOrder = z.infer<typeof routeOrderSchema>;

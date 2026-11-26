@@ -3,12 +3,12 @@ import type {
   GatewayErrorCode,
   RecordedAttemptFailure,
   UpstreamProtocol,
-} from "@/db/schemas";
+} from '@/db/schemas';
 
 export type FailedHop =
-  | { kind: "client-to-gateway" }
+  | { kind: 'client-to-gateway' }
   | {
-      kind: "gateway-to-provider-account";
+      kind: 'gateway-to-provider-account';
       attemptId: string;
       providerAccountId: string | null;
       providerAccountName: string | null;

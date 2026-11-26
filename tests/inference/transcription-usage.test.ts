@@ -1,26 +1,26 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { MAX_UPLOAD_BYTES } from "@/inference/models/media-upload";
-import { dashScopeTranscriptionFixture, FakeUpstream } from "@tests/support/fake-upstream";
-import { insertApiKey, insertDashScopeTranscriptionModel } from "@tests/support/inference";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
-import { writtenUsageLog } from "@tests/support/usage-logs";
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { MAX_UPLOAD_BYTES } from '@/inference/models/media-upload';
+import { dashScopeTranscriptionFixture, FakeUpstream } from '@tests/support/fake-upstream';
+import { insertApiKey, insertDashScopeTranscriptionModel } from '@tests/support/inference';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
+import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
+import { writtenUsageLog } from '@tests/support/usage-logs';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
+const { createTestApp } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
 
-const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
+const GENERATION_PATH = '/api/v1/services/aigc/multimodal-generation/generation';
 
-describe("Usage Logs of transcription (e2e)", () => {
+describe('Usage Logs of transcription (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -42,7 +42,7 @@ describe("Usage Logs of transcription (e2e)", () => {
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     await insertDashScopeTranscriptionModel(app, db, {
-      modelName: "scribe",
+      modelName: 'scribe',
       baseUrl: `${upstream.origin}/api/v1`,
       pricePerAudioSecond: 0.000035,
     });
@@ -56,26 +56,26 @@ describe("Usage Logs of transcription (e2e)", () => {
     await app.close();
   });
 
-  it("records the audio seconds DashScope billed and their Cost at the price per second", async () => {
+  it('records the audio seconds DashScope billed and their Cost at the price per second', async () => {
     upstream.replyTo(GENERATION_PATH, {
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(dashScopeTranscriptionFixture("upstream-response.json")),
+      body: JSON.parse(dashScopeTranscriptionFixture('upstream-response.json')),
     });
 
     await request(app.getHttpServer())
-      .post("/v1/audio/transcriptions")
-      .set("Authorization", `Bearer ${apiKey}`)
-      .field("model", "scribe")
-      .attach("file", Buffer.from([0x49, 0x44, 0x33]), {
-        filename: "speech.mp3",
-        contentType: "audio/mpeg",
+      .post('/v1/audio/transcriptions')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .field('model', 'scribe')
+      .attach('file', Buffer.from([0x49, 0x44, 0x33]), {
+        filename: 'speech.mp3',
+        contentType: 'audio/mpeg',
       })
       .expect(200);
 
     expect(await writtenUsageLog(db)).toMatchObject({
-      kind: "transcription",
-      clientProtocol: "openai-transcription",
+      kind: 'transcription',
+      clientProtocol: 'openai-transcription',
       audioSeconds: 4,
       cost: 0.00014,
       inputTokens: null,
@@ -85,21 +85,21 @@ describe("Usage Logs of transcription (e2e)", () => {
     });
   });
 
-  it("records an upload refused as too large against transcription", async () => {
+  it('records an upload refused as too large against transcription', async () => {
     await request(app.getHttpServer())
-      .post("/v1/audio/transcriptions")
-      .set("Authorization", `Bearer ${apiKey}`)
-      .field("model", "scribe")
-      .attach("file", Buffer.alloc(MAX_UPLOAD_BYTES + 1), {
-        filename: "long.mp3",
-        contentType: "audio/mpeg",
+      .post('/v1/audio/transcriptions')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .field('model', 'scribe')
+      .attach('file', Buffer.alloc(MAX_UPLOAD_BYTES + 1), {
+        filename: 'long.mp3',
+        contentType: 'audio/mpeg',
       })
       .expect(413);
 
     expect(await writtenUsageLog(db)).toMatchObject({
-      kind: "transcription",
-      clientProtocol: "openai-transcription",
-      errorCode: "request_too_large",
+      kind: 'transcription',
+      clientProtocol: 'openai-transcription',
+      errorCode: 'request_too_large',
     });
   });
 });

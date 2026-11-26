@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Boxes, Plus, Power } from "@lucide/vue";
-import { apiErrorMessage } from "~/lib/api";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
-import type { ModelDetail, ModelSummary } from "~/lib/routing";
-import { MODEL_KIND_LABELS, MODEL_KIND_OPTIONS, type ModelKind } from "~/lib/upstream";
+import { Boxes, Plus, Power } from '@lucide/vue';
+import { apiErrorMessage } from '~/lib/api';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
+import type { ModelDetail, ModelSummary } from '~/lib/routing';
+import { MODEL_KIND_LABELS, MODEL_KIND_OPTIONS, type ModelKind } from '~/lib/upstream';
 
-useHead({ title: "Models" });
+useHead({ title: 'Models' });
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
@@ -14,36 +14,36 @@ const {
   status: modelsStatus,
   error: loadError,
   refresh,
-} = useDashboardApi<ModelSummary[]>("/models");
-const isLoading = computed(() => modelsStatus.value === "pending" && !models.value);
+} = useDashboardApi<ModelSummary[]>('/models');
+const isLoading = computed(() => modelsStatus.value === 'pending' && !models.value);
 
 const columns: DataTableColumn<ModelSummary>[] = [
-  { id: "model", header: "Model", enableHiding: false, accessorFn: (model) => model.name },
-  { id: "kind", header: "Kind" },
-  { id: "routes", header: "Routes" },
-  { id: "status", header: "Status" },
+  { id: 'model', header: 'Model', enableHiding: false, accessorFn: (model) => model.name },
+  { id: 'kind', header: 'Kind' },
+  { id: 'routes', header: 'Routes' },
+  { id: 'status', header: 'Status' },
   actionsColumn(),
 ];
 
 const isCreateDialogOpen = ref(false);
-const newModelName = ref("");
-const newModelKind = ref<ModelKind>("chat");
+const newModelName = ref('');
+const newModelKind = ref<ModelKind>('chat');
 const isSaving = ref(false);
-const dialogError = ref("");
+const dialogError = ref('');
 
 function openCreateDialog(): void {
-  newModelName.value = "";
-  newModelKind.value = "chat";
-  dialogError.value = "";
+  newModelName.value = '';
+  newModelKind.value = 'chat';
+  dialogError.value = '';
   isCreateDialogOpen.value = true;
 }
 
 async function createModel(): Promise<void> {
   isSaving.value = true;
-  dialogError.value = "";
+  dialogError.value = '';
   try {
-    const created = await $dashboardApi<Pick<ModelDetail, "id" | "name">>("/models", {
-      method: "POST",
+    const created = await $dashboardApi<Pick<ModelDetail, 'id' | 'name'>>('/models', {
+      method: 'POST',
       body: { name: newModelName.value, kind: newModelKind.value },
     });
     showToast(`Created ${created.name}. Add its Routes next.`);
@@ -58,10 +58,10 @@ async function createModel(): Promise<void> {
 async function toggleModel(model: ModelSummary): Promise<void> {
   try {
     await $dashboardApi(`/models/${model.id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: { isEnabled: !model.isEnabled },
     });
-    showToast(`${model.isEnabled ? "Disabled" : "Enabled"} ${model.name}`);
+    showToast(`${model.isEnabled ? 'Disabled' : 'Enabled'} ${model.name}`);
     await refresh();
   } catch (error) {
     showToast(apiErrorMessage(error, `Couldn't update ${model.name}.`));
@@ -105,13 +105,13 @@ async function toggleModel(model: ModelSummary): Promise<void> {
         <span
           class="status-badge"
           :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-          >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
+          >{{ model.isEnabled ? 'Enabled' : 'Disabled' }}</span
         >
       </template>
       <template #cell-actions="{ row: model }">
         <div class="row-actions">
           <button class="row-action" @click="toggleModel(model)">
-            <Power :size="14" /> {{ model.isEnabled ? "Disable" : "Enable" }}
+            <Power :size="14" /> {{ model.isEnabled ? 'Disable' : 'Enable' }}
           </button>
         </div>
       </template>

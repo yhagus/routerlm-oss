@@ -1,6 +1,6 @@
-import type { z } from "zod";
-import type { KeyCustomer } from "@/api-keys/models/api-key";
-import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema";
+import type { z } from 'zod';
+import type { KeyCustomer } from '@/api-keys/models/api-key';
+import type { StoredProviderQuirks } from '@/catalog/schemas/catalog.schema';
 import type {
   AuthStyle,
   Capability,
@@ -9,10 +9,10 @@ import type {
   ServiceTierValues,
   TierPrices,
   UpstreamProtocol,
-} from "@/db/schemas";
-import type { ServiceTier } from "@/inference/models/internal-format";
-import type { WindowPricesHours } from "@/pricing-windows/models/pricing-window-activity";
-import type { UpstreamModelPrices, UpstreamModelUnitPrices } from "@/usage/models/usage-job";
+} from '@/db/schemas';
+import type { ServiceTier } from '@/inference/models/internal-format';
+import type { WindowPricesHours } from '@/pricing-windows/models/pricing-window-activity';
+import type { UpstreamModelPrices, UpstreamModelUnitPrices } from '@/usage/models/usage-job';
 
 export interface SnapshotApiKey {
   id: string;
@@ -26,8 +26,8 @@ export interface SnapshotApiKey {
 }
 
 export type SnapshotCredential =
-  | { kind: "api-key"; encryptedKey: string }
-  | { kind: "oauth-login" };
+  | { kind: 'api-key'; encryptedKey: string }
+  | { kind: 'oauth-login' };
 
 export interface SnapshotProviderAccount {
   id: string;

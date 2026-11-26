@@ -1,7 +1,7 @@
-import { isIPv4, isIPv6 } from "node:net";
-import { z } from "zod";
-import { allowsPrivateUpstreams } from "@/libs/models/private-upstreams-policy";
-import { bareHostname } from "@/libs/models/url";
+import { isIPv4, isIPv6 } from 'node:net';
+import { z } from 'zod';
+import { allowsPrivateUpstreams } from '@/libs/models/private-upstreams-policy';
+import { bareHostname } from '@/libs/models/url';
 
 interface Ipv4Range {
   firstOctet: number;
@@ -19,7 +19,7 @@ const NON_PUBLIC_IPV4_RANGES: readonly Ipv4Range[] = [
 ];
 
 function isPrivateIpv4(address: string): boolean {
-  const [first, second] = address.split(".").map(Number);
+  const [first, second] = address.split('.').map(Number);
   const prefix = first * 256 + second;
   return NON_PUBLIC_IPV4_RANGES.some(({ firstOctet, secondOctet, prefixBits }) => {
     const shift = 16 - prefixBits;
@@ -33,8 +33,8 @@ export function isPrivateAddress(address: string): boolean {
 
 function isPrivateIpv6(address: string): boolean {
   const lower = address.toLowerCase();
-  if (lower === "::" || lower === "::1") return true;
-  const firstGroup = Number.parseInt(lower.split(":")[0] || "0", 16);
+  if (lower === '::' || lower === '::1') return true;
+  const firstGroup = Number.parseInt(lower.split(':')[0] || '0', 16);
   const isUniqueLocal = (firstGroup & 0xfe00) === 0xfc00;
   const isLinkLocal = (firstGroup & 0xffc0) === 0xfe80;
   if (isUniqueLocal || isLinkLocal) return true;
@@ -51,17 +51,17 @@ function isPrivateMappedIpv4(lower: string): boolean {
 
 function hasPrivateHost(url: URL): boolean {
   const host = bareHostname(url).toLowerCase();
-  if (host === "localhost" || host.endsWith(".localhost")) return true;
+  if (host === 'localhost' || host.endsWith('.localhost')) return true;
   return (isIPv4(host) || isIPv6(host)) && isPrivateAddress(host);
 }
 
 export function isPublicHttpsUrl(url: URL): boolean {
-  return url.protocol === "https:" && !hasPrivateHost(url);
+  return url.protocol === 'https:' && !hasPrivateHost(url);
 }
 
 export const providerUrlSchema = z.url().check(
   z.refine((value) => allowsPrivateUpstreams() || isPublicHttpsUrl(new URL(value)), {
     error:
-      "Must be an https URL that is not localhost, loopback, private or link-local (turn on Allow private upstreams in Settings to allow them)",
+      'Must be an https URL that is not localhost, loopback, private or link-local (turn on Allow private upstreams in Settings to allow them)',
   }),
 );

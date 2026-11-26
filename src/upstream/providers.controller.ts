@@ -8,22 +8,22 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-} from "@nestjs/common";
-import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
-import { CreateProviderCommand } from "./commands/impl/create-provider.command";
-import { DeleteProviderCommand } from "./commands/impl/delete-provider.command";
-import { UpdateProviderCommand } from "./commands/impl/update-provider.command";
-import type { Provider } from "./models/provider";
-import { ListProvidersQuery } from "./queries/impl/list-providers.query";
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { DashboardController } from '@/auth/decorators/dashboard-controller.decorator';
+import { CreateProviderCommand } from './commands/impl/create-provider.command';
+import { DeleteProviderCommand } from './commands/impl/delete-provider.command';
+import { UpdateProviderCommand } from './commands/impl/update-provider.command';
+import type { Provider } from './models/provider';
+import { ListProvidersQuery } from './queries/impl/list-providers.query';
 import {
   type NewProvider,
   newProviderSchema,
   type ProviderChanges,
   providerChangesSchema,
-} from "./schemas/upstream.schema";
+} from './schemas/upstream.schema';
 
-@DashboardController("providers")
+@DashboardController('providers')
 export class ProvidersController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -40,17 +40,17 @@ export class ProvidersController {
     return this.commandBus.execute(new CreateProviderCommand(newProvider));
   }
 
-  @Patch(":id")
+  @Patch(':id')
   updateProvider(
-    @Param("id", ParseUUIDPipe) providerId: string,
+    @Param('id', ParseUUIDPipe) providerId: string,
     @Body({ schema: providerChangesSchema }) changes: ProviderChanges,
   ): Promise<Provider> {
     return this.commandBus.execute(new UpdateProviderCommand(providerId, changes));
   }
 
-  @Delete(":id")
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteProvider(@Param("id", ParseUUIDPipe) providerId: string): Promise<void> {
+  deleteProvider(@Param('id', ParseUUIDPipe) providerId: string): Promise<void> {
     return this.commandBus.execute(new DeleteProviderCommand(providerId));
   }
 }

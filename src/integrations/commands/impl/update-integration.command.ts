@@ -1,6 +1,6 @@
-import { Command } from "@nestjs/cqrs";
-import type { IntegrationSummary } from "@/integrations/models/integration";
-import type { IntegrationChanges } from "@/integrations/schemas/integration.schema";
+import { Command } from '@nestjs/cqrs';
+import type { IntegrationSummary } from '@/integrations/models/integration';
+import type { IntegrationChanges } from '@/integrations/schemas/integration.schema';
 
 export class UpdateIntegrationCommand extends Command<IntegrationSummary> {
   constructor(

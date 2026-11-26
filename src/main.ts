@@ -1,13 +1,13 @@
-import type { ConfigService } from "@nestjs/config";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { type BackendRole, type Env, envSchema } from "@/config/schemas/env.schema";
-import { runGatewayProcesses } from "@/libs/models/gateway-processes";
+import type { ConfigService } from '@nestjs/config';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { type BackendRole, type Env, envSchema } from '@/config/schemas/env.schema';
+import { runGatewayProcesses } from '@/libs/models/gateway-processes';
 
 async function bootstrap(role: BackendRole): Promise<void> {
-  const { ConfigService: ConfigServiceToken } = await import("@nestjs/config");
-  const { NestFactory } = await import("@nestjs/core");
-  const { AppModule } = await import("@/app.module");
-  const { configureApp, createNodeAdapter } = await import("@/configure-app");
+  const { ConfigService: ConfigServiceToken } = await import('@nestjs/config');
+  const { NestFactory } = await import('@nestjs/core');
+  const { AppModule } = await import('@/app.module');
+  const { configureApp, createNodeAdapter } = await import('@/configure-app');
   const app = await NestFactory.create<NestNodeApplication>(
     AppModule.forRole(role),
     createNodeAdapter(),
@@ -15,7 +15,7 @@ async function bootstrap(role: BackendRole): Promise<void> {
   configureApp(app);
   app.enableShutdownHooks();
   const config = app.get<ConfigService<Env, true>>(ConfigServiceToken);
-  await app.listen(config.get("PORT", { infer: true }));
+  await app.listen(config.get('PORT', { infer: true }));
 }
 
 const { BACKEND_PROCESSES, BACKEND_ROLE } = envSchema

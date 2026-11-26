@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import "@fontsource-variable/jetbrains-mono";
-import "~/assets/css/docs.css";
-import { X } from "@lucide/vue";
-import { nextTick, shallowRef, useTemplateRef, watch } from "vue";
-import type { DocsLocale } from "~/lib/docsMessages";
+import '@fontsource-variable/jetbrains-mono';
+import '~/assets/css/docs.css';
+import { X } from '@lucide/vue';
+import { nextTick, shallowRef, useTemplateRef, watch } from 'vue';
+import type { DocsLocale } from '~/lib/docsMessages';
 
 const route = useRoute();
 const { locale, t } = useDocsLocale();
 
-const search = useTemplateRef<{ open: () => void }>("search");
-const contentsCloseButton = useTemplateRef<HTMLButtonElement>("contentsCloseButton");
+const search = useTemplateRef<{ open: () => void }>('search');
+const contentsCloseButton = useTemplateRef<HTMLButtonElement>('contentsCloseButton');
 const isContentsOpen = shallowRef(false);
 let contentsOpenedFrom: HTMLElement | null = null;
 
@@ -33,7 +33,7 @@ watch(
 );
 
 function handleContentsKeydown(event: KeyboardEvent): void {
-  if (event.key === "Escape") closeContents();
+  if (event.key === 'Escape') closeContents();
 }
 
 const origin = useRequestURL().origin;
@@ -42,9 +42,9 @@ const pageUrlIn = (target: DocsLocale): string =>
 useHead({
   htmlAttrs: { lang: locale },
   link: () => [
-    { rel: "alternate", hreflang: "en", href: pageUrlIn("en") },
-    { rel: "alternate", hreflang: "id", href: pageUrlIn("id") },
-    { rel: "alternate", hreflang: "x-default", href: pageUrlIn("en") },
+    { rel: 'alternate', hreflang: 'en', href: pageUrlIn('en') },
+    { rel: 'alternate', hreflang: 'id', href: pageUrlIn('id') },
+    { rel: 'alternate', hreflang: 'x-default', href: pageUrlIn('en') },
   ],
 });
 </script>
@@ -60,7 +60,7 @@ useHead({
         @keydown="handleContentsKeydown"
       >
         <div class="datasheet__sheet-head">
-          <span class="datasheet__sheet-title">{{ t("contents") }}</span>
+          <span class="datasheet__sheet-title">{{ t('contents') }}</span>
           <button
             ref="contentsCloseButton"
             class="icon-button"

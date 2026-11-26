@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { CSSProperties, HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
+import type { CSSProperties, HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
 
 const props = defineProps<{
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
   language: string;
 }>();
 
 const style: CSSProperties = {
-  contentVisibility: "auto",
-  containIntrinsicSize: "auto 200px",
+  contentVisibility: 'auto',
+  containIntrinsicSize: 'auto 200px',
 };
 </script>
 

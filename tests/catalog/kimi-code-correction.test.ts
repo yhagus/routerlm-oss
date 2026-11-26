@@ -1,19 +1,19 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
-import { type Database, relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import request from 'supertest';
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
+import { type Database, relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
 
-const CORRECTION_MIGRATION_SUFFIX = "_correct_kimi_code_base_url_and_context_sizes";
-const OAUTH_LOGIN_OFFER_MIGRATION_SUFFIX = "_offer_kimi_code_oauth_login";
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
+const CORRECTION_MIGRATION_SUFFIX = '_correct_kimi_code_base_url_and_context_sizes';
+const OAUTH_LOGIN_OFFER_MIGRATION_SUFFIX = '_offer_kimi_code_oauth_login';
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
 
-const OLD_BASE_URL = "https://api.kimi.ai/coding/v1";
+const OLD_BASE_URL = 'https://api.kimi.ai/coding/v1';
 const OLD_CONTEXT_SIZE = 1048576;
 
 type OldKimiCode = {
@@ -32,8 +32,8 @@ type KimiCodeFromApi = {
   oauthLogin: Record<string, unknown> | null;
 };
 
-describe("Kimi Code correction migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('Kimi Code correction migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBeforeCorrection: string;
   let migrationsBeforeOauthLoginOffer: string;
   const opened: { databaseUrl: string; pool: Pool }[] = [];
@@ -58,7 +58,7 @@ describe("Kimi Code correction migration (e2e)", () => {
   async function upgradeInstallHolding(
     oldKimiCode: OldKimiCode,
   ): Promise<{ db: Database; providerId: string }> {
-    const databaseUrl = await createEmptyDatabase(serverUrl, "kimi_code_correction");
+    const databaseUrl = await createEmptyDatabase(serverUrl, 'kimi_code_correction');
     const pool = new Pool({ connectionString: databaseUrl });
     opened.push({ databaseUrl, pool });
     const db = drizzle({ client: pool, relations });
@@ -79,8 +79,8 @@ describe("Kimi Code correction migration (e2e)", () => {
     const { db, providerId } = await upgradeInstallHolding({
       baseUrl: OLD_BASE_URL,
       contextSizes: {
-        "k3.1-pro": OLD_CONTEXT_SIZE,
-        "k3.1-pro-highspeed": OLD_CONTEXT_SIZE,
+        'k3.1-pro': OLD_CONTEXT_SIZE,
+        'k3.1-pro-highspeed': OLD_CONTEXT_SIZE,
         k3: OLD_CONTEXT_SIZE,
       },
     });
@@ -89,22 +89,22 @@ describe("Kimi Code correction migration (e2e)", () => {
 
     expect(kimiCode).toMatchObject({
       id: providerId,
-      baseUrl: "https://api.kimi.com/coding/v1",
-      contextSizes: { "k3.1-pro": 1048576, "k3.1-pro-highspeed": 1048576, k3: 1048576 },
+      baseUrl: 'https://api.kimi.com/coding/v1',
+      contextSizes: { 'k3.1-pro': 1048576, 'k3.1-pro-highspeed': 1048576, k3: 1048576 },
     });
   });
 
-  it("keeps a base URL and a context size the operator edited", async () => {
+  it('keeps a base URL and a context size the operator edited', async () => {
     const { db } = await upgradeInstallHolding({
-      baseUrl: "https://kimi-proxy.example/coding/v1",
-      contextSizes: { "k3.1-pro": 524288, k3: OLD_CONTEXT_SIZE },
+      baseUrl: 'https://kimi-proxy.example/coding/v1',
+      contextSizes: { 'k3.1-pro': 524288, k3: OLD_CONTEXT_SIZE },
     });
 
     const kimiCode = await readKimiCodeThroughApi(db);
 
     expect(kimiCode).toMatchObject({
-      baseUrl: "https://kimi-proxy.example/coding/v1",
-      contextSizes: { "k3.1-pro": 524288, k3: 1048576 },
+      baseUrl: 'https://kimi-proxy.example/coding/v1',
+      contextSizes: { 'k3.1-pro': 524288, k3: 1048576 },
     });
   });
 
@@ -116,7 +116,7 @@ describe("Kimi Code correction migration (e2e)", () => {
     expect(kimiCode.quirks).toEqual(await catalogKimiCodeQuirks());
   });
 
-  it("keeps quirks the operator edited", async () => {
+  it('keeps quirks the operator edited', async () => {
     const { db } = await upgradeInstallHolding({
       baseUrl: OLD_BASE_URL,
       contextSizes: {},
@@ -128,45 +128,45 @@ describe("Kimi Code correction migration (e2e)", () => {
     expect(kimiCode.quirks).toEqual({ usesMaxCompletionTokens: true });
   });
 
-  it("names the Kimi Code quota reader on an untouched Kimi Code Provider", async () => {
+  it('names the Kimi Code quota reader on an untouched Kimi Code Provider', async () => {
     const { db } = await upgradeInstallHolding({ baseUrl: OLD_BASE_URL, contextSizes: {} });
 
     const kimiCode = await readKimiCodeThroughApi(db);
 
-    expect(kimiCode.quotaReader).toBe("kimi-code");
+    expect(kimiCode.quotaReader).toBe('kimi-code');
   });
 
-  it("keeps a quota reader the operator set", async () => {
+  it('keeps a quota reader the operator set', async () => {
     const { db } = await upgradeInstallHolding({
       baseUrl: OLD_BASE_URL,
       contextSizes: {},
-      quotaReader: "minimax-m-plan",
+      quotaReader: 'minimax-m-plan',
     });
 
     const kimiCode = await readKimiCodeThroughApi(db);
 
-    expect(kimiCode.quotaReader).toBe("minimax-m-plan");
+    expect(kimiCode.quotaReader).toBe('minimax-m-plan');
   });
 
-  it("lets an untouched Kimi Code Provider offer OAuth Login", async () => {
+  it('lets an untouched Kimi Code Provider offer OAuth Login', async () => {
     const { db } = await upgradeInstallHolding({ baseUrl: OLD_BASE_URL, contextSizes: {} });
 
     const kimiCode = await readKimiCodeThroughApi(db);
 
     expect(kimiCode.oauthLogin).toEqual({
-      flow: "kimi-code",
-      authHosts: { global: "https://auth.kimi.ai", china: "https://auth.kimi.com" },
-      clientId: "17e5f671-d194-4dfb-9706-5516cb48c098",
-      cliVersion: "2.6.2",
+      flow: 'kimi-code',
+      authHosts: { global: 'https://auth.kimi.ai', china: 'https://auth.kimi.com' },
+      clientId: '17e5f671-d194-4dfb-9706-5516cb48c098',
+      cliVersion: '2.6.2',
     });
     expect(kimiCode.oauthLogin).toEqual(await catalogKimiCodeOauthLogin());
   });
 
-  it("keeps OAuth Login data the operator set, keyed by the kimi-code flow", async () => {
+  it('keeps OAuth Login data the operator set, keyed by the kimi-code flow', async () => {
     const operatorOauthLogin = {
-      authHosts: { global: "https://auth.kimi-proxy.example", china: "https://auth.kimi.com" },
-      clientId: "client-id-the-operator-set",
-      cliVersion: "3.0.0",
+      authHosts: { global: 'https://auth.kimi-proxy.example', china: 'https://auth.kimi.com' },
+      clientId: 'client-id-the-operator-set',
+      cliVersion: '3.0.0',
     };
     const { db } = await upgradeInstallHolding({
       baseUrl: OLD_BASE_URL,
@@ -176,19 +176,19 @@ describe("Kimi Code correction migration (e2e)", () => {
 
     const kimiCode = await readKimiCodeThroughApi(db);
 
-    expect(kimiCode.oauthLogin).toEqual({ flow: "kimi-code", ...operatorOauthLogin });
+    expect(kimiCode.oauthLogin).toEqual({ flow: 'kimi-code', ...operatorOauthLogin });
   });
 });
 
 async function catalogKimiCodeOauthLogin(): Promise<unknown> {
   const catalog = await loadCatalog(CATALOG_DIRECTORY);
-  return catalog.find((provider) => provider.slug === "kimi-code")?.oauthLogin;
+  return catalog.find((provider) => provider.slug === 'kimi-code')?.oauthLogin;
 }
 
 async function catalogKimiCodeQuirks(): Promise<Record<string, unknown>> {
   const catalog = await loadCatalog(CATALOG_DIRECTORY);
-  const kimiCode = catalog.find((provider) => provider.slug === "kimi-code");
-  if (!kimiCode) throw new Error("the Catalog has no Kimi Code Provider");
+  const kimiCode = catalog.find((provider) => provider.slug === 'kimi-code');
+  if (!kimiCode) throw new Error('the Catalog has no Kimi Code Provider');
   return kimiCode.quirks;
 }
 
@@ -204,7 +204,7 @@ async function insertKimiCode(
     [baseUrl, JSON.stringify(quirks), quotaReader ?? null],
   );
   const providerId = rows[0]?.id;
-  if (providerId === undefined) throw new Error("the Kimi Code Provider was not inserted");
+  if (providerId === undefined) throw new Error('the Kimi Code Provider was not inserted');
 
   for (const [upstreamModelId, contextSize] of Object.entries(contextSizes)) {
     await pool.query(
@@ -221,10 +221,10 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
   try {
     const cookie = await setUpFirstUser(app, OPERATOR);
     const server = app.getHttpServer();
-    const providers = await request(server).get("/api/providers").set("Cookie", cookie).expect(200);
+    const providers = await request(server).get('/api/providers').set('Cookie', cookie).expect(200);
     const upstreamModels = await request(server)
-      .get("/api/upstream-models")
-      .set("Cookie", cookie)
+      .get('/api/upstream-models')
+      .set('Cookie', cookie)
       .expect(200);
 
     const providerRows: {
@@ -237,12 +237,12 @@ async function readKimiCodeThroughApi(db: Database): Promise<KimiCodeFromApi> {
     }[] = providers.body;
     const upstreamModelRows: { upstreamModelId: string; contextSize: number }[] =
       upstreamModels.body;
-    const kimiCode = providerRows.find((provider) => provider.slug === "kimi-code");
-    if (!kimiCode) throw new Error("the API lists no Kimi Code Provider");
+    const kimiCode = providerRows.find((provider) => provider.slug === 'kimi-code');
+    if (!kimiCode) throw new Error('the API lists no Kimi Code Provider');
 
     return {
       id: kimiCode.id,
-      baseUrl: kimiCode.endpoints.find((endpoint) => endpoint.kind === "chat")?.baseUrl,
+      baseUrl: kimiCode.endpoints.find((endpoint) => endpoint.kind === 'chat')?.baseUrl,
       quirks: kimiCode.quirks,
       quotaReader: kimiCode.quotaReader,
       oauthLogin: kimiCode.oauthLogin,

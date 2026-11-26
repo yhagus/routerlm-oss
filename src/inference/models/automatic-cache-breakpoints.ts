@@ -1,4 +1,4 @@
-import type { InferenceMessage, InferenceRequest, UserContentPart } from "./internal-format";
+import type { InferenceMessage, InferenceRequest, UserContentPart } from './internal-format';
 
 export const DEFAULT_CACHE_MARKER_LIMIT = 4;
 
@@ -23,7 +23,7 @@ function hasCacheMarkers(request: InferenceRequest): boolean {
     ...request.tools,
     ...request.messages.flatMap((message): object[] => message.content),
   ];
-  return parts.some((part) => "cacheMarker" in part && part.cacheMarker !== undefined);
+  return parts.some((part) => 'cacheMarker' in part && part.cacheMarker !== undefined);
 }
 
 function markTools(request: InferenceRequest): InferenceRequest {
@@ -47,11 +47,11 @@ function markLatestTurn(request: InferenceRequest): InferenceRequest {
 }
 
 function withTurnMarked(message: InferenceMessage): InferenceMessage {
-  if (message.role !== "assistant") {
+  if (message.role !== 'assistant') {
     return { ...message, content: withLastPartMarked(message.content) };
   }
   const lastText = message.content.findLastIndex(
-    (part) => part.type === "text" && part.text !== "",
+    (part) => part.type === 'text' && part.text !== '',
   );
   if (lastText === -1) {
     return message;
@@ -65,6 +65,6 @@ function withTurnMarked(message: InferenceMessage): InferenceMessage {
 }
 
 function withLastPartMarked<Part extends UserContentPart>(parts: Part[]): Part[] {
-  const last = parts.findLastIndex((part) => part.type === "image" || part.text !== "");
+  const last = parts.findLastIndex((part) => part.type === 'image' || part.text !== '');
   return parts.map((part, index) => (index === last ? { ...part, cacheMarker: {} } : part));
 }

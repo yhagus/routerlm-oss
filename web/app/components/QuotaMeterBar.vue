@@ -4,8 +4,8 @@ import {
   quotaMeterRemaining,
   quotaMeterTone,
   resetCountdown,
-} from "~/lib/quotaMeters";
-import type { QuotaMeter } from "~/lib/upstream";
+} from '~/lib/quotaMeters';
+import type { QuotaMeter } from '~/lib/upstream';
 
 const props = defineProps<{
   meter: QuotaMeter;

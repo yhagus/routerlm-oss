@@ -1,12 +1,12 @@
-import { sendsServiceTiers } from "@/libs/models/provider-protocols";
-import type { ServiceTierValues, UpstreamProtocol } from "@/db/schemas";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
-import type { ServiceTier } from "./internal-format";
+import { sendsServiceTiers } from '@/libs/models/provider-protocols';
+import type { ServiceTierValues, UpstreamProtocol } from '@/db/schemas';
+import type { SnapshotUpstreamModel } from '@/snapshot/models/snapshot';
+import type { ServiceTier } from './internal-format';
 
 const OPENAI_CLIENT_TIERS: ReadonlyMap<string, ServiceTier> = new Map([
-  ["priority", "fast"],
-  ["fast", "fast"],
-  ["flex", "flex"],
+  ['priority', 'fast'],
+  ['fast', 'fast'],
+  ['flex', 'flex'],
 ]);
 
 export function serviceTierOfOpenAiClient(
@@ -41,10 +41,10 @@ export function serviceTierOfWireValue(
   serviceTierValues: ServiceTierValues,
 ): ServiceTier | null {
   if (reportedWireValue === serviceTierValues.fast) {
-    return "fast";
+    return 'fast';
   }
   if (reportedWireValue === serviceTierValues.flex) {
-    return "flex";
+    return 'flex';
   }
   return null;
 }

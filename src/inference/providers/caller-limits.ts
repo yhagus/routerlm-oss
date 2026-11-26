@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
-import { InjectThrottlerStorage, minutes, type ThrottlerStorage } from "@nestjs/throttler";
-import type { ApiKeyPrincipal } from "@/api-keys/models/api-key";
-import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags";
-import { GatewayError } from "@/inference/models/gateway-error";
-import type { InferenceCaller } from "@/inference/models/inference";
+import { Injectable } from '@nestjs/common';
+import { InjectThrottlerStorage, minutes, type ThrottlerStorage } from '@nestjs/throttler';
+import type { ApiKeyPrincipal } from '@/api-keys/models/api-key';
+import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
+import { GatewayError } from '@/inference/models/gateway-error';
+import type { InferenceCaller } from '@/inference/models/inference';
 
-const REQUEST_RATE_THROTTLER = "request-rate";
+const REQUEST_RATE_THROTTLER = 'request-rate';
 const REQUEST_RATE_WINDOW = minutes(1);
 const NO_BLOCK = 0;
 
@@ -17,22 +17,22 @@ export class CallerLimits {
   ) {}
 
   async assertWithinLimits(caller: InferenceCaller): Promise<void> {
-    if (caller.kind !== "api-key") {
+    if (caller.kind !== 'api-key') {
       return;
     }
     const { apiKeyId, spendLimit } = caller.principal;
     if (spendLimit !== null && (await this.spendLimitFlags.isReached(apiKeyId))) {
       throw new GatewayError(
-        "spend_limit_reached",
-        "This API Key has reached its Spend Limit",
-        "client",
+        'spend_limit_reached',
+        'This API Key has reached its Spend Limit',
+        'client',
       );
     }
     if (await this.isPastRequestRate(caller.principal)) {
       throw new GatewayError(
-        "request_rate_exceeded",
-        "This API Key has sent more requests this minute than its Request Rate allows",
-        "client",
+        'request_rate_exceeded',
+        'This API Key has sent more requests this minute than its Request Rate allows',
+        'client',
       );
     }
   }

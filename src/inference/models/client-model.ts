@@ -1,15 +1,15 @@
-import type { Capability, ModelKind } from "@/db/schemas";
+import type { Capability, ModelKind } from '@/db/schemas';
 
 export interface ClientModel {
   id: string;
-  object: "model";
+  object: 'model';
   created: number;
-  owned_by: "routerlm";
+  owned_by: 'routerlm';
   kind: ModelKind;
   capabilities: Capability[];
 }
 
 export interface ClientModelList {
-  object: "list";
+  object: 'list';
   data: ClientModel[];
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { MIN_PASSWORD_LENGTH } from "~/lib/users";
+import { ref } from 'vue';
+import { MIN_PASSWORD_LENGTH } from '~/lib/users';
 
 export interface Credentials {
   email: string;
@@ -9,16 +9,16 @@ export interface Credentials {
 
 const props = defineProps<{
   submitLabel: string;
-  passwordAutocomplete: "current-password" | "new-password";
+  passwordAutocomplete: 'current-password' | 'new-password';
   isSubmitting: boolean;
   errorMessage: string;
 }>();
 const emit = defineEmits<{ submit: [credentials: Credentials] }>();
 
-const email = ref("");
-const password = ref("");
+const email = ref('');
+const password = ref('');
 const minPasswordLength =
-  props.passwordAutocomplete === "new-password" ? MIN_PASSWORD_LENGTH : undefined;
+  props.passwordAutocomplete === 'new-password' ? MIN_PASSWORD_LENGTH : undefined;
 </script>
 
 <template>

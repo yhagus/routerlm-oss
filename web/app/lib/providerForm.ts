@@ -3,7 +3,7 @@ import {
   type ReasoningEffort,
   SERVICE_TIERS,
   type ServiceTier,
-} from "~/lib/parameterPolicy";
+} from '~/lib/parameterPolicy';
 import {
   CREDENTIAL_KINDS,
   type CredentialKind,
@@ -18,9 +18,9 @@ import {
   QUOTA_READERS,
   type QuotaReader,
   REASONING_CONTENT_IN_HISTORY,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
-type FlowFields<Login> = Omit<Login, "flow">;
+type FlowFields<Login> = Omit<Login, 'flow'>;
 
 export interface EndpointForm {
   key: number;
@@ -29,7 +29,7 @@ export interface EndpointForm {
   baseUrl: string;
 }
 
-export type EndpointFields = Omit<EndpointForm, "key">;
+export type EndpointFields = Omit<EndpointForm, 'key'>;
 
 let nextEndpointKey = 0;
 
@@ -41,7 +41,7 @@ export interface FixedHeaderForm {
 
 let nextFixedHeaderKey = 0;
 
-export function fixedHeaderFormFor(name = "", value = ""): FixedHeaderForm {
+export function fixedHeaderFormFor(name = '', value = ''): FixedHeaderForm {
   nextFixedHeaderKey += 1;
   return { key: nextFixedHeaderKey, name, value };
 }
@@ -50,15 +50,15 @@ export function endpointFormFor(endpoint?: ProviderEndpoint): EndpointForm {
   nextEndpointKey += 1;
   return {
     key: nextEndpointKey,
-    kind: endpoint?.kind ?? "",
-    protocol: endpoint?.protocol ?? "",
-    baseUrl: endpoint?.baseUrl ?? "",
+    kind: endpoint?.kind ?? '',
+    protocol: endpoint?.protocol ?? '',
+    baseUrl: endpoint?.baseUrl ?? '',
   };
 }
 
-export function chatProtocolsOf(form: Pick<ProviderForm, "endpoints">): string[] {
+export function chatProtocolsOf(form: Pick<ProviderForm, 'endpoints'>): string[] {
   return form.endpoints
-    .filter((endpoint) => endpoint.kind === "chat")
+    .filter((endpoint) => endpoint.kind === 'chat')
     .map((endpoint) => endpoint.protocol);
 }
 
@@ -108,21 +108,21 @@ export interface ProviderFields {
 }
 
 function kimiCodeFields(login: ProviderOauthLogin | null): FlowFields<KimiCodeOauthLogin> {
-  if (login?.flow === "kimi-code") {
+  if (login?.flow === 'kimi-code') {
     return {
       authHosts: { ...login.authHosts },
       clientId: login.clientId,
       cliVersion: login.cliVersion,
     };
   }
-  return { authHosts: { global: "", china: "" }, clientId: "", cliVersion: "" };
+  return { authHosts: { global: '', china: '' }, clientId: '', cliVersion: '' };
 }
 
 function openAiCodexFields(login: ProviderOauthLogin | null): FlowFields<OpenAiCodexOauthLogin> {
-  if (login?.flow === "openai-codex") {
+  if (login?.flow === 'openai-codex') {
     return { issuer: login.issuer, clientId: login.clientId, cliVersion: login.cliVersion };
   }
-  return { issuer: "", clientId: "", cliVersion: "" };
+  return { issuer: '', clientId: '', cliVersion: '' };
 }
 
 const ALL_DIGITS = /^\d+$/;
@@ -130,12 +130,12 @@ const COMBINING_MARKS = /\p{Mark}/gu;
 
 function emptyEfforts(): Record<ReasoningEffort, string> {
   return {
-    none: "",
-    minimal: "",
-    low: "",
-    medium: "",
-    high: "",
-    xhigh: "",
+    none: '',
+    minimal: '',
+    low: '',
+    medium: '',
+    high: '',
+    xhigh: '',
   };
 }
 
@@ -143,19 +143,19 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
   const quirks = provider?.quirks ?? {};
   const oauthLogin = provider?.oauthLogin ?? null;
   return {
-    slug: provider?.slug ?? "",
-    name: provider?.name ?? "",
-    logo: provider?.logo ?? "",
+    slug: provider?.slug ?? '',
+    name: provider?.name ?? '',
+    logo: provider?.logo ?? '',
     termsRisk: provider?.termsRisk ?? false,
     endpoints: provider
       ? provider.endpoints.map((endpoint) => endpointFormFor(endpoint))
-      : [{ ...endpointFormFor(), kind: "chat", protocol: "openai-chat" }],
-    authStyle: provider?.authStyle ?? "bearer",
-    reasoningContentInHistory: quirks.reasoningContentInHistory ?? "",
+      : [{ ...endpointFormFor(), kind: 'chat', protocol: 'openai-chat' }],
+    authStyle: provider?.authStyle ?? 'bearer',
+    reasoningContentInHistory: quirks.reasoningContentInHistory ?? '',
     acceptsCacheControl: quirks.acceptsCacheControl ?? false,
     acceptsPromptCacheKey: quirks.acceptsPromptCacheKey ?? false,
     usesMaxCompletionTokens: quirks.usesMaxCompletionTokens ?? false,
-    cacheMarkerLimit: quirks.cacheMarkerLimit ?? "",
+    cacheMarkerLimit: quirks.cacheMarkerLimit ?? '',
     hasReasoningAsThinking: quirks.reasoningAsThinking !== undefined,
     thinkingEfforts: { ...emptyEfforts(), ...quirks.reasoningAsThinking?.efforts },
     upstreamModelsWithoutEffort: [
@@ -171,32 +171,32 @@ export function providerFormFor(provider: Provider | undefined): ProviderForm {
       fixedHeaderFormFor(name, value),
     ),
     exhaustedErrorCodes: (quirks.exhaustedErrorCodes ?? []).map(String),
-    quotaReader: provider?.quotaReader ?? "",
-    quotaBaseUrl: quirks.quotaBaseUrl ?? "",
-    oauthLoginFlow: oauthLogin?.flow ?? "",
+    quotaReader: provider?.quotaReader ?? '',
+    quotaBaseUrl: quirks.quotaBaseUrl ?? '',
+    oauthLoginFlow: oauthLogin?.flow ?? '',
     kimiCodeOauthLogin: kimiCodeFields(oauthLogin),
     openAiCodexOauthLogin: openAiCodexFields(oauthLogin),
     credentialKinds: [...(provider?.credentialKinds ?? CREDENTIAL_KINDS)],
     serviceTierValues: {
-      fast: provider?.serviceTierValues.fast ?? "",
-      flex: provider?.serviceTierValues.flex ?? "",
+      fast: provider?.serviceTierValues.fast ?? '',
+      flex: provider?.serviceTierValues.flex ?? '',
     },
   };
 }
 
 export function slugFromName(name: string): string {
   return name
-    .normalize("NFKD")
-    .replace(COMBINING_MARKS, "")
+    .normalize('NFKD')
+    .replace(COMBINING_MARKS, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 export function providerFieldsFromForm(form: ProviderForm): ProviderFields {
   return {
     name: form.name,
-    logo: form.logo === "" ? null : form.logo,
+    logo: form.logo === '' ? null : form.logo,
     termsRisk: form.termsRisk,
     endpoints: form.endpoints.map(({ kind, protocol, baseUrl }) => ({ kind, protocol, baseUrl })),
     authStyle: form.authStyle,
@@ -210,8 +210,8 @@ export function providerFieldsFromForm(form: ProviderForm): ProviderFields {
 
 function oauthLoginFromForm(form: ProviderForm): ProviderOauthLogin | null {
   const flow = OAUTH_LOGIN_FLOWS.find((known) => known === form.oauthLoginFlow);
-  if (flow === "kimi-code") return { flow, ...structuredClone(form.kimiCodeOauthLogin) };
-  if (flow === "openai-codex") return { flow, ...form.openAiCodexOauthLogin };
+  if (flow === 'kimi-code') return { flow, ...structuredClone(form.kimiCodeOauthLogin) };
+  if (flow === 'openai-codex') return { flow, ...form.openAiCodexOauthLogin };
   return null;
 }
 
@@ -219,7 +219,7 @@ function serviceTierValuesFromForm(form: ProviderForm): Partial<Record<ServiceTi
   const values: Partial<Record<ServiceTier, string>> = {};
   for (const tier of SERVICE_TIERS) {
     const value = form.serviceTierValues[tier].trim();
-    if (value !== "") values[tier] = value;
+    if (value !== '') values[tier] = value;
   }
   return values;
 }
@@ -231,9 +231,9 @@ function quirksFromForm(form: ProviderForm): ProviderQuirks {
 function protocolQuirks(form: ProviderForm): ProviderQuirks {
   const protocols = chatProtocolsOf(form);
   return {
-    ...(protocols.includes("anthropic-messages") ? anthropicMessagesQuirks(form) : {}),
-    ...(protocols.includes("openai-chat") ? openaiChatQuirks(form) : {}),
-    ...(protocols.includes("openai-responses") ? openaiResponsesQuirks(form) : {}),
+    ...(protocols.includes('anthropic-messages') ? anthropicMessagesQuirks(form) : {}),
+    ...(protocols.includes('openai-chat') ? openaiChatQuirks(form) : {}),
+    ...(protocols.includes('openai-responses') ? openaiResponsesQuirks(form) : {}),
   };
 }
 
@@ -250,7 +250,7 @@ function openaiResponsesQuirks(form: ProviderForm): ProviderQuirks {
 
 function anthropicMessagesQuirks(form: ProviderForm): ProviderQuirks {
   const limit = form.cacheMarkerLimit;
-  return limit === "" ? {} : { cacheMarkerLimit: Number(limit) };
+  return limit === '' ? {} : { cacheMarkerLimit: Number(limit) };
 }
 
 function openaiChatQuirks(form: ProviderForm): ProviderQuirks {
@@ -284,7 +284,7 @@ function fixedHeadersFromRows(rows: FixedHeaderForm[]): Record<string, string> {
   for (const row of rows) {
     const name = row.name.trim().toLowerCase();
     const value = row.value.trim();
-    if (name !== "" && value !== "") headers[name] = value;
+    if (name !== '' && value !== '') headers[name] = value;
   }
   return headers;
 }
@@ -297,6 +297,6 @@ function sharedQuirks(form: ProviderForm): ProviderQuirks {
     );
   }
   const quotaBaseUrl = form.quotaBaseUrl.trim();
-  if (form.quotaReader !== "" && quotaBaseUrl !== "") quirks.quotaBaseUrl = quotaBaseUrl;
+  if (form.quotaReader !== '' && quotaBaseUrl !== '') quirks.quotaBaseUrl = quotaBaseUrl;
   return quirks;
 }

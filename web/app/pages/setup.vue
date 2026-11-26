@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import type { Credentials } from "~/components/CredentialsForm.vue";
-import { apiErrorMessage } from "~/lib/api";
-import type { User } from "~/lib/users";
+import { ref } from 'vue';
+import type { Credentials } from '~/components/CredentialsForm.vue';
+import { apiErrorMessage } from '~/lib/api';
+import type { User } from '~/lib/users';
 
-definePageMeta({ layout: "auth" });
-useHead({ title: "Set up RouterLM" });
+definePageMeta({ layout: 'auth' });
+useHead({ title: 'Set up RouterLM' });
 
 const currentUser = useCurrentUser();
 const { $dashboardApi } = useNuxtApp();
 const isSubmitting = ref(false);
-const errorMessage = ref("");
+const errorMessage = ref('');
 
 async function createFirstUser(credentials: Credentials): Promise<void> {
   isSubmitting.value = true;
-  errorMessage.value = "";
+  errorMessage.value = '';
   try {
-    currentUser.value = await $dashboardApi<User>("/auth/setup", {
-      method: "POST",
+    currentUser.value = await $dashboardApi<User>('/auth/setup', {
+      method: 'POST',
       body: credentials,
     });
-    await navigateTo("/");
+    await navigateTo('/');
   } catch (error) {
     errorMessage.value = apiErrorMessage(error, "Couldn't create the User. Try again.");
   } finally {

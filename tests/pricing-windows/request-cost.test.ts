@@ -1,35 +1,35 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { upstreamModels } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { upstreamModels } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
+import { insertApiKey, insertOpenAiChatModel } from '@tests/support/inference';
 import {
   deleteAllPricingWindows,
   utcWallClockInDays,
   zoneAtNoonNow,
-} from "@tests/support/pricing-windows";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
-import { writtenUsageLog } from "@tests/support/usage-logs";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
+} from '@tests/support/pricing-windows';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
+import { writtenUsageLog } from '@tests/support/usage-logs';
+import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
+const { createTestApp, setUpFirstUser } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hello" }] };
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const CHAT_REQUEST = { model: 'smart', messages: [{ role: 'user', content: 'Hello' }] };
 
 const STANDARD_COST = 0.00041;
 
-describe("Cost of a request in a Pricing Window (e2e)", () => {
+describe('Cost of a request in a Pricing Window (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -41,9 +41,9 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
   let upstreamModelId: string;
 
   const { timeZone, today } = zoneAtNoonNow();
-  const ACTIVE_NOW = [{ weekdays: [today], start: "11:00", end: "14:00" }];
-  const NEVER_TODAY = [{ weekdays: [today === 1 ? 2 : 1], start: "00:00", end: "24:00" }];
-  const WHOLE_WEEK = [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "00:00", end: "24:00" }];
+  const ACTIVE_NOW = [{ weekdays: [today], start: '11:00', end: '14:00' }];
+  const NEVER_TODAY = [{ weekdays: [today === 1 ? 2 : 1], start: '00:00', end: '24:00' }];
+  const WHOLE_WEEK = [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: '00:00', end: '24:00' }];
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -60,7 +60,7 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     await deleteAllUpstreamData(db);
     await deleteAllPricingWindows(db);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: upstream.baseUrl,
     }));
     [{ id: upstreamModelId }] = await db
@@ -86,8 +86,8 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     windowTimeZone = timeZone,
   ): Promise<string> {
     const created = await request(app.getHttpServer())
-      .post("/api/pricing-windows")
-      .set("Cookie", cookie)
+      .post('/api/pricing-windows')
+      .set('Cookie', cookie)
       .send({ name, timeZone: windowTimeZone, ranges, isEnabled })
       .expect(201);
     return created.body.id;
@@ -96,17 +96,17 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
   async function attachWindows(entries: object[]): Promise<void> {
     await request(app.getHttpServer())
       .put(`/api/upstream-models/${upstreamModelId}/pricing-windows`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .send(entries)
       .expect(200);
   }
 
   function upstreamAnswers(servedTierValue?: string): void {
     const answer: Record<string, unknown> = JSON.parse(
-      openAiChatFixture("upstream-response-tool-call.json"),
+      openAiChatFixture('upstream-response-tool-call.json'),
     );
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 200,
       body: servedTierValue === undefined ? answer : { ...answer, service_tier: servedTierValue },
     });
@@ -119,8 +119,8 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
 
   async function chatAnsweredAndWaitForUsageLog(body: object = CHAT_REQUEST) {
     await request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send(body)
       .expect(200);
     const { id } = await writtenUsageLog(db);
@@ -130,41 +130,41 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
   async function acceptFlexTier(): Promise<void> {
     await request(app.getHttpServer())
       .patch(`/api/providers/${providerId}`)
-      .set("Cookie", cookie)
-      .send({ serviceTierValues: { flex: "flex" } })
+      .set('Cookie', cookie)
+      .send({ serviceTierValues: { flex: 'flex' } })
       .expect(200);
     await request(app.getHttpServer())
       .patch(`/api/upstream-models/${upstreamModelId}`)
-      .set("Cookie", cookie)
-      .send({ serviceTiers: ["flex"], tierPrices: { flex: { inputPrice: 1, outputPrice: 4 } } })
+      .set('Cookie', cookie)
+      .send({ serviceTiers: ['flex'], tierPrices: { flex: { inputPrice: 1, outputPrice: 4 } } })
       .expect(200);
   }
 
   async function shownUsageLog(id: string) {
     const shown = await request(app.getHttpServer())
       .get(`/api/usage/${id}`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(200);
     return shown.body;
   }
 
-  it("prices a request in an active window at its Window Prices, falling back to standard for a price left out", async () => {
-    const offPeakId = await createWindow("Off-peak", ACTIVE_NOW);
+  it('prices a request in an active window at its Window Prices, falling back to standard for a price left out', async () => {
+    const offPeakId = await createWindow('Off-peak', ACTIVE_NOW);
     await attachWindows([{ pricingWindowId: offPeakId, inputPrice: 1, outputPrice: 4 }]);
 
     const usageLog = await chatAndWaitForUsageLog();
 
     expect(usageLog.cost).toBeCloseTo(0.00023, 10);
-    expect(usageLog.pricingWindowName).toBe("Off-peak");
+    expect(usageLog.pricingWindowName).toBe('Off-peak');
     const listed = await request(app.getHttpServer())
-      .get("/api/usage")
-      .set("Cookie", cookie)
+      .get('/api/usage')
+      .set('Cookie', cookie)
       .expect(200);
-    expect(listed.body.items).toEqual([expect.objectContaining({ pricingWindowName: "Off-peak" })]);
+    expect(listed.body.items).toEqual([expect.objectContaining({ pricingWindowName: 'Off-peak' })]);
   });
 
   it("prices at the standard prices when the window isn't active now", async () => {
-    const weekendId = await createWindow("Weekend", NEVER_TODAY);
+    const weekendId = await createWindow('Weekend', NEVER_TODAY);
     await attachWindows([{ pricingWindowId: weekendId, inputPrice: 1, outputPrice: 4 }]);
 
     const usageLog = await chatAndWaitForUsageLog();
@@ -173,8 +173,8 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     expect(usageLog.pricingWindowName).toBeNull();
   });
 
-  it("prices at the standard prices when the active window is disabled", async () => {
-    const offPeakId = await createWindow("Off-peak", ACTIVE_NOW, false);
+  it('prices at the standard prices when the active window is disabled', async () => {
+    const offPeakId = await createWindow('Off-peak', ACTIVE_NOW, false);
     await attachWindows([{ pricingWindowId: offPeakId, inputPrice: 1, outputPrice: 4 }]);
 
     const usageLog = await chatAndWaitForUsageLog();
@@ -184,8 +184,8 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
   });
 
   it("prices at the one window that applies among the model's windows", async () => {
-    const weekendId = await createWindow("Weekend", NEVER_TODAY);
-    const happyHourId = await createWindow("Happy hour", ACTIVE_NOW);
+    const weekendId = await createWindow('Weekend', NEVER_TODAY);
+    const happyHourId = await createWindow('Happy hour', ACTIVE_NOW);
     await attachWindows([
       { pricingWindowId: weekendId, inputPrice: 1, outputPrice: 4 },
       { pricingWindowId: happyHourId, inputPrice: 0.5, outputPrice: 1 },
@@ -194,12 +194,12 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     const usageLog = await chatAndWaitForUsageLog();
 
     expect(usageLog.cost).toBeCloseTo(0.0001, 10);
-    expect(usageLog.pricingWindowName).toBe("Happy hour");
+    expect(usageLog.pricingWindowName).toBe('Happy hour');
   });
 
-  describe("within a Validity Period", () => {
+  describe('within a Validity Period', () => {
     function createSaleWindow(): Promise<string> {
-      return createWindow("Sale", WHOLE_WEEK, true, "UTC");
+      return createWindow('Sale', WHOLE_WEEK, true, 'UTC');
     }
 
     it("prices a request received from the start's minute on at Window Prices", async () => {
@@ -216,10 +216,10 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
       const usageLog = await chatAndWaitForUsageLog();
 
       expect(usageLog.cost).toBeCloseTo(0.00023, 10);
-      expect(usageLog.pricingWindowName).toBe("Sale");
+      expect(usageLog.pricingWindowName).toBe('Sale');
     });
 
-    it("prices a request received before the start at the standard prices", async () => {
+    it('prices a request received before the start at the standard prices', async () => {
       const saleId = await createSaleWindow();
       await attachWindows([
         {
@@ -254,22 +254,22 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     });
   });
 
-  it("ignores windows for a request served at a Service Tier", async () => {
+  it('ignores windows for a request served at a Service Tier', async () => {
     await acceptFlexTier();
-    const happyHourId = await createWindow("Happy hour", ACTIVE_NOW);
+    const happyHourId = await createWindow('Happy hour', ACTIVE_NOW);
     await attachWindows([{ pricingWindowId: happyHourId, inputPrice: 0.5, outputPrice: 1 }]);
 
-    const usageLog = await chatAndWaitForUsageLog({ ...CHAT_REQUEST, service_tier: "flex" });
+    const usageLog = await chatAndWaitForUsageLog({ ...CHAT_REQUEST, service_tier: 'flex' });
 
     expect(usageLog.cost).toBeCloseTo(0.00023, 10);
     expect(usageLog.pricingWindowName).toBeNull();
   });
 
-  it("ignores windows when the upstream reports serving a tier nobody asked for", async () => {
+  it('ignores windows when the upstream reports serving a tier nobody asked for', async () => {
     await acceptFlexTier();
-    const happyHourId = await createWindow("Happy hour", ACTIVE_NOW);
+    const happyHourId = await createWindow('Happy hour', ACTIVE_NOW);
     await attachWindows([{ pricingWindowId: happyHourId, inputPrice: 0.5, outputPrice: 1 }]);
-    upstreamAnswers("flex");
+    upstreamAnswers('flex');
 
     const usageLog = await chatAnsweredAndWaitForUsageLog();
 
@@ -277,56 +277,56 @@ describe("Cost of a request in a Pricing Window (e2e)", () => {
     expect(usageLog.pricingWindowName).toBeNull();
   });
 
-  it("prices at the active window when the upstream reports serving no tier over the one sent", async () => {
+  it('prices at the active window when the upstream reports serving no tier over the one sent', async () => {
     await acceptFlexTier();
-    const happyHourId = await createWindow("Happy hour", ACTIVE_NOW);
+    const happyHourId = await createWindow('Happy hour', ACTIVE_NOW);
     await attachWindows([{ pricingWindowId: happyHourId, inputPrice: 0.5, outputPrice: 1 }]);
-    upstreamAnswers("default");
+    upstreamAnswers('default');
 
     const usageLog = await chatAnsweredAndWaitForUsageLog({
       ...CHAT_REQUEST,
-      service_tier: "flex",
+      service_tier: 'flex',
     });
 
     expect(usageLog.cost).toBeCloseTo(0.0001, 10);
-    expect(usageLog.pricingWindowName).toBe("Happy hour");
+    expect(usageLog.pricingWindowName).toBe('Happy hour');
   });
 
-  it("prices a Playground request in an active window at its Window Prices", async () => {
-    const offPeakId = await createWindow("Off-peak", ACTIVE_NOW);
+  it('prices a Playground request in an active window at its Window Prices', async () => {
+    const offPeakId = await createWindow('Off-peak', ACTIVE_NOW);
     await attachWindows([{ pricingWindowId: offPeakId, inputPrice: 1, outputPrice: 4 }]);
-    upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
+    upstream.reply({ kind: 'stream', events: openAiChatFixture('upstream-stream-tool-call.sse') });
 
     await request(app.getHttpServer())
-      .post("/api/playground/chat/completions")
-      .set("Cookie", cookie)
+      .post('/api/playground/chat/completions')
+      .set('Cookie', cookie)
       .send({ ...CHAT_REQUEST, stream: true })
       .expect(200);
 
     const { id } = await writtenUsageLog(db);
     const usageLog = await shownUsageLog(id);
-    expect(usageLog).toMatchObject({ isPlayground: true, pricingWindowName: "Off-peak" });
+    expect(usageLog).toMatchObject({ isPlayground: true, pricingWindowName: 'Off-peak' });
     expect(usageLog.cost).toBeCloseTo(0.00023, 10);
   });
 
   it("keeps the window's name and the Cost after the window is renamed, then deleted", async () => {
-    const offPeakId = await createWindow("Off-peak", ACTIVE_NOW);
+    const offPeakId = await createWindow('Off-peak', ACTIVE_NOW);
     await attachWindows([{ pricingWindowId: offPeakId, inputPrice: 1, outputPrice: 4 }]);
     const { id } = await chatAndWaitForUsageLog();
 
     await request(app.getHttpServer())
       .patch(`/api/pricing-windows/${offPeakId}`)
-      .set("Cookie", cookie)
-      .send({ name: "Night" })
+      .set('Cookie', cookie)
+      .send({ name: 'Night' })
       .expect(200);
-    expect(await shownUsageLog(id)).toMatchObject({ pricingWindowName: "Off-peak" });
+    expect(await shownUsageLog(id)).toMatchObject({ pricingWindowName: 'Off-peak' });
     await request(app.getHttpServer())
       .delete(`/api/pricing-windows/${offPeakId}`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(204);
 
     const shown = await shownUsageLog(id);
-    expect(shown.pricingWindowName).toBe("Off-peak");
+    expect(shown.pricingWindowName).toBe('Off-peak');
     expect(shown.cost).toBeCloseTo(0.00023, 10);
   });
 });

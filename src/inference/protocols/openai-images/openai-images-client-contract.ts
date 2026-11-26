@@ -1,32 +1,32 @@
-import { z } from "zod";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
-import { GatewayError } from "@/inference/models/gateway-error";
+import { z } from 'zod';
+import type { SnapshotUpstreamModel } from '@/snapshot/models/snapshot';
+import { GatewayError } from '@/inference/models/gateway-error';
 import {
   clientSizeOf,
   type GeneratedImages,
   type ImageGenerationRequest,
   type ImageSize,
   providerSizeOf,
-} from "@/inference/models/image-generation";
+} from '@/inference/models/image-generation';
 import {
   jsonReply,
   type MediaClientContract,
   type MediaReply,
   type MediaResponseContext,
-} from "@/inference/models/media-kind";
-import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
+} from '@/inference/models/media-kind';
+import { dashScopeImageProtocol } from '@/inference/protocols/dashscope-image/dashscope-image-protocol';
+import { writeOpenAiError } from '@/inference/protocols/openai-chat/openai-error';
 
 const MAX_IMAGES_PER_REQUEST = 10;
 export const MAX_INPUT_IMAGES_PER_EDIT = 16;
 const MAX_SEED = 2_147_483_647;
 const CLIENT_SIZE = /^(\d+)x(\d+)$/;
-const AUTOMATIC_SIZE = "auto";
+const AUTOMATIC_SIZE = 'auto';
 const FORM_INTEGER = /^\d+$/;
 
 function integerField(schema: z.ZodInt) {
   return z.preprocess(
-    (value) => (typeof value === "string" && FORM_INTEGER.test(value) ? Number(value) : value),
+    (value) => (typeof value === 'string' && FORM_INTEGER.test(value) ? Number(value) : value),
     schema,
   );
 }
@@ -45,7 +45,7 @@ const editSchema = generationSchema.extend({
   seed: integerField(z.int().min(0).max(MAX_SEED)).optional(),
   images: z
     .array(z.object({ image_url: z.string().check(inputImageCheck) }))
-    .min(1, "an edit needs at least one input image")
+    .min(1, 'an edit needs at least one input image')
     .max(MAX_INPUT_IMAGES_PER_EDIT),
 });
 
@@ -58,16 +58,16 @@ const featureRefusedSchema = z.object({
 
 export function inputImageCheck(context: z.core.ParsePayload<string>): void {
   const url = context.value;
-  if (/^https?:\/\//.test(url) || url.startsWith("data:image/")) {
+  if (/^https?:\/\//.test(url) || url.startsWith('data:image/')) {
     return;
   }
   const dataType = /^data:([^;,]*)/.exec(url)?.[1];
   context.issues.push({
-    code: "custom",
+    code: 'custom',
     input: url,
     message:
       dataType === undefined
-        ? "an input image must be an http(s) URL or a data URI"
+        ? 'an input image must be an http(s) URL or a data URI'
         : `an input image can't be of type "${dataType}"`,
   });
 }
@@ -99,9 +99,9 @@ function parseWith<Schema extends z.ZodType>(schema: Schema, body: unknown): z.o
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `Invalid request: ${z.prettifyError(parsed.error)}`,
-      "client",
+      'client',
     );
   }
   return parsed.data;
@@ -117,17 +117,17 @@ function refuseUnsupportedFeatures(body: unknown): void {
     return;
   }
   const { response_format, stream, partial_images, mask } = features.data;
-  if (response_format !== undefined && response_format !== "b64_json") {
-    throw unsupported("`response_format` other than `b64_json`");
+  if (response_format !== undefined && response_format !== 'b64_json') {
+    throw unsupported('`response_format` other than `b64_json`');
   }
-  if (stream !== undefined && stream !== false && stream !== "false") {
-    throw unsupported("`stream`");
+  if (stream !== undefined && stream !== false && stream !== 'false') {
+    throw unsupported('`stream`');
   }
-  if (partial_images !== undefined && partial_images !== 0 && partial_images !== "0") {
-    throw unsupported("`partial_images`");
+  if (partial_images !== undefined && partial_images !== 0 && partial_images !== '0') {
+    throw unsupported('`partial_images`');
   }
   if (mask !== undefined) {
-    throw unsupported("`mask`");
+    throw unsupported('`mask`');
   }
 }
 
@@ -135,16 +135,16 @@ function imageSizeOf(size: string): ImageSize {
   const match = CLIENT_SIZE.exec(size);
   if (!match) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `Invalid request: the size "${size}" is not written as WIDTHxHEIGHT`,
-      "client",
+      'client',
     );
   }
   return { width: Number(match[1]), height: Number(match[2]) };
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
+  return new GatewayError('invalid_request', `Not supported: ${feature}`, 'client');
 }
 
 function unservableReason(
@@ -164,7 +164,7 @@ function unservableReason(
 function writeResponse({ images }: GeneratedImages, context: MediaResponseContext): MediaReply {
   return jsonReply({
     created: Math.floor(context.createdAt.getTime() / 1000),
-    data: images.map((image) => ({ b64_json: Buffer.from(image.bytes).toString("base64") })),
+    data: images.map((image) => ({ b64_json: Buffer.from(image.bytes).toString('base64') })),
   });
 }
 
@@ -172,10 +172,10 @@ export const openAiImagesClientContract: MediaClientContract<
   ImageGenerationRequest,
   GeneratedImages
 > = {
-  protocol: "openai-images",
+  protocol: 'openai-images',
   parseRequest: parseGenerationRequest,
   unservableReason,
-  upstreamProtocols: { "dashscope-image": dashScopeImageProtocol },
+  upstreamProtocols: { 'dashscope-image': dashScopeImageProtocol },
   writeResponse,
   writeError: writeOpenAiError,
 };

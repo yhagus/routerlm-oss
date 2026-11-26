@@ -1,4 +1,4 @@
-import type { Capability, ClientProtocol, UpstreamProtocol } from "@/db/schemas";
+import type { Capability, ClientProtocol, UpstreamProtocol } from '@/db/schemas';
 import {
   isUpstreamModelUsable,
   type SnapshotEndpoint,
@@ -6,39 +6,39 @@ import {
   type SnapshotProviderAccount,
   type SnapshotRoute,
   type SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot";
-import type { InferenceRequest } from "./internal-format";
-import { UPSTREAM_PROTOCOL_CONVERTERS } from "@/inference/protocols/converters";
+} from '@/snapshot/models/snapshot';
+import type { InferenceRequest } from './internal-format';
+import { UPSTREAM_PROTOCOL_CONVERTERS } from '@/inference/protocols/converters';
 
 const CHARACTERS_PER_TOKEN = 4;
 
 export const UPSTREAM_PROTOCOL_SPOKEN_BY_CLIENT = {
-  "openai-chat": "openai-chat",
-  "anthropic-messages": "anthropic-messages",
-  "openai-responses": "openai-responses",
-  "openai-images": undefined,
-  "openai-videos": undefined,
-  "openai-speech": undefined,
-  "openai-transcription": undefined,
+  'openai-chat': 'openai-chat',
+  'anthropic-messages': 'anthropic-messages',
+  'openai-responses': 'openai-responses',
+  'openai-images': undefined,
+  'openai-videos': undefined,
+  'openai-speech': undefined,
+  'openai-transcription': undefined,
 } as const satisfies Record<ClientProtocol, UpstreamProtocol | undefined>;
 
 export function requiredCapabilities(request: InferenceRequest): Capability[] {
   const required: Capability[] = [];
   const hasImage = request.messages.some(
     (message) =>
-      message.role !== "assistant" && message.content.some((part) => part.type === "image"),
+      message.role !== 'assistant' && message.content.some((part) => part.type === 'image'),
   );
   if (hasImage) {
-    required.push("vision");
+    required.push('vision');
   }
   if (request.tools.length > 0) {
-    required.push("tools");
+    required.push('tools');
   }
   if (request.reasoning) {
-    required.push("reasoning");
+    required.push('reasoning');
   }
-  if (request.responseFormat?.type === "json-schema") {
-    required.push("structured-output");
+  if (request.responseFormat?.type === 'json-schema') {
+    required.push('structured-output');
   }
   return required;
 }
@@ -103,9 +103,9 @@ function estimatedPromptTokens(request: InferenceRequest): number {
   let characters = request.system.reduce((sum, part) => sum + part.text.length, 0);
   for (const message of request.messages) {
     for (const part of message.content) {
-      if (part.type === "text" || part.type === "reasoning") {
+      if (part.type === 'text' || part.type === 'reasoning') {
         characters += part.text.length;
-      } else if (part.type === "tool-call") {
+      } else if (part.type === 'tool-call') {
         characters += part.arguments.length;
       }
     }

@@ -8,7 +8,7 @@ export interface AllowedModel {
   name: string | null;
 }
 
-export const API_KEY_CIPHER_PURPOSE = "api-key";
+export const API_KEY_CIPHER_PURPOSE = 'api-key';
 
 export interface ApiKeySummary {
   id: string;

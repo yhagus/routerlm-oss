@@ -5,8 +5,8 @@ import type {
   GatewayErrorCode,
   RecordedAttemptFailure,
   UpstreamProtocol,
-} from "@/db/schemas";
-import type { ServiceTier, TokenUsage } from "@/inference/models/internal-format";
+} from '@/db/schemas';
+import type { ServiceTier, TokenUsage } from '@/inference/models/internal-format';
 
 export interface MediaUnits {
   imagesOut?: number;
@@ -17,17 +17,17 @@ export interface MediaUnits {
   tier?: string;
 }
 
-export const RECORD_USAGE_JOB = "record";
+export const RECORD_USAGE_JOB = 'record';
 
 export type UsageCaller =
   | {
-      kind: "api-key";
+      kind: 'api-key';
       apiKeyId: string;
       apiKeyName?: string;
       customer?: UsageCustomer;
     }
-  | { kind: "playground"; userId: string }
-  | { kind: "unidentified" };
+  | { kind: 'playground'; userId: string }
+  | { kind: 'unidentified' };
 
 export interface UsageCustomer {
   integrationId: string;
@@ -61,8 +61,8 @@ export interface ServingTarget {
   providerAccountName: string;
 }
 
-export type QueuedServingTarget = Pick<ServingTarget, "routeId" | "providerAccountId"> &
-  Partial<Omit<ServingTarget, "routeId" | "providerAccountId">>;
+export type QueuedServingTarget = Pick<ServingTarget, 'routeId' | 'providerAccountId'> &
+  Partial<Omit<ServingTarget, 'routeId' | 'providerAccountId'>>;
 
 export interface RequestNames {
   modelName: string | null;

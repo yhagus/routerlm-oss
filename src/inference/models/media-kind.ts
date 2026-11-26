@@ -3,11 +3,11 @@ import type {
   ClientProtocol,
   ParameterPolicy,
   UpstreamProtocol,
-} from "@/db/schemas";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
-import type { MediaUnits } from "@/usage/models/usage-job";
-import type { GatewayError } from "./gateway-error";
-import type { InferenceCaller } from "./inference";
+} from '@/db/schemas';
+import type { SnapshotUpstreamModel } from '@/snapshot/models/snapshot';
+import type { MediaUnits } from '@/usage/models/usage-job';
+import type { GatewayError } from './gateway-error';
+import type { InferenceCaller } from './inference';
 
 export interface MediaRequest {
   model: string;
@@ -30,7 +30,7 @@ export interface MediaReply {
   body: Uint8Array;
 }
 
-const JSON_CONTENT_TYPE = "application/json; charset=utf-8";
+const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
 const encoder = new TextEncoder();
 
 export function jsonReply(json: unknown): MediaReply {

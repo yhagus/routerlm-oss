@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { CommandEmpty } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from 'vue';
+import { CommandEmpty } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
 
-type PromptInputCommandEmptyProps = InstanceType<typeof CommandEmpty>["$props"];
+type PromptInputCommandEmptyProps = InstanceType<typeof CommandEmpty>['$props'];
 
 interface Props extends /* @vue-ignore */ PromptInputCommandEmptyProps {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();

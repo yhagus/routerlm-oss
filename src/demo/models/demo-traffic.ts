@@ -1,23 +1,23 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 import type {
   AttemptFailureReason,
   attempts,
   errorCaptures,
   GatewayErrorCode,
   usageLogs,
-} from "@/db/schemas";
-import type { TokenUsage } from "@/inference/models/internal-format";
-import { REDACTED } from "@/error-captures/models/captured-content";
-import { SECOND_MS } from "@/libs/models/duration";
-import { usageMeasurementsOf } from "@/usage/models/usage-measurements";
-import type { RequestNames, ServingTarget, UpstreamModelPrices } from "@/usage/models/usage-job";
+} from '@/db/schemas';
+import type { TokenUsage } from '@/inference/models/internal-format';
+import { REDACTED } from '@/error-captures/models/captured-content';
+import { SECOND_MS } from '@/libs/models/duration';
+import { usageMeasurementsOf } from '@/usage/models/usage-measurements';
+import type { RequestNames, ServingTarget, UpstreamModelPrices } from '@/usage/models/usage-job';
 import {
   type DemoCaller,
   DEMO_MODEL_NAMES,
   type DemoModelName,
   type TrafficProfile,
-} from "@/demo/data/demo-fixtures";
-import { between, logNormal, pickWeighted, type Random, seededRandom } from "./seeded-random";
+} from '@/demo/data/demo-fixtures';
+import { between, logNormal, pickWeighted, type Random, seededRandom } from './seeded-random';
 
 type NewUsageLog = typeof usageLogs.$inferInsert;
 type NewAttempt = typeof attempts.$inferInsert;
@@ -46,8 +46,8 @@ export interface TrafficModel {
 }
 
 export type TrafficSource =
-  | { kind: "api-key"; apiKeyId: string; apiKeyName: string }
-  | { kind: "playground"; userId: string };
+  | { kind: 'api-key'; apiKeyId: string; apiKeyName: string }
+  | { kind: 'playground'; userId: string };
 
 export interface TrafficCaller {
   source: TrafficSource;
@@ -91,22 +91,22 @@ const REQUEST_ENVELOPE_BYTES = 400;
 const RESPONSE_ENVELOPE_BYTES = 300;
 const ERROR_RESPONSE_BYTES = 180;
 
-type Outcome = "served" | "recovered" | "failed";
-type FallbackFailure = Extract<AttemptFailureReason, "rate_limited" | "server_error" | "timeout">;
+type Outcome = 'served' | 'recovered' | 'failed';
+type FallbackFailure = Extract<AttemptFailureReason, 'rate_limited' | 'server_error' | 'timeout'>;
 
 const FAILURE_WEIGHTS = [
-  { value: "rate_limited", weight: 5 },
-  { value: "server_error", weight: 3 },
-  { value: "timeout", weight: 1 },
+  { value: 'rate_limited', weight: 5 },
+  { value: 'server_error', weight: 3 },
+  { value: 'timeout', weight: 1 },
 ] as const satisfies readonly { value: FallbackFailure; weight: number }[];
 
 const SERVER_ERROR_STATUSES = [500, 502, 503];
 
 const GATEWAY_ERRORS: Record<FallbackFailure, { httpStatus: number; errorCode: GatewayErrorCode }> =
   {
-    rate_limited: { httpStatus: 429, errorCode: "upstream_rate_limited" },
-    server_error: { httpStatus: 502, errorCode: "upstream_error" },
-    timeout: { httpStatus: 504, errorCode: "upstream_timeout" },
+    rate_limited: { httpStatus: 429, errorCode: 'upstream_rate_limited' },
+    server_error: { httpStatus: 502, errorCode: 'upstream_error' },
+    timeout: { httpStatus: 504, errorCode: 'upstream_timeout' },
   };
 
 interface Candidate {
@@ -141,7 +141,7 @@ export function generateDemoTraffic(
     );
     const requestNames: RequestNames = {
       modelName: model.modelName,
-      apiKeyName: source.kind === "api-key" ? source.apiKeyName : null,
+      apiKeyName: source.kind === 'api-key' ? source.apiKeyName : null,
     };
     const isStreamed = random() < caller.streamedShare;
     const usageLogId = randomUUID();
@@ -176,11 +176,11 @@ export function generateDemoTraffic(
     };
 
     const lastFailure = failedAttempts.at(-1);
-    if (outcome === "failed" && lastFailure) {
+    if (outcome === 'failed' && lastFailure) {
       const usageLog: NewUsageLog = {
         ...base,
         ...GATEWAY_ERRORS[lastFailure.failure],
-        errorOrigin: "upstream",
+        errorOrigin: 'upstream',
         requestBytes: requestBytesFor(model.profile.contextTokens),
         responseBytes: ERROR_RESPONSE_BYTES,
         durationMs: elapsedMs,
@@ -255,7 +255,7 @@ function modelFor(
   const model = models.get(name);
   if (!model) {
     throw new Error(
-      `Demo caller "${caller.apiKeyName ?? "Playground"}" uses unknown Model ${name}`,
+      `Demo caller "${caller.apiKeyName ?? 'Playground'}" uses unknown Model ${name}`,
     );
   }
   return model;
@@ -263,14 +263,14 @@ function modelFor(
 
 function pickOutcome(random: Random): Outcome {
   const draw = random();
-  if (draw < FAILED_SHARE) return "failed";
-  if (draw < FAILED_SHARE + RECOVERED_SHARE) return "recovered";
-  return "served";
+  if (draw < FAILED_SHARE) return 'failed';
+  if (draw < FAILED_SHARE + RECOVERED_SHARE) return 'recovered';
+  return 'served';
 }
 
 function failedAttemptCountFor(random: Random, outcome: Outcome, candidateCount: number): number {
-  if (outcome === "served") return 0;
-  if (outcome === "recovered") return 1;
+  if (outcome === 'served') return 0;
+  if (outcome === 'recovered') return 1;
   return Math.min(between(random, 2, 3), candidateCount);
 }
 
@@ -300,22 +300,22 @@ function failedAttempt(
 
 function upstreamStatusFor(random: Random, failure: FallbackFailure): number | null {
   switch (failure) {
-    case "rate_limited":
+    case 'rate_limited':
       return 429;
-    case "server_error":
+    case 'server_error':
       return SERVER_ERROR_STATUSES[between(random, 0, SERVER_ERROR_STATUSES.length - 1)];
-    case "timeout":
+    case 'timeout':
       return null;
   }
 }
 
 function failedAttemptDurationMs(random: Random, failure: FallbackFailure): number {
   switch (failure) {
-    case "rate_limited":
+    case 'rate_limited':
       return between(random, 120, 600);
-    case "server_error":
+    case 'server_error':
       return between(random, 400, 3_000);
-    case "timeout":
+    case 'timeout':
       return FIRST_TOKEN_TIMEOUT_MS;
   }
 }
@@ -327,7 +327,7 @@ function servingTargetOf(candidate: Candidate): ServingTarget {
 function usageLogTargetOf({
   route,
   providerAccount,
-}: Candidate): Omit<ServingTarget, "providerName"> {
+}: Candidate): Omit<ServingTarget, 'providerName'> {
   return {
     routeId: route.routeId,
     upstreamModelId: route.upstreamModelRowId,
@@ -340,8 +340,8 @@ function usageLogTargetOf({
 
 function attribution(
   source: TrafficSource,
-): Pick<NewUsageLog, "apiKeyId" | "userId" | "isPlayground"> {
-  return source.kind === "api-key"
+): Pick<NewUsageLog, 'apiKeyId' | 'userId' | 'isPlayground'> {
+  return source.kind === 'api-key'
     ? { apiKeyId: source.apiKeyId, userId: null, isPlayground: false }
     : { apiKeyId: null, userId: source.userId, isPlayground: true };
 }
@@ -388,18 +388,18 @@ function errorCaptureOf(
     clientIp: caller.clientIp,
     requestHeaders: {
       authorization: REDACTED,
-      "content-type": "application/json",
-      "user-agent": caller.userAgent,
+      'content-type': 'application/json',
+      'user-agent': caller.userAgent,
     },
     requestBody: JSON.stringify({
       model: failed.candidate.route.upstreamModelName,
       stream: usageLog.isStreamed,
       messages: [
         {
-          role: "system",
-          content: "You are a careful release assistant for the Acme Widgets team.",
+          role: 'system',
+          content: 'You are a careful release assistant for the Acme Widgets team.',
         },
-        { role: "user", content: "Summarise the failing checks in build 4821 for the changelog." },
+        { role: 'user', content: 'Summarise the failing checks in build 4821 for the changelog.' },
       ],
     }),
     responseHeaders:
@@ -409,15 +409,15 @@ function errorCaptureOf(
 }
 
 function responseHeadersFor(failure: FallbackFailure): Record<string, string> {
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (failure === "rate_limited") headers["retry-after"] = "20";
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (failure === 'rate_limited') headers['retry-after'] = '20';
   return headers;
 }
 
 function responseBodyFor(failure: FallbackFailure): string {
   const error =
-    failure === "rate_limited"
-      ? { type: "rate_limit_error", message: "Rate limit reached for requests per minute." }
-      : { type: "server_error", message: "The server had an error while processing your request." };
+    failure === 'rate_limited'
+      ? { type: 'rate_limit_error', message: 'Rate limit reached for requests per minute.' }
+      : { type: 'server_error', message: 'The server had an error while processing your request.' };
   return JSON.stringify({ error });
 }

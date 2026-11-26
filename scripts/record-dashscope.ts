@@ -1,28 +1,28 @@
-import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import type {
   FetchedMedia,
   MediaExchange,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind";
-import { dashScopeImageProtocol } from "@/inference/protocols/dashscope-image/dashscope-image-protocol";
-import { dashScopeSpeechProtocol } from "@/inference/protocols/dashscope-speech/dashscope-speech-protocol";
-import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol";
-import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/dashscope-video-protocol";
+} from '@/inference/models/media-kind';
+import { dashScopeImageProtocol } from '@/inference/protocols/dashscope-image/dashscope-image-protocol';
+import { dashScopeSpeechProtocol } from '@/inference/protocols/dashscope-speech/dashscope-speech-protocol';
+import { dashScopeTranscriptionProtocol } from '@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol';
+import { dashScopeVideoProtocol } from '@/inference/protocols/dashscope-video/dashscope-video-protocol';
 
 const apiKey = process.env.DASHSCOPE_API_KEY;
 if (!apiKey) {
-  console.error("Set DASHSCOPE_API_KEY to a DashScope key. Every run is billed.");
+  console.error('Set DASHSCOPE_API_KEY to a DashScope key. Every run is billed.');
   process.exit(1);
 }
-const baseUrl = process.env.DASHSCOPE_BASE_URL ?? "https://dashscope-intl.aliyuncs.com/api/v1";
-const withVideo = process.argv.includes("--video");
-const PROTOCOLS_DIR = "src/inference/protocols";
+const baseUrl = process.env.DASHSCOPE_BASE_URL ?? 'https://dashscope-intl.aliyuncs.com/api/v1';
+const withVideo = process.argv.includes('--video');
+const PROTOCOLS_DIR = 'src/inference/protocols';
 const VIDEO_POLL_MS = 10_000;
 const VIDEO_TIMEOUT_MS = 10 * 60_000;
 
 function save(protocolDir: string, name: string, body: unknown): void {
-  const path = join(PROTOCOLS_DIR, protocolDir, "fixtures", "recorded", `${name}.json`);
+  const path = join(PROTOCOLS_DIR, protocolDir, 'fixtures', 'recorded', `${name}.json`);
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(body, null, 2)}\n`);
   console.log(`  saved ${path}`);
@@ -46,8 +46,8 @@ function recordingExchange(protocolDir: string, names: string[]): MediaExchange 
   return {
     async postJson(url, body, headers) {
       const response = await fetch(url, {
-        method: "POST",
-        headers: { ...authorization, "Content-Type": "application/json", ...headers },
+        method: 'POST',
+        headers: { ...authorization, 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body),
       });
       return record(await answerOf(response));
@@ -62,7 +62,7 @@ function recordingExchange(protocolDir: string, names: string[]): MediaExchange 
       }
       return {
         bytes: new Uint8Array(await response.arrayBuffer()),
-        contentType: response.headers.get("content-type") ?? "application/octet-stream",
+        contentType: response.headers.get('content-type') ?? 'application/octet-stream',
       };
     },
   };
@@ -86,19 +86,19 @@ async function check(label: string, run: () => Promise<string>): Promise<boolean
 const outcomes: boolean[] = [];
 
 outcomes.push(
-  await check("dashscope-image, qwen-image-3.0-pro", async () => {
+  await check('dashscope-image, qwen-image-3.0-pro', async () => {
     const outcome = await dashScopeImageProtocol.generate(
       {
-        model: "qwen-image-3.0-pro",
-        prompt: "A red apple on a white table",
+        model: 'qwen-image-3.0-pro',
+        prompt: 'A red apple on a white table',
         n: 1,
         size: { width: 1328, height: 1328 },
         negativePrompt: null,
         seed: null,
         inputImages: [],
       },
-      targetOf("qwen-image-3.0-pro"),
-      recordingExchange("dashscope-image", ["generation"]),
+      targetOf('qwen-image-3.0-pro'),
+      recordingExchange('dashscope-image', ['generation']),
     );
     return `${outcome.result.images.length} image(s), units ${JSON.stringify(outcome.units)}`;
   }),
@@ -106,17 +106,17 @@ outcomes.push(
 
 let spokenAudio: FetchedMedia | undefined;
 outcomes.push(
-  await check("dashscope-speech, qwen-audio-3.0-tts-plus", async () => {
+  await check('dashscope-speech, qwen-audio-3.0-tts-plus', async () => {
     const outcome = await dashScopeSpeechProtocol.generate(
       {
-        model: "qwen-audio-3.0-tts-plus",
-        text: "Hello from the gateway.",
-        voice: "Cherry",
-        format: "mp3",
+        model: 'qwen-audio-3.0-tts-plus',
+        text: 'Hello from the gateway.',
+        voice: 'Cherry',
+        format: 'mp3',
         speed: null,
       },
-      targetOf("qwen-audio-3.0-tts-plus"),
-      recordingExchange("dashscope-speech", ["synthesis"]),
+      targetOf('qwen-audio-3.0-tts-plus'),
+      recordingExchange('dashscope-speech', ['synthesis']),
     );
     spokenAudio = outcome.result.audio;
     return `${outcome.result.audio.bytes.length} bytes of ${outcome.result.audio.contentType}, units ${JSON.stringify(outcome.units)}`;
@@ -124,16 +124,16 @@ outcomes.push(
 );
 
 outcomes.push(
-  await check("qwen-audio-3.0-tts-plus with input.instruction (raw probe)", async () => {
-    const answer = await recordingExchange("dashscope-speech", ["probe-instruction"]).postJson(
+  await check('qwen-audio-3.0-tts-plus with input.instruction (raw probe)', async () => {
+    const answer = await recordingExchange('dashscope-speech', ['probe-instruction']).postJson(
       `${baseUrl}/services/audio/tts/SpeechSynthesizer`,
       {
-        model: "qwen-audio-3.0-tts-plus",
+        model: 'qwen-audio-3.0-tts-plus',
         input: {
-          text: "Hello from the gateway.",
-          voice: "Cherry",
-          format: "mp3",
-          instruction: "Speak slowly and cheerfully.",
+          text: 'Hello from the gateway.',
+          voice: 'Cherry',
+          format: 'mp3',
+          instruction: 'Speak slowly and cheerfully.',
         },
       },
     );
@@ -142,22 +142,22 @@ outcomes.push(
 );
 
 outcomes.push(
-  await check("dashscope-transcription, qwen-audio-3.0-asr-flash", async () => {
+  await check('dashscope-transcription, qwen-audio-3.0-asr-flash', async () => {
     if (!spokenAudio) {
       throw new Error("skipped: needs the speech check's audio");
     }
     const outcome = await dashScopeTranscriptionProtocol.generate(
       {
-        model: "qwen-audio-3.0-asr-flash",
+        model: 'qwen-audio-3.0-asr-flash',
         audio: {
-          dataUri: `data:audio/mpeg;base64,${Buffer.from(spokenAudio.bytes).toString("base64")}`,
-          format: "mp3",
+          dataUri: `data:audio/mpeg;base64,${Buffer.from(spokenAudio.bytes).toString('base64')}`,
+          format: 'mp3',
         },
-        language: "en",
-        responseFormat: "json",
+        language: 'en',
+        responseFormat: 'json',
       },
-      targetOf("qwen-audio-3.0-asr-flash"),
-      recordingExchange("dashscope-transcription", ["transcription"]),
+      targetOf('qwen-audio-3.0-asr-flash'),
+      recordingExchange('dashscope-transcription', ['transcription']),
     );
     return `heard "${outcome.result.text}", units ${JSON.stringify(outcome.units)}`;
   }),
@@ -165,17 +165,17 @@ outcomes.push(
 
 if (withVideo) {
   outcomes.push(
-    await check("dashscope-video, happyhorse-1.1-t2v at 3 s 480P", async () => {
-      const target = targetOf("happyhorse-1.1-t2v");
-      const names = ["create"];
-      const exchange = recordingExchange("dashscope-video", names);
+    await check('dashscope-video, happyhorse-1.1-t2v at 3 s 480P', async () => {
+      const target = targetOf('happyhorse-1.1-t2v');
+      const names = ['create'];
+      const exchange = recordingExchange('dashscope-video', names);
       const submitted = await dashScopeVideoProtocol.generate(
         {
-          model: "happyhorse-1.1-t2v",
-          prompt: "A paper boat drifting on a calm lake",
+          model: 'happyhorse-1.1-t2v',
+          prompt: 'A paper boat drifting on a calm lake',
           seconds: 3,
-          resolution: "480P",
-          ratio: "16:9",
+          resolution: '480P',
+          ratio: '16:9',
           clientSize: null,
           media: [],
           seed: null,
@@ -185,13 +185,13 @@ if (withVideo) {
       );
       const deadline = Date.now() + VIDEO_TIMEOUT_MS;
       while (Date.now() < deadline) {
-        names.push("task-latest");
+        names.push('task-latest');
         const state = await dashScopeVideoProtocol.readTask(
           submitted.result.taskId,
           target,
           exchange,
         );
-        if (state.status !== "queued" && state.status !== "in_progress") {
+        if (state.status !== 'queued' && state.status !== 'in_progress') {
           return `task ${submitted.result.taskId} ended ${state.status}`;
         }
         await new Promise((resolve) => setTimeout(resolve, VIDEO_POLL_MS));
@@ -200,7 +200,7 @@ if (withVideo) {
     }),
   );
 } else {
-  console.log("dashscope-video: skipped (pass --video; a Video Job costs more).");
+  console.log('dashscope-video: skipped (pass --video; a Video Job costs more).');
 }
 
 process.exit(outcomes.every(Boolean) ? 0 : 1);

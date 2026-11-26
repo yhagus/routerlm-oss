@@ -1,6 +1,6 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import type { PingJob } from "./ping.producer";
-import { PING_QUEUE } from "@/queue/models/queue-names";
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import type { PingJob } from './ping.producer';
+import { PING_QUEUE } from '@/queue/models/queue-names';
 
 export type PingResult = { workerPid: number };
 

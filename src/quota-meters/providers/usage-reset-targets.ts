@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq, inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, providers } from "@/db/schemas";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq, inArray } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, providers } from '@/db/schemas';
 import {
   type QuotaReaderProvider,
   quotaReaderProviderOf,
-} from "@/quota-meters/models/quota-reader";
-import type { UsageResetPort } from "@/quota-meters/models/usage-reset";
-import { QuotaReaders } from "./quota-readers";
+} from '@/quota-meters/models/quota-reader';
+import type { UsageResetPort } from '@/quota-meters/models/usage-reset';
+import { QuotaReaders } from './quota-readers';
 
 export interface UsageResetTarget {
   port: UsageResetPort;
@@ -33,7 +33,7 @@ export class UsageResetTargets {
       .innerJoin(providers, eq(providers.id, providerAccounts.providerId))
       .where(eq(providerAccounts.id, providerAccountId));
     if (!account) {
-      throw new NotFoundException("Provider Account not found");
+      throw new NotFoundException('Provider Account not found');
     }
     const port = this.readers.usageResetsOf(account.quotaReader);
     if (port === undefined) {

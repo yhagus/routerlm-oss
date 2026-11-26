@@ -1,5 +1,5 @@
-import type { ParameterPolicy } from "~/lib/parameterPolicy";
-import type { Capability, ModelKind } from "~/lib/upstream";
+import type { ParameterPolicy } from '~/lib/parameterPolicy';
+import type { Capability, ModelKind } from '~/lib/upstream';
 
 export interface ModelSummary {
   id: string;

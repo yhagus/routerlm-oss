@@ -1,13 +1,13 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, asc, countDistinct, eq, isNotNull, like, max, type SQL, sql } from "drizzle-orm";
-import type { PgColumn } from "drizzle-orm/pg-core";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys, usageLogs } from "@/db/schemas";
-import { startingWith } from "@/usage/models/usage-filters";
-import type { IntegrationCustomerPage } from "@/integrations/models/integration";
-import { assertIntegrationExists } from "@/integrations/models/integration-exists";
-import { ListIntegrationCustomersQuery } from "@/integrations/queries/impl/list-integration-customers.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, asc, countDistinct, eq, isNotNull, like, max, type SQL, sql } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys, usageLogs } from '@/db/schemas';
+import { startingWith } from '@/usage/models/usage-filters';
+import type { IntegrationCustomerPage } from '@/integrations/models/integration';
+import { assertIntegrationExists } from '@/integrations/models/integration-exists';
+import { ListIntegrationCustomersQuery } from '@/integrations/queries/impl/list-integration-customers.query';
 
 @QueryHandler(ListIntegrationCustomersQuery)
 export class ListIntegrationCustomersHandler implements IQueryHandler<ListIntegrationCustomersQuery> {
@@ -22,29 +22,29 @@ export class ListIntegrationCustomersHandler implements IQueryHandler<ListIntegr
       eq(apiKeys.integrationId, integrationId),
       customerIdMatches(apiKeys.customerId, search),
     );
-    const customerKeys = this.db.$with("customer_keys").as(
+    const customerKeys = this.db.$with('customer_keys').as(
       this.db
         .select({
-          customerId: sql<string>`${apiKeys.customerId}`.as("customer_id"),
+          customerId: sql<string>`${apiKeys.customerId}`.as('customer_id'),
           activeKeyCount: sql<number>`count(*) filter (where ${apiKeys.revokedAt} is null)`
             .mapWith(Number)
-            .as("active_key_count"),
+            .as('active_key_count'),
           revokedKeyCount: sql<number>`count(${apiKeys.revokedAt})`
             .mapWith(Number)
-            .as("revoked_key_count"),
-          spent: sql<number>`sum(${apiKeys.spent})`.mapWith(Number).as("spent"),
+            .as('revoked_key_count'),
+          spent: sql<number>`sum(${apiKeys.spent})`.mapWith(Number).as('spent'),
         })
         .from(apiKeys)
         .where(keyCondition)
         .groupBy(apiKeys.customerId),
     );
-    const customerUsage = this.db.$with("customer_usage").as(
+    const customerUsage = this.db.$with('customer_usage').as(
       this.db
         .select({
-          customerId: sql<string>`${usageLogs.customerId}`.as("usage_customer_id"),
-          requestCount: sql<number>`count(*)`.mapWith(Number).as("request_count"),
-          cost: sql<number>`coalesce(sum(${usageLogs.cost}), 0)`.mapWith(Number).as("cost"),
-          lastRequestAt: max(usageLogs.createdAt).as("last_request_at"),
+          customerId: sql<string>`${usageLogs.customerId}`.as('usage_customer_id'),
+          requestCount: sql<number>`count(*)`.mapWith(Number).as('request_count'),
+          cost: sql<number>`coalesce(sum(${usageLogs.cost}), 0)`.mapWith(Number).as('cost'),
+          lastRequestAt: max(usageLogs.createdAt).as('last_request_at'),
         })
         .from(usageLogs)
         .where(

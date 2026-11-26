@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { searchTextSchema } from "@/usage/schemas/usage.schema";
+import { z } from 'zod';
+import { searchTextSchema } from '@/usage/schemas/usage.schema';
 
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_PAGE_SIZE = 50;

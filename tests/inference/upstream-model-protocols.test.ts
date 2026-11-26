@@ -1,43 +1,43 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { providers, type UpstreamProtocol, upstreamModels } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { providers, type UpstreamProtocol, upstreamModels } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import {
   anthropicMessagesFixture,
   type FakeReply,
   FakeUpstream,
   openAiChatFixture,
-} from "@tests/support/fake-upstream";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/fake-upstream';
+import { insertApiKey, insertOpenAiChatModel } from '@tests/support/inference';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const ANTHROPIC_PATH_PREFIX = "/anthropic";
-const OPENAI_CHAT_PATH = "/v1/chat/completions";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const ANTHROPIC_PATH_PREFIX = '/anthropic';
+const OPENAI_CHAT_PATH = '/v1/chat/completions';
 const ANTHROPIC_MESSAGES_PATH = `${ANTHROPIC_PATH_PREFIX}/v1/messages`;
 
 const ANTHROPIC_ANSWER: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
-  body: JSON.parse(anthropicMessagesFixture("upstream-response-tool-call.json")),
+  body: JSON.parse(anthropicMessagesFixture('upstream-response-tool-call.json')),
 };
 const OPENAI_CHAT_ANSWER: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
-  body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+  body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
 };
 
-const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
+const CHAT_REQUEST = { model: 'smart', messages: [{ role: 'user', content: 'Hi' }] };
 const MESSAGES_REQUEST = {
-  model: "smart",
+  model: 'smart',
   max_tokens: 64,
-  messages: [{ role: "user", content: [{ type: "text", text: "Hi" }] }],
+  messages: [{ role: 'user', content: [{ type: 'text', text: 'Hi' }] }],
 };
 
-describe("The Provider Endpoint an Upstream Model is sent through (e2e)", () => {
+describe('The Provider Endpoint an Upstream Model is sent through (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let upstream: FakeUpstream;
@@ -53,17 +53,17 @@ describe("The Provider Endpoint an Upstream Model is sent through (e2e)", () => 
     upstream.reset();
     await deleteAllUpstreamData(db);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: upstream.baseUrl,
     }));
     await db
       .update(providers)
       .set({
         endpoints: [
-          { kind: "chat", protocol: "openai-chat", baseUrl: upstream.baseUrl },
+          { kind: 'chat', protocol: 'openai-chat', baseUrl: upstream.baseUrl },
           {
-            kind: "chat",
-            protocol: "anthropic-messages",
+            kind: 'chat',
+            protocol: 'anthropic-messages',
             baseUrl: `${upstream.origin}${ANTHROPIC_PATH_PREFIX}`,
           },
         ],
@@ -87,20 +87,20 @@ describe("The Provider Endpoint an Upstream Model is sent through (e2e)", () => 
 
   function chat() {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send(CHAT_REQUEST);
   }
 
   function createMessage() {
     return request(app.getHttpServer())
-      .post("/v1/messages")
-      .set("x-api-key", apiKey)
+      .post('/v1/messages')
+      .set('x-api-key', apiKey)
       .send(MESSAGES_REQUEST);
   }
 
   it("sends an Anthropic Messages client through the model's anthropic-messages endpoint unchanged", async () => {
-    await listProtocols(["openai-chat", "anthropic-messages"]);
+    await listProtocols(['openai-chat', 'anthropic-messages']);
     upstream.reply(ANTHROPIC_ANSWER);
 
     await createMessage().expect(200);
@@ -109,8 +109,8 @@ describe("The Provider Endpoint an Upstream Model is sent through (e2e)", () => 
     expect(upstream.lastRequest.body).toMatchObject({ messages: MESSAGES_REQUEST.messages });
   });
 
-  it("sends a Chat Completions client through the openai-chat endpoint of a model that lists both", async () => {
-    await listProtocols(["anthropic-messages", "openai-chat"]);
+  it('sends a Chat Completions client through the openai-chat endpoint of a model that lists both', async () => {
+    await listProtocols(['anthropic-messages', 'openai-chat']);
     upstream.reply(OPENAI_CHAT_ANSWER);
 
     await chat().expect(200);
@@ -118,20 +118,20 @@ describe("The Provider Endpoint an Upstream Model is sent through (e2e)", () => 
     expect(upstream.lastRequest.path).toBe(OPENAI_CHAT_PATH);
   });
 
-  it("translates a Chat Completions client to the only Protocol the model lists", async () => {
-    await listProtocols(["anthropic-messages"]);
+  it('translates a Chat Completions client to the only Protocol the model lists', async () => {
+    await listProtocols(['anthropic-messages']);
     upstream.reply(ANTHROPIC_ANSWER);
 
     const response = await chat().expect(200);
 
     expect(upstream.lastRequest.path).toBe(ANTHROPIC_MESSAGES_PATH);
-    expect(response.body).toMatchObject({ object: "chat.completion", model: "smart" });
+    expect(response.body).toMatchObject({ object: 'chat.completion', model: 'smart' });
   });
 
   it("probes through the model's first listed endpoint", async () => {
     await deleteAllUsers(db);
     const cookie = await setUpFirstUser(app, ADA);
-    await listProtocols(["anthropic-messages", "openai-chat"]);
+    await listProtocols(['anthropic-messages', 'openai-chat']);
     const [{ id: upstreamModelRowId }] = await db
       .select({ id: upstreamModels.id })
       .from(upstreamModels);
@@ -139,7 +139,7 @@ describe("The Provider Endpoint an Upstream Model is sent through (e2e)", () => 
 
     await request(app.getHttpServer())
       .post(`/api/playground/upstream-models/${upstreamModelRowId}/probe`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(200);
 
     expect(upstream.lastRequest.path).toBe(ANTHROPIC_MESSAGES_PATH);

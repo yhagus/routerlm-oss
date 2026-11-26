@@ -4,8 +4,8 @@ import type {
   GatewayErrorCode,
   RecordedAttemptFailure,
   UpstreamProtocol,
-} from "@/db/schemas";
-import type { ServiceTier } from "@/inference/models/internal-format";
+} from '@/db/schemas';
+import type { ServiceTier } from '@/inference/models/internal-format';
 
 export interface UsageLogSummary {
   id: string;

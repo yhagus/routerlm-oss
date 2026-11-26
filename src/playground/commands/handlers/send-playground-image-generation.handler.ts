@@ -1,9 +1,9 @@
-import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import type { PlaygroundImageGeneration } from "@/playground/models/playground-image-generation";
-import { PlaygroundUsage } from "@/playground/models/playground-usage";
-import { SendPlaygroundImageGenerationCommand } from "@/playground/commands/impl/send-playground-image-generation.command";
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { RunMediaInferenceCommand } from '@/inference/commands/impl/run-media-inference.command';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import type { PlaygroundImageGeneration } from '@/playground/models/playground-image-generation';
+import { PlaygroundUsage } from '@/playground/models/playground-usage';
+import { SendPlaygroundImageGenerationCommand } from '@/playground/commands/impl/send-playground-image-generation.command';
 
 const decoder = new TextDecoder();
 
@@ -26,7 +26,7 @@ export class SendPlaygroundImageGenerationHandler implements ICommandHandler<Sen
       new RunMediaInferenceCommand(
         contract,
         body,
-        { kind: "playground", userId: user.id },
+        { kind: 'playground', userId: user.id },
         connection,
         usage.record,
         target,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { type DateValue, getLocalTimeZone, parseDate, today } from "@internationalized/date";
-import { CalendarDays, ChevronLeft, ChevronRight, X } from "@lucide/vue";
+import { type DateValue, getLocalTimeZone, parseDate, today } from '@internationalized/date';
+import { CalendarDays, ChevronLeft, ChevronRight, X } from '@lucide/vue';
 import {
   DatePickerCalendar,
   DatePickerCell,
@@ -19,7 +19,7 @@ import {
   DatePickerPrev,
   DatePickerRoot,
   DatePickerTrigger,
-} from "reka-ui";
+} from 'reka-ui';
 
 const props = defineProps<{
   label: string;
@@ -28,7 +28,7 @@ const props = defineProps<{
 const model = defineModel<string>({ required: true });
 const open = ref(false);
 
-const LOCALE = "en-CA";
+const LOCALE = 'en-CA';
 
 const dateValue = computed<DateValue | undefined>({
   get: () => {
@@ -40,7 +40,7 @@ const dateValue = computed<DateValue | undefined>({
     }
   },
   set: (value) => {
-    model.value = value ? value.toString() : "";
+    model.value = value ? value.toString() : '';
   },
 });
 
@@ -58,7 +58,7 @@ function pickToday() {
   open.value = false;
 }
 function clear() {
-  model.value = "";
+  model.value = '';
   open.value = false;
 }
 </script>

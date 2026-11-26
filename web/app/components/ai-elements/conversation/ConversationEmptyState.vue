@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
 
 interface Props {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
   title?: string;
   description?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: "No messages yet",
-  description: "Start a conversation to see messages here",
+  title: 'No messages yet',
+  description: 'Start a conversation to see messages here',
 });
 </script>
 

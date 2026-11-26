@@ -1,16 +1,16 @@
-import { type IQueryHandler, QueryBus, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { asc } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts } from "@/db/schemas";
-import { ListQuotaMetersQuery } from "@/quota-meters/queries/impl/list-quota-meters.query";
-import { ListUsageResetsQuery } from "@/quota-meters/queries/impl/list-usage-resets.query";
-import { CooldownStore } from "@/upstream/providers/cooldown-store";
-import { providerAccountColumns } from "@/upstream/models/provider-account";
+import { type IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { asc } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts } from '@/db/schemas';
+import { ListQuotaMetersQuery } from '@/quota-meters/queries/impl/list-quota-meters.query';
+import { ListUsageResetsQuery } from '@/quota-meters/queries/impl/list-usage-resets.query';
+import { CooldownStore } from '@/upstream/providers/cooldown-store';
+import { providerAccountColumns } from '@/upstream/models/provider-account';
 import {
   type ListedProviderAccount,
   ListProviderAccountsQuery,
-} from "@/upstream/queries/impl/list-provider-accounts.query";
+} from '@/upstream/queries/impl/list-provider-accounts.query';
 
 @QueryHandler(ListProviderAccountsQuery)
 export class ListProviderAccountsHandler implements IQueryHandler<ListProviderAccountsQuery> {

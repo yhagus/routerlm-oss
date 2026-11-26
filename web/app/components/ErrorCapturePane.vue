@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Check, Copy } from "@lucide/vue";
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "reka-ui";
-import { computed, ref, useTemplateRef } from "vue";
-import { copyShortcut, useCopyFeedback } from "~/composables/useCopyFeedback";
-import { readableBody } from "~/lib/errorCaptures";
+import { Check, Copy } from '@lucide/vue';
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
+import { computed, ref, useTemplateRef } from 'vue';
+import { copyShortcut, useCopyFeedback } from '~/composables/useCopyFeedback';
+import { readableBody } from '~/lib/errorCaptures';
 
 const props = defineProps<{
   title: string;
@@ -12,30 +12,30 @@ const props = defineProps<{
   body: string;
 }>();
 
-type Tab = "body" | "headers";
-const tab = ref<Tab>("body");
+type Tab = 'body' | 'headers';
+const tab = ref<Tab>('body');
 const { state, copy } = useCopyFeedback();
-const bodyElement = useTemplateRef<HTMLElement>("bodyElement");
-const headersElement = useTemplateRef<HTMLElement>("headersElement");
+const bodyElement = useTemplateRef<HTMLElement>('bodyElement');
+const headersElement = useTemplateRef<HTMLElement>('headersElement');
 
 const headerEntries = computed(() => Object.entries(props.headers));
 const bodyText = computed(() => readableBody(props.body));
 const headersText = computed(() =>
-  headerEntries.value.map(([name, value]) => `${name}: ${value}`).join("\n"),
+  headerEntries.value.map(([name, value]) => `${name}: ${value}`).join('\n'),
 );
 const isShownEmpty = computed(() =>
-  tab.value === "body" ? props.body.trim() === "" : headerEntries.value.length === 0,
+  tab.value === 'body' ? props.body.trim() === '' : headerEntries.value.length === 0,
 );
-const copyLabel = computed(() => (tab.value === "body" ? "Copy body" : "Copy headers"));
+const copyLabel = computed(() => (tab.value === 'body' ? 'Copy body' : 'Copy headers'));
 const copyText = computed(() => {
-  if (state.value === "copied") return "Copied";
-  if (state.value === "failed") return "Couldn't copy";
-  if (state.value === "manual") return `Press ${copyShortcut()}`;
-  return "Copy";
+  if (state.value === 'copied') return 'Copied';
+  if (state.value === 'failed') return "Couldn't copy";
+  if (state.value === 'manual') return `Press ${copyShortcut()}`;
+  return 'Copy';
 });
 
 function copyShown(): void {
-  const isBody = tab.value === "body";
+  const isBody = tab.value === 'body';
   void copy(
     isBody ? bodyText.value : headersText.value,
     isBody ? bodyElement.value : headersElement.value,
@@ -68,7 +68,7 @@ function copyShown(): void {
             <Check v-if="state === 'copied'" :size="13" aria-hidden="true" />
             <Copy v-else :size="13" aria-hidden="true" />
             <span aria-hidden="true">{{ copyText }}</span>
-            <span class="sr-only" aria-live="polite">{{ state === "idle" ? "" : copyText }}</span>
+            <span class="sr-only" aria-live="polite">{{ state === 'idle' ? '' : copyText }}</span>
           </button>
         </div>
       </header>

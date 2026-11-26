@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { apiErrorMessage } from "~/lib/api";
+import { apiErrorMessage } from '~/lib/api';
 import {
   type ApiKeySummary,
   type CreatedApiKey,
@@ -8,40 +8,40 @@ import {
   MAX_REQUEST_RATE,
   MAX_SPEND_LIMIT_USD,
   type ModelChoice,
-} from "~/lib/api-keys";
-import { formatCost } from "~/lib/usage";
+} from '~/lib/api-keys';
+import { formatCost } from '~/lib/usage';
 
 const props = defineProps<{
   apiKey?: ApiKeySummary;
   modelChoices: ModelChoice[] | undefined;
   isLoadingModelChoices: boolean;
 }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 const emit = defineEmits<{ created: [apiKey: CreatedApiKey]; updated: [apiKey: ApiKeySummary] }>();
 
 const { $dashboardApi } = useNuxtApp();
 
-const name = ref("");
-const expiryDate = ref("");
+const name = ref('');
+const expiryDate = ref('');
 const allowedModelIds = ref<string[]>([]);
-const spendLimit = ref("");
-const requestRate = ref("");
+const spendLimit = ref('');
+const requestRate = ref('');
 const isSaving = ref(false);
-const error = ref("");
+const error = ref('');
 
 const isEdit = computed(() => props.apiKey !== undefined);
-const today = new Date().toLocaleDateString("en-CA");
+const today = new Date().toLocaleDateString('en-CA');
 
 watch(
   isOpen,
   (open) => {
     if (!open) return;
-    name.value = props.apiKey?.name ?? "";
+    name.value = props.apiKey?.name ?? '';
     expiryDate.value = localDateOf(props.apiKey?.expiresAt ?? null);
     allowedModelIds.value = props.apiKey?.allowedModels.map((model) => model.id) ?? [];
     spendLimit.value = limitText(props.apiKey?.spendLimit ?? null);
     requestRate.value = limitText(props.apiKey?.requestRate ?? null);
-    error.value = "";
+    error.value = '';
   },
   { immediate: true },
 );
@@ -54,26 +54,26 @@ const modelOptions = computed(() => {
   const offered = new Set(options.map((option) => option.value));
   const deleted = (props.apiKey?.allowedModels ?? [])
     .filter((model) => !offered.has(model.id))
-    .map((model) => ({ label: model.name ?? "Deleted Model", value: model.id }));
+    .map((model) => ({ label: model.name ?? 'Deleted Model', value: model.id }));
   return [...options, ...deleted];
 });
 
 const allowedSummary = computed(() => {
-  if (allowedModelIds.value.length === 0) return "Every Model, including ones added later.";
+  if (allowedModelIds.value.length === 0) return 'Every Model, including ones added later.';
   const labels = new Map(modelOptions.value.map((option) => [option.value, option.label]));
-  return `Only ${allowedModelIds.value.map((id) => labels.get(id) ?? "Deleted Model").join(", ")}.`;
+  return `Only ${allowedModelIds.value.map((id) => labels.get(id) ?? 'Deleted Model').join(', ')}.`;
 });
 
 function limitText(limit: number | null): string {
-  return limit === null ? "" : String(limit);
+  return limit === null ? '' : String(limit);
 }
 
 function limitValue(text: string): number | null {
-  return text === "" ? null : Number(text);
+  return text === '' ? null : Number(text);
 }
 
 const spentNote = computed(() =>
-  props.apiKey ? `${formatCost(props.apiKey.spent)} spent so far.` : "",
+  props.apiKey ? `${formatCost(props.apiKey.spent)} spent so far.` : '',
 );
 
 function sameIds(first: string[], second: string[]): boolean {
@@ -108,17 +108,17 @@ const hasChanges = computed(() => Object.keys(changes.value).length > 0);
 
 async function submit(): Promise<void> {
   isSaving.value = true;
-  error.value = "";
+  error.value = '';
   try {
     if (props.apiKey) {
       const updated = await $dashboardApi<ApiKeySummary>(`/api-keys/${props.apiKey.id}`, {
-        method: "PATCH",
+        method: 'PATCH',
         body: changes.value,
       });
-      emit("updated", updated);
+      emit('updated', updated);
     } else {
-      const created = await $dashboardApi<CreatedApiKey>("/api-keys", {
-        method: "POST",
+      const created = await $dashboardApi<CreatedApiKey>('/api-keys', {
+        method: 'POST',
         body: {
           name: name.value,
           expiresAt: expiryDate.value ? endOfLocalDay(expiryDate.value) : null,
@@ -127,7 +127,7 @@ async function submit(): Promise<void> {
           requestRate: limitValue(requestRate.value),
         },
       });
-      emit("created", created);
+      emit('created', created);
     }
   } catch (caught) {
     error.value = apiErrorMessage(
@@ -218,7 +218,7 @@ async function submit(): Promise<void> {
           type="submit"
           :disabled="isSaving || isLoadingModelChoices || (isEdit && !hasChanges)"
         >
-          {{ apiKey ? "Save changes" : "Create API Key" }}
+          {{ apiKey ? 'Save changes' : 'Create API Key' }}
         </button>
       </div>
     </form>

@@ -1,15 +1,15 @@
-import { Injectable, Logger } from "@nestjs/common";
-import type { Redis } from "ioredis";
-import { ATTEMPT_FAILURE_REASONS, type AttemptFailureReason } from "@/db/schemas";
-import { RedisConnection } from "@/redis/providers/redis-connection";
-import { cooldownDurationMs } from "@/upstream/models/cooldown";
+import { Injectable, Logger } from '@nestjs/common';
+import type { Redis } from 'ioredis';
+import { ATTEMPT_FAILURE_REASONS, type AttemptFailureReason } from '@/db/schemas';
+import { RedisConnection } from '@/redis/providers/redis-connection';
+import { cooldownDurationMs } from '@/upstream/models/cooldown';
 
-export const COOLDOWN_KEY_PREFIX = "routerlm:cooldown:";
-const FAILURE_STREAK_KEY_PREFIX = "routerlm:cooldown-streak:";
+export const COOLDOWN_KEY_PREFIX = 'routerlm:cooldown:';
+const FAILURE_STREAK_KEY_PREFIX = 'routerlm:cooldown-streak:';
 const FAILURE_STREAK_MEMORY_MS = 10 * 60_000;
-const REFUSAL_COUNT_KEY_PREFIX = "routerlm:refusal-count:";
+const REFUSAL_COUNT_KEY_PREFIX = 'routerlm:refusal-count:';
 const REFUSAL_COUNT_MEMORY_MS = 60 * 60_000;
-export const COOLDOWN_VALUE_SEPARATOR = ":";
+export const COOLDOWN_VALUE_SEPARATOR = ':';
 export const LOCAL_COPY_MAX_AGE_MS = 1_000;
 const NEVER_READ = Number.NEGATIVE_INFINITY;
 
@@ -52,7 +52,7 @@ export class CooldownStore {
         .set(
           COOLDOWN_KEY_PREFIX + providerAccountId,
           `${endsAt}${COOLDOWN_VALUE_SEPARATOR}${cause}`,
-          "PX",
+          'PX',
           durationMs,
         )
         .exec();
@@ -106,10 +106,10 @@ export class CooldownStore {
       await this.redis.set(
         COOLDOWN_KEY_PREFIX + providerAccountId,
         `${until.getTime()}${COOLDOWN_VALUE_SEPARATOR}exhausted`,
-        "PX",
+        'PX',
         durationMs,
       );
-      this.updateLocalCopy(providerAccountId, { cooldown: { endsAt: until, cause: "exhausted" } });
+      this.updateLocalCopy(providerAccountId, { cooldown: { endsAt: until, cause: 'exhausted' } });
     } catch (error) {
       this.logger.warn(
         `Exhausted state not recorded for Provider Account ${providerAccountId}: ${String(error)}`,
@@ -121,7 +121,7 @@ export class CooldownStore {
     try {
       const key = COOLDOWN_KEY_PREFIX + providerAccountId;
       const value = await this.redis.get(key);
-      if (value !== null && cooldownOf(value).cause === "exhausted") {
+      if (value !== null && cooldownOf(value).cause === 'exhausted') {
         await this.redis.del(key);
         this.updateLocalCopy(providerAccountId, { cooldown: null });
       }
@@ -232,7 +232,7 @@ export class CooldownStore {
 
   private updateLocalCopy(
     providerAccountId: string,
-    change: Partial<Pick<LocalCopy, "cooldown" | "refusalCount">>,
+    change: Partial<Pick<LocalCopy, 'cooldown' | 'refusalCount'>>,
   ): void {
     const copy = this.localCopies.get(providerAccountId) ?? {
       cooldown: null,

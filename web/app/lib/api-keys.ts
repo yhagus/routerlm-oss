@@ -1,4 +1,4 @@
-import { formatCost, formatCount } from "~/lib/usage";
+import { formatCost, formatCount } from '~/lib/usage';
 
 /** The largest Spend Limit in USD (spend_limit is numeric(18, 10)), as the backend's `MAX_SPEND_LIMIT_USD` says. */
 export const MAX_SPEND_LIMIT_USD = 99_999_999;
@@ -45,18 +45,18 @@ export function isIntegrationOwned(apiKey: ApiKeySummary): boolean {
   return apiKey.integration !== null;
 }
 
-export type ApiKeyStatus = "active" | "expired" | "revoked";
+export type ApiKeyStatus = 'active' | 'expired' | 'revoked';
 
 export const API_KEY_STATUS_LABELS = {
-  active: "Active",
-  expired: "Expired",
-  revoked: "Revoked",
+  active: 'Active',
+  expired: 'Expired',
+  revoked: 'Revoked',
 } as const satisfies Record<ApiKeyStatus, string>;
 
 export function apiKeyStatus(apiKey: ApiKeySummary, now: number): ApiKeyStatus {
-  if (apiKey.revokedAt) return "revoked";
-  if (apiKey.expiresAt && new Date(apiKey.expiresAt).getTime() <= now) return "expired";
-  return "active";
+  if (apiKey.revokedAt) return 'revoked';
+  if (apiKey.expiresAt && new Date(apiKey.expiresAt).getTime() <= now) return 'expired';
+  return 'active';
 }
 
 export function endOfLocalDay(date: string): string {
@@ -64,31 +64,31 @@ export function endOfLocalDay(date: string): string {
 }
 
 export function localDateOf(expiresAt: string | null): string {
-  return expiresAt ? new Date(expiresAt).toLocaleDateString("en-CA") : "";
+  return expiresAt ? new Date(expiresAt).toLocaleDateString('en-CA') : '';
 }
 
 export function spendLimitLabel(apiKey: ApiKeySummary): string {
-  const limit = apiKey.spendLimit === null ? "no limit" : formatCost(apiKey.spendLimit);
+  const limit = apiKey.spendLimit === null ? 'no limit' : formatCost(apiKey.spendLimit);
   return `${formatCost(apiKey.spent)} of ${limit}`;
 }
 
 export function requestRateLabel(apiKey: ApiKeySummary): string {
-  return apiKey.requestRate === null ? "No limit" : `${formatCount(apiKey.requestRate)} / min`;
+  return apiKey.requestRate === null ? 'No limit' : `${formatCount(apiKey.requestRate)} / min`;
 }
 
 export const API_KEY_CONFIRM_COPY = {
   rotate: {
-    title: "Rotate API Key",
+    title: 'Rotate API Key',
     description: (name: string) =>
       `${name} gets a new key, and clients still using the current one are refused at once. Its name, expiry, allowed Models and usage history stay.`,
-    action: "Rotate key",
+    action: 'Rotate key',
     failed: "Couldn't rotate the API Key.",
   },
   revoke: {
-    title: "Revoke API Key",
+    title: 'Revoke API Key',
     description: (name: string) =>
       `Clients using ${name} are refused from now on. This can't be undone.`,
-    action: "Revoke API Key",
+    action: 'Revoke API Key',
     failed: "Couldn't revoke the API Key.",
   },
 } as const;

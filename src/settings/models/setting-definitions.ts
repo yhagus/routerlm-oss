@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const SETTING_DEFINITIONS = {
   errorCaptureRetentionDays: { default: 7, min: 1, max: 365 },

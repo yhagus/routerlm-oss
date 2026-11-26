@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Construction } from "@lucide/vue";
+import { Construction } from '@lucide/vue';
 
 const props = defineProps<{ title: string; description: string }>();
 useHead({ title: props.title });

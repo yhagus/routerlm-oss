@@ -1,40 +1,40 @@
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref } from 'vue';
 
-export type ThemePreference = "system" | "light" | "dark";
+export type ThemePreference = 'system' | 'light' | 'dark';
 
-export const THEME_STORAGE_KEY = "routerlm-theme";
+export const THEME_STORAGE_KEY = 'routerlm-theme';
 const NEXT: Record<ThemePreference, ThemePreference> = {
-  system: "light",
-  light: "dark",
-  dark: "system",
+  system: 'light',
+  light: 'dark',
+  dark: 'system',
 };
 const LABELS: Record<ThemePreference, string> = {
-  system: "System theme",
-  light: "Light theme",
-  dark: "Dark theme",
+  system: 'System theme',
+  light: 'Light theme',
+  dark: 'Dark theme',
 };
 
 function readPreference(): ThemePreference {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === "light" || stored === "dark" ? stored : "system";
+    return stored === 'light' || stored === 'dark' ? stored : 'system';
   } catch {
-    return "system";
+    return 'system';
   }
 }
 
 function applyPreference(preference: ThemePreference) {
   const root = document.documentElement;
-  if (preference === "system") delete root.dataset.theme;
+  if (preference === 'system') delete root.dataset.theme;
   else root.dataset.theme = preference;
   try {
-    if (preference === "system") localStorage.removeItem(THEME_STORAGE_KEY);
+    if (preference === 'system') localStorage.removeItem(THEME_STORAGE_KEY);
     else localStorage.setItem(THEME_STORAGE_KEY, preference);
   } catch {}
 }
 
 export function useTheme() {
-  const preference = ref<ThemePreference>("system");
+  const preference = ref<ThemePreference>('system');
 
   onMounted(() => {
     preference.value = readPreference();

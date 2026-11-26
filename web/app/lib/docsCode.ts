@@ -8,19 +8,19 @@ function importedPackageOf(code: string): string | undefined {
 }
 
 export function labelOf({ language, code }: CodeExample): string {
-  if (language === "bash") return code.trimStart().startsWith("curl") ? "curl" : "Shell";
-  if (language === "ts") {
+  if (language === 'bash') return code.trimStart().startsWith('curl') ? 'curl' : 'Shell';
+  if (language === 'ts') {
     const sdk = importedPackageOf(code);
-    return sdk ? `TypeScript · ${sdk}` : "TypeScript";
+    return sdk ? `TypeScript · ${sdk}` : 'TypeScript';
   }
-  if (language === "json") return "JSON";
-  return language || "Text";
+  if (language === 'json') return 'JSON';
+  return language || 'Text';
 }
 
 export function readableMarkdownOf(rawMarkdown: string): string {
   return rawMarkdown
-    .replace(/^---\n[\s\S]*?\n---\n+/, "")
-    .replace(/^::(code-tabs)?[ \t]*\n/gm, "")
+    .replace(/^---\n[\s\S]*?\n---\n+/, '')
+    .replace(/^::(code-tabs)?[ \t]*\n/gm, '')
     .trim()
-    .concat("\n");
+    .concat('\n');
 }

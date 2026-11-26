@@ -1,4 +1,4 @@
-export const PLAYGROUND = "playground";
+export const PLAYGROUND = 'playground';
 const SHORT_ID_LENGTH = 8;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -25,5 +25,5 @@ export function missingOptions(
 }
 
 export function listParam(values: readonly string[]): string | undefined {
-  return values.length > 0 ? values.join(",") : undefined;
+  return values.length > 0 ? values.join(',') : undefined;
 }

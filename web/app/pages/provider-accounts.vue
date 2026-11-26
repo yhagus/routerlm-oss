@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ redirect: "/providers" });
+definePageMeta({ redirect: '/providers' });
 </script>
 
 <template>

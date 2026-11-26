@@ -1,19 +1,19 @@
-import { z } from "zod";
-import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from "@/db/schemas";
+import { z } from 'zod';
+import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from '@/db/schemas';
 import {
   commaSeparated,
   customerIdFilterSchema,
   instant,
   searchTextSchema,
-} from "@/usage/schemas/usage.schema";
+} from '@/usage/schemas/usage.schema';
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
 
-export const FAILED_HOPS = ["client-to-gateway", "gateway-to-provider-account"] as const;
+export const FAILED_HOPS = ['client-to-gateway', 'gateway-to-provider-account'] as const;
 export type FailedHopKind = (typeof FAILED_HOPS)[number];
 
-export const CAPTURE_OUTCOMES = ["recovered", "failed"] as const;
+export const CAPTURE_OUTCOMES = ['recovered', 'failed'] as const;
 export type CaptureOutcome = (typeof CAPTURE_OUTCOMES)[number];
 
 export const errorCapturePageQuerySchema = z.object({

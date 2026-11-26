@@ -1,16 +1,16 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import { vi } from "vitest";
-import type { Database } from "@/db/schemas/relations";
-import { models } from "@/db/schemas";
-import { authenticateWithApiKey, createApiKey } from "@tests/support/api-keys";
-import type { ControlPlaneClient } from "@tests/support/control-plane-client";
-import { createIntegration } from "@tests/support/integrations";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import { vi } from 'vitest';
+import type { Database } from '@/db/schemas/relations';
+import { models } from '@/db/schemas';
+import { authenticateWithApiKey, createApiKey } from '@tests/support/api-keys';
+import type { ControlPlaneClient } from '@tests/support/control-plane-client';
+import { createIntegration } from '@tests/support/integrations';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 const NEXT_YEAR = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 const SNAPSHOT_NOTICE_TIMEOUT_MS = 5_000;
 
@@ -42,7 +42,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
       await db.execute(sql`truncate table integrations, api_keys, models cascade`);
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
-      acme = await createIntegration(app, adaCookie, { name: "Acme SaaS" });
+      acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
     });
 
     afterAll(async () => {
@@ -56,65 +56,65 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
       return created.body;
     }
 
-    describe("authentication", () => {
-      it("refuses a call without an Integration Secret", async () => {
-        await expect(client.createKey(undefined, { customerId: "cus_1" })).resolves.toEqual({
+    describe('authentication', () => {
+      it('refuses a call without an Integration Secret', async () => {
+        await expect(client.createKey(undefined, { customerId: 'cus_1' })).resolves.toEqual({
           ok: false,
-          code: "UNAUTHENTICATED",
+          code: 'UNAUTHENTICATED',
         });
       });
 
-      it("refuses a wrong Integration Secret", async () => {
+      it('refuses a wrong Integration Secret', async () => {
         const wrongSecret = `${acme.secret.slice(0, -4)}xxxx`;
 
-        await expect(client.createKey(wrongSecret, { customerId: "cus_1" })).resolves.toEqual({
+        await expect(client.createKey(wrongSecret, { customerId: 'cus_1' })).resolves.toEqual({
           ok: false,
-          code: "UNAUTHENTICATED",
+          code: 'UNAUTHENTICATED',
         });
       });
 
-      it("refuses a secret rotated away, and accepts its replacement", async () => {
+      it('refuses a secret rotated away, and accepts its replacement', async () => {
         const rotated = await request(app.getHttpServer())
           .post(`/api/integrations/${acme.id}/rotate`)
-          .set("Cookie", adaCookie)
+          .set('Cookie', adaCookie)
           .expect(201);
 
         await expect(client.listKeys(acme.secret)).resolves.toEqual({
           ok: false,
-          code: "UNAUTHENTICATED",
+          code: 'UNAUTHENTICATED',
         });
         await expect(client.listKeys(rotated.body.secret)).resolves.toMatchObject({ ok: true });
       });
 
-      it("refuses the secret of a disabled Integration", async () => {
+      it('refuses the secret of a disabled Integration', async () => {
         await request(app.getHttpServer())
           .post(`/api/integrations/${acme.id}/disable`)
-          .set("Cookie", adaCookie)
+          .set('Cookie', adaCookie)
           .expect(204);
 
         await expect(client.listKeys(acme.secret)).resolves.toEqual({
           ok: false,
-          code: "UNAUTHENTICATED",
+          code: 'UNAUTHENTICATED',
         });
       });
 
-      it("refuses an API Key in place of the Integration Secret", async () => {
+      it('refuses an API Key in place of the Integration Secret', async () => {
         const operatorKey = await createApiKey(app, adaCookie);
 
         await expect(client.listKeys(operatorKey.key)).resolves.toEqual({
           ok: false,
-          code: "UNAUTHENTICATED",
+          code: 'UNAUTHENTICATED',
         });
       });
     });
 
-    describe("creating a key", () => {
-      it("issues a key to a Customer with its settings, returning the whole key only then", async () => {
-        const [model] = await db.insert(models).values({ name: "smart" }).returning();
+    describe('creating a key', () => {
+      it('issues a key to a Customer with its settings, returning the whole key only then', async () => {
+        const [model] = await db.insert(models).values({ name: 'smart' }).returning();
 
         const created = await client.createKey(acme.secret, {
-          customerId: "cus_42",
-          name: "Production",
+          customerId: 'cus_42',
+          name: 'Production',
           expiresAt: NEXT_YEAR,
           allowedModelIds: [model.id],
           spendLimit: 25.5,
@@ -126,9 +126,9 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         expect(created.body.key).toMatch(/^rlm_[0-9a-f]{16}_\S+$/);
         expect(created.body.apiKey).toEqual({
           id: expect.any(String),
-          keyId: created.body.key.split("_")[1],
-          name: "Production",
-          customerId: "cus_42",
+          keyId: created.body.key.split('_')[1],
+          name: 'Production',
+          customerId: 'cus_42',
           createdAt: expect.any(String),
           expiresAt: NEXT_YEAR,
           allowedModelIds: [model.id],
@@ -144,53 +144,53 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         );
       });
 
-      it("names a key after its Customer when no name is given, with no limits", async () => {
-        const issued = await issueKey("cus_7");
+      it('names a key after its Customer when no name is given, with no limits', async () => {
+        const issued = await issueKey('cus_7');
 
-        expect(issued.apiKey).toMatchObject({ name: "cus_7", allowedModelIds: [], spent: 0 });
-        expect(issued.apiKey).not.toHaveProperty("spendLimit");
-        expect(issued.apiKey).not.toHaveProperty("requestRate");
-        expect(issued.apiKey).not.toHaveProperty("expiresAt");
+        expect(issued.apiKey).toMatchObject({ name: 'cus_7', allowedModelIds: [], spent: 0 });
+        expect(issued.apiKey).not.toHaveProperty('spendLimit');
+        expect(issued.apiKey).not.toHaveProperty('requestRate');
+        expect(issued.apiKey).not.toHaveProperty('expiresAt');
       });
 
-      it("refuses a key without a Customer id", async () => {
-        await expect(client.createKey(acme.secret, { name: "Orphan" })).resolves.toEqual({
+      it('refuses a key without a Customer id', async () => {
+        await expect(client.createKey(acme.secret, { name: 'Orphan' })).resolves.toEqual({
           ok: false,
-          code: "INVALID_ARGUMENT",
+          code: 'INVALID_ARGUMENT',
         });
       });
 
       it("refuses allowed Models outside the Integration's, and accepts those within", async () => {
         const [sold, kept] = await db
           .insert(models)
-          .values([{ name: "sold" }, { name: "kept" }])
+          .values([{ name: 'sold' }, { name: 'kept' }])
           .returning();
         await request(app.getHttpServer())
           .patch(`/api/integrations/${acme.id}`)
-          .set("Cookie", adaCookie)
+          .set('Cookie', adaCookie)
           .send({ allowedModelIds: [sold.id] })
           .expect(200);
 
         await expect(
-          client.createKey(acme.secret, { customerId: "cus_1", allowedModelIds: [kept.id] }),
-        ).resolves.toEqual({ ok: false, code: "INVALID_ARGUMENT" });
+          client.createKey(acme.secret, { customerId: 'cus_1', allowedModelIds: [kept.id] }),
+        ).resolves.toEqual({ ok: false, code: 'INVALID_ARGUMENT' });
         await expect(
-          client.createKey(acme.secret, { customerId: "cus_1", allowedModelIds: [sold.id] }),
+          client.createKey(acme.secret, { customerId: 'cus_1', allowedModelIds: [sold.id] }),
         ).resolves.toMatchObject({ ok: true });
       });
     });
 
-    describe("updating a key", () => {
-      it("changes the settings sent and clears those sent as null", async () => {
-        const [model] = await db.insert(models).values({ name: "smart" }).returning();
-        const issued = await issueKey("cus_1", {
+    describe('updating a key', () => {
+      it('changes the settings sent and clears those sent as null', async () => {
+        const [model] = await db.insert(models).values({ name: 'smart' }).returning();
+        const issued = await issueKey('cus_1', {
           spendLimit: 10,
           requestRate: 5,
           expiresAt: NEXT_YEAR,
         });
 
         const updated = await client.updateKey(acme.secret, issued.apiKey.id, {
-          name: "Renamed",
+          name: 'Renamed',
           allowedModelIds: [model.id],
           spendLimit: 20,
           requestRate: null,
@@ -201,7 +201,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
           ok: true,
           body: {
             ...issued.apiKey,
-            name: "Renamed",
+            name: 'Renamed',
             allowedModelIds: [model.id],
             spendLimit: 20,
             requestRate: undefined,
@@ -210,43 +210,43 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         });
       });
 
-      it("never changes the Customer id", async () => {
-        const issued = await issueKey("cus_1");
+      it('never changes the Customer id', async () => {
+        const issued = await issueKey('cus_1');
 
         await expect(
-          client.updateKey(acme.secret, issued.apiKey.id, { name: "Moved", customerId: "cus_2" }),
-        ).resolves.toEqual({ ok: false, code: "INVALID_ARGUMENT" });
+          client.updateKey(acme.secret, issued.apiKey.id, { name: 'Moved', customerId: 'cus_2' }),
+        ).resolves.toEqual({ ok: false, code: 'INVALID_ARGUMENT' });
         await expect(client.getKey(acme.secret, issued.apiKey.id)).resolves.toMatchObject({
-          body: { customerId: "cus_1" },
+          body: { customerId: 'cus_1' },
         });
       });
 
       it("refuses allowed Models outside the Integration's", async () => {
         const [sold, kept] = await db
           .insert(models)
-          .values([{ name: "sold" }, { name: "kept" }])
+          .values([{ name: 'sold' }, { name: 'kept' }])
           .returning();
         await request(app.getHttpServer())
           .patch(`/api/integrations/${acme.id}`)
-          .set("Cookie", adaCookie)
+          .set('Cookie', adaCookie)
           .send({ allowedModelIds: [sold.id] })
           .expect(200);
-        const issued = await issueKey("cus_1");
+        const issued = await issueKey('cus_1');
 
         await expect(
           client.updateKey(acme.secret, issued.apiKey.id, { allowedModelIds: [kept.id] }),
-        ).resolves.toEqual({ ok: false, code: "INVALID_ARGUMENT" });
+        ).resolves.toEqual({ ok: false, code: 'INVALID_ARGUMENT' });
       });
     });
 
-    describe("rotating and revoking a key", () => {
-      it("rotates a key: the new key signs in, the old one no longer does", async () => {
-        const issued = await issueKey("cus_1");
+    describe('rotating and revoking a key', () => {
+      it('rotates a key: the new key signs in, the old one no longer does', async () => {
+        const issued = await issueKey('cus_1');
 
         const rotated = await client.rotateKey(acme.secret, issued.apiKey.id);
         if (!rotated.ok) throw new Error(`rotateKey failed with ${rotated.code}`);
 
-        expect(rotated.body.apiKey).toMatchObject({ id: issued.apiKey.id, customerId: "cus_1" });
+        expect(rotated.body.apiKey).toMatchObject({ id: issued.apiKey.id, customerId: 'cus_1' });
         expect(rotated.body.key).not.toBe(issued.key);
         await eventually(() =>
           expect(authenticateWithApiKey(app, rotated.body.key)).resolves.toMatchObject({
@@ -256,34 +256,34 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         await eventually(() => expect(authenticateWithApiKey(app, issued.key)).rejects.toThrow());
       });
 
-      it("revokes a key for good: it stops signing in and can no longer change", async () => {
-        const issued = await issueKey("cus_1");
+      it('revokes a key for good: it stops signing in and can no longer change', async () => {
+        const issued = await issueKey('cus_1');
 
         const revoked = await client.revokeKey(acme.secret, issued.apiKey.id);
 
         expect(revoked).toMatchObject({ ok: true, body: { revokedAt: expect.any(String) } });
         await eventually(() => expect(authenticateWithApiKey(app, issued.key)).rejects.toThrow());
         await expect(
-          client.updateKey(acme.secret, issued.apiKey.id, { name: "Back" }),
-        ).resolves.toEqual({ ok: false, code: "FAILED_PRECONDITION" });
+          client.updateKey(acme.secret, issued.apiKey.id, { name: 'Back' }),
+        ).resolves.toEqual({ ok: false, code: 'FAILED_PRECONDITION' });
         await expect(client.rotateKey(acme.secret, issued.apiKey.id)).resolves.toEqual({
           ok: false,
-          code: "FAILED_PRECONDITION",
+          code: 'FAILED_PRECONDITION',
         });
       });
     });
 
-    describe("listing keys", () => {
+    describe('listing keys', () => {
       it("lists one Customer's keys, newest first, page by page", async () => {
-        const first = await issueKey("cus_1", { name: "first" });
-        await issueKey("cus_2", { name: "other customer" });
-        const second = await issueKey("cus_1", { name: "second" });
-        const third = await issueKey("cus_1", { name: "third" });
+        const first = await issueKey('cus_1', { name: 'first' });
+        await issueKey('cus_2', { name: 'other customer' });
+        const second = await issueKey('cus_1', { name: 'second' });
+        const third = await issueKey('cus_1', { name: 'third' });
 
-        const firstPage = await client.listKeys(acme.secret, { customerId: "cus_1", pageSize: 2 });
+        const firstPage = await client.listKeys(acme.secret, { customerId: 'cus_1', pageSize: 2 });
         if (!firstPage.ok) throw new Error(`listKeys failed with ${firstPage.code}`);
         const lastPage = await client.listKeys(acme.secret, {
-          customerId: "cus_1",
+          customerId: 'cus_1',
           pageSize: 2,
           pageToken: firstPage.body.nextPageToken,
         });
@@ -296,16 +296,16 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
       });
     });
 
-    describe("isolation", () => {
+    describe('isolation', () => {
       it("answers NOT_FOUND for another Integration's key on every operation", async () => {
-        const globex = await createIntegration(app, adaCookie, { name: "Globex" });
-        const theirs = await client.createKey(globex.secret, { customerId: "cus_1" });
+        const globex = await createIntegration(app, adaCookie, { name: 'Globex' });
+        const theirs = await client.createKey(globex.secret, { customerId: 'cus_1' });
         if (!theirs.ok) throw new Error(`createKey failed with ${theirs.code}`);
         const id = theirs.body.apiKey.id;
-        const notFound = { ok: false, code: "NOT_FOUND" };
+        const notFound = { ok: false, code: 'NOT_FOUND' };
 
         await expect(client.getKey(acme.secret, id)).resolves.toEqual(notFound);
-        await expect(client.updateKey(acme.secret, id, { name: "Mine" })).resolves.toEqual(
+        await expect(client.updateKey(acme.secret, id, { name: 'Mine' })).resolves.toEqual(
           notFound,
         );
         await expect(client.rotateKey(acme.secret, id)).resolves.toEqual(notFound);
@@ -321,12 +321,12 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
 
       it("answers NOT_FOUND for an operator's key and for an id naming no key", async () => {
         const operatorKey = await createApiKey(app, adaCookie);
-        const notFound = { ok: false, code: "NOT_FOUND" };
+        const notFound = { ok: false, code: 'NOT_FOUND' };
 
         await expect(client.getKey(acme.secret, operatorKey.id)).resolves.toEqual(notFound);
         await expect(client.revokeKey(acme.secret, operatorKey.id)).resolves.toEqual(notFound);
         await expect(client.getKey(acme.secret, UNKNOWN_ID)).resolves.toEqual(notFound);
-        await expect(client.getKey(acme.secret, "not-a-key-id")).resolves.toEqual(notFound);
+        await expect(client.getKey(acme.secret, 'not-a-key-id')).resolves.toEqual(notFound);
         await expect(authenticateWithApiKey(app, operatorKey.key)).resolves.toBeTruthy();
       });
     });

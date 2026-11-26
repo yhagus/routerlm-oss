@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { compactNumber, percent } from "~/lib/chart";
-import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from "~/lib/errorOrigins";
-import { formatCost, formatCount, formatDuration, type UsageSummary } from "~/lib/usage";
+import { computed } from 'vue';
+import { compactNumber, percent } from '~/lib/chart';
+import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from '~/lib/errorOrigins';
+import { formatCost, formatCount, formatDuration, type UsageSummary } from '~/lib/usage';
 
 const props = defineProps<{
   summary: UsageSummary | null | undefined;
   isLoading: boolean;
 }>();
 
-const NO_DATA = "—";
+const NO_DATA = '—';
 
 function formatLatency(ms: number | null): string {
   return formatDuration(ms === null ? null : Math.round(ms));
@@ -30,7 +30,7 @@ const failedByOriginNote = computed(() => {
     (origin) =>
       `${formatCount(failedByOrigin[origin])} ${ERROR_ORIGIN_LABELS[origin].toLowerCase()}`,
   );
-  return parts.length > 0 ? parts.join(" · ") : null;
+  return parts.length > 0 ? parts.join(' · ') : null;
 });
 
 const hasMedianDuration = computed(() => (props.summary?.durationMsP50 ?? null) !== null);

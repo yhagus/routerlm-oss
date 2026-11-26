@@ -9,35 +9,35 @@ import {
   Route,
   SlidersHorizontal,
   Trash2,
-} from "@lucide/vue";
-import { apiErrorMessage } from "~/lib/api";
-import { isNotFound } from "~/lib/errors";
-import { TERMS_RISK_BLOCKED_HINT } from "~/lib/settings";
-import { isEmptyPolicy, type ParameterPolicy } from "~/lib/parameterPolicy";
-import type { ModelDetail, RouteSummary } from "~/lib/routing";
+} from '@lucide/vue';
+import { apiErrorMessage } from '~/lib/api';
+import { isNotFound } from '~/lib/errors';
+import { TERMS_RISK_BLOCKED_HINT } from '~/lib/settings';
+import { isEmptyPolicy, type ParameterPolicy } from '~/lib/parameterPolicy';
+import type { ModelDetail, RouteSummary } from '~/lib/routing';
 import {
   MODEL_KIND_LABELS,
   type Provider,
   type UpstreamModel,
   upstreamModelLabel,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 type ModelDialog =
-  | { kind: "rename" }
-  | { kind: "delete" }
-  | { kind: "add-route" }
-  | { kind: "remove-route"; route: RouteSummary }
-  | { kind: "route-policy"; route: RouteSummary };
+  | { kind: 'rename' }
+  | { kind: 'delete' }
+  | { kind: 'add-route' }
+  | { kind: 'remove-route'; route: RouteSummary }
+  | { kind: 'route-policy'; route: RouteSummary };
 
 const modelPath = `/models/${String(useRoute().params.id)}`;
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 const { data: model, error: loadError, refresh } = useDashboardApi<ModelDetail>(modelPath);
-useMissingResource(() => isNotFound(loadError.value), "Model");
+useMissingResource(() => isNotFound(loadError.value), 'Model');
 const { data: upstreamModels, status: upstreamModelsStatus } =
-  useDashboardApi<UpstreamModel[]>("/upstream-models");
-const { data: providers, status: providersStatus } = useDashboardApi<Provider[]>("/providers");
+  useDashboardApi<UpstreamModel[]>('/upstream-models');
+const { data: providers, status: providersStatus } = useDashboardApi<Provider[]>('/providers');
 const { isBlocked } = useTermsRiskAllowed();
 const blockedProviderIds = computed(
   () => new Set((providers.value ?? []).filter(isBlocked).map((provider) => provider.id)),
@@ -45,12 +45,12 @@ const blockedProviderIds = computed(
 
 const isLoadingRouteOptions = computed(
   () =>
-    (upstreamModelsStatus.value === "pending" && !upstreamModels.value) ||
-    (providersStatus.value === "pending" && !providers.value),
+    (upstreamModelsStatus.value === 'pending' && !upstreamModels.value) ||
+    (providersStatus.value === 'pending' && !providers.value),
 );
 const routes = computed(() => model.value?.routes ?? []);
 
-useHead({ title: () => model.value?.name ?? "Model" });
+useHead({ title: () => model.value?.name ?? 'Model' });
 
 const providerNameById = computed(
   () => new Map((providers.value ?? []).map((provider) => [provider.id, provider.name])),
@@ -59,7 +59,7 @@ const upstreamModelOptions = computed(() =>
   (upstreamModels.value ?? [])
     .filter((upstreamModel) => upstreamModel.kind === model.value?.kind)
     .map((upstreamModel) => ({
-      label: `${providerNameById.value.get(upstreamModel.providerId) ?? "?"} · ${upstreamModelLabel(upstreamModel)}`,
+      label: `${providerNameById.value.get(upstreamModel.providerId) ?? '?'} · ${upstreamModelLabel(upstreamModel)}`,
       value: upstreamModel.id,
     })),
 );
@@ -72,16 +72,16 @@ const isDialogOpen = computed({
   },
 });
 const isSaving = ref(false);
-const dialogError = ref("");
-const newName = ref("");
-const newRouteUpstreamModelId = ref("");
+const dialogError = ref('');
+const newName = ref('');
+const newRouteUpstreamModelId = ref('');
 
 function openDialog(next: ModelDialog): void {
   dialog.value = next;
-  dialogError.value = "";
-  if (next.kind === "rename") newName.value = model.value?.name ?? "";
-  if (next.kind === "add-route") {
-    newRouteUpstreamModelId.value = upstreamModelOptions.value[0]?.value ?? "";
+  dialogError.value = '';
+  if (next.kind === 'rename') newName.value = model.value?.name ?? '';
+  if (next.kind === 'add-route') {
+    newRouteUpstreamModelId.value = upstreamModelOptions.value[0]?.value ?? '';
   }
 }
 
@@ -91,7 +91,7 @@ async function saveFromDialog(
   failureMessage: string,
 ): Promise<boolean> {
   isSaving.value = true;
-  dialogError.value = "";
+  dialogError.value = '';
   try {
     await write();
     showToast(successMessage);
@@ -107,7 +107,7 @@ async function saveFromDialog(
 
 async function renameModel(): Promise<void> {
   const isSaved = await saveFromDialog(
-    () => $dashboardApi(modelPath, { method: "PATCH", body: { name: newName.value } }),
+    () => $dashboardApi(modelPath, { method: 'PATCH', body: { name: newName.value } }),
     `Renamed to ${newName.value}`,
     "Couldn't rename the Model.",
   );
@@ -115,23 +115,23 @@ async function renameModel(): Promise<void> {
 }
 
 async function deleteModel(): Promise<void> {
-  const name = model.value?.name ?? "the Model";
+  const name = model.value?.name ?? 'the Model';
   const isDeleted = await saveFromDialog(
-    () => $dashboardApi(modelPath, { method: "DELETE" }),
+    () => $dashboardApi(modelPath, { method: 'DELETE' }),
     `Deleted ${name}`,
     "Couldn't delete the Model.",
   );
-  if (isDeleted) await navigateTo("/models");
+  if (isDeleted) await navigateTo('/models');
 }
 
 async function addRoute(): Promise<void> {
   const isAdded = await saveFromDialog(
     () =>
       $dashboardApi(`${modelPath}/routes`, {
-        method: "POST",
+        method: 'POST',
         body: { upstreamModelId: newRouteUpstreamModelId.value },
       }),
-    "Added the Route",
+    'Added the Route',
     "Couldn't add the Route.",
   );
   if (isAdded) await refresh();
@@ -139,7 +139,7 @@ async function addRoute(): Promise<void> {
 
 async function removeRoute(routeToRemove: RouteSummary): Promise<void> {
   const isRemoved = await saveFromDialog(
-    () => $dashboardApi(`${modelPath}/routes/${routeToRemove.id}`, { method: "DELETE" }),
+    () => $dashboardApi(`${modelPath}/routes/${routeToRemove.id}`, { method: 'DELETE' }),
     `Removed the Route to ${routeToRemove.upstreamModel.upstreamModelId}`,
     "Couldn't remove the Route.",
   );
@@ -147,14 +147,14 @@ async function removeRoute(routeToRemove: RouteSummary): Promise<void> {
 }
 
 const isSavingPolicy = ref(false);
-const policyError = ref("");
+const policyError = ref('');
 
 async function saveModelPolicy(parameterPolicy: ParameterPolicy): Promise<void> {
   isSavingPolicy.value = true;
-  policyError.value = "";
+  policyError.value = '';
   try {
-    await $dashboardApi(modelPath, { method: "PATCH", body: { parameterPolicy } });
-    showToast("Saved the Parameter Policy");
+    await $dashboardApi(modelPath, { method: 'PATCH', body: { parameterPolicy } });
+    showToast('Saved the Parameter Policy');
     await refresh();
   } catch (error) {
     policyError.value = apiErrorMessage(error, "Couldn't save the Parameter Policy.");
@@ -172,7 +172,7 @@ async function saveRouteOverride(
   const isSaved = await saveFromDialog(
     () =>
       $dashboardApi(`${modelPath}/routes/${routeToChange.id}`, {
-        method: "PATCH",
+        method: 'PATCH',
         body: { parameterPolicyOverride },
       }),
     parameterPolicyOverride
@@ -190,8 +190,8 @@ async function toggleCacheBreakpoints(): Promise<void> {
   const hasAutomaticCacheBreakpoints = !model.value.hasAutomaticCacheBreakpoints;
   isSavingCacheBreakpoints.value = true;
   try {
-    await $dashboardApi(modelPath, { method: "PATCH", body: { hasAutomaticCacheBreakpoints } });
-    showToast(`Turned automatic cache breakpoints ${hasAutomaticCacheBreakpoints ? "on" : "off"}`);
+    await $dashboardApi(modelPath, { method: 'PATCH', body: { hasAutomaticCacheBreakpoints } });
+    showToast(`Turned automatic cache breakpoints ${hasAutomaticCacheBreakpoints ? 'on' : 'off'}`);
     await refresh();
   } catch (error) {
     showToast(apiErrorMessage(error, "Couldn't update the cache breakpoints."));
@@ -204,8 +204,8 @@ async function toggleModel(): Promise<void> {
   if (!model.value) return;
   const { isEnabled, name } = model.value;
   try {
-    await $dashboardApi(modelPath, { method: "PATCH", body: { isEnabled: !isEnabled } });
-    showToast(`${isEnabled ? "Disabled" : "Enabled"} ${name}`);
+    await $dashboardApi(modelPath, { method: 'PATCH', body: { isEnabled: !isEnabled } });
+    showToast(`${isEnabled ? 'Disabled' : 'Enabled'} ${name}`);
     await refresh();
   } catch (error) {
     showToast(apiErrorMessage(error, `Couldn't update ${name}.`));
@@ -215,11 +215,11 @@ async function toggleModel(): Promise<void> {
 async function toggleRoute(routeToToggle: RouteSummary): Promise<void> {
   try {
     await $dashboardApi(`${modelPath}/routes/${routeToToggle.id}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: { isEnabled: !routeToToggle.isEnabled },
     });
     showToast(
-      `${routeToToggle.isEnabled ? "Disabled" : "Enabled"} the Route to ${routeToToggle.upstreamModel.upstreamModelId}`,
+      `${routeToToggle.isEnabled ? 'Disabled' : 'Enabled'} the Route to ${routeToToggle.upstreamModel.upstreamModelId}`,
     );
     await refresh();
   } catch (error) {
@@ -236,7 +236,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
   routeIds[index] = neighbourId;
   routeIds[neighbourIndex] = movedId;
   try {
-    await $dashboardApi(`${modelPath}/route-order`, { method: "PUT", body: { routeIds } });
+    await $dashboardApi(`${modelPath}/route-order`, { method: 'PUT', body: { routeIds } });
     await refresh();
   } catch (error) {
     showToast(apiErrorMessage(error, "Couldn't save the new Route order."));
@@ -282,13 +282,13 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
         <span
           class="status-badge"
           :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-          >{{ model.isEnabled ? "Enabled" : "Disabled" }}</span
+          >{{ model.isEnabled ? 'Enabled' : 'Disabled' }}</span
         >
         <button class="button" type="button" @click="openDialog({ kind: 'rename' })">
           <Pencil :size="14" /> Rename
         </button>
         <button class="button" type="button" @click="toggleModel">
-          <Power :size="14" /> {{ model.isEnabled ? "Disable" : "Enable" }}
+          <Power :size="14" /> {{ model.isEnabled ? 'Disable' : 'Enable' }}
         </button>
         <button class="button" type="button" @click="openDialog({ kind: 'delete' })">
           <Trash2 :size="14" /> Delete
@@ -349,7 +349,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
                     >Overrides the Parameter Policy</span
                   >
                 </td>
-                <td>{{ modelRoute.upstreamModel.capabilities.join(", ") || "—" }}</td>
+                <td>{{ modelRoute.upstreamModel.capabilities.join(', ') || '—' }}</td>
                 <td class="tabular">
                   <span
                     v-if="modelRoute.enabledProviderAccountCount === 0"
@@ -363,7 +363,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
                   <span
                     class="status-badge"
                     :class="modelRoute.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-                    >{{ modelRoute.isEnabled ? "Enabled" : "Disabled" }}</span
+                    >{{ modelRoute.isEnabled ? 'Enabled' : 'Disabled' }}</span
                   >
                 </td>
                 <td>
@@ -391,7 +391,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
                       <SlidersHorizontal :size="14" /> Policy
                     </button>
                     <button class="row-action" @click="toggleRoute(modelRoute)">
-                      <Power :size="14" /> {{ modelRoute.isEnabled ? "Disable" : "Enable" }}
+                      <Power :size="14" /> {{ modelRoute.isEnabled ? 'Disable' : 'Enable' }}
                     </button>
                     <button
                       class="row-action"

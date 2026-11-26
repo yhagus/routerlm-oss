@@ -1,20 +1,20 @@
-import type { ParameterCaps, ParameterPolicy, ParameterValues } from "@/db/schemas";
-import { type InferenceRequest, REASONING_EFFORTS, type ReasoningEffort } from "./internal-format";
+import type { ParameterCaps, ParameterPolicy, ParameterValues } from '@/db/schemas';
+import { type InferenceRequest, REASONING_EFFORTS, type ReasoningEffort } from './internal-format';
 
 export const POLICY_PARAMETERS = [
-  "temperature",
-  "topP",
-  "maxOutputTokens",
-  "reasoningEffort",
-  "stopSequences",
-  "serviceTier",
-  "voice",
-  "watermark",
+  'temperature',
+  'topP',
+  'maxOutputTokens',
+  'reasoningEffort',
+  'stopSequences',
+  'serviceTier',
+  'voice',
+  'watermark',
 ] as const satisfies readonly (keyof ParameterValues)[];
 
 type PolicyParameter = (typeof POLICY_PARAMETERS)[number];
-type CappedParameter = Exclude<keyof ParameterCaps, "reasoningBudgetTokens">;
-type NumericParameter = "temperature" | "topP" | "maxOutputTokens";
+type CappedParameter = Exclude<keyof ParameterCaps, 'reasoningBudgetTokens'>;
+type NumericParameter = 'temperature' | 'topP' | 'maxOutputTokens';
 
 export function applyParameterPolicy(
   request: InferenceRequest,
@@ -23,11 +23,11 @@ export function applyParameterPolicy(
   const policed: InferenceRequest = {
     ...request,
     system: policy.systemPrompt
-      ? [{ type: "text", text: policy.systemPrompt }, ...request.system]
+      ? [{ type: 'text', text: policy.systemPrompt }, ...request.system]
       : request.system,
-    temperature: numberUnderPolicy("temperature", request.temperature, policy),
-    topP: numberUnderPolicy("topP", request.topP, policy),
-    maxOutputTokens: numberUnderPolicy("maxOutputTokens", request.maxOutputTokens, policy),
+    temperature: numberUnderPolicy('temperature', request.temperature, policy),
+    topP: numberUnderPolicy('topP', request.topP, policy),
+    maxOutputTokens: numberUnderPolicy('maxOutputTokens', request.maxOutputTokens, policy),
     stopSequences:
       policy.forced?.stopSequences ?? request.stopSequences ?? policy.defaults?.stopSequences,
     serviceTier: policy.forced?.serviceTier ?? request.serviceTier ?? policy.defaults?.serviceTier,
@@ -77,9 +77,9 @@ function numberUnderPolicy(
 }
 
 function reasoningUnderPolicy(
-  clientReasoning: InferenceRequest["reasoning"],
+  clientReasoning: InferenceRequest['reasoning'],
   { defaults, forced, caps }: ParameterPolicy,
-): InferenceRequest["reasoning"] {
+): InferenceRequest['reasoning'] {
   if (forced?.reasoningEffort) {
     return { effort: lowerEffort(forced.reasoningEffort, caps?.reasoningEffort) };
   }
@@ -117,10 +117,10 @@ function setsParameter(policy: ParameterPolicy, parameter: PolicyParameter): boo
 
 function isCapped(parameter: PolicyParameter): parameter is CappedParameter {
   return (
-    parameter !== "stopSequences" &&
-    parameter !== "serviceTier" &&
-    parameter !== "voice" &&
-    parameter !== "watermark"
+    parameter !== 'stopSequences' &&
+    parameter !== 'serviceTier' &&
+    parameter !== 'voice' &&
+    parameter !== 'watermark'
   );
 }
 

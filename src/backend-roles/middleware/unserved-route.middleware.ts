@@ -1,6 +1,6 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import { Inject, Injectable, type NestMiddleware, NotFoundException } from "@nestjs/common";
-import { HttpAdapterHost } from "@nestjs/core";
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { Inject, Injectable, type NestMiddleware, NotFoundException } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 
 @Injectable()
 export class UnservedRouteMiddleware implements NestMiddleware<IncomingMessage, ServerResponse> {

@@ -1,10 +1,10 @@
-import type { TokenUsage } from "@/inference/models/internal-format";
+import type { TokenUsage } from '@/inference/models/internal-format';
 import type {
   MediaUnits,
   ServedBy,
   UpstreamModelPrices,
   UpstreamModelUnitPrices,
-} from "./usage-job";
+} from './usage-job';
 
 export interface UsageMeasurements extends TokenUsage {
   cost: number | null;
@@ -23,7 +23,7 @@ const NOT_REPORTED: TokenUsage = {
 };
 
 export function usageMeasurementsOf(
-  servedBy: Pick<ServedBy, "prices"> | null,
+  servedBy: Pick<ServedBy, 'prices'> | null,
   usage: TokenUsage | null,
 ): UsageMeasurements {
   if (!servedBy) {
@@ -71,7 +71,7 @@ function perUnit(price: number | null, per: number): number | null {
 }
 
 export function unitCostOf(
-  servedBy: Pick<ServedBy, "unitPrices"> | null,
+  servedBy: Pick<ServedBy, 'unitPrices'> | null,
   units: MediaUnits,
 ): number | null {
   const prices = servedBy?.unitPrices;

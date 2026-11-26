@@ -1,11 +1,11 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { desc, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { integrationRotations, users } from "@/db/schemas";
-import type { IntegrationRotation } from "@/integrations/models/integration";
-import { assertIntegrationExists } from "@/integrations/models/integration-exists";
-import { ListIntegrationRotationsQuery } from "@/integrations/queries/impl/list-integration-rotations.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { desc, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { integrationRotations, users } from '@/db/schemas';
+import type { IntegrationRotation } from '@/integrations/models/integration';
+import { assertIntegrationExists } from '@/integrations/models/integration-exists';
+import { ListIntegrationRotationsQuery } from '@/integrations/queries/impl/list-integration-rotations.query';
 
 @QueryHandler(ListIntegrationRotationsQuery)
 export class ListIntegrationRotationsHandler implements IQueryHandler<ListIntegrationRotationsQuery> {

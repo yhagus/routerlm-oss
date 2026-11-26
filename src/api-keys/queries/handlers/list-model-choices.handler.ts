@@ -1,10 +1,10 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { asc } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { models } from "@/db/schemas";
-import type { ModelChoice } from "@/api-keys/models/api-key";
-import { ListModelChoicesQuery } from "@/api-keys/queries/impl/list-model-choices.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { asc } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { models } from '@/db/schemas';
+import type { ModelChoice } from '@/api-keys/models/api-key';
+import { ListModelChoicesQuery } from '@/api-keys/queries/impl/list-model-choices.query';
 
 @QueryHandler(ListModelChoicesQuery)
 export class ListModelChoicesHandler implements IQueryHandler<ListModelChoicesQuery> {

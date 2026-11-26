@@ -1,4 +1,4 @@
-import { CurrentUser, Public, SignInService } from "@nestjs/authentication";
+import { CurrentUser, Public, SignInService } from '@nestjs/authentication';
 import {
   Body,
   Get,
@@ -7,16 +7,16 @@ import {
   Post,
   UnauthorizedException,
   UseGuards,
-} from "@nestjs/common";
-import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { ThrottlerGuard } from "@nestjs/throttler";
-import { z } from "zod";
-import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command";
-import type { User } from "@/users/models/user";
-import { FindUserByCredentialsQuery } from "@/users/queries/impl/find-user-by-credentials.query";
-import { IsSetupRequiredQuery } from "@/users/queries/impl/is-setup-required.query";
-import { type NewUser, newUserSchema } from "@/users/schemas/new-user.schema";
-import { DashboardController } from "./decorators/dashboard-controller.decorator";
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { z } from 'zod';
+import { CreateFirstUserCommand } from '@/users/commands/impl/create-first-user.command';
+import type { User } from '@/users/models/user';
+import { FindUserByCredentialsQuery } from '@/users/queries/impl/find-user-by-credentials.query';
+import { IsSetupRequiredQuery } from '@/users/queries/impl/is-setup-required.query';
+import { type NewUser, newUserSchema } from '@/users/schemas/new-user.schema';
+import { DashboardController } from './decorators/dashboard-controller.decorator';
 
 const MAX_EMAIL_LENGTH = 254;
 const MAX_PASSWORD_LENGTH = 1_024;
@@ -26,9 +26,9 @@ const loginSchema = z.object({
 });
 type Login = z.infer<typeof loginSchema>;
 
-const INVALID_CREDENTIALS = "Invalid email or password";
+const INVALID_CREDENTIALS = 'Invalid email or password';
 
-@DashboardController("auth")
+@DashboardController('auth')
 export class AuthController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -37,22 +37,22 @@ export class AuthController {
   ) {}
 
   @Public()
-  @Get("setup")
+  @Get('setup')
   async getSetupStatus(): Promise<{ isSetupRequired: boolean }> {
     return { isSetupRequired: await this.queryBus.execute(new IsSetupRequiredQuery()) };
   }
 
   @Public()
-  @Post("setup")
+  @Post('setup')
   async completeSetup(@Body({ schema: newUserSchema }) newUser: NewUser): Promise<User> {
     const user = await this.commandBus.execute(new CreateFirstUserCommand(newUser));
-    await this.signIn.signIn(user.id, { method: "password" });
+    await this.signIn.signIn(user.id, { method: 'password' });
     return user;
   }
 
   @Public()
   @UseGuards(ThrottlerGuard)
-  @Post("login")
+  @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body({ schema: loginSchema }) login: Login): Promise<User> {
     const user = await this.queryBus.execute(
@@ -61,17 +61,17 @@ export class AuthController {
     if (!user) {
       throw new UnauthorizedException(INVALID_CREDENTIALS);
     }
-    await this.signIn.signIn(user.id, { method: "password" });
+    await this.signIn.signIn(user.id, { method: 'password' });
     return user;
   }
 
-  @Post("logout")
+  @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(): Promise<void> {
     await this.signIn.signOut();
   }
 
-  @Get("me")
+  @Get('me')
   getCurrentUser(@CurrentUser() user: User): User {
     return user;
   }

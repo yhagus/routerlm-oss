@@ -1,11 +1,11 @@
-import { Logger } from "@nestjs/common";
-import { z } from "zod";
-import type { ThrottlerStorage } from "@nestjs/throttler";
-import { RedisConnection } from "@/redis/providers/redis-connection";
+import { Logger } from '@nestjs/common';
+import { z } from 'zod';
+import type { ThrottlerStorage } from '@nestjs/throttler';
+import { RedisConnection } from '@/redis/providers/redis-connection';
 
-type ThrottlerStorageRecord = Awaited<ReturnType<ThrottlerStorage["increment"]>>;
+type ThrottlerStorageRecord = Awaited<ReturnType<ThrottlerStorage['increment']>>;
 
-export const THROTTLE_KEY_PREFIX = "routerlm:throttle:";
+export const THROTTLE_KEY_PREFIX = 'routerlm:throttle:';
 const MILLISECONDS_PER_SECOND = 1000;
 
 const INCREMENT_SCRIPT = `

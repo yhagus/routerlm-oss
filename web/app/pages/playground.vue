@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { MODEL_KIND_LABELS, type ModelKind } from "~/lib/upstream";
+import { ref } from 'vue';
+import { MODEL_KIND_LABELS, type ModelKind } from '~/lib/upstream';
 
-useHead({ title: "Playground" });
+useHead({ title: 'Playground' });
 
 const PLAYGROUND_KINDS = [
-  "chat",
-  "image",
-  "speech",
-  "transcription",
-  "video",
+  'chat',
+  'image',
+  'speech',
+  'transcription',
+  'video',
 ] as const satisfies readonly ModelKind[];
 type PlaygroundKind = (typeof PLAYGROUND_KINDS)[number];
 
-const kind = ref<PlaygroundKind>("chat");
+const kind = ref<PlaygroundKind>('chat');
 </script>
 
 <template>

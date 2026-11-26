@@ -1,7 +1,7 @@
-import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "node:http";
-import { NodeRequest } from "@nestjs/platform-node";
-import { USER_AGENT_MAX_LENGTH } from "@/db/schemas";
-import { clientDisconnectSignal } from "./event-stream-response";
+import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'node:http';
+import { NodeRequest } from '@nestjs/platform-node';
+import { USER_AGENT_MAX_LENGTH } from '@/db/schemas';
+import { clientDisconnectSignal } from './event-stream-response';
 
 export interface ClientConnection {
   signal: AbortSignal;
@@ -28,7 +28,7 @@ export function clientConnectionOf(
 }
 
 export function requestSenderOf(request: IncomingMessage): RequestSender {
-  const userAgent = request.headers["user-agent"];
+  const userAgent = request.headers['user-agent'];
   return {
     userAgent: userAgent === undefined ? null : userAgent.slice(0, USER_AGENT_MAX_LENGTH),
     clientIp: request instanceof NodeRequest ? (request.ip ?? null) : null,
@@ -36,6 +36,6 @@ export function requestSenderOf(request: IncomingMessage): RequestSender {
 }
 
 export function requestBytesOf(request: IncomingMessage): number {
-  const contentLength = Number(request.headers["content-length"]);
+  const contentLength = Number(request.headers['content-length']);
   return Number.isSafeInteger(contentLength) && contentLength >= 0 ? contentLength : 0;
 }

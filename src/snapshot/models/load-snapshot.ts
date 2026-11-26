@@ -1,11 +1,11 @@
-import { and, asc, eq, isNull, or } from "drizzle-orm";
-import { storedProviderQuirksSchema } from "@/catalog/schemas/catalog.schema";
-import type { Database } from "@/db/schemas/relations";
+import { and, asc, eq, isNull, or } from 'drizzle-orm';
+import { storedProviderQuirksSchema } from '@/catalog/schemas/catalog.schema';
+import type { Database } from '@/db/schemas/relations';
 import {
   type AttachedPricingWindowRow,
   selectAttachedPricingWindows,
-} from "@/pricing-windows/models/upstream-model-pricing-windows";
-import { SettingsStore } from "@/settings/providers/settings-store";
+} from '@/pricing-windows/models/upstream-model-pricing-windows';
+import { SettingsStore } from '@/settings/providers/settings-store';
 import {
   apiKeys,
   type CredentialKind,
@@ -16,7 +16,7 @@ import {
   providers,
   routes,
   upstreamModels,
-} from "@/db/schemas";
+} from '@/db/schemas';
 import type {
   Snapshot,
   SnapshotApiKey,
@@ -26,8 +26,8 @@ import type {
   SnapshotProvider,
   SnapshotProviderAccount,
   SnapshotUpstreamModel,
-} from "./snapshot";
-import { providerIsUsable } from "./provider-usability";
+} from './snapshot';
+import { providerIsUsable } from './provider-usability';
 
 export async function loadSnapshot(db: Database): Promise<Snapshot> {
   const [
@@ -73,8 +73,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     selectAttachedPricingWindows(db, eq(pricingWindows.isEnabled, true)),
     db.select().from(models),
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
-    new SettingsStore(db).read("allowTermsRiskProviders"),
-    new SettingsStore(db).read("allowPrivateUpstreams"),
+    new SettingsStore(db).read('allowTermsRiskProviders'),
+    new SettingsStore(db).read('allowPrivateUpstreams'),
   ]);
 
   const apiKeysByKeyId = new Map<string, SnapshotApiKey>(
@@ -233,13 +233,13 @@ function snapshotCredentialOf(account: {
   credentialKind: CredentialKind;
   encryptedKey: string | null;
 }): SnapshotCredential | null {
-  if (account.credentialKind === "oauth-login") {
-    return { kind: "oauth-login" };
+  if (account.credentialKind === 'oauth-login') {
+    return { kind: 'oauth-login' };
   }
   if (account.encryptedKey === null) {
     return null;
   }
-  return { kind: "api-key", encryptedKey: account.encryptedKey };
+  return { kind: 'api-key', encryptedKey: account.encryptedKey };
 }
 
 function snapshotPricingWindowOf(row: AttachedPricingWindowRow): SnapshotPricingWindow {

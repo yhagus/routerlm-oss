@@ -1,12 +1,12 @@
-import { z } from "zod";
-import type { UpstreamProtocol } from "@/db/schemas";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
-import { GatewayError } from "@/inference/models/gateway-error";
+import { z } from 'zod';
+import type { UpstreamProtocol } from '@/db/schemas';
+import type { SnapshotUpstreamModel } from '@/snapshot/models/snapshot';
+import { GatewayError } from '@/inference/models/gateway-error';
 import {
   jsonReply,
   type MediaClientContract,
   type MediaResponseContext,
-} from "@/inference/models/media-kind";
+} from '@/inference/models/media-kind';
 import {
   requiredCapabilitiesOf,
   type SubmittedVideoJob,
@@ -19,18 +19,18 @@ import {
   type VideoTaskState,
   type VideoUpstreamProtocol,
   videoFormatOfSize,
-} from "@/inference/models/video-generation";
+} from '@/inference/models/video-generation';
 import {
   type VideoHandles,
   type VideoJobHandle,
   videoJobOwnerOf,
-} from "@/inference/providers/video-handles";
-import { dashScopeVideoProtocol } from "@/inference/protocols/dashscope-video/dashscope-video-protocol";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
-import { inputImageCheck } from "@/inference/protocols/openai-images/openai-images-client-contract";
+} from '@/inference/providers/video-handles';
+import { dashScopeVideoProtocol } from '@/inference/protocols/dashscope-video/dashscope-video-protocol';
+import { writeOpenAiError } from '@/inference/protocols/openai-chat/openai-error';
+import { inputImageCheck } from '@/inference/protocols/openai-images/openai-images-client-contract';
 
 const DEFAULT_SECONDS = 5;
-const DEFAULT_RESOLUTION: VideoResolution = "720P";
+const DEFAULT_RESOLUTION: VideoResolution = '720P';
 const PROVIDER_CHOSEN_SECONDS = -1;
 const MAX_SEED = 2_147_483_647;
 const CLIENT_SIZE = /^(\d+)x(\d+)$/;
@@ -40,7 +40,7 @@ const imageUrlSchema = z
   .union([z.string(), z.object({ url: z.string() }).transform(({ url }) => url)])
   .pipe(z.string().check(inputImageCheck));
 
-const imagePartTypeSchema = z.literal("image_url").optional();
+const imagePartTypeSchema = z.literal('image_url').optional();
 
 const requestSchema = z.object({
   model: z.string().min(1),
@@ -62,7 +62,7 @@ const requestSchema = z.object({
     .array(
       z.object({
         type: imagePartTypeSchema,
-        frame_type: z.enum(["first_frame", "last_frame"]),
+        frame_type: z.enum(['first_frame', 'last_frame']),
         image_url: imageUrlSchema,
       }),
     )
@@ -81,7 +81,7 @@ function parseRequest(body: unknown): VideoGenerationRequest {
   const { model, prompt, seconds, size, resolution, aspect_ratio, seed } = parsed.data;
   const media = mediaOf(parsed.data);
   const format = videoFormatOf(size, resolution, aspect_ratio);
-  const hasFirstFrame = media.some(({ role }) => role === "first_frame");
+  const hasFirstFrame = media.some(({ role }) => role === 'first_frame');
   return {
     model,
     prompt,
@@ -99,23 +99,23 @@ function mediaOf({
   frame_images = [],
   input_references = [],
 }: ParsedVideoRequest): VideoMediaInput[] {
-  const firstFrames = frame_images.filter(({ frame_type }) => frame_type === "first_frame");
-  const lastFrames = frame_images.filter(({ frame_type }) => frame_type === "last_frame");
+  const firstFrames = frame_images.filter(({ frame_type }) => frame_type === 'first_frame');
+  const lastFrames = frame_images.filter(({ frame_type }) => frame_type === 'last_frame');
   const firstFrameUrls = [
     ...(input_reference ? [input_reference.image_url] : []),
     ...firstFrames.map(({ image_url }) => image_url),
   ];
   if (firstFrameUrls.length > 1) {
-    throw invalid("send one first frame, in either `input_reference` or `frame_images`");
+    throw invalid('send one first frame, in either `input_reference` or `frame_images`');
   }
   if (lastFrames.length > 1) {
-    throw invalid("send at most one last frame");
+    throw invalid('send at most one last frame');
   }
   return [
-    ...firstFrameUrls.map((url): VideoMediaInput => ({ role: "first_frame", url })),
-    ...lastFrames.map(({ image_url }): VideoMediaInput => ({ role: "last_frame", url: image_url })),
+    ...firstFrameUrls.map((url): VideoMediaInput => ({ role: 'first_frame', url })),
+    ...lastFrames.map(({ image_url }): VideoMediaInput => ({ role: 'last_frame', url: image_url })),
     ...input_references.map(({ image_url }): VideoMediaInput => ({
-      role: "reference_image",
+      role: 'reference_image',
       url: image_url,
     })),
   ];
@@ -127,13 +127,13 @@ function requestedSecondsOf(seconds: number | undefined): number {
   }
   if (seconds === PROVIDER_CHOSEN_SECONDS) {
     throw new GatewayError(
-      "invalid_request",
-      "Not supported: `seconds` of -1, which leaves the duration to the Provider",
-      "client",
+      'invalid_request',
+      'Not supported: `seconds` of -1, which leaves the duration to the Provider',
+      'client',
     );
   }
   if (seconds <= 0) {
-    throw invalid("`seconds` must be a positive whole number");
+    throw invalid('`seconds` must be a positive whole number');
   }
   return seconds;
 }
@@ -147,20 +147,20 @@ function videoFormatOf(
     return { resolution: resolution ?? DEFAULT_RESOLUTION, ratio: aspectRatio ?? null };
   }
   if (resolution !== undefined || aspectRatio !== undefined) {
-    throw invalid("send either `size` or `resolution` and `aspect_ratio`, not both");
+    throw invalid('send either `size` or `resolution` and `aspect_ratio`, not both');
   }
   const match = CLIENT_SIZE.exec(size);
   const format = match && videoFormatOfSize(Number(match[1]), Number(match[2]));
   if (!format) {
     throw invalid(
-      `the size "${size}" is not WIDTHxHEIGHT in an aspect ratio of ${VIDEO_RATIOS.join(", ")}`,
+      `the size "${size}" is not WIDTHxHEIGHT in an aspect ratio of ${VIDEO_RATIOS.join(', ')}`,
     );
   }
   return format;
 }
 
 function invalid(reason: string): GatewayError {
-  return new GatewayError("invalid_request", `Invalid request: ${reason}`, "client");
+  return new GatewayError('invalid_request', `Invalid request: ${reason}`, 'client');
 }
 
 function unservableReason(
@@ -191,7 +191,7 @@ function unservableReason(
 }
 
 export const VIDEO_UPSTREAM_PROTOCOLS: Partial<Record<UpstreamProtocol, VideoUpstreamProtocol>> = {
-  "dashscope-video": dashScopeVideoProtocol,
+  'dashscope-video': dashScopeVideoProtocol,
 };
 
 export function videoObjectOf(
@@ -200,22 +200,22 @@ export function videoObjectOf(
   state: VideoTaskState,
 ): unknown {
   const completedAt =
-    (state.status === "completed" || state.status === "failed") && state.completedAt
+    (state.status === 'completed' || state.status === 'failed') && state.completedAt
       ? { completed_at: Math.floor(state.completedAt.getTime() / 1000) }
       : {};
   return {
     id: videoId,
-    object: "video",
+    object: 'video',
     status: state.status,
     model: handle.modelName,
     seconds: String(handle.seconds),
     size: handle.size,
     created_at: handle.createdAt,
     ...completedAt,
-    ...(state.status === "failed" && {
+    ...(state.status === 'failed' && {
       error: {
-        code: "video_generation_failed",
-        message: "The upstream failed to generate the video",
+        code: 'video_generation_failed',
+        message: 'The upstream failed to generate the video',
       },
     }),
   };
@@ -225,7 +225,7 @@ export function openAiVideosClientContract(
   handles: VideoHandles,
 ): MediaClientContract<VideoGenerationRequest, SubmittedVideoJob> {
   return {
-    protocol: "openai-videos",
+    protocol: 'openai-videos',
     parseRequest,
     unservableReason,
     upstreamProtocols: VIDEO_UPSTREAM_PROTOCOLS,
@@ -241,7 +241,7 @@ export function openAiVideosClientContract(
         resolution: request.resolution,
         size: request.clientSize,
       };
-      return jsonReply(videoObjectOf(handles.seal(handle), handle, { status: "queued" }));
+      return jsonReply(videoObjectOf(handles.seal(handle), handle, { status: 'queued' }));
     },
     writeError: writeOpenAiError,
   };

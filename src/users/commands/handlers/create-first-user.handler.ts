@@ -1,12 +1,12 @@
-import { PasswordHasher } from "@nestjs/authentication";
-import { ConflictException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations";
-import { users } from "@/db/schemas";
-import { lockUsers } from "@/users/models/lock-users";
-import { normalizeEmail, type User, userColumns } from "@/users/models/user";
-import { CreateFirstUserCommand } from "@/users/commands/impl/create-first-user.command";
+import { PasswordHasher } from '@nestjs/authentication';
+import { ConflictException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import type { Database } from '@/db/schemas/relations';
+import { users } from '@/db/schemas';
+import { lockUsers } from '@/users/models/lock-users';
+import { normalizeEmail, type User, userColumns } from '@/users/models/user';
+import { CreateFirstUserCommand } from '@/users/commands/impl/create-first-user.command';
 
 @CommandHandler(CreateFirstUserCommand)
 export class CreateFirstUserHandler implements ICommandHandler<CreateFirstUserCommand> {
@@ -21,7 +21,7 @@ export class CreateFirstUserHandler implements ICommandHandler<CreateFirstUserCo
       await lockUsers(tx);
       const [existing] = await tx.select({ id: users.id }).from(users).limit(1);
       if (existing) {
-        throw new ConflictException("Setup is already complete");
+        throw new ConflictException('Setup is already complete');
       }
       const [created] = await tx
         .insert(users)

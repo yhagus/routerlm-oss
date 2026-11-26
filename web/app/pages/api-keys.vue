@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Ban, Copy, KeyRound, Pencil, Plus, RefreshCw } from "@lucide/vue";
-import { computed, ref } from "vue";
-import type { RowAction } from "~/components/RowActionsMenu.vue";
-import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
-import { apiErrorMessage } from "~/lib/api";
+import { Ban, Copy, KeyRound, Pencil, Plus, RefreshCw } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import type { RowAction } from '~/components/RowActionsMenu.vue';
+import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
+import { apiErrorMessage } from '~/lib/api';
 import {
   API_KEY_CONFIRM_COPY,
   API_KEY_STATUS_LABELS,
@@ -15,13 +15,13 @@ import {
   type ModelChoice,
   requestRateLabel,
   spendLimitLabel,
-} from "~/lib/api-keys";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
-import { dateFormat } from "~/lib/dateFormats";
+} from '~/lib/api-keys';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
+import { dateFormat } from '~/lib/dateFormats';
 
-useHead({ title: "API Keys" });
+useHead({ title: 'API Keys' });
 
-const API_KEY_STATUSES = ["active", "expired", "revoked"] as const satisfies ApiKeyStatus[];
+const API_KEY_STATUSES = ['active', 'expired', 'revoked'] as const satisfies ApiKeyStatus[];
 const statusFilterOptions = API_KEY_STATUSES.map((status) => ({
   label: API_KEY_STATUS_LABELS[status],
   value: status,
@@ -34,13 +34,13 @@ const {
   error: loadError,
   status: apiKeysStatus,
   refresh,
-} = useDashboardApi<ApiKeySummary[]>("/api-keys");
+} = useDashboardApi<ApiKeySummary[]>('/api-keys');
 const { data: modelChoices, status: modelChoicesStatus } =
-  useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
+  useDashboardApi<ModelChoice[]>('/api-keys/model-choices');
 
-const isLoadingApiKeys = computed(() => apiKeysStatus.value === "pending" && !apiKeys.value);
+const isLoadingApiKeys = computed(() => apiKeysStatus.value === 'pending' && !apiKeys.value);
 const isLoadingModelChoices = computed(
-  () => modelChoicesStatus.value === "pending" && !modelChoices.value,
+  () => modelChoicesStatus.value === 'pending' && !modelChoices.value,
 );
 
 function formatDate(value: string | null, whenNull: string): string {
@@ -55,7 +55,7 @@ const rows = computed<ApiKeyRow[]>(() =>
   (apiKeys.value ?? []).map((apiKey) => ({ ...apiKey, status: apiKeyStatus(apiKey, Date.now()) })),
 );
 
-const statusFilter = useQueryList("status", {
+const statusFilter = useQueryList('status', {
   isValid: oneOf(API_KEY_STATUSES),
   order: API_KEY_STATUSES,
 });
@@ -68,7 +68,7 @@ const {
 } = useOwnerFilters();
 
 const activeFilters = computed<ActiveFilter[]>(() => [
-  ...listFilterTokens("Status", statusFilter, statusFilterOptions),
+  ...listFilterTokens('Status', statusFilter, statusFilterOptions),
   ...ownerFilterTokens.value,
 ]);
 
@@ -76,10 +76,10 @@ function matchesFilters(row: ApiKeyRow): boolean {
   const statuses = statusFilter.value;
   const integrationIds = integrationFilter.value;
   if (statuses.length > 0 && !statuses.includes(row.status)) return false;
-  if (integrationIds.length > 0 && !integrationIds.includes(row.integration?.id ?? "")) {
+  if (integrationIds.length > 0 && !integrationIds.includes(row.integration?.id ?? '')) {
     return false;
   }
-  return customerFilter.value === "" || row.customerId === customerFilter.value;
+  return customerFilter.value === '' || row.customerId === customerFilter.value;
 }
 
 const filteredRows = computed(() => rows.value.filter(matchesFilters));
@@ -90,24 +90,24 @@ function clearFilters(): void {
 }
 
 const columns: DataTableColumn<ApiKeyRow>[] = [
-  { id: "name", header: "Name", enableHiding: false, accessorFn: (row) => row.name },
-  { id: "keyId", header: "Key id", accessorFn: (row) => `rlm_${row.keyId}` },
-  { id: "integration", header: "Integration", accessorFn: (row) => row.integration?.name ?? "" },
-  { id: "customer", header: "Customer", accessorFn: (row) => row.customerId ?? "" },
-  { id: "allowedModels", header: "Allowed Models", accessorFn: allowedModelsLabel },
-  { id: "spendLimit", header: "Spend Limit" },
-  { id: "requestRate", header: "Request Rate" },
-  { id: "created", header: "Created" },
-  { id: "createdBy", header: "Created by", accessorFn: (row) => row.createdBy?.email ?? "" },
-  { id: "expires", header: "Expires" },
-  { id: "lastRotated", header: "Last rotated" },
-  { id: "status", header: "Status" },
+  { id: 'name', header: 'Name', enableHiding: false, accessorFn: (row) => row.name },
+  { id: 'keyId', header: 'Key id', accessorFn: (row) => `rlm_${row.keyId}` },
+  { id: 'integration', header: 'Integration', accessorFn: (row) => row.integration?.name ?? '' },
+  { id: 'customer', header: 'Customer', accessorFn: (row) => row.customerId ?? '' },
+  { id: 'allowedModels', header: 'Allowed Models', accessorFn: allowedModelsLabel },
+  { id: 'spendLimit', header: 'Spend Limit' },
+  { id: 'requestRate', header: 'Request Rate' },
+  { id: 'created', header: 'Created' },
+  { id: 'createdBy', header: 'Created by', accessorFn: (row) => row.createdBy?.email ?? '' },
+  { id: 'expires', header: 'Expires' },
+  { id: 'lastRotated', header: 'Last rotated' },
+  { id: 'status', header: 'Status' },
   actionsColumn(),
 ];
 
 function allowedModelsLabel(apiKey: ApiKeySummary): string {
-  if (apiKey.allowedModels.length === 0) return "All Models";
-  return apiKey.allowedModels.map((model) => model.name ?? "Deleted Model").join(", ");
+  if (apiKey.allowedModels.length === 0) return 'All Models';
+  return apiKey.allowedModels.map((model) => model.name ?? 'Deleted Model').join(', ');
 }
 
 const historyOf = ref<ApiKeySummary | null>(null);
@@ -133,7 +133,7 @@ function openEditDialog(apiKey: ApiKeySummary): void {
 
 async function handleCreated(apiKey: CreatedApiKey): Promise<void> {
   isFormOpen.value = false;
-  revealed.value = { apiKey, verb: "created" };
+  revealed.value = { apiKey, verb: 'created' };
   await refresh();
 }
 
@@ -143,7 +143,7 @@ async function handleUpdated(apiKey: ApiKeySummary): Promise<void> {
   await refresh();
 }
 
-const revealed = ref<{ apiKey: CreatedApiKey; verb: "created" | "rotated" } | null>(null);
+const revealed = ref<{ apiKey: CreatedApiKey; verb: 'created' | 'rotated' } | null>(null);
 const isRevealOpen = computed({
   get: () => revealed.value !== null,
   set: (isOpen) => {
@@ -173,10 +173,10 @@ async function copyApiKey(apiKey: ApiKeySummary): Promise<void> {
   }
 }
 
-type Confirmation = { kind: "rotate" | "revoke"; apiKey: ApiKeySummary };
+type Confirmation = { kind: 'rotate' | 'revoke'; apiKey: ApiKeySummary };
 const confirming = ref<Confirmation | null>(null);
 const isConfirming = ref(false);
-const confirmError = ref("");
+const confirmError = ref('');
 const isConfirmOpen = computed({
   get: () => confirming.value !== null,
   set: (isOpen) => {
@@ -188,16 +188,16 @@ async function confirmAction(): Promise<void> {
   const current = confirming.value;
   if (!current) return;
   isConfirming.value = true;
-  confirmError.value = "";
+  confirmError.value = '';
   try {
-    if (current.kind === "rotate") {
+    if (current.kind === 'rotate') {
       const rotated = await $dashboardApi<CreatedApiKey>(`/api-keys/${current.apiKey.id}/rotate`, {
-        method: "POST",
+        method: 'POST',
       });
       confirming.value = null;
-      revealed.value = { apiKey: rotated, verb: "rotated" };
+      revealed.value = { apiKey: rotated, verb: 'rotated' };
     } else {
-      await $dashboardApi(`/api-keys/${current.apiKey.id}/revoke`, { method: "POST" });
+      await $dashboardApi(`/api-keys/${current.apiKey.id}/revoke`, { method: 'POST' });
       showToast(`Revoked ${current.apiKey.name}`);
       confirming.value = null;
     }
@@ -209,11 +209,11 @@ async function confirmAction(): Promise<void> {
   }
 }
 
-type ApiKeyActionId = "copy" | "edit" | "rotate" | "revoke";
+type ApiKeyActionId = 'copy' | 'edit' | 'rotate' | 'revoke';
 
 const REVOKE_ACTION: RowAction<ApiKeyActionId> = {
-  id: "revoke",
-  label: "Revoke",
+  id: 'revoke',
+  label: 'Revoke',
   icon: Ban,
   isDestructive: true,
 };
@@ -222,25 +222,25 @@ function actionsFor(apiKey: ApiKeyRow): RowAction<ApiKeyActionId>[] {
   if (isIntegrationOwned(apiKey)) return [REVOKE_ACTION];
   return [
     {
-      id: "copy",
-      label: "Copy key",
+      id: 'copy',
+      label: 'Copy key',
       icon: Copy,
       isDisabled: !apiKey.isCopyable,
-      hint: apiKey.isCopyable ? undefined : "Made before keys were kept. Rotate it to copy.",
+      hint: apiKey.isCopyable ? undefined : 'Made before keys were kept. Rotate it to copy.',
     },
-    { id: "edit", label: "Edit", icon: Pencil },
-    { id: "rotate", label: "Rotate key", icon: RefreshCw },
+    { id: 'edit', label: 'Edit', icon: Pencil },
+    { id: 'rotate', label: 'Rotate key', icon: RefreshCw },
     REVOKE_ACTION,
   ];
 }
 
 function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
-  if (id === "copy") {
+  if (id === 'copy') {
     void copyApiKey(apiKey);
-  } else if (id === "edit") {
+  } else if (id === 'edit') {
     openEditDialog(apiKey);
   } else {
-    confirmError.value = "";
+    confirmError.value = '';
     confirming.value = { kind: id, apiKey };
   }
 }
@@ -296,9 +296,9 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
       <template #cell-keyId="{ row: apiKey }">
         <span class="tabular">rlm_{{ apiKey.keyId }}_…</span>
       </template>
-      <template #cell-integration="{ row: apiKey }">{{ apiKey.integration?.name ?? "—" }}</template>
+      <template #cell-integration="{ row: apiKey }">{{ apiKey.integration?.name ?? '—' }}</template>
       <template #cell-customer="{ row: apiKey }">
-        <span class="tabular">{{ apiKey.customerId ?? "—" }}</span>
+        <span class="tabular">{{ apiKey.customerId ?? '—' }}</span>
       </template>
       <template #cell-spendLimit="{ row: apiKey }">
         <span class="tabular">{{ spendLimitLabel(apiKey) }}</span>
@@ -312,11 +312,11 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
         }}</span>
       </template>
       <template #cell-created="{ row: apiKey }">
-        <span class="tabular">{{ formatDate(apiKey.createdAt, "—") }}</span>
+        <span class="tabular">{{ formatDate(apiKey.createdAt, '—') }}</span>
       </template>
-      <template #cell-createdBy="{ row: apiKey }">{{ apiKey.createdBy?.email ?? "—" }}</template>
+      <template #cell-createdBy="{ row: apiKey }">{{ apiKey.createdBy?.email ?? '—' }}</template>
       <template #cell-expires="{ row: apiKey }">
-        <span class="tabular">{{ formatDate(apiKey.expiresAt, "Never") }}</span>
+        <span class="tabular">{{ formatDate(apiKey.expiresAt, 'Never') }}</span>
       </template>
       <template #cell-lastRotated="{ row: apiKey }">
         <button
@@ -326,7 +326,7 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
           :aria-label="`Rotation history of ${apiKey.name}, last rotated ${formatDate(apiKey.lastRotatedAt, '')}`"
           @click="historyOf = apiKey"
         >
-          {{ formatDate(apiKey.lastRotatedAt, "") }}
+          {{ formatDate(apiKey.lastRotatedAt, '') }}
         </button>
         <span v-else class="value-never">Never</span>
       </template>

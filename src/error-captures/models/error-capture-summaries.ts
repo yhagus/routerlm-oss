@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { type RecordedAttemptFailure, attempts, errorCaptures, usageLogs } from "@/db/schemas";
-import type { ErrorCaptureSummary, FailedHop } from "./error-capture";
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { type RecordedAttemptFailure, attempts, errorCaptures, usageLogs } from '@/db/schemas';
+import type { ErrorCaptureSummary, FailedHop } from './error-capture';
 
 const summaryColumns = {
   id: errorCaptures.id,
@@ -36,7 +36,7 @@ export function selectSummaryRows(db: Database) {
     .leftJoin(attempts, eq(attempts.id, errorCaptures.attemptId));
 }
 
-interface SummaryRow extends Omit<ErrorCaptureSummary, "failedHop"> {
+interface SummaryRow extends Omit<ErrorCaptureSummary, 'failedHop'> {
   attemptId: string | null;
   providerAccountId: string | null;
   providerAccountName: string | null;
@@ -69,10 +69,10 @@ export function summaryOf(row: SummaryRow): ErrorCaptureSummary {
 
 function failedHopOf(row: SummaryRow): FailedHop {
   if (row.attemptId === null) {
-    return { kind: "client-to-gateway" };
+    return { kind: 'client-to-gateway' };
   }
   return {
-    kind: "gateway-to-provider-account",
+    kind: 'gateway-to-provider-account',
     attemptId: row.attemptId,
     providerAccountId: row.providerAccountId,
     providerAccountName: row.providerAccountName,

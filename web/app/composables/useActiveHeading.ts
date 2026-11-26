@@ -1,20 +1,20 @@
-import { useEventListener, useResizeObserver } from "@vueuse/core";
-import { nextTick, shallowRef, watch, type Ref, type ShallowRef } from "vue";
+import { useEventListener, useResizeObserver } from '@vueuse/core';
+import { nextTick, shallowRef, watch, type Ref, type ShallowRef } from 'vue';
 
 const ACTIVATION_OFFSET_PX = 96;
 
-const SCROLL_KEYS = new Set(["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "]);
+const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
 
-const usePickedHeading = () => useState<string | null>("docs-picked-heading", () => null);
+const usePickedHeading = () => useState<string | null>('docs-picked-heading', () => null);
 
 export function pickHeading(id: string): void {
   const heading = document.getElementById(id);
   if (!heading) return;
   usePickedHeading().value = id;
-  history.replaceState(history.state, "", `#${id}`);
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  history.replaceState(history.state, '', `#${id}`);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   requestAnimationFrame(() =>
-    heading.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }),
+    heading.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }),
   );
 }
 
@@ -25,7 +25,7 @@ function scrollWhenRendered(id: string): void {
   const attempt = (): void => {
     const heading = document.getElementById(id);
     if (heading) {
-      heading.scrollIntoView({ block: "start" });
+      heading.scrollIntoView({ block: 'start' });
       return;
     }
     if (performance.now() < deadline) requestAnimationFrame(attempt);
@@ -71,11 +71,11 @@ export function useActiveHeading(headingIds: Ref<string[]>): Readonly<ShallowRef
     scheduleUpdate();
   }
 
-  useEventListener(window, "scroll", scheduleUpdate, { passive: true });
-  useEventListener(window, "resize", scheduleUpdate, { passive: true });
-  useEventListener(window, "wheel", releasePick, { passive: true });
-  useEventListener(window, "touchmove", releasePick, { passive: true });
-  useEventListener(window, "keydown", (event: KeyboardEvent) => {
+  useEventListener(window, 'scroll', scheduleUpdate, { passive: true });
+  useEventListener(window, 'resize', scheduleUpdate, { passive: true });
+  useEventListener(window, 'wheel', releasePick, { passive: true });
+  useEventListener(window, 'touchmove', releasePick, { passive: true });
+  useEventListener(window, 'keydown', (event: KeyboardEvent) => {
     if (SCROLL_KEYS.has(event.key)) releasePick();
   });
   useResizeObserver(() => document.body, scheduleUpdate);

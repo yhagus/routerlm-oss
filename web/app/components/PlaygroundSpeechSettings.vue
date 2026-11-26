@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { AUDIO_FORMAT_LABELS, AUDIO_FORMATS, type AudioFormat } from "~/lib/playgroundSpeech";
+import { AUDIO_FORMAT_LABELS, AUDIO_FORMATS, type AudioFormat } from '~/lib/playgroundSpeech';
 
-const voice = defineModel<string>("voice", { required: true });
-const format = defineModel<AudioFormat>("format", { required: true });
+const voice = defineModel<string>('voice', { required: true });
+const format = defineModel<AudioFormat>('format', { required: true });
 
 const formatOptions = AUDIO_FORMATS.map((option) => ({
   value: option,

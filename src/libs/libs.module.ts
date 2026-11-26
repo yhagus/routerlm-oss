@@ -1,9 +1,9 @@
-import { Global, Module } from "@nestjs/common";
-import { minutes, ThrottlerModule } from "@nestjs/throttler";
-import { RedisConnection } from "@/redis/providers/redis-connection";
-import { RedisModule } from "@/redis/redis.module";
-import { OutboundFetch } from "./providers/outbound-fetch";
-import { RedisThrottlerStorage } from "./providers/redis-throttler-storage";
+import { Global, Module } from '@nestjs/common';
+import { minutes, ThrottlerModule } from '@nestjs/throttler';
+import { RedisConnection } from '@/redis/providers/redis-connection';
+import { RedisModule } from '@/redis/redis.module';
+import { OutboundFetch } from './providers/outbound-fetch';
+import { RedisThrottlerStorage } from './providers/redis-throttler-storage';
 
 const LOGINS_PER_MINUTE = 10;
 

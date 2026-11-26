@@ -1,16 +1,16 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
-const BASELINE_FILE = "comment-baseline.json";
-const RULE_CODE = "routerlm(no-comments)";
+const BASELINE_FILE = 'comment-baseline.json';
+const RULE_CODE = 'routerlm(no-comments)';
 const LINTED_PATHS = [
-  "src",
-  "tests",
-  "scripts",
-  "web/app",
-  "web/server",
-  "web/nuxt.config.ts",
-  "web/content.config.ts",
+  'src',
+  'tests',
+  'scripts',
+  'web/app',
+  'web/server',
+  'web/nuxt.config.ts',
+  'web/content.config.ts',
 ];
 
 interface Diagnostic {
@@ -20,22 +20,22 @@ interface Diagnostic {
 
 function countCommentsPerFile(): Map<string, number> {
   const result = spawnSync(
-    "oxlint",
+    'oxlint',
     [
-      "-c",
-      ".oxlintrc.comments.json",
-      "-A",
-      "all",
-      "-D",
-      "routerlm/no-comments",
-      "-f",
-      "json",
+      '-c',
+      '.oxlintrc.comments.json',
+      '-A',
+      'all',
+      '-D',
+      'routerlm/no-comments',
+      '-f',
+      'json',
       ...LINTED_PATHS,
     ],
-    { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 },
+    { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 },
   );
   if (result.error) {
-    throw new Error("could not run oxlint", { cause: result.error });
+    throw new Error('could not run oxlint', { cause: result.error });
   }
   const output: { diagnostics: Diagnostic[] } = JSON.parse(result.stdout);
   const counts = new Map<string, number>();
@@ -48,10 +48,10 @@ function countCommentsPerFile(): Map<string, number> {
 }
 
 function readBaseline(): Record<string, number> {
-  return existsSync(BASELINE_FILE) ? JSON.parse(readFileSync(BASELINE_FILE, "utf8")) : {};
+  return existsSync(BASELINE_FILE) ? JSON.parse(readFileSync(BASELINE_FILE, 'utf8')) : {};
 }
 
-const allowGrowth = process.argv.includes("--allow-growth");
+const allowGrowth = process.argv.includes('--allow-growth');
 const previous = readBaseline();
 const counts = countCommentsPerFile();
 

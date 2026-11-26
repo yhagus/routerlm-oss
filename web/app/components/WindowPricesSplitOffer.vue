@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { formatValidityPeriod } from "~/lib/validityPeriods";
-import { type AttachedWindowForm, validityPeriodOf } from "~/lib/windowPricesForm";
+import { formatValidityPeriod } from '~/lib/validityPeriods';
+import { type AttachedWindowForm, validityPeriodOf } from '~/lib/windowPricesForm';
 
 defineProps<{
   entries: readonly AttachedWindowForm[];

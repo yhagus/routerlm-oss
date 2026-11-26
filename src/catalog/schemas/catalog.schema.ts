@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { providerUrlSchema } from "@/libs/schemas/provider-url.schema";
+import { z } from 'zod';
+import { providerUrlSchema } from '@/libs/schemas/provider-url.schema';
 import {
   AUTH_STYLES,
   CAPABILITIES,
@@ -15,48 +15,48 @@ import {
   type ServiceTierValues,
   type TierPrices,
   UPSTREAM_PROTOCOLS,
-} from "@/db/schemas";
+} from '@/db/schemas';
 import {
   REASONING_EFFORTS,
   SERVICE_TIERS,
   type ServiceTier,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 import {
   protocolsOf,
   quirksUnderstoodBy,
   sendsServiceTiers,
-} from "@/libs/models/provider-protocols";
-import { isIanaTimeZone, rangeSchema } from "@/pricing-windows/schemas/pricing-window.schema";
+} from '@/libs/models/provider-protocols';
+import { isIanaTimeZone, rangeSchema } from '@/pricing-windows/schemas/pricing-window.schema';
 
 const UNFORWARDABLE_CLIENT_HEADERS = [
-  "authorization",
-  "proxy-authorization",
-  "x-api-key",
-  "api-key",
-  "cookie",
-  "host",
-  "content-length",
-  "content-type",
-  "accept-encoding",
-  "connection",
-  "keep-alive",
-  "proxy-connection",
-  "te",
-  "trailer",
-  "transfer-encoding",
-  "upgrade",
+  'authorization',
+  'proxy-authorization',
+  'x-api-key',
+  'api-key',
+  'cookie',
+  'host',
+  'content-length',
+  'content-type',
+  'accept-encoding',
+  'connection',
+  'keep-alive',
+  'proxy-connection',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
 ];
 
 const quirkHeaderNameSchema = z
   .string()
-  .regex(/^[a-z0-9-]+$/, { error: "Use a lowercase header name: letters, digits and hyphens" })
+  .regex(/^[a-z0-9-]+$/, { error: 'Use a lowercase header name: letters, digits and hyphens' })
   .refine((name) => !UNFORWARDABLE_CLIENT_HEADERS.includes(name), {
     error:
-      "This header carries a credential or describes the connection, and only the gateway sets it",
+      'This header carries a credential or describes the connection, and only the gateway sets it',
   });
 
 export const providerQuirksSchema = z.strictObject({
-  reasoningContentInHistory: z.enum(["all-assistant-turns", "tool-call-turns"]).optional(),
+  reasoningContentInHistory: z.enum(['all-assistant-turns', 'tool-call-turns']).optional(),
   acceptsCacheControl: z.boolean().optional(),
   reasoningAsThinking: z
     .strictObject({
@@ -69,7 +69,7 @@ export const providerQuirksSchema = z.strictObject({
   alwaysStreams: z.boolean().optional(),
   includesEncryptedReasoning: z.boolean().optional(),
   systemAsDeveloperMessage: z.boolean().optional(),
-  droppedParameters: z.array(z.enum(["temperature", "top_p", "max_output_tokens"])).optional(),
+  droppedParameters: z.array(z.enum(['temperature', 'top_p', 'max_output_tokens'])).optional(),
   cacheMarkerLimit: z.int().nonnegative().optional(),
   usesMaxCompletionTokens: z.boolean().optional(),
   forwardedClientHeaders: z.array(quirkHeaderNameSchema).optional(),
@@ -86,7 +86,7 @@ export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
 export function chatEndpointOf(
   endpoints: readonly ProviderEndpoint[],
 ): ProviderEndpoint | undefined {
-  return endpoints.find((endpoint) => endpoint.kind === "chat");
+  return endpoints.find((endpoint) => endpoint.kind === 'chat');
 }
 
 export function kindsWithoutEndpoint(
@@ -95,7 +95,7 @@ export function kindsWithoutEndpoint(
 ): ModelKind[] {
   const served = new Set(endpoints.map((endpoint) => endpoint.kind));
   return MODEL_KINDS.filter(
-    (kind) => !served.has(kind) && upstreamModels.some((model) => (model.kind ?? "chat") === kind),
+    (kind) => !served.has(kind) && upstreamModels.some((model) => (model.kind ?? 'chat') === kind),
   );
 }
 
@@ -137,20 +137,20 @@ export function tierPricesWithoutListedTier(
 export const providerLogoSchema = z.string().regex(/^[a-z0-9-]+$/);
 
 const kimiCodeOauthLoginSchema = z.strictObject({
-  flow: z.literal("kimi-code"),
+  flow: z.literal('kimi-code'),
   authHosts: z.strictObject({ global: providerUrlSchema, china: providerUrlSchema }),
   clientId: z.string().min(1),
   cliVersion: z.string().min(1),
 }) satisfies z.ZodType<KimiCodeOauthLogin>;
 
 const openAiCodexOauthLoginSchema = z.strictObject({
-  flow: z.literal("openai-codex"),
+  flow: z.literal('openai-codex'),
   issuer: providerUrlSchema,
   clientId: z.string().min(1),
   cliVersion: z.string().min(1),
 }) satisfies z.ZodType<OpenAiCodexOauthLogin>;
 
-export const providerOauthLoginSchema = z.discriminatedUnion("flow", [
+export const providerOauthLoginSchema = z.discriminatedUnion('flow', [
   kimiCodeOauthLoginSchema,
   openAiCodexOauthLoginSchema,
 ]);
@@ -170,7 +170,7 @@ const pricesByTierSchema = z
 
 const supportedValuesSchema = z
   .array(z.string().min(1))
-  .refine((values) => new Set(values).size === values.length, { error: "List each value once" })
+  .refine((values) => new Set(values).size === values.length, { error: 'List each value once' })
   .nullable();
 
 export const serviceTierValuesSchema = z
@@ -189,13 +189,13 @@ const tierPricesSchema = z
 export const upstreamModelProtocolsSchema = z
   .array(z.enum(UPSTREAM_PROTOCOLS))
   .refine((protocols) => new Set(protocols).size === protocols.length, {
-    error: "List each Protocol once",
+    error: 'List each Protocol once',
   });
 
 export const serviceTiersSchema = z
   .array(z.enum(SERVICE_TIERS))
   .refine((tiers) => new Set(tiers).size === tiers.length, {
-    error: "List each Service Tier once",
+    error: 'List each Service Tier once',
   });
 
 export const serviceTierPricesSchema = z
@@ -217,7 +217,7 @@ const catalogWindowPricesSchema = z
       [entry.inputPrice, entry.outputPrice, entry.cacheReadPrice, entry.cacheWritePrice].some(
         (price) => price !== undefined,
       ),
-    { error: "Give the Pricing Window at least one price" },
+    { error: 'Give the Pricing Window at least one price' },
   );
 export type CatalogWindowPrices = z.infer<typeof catalogWindowPricesSchema>;
 
@@ -250,7 +250,7 @@ const upstreamModelSchema = z.strictObject({
     .array(catalogWindowPricesSchema)
     .refine(
       (entries) => new Set(entries.map((entry) => entry.pricingWindow)).size === entries.length,
-      { error: "List each Pricing Window once" },
+      { error: 'List each Pricing Window once' },
     )
     .optional(),
   releaseDate: z.iso.date(),
@@ -267,7 +267,7 @@ const providerEndpointSchema = z
   })
   .refine(({ kind, protocol }) => PROTOCOL_KINDS[protocol] === kind, {
     error: "The Protocol doesn't serve the endpoint's Kind",
-    path: ["protocol"],
+    path: ['protocol'],
   }) satisfies z.ZodType<ProviderEndpoint>;
 
 export const providerEndpointsSchema = z
@@ -276,13 +276,13 @@ export const providerEndpointsSchema = z
   .refine(
     (endpoints) =>
       new Set(endpoints.map((endpoint) => endpoint.protocol)).size === endpoints.length,
-    { error: "A Provider has at most one endpoint per Protocol" },
+    { error: 'A Provider has at most one endpoint per Protocol' },
   );
 
 const catalogPricingWindowSchema = z.strictObject({
   name: z.string().trim().min(1),
-  timeZone: z.string().refine(isIanaTimeZone, { error: "Unknown time zone" }),
-  ranges: z.array(rangeSchema).min(1, { error: "A Pricing Window needs at least one range" }),
+  timeZone: z.string().refine(isIanaTimeZone, { error: 'Unknown time zone' }),
+  ranges: z.array(rangeSchema).min(1, { error: 'A Pricing Window needs at least one range' }),
   notes: z.string().optional(),
 });
 export type CatalogPricingWindow = z.infer<typeof catalogPricingWindowSchema>;
@@ -303,7 +303,7 @@ export const catalogProviderSchema = z.strictObject({
   pricingWindows: z
     .array(catalogPricingWindowSchema)
     .refine((windows) => new Set(windows.map((window) => window.name)).size === windows.length, {
-      error: "Name each Pricing Window once",
+      error: 'Name each Pricing Window once',
     })
     .optional(),
   source: sourceSchema,

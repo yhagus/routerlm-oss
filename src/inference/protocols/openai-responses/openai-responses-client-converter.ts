@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { GatewayError } from "@/inference/models/gateway-error";
-import { serviceTierOfOpenAiClient } from "@/inference/models/service-tier";
+import { z } from 'zod';
+import { GatewayError } from '@/inference/models/gateway-error';
+import { serviceTierOfOpenAiClient } from '@/inference/models/service-tier';
 import {
   type AssistantContentPart,
   type InferenceMessage,
@@ -17,65 +17,65 @@ import {
   type ToolChoice,
   UNREPORTED_USAGE,
   type UserContentPart,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "@/inference/protocols/client-protocol-converter";
-import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter";
+} from '@/inference/protocols/client-protocol-converter';
+import { openAiChatClientConverter } from '@/inference/protocols/openai-chat/openai-chat-client-converter';
 
-const inputTextSchema = z.object({ type: z.literal("input_text"), text: z.string() });
+const inputTextSchema = z.object({ type: z.literal('input_text'), text: z.string() });
 const inputImageSchema = z.object({
-  type: z.literal("input_image"),
+  type: z.literal('input_image'),
   image_url: z.string().min(1),
 });
-const outputTextSchema = z.object({ type: z.literal("output_text"), text: z.string() });
-const refusalSchema = z.object({ type: z.literal("refusal"), refusal: z.string() });
+const outputTextSchema = z.object({ type: z.literal('output_text'), text: z.string() });
+const refusalSchema = z.object({ type: z.literal('refusal'), refusal: z.string() });
 
 const userContentSchema = z.union([
   z.string(),
-  z.array(z.discriminatedUnion("type", [inputTextSchema, inputImageSchema])),
+  z.array(z.discriminatedUnion('type', [inputTextSchema, inputImageSchema])),
 ]);
 const instructionContentSchema = z.union([z.string(), z.array(inputTextSchema)]);
 const assistantContentSchema = z.union([
   z.string(),
-  z.array(z.discriminatedUnion("type", [outputTextSchema, inputTextSchema, refusalSchema])),
+  z.array(z.discriminatedUnion('type', [outputTextSchema, inputTextSchema, refusalSchema])),
 ]);
 
-const messageItemSchema = z.discriminatedUnion("role", [
+const messageItemSchema = z.discriminatedUnion('role', [
   z.object({
-    type: z.literal("message").optional(),
-    role: z.literal("user"),
+    type: z.literal('message').optional(),
+    role: z.literal('user'),
     content: userContentSchema,
   }),
   z.object({
-    type: z.literal("message").optional(),
-    role: z.enum(["system", "developer"]),
+    type: z.literal('message').optional(),
+    role: z.enum(['system', 'developer']),
     content: instructionContentSchema,
   }),
   z.object({
-    type: z.literal("message").optional(),
-    role: z.literal("assistant"),
+    type: z.literal('message').optional(),
+    role: z.literal('assistant'),
     content: assistantContentSchema,
   }),
 ]);
 
 const reasoningTextSchema = z.object({ text: z.string() });
 const reasoningItemSchema = z.object({
-  type: z.literal("reasoning"),
+  type: z.literal('reasoning'),
   summary: z.array(reasoningTextSchema).optional(),
   content: z.array(reasoningTextSchema).nullish(),
   encrypted_content: z.string().nullish(),
 });
 const functionCallItemSchema = z.object({
-  type: z.literal("function_call"),
+  type: z.literal('function_call'),
   call_id: z.string().min(1),
   name: z.string().min(1),
   arguments: z.string(),
 });
 const functionCallOutputItemSchema = z.object({
-  type: z.literal("function_call_output"),
+  type: z.literal('function_call_output'),
   call_id: z.string().min(1),
   output: userContentSchema,
 });
@@ -88,17 +88,17 @@ const inputItemSchema = z.union([
 ]);
 type InputItem = z.infer<typeof inputItemSchema>;
 
-const CLIENT_EFFORTS = ["none", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
+const CLIENT_EFFORTS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
 type ClientEffort = (typeof CLIENT_EFFORTS)[number];
 
 const CLIENT_EFFORT_LEVELS = {
-  none: "none",
-  minimal: "minimal",
-  low: "low",
-  medium: "medium",
-  high: "high",
-  xhigh: "xhigh",
-  max: "xhigh",
+  none: 'none',
+  minimal: 'minimal',
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  xhigh: 'xhigh',
+  max: 'xhigh',
 } as const satisfies Record<ClientEffort, ReasoningEffort>;
 
 const requestSchema = z.object({
@@ -108,7 +108,7 @@ const requestSchema = z.object({
   tools: z
     .array(
       z.object({
-        type: z.literal("function"),
+        type: z.literal('function'),
         name: z.string().min(1),
         description: z.string().nullish(),
         parameters: z.record(z.string(), z.unknown()).nullish(),
@@ -118,19 +118,19 @@ const requestSchema = z.object({
     .optional(),
   tool_choice: z
     .union([
-      z.enum(["auto", "none", "required"]),
-      z.object({ type: z.literal("function"), name: z.string().min(1) }),
+      z.enum(['auto', 'none', 'required']),
+      z.object({ type: z.literal('function'), name: z.string().min(1) }),
     ])
     .optional(),
   parallel_tool_calls: z.boolean().nullish(),
   text: z
     .object({
       format: z
-        .discriminatedUnion("type", [
-          z.object({ type: z.literal("text") }),
-          z.object({ type: z.literal("json_object") }),
+        .discriminatedUnion('type', [
+          z.object({ type: z.literal('text') }),
+          z.object({ type: z.literal('json_object') }),
           z.object({
-            type: z.literal("json_schema"),
+            type: z.literal('json_schema'),
             name: z.string().min(1),
             schema: z.record(z.string(), z.unknown()),
             strict: z.boolean().nullish(),
@@ -149,7 +149,7 @@ const requestSchema = z.object({
 });
 type ClientRequest = z.infer<typeof requestSchema>;
 
-const EMPTY_PARAMETERS_SCHEMA = { type: "object", properties: {} };
+const EMPTY_PARAMETERS_SCHEMA = { type: 'object', properties: {} };
 const DATA_URL = /^data:([^;,]+);base64,(.*)$/s;
 
 function parseRequest(body: unknown): InferenceRequest {
@@ -157,9 +157,9 @@ function parseRequest(body: unknown): InferenceRequest {
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `Invalid request: ${z.prettifyError(parsed.error)}`,
-      "client",
+      'client',
     );
   }
   return toInferenceRequest(parsed.data);
@@ -181,13 +181,13 @@ const featureRefusedSchema = z.object({
 
 const SUPPORTED_INPUT_ITEMS = new Set([
   undefined,
-  "message",
-  "reasoning",
-  "function_call",
-  "function_call_output",
+  'message',
+  'reasoning',
+  'function_call',
+  'function_call_output',
 ]);
-const SUPPORTED_CONTENT_PARTS = new Set(["input_text", "input_image", "output_text", "refusal"]);
-const SEND_THE_CONVERSATION = "the gateway is stateless, so send the whole conversation in `input`";
+const SUPPORTED_CONTENT_PARTS = new Set(['input_text', 'input_image', 'output_text', 'refusal']);
+const SEND_THE_CONVERSATION = 'the gateway is stateless, so send the whole conversation in `input`';
 
 function refuseOutOfScopeFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
@@ -206,12 +206,12 @@ function refuseOutOfScopeFeatures(body: unknown): void {
     throw unsupported(`stored conversations (\`conversation\`); ${SEND_THE_CONVERSATION}`);
   }
   if (background === true) {
-    throw unsupported("background mode (`background`)");
+    throw unsupported('background mode (`background`)');
   }
   if (prompt != null) {
-    throw unsupported("stored prompts (`prompt`)");
+    throw unsupported('stored prompts (`prompt`)');
   }
-  const otherTool = tools?.find((tool) => tool.type !== "function");
+  const otherTool = tools?.find((tool) => tool.type !== 'function');
   if (otherTool) {
     throw unsupported(
       `tools of type \`${String(otherTool.type)}\`; only function tools are supported`,
@@ -223,36 +223,36 @@ function refuseOutOfScopeFeatures(body: unknown): void {
 }
 
 function refuseUnsupportedItem(item: { type: unknown; content: unknown; output: unknown }): void {
-  if (!SUPPORTED_INPUT_ITEMS.has(typeof item.type === "string" ? item.type : undefined)) {
+  if (!SUPPORTED_INPUT_ITEMS.has(typeof item.type === 'string' ? item.type : undefined)) {
     throw unsupported(`input items of type \`${String(item.type)}\``);
   }
-  if (item.type === "reasoning") {
+  if (item.type === 'reasoning') {
     return;
   }
   const parts = z
     .array(typedSchema)
-    .safeParse(item.type === "function_call_output" ? item.output : item.content);
+    .safeParse(item.type === 'function_call_output' ? item.output : item.content);
   for (const part of parts.success ? parts.data : []) {
-    if (typeof part.type === "string" && !SUPPORTED_CONTENT_PARTS.has(part.type)) {
+    if (typeof part.type === 'string' && !SUPPORTED_CONTENT_PARTS.has(part.type)) {
       throw unsupported(`content parts of type \`${part.type}\``);
     }
-    if (part.type === "input_image" && part.image_url == null) {
-      throw unsupported("images by `file_id`; send an `image_url` (a URL or a data URL)");
+    if (part.type === 'input_image' && part.image_url == null) {
+      throw unsupported('images by `file_id`; send an `image_url` (a URL or a data URL)');
     }
   }
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
+  return new GatewayError('invalid_request', `Not supported: ${feature}`, 'client');
 }
 
 function toInferenceRequest(request: ClientRequest): InferenceRequest {
   const system: TextPart[] = [];
   if (request.instructions) {
-    system.push({ type: "text", text: request.instructions });
+    system.push({ type: 'text', text: request.instructions });
   }
   const items: InputItem[] =
-    typeof request.input === "string" ? [{ role: "user", content: request.input }] : request.input;
+    typeof request.input === 'string' ? [{ role: 'user', content: request.input }] : request.input;
   const messages: InferenceMessage[] = [];
   for (const item of items) {
     if (isInstruction(item)) {
@@ -305,24 +305,24 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
   return parsed;
 }
 
-type InstructionItem = Extract<InputItem, { role: "system" | "developer" }>;
+type InstructionItem = Extract<InputItem, { role: 'system' | 'developer' }>;
 type ConversationItem = Exclude<InputItem, InstructionItem>;
 
 function isInstruction(item: InputItem): item is InstructionItem {
-  return "role" in item && (item.role === "system" || item.role === "developer");
+  return 'role' in item && (item.role === 'system' || item.role === 'developer');
 }
 
 function appendItem(messages: InferenceMessage[], item: ConversationItem): void {
-  if ("role" in item && item.role === "user") {
-    messages.push({ role: "user", content: userContent(item.content) });
+  if ('role' in item && item.role === 'user') {
+    messages.push({ role: 'user', content: userContent(item.content) });
     return;
   }
-  if (item.type === "function_call_output") {
-    messages.push({ role: "tool", toolCallId: item.call_id, content: userContent(item.output) });
+  if (item.type === 'function_call_output') {
+    messages.push({ role: 'tool', toolCallId: item.call_id, content: userContent(item.output) });
     return;
   }
   const last = messages.at(-1);
-  const assistant = last?.role === "assistant" ? last : { role: "assistant" as const, content: [] };
+  const assistant = last?.role === 'assistant' ? last : { role: 'assistant' as const, content: [] };
   if (assistant !== last) {
     messages.push(assistant);
   }
@@ -330,68 +330,68 @@ function appendItem(messages: InferenceMessage[], item: ConversationItem): void 
 }
 
 function assistantParts(
-  item: Exclude<ConversationItem, { role: "user" } | { type: "function_call_output" }>,
+  item: Exclude<ConversationItem, { role: 'user' } | { type: 'function_call_output' }>,
 ): AssistantContentPart[] {
-  if ("role" in item) {
-    if (typeof item.content === "string") {
-      return [{ type: "text", text: item.content }];
+  if ('role' in item) {
+    if (typeof item.content === 'string') {
+      return [{ type: 'text', text: item.content }];
     }
     return item.content.map((part) => ({
-      type: "text",
-      text: part.type === "refusal" ? part.refusal : part.text,
+      type: 'text',
+      text: part.type === 'refusal' ? part.refusal : part.text,
     }));
   }
-  if (item.type === "function_call") {
-    return [{ type: "tool-call", id: item.call_id, name: item.name, arguments: item.arguments }];
+  if (item.type === 'function_call') {
+    return [{ type: 'tool-call', id: item.call_id, name: item.name, arguments: item.arguments }];
   }
   const texts = item.content?.length ? item.content : (item.summary ?? []);
   return [
     {
-      type: "reasoning",
-      text: texts.map((text) => text.text).join("\n\n"),
+      type: 'reasoning',
+      text: texts.map((text) => text.text).join('\n\n'),
       ...(item.encrypted_content && { signature: item.encrypted_content }),
     },
   ];
 }
 
 function textParts(content: z.infer<typeof instructionContentSchema>): TextPart[] {
-  if (typeof content === "string") {
-    return [{ type: "text", text: content }];
+  if (typeof content === 'string') {
+    return [{ type: 'text', text: content }];
   }
-  return content.map((part) => ({ type: "text", text: part.text }));
+  return content.map((part) => ({ type: 'text', text: part.text }));
 }
 
 function userContent(content: z.infer<typeof userContentSchema>): UserContentPart[] {
-  if (typeof content === "string") {
-    return [{ type: "text", text: content }];
+  if (typeof content === 'string') {
+    return [{ type: 'text', text: content }];
   }
   return content.map((part): UserContentPart => {
-    if (part.type === "input_text") {
-      return { type: "text", text: part.text };
+    if (part.type === 'input_text') {
+      return { type: 'text', text: part.text };
     }
     const dataUrl = DATA_URL.exec(part.image_url);
     if (dataUrl) {
-      return { type: "image", source: { type: "base64", mediaType: dataUrl[1], data: dataUrl[2] } };
+      return { type: 'image', source: { type: 'base64', mediaType: dataUrl[1], data: dataUrl[2] } };
     }
-    return { type: "image", source: { type: "url", url: part.image_url } };
+    return { type: 'image', source: { type: 'url', url: part.image_url } };
   });
 }
 
-function toToolChoice(choice: NonNullable<ClientRequest["tool_choice"]>): ToolChoice {
-  return typeof choice === "string" ? { type: choice } : { type: "tool", name: choice.name };
+function toToolChoice(choice: NonNullable<ClientRequest['tool_choice']>): ToolChoice {
+  return typeof choice === 'string' ? { type: choice } : { type: 'tool', name: choice.name };
 }
 
 function toResponseFormat(
-  format: NonNullable<NonNullable<ClientRequest["text"]>["format"]>,
+  format: NonNullable<NonNullable<ClientRequest['text']>['format']>,
 ): ResponseFormat {
   switch (format.type) {
-    case "text":
-      return { type: "text" };
-    case "json_object":
-      return { type: "json-object" };
-    case "json_schema":
+    case 'text':
+      return { type: 'text' };
+    case 'json_object':
+      return { type: 'json-object' };
+    case 'json_schema':
       return {
-        type: "json-schema",
+        type: 'json-schema',
         name: format.name,
         schema: format.schema,
         ...(format.strict != null && { strict: format.strict }),
@@ -399,14 +399,14 @@ function toResponseFormat(
   }
 }
 
-const RESPONSE_ID_PREFIX = "resp_";
-const ITEM_ID_PREFIXES = { message: "msg_", reasoning: "rs_", function_call: "fc_" } as const;
+const RESPONSE_ID_PREFIX = 'resp_';
+const ITEM_ID_PREFIXES = { message: 'msg_', reasoning: 'rs_', function_call: 'fc_' } as const;
 type OutputItemType = keyof typeof ITEM_ID_PREFIXES;
-type ItemStatus = "in_progress" | "completed";
+type ItemStatus = 'in_progress' | 'completed';
 
 const INCOMPLETE_REASONS: Partial<Record<StopReason, string>> = {
-  "max-tokens": "max_output_tokens",
-  "content-filter": "content_filter",
+  'max-tokens': 'max_output_tokens',
+  'content-filter': 'content_filter',
 };
 
 type ResponseEnding = { stopReason: StopReason; usage: TokenUsage } | null;
@@ -419,12 +419,12 @@ function writeResponse(
   const output = mergeTextParts(response.content).map((part, outputIndex) => {
     const id = outputItemId(context, outputItemTypeOf(part), outputIndex);
     switch (part.type) {
-      case "text":
-        return messageItem(id, "completed", part.text);
-      case "reasoning":
-        return reasoningItem(id, "completed", part);
-      case "tool-call":
-        return functionCallItem(id, "completed", part);
+      case 'text':
+        return messageItem(id, 'completed', part.text);
+      case 'reasoning':
+        return reasoningItem(id, 'completed', part);
+      case 'tool-call':
+        return functionCallItem(id, 'completed', part);
     }
   });
   return responseObject(request, context, output, response);
@@ -434,8 +434,8 @@ function mergeTextParts(content: AssistantContentPart[]): AssistantContentPart[]
   const merged: AssistantContentPart[] = [];
   for (const part of content) {
     const previous = merged.at(-1);
-    if (part.type === "text" && previous?.type === "text") {
-      merged[merged.length - 1] = { type: "text", text: previous.text + part.text };
+    if (part.type === 'text' && previous?.type === 'text') {
+      merged[merged.length - 1] = { type: 'text', text: previous.text + part.text };
     } else {
       merged.push(part);
     }
@@ -445,12 +445,12 @@ function mergeTextParts(content: AssistantContentPart[]): AssistantContentPart[]
 
 function outputItemTypeOf(part: AssistantContentPart): OutputItemType {
   switch (part.type) {
-    case "text":
-      return "message";
-    case "reasoning":
-      return "reasoning";
-    case "tool-call":
-      return "function_call";
+    case 'text':
+      return 'message';
+    case 'reasoning':
+      return 'reasoning';
+    case 'tool-call':
+      return 'function_call';
   }
 }
 
@@ -461,25 +461,25 @@ function outputItemId(context: ResponseContext, type: OutputItemType, outputInde
 function messageItem(id: string, status: ItemStatus, text: string | null): Record<string, unknown> {
   return {
     id,
-    type: "message",
+    type: 'message',
     status,
-    role: "assistant",
+    role: 'assistant',
     content: text === null ? [] : [outputTextPart(text)],
   };
 }
 
 function outputTextPart(text: string): Record<string, unknown> {
-  return { type: "output_text", text, annotations: [], logprobs: [] };
+  return { type: 'output_text', text, annotations: [], logprobs: [] };
 }
 
 function reasoningItem(
   id: string,
   status: ItemStatus,
-  reasoning: Omit<ReasoningPart, "type"> | null,
+  reasoning: Omit<ReasoningPart, 'type'> | null,
 ): Record<string, unknown> {
   return {
     id,
-    type: "reasoning",
+    type: 'reasoning',
     status,
     summary: [],
     content: reasoning === null ? [] : [reasoningTextPart(reasoning.text)],
@@ -488,17 +488,17 @@ function reasoningItem(
 }
 
 function reasoningTextPart(text: string): Record<string, unknown> {
-  return { type: "reasoning_text", text };
+  return { type: 'reasoning_text', text };
 }
 
 function functionCallItem(
   id: string,
   status: ItemStatus,
-  call: Omit<ToolCallPart, "type">,
+  call: Omit<ToolCallPart, 'type'>,
 ): Record<string, unknown> {
   return {
     id,
-    type: "function_call",
+    type: 'function_call',
     status,
     call_id: call.id,
     name: call.name,
@@ -515,7 +515,7 @@ function responseObject(
   const incompleteReason = ending && INCOMPLETE_REASONS[ending.stopReason];
   return {
     id: `${RESPONSE_ID_PREFIX}${context.requestId}`,
-    object: "response",
+    object: 'response',
     created_at: Math.floor(context.createdAt.getTime() / 1000),
     status: responseStatusOf(ending),
     error: null,
@@ -528,7 +528,7 @@ function responseObject(
     temperature: request.temperature ?? null,
     tool_choice: writeToolChoice(request.toolChoice),
     tools: request.tools.map((tool) => ({
-      type: "function",
+      type: 'function',
       name: tool.name,
       description: tool.description ?? null,
       parameters: tool.parameters,
@@ -540,35 +540,35 @@ function responseObject(
     reasoning: { effort: request.reasoning?.effort ?? null, summary: null },
     store: false,
     text: { format: writeResponseFormat(request.responseFormat) },
-    truncation: "disabled",
+    truncation: 'disabled',
     usage: ending === null ? null : writeUsage(ending.usage),
   };
 }
 
-function responseStatusOf(ending: ResponseEnding): "in_progress" | "completed" | "incomplete" {
+function responseStatusOf(ending: ResponseEnding): 'in_progress' | 'completed' | 'incomplete' {
   if (ending === null) {
-    return "in_progress";
+    return 'in_progress';
   }
-  return INCOMPLETE_REASONS[ending.stopReason] === undefined ? "completed" : "incomplete";
+  return INCOMPLETE_REASONS[ending.stopReason] === undefined ? 'completed' : 'incomplete';
 }
 
 function writeToolChoice(choice: ToolChoice | undefined): unknown {
   if (choice === undefined) {
-    return "auto";
+    return 'auto';
   }
-  return choice.type === "tool" ? { type: "function", name: choice.name } : choice.type;
+  return choice.type === 'tool' ? { type: 'function', name: choice.name } : choice.type;
 }
 
 function writeResponseFormat(format: ResponseFormat | undefined): Record<string, unknown> {
   switch (format?.type) {
     case undefined:
-    case "text":
-      return { type: "text" };
-    case "json-object":
-      return { type: "json_object" };
-    case "json-schema":
+    case 'text':
+      return { type: 'text' };
+    case 'json-object':
+      return { type: 'json_object' };
+    case 'json-schema':
       return {
-        type: "json_schema",
+        type: 'json_schema',
         name: format.name,
         schema: format.schema,
         strict: format.strict ?? null,
@@ -596,7 +596,7 @@ function startStream(request: InferenceRequest, context: ResponseContext): Clien
 
 class OpenAiResponsesStreamWriter implements ClientStreamWriter {
   private readonly items: ResponseEventWriter;
-  private stopReason: StopReason = "end";
+  private stopReason: StopReason = 'end';
   private usage = UNREPORTED_USAGE;
 
   constructor(request: InferenceRequest, context: ResponseContext) {
@@ -604,18 +604,18 @@ class OpenAiResponsesStreamWriter implements ClientStreamWriter {
   }
 
   start(): string {
-    const created = this.items.lifecycleEvent("response.created", null);
-    return created + this.items.lifecycleEvent("response.in_progress", null);
+    const created = this.items.lifecycleEvent('response.created', null);
+    return created + this.items.lifecycleEvent('response.in_progress', null);
   }
 
   write(event: InferenceStreamEvent): string {
     switch (event.type) {
-      case "finish":
+      case 'finish':
         this.stopReason = event.stopReason;
-        return "";
-      case "usage":
+        return '';
+      case 'usage':
         this.usage = event.usage;
-        return "";
+        return '';
       default:
         return this.items.write(event);
     }
@@ -625,23 +625,23 @@ class OpenAiResponsesStreamWriter implements ClientStreamWriter {
     const closing = this.items.closeOpenItem();
     const ending = { stopReason: this.stopReason, usage: this.usage };
     const lifecycleType =
-      responseStatusOf(ending) === "completed" ? "response.completed" : "response.incomplete";
+      responseStatusOf(ending) === 'completed' ? 'response.completed' : 'response.incomplete';
     return closing + this.items.lifecycleEvent(lifecycleType, ending);
   }
 }
 
-type ContentEvent = Exclude<InferenceStreamEvent, { type: "finish" | "usage" }>;
+type ContentEvent = Exclude<InferenceStreamEvent, { type: 'finish' | 'usage' }>;
 
 interface OpenItemPosition {
   id: string;
   outputIndex: number;
 }
-type OpenMessage = OpenItemPosition & { type: "message"; text: string };
-type OpenReasoning = OpenItemPosition & { type: "reasoning"; text: string; signature?: string };
+type OpenMessage = OpenItemPosition & { type: 'message'; text: string };
+type OpenReasoning = OpenItemPosition & { type: 'reasoning'; text: string; signature?: string };
 type OpenFunctionCall = OpenItemPosition & {
-  type: "function_call";
+  type: 'function_call';
   toolIndex: number;
-  call: Omit<ToolCallPart, "type">;
+  call: Omit<ToolCallPart, 'type'>;
 };
 type OpenItem = OpenMessage | OpenReasoning | OpenFunctionCall;
 
@@ -671,47 +671,47 @@ class ResponseEventWriter {
 
   write(event: ContentEvent): string {
     switch (event.type) {
-      case "text-delta": {
+      case 'text-delta': {
         const { written, item: message } = this.openMessage();
         message.text += event.text;
         return (
           written +
-          this.event("response.output_text.delta", {
+          this.event('response.output_text.delta', {
             ...this.contentPosition(message),
             delta: event.text,
             logprobs: [],
           })
         );
       }
-      case "reasoning-delta": {
+      case 'reasoning-delta': {
         const { written, item: reasoning } = this.unsignedReasoning();
         reasoning.text += event.text;
         return (
           written +
-          this.event("response.reasoning_text.delta", {
+          this.event('response.reasoning_text.delta', {
             ...this.contentPosition(reasoning),
             delta: event.text,
           })
         );
       }
-      case "reasoning-signature": {
+      case 'reasoning-signature': {
         const { written, item: reasoning } = this.unsignedReasoning();
         reasoning.signature = event.signature;
         return written;
       }
-      case "tool-call-start":
+      case 'tool-call-start':
         return this.startFunctionCall(event.index, { id: event.id, name: event.name });
-      case "tool-call-delta": {
+      case 'tool-call-delta': {
         const call = this.open;
-        if (call?.type !== "function_call" || call.toolIndex !== event.index) {
+        if (call?.type !== 'function_call' || call.toolIndex !== event.index) {
           throw new GatewayError(
-            "upstream_error",
-            "The upstream interleaved tool call arguments",
-            "upstream",
+            'upstream_error',
+            'The upstream interleaved tool call arguments',
+            'upstream',
           );
         }
         call.call.arguments += event.argumentsDelta;
-        return this.event("response.function_call_arguments.delta", {
+        return this.event('response.function_call_arguments.delta', {
           item_id: call.id,
           output_index: call.outputIndex,
           delta: event.argumentsDelta,
@@ -723,107 +723,107 @@ class ResponseEventWriter {
   closeOpenItem(): string {
     const item = this.open;
     if (item === null) {
-      return "";
+      return '';
     }
     this.open = null;
     let written: string;
     let done: Record<string, unknown>;
     switch (item.type) {
-      case "message": {
+      case 'message': {
         const part = outputTextPart(item.text);
         written =
-          this.event("response.output_text.done", {
+          this.event('response.output_text.done', {
             ...this.contentPosition(item),
             text: item.text,
             logprobs: [],
-          }) + this.event("response.content_part.done", { ...this.contentPosition(item), part });
-        done = messageItem(item.id, "completed", item.text);
+          }) + this.event('response.content_part.done', { ...this.contentPosition(item), part });
+        done = messageItem(item.id, 'completed', item.text);
         break;
       }
-      case "reasoning": {
+      case 'reasoning': {
         written =
-          this.event("response.reasoning_text.done", {
+          this.event('response.reasoning_text.done', {
             ...this.contentPosition(item),
             text: item.text,
           }) +
-          this.event("response.content_part.done", {
+          this.event('response.content_part.done', {
             ...this.contentPosition(item),
             part: reasoningTextPart(item.text),
           });
-        done = reasoningItem(item.id, "completed", item);
+        done = reasoningItem(item.id, 'completed', item);
         break;
       }
-      case "function_call":
-        written = this.event("response.function_call_arguments.done", {
+      case 'function_call':
+        written = this.event('response.function_call_arguments.done', {
           item_id: item.id,
           output_index: item.outputIndex,
           arguments: item.call.arguments,
         });
-        done = functionCallItem(item.id, "completed", item.call);
+        done = functionCallItem(item.id, 'completed', item.call);
         break;
     }
     this.finishedItems.push(done);
     return (
       written +
-      this.event("response.output_item.done", { output_index: item.outputIndex, item: done })
+      this.event('response.output_item.done', { output_index: item.outputIndex, item: done })
     );
   }
 
   private openMessage(): Opened<OpenMessage> {
-    if (this.open?.type === "message") {
-      return { written: "", item: this.open };
+    if (this.open?.type === 'message') {
+      return { written: '', item: this.open };
     }
     const closing = this.closeOpenItem();
-    const message: OpenMessage = { ...this.nextPosition("message"), type: "message", text: "" };
+    const message: OpenMessage = { ...this.nextPosition('message'), type: 'message', text: '' };
     this.open = message;
     const written =
       closing +
-      this.itemAdded(message, messageItem(message.id, "in_progress", null)) +
-      this.event("response.content_part.added", {
+      this.itemAdded(message, messageItem(message.id, 'in_progress', null)) +
+      this.event('response.content_part.added', {
         ...this.contentPosition(message),
-        part: outputTextPart(""),
+        part: outputTextPart(''),
       });
     return { written, item: message };
   }
 
   private unsignedReasoning(): Opened<OpenReasoning> {
-    if (this.open?.type === "reasoning" && this.open.signature === undefined) {
-      return { written: "", item: this.open };
+    if (this.open?.type === 'reasoning' && this.open.signature === undefined) {
+      return { written: '', item: this.open };
     }
     const closing = this.closeOpenItem();
     const reasoning: OpenReasoning = {
-      ...this.nextPosition("reasoning"),
-      type: "reasoning",
-      text: "",
+      ...this.nextPosition('reasoning'),
+      type: 'reasoning',
+      text: '',
     };
     this.open = reasoning;
     const written =
       closing +
-      this.itemAdded(reasoning, reasoningItem(reasoning.id, "in_progress", null)) +
-      this.event("response.content_part.added", {
+      this.itemAdded(reasoning, reasoningItem(reasoning.id, 'in_progress', null)) +
+      this.event('response.content_part.added', {
         ...this.contentPosition(reasoning),
-        part: reasoningTextPart(""),
+        part: reasoningTextPart(''),
       });
     return { written, item: reasoning };
   }
 
   private startFunctionCall(
     toolIndex: number,
-    call: Omit<ToolCallPart, "type" | "arguments">,
+    call: Omit<ToolCallPart, 'type' | 'arguments'>,
   ): string {
     const closing = this.closeOpenItem();
     const functionCall: OpenFunctionCall = {
-      ...this.nextPosition("function_call"),
-      type: "function_call",
+      ...this.nextPosition('function_call'),
+      type: 'function_call',
       toolIndex,
-      call: { ...call, arguments: "" },
+      call: { ...call, arguments: '' },
     };
     this.open = functionCall;
     return (
       closing +
       this.itemAdded(
         functionCall,
-        functionCallItem(functionCall.id, "in_progress", functionCall.call),
+        functionCallItem(functionCall.id, 'in_progress', functionCall.call),
       )
     );
   }
@@ -834,7 +834,7 @@ class ResponseEventWriter {
   }
 
   private itemAdded(position: OpenItemPosition, item: Record<string, unknown>): string {
-    return this.event("response.output_item.added", { output_index: position.outputIndex, item });
+    return this.event('response.output_item.added', { output_index: position.outputIndex, item });
   }
 
   private contentPosition(item: OpenItemPosition): Record<string, unknown> {
@@ -857,8 +857,8 @@ function writeError(error: GatewayError): unknown {
 }
 
 function writeStreamError(error: GatewayError): string {
-  return namedEvent("error", {
-    type: "error",
+  return namedEvent('error', {
+    type: 'error',
     code: error.code,
     message: error.message,
     param: null,
@@ -866,7 +866,7 @@ function writeStreamError(error: GatewayError): string {
 }
 
 export const openAiResponsesClientConverter: ClientProtocolConverter = {
-  protocol: "openai-responses",
+  protocol: 'openai-responses',
   parseRequest,
   writeResponse,
   startStream,

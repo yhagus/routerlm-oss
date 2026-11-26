@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Check, Copy } from "@lucide/vue";
-import { computed } from "vue";
-import { readableMarkdownOf } from "~/lib/docsCode";
+import { Check, Copy } from '@lucide/vue';
+import { computed } from 'vue';
+import { readableMarkdownOf } from '~/lib/docsCode';
 
 const props = defineProps<{
   title: string;
@@ -17,9 +17,9 @@ const { withGatewayUrl } = useGatewayUrl();
 const { state: copyState, copy } = useCopyFeedback();
 
 const copyLabel = computed(() => {
-  if (copyState.value === "copied") return t("copied");
-  if (copyState.value === "failed") return t("copyFailed");
-  return t("copyPage");
+  if (copyState.value === 'copied') return t('copied');
+  if (copyState.value === 'failed') return t('copyFailed');
+  return t('copyPage');
 });
 
 async function handleCopyPage(): Promise<void> {
@@ -35,15 +35,15 @@ async function handleCopyPage(): Promise<void> {
     </div>
     <div class="ds-title__cells">
       <dl v-if="endpoint" class="ds-title__cell ds-title__cell--endpoint">
-        <dt>{{ t("endpoint") }}</dt>
+        <dt>{{ t('endpoint') }}</dt>
         <dd class="ds-title__value">{{ endpoint }}</dd>
       </dl>
       <dl v-if="pageCounter" class="ds-title__cell">
-        <dt>{{ t("page") }}</dt>
+        <dt>{{ t('page') }}</dt>
         <dd class="ds-title__value">{{ pageCounter }}</dd>
       </dl>
       <dl class="ds-title__cell">
-        <dt>{{ t("revision") }}</dt>
+        <dt>{{ t('revision') }}</dt>
         <dd class="ds-title__value">{{ appVersion }}</dd>
       </dl>
       <div class="ds-title__cell ds-title__cell--action">
@@ -53,7 +53,7 @@ async function handleCopyPage(): Promise<void> {
           <span>{{ copyLabel }}</span>
         </button>
         <span class="sr-only" role="status">{{
-          copyState === "copied" ? t("pageCopied") : ""
+          copyState === 'copied' ? t('pageCopied') : ''
         }}</span>
       </div>
     </div>

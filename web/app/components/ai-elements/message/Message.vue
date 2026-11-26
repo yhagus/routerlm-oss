@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { UIMessage } from "ai";
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
+import type { UIMessage } from 'ai';
+import type { HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
 
 interface Props {
-  from: UIMessage["role"];
-  class?: HTMLAttributes["class"];
+  from: UIMessage['role'];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();

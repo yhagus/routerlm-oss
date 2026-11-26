@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { UpstreamModelProbe } from "~/composables/useUpstreamModelProbe";
-import { attemptOutcomeLabel, upstreamErrorMessage } from "~/lib/errorCaptures";
-import { ERROR_ORIGIN_LABELS } from "~/lib/errorOrigins";
-import type { ProbeResult } from "~/lib/probe";
-import { upstreamModelLabel } from "~/lib/upstream";
-import { formatCost, formatDuration } from "~/lib/usage";
+import type { UpstreamModelProbe } from '~/composables/useUpstreamModelProbe';
+import { attemptOutcomeLabel, upstreamErrorMessage } from '~/lib/errorCaptures';
+import { ERROR_ORIGIN_LABELS } from '~/lib/errorOrigins';
+import type { ProbeResult } from '~/lib/probe';
+import { upstreamModelLabel } from '~/lib/upstream';
+import { formatCost, formatDuration } from '~/lib/usage';
 
 const props = defineProps<{
   probe: UpstreamModelProbe;
 }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const title = computed(() => `Probe of ${upstreamModelLabel(props.probe.upstreamModel)}`);
 
@@ -19,7 +19,7 @@ function errorText(result: ProbeResult): string | null {
 }
 
 const results = computed(() =>
-  props.probe.status === "done"
+  props.probe.status === 'done'
     ? props.probe.results.map((result) => ({ ...result, errorText: errorText(result) }))
     : [],
 );
@@ -41,7 +41,7 @@ const results = computed(() =>
           <span
             class="status-badge"
             :class="result.ok ? 'status-badge--good' : 'status-badge--bad'"
-            >{{ attemptOutcomeLabel(result, result.ok ? "Succeeded" : "Failed") }}</span
+            >{{ attemptOutcomeLabel(result, result.ok ? 'Succeeded' : 'Failed') }}</span
           >
         </p>
         <p class="probe-result__facts tabular">

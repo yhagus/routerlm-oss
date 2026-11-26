@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { SelectValue } from "@/components/ui/select";
+import { SelectValue } from '@/components/ui/select';
 
-type CodeBlockLanguageSelectorValueProps = InstanceType<typeof SelectValue>["$props"];
+type CodeBlockLanguageSelectorValueProps = InstanceType<typeof SelectValue>['$props'];
 
 interface Props extends /* @vue-ignore */ CodeBlockLanguageSelectorValueProps {}
 

@@ -1,17 +1,17 @@
-import { z } from "zod";
+import { z } from 'zod';
 import type {
   AssistantContentPart,
   InferenceResponse,
   InferenceStreamEvent,
   StopReason,
   TokenUsage,
-} from "@/inference/models/internal-format";
-import { isJsonObject } from "@/inference/protocols/json-object";
-import type { ServerSentEvent } from "@/inference/protocols/server-sent-events";
+} from '@/inference/models/internal-format';
+import { isJsonObject } from '@/inference/protocols/json-object';
+import type { ServerSentEvent } from '@/inference/protocols/server-sent-events';
 import {
   UpstreamProtocolError,
   type UpstreamStreamParser,
-} from "@/inference/protocols/upstream-protocol-converter";
+} from '@/inference/protocols/upstream-protocol-converter';
 
 const usageSchema = z.object({
   input_tokens: z.number().nullish(),
@@ -24,17 +24,17 @@ type MessagesUsage = z.infer<typeof usageSchema>;
 const stopReasonSchema = z.string().nullish();
 
 const STOP_REASONS: Record<string, StopReason> = {
-  end_turn: "end",
-  max_tokens: "max-tokens",
-  model_context_window_exceeded: "max-tokens",
-  stop_sequence: "stop-sequence",
-  tool_use: "tool-calls",
-  refusal: "content-filter",
-  pause_turn: "end",
+  end_turn: 'end',
+  max_tokens: 'max-tokens',
+  model_context_window_exceeded: 'max-tokens',
+  stop_sequence: 'stop-sequence',
+  tool_use: 'tool-calls',
+  refusal: 'content-filter',
+  pause_turn: 'end',
 };
 
 function stopReasonOf(stopReason: string | null | undefined): StopReason {
-  return (stopReason && STOP_REASONS[stopReason]) || "end";
+  return (stopReason && STOP_REASONS[stopReason]) || 'end';
 }
 
 function tokenUsageOf(usage: MessagesUsage): TokenUsage {
@@ -49,11 +49,11 @@ function tokenUsageOf(usage: MessagesUsage): TokenUsage {
   };
 }
 
-const contentBlockSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("text"), text: z.string() }),
-  z.object({ type: z.literal("thinking"), thinking: z.string(), signature: z.string() }),
+const contentBlockSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text'), text: z.string() }),
+  z.object({ type: z.literal('thinking'), thinking: z.string(), signature: z.string() }),
   z.object({
-    type: z.literal("tool_use"),
+    type: z.literal('tool_use'),
     id: z.string(),
     name: z.string(),
     input: z.unknown(),
@@ -78,19 +78,19 @@ export function parseMessagesResponse(body: unknown): InferenceResponse {
       continue;
     }
     switch (block.data.type) {
-      case "text":
-        content.push({ type: "text", text: block.data.text });
+      case 'text':
+        content.push({ type: 'text', text: block.data.text });
         break;
-      case "thinking":
+      case 'thinking':
         content.push({
-          type: "reasoning",
+          type: 'reasoning',
           text: block.data.thinking,
           signature: block.data.signature,
         });
         break;
-      case "tool_use":
+      case 'tool_use':
         content.push({
-          type: "tool-call",
+          type: 'tool-call',
           id: block.data.id,
           name: block.data.name,
           arguments: JSON.stringify(block.data.input),
@@ -105,27 +105,27 @@ export function parseMessagesResponse(body: unknown): InferenceResponse {
   };
 }
 
-const streamEventSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("message_start"), message: z.object({ usage: usageSchema }) }),
+const streamEventSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('message_start'), message: z.object({ usage: usageSchema }) }),
   z.object({
-    type: z.literal("content_block_start"),
+    type: z.literal('content_block_start'),
     index: z.number(),
     content_block: z.object({ type: z.string() }).loose(),
   }),
   z.object({
-    type: z.literal("content_block_delta"),
+    type: z.literal('content_block_delta'),
     index: z.number(),
     delta: z.object({ type: z.string() }).loose(),
   }),
-  z.object({ type: z.literal("content_block_stop") }),
+  z.object({ type: z.literal('content_block_stop') }),
   z.object({
-    type: z.literal("message_delta"),
+    type: z.literal('message_delta'),
     delta: z.object({ stop_reason: stopReasonSchema }),
     usage: usageSchema.nullish(),
   }),
-  z.object({ type: z.literal("message_stop") }),
-  z.object({ type: z.literal("ping") }),
-  z.object({ type: z.literal("error"), error: z.unknown() }),
+  z.object({ type: z.literal('message_stop') }),
+  z.object({ type: z.literal('ping') }),
+  z.object({ type: z.literal('error'), error: z.unknown() }),
 ]);
 type StreamEvent = z.infer<typeof streamEventSchema>;
 const KNOWN_STREAM_EVENT_TYPES: ReadonlySet<string> = new Set(
@@ -133,16 +133,16 @@ const KNOWN_STREAM_EVENT_TYPES: ReadonlySet<string> = new Set(
 );
 
 const toolUseStartSchema = z.object({
-  type: z.literal("tool_use"),
+  type: z.literal('tool_use'),
   id: z.string(),
   name: z.string(),
 });
 
-const deltaSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("text_delta"), text: z.string() }),
-  z.object({ type: z.literal("thinking_delta"), thinking: z.string() }),
-  z.object({ type: z.literal("signature_delta"), signature: z.string() }),
-  z.object({ type: z.literal("input_json_delta"), partial_json: z.string() }),
+const deltaSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text_delta'), text: z.string() }),
+  z.object({ type: z.literal('thinking_delta'), thinking: z.string() }),
+  z.object({ type: z.literal('signature_delta'), signature: z.string() }),
+  z.object({ type: z.literal('input_json_delta'), partial_json: z.string() }),
 ]);
 
 class StreamState {
@@ -184,15 +184,15 @@ class MessagesStreamParser implements UpstreamStreamParser {
     if (!event) {
       return [];
     }
-    if (event.type === "message_stop") {
+    if (event.type === 'message_stop') {
       this.isDone = true;
-      return [{ type: "usage", usage: tokenUsageOf(this.state.usage) }];
+      return [{ type: 'usage', usage: tokenUsageOf(this.state.usage) }];
     }
     return [...eventsOf(event, this.state)];
   }
 
   end(): InferenceStreamEvent[] {
-    throw new UpstreamProtocolError("The stream ended before message_stop");
+    throw new UpstreamProtocolError('The stream ended before message_stop');
   }
 }
 
@@ -206,26 +206,26 @@ function parseJson(data: string): unknown {
   try {
     return JSON.parse(data);
   } catch (error) {
-    throw new UpstreamProtocolError("A stream event is not JSON", { cause: error });
+    throw new UpstreamProtocolError('A stream event is not JSON', { cause: error });
   }
 }
 
 function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
-  if (!isJsonObject(json) || json.type !== "content_block_delta") {
+  if (!isJsonObject(json) || json.type !== 'content_block_delta') {
     return undefined;
   }
-  if (typeof json.index !== "number" || !Number.isFinite(json.index)) {
+  if (typeof json.index !== 'number' || !Number.isFinite(json.index)) {
     return undefined;
   }
   const delta = json.delta;
   if (!isJsonObject(delta)) {
     return undefined;
   }
-  if (delta.type === "text_delta" && typeof delta.text === "string") {
-    return [{ type: "text-delta", text: delta.text }];
+  if (delta.type === 'text_delta' && typeof delta.text === 'string') {
+    return [{ type: 'text-delta', text: delta.text }];
   }
-  if (delta.type === "thinking_delta" && typeof delta.thinking === "string") {
-    return [{ type: "reasoning-delta", text: delta.thinking }];
+  if (delta.type === 'thinking_delta' && typeof delta.thinking === 'string') {
+    return [{ type: 'reasoning-delta', text: delta.thinking }];
   }
   return undefined;
 }
@@ -244,33 +244,33 @@ function parseStreamEvent(json: unknown): StreamEvent | null {
 
 function* eventsOf(event: StreamEvent, state: StreamState): Iterable<InferenceStreamEvent> {
   switch (event.type) {
-    case "message_start":
+    case 'message_start':
       state.updateUsage(event.message.usage);
       return;
-    case "content_block_start": {
+    case 'content_block_start': {
       const toolUse = toolUseStartSchema.safeParse(event.content_block);
       if (toolUse.success) {
         const index = state.startToolCall(event.index);
-        yield { type: "tool-call-start", index, id: toolUse.data.id, name: toolUse.data.name };
+        yield { type: 'tool-call-start', index, id: toolUse.data.id, name: toolUse.data.name };
       }
       return;
     }
-    case "content_block_delta":
+    case 'content_block_delta':
       yield* eventsOfDelta(event.index, event.delta, state);
       return;
-    case "message_delta":
+    case 'message_delta':
       state.updateUsage(event.usage ?? {});
       if (event.delta.stop_reason) {
-        yield { type: "finish", stopReason: stopReasonOf(event.delta.stop_reason) };
+        yield { type: 'finish', stopReason: stopReasonOf(event.delta.stop_reason) };
       }
       return;
-    case "error":
+    case 'error':
       throw new UpstreamProtocolError(
         `The upstream reported an error mid-stream: ${JSON.stringify(event.error)}`,
       );
-    case "content_block_stop":
-    case "message_stop":
-    case "ping":
+    case 'content_block_stop':
+    case 'message_stop':
+    case 'ping':
       return;
   }
 }
@@ -285,19 +285,19 @@ function* eventsOfDelta(
     return;
   }
   switch (delta.data.type) {
-    case "text_delta":
-      yield { type: "text-delta", text: delta.data.text };
+    case 'text_delta':
+      yield { type: 'text-delta', text: delta.data.text };
       return;
-    case "thinking_delta":
-      yield { type: "reasoning-delta", text: delta.data.thinking };
+    case 'thinking_delta':
+      yield { type: 'reasoning-delta', text: delta.data.thinking };
       return;
-    case "signature_delta":
-      yield { type: "reasoning-signature", signature: delta.data.signature };
+    case 'signature_delta':
+      yield { type: 'reasoning-signature', signature: delta.data.signature };
       return;
-    case "input_json_delta": {
+    case 'input_json_delta': {
       const index = state.toolCallIndexOf(blockIndex);
-      if (index !== undefined && delta.data.partial_json !== "") {
-        yield { type: "tool-call-delta", index, argumentsDelta: delta.data.partial_json };
+      if (index !== undefined && delta.data.partial_json !== '') {
+        yield { type: 'tool-call-delta', index, argumentsDelta: delta.data.partial_json };
       }
       return;
     }

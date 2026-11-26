@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SlidersHorizontal, Square, Trash2, X } from "@lucide/vue";
+import { SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
   DialogDescription,
@@ -7,13 +7,13 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "reka-ui";
-import { computed, reactive, ref } from "vue";
+} from 'reka-ui';
+import { computed, reactive, ref } from 'vue';
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
+} from '@/components/ai-elements/conversation';
 import {
   PromptInput,
   PromptInputBody,
@@ -24,9 +24,9 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputProvider,
-} from "@/components/ai-elements/prompt-input";
-import { apiErrorMessage } from "~/lib/api";
-import { playgroundErrorOfFailure } from "~/lib/playground";
+} from '@/components/ai-elements/prompt-input';
+import { apiErrorMessage } from '~/lib/api';
+import { playgroundErrorOfFailure } from '~/lib/playground';
 import {
   AUDIO_FORMAT_LABELS,
   type AudioFormat,
@@ -35,27 +35,27 @@ import {
   type SpeechExchange,
   speechAnswerOf,
   speechRequestOf,
-} from "~/lib/playgroundSpeech";
-import { formatCost } from "~/lib/usage";
+} from '~/lib/playgroundSpeech';
+import { formatCost } from '~/lib/usage';
 
 const { $dashboardApi } = useNuxtApp();
-const { source, modelDetail, canTry, requestModel, requestPath } = usePlaygroundTarget("speech");
+const { source, modelDetail, canTry, requestModel, requestPath } = usePlaygroundTarget('speech');
 
-const voice = ref("");
+const voice = ref('');
 const format = ref<AudioFormat>(DEFAULT_AUDIO_FORMAT);
 const isSettingsSheetOpen = ref(false);
 
 function readSettings(): { settings: PlaygroundSpeechSettings } | { problem: string } {
   const target = requestModel();
-  if ("problem" in target) return target;
+  if ('problem' in target) return target;
   const typedVoice = voice.value.trim();
-  if (typedVoice === "") return { problem: "Enter a voice in Settings." };
+  if (typedVoice === '') return { problem: 'Enter a voice in Settings.' };
   return { settings: { model: target.model, voice: typedVoice, format: format.value } };
 }
 
 const exchanges = ref<SpeechExchange[]>([]);
 let nextExchangeId = 1;
-const composerError = ref("");
+const composerError = ref('');
 const runningRequest = ref<AbortController | null>(null);
 const isSending = computed(() => runningRequest.value !== null);
 
@@ -64,21 +64,21 @@ const promptInput = usePromptInputProvider({
   onError: (error) => (composerError.value = error.message),
 });
 const canSend = computed(
-  () => !isSending.value && canTry.value && promptInput.textInput.value.trim() !== "",
+  () => !isSending.value && canTry.value && promptInput.textInput.value.trim() !== '',
 );
 
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSending.value) return;
   const text = message.text.trim();
-  if (text === "") throw new Error("Type the text to speak.");
+  if (text === '') throw new Error('Type the text to speak.');
   const read = readSettings();
-  if ("problem" in read) throw new Error(read.problem);
-  composerError.value = "";
+  if ('problem' in read) throw new Error(read.problem);
+  composerError.value = '';
   void send(read.settings, text);
 }
 
 async function send(settings: PlaygroundSpeechSettings, text: string): Promise<void> {
-  const isDirect = source.value === "upstream";
+  const isDirect = source.value === 'upstream';
   const exchange = reactive<SpeechExchange>({
     id: nextExchangeId++,
     text,
@@ -87,32 +87,32 @@ async function send(settings: PlaygroundSpeechSettings, text: string): Promise<v
     isDirect,
     routes:
       !isDirect && modelDetail.value?.name === settings.model ? modelDetail.value.routes : null,
-    state: { kind: "pending" },
+    state: { kind: 'pending' },
   });
   exchanges.value.push(exchange);
 
   const request = new AbortController();
   runningRequest.value = request;
   try {
-    const payload = await $dashboardApi(requestPath("audio/speech"), {
-      method: "POST",
+    const payload = await $dashboardApi(requestPath('audio/speech'), {
+      method: 'POST',
       body: speechRequestOf(settings, text),
       signal: request.signal,
     });
     const answer = speechAnswerOf(payload);
     exchange.state = answer
-      ? { kind: "done", ...answer }
-      : { kind: "failed", error: { code: null, message: "The gateway's answer had no audio." } };
+      ? { kind: 'done', ...answer }
+      : { kind: 'failed', error: { code: null, message: "The gateway's answer had no audio." } };
   } catch (failure) {
     if (request.signal.aborted) {
-      exchange.state = { kind: "stopped" };
+      exchange.state = { kind: 'stopped' };
       return;
     }
     const error = (await playgroundErrorOfFailure(failure)) ?? {
       code: null,
-      message: apiErrorMessage(failure, "The request did not reach the gateway."),
+      message: apiErrorMessage(failure, 'The request did not reach the gateway.'),
     };
-    exchange.state = { kind: "failed", error };
+    exchange.state = { kind: 'failed', error };
   } finally {
     runningRequest.value = null;
   }
@@ -131,7 +131,7 @@ const totals = computed(() => {
   let clips = 0;
   let cost: number | null = null;
   for (const exchange of exchanges.value) {
-    if (exchange.state.kind !== "done") continue;
+    if (exchange.state.kind !== 'done') continue;
     clips += 1;
     const exchangeCost = exchange.state.summary.cost;
     if (exchangeCost !== null) cost = (cost ?? 0) + exchangeCost;
@@ -153,7 +153,7 @@ const settingsHint = "The voice is the Provider's own name for it, sent unchange
           <span class="chip">{{ AUDIO_FORMAT_LABELS[format] }}</span>
         </p>
         <p v-if="totals.clips > 0" class="bench-bar__totals tabular">
-          <span>{{ totals.clips }} {{ totals.clips === 1 ? "clip" : "clips" }}</span>
+          <span>{{ totals.clips }} {{ totals.clips === 1 ? 'clip' : 'clips' }}</span>
           <span>{{ formatCost(totals.cost) }}</span>
         </p>
         <div class="bench-bar__tools">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed } from 'vue';
 
 const props = defineProps<{
   tokens?: number;
@@ -8,9 +8,9 @@ const props = defineProps<{
 
 const formattedTokens = computed(() => {
   return props.tokens === undefined
-    ? "—"
-    : new Intl.NumberFormat("en-US", {
-        notation: "compact",
+    ? '—'
+    : new Intl.NumberFormat('en-US', {
+        notation: 'compact',
       }).format(props.tokens);
 });
 </script>

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { MAX_IMAGES_PER_REQUEST, MAX_SEED } from "~/lib/playgroundImages";
+import { MAX_IMAGES_PER_REQUEST, MAX_SEED } from '~/lib/playgroundImages';
 
 defineProps<{
   sizeOptions: { value: string; label: string }[];
 }>();
 
-const size = defineModel<string>("size", { required: true });
-const count = defineModel<string>("count", { required: true });
-const negativePrompt = defineModel<string>("negativePrompt", { required: true });
-const seed = defineModel<string>("seed", { required: true });
+const size = defineModel<string>('size', { required: true });
+const count = defineModel<string>('count', { required: true });
+const negativePrompt = defineModel<string>('negativePrompt', { required: true });
+const seed = defineModel<string>('seed', { required: true });
 </script>
 
 <template>

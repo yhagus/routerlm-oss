@@ -1,10 +1,10 @@
-import { sql } from "drizzle-orm";
-import type { IsoWeekday } from "@/db/schemas";
-import type { Database } from "@/db/schemas/relations";
-import { truncateTables } from "./truncate";
+import { sql } from 'drizzle-orm';
+import type { IsoWeekday } from '@/db/schemas';
+import type { Database } from '@/db/schemas/relations';
+import { truncateTables } from './truncate';
 
 export async function deleteAllPricingWindows(db: Database): Promise<void> {
-  await truncateTables(db, sql.raw("pricing_windows"));
+  await truncateTables(db, sql.raw('pricing_windows'));
 }
 
 const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
@@ -33,9 +33,9 @@ export function zoneAtNoonNow(now = new Date()): { timeZone: string; today: IsoW
 
 function etcZoneAtOffset(offsetHours: number): string {
   if (offsetHours === 0) {
-    return "Etc/GMT";
+    return 'Etc/GMT';
   }
-  const invertedSign = offsetHours > 0 ? "-" : "+";
+  const invertedSign = offsetHours > 0 ? '-' : '+';
   return `Etc/GMT${invertedSign}${Math.abs(offsetHours)}`;
 }
 

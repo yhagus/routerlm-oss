@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Download } from "@lucide/vue";
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { Shimmer } from "@/components/ai-elements/shimmer";
-import { type ImageExchange, imageFileName } from "~/lib/playgroundImages";
+import { Download } from '@lucide/vue';
+import { Message, MessageContent } from '@/components/ai-elements/message';
+import { Shimmer } from '@/components/ai-elements/shimmer';
+import { type ImageExchange, imageFileName } from '~/lib/playgroundImages';
 
 defineProps<{ exchange: ImageExchange }>();
 
@@ -28,12 +28,12 @@ const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget
   <Message from="assistant" class="max-w-full">
     <MessageContent class="w-full max-w-[76ch] gap-2.5">
       <Shimmer v-if="exchange.state.kind === 'pending'" class="exchange__waiting" :duration="1.6">{{
-        exchange.operation === "edit" ? "Editing the images…" : "Generating…"
+        exchange.operation === 'edit' ? 'Editing the images…' : 'Generating…'
       }}</Shimmer>
       <p v-else-if="exchange.state.kind === 'stopped'" class="exchange__note">Stopped.</p>
       <p v-else-if="exchange.state.kind === 'failed'" class="exchange__error" role="alert">
         <span class="status-badge status-badge--bad">{{
-          exchange.state.error.code ?? "Error"
+          exchange.state.error.code ?? 'Error'
         }}</span>
         {{ exchange.state.error.message }}
       </p>

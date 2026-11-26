@@ -1,6 +1,6 @@
-import type { IsoWeekday, PricingWindowRange } from "@/db/schemas";
-import { isWithinValidityPeriod, type ValidityPeriod, validityInstantsOf } from "./validity-period";
-import { minuteOfDayOf, wallClockAt } from "./wall-clock";
+import type { IsoWeekday, PricingWindowRange } from '@/db/schemas';
+import { isWithinValidityPeriod, type ValidityPeriod, validityInstantsOf } from './validity-period';
+import { minuteOfDayOf, wallClockAt } from './wall-clock';
 
 export interface PricingWindowSchedule {
   timeZone: string;
@@ -39,7 +39,7 @@ export function isPricingWindowActiveAt(window: PricingWindowSchedule, instant: 
 
 export type WindowPricesHours = PricingWindowSchedule & ValidityPeriod;
 
-export const WINDOW_PRICES_STATUSES = ["scheduled", "active", "inactive", "expired"] as const;
+export const WINDOW_PRICES_STATUSES = ['scheduled', 'active', 'inactive', 'expired'] as const;
 export type WindowPricesStatus = (typeof WINDOW_PRICES_STATUSES)[number];
 
 export function doWindowPricesApplyAt(windowPrices: WindowPricesHours, instant: Date): boolean {
@@ -55,10 +55,10 @@ export function windowPricesStatusAt(
 ): WindowPricesStatus {
   const { start, end } = validityInstantsOf(windowPrices, windowPrices.timeZone);
   if (start !== null && instant < start) {
-    return "scheduled";
+    return 'scheduled';
   }
   if (end !== null && instant >= end) {
-    return "expired";
+    return 'expired';
   }
-  return doWindowPricesApplyAt(windowPrices, instant) ? "active" : "inactive";
+  return doWindowPricesApplyAt(windowPrices, instant) ? 'active' : 'inactive';
 }

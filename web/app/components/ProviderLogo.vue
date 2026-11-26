@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { PROVIDER_LOGOS } from "~/lib/providerLogos";
+import { computed } from 'vue';
+import { PROVIDER_LOGOS } from '~/lib/providerLogos';
 
 const props = defineProps<{
   logo: string | null;
@@ -9,21 +9,21 @@ const props = defineProps<{
 }>();
 
 const LOGOS_BY_HOST: [RegExp, string][] = [
-  [/(^|\.)openai\.com$/, "openai"],
-  [/(^|\.)anthropic\.com$/, "anthropic"],
-  [/(^|\.)deepseek\.com$/, "deepseek"],
-  [/(^|\.)kimi\.(ai|com)$/, "kimi"],
-  [/(^|\.)moonshot\.(ai|cn)$/, "moonshot"],
-  [/(^|\.)minimaxi?\.(io|com|chat)$/, "minimax"],
-  [/(^|\.)xiaomimimo\.com$/, "xiaomimimo"],
-  [/(^|\.)(aliyuncs|alibabacloud)\.com$/, "alibabacloud"],
+  [/(^|\.)openai\.com$/, 'openai'],
+  [/(^|\.)anthropic\.com$/, 'anthropic'],
+  [/(^|\.)deepseek\.com$/, 'deepseek'],
+  [/(^|\.)kimi\.(ai|com)$/, 'kimi'],
+  [/(^|\.)moonshot\.(ai|cn)$/, 'moonshot'],
+  [/(^|\.)minimaxi?\.(io|com|chat)$/, 'minimax'],
+  [/(^|\.)xiaomimimo\.com$/, 'xiaomimimo'],
+  [/(^|\.)(aliyuncs|alibabacloud)\.com$/, 'alibabacloud'],
 ];
 
 function hostOf(url: string): string {
   try {
     return new URL(url).hostname;
   } catch {
-    return "";
+    return '';
   }
 }
 
@@ -41,7 +41,7 @@ const monogram = computed(() =>
     .filter(Boolean)
     .slice(0, 2)
     .map((word) => word[0]?.toUpperCase())
-    .join(""),
+    .join(''),
 );
 </script>
 

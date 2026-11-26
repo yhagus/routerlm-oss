@@ -1,10 +1,10 @@
-import type { Capability, ModelKind, PricingWindowRange } from "@/db/schemas";
-import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot";
-import type { UpstreamModelPrices } from "@/usage/models/usage-job";
+import type { Capability, ModelKind, PricingWindowRange } from '@/db/schemas';
+import type { SnapshotUpstreamModel } from '@/snapshot/models/snapshot';
+import type { UpstreamModelPrices } from '@/usage/models/usage-job';
 
 export type ModelPrices = Pick<
   SnapshotUpstreamModel,
-  "inputPrice" | "outputPrice" | "cacheReadPrice" | "cacheWritePrice" | "unitPrices"
+  'inputPrice' | 'outputPrice' | 'cacheReadPrice' | 'cacheWritePrice' | 'unitPrices'
 >;
 
 export interface IntegrationPricingWindow {

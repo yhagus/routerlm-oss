@@ -2,13 +2,13 @@ import {
   AuthenticationStorage,
   type SessionRecord,
   type SessionStore,
-} from "@nestjs/authentication";
-import { Injectable } from "@nestjs/common";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, lt } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { sessions, users } from "@/db/schemas";
-import { userColumns } from "@/users/models/user";
+} from '@nestjs/authentication';
+import { Injectable } from '@nestjs/common';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq, lt } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { sessions, users } from '@/db/schemas';
+import { userColumns } from '@/users/models/user';
 
 type SessionRow = typeof sessions.$inferSelect;
 

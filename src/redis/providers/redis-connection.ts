@@ -3,10 +3,10 @@ import {
   Logger,
   type OnApplicationBootstrap,
   type OnApplicationShutdown,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { Redis, type RedisOptions } from "ioredis";
-import type { Env } from "@/config/schemas/env.schema";
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Redis, type RedisOptions } from 'ioredis';
+import type { Env } from '@/config/schemas/env.schema';
 
 const COMMAND_TIMEOUT_MS = 250;
 
@@ -18,8 +18,8 @@ export class RedisConnection implements OnApplicationBootstrap, OnApplicationShu
   private readonly subscribers: Redis[] = [];
 
   constructor(config: ConfigService<Env, true>) {
-    this.url = config.get("REDIS_URL", { infer: true });
-    this.client = this.connection("commands", {
+    this.url = config.get('REDIS_URL', { infer: true });
+    this.client = this.connection('commands', {
       enableOfflineQueue: false,
       maxRetriesPerRequest: 0,
       commandTimeout: COMMAND_TIMEOUT_MS,
@@ -42,14 +42,14 @@ export class RedisConnection implements OnApplicationBootstrap, OnApplicationShu
   }
 
   createSubscriber(): Redis {
-    const subscriber = this.connection("subscriber", {});
+    const subscriber = this.connection('subscriber', {});
     this.subscribers.push(subscriber);
     return subscriber;
   }
 
   private connection(role: string, options: RedisOptions): Redis {
     const connection = new Redis(this.url, { ...options, lazyConnect: true });
-    connection.on("error", (error: Error) => this.logger.warn(`Redis (${role}): ${error.message}`));
+    connection.on('error', (error: Error) => this.logger.warn(`Redis (${role}): ${error.message}`));
     return connection;
   }
 }

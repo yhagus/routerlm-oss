@@ -1,8 +1,8 @@
-import type { FakeReply } from "./fake-upstream";
+import type { FakeReply } from './fake-upstream';
 
-export const USAGE_PATH = "/backend-api/wham/usage";
-export const RESET_CREDITS_PATH = "/backend-api/wham/rate-limit-reset-credits";
-export const CONSUME_PATH = "/backend-api/wham/rate-limit-reset-credits/consume";
+export const USAGE_PATH = '/backend-api/wham/usage';
+export const RESET_CREDITS_PATH = '/backend-api/wham/rate-limit-reset-credits';
+export const CONSUME_PATH = '/backend-api/wham/rate-limit-reset-credits/consume';
 
 export const FIVE_HOURS_IN_SECONDS = 18_000;
 export const WEEK_IN_SECONDS = 604_800;
@@ -54,12 +54,12 @@ export function usageReply(answer: {
   usageResetCount?: number;
 }): FakeReply {
   return {
-    kind: "json",
+    kind: 'json',
     status: 200,
     body: {
-      plan_type: "pro",
+      plan_type: 'pro',
       rate_limit: answer.rateLimit,
-      credits: { has_credits: true, unlimited: false, balance: "42.5" },
+      credits: { has_credits: true, unlimited: false, balance: '42.5' },
       additional_rate_limits: (answer.additionalRateLimits ?? []).map((limit) => ({
         ...limit,
         metered_feature: limit.limit_name,
@@ -85,7 +85,7 @@ export function usageAtPercentReply(
   });
 }
 
-export type ResetCreditStatus = "available" | "redeeming" | "redeemed";
+export type ResetCreditStatus = 'available' | 'redeeming' | 'redeemed';
 
 export interface ResetCredit {
   id: string;
@@ -100,34 +100,34 @@ export interface ResetCredit {
 export function resetCredit(
   id: string,
   expiresAt: Date | null,
-  status: ResetCreditStatus = "available",
+  status: ResetCreditStatus = 'available',
 ): ResetCredit {
   return {
     id,
-    reset_type: "all_windows",
+    reset_type: 'all_windows',
     status,
     granted_at: new Date(Date.now() - DAY_MS).toISOString(),
     expires_at: expiresAt?.toISOString() ?? null,
     title: `Reset ${id}`,
-    description: "Restores your usage limits once",
+    description: 'Restores your usage limits once',
   };
 }
 
 export function resetCreditsReply(credits: ResetCredit[]): FakeReply {
-  const availableCount = credits.filter((credit) => credit.status === "available").length;
+  const availableCount = credits.filter((credit) => credit.status === 'available').length;
   return {
-    kind: "json",
+    kind: 'json',
     status: 200,
     body: { credits, available_count: availableCount, total_earned_count: credits.length },
   };
 }
 
-export type ConsumeCode = "reset" | "nothing_to_reset" | "no_credit" | "already_redeemed";
+export type ConsumeCode = 'reset' | 'nothing_to_reset' | 'no_credit' | 'already_redeemed';
 
 export function consumeReply(code: ConsumeCode): FakeReply {
   return {
-    kind: "json",
+    kind: 'json',
     status: 200,
-    body: { code, windows_reset: code === "reset" ? 2 : 0 },
+    body: { code, windows_reset: code === 'reset' ? 2 : 0 },
   };
 }

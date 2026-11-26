@@ -1,10 +1,10 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { routes } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { routes } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { dashScopeSpeechFixture, FakeUpstream } from '@tests/support/fake-upstream';
 import {
   addProviderAccount,
   insertApiKey,
@@ -12,22 +12,22 @@ import {
   insertDashScopeSpeechModel,
   UPSTREAM_KEY,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference";
-import { createTestApp } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/inference';
+import { createTestApp } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";
-const AUDIO_PATH = "/media/speech.bin";
+const SYNTHESIZER_PATH = '/api/v1/services/audio/tts/SpeechSynthesizer';
+const AUDIO_PATH = '/media/speech.bin';
 const SPEECH_REQUEST = {
-  model: "narrator",
-  input: "Hello from the gateway",
-  voice: "Cherry",
-  response_format: "wav",
+  model: 'narrator',
+  input: 'Hello from the gateway',
+  voice: 'Cherry',
+  response_format: 'wav',
 };
-const BACKUP_KEY = "sk-backup-speech-key";
+const BACKUP_KEY = 'sk-backup-speech-key';
 const AUDIO = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4]);
 
-describe("Speech on /v1/audio/speech (e2e)", () => {
+describe('Speech on /v1/audio/speech (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let upstream: FakeUpstream;
@@ -44,7 +44,7 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
     upstream.reset();
     await deleteAllUpstreamData(db);
     ({ routeId, providerId } = await insertDashScopeSpeechModel(app, db, {
-      modelName: "narrator",
+      modelName: 'narrator',
       baseUrl: `${upstream.origin}/api/v1`,
     }));
     ({ key: apiKey } = await insertApiKey(app, db));
@@ -57,27 +57,27 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
 
   function synthesize(body: object = SPEECH_REQUEST) {
     return request(app.getHttpServer())
-      .post("/v1/audio/speech")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/audio/speech')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send(body)
       .buffer(true)
       .parse((response, done) => {
         const chunks: Buffer[] = [];
-        response.on("data", (chunk: Buffer) => chunks.push(chunk));
-        response.on("end", () => done(null, Buffer.concat(chunks)));
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => done(null, Buffer.concat(chunks)));
       });
   }
 
   function answerWithAudio(): void {
-    const answer = dashScopeSpeechFixture("upstream-response.json").replace(
+    const answer = dashScopeSpeechFixture('upstream-response.json').replace(
       /https:\/\/[^"]*speech\.mp3[^"]*/,
       upstream.mediaUrl(AUDIO_PATH),
     );
-    upstream.replyTo(SYNTHESIZER_PATH, { kind: "json", status: 200, body: JSON.parse(answer) });
+    upstream.replyTo(SYNTHESIZER_PATH, { kind: 'json', status: 200, body: JSON.parse(answer) });
     upstream.replyTo(AUDIO_PATH, {
-      kind: "binary",
+      kind: 'binary',
       status: 200,
-      contentType: "application/octet-stream",
+      contentType: 'application/octet-stream',
       body: AUDIO,
     });
   }
@@ -91,14 +91,14 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
 
     const response = await synthesize().expect(200);
 
-    expect(response.headers["content-type"]).toBe("audio/wav");
+    expect(response.headers['content-type']).toBe('audio/wav');
     expect(new Uint8Array(response.body)).toEqual(AUDIO);
     const [sent] = synthesizerRequests();
-    expect(sent.method).toBe("POST");
+    expect(sent.method).toBe('POST');
     expect(sent.headers.authorization).toBe(`Bearer ${UPSTREAM_KEY}`);
     expect(sent.body).toEqual({
       model: UPSTREAM_MODEL_ID,
-      input: { text: "Hello from the gateway", voice: "Cherry", format: "wav" },
+      input: { text: 'Hello from the gateway', voice: 'Cherry', format: 'wav' },
     });
   });
 
@@ -110,9 +110,9 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
     expect(synthesizerRequests()[0].body).toMatchObject({ input: { rate: 1.5 } });
   });
 
-  it("falls back to the next Provider Account when the upstream call fails", async () => {
+  it('falls back to the next Provider Account when the upstream call fails', async () => {
     await addProviderAccount(app, db, providerId, { key: BACKUP_KEY, priority: 1 });
-    upstream.replyTo(SYNTHESIZER_PATH, { kind: "json", status: 503, body: { code: "Overloaded" } });
+    upstream.replyTo(SYNTHESIZER_PATH, { kind: 'json', status: 503, body: { code: 'Overloaded' } });
     answerWithAudio();
 
     const response = await synthesize().expect(200);
@@ -125,46 +125,46 @@ describe("Speech on /v1/audio/speech (e2e)", () => {
   });
 
   it("refuses a response_format DashScope can't produce, naming it", async () => {
-    const response = await synthesize({ ...SPEECH_REQUEST, response_format: "flac" }).expect(400);
+    const response = await synthesize({ ...SPEECH_REQUEST, response_format: 'flac' }).expect(400);
 
     expect(JSON.parse(response.body.toString()).error.message).toContain('"flac"');
     expect(synthesizerRequests()).toHaveLength(0);
   });
 
-  it("refuses streamed speech, naming stream_format", async () => {
-    const response = await synthesize({ ...SPEECH_REQUEST, stream_format: "sse" }).expect(400);
+  it('refuses streamed speech, naming stream_format', async () => {
+    const response = await synthesize({ ...SPEECH_REQUEST, stream_format: 'sse' }).expect(400);
 
-    expect(JSON.parse(response.body.toString()).error.message).toContain("stream_format");
+    expect(JSON.parse(response.body.toString()).error.message).toContain('stream_format');
   });
 
-  it("accepts instructions without sending them, as qwen-audio-3.0-tts-plus is not known to honour them", async () => {
+  it('accepts instructions without sending them, as qwen-audio-3.0-tts-plus is not known to honour them', async () => {
     answerWithAudio();
 
-    await synthesize({ ...SPEECH_REQUEST, instructions: "Speak softly" }).expect(200);
+    await synthesize({ ...SPEECH_REQUEST, instructions: 'Speak softly' }).expect(200);
 
-    expect(JSON.stringify(synthesizerRequests()[0].body)).not.toContain("Speak softly");
+    expect(JSON.stringify(synthesizerRequests()[0].body)).not.toContain('Speak softly');
   });
 
   it("sends the voice a Route's Parameter Policy forces instead of the client's", async () => {
     await db
       .update(routes)
-      .set({ parameterPolicyOverride: { forced: { voice: "Ethan" } } })
+      .set({ parameterPolicyOverride: { forced: { voice: 'Ethan' } } })
       .where(eq(routes.id, routeId));
     await app.get(SnapshotService).changed();
     answerWithAudio();
 
     await synthesize().expect(200);
 
-    expect(synthesizerRequests()[0].body).toMatchObject({ input: { voice: "Ethan" } });
+    expect(synthesizerRequests()[0].body).toMatchObject({ input: { voice: 'Ethan' } });
   });
 
-  it("refuses an image Model, naming both Kinds", async () => {
+  it('refuses an image Model, naming both Kinds', async () => {
     await insertDashScopeImageModel(app, db, {
-      modelName: "painter",
+      modelName: 'painter',
       baseUrl: `${upstream.origin}/api/v1`,
     });
 
-    const response = await synthesize({ ...SPEECH_REQUEST, model: "painter" }).expect(400);
+    const response = await synthesize({ ...SPEECH_REQUEST, model: 'painter' }).expect(400);
 
     expect(JSON.parse(response.body.toString()).error.message).toMatch(/Kind image.*Kind speech/);
   });

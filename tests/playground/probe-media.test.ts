@@ -1,26 +1,26 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { upstreamModels } from "@/db/schemas";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { upstreamModels } from '@/db/schemas';
 import {
   DASHSCOPE_GENERATION_PATH,
   dashScopeSpeechFixture,
   dashScopeTranscriptionFixture,
   FakeUpstream,
   replyWithTwoDashScopeImages,
-} from "@tests/support/fake-upstream";
+} from '@tests/support/fake-upstream';
 import {
   insertDashScopeImageModel,
   insertDashScopeSpeechModel,
   insertDashScopeTranscriptionModel,
-} from "@tests/support/inference";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/inference';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const SYNTHESIZER_PATH = '/api/v1/services/audio/tts/SpeechSynthesizer';
 
-describe("Probe of a media Upstream Model (e2e)", () => {
+describe('Probe of a media Upstream Model (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let upstream: FakeUpstream;
@@ -46,61 +46,61 @@ describe("Probe of a media Upstream Model (e2e)", () => {
     const [{ id }] = await db.select({ id: upstreamModels.id }).from(upstreamModels);
     return request(app.getHttpServer())
       .post(`/api/playground/upstream-models/${id}/probe`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(200);
   }
 
   it("generates one image at the Upstream Model's smallest size", async () => {
     await insertDashScopeImageModel(app, db, {
-      modelName: "painter",
+      modelName: 'painter',
       baseUrl: `${upstream.origin}/api/v1`,
-      sizes: ["1024*1024", "512*512", "768*1344"],
+      sizes: ['1024*1024', '512*512', '768*1344'],
     });
     replyWithTwoDashScopeImages(upstream);
 
     const response = await probeTheUpstreamModel();
 
     expect(response.body.results).toEqual([expect.objectContaining({ ok: true })]);
-    expect(upstream.requests[0].body).toMatchObject({ parameters: { size: "512*512", n: 1 } });
+    expect(upstream.requests[0].body).toMatchObject({ parameters: { size: '512*512', n: 1 } });
   });
 
-  it("synthesizes a short text with a default voice", async () => {
+  it('synthesizes a short text with a default voice', async () => {
     await insertDashScopeSpeechModel(app, db, {
-      modelName: "narrator",
+      modelName: 'narrator',
       baseUrl: `${upstream.origin}/api/v1`,
     });
-    const answer = dashScopeSpeechFixture("upstream-response.json").replace(
+    const answer = dashScopeSpeechFixture('upstream-response.json').replace(
       /https:\/\/[^"]*speech\.mp3[^"]*/,
-      upstream.mediaUrl("/media/speech.mp3"),
+      upstream.mediaUrl('/media/speech.mp3'),
     );
-    upstream.replyTo(SYNTHESIZER_PATH, { kind: "json", status: 200, body: JSON.parse(answer) });
-    upstream.replyTo("/media/speech.mp3", {
-      kind: "binary",
+    upstream.replyTo(SYNTHESIZER_PATH, { kind: 'json', status: 200, body: JSON.parse(answer) });
+    upstream.replyTo('/media/speech.mp3', {
+      kind: 'binary',
       status: 200,
-      contentType: "audio/mpeg",
+      contentType: 'audio/mpeg',
       body: new Uint8Array([0x49, 0x44, 0x33]),
     });
 
     const response = await probeTheUpstreamModel();
 
     expect(response.body.results).toEqual([expect.objectContaining({ ok: true })]);
-    expect(upstream.requests[0].body).toMatchObject({ input: { voice: "Cherry" } });
+    expect(upstream.requests[0].body).toMatchObject({ input: { voice: 'Cherry' } });
   });
 
-  it("transcribes the bundled audio clip", async () => {
+  it('transcribes the bundled audio clip', async () => {
     await insertDashScopeTranscriptionModel(app, db, {
-      modelName: "scribe",
+      modelName: 'scribe',
       baseUrl: `${upstream.origin}/api/v1`,
     });
     upstream.replyTo(DASHSCOPE_GENERATION_PATH, {
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(dashScopeTranscriptionFixture("upstream-response.json")),
+      body: JSON.parse(dashScopeTranscriptionFixture('upstream-response.json')),
     });
 
     const response = await probeTheUpstreamModel();
 
     expect(response.body.results).toEqual([expect.objectContaining({ ok: true })]);
-    expect(JSON.stringify(upstream.requests[0].body)).toContain("data:audio/wav;base64,");
+    expect(JSON.stringify(upstream.requests[0].body)).toContain('data:audio/wav;base64,');
   });
 });

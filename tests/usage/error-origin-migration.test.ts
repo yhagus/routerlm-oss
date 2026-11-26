@@ -1,129 +1,129 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
 
-const ERROR_ORIGIN_MIGRATION_SUFFIX = "_error_origin";
+const ERROR_ORIGIN_MIGRATION_SUFFIX = '_error_origin';
 
 interface RecordedRequest {
   errorCode: string | null;
   httpStatus: number;
   isCancelled: boolean;
   attemptCount: number;
-  expectedOrigin: "client" | "upstream" | "gateway" | null;
+  expectedOrigin: 'client' | 'upstream' | 'gateway' | null;
 }
 
 const RECORDED_REQUESTS: RecordedRequest[] = [
   {
-    errorCode: "upstream_rate_limited",
+    errorCode: 'upstream_rate_limited',
     httpStatus: 429,
     isCancelled: false,
     attemptCount: 1,
-    expectedOrigin: "upstream",
+    expectedOrigin: 'upstream',
   },
   {
-    errorCode: "upstream_error",
+    errorCode: 'upstream_error',
     httpStatus: 502,
     isCancelled: false,
     attemptCount: 2,
-    expectedOrigin: "upstream",
+    expectedOrigin: 'upstream',
   },
   {
-    errorCode: "upstream_error",
+    errorCode: 'upstream_error',
     httpStatus: 503,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "upstream",
+    expectedOrigin: 'upstream',
   },
   {
-    errorCode: "upstream_timeout",
+    errorCode: 'upstream_timeout',
     httpStatus: 504,
     isCancelled: false,
     attemptCount: 1,
-    expectedOrigin: "upstream",
+    expectedOrigin: 'upstream',
   },
   {
-    errorCode: "invalid_request",
+    errorCode: 'invalid_request',
     httpStatus: 400,
     isCancelled: false,
     attemptCount: 1,
-    expectedOrigin: "upstream",
+    expectedOrigin: 'upstream',
   },
   {
-    errorCode: "invalid_request",
+    errorCode: 'invalid_request',
     httpStatus: 400,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
     errorCode: null,
     httpStatus: 500,
     isCancelled: false,
     attemptCount: 1,
-    expectedOrigin: "gateway",
+    expectedOrigin: 'gateway',
   },
   {
-    errorCode: "invalid_api_key",
+    errorCode: 'invalid_api_key',
     httpStatus: 401,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
-    errorCode: "model_not_allowed",
+    errorCode: 'model_not_allowed',
     httpStatus: 403,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
-    errorCode: "model_not_found",
+    errorCode: 'model_not_found',
     httpStatus: 404,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
-    errorCode: "no_capable_route",
+    errorCode: 'no_capable_route',
     httpStatus: 400,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
-    errorCode: "request_too_large",
+    errorCode: 'request_too_large',
     httpStatus: 413,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
-    errorCode: "video_not_found",
+    errorCode: 'video_not_found',
     httpStatus: 404,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
-    errorCode: "video_not_ready",
+    errorCode: 'video_not_ready',
     httpStatus: 409,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
     errorCode: null,
     httpStatus: 404,
     isCancelled: false,
     attemptCount: 0,
-    expectedOrigin: "client",
+    expectedOrigin: 'client',
   },
   {
-    errorCode: "upstream_error",
+    errorCode: 'upstream_error',
     httpStatus: 502,
     isCancelled: true,
     attemptCount: 1,
@@ -133,15 +133,15 @@ const RECORDED_REQUESTS: RecordedRequest[] = [
   { errorCode: null, httpStatus: 200, isCancelled: false, attemptCount: 1, expectedOrigin: null },
 ];
 
-describe("Error Origin migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('Error Origin migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
   let databaseUrl: string;
   let pool: Pool;
 
   beforeAll(async () => {
     migrationsBefore = await copyMigrationsBefore(ERROR_ORIGIN_MIGRATION_SUFFIX);
-    databaseUrl = await createEmptyDatabase(serverUrl, "error_origin");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'error_origin');
     pool = new Pool({ connectionString: databaseUrl });
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: migrationsBefore });
   });
@@ -174,7 +174,7 @@ describe("Error Origin migration (e2e)", () => {
     }
   }
 
-  it("backfills the Error Origin of every existing failed Usage Log", async () => {
+  it('backfills the Error Origin of every existing failed Usage Log', async () => {
     await insertRecordedRequests();
 
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: MIGRATIONS_FOLDER });

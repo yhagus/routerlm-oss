@@ -1,15 +1,15 @@
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
-import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "@/api-keys/models/api-key";
-import { assertModelsExist } from "@/libs/models/allowed-models";
-import { selectApiKeySummaries } from "@/api-keys/models/api-key-summaries";
-import { CreateApiKeyCommand } from "@/api-keys/commands/impl/create-api-key.command";
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
+import { ApiKeyAuth } from '@/api-keys/providers/api-key-auth';
+import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from '@/api-keys/models/api-key';
+import { assertModelsExist } from '@/libs/models/allowed-models';
+import { selectApiKeySummaries } from '@/api-keys/models/api-key-summaries';
+import { CreateApiKeyCommand } from '@/api-keys/commands/impl/create-api-key.command';
 
 @CommandHandler(CreateApiKeyCommand)
 export class CreateApiKeyHandler implements ICommandHandler<CreateApiKeyCommand> {

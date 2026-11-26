@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { Globe } from "@lucide/vue";
-import { useIntervalFn } from "@vueuse/core";
-import { computed, ref, watch } from "vue";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { Globe } from '@lucide/vue';
+import { useIntervalFn } from '@vueuse/core';
+import { computed, ref, watch } from 'vue';
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 import {
   browserTimeZone,
   calendarDay,
   clockTime,
   utcOffsetLabel,
   utcOffsetMinutes,
-} from "~/lib/timeZones";
+} from '~/lib/timeZones';
 
-const { data: server, status, error } = useDashboardApi<{ timeZone: string }>("/time-zone");
+const { data: server, status, error } = useDashboardApi<{ timeZone: string }>('/time-zone');
 
 const browser = browserTimeZone();
 const now = ref(new Date());
@@ -104,7 +104,7 @@ const buttonName = computed(() => {
               </dd>
             </template>
             <dd v-else class="zone-menu__name zone-menu__name--muted">
-              {{ status === "pending" ? "Checking…" : error ? "Couldn't read it" : "—" }}
+              {{ status === 'pending' ? 'Checking…' : error ? "Couldn't read it" : '—' }}
             </dd>
           </div>
         </dl>

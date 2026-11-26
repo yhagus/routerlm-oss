@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Boxes, CloudOff } from "@lucide/vue";
+import { Boxes, CloudOff } from '@lucide/vue';
 import {
   type IntegrationModel,
   type IntegrationSummary,
   integrationModelPriceLines,
-} from "~/lib/integrations";
-import { CAPABILITY_LABELS, MODEL_KIND_LABELS } from "~/lib/upstream";
+} from '~/lib/integrations';
+import { CAPABILITY_LABELS, MODEL_KIND_LABELS } from '~/lib/upstream';
 
 const props = defineProps<{ integration: IntegrationSummary }>();
 
@@ -18,13 +18,13 @@ const {
   { watch: [() => props.integration.allowedModels] },
 );
 
-const isLoading = computed(() => status.value === "pending" && !modelList.value);
+const isLoading = computed(() => status.value === 'pending' && !modelList.value);
 const sellsEveryModel = computed(() => props.integration.allowedModels.length === 0);
 
 const rows = computed(() =>
   (modelList.value?.models ?? []).map((model) => ({
     model,
-    capabilities: model.capabilities.map((capability) => CAPABILITY_LABELS[capability]).join(", "),
+    capabilities: model.capabilities.map((capability) => CAPABILITY_LABELS[capability]).join(', '),
     priceLines: integrationModelPriceLines(model),
   })),
 );
@@ -44,8 +44,8 @@ const rows = computed(() =>
       <strong>No Models to sell.</strong
       ><span>{{
         sellsEveryModel
-          ? "The Catalog has no enabled Models yet."
-          : "Its allowed Models were deleted or disabled."
+          ? 'The Catalog has no enabled Models yet.'
+          : 'Its allowed Models were deleted or disabled.'
       }}</span>
     </EmptyState>
     <div v-else class="table-wrap">

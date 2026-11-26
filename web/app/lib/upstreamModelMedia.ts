@@ -4,7 +4,7 @@ import {
   optionalNumber,
   type PricesByTier,
   type UpstreamModel,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 type NumberInput = number | string;
 
@@ -29,17 +29,17 @@ export interface MediaForm {
 
 export type MediaFields = Pick<
   UpstreamModel,
-  | "pricePerImage"
-  | "pricePerImageBySize"
-  | "pricePerInputImage"
-  | "pricePerSecondByResolution"
-  | "pricePerMillionCharacters"
-  | "pricePerAudioSecond"
-  | "maxInputImages"
-  | "minDurationSeconds"
-  | "maxDurationSeconds"
-  | "resolutions"
-  | "sizes"
+  | 'pricePerImage'
+  | 'pricePerImageBySize'
+  | 'pricePerInputImage'
+  | 'pricePerSecondByResolution'
+  | 'pricePerMillionCharacters'
+  | 'pricePerAudioSecond'
+  | 'maxInputImages'
+  | 'minDurationSeconds'
+  | 'maxDurationSeconds'
+  | 'resolutions'
+  | 'sizes'
 >;
 
 function tierPriceForm(prices: PricesByTier | null): TierPriceForm {
@@ -65,7 +65,7 @@ export function mediaFormFor(model?: UpstreamModel): MediaForm {
 function pricesByTierFromForm(form: TierPriceForm): PricesByTier | null {
   const prices: PricesByTier = {};
   for (const tier of form.tiers) {
-    const price = optionalNumber(form.prices[tier] ?? "");
+    const price = optionalNumber(form.prices[tier] ?? '');
     if (price !== null) prices[tier] = price;
   }
   return Object.keys(prices).length > 0 ? prices : null;
@@ -91,7 +91,7 @@ const NO_MEDIA_FIELDS: MediaFields = {
 
 export function mediaFieldsFromForm(form: MediaForm, kind: ModelKind): MediaFields {
   switch (kind) {
-    case "image":
+    case 'image':
       return {
         ...NO_MEDIA_FIELDS,
         pricePerImage: optionalNumber(form.pricePerImage),
@@ -100,7 +100,7 @@ export function mediaFieldsFromForm(form: MediaForm, kind: ModelKind): MediaFiel
         maxInputImages: optionalNumber(form.maxInputImages),
         sizes: listOrNull(form.sizes),
       };
-    case "video":
+    case 'video':
       return {
         ...NO_MEDIA_FIELDS,
         pricePerSecondByResolution: pricesByTierFromForm(form.pricePerSecondByResolution),
@@ -109,21 +109,21 @@ export function mediaFieldsFromForm(form: MediaForm, kind: ModelKind): MediaFiel
         maxDurationSeconds: optionalNumber(form.maxDurationSeconds),
         resolutions: listOrNull(form.resolutions),
       };
-    case "speech":
+    case 'speech':
       return {
         ...NO_MEDIA_FIELDS,
         pricePerMillionCharacters: optionalNumber(form.pricePerMillionCharacters),
       };
-    case "transcription":
+    case 'transcription':
       return { ...NO_MEDIA_FIELDS, pricePerAudioSecond: optionalNumber(form.pricePerAudioSecond) };
-    case "chat":
+    case 'chat':
       return NO_MEDIA_FIELDS;
   }
 }
 
-export const unitPriceFormat = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
+export const unitPriceFormat = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
   minimumFractionDigits: 0,
   maximumFractionDigits: 8,
 });
@@ -146,19 +146,19 @@ function priceLine(label: string, price: number | null): DetailLine[] {
 
 export function unitPriceLines(model: UpstreamModel): DetailLine[] {
   switch (model.kind) {
-    case "image":
+    case 'image':
       return [
-        ...priceLine("Per image", model.pricePerImage),
-        ...tierLines(model.pricePerImageBySize, "image"),
-        ...priceLine("Per input image", model.pricePerInputImage),
+        ...priceLine('Per image', model.pricePerImage),
+        ...tierLines(model.pricePerImageBySize, 'image'),
+        ...priceLine('Per input image', model.pricePerInputImage),
       ];
-    case "video":
-      return tierLines(model.pricePerSecondByResolution, "per second");
-    case "speech":
-      return priceLine("Per 1M characters", model.pricePerMillionCharacters);
-    case "transcription":
-      return priceLine("Per audio second", model.pricePerAudioSecond);
-    case "chat":
+    case 'video':
+      return tierLines(model.pricePerSecondByResolution, 'per second');
+    case 'speech':
+      return priceLine('Per 1M characters', model.pricePerMillionCharacters);
+    case 'transcription':
+      return priceLine('Per audio second', model.pricePerAudioSecond);
+    case 'chat':
       return [];
   }
 }
@@ -168,15 +168,15 @@ function countLine(label: string, count: number | null, unit: string): DetailLin
 }
 
 function listLine(label: string, values: string[] | null): DetailLine[] {
-  return values === null || values.length === 0 ? [] : [{ label, value: values.join(", ") }];
+  return values === null || values.length === 0 ? [] : [{ label, value: values.join(', ') }];
 }
 
 export function mediaLimitLines(model: UpstreamModel): DetailLine[] {
   return [
-    ...countLine("Max input images", model.maxInputImages, "images"),
-    ...countLine("Shortest video", model.minDurationSeconds, "s"),
-    ...countLine("Longest video", model.maxDurationSeconds, "s"),
-    ...listLine("Resolutions", model.resolutions),
-    ...listLine("Sizes", model.sizes),
+    ...countLine('Max input images', model.maxInputImages, 'images'),
+    ...countLine('Shortest video', model.minDurationSeconds, 's'),
+    ...countLine('Longest video', model.maxDurationSeconds, 's'),
+    ...listLine('Resolutions', model.resolutions),
+    ...listLine('Sizes', model.sizes),
   ];
 }

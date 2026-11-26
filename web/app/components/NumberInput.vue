@@ -5,7 +5,7 @@ import {
   parseNumberInput,
   positionAfterSignificantChars,
   significantCharsBefore,
-} from "~/lib/numberInput";
+} from '~/lib/numberInput';
 
 defineOptions({ inheritAttrs: false });
 
@@ -24,46 +24,46 @@ const props = withDefaults(
     min: undefined,
     max: undefined,
     tokens: false,
-    prefix: "",
-    suffix: "",
-    unitLabel: "",
+    prefix: '',
+    suffix: '',
+    unitLabel: '',
   },
 );
 const unitId = useId();
 const model = defineModel<string | number>({ required: true });
 
-const input = useTemplateRef<HTMLInputElement>("input");
+const input = useTemplateRef<HTMLInputElement>('input');
 const rules = computed(() => ({ isWhole: props.whole, allowsShorthand: props.tokens }));
 
 const value = computed(() =>
-  model.value === "" ? "" : parseNumberInput(String(model.value), rules.value),
+  model.value === '' ? '' : parseNumberInput(String(model.value), rules.value),
 );
 const shown = computed(() => formatNumberInput(value.value));
 
-const compactTokens = new Intl.NumberFormat("en-US", {
-  notation: "compact",
+const compactTokens = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
   maximumFractionDigits: 2,
 });
 const tokenNote = computed(() => {
   const amount = Number(value.value);
-  return props.tokens && value.value !== "" && Number.isFinite(amount) && amount >= 1000
+  return props.tokens && value.value !== '' && Number.isFinite(amount) && amount >= 1000
     ? `${compactTokens.format(amount)} tokens`
-    : "";
+    : '';
 });
 const note = computed(() => tokenNote.value || props.suffix);
 
 function problemWith(text: string): string {
-  if (text === "") return "";
+  if (text === '') return '';
   const amount = Number(text);
-  if (!Number.isFinite(amount)) return "Enter a number.";
-  if (props.whole && !Number.isInteger(amount)) return "Enter a whole number.";
+  if (!Number.isFinite(amount)) return 'Enter a number.';
+  if (props.whole && !Number.isInteger(amount)) return 'Enter a whole number.';
   if (props.min !== undefined && amount < props.min) {
     return `Enter ${formatNumberInput(String(props.min))} or more.`;
   }
   if (props.max !== undefined && amount > props.max) {
     return `Enter ${formatNumberInput(String(props.max))} or less.`;
   }
-  return "";
+  return '';
 }
 
 function syncValidity(): void {
@@ -92,16 +92,16 @@ function onBeforeInput(event: InputEvent): void {
   if (!(field instanceof HTMLInputElement)) return;
   const { selectionStart: start, selectionEnd: end, value: text } = field;
   if (start === null || start !== end) return;
-  if (event.inputType === "deleteContentBackward" && text.charAt(start - 1) === GROUP_SEPARATOR) {
+  if (event.inputType === 'deleteContentBackward' && text.charAt(start - 1) === GROUP_SEPARATOR) {
     field.setSelectionRange(start - 1, start - 1);
   }
-  if (event.inputType === "deleteContentForward" && text.charAt(start) === GROUP_SEPARATOR) {
+  if (event.inputType === 'deleteContentForward' && text.charAt(start) === GROUP_SEPARATOR) {
     field.setSelectionRange(start + 1, start + 1);
   }
 }
 
 onMounted(syncValidity);
-watch(value, syncValidity, { flush: "post" });
+watch(value, syncValidity, { flush: 'post' });
 </script>
 
 <template>

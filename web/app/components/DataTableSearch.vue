@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Search, X } from "@lucide/vue";
+import { Search, X } from '@lucide/vue';
 
 defineProps<{
   label: string;
@@ -7,10 +7,10 @@ defineProps<{
 }>();
 const text = defineModel<string>({ required: true });
 
-const input = useTemplateRef("input");
+const input = useTemplateRef('input');
 
 function handleClear(): void {
-  text.value = "";
+  text.value = '';
   input.value?.focus();
 }
 </script>

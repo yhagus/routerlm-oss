@@ -3,10 +3,10 @@ import {
   type PlaygroundError,
   type PlaygroundSummary,
   readProperty,
-} from "~/lib/playground";
-import type { RouteSummary } from "~/lib/routing";
+} from '~/lib/playground';
+import type { RouteSummary } from '~/lib/routing';
 
-export const AUTOMATIC_SIZE = "auto";
+export const AUTOMATIC_SIZE = 'auto';
 export const MAX_IMAGES_PER_REQUEST = 10;
 export const MAX_SEED = 2_147_483_647;
 
@@ -18,13 +18,13 @@ export interface PlaygroundImageSettings {
   seed?: number;
 }
 
-export type ImageOperation = "generation" | "edit";
+export type ImageOperation = 'generation' | 'edit';
 
 export type ImageAnswerState =
-  | { kind: "pending" }
-  | { kind: "done"; imageUrls: string[]; summary: PlaygroundSummary }
-  | { kind: "failed"; error: PlaygroundError }
-  | { kind: "stopped" };
+  | { kind: 'pending' }
+  | { kind: 'done'; imageUrls: string[]; summary: PlaygroundSummary }
+  | { kind: 'failed'; error: PlaygroundError }
+  | { kind: 'stopped' };
 
 export interface ImageExchange {
   id: number;
@@ -50,49 +50,49 @@ export function imageRequestOf(
     seed: settings.seed,
   };
   if (inputImageUrls.length === 0) {
-    return { operation: "generation", endpoint: "images/generations", body };
+    return { operation: 'generation', endpoint: 'images/generations', body };
   }
   return {
-    operation: "edit",
-    endpoint: "images/edits",
+    operation: 'edit',
+    endpoint: 'images/edits',
     body: { ...body, images: inputImageUrls.map((url) => ({ image_url: url })) },
   };
 }
 
 export function clientSizeOf(upstreamSize: string): string {
-  return upstreamSize.replace("*", "x");
+  return upstreamSize.replace('*', 'x');
 }
 
 export function imageAnswerOf(
   payload: unknown,
 ): { imageUrls: string[]; summary: PlaygroundSummary } | null {
-  const summary = readProperty(payload, "summary");
-  const data = readProperty(readProperty(payload, "response"), "data");
+  const summary = readProperty(payload, 'summary');
+  const data = readProperty(readProperty(payload, 'response'), 'data');
   if (!isPlaygroundSummary(summary) || !Array.isArray(data)) return null;
   const imageUrls = data
-    .map((image) => readProperty(image, "b64_json"))
-    .filter((base64) => typeof base64 === "string")
+    .map((image) => readProperty(image, 'b64_json'))
+    .filter((base64) => typeof base64 === 'string')
     .map((base64) => `data:${imageMimeTypeOf(base64)};base64,${base64}`);
   return { imageUrls, summary };
 }
 
 const BASE64_SIGNATURES: [prefix: string, mimeType: string][] = [
-  ["iVBOR", "image/png"],
-  ["/9j/", "image/jpeg"],
-  ["UklGR", "image/webp"],
+  ['iVBOR', 'image/png'],
+  ['/9j/', 'image/jpeg'],
+  ['UklGR', 'image/webp'],
 ];
 
 function imageMimeTypeOf(base64: string): string {
-  return BASE64_SIGNATURES.find(([prefix]) => base64.startsWith(prefix))?.[1] ?? "image/png";
+  return BASE64_SIGNATURES.find(([prefix]) => base64.startsWith(prefix))?.[1] ?? 'image/png';
 }
 
 const EXTENSIONS_BY_MIME_TYPE: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/webp": "webp",
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
 };
 
 export function imageFileName(exchangeId: number, index: number, dataUrl: string): string {
-  const mimeType = dataUrl.slice("data:".length, dataUrl.indexOf(";"));
-  return `image-${exchangeId}-${index + 1}.${EXTENSIONS_BY_MIME_TYPE[mimeType] ?? "png"}`;
+  const mimeType = dataUrl.slice('data:'.length, dataUrl.indexOf(';'));
+  return `image-${exchangeId}-${index + 1}.${EXTENSIONS_BY_MIME_TYPE[mimeType] ?? 'png'}`;
 }

@@ -1,10 +1,10 @@
-import { z } from "zod";
-import type { IsoWeekday, PricingWindowRange } from "@/db/schemas";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
-import { parseWallClock } from "@/pricing-windows/models/wall-clock";
+import { z } from 'zod';
+import type { IsoWeekday, PricingWindowRange } from '@/db/schemas';
+import { hasAnyField, nothingToChange } from '@/libs/schemas/partial-update.schema';
+import { parseWallClock } from '@/pricing-windows/models/wall-clock';
 
 const TIME_OF_DAY = /^([01]\d|2[0-3]):[0-5]\d$/;
-const END_OF_DAY = "24:00";
+const END_OF_DAY = '24:00';
 
 const weekdaySchema = z.union([
   z.literal(1),
@@ -20,13 +20,13 @@ export const rangeSchema = z
   .strictObject({
     weekdays: z
       .array(weekdaySchema)
-      .min(1, { error: "A range needs at least one weekday" })
+      .min(1, { error: 'A range needs at least one weekday' })
       .refine((weekdays) => new Set(weekdays).size === weekdays.length, {
-        error: "List each weekday once",
+        error: 'List each weekday once',
       }),
-    start: z.string().regex(TIME_OF_DAY, { error: "Write the start as HH:MM" }),
+    start: z.string().regex(TIME_OF_DAY, { error: 'Write the start as HH:MM' }),
     end: z.string().refine((end) => end === END_OF_DAY || TIME_OF_DAY.test(end), {
-      error: "Write the end as HH:MM, or 24:00",
+      error: 'Write the end as HH:MM, or 24:00',
     }),
   })
   .refine((range) => range.start !== range.end, {
@@ -38,7 +38,7 @@ export function isIanaTimeZone(timeZone: string): boolean {
     return false;
   }
   try {
-    new Intl.DateTimeFormat("en-US", { timeZone });
+    new Intl.DateTimeFormat('en-US', { timeZone });
     return true;
   } catch {
     return false;
@@ -47,8 +47,8 @@ export function isIanaTimeZone(timeZone: string): boolean {
 
 const pricingWindowFieldsSchema = z.strictObject({
   name: z.string().trim().min(1),
-  timeZone: z.string().refine(isIanaTimeZone, { error: "Unknown time zone" }),
-  ranges: z.array(rangeSchema).min(1, { error: "A Pricing Window needs at least one range" }),
+  timeZone: z.string().refine(isIanaTimeZone, { error: 'Unknown time zone' }),
+  ranges: z.array(rangeSchema).min(1, { error: 'A Pricing Window needs at least one range' }),
   isEnabled: z.boolean(),
 });
 
@@ -65,7 +65,7 @@ export type PricingWindowChanges = z.infer<typeof pricingWindowChangesSchema>;
 const validityBoundSchema = z
   .string()
   .refine((bound) => parseWallClock(bound) !== undefined, {
-    error: "Write a Validity Period bound as YYYY-MM-DDTHH:MM",
+    error: 'Write a Validity Period bound as YYYY-MM-DDTHH:MM',
   })
   .nullable()
   .optional();
@@ -90,7 +90,7 @@ const windowPricesEntrySchema = z
       [entry.inputPrice, entry.outputPrice, entry.cacheReadPrice, entry.cacheWritePrice].some(
         (price) => price !== undefined && price !== null,
       ),
-    { error: "Give the Pricing Window at least one price" },
+    { error: 'Give the Pricing Window at least one price' },
   );
 export type WindowPricesEntry = z.infer<typeof windowPricesEntrySchema>;
 

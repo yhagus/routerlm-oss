@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { X } from "@lucide/vue";
-import type { ActiveFilter } from "~/lib/activeFilters";
+import { X } from '@lucide/vue';
+import type { ActiveFilter } from '~/lib/activeFilters';
 
 defineProps<{ filters: ActiveFilter[] }>();
 const emit = defineEmits<{ clearAll: [] }>();

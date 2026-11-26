@@ -1,4 +1,4 @@
-import { onActivated, onDeactivated, ref, type Ref } from "vue";
+import { onActivated, onDeactivated, ref, type Ref } from 'vue';
 
 export function useIsActivated(): Readonly<Ref<boolean>> {
   const isActivated = ref(true);

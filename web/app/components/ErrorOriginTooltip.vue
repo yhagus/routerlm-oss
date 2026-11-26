@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { ChartSeries } from "~/lib/chart";
-import { ERROR_ORIGINS } from "~/lib/errorOrigins";
-import { formatRate, type OverviewBucket } from "~/lib/overview";
-import { formatCount } from "~/lib/usage";
+import { computed } from 'vue';
+import type { ChartSeries } from '~/lib/chart';
+import { ERROR_ORIGINS } from '~/lib/errorOrigins';
+import { formatRate, type OverviewBucket } from '~/lib/overview';
+import { formatCount } from '~/lib/usage';
 
 const props = defineProps<{
   buckets: OverviewBucket[];

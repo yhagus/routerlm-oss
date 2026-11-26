@@ -1,18 +1,18 @@
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, isNull } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags";
-import { ControlPlaneError } from "@/control-plane/models/control-plane-error";
-import type { CustomerApiKey } from "@/control-plane/models/customer-api-key";
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq, isNull } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
+import { ControlPlaneError } from '@/control-plane/models/control-plane-error';
+import type { CustomerApiKey } from '@/control-plane/models/customer-api-key';
 import {
   assertWithinCeiling,
   findCustomerApiKey,
   findUnrevokedCustomerApiKey,
-} from "@/control-plane/models/customer-api-keys";
-import { UpdateCustomerApiKeyCommand } from "@/control-plane/commands/impl/update-customer-api-key.command";
+} from '@/control-plane/models/customer-api-keys';
+import { UpdateCustomerApiKeyCommand } from '@/control-plane/commands/impl/update-customer-api-key.command';
 
 const REVOKED_MESSAGE = "A revoked API Key can't be changed.";
 
@@ -46,7 +46,7 @@ export class UpdateCustomerApiKeyHandler implements ICommandHandler<UpdateCustom
       )
       .returning({ id: apiKeys.id });
     if (updated.length === 0) {
-      throw new ControlPlaneError("FAILED_PRECONDITION", REVOKED_MESSAGE);
+      throw new ControlPlaneError('FAILED_PRECONDITION', REVOKED_MESSAGE);
     }
     if (changes.spendLimit !== undefined) {
       await this.spendLimitFlags.recompute(id);

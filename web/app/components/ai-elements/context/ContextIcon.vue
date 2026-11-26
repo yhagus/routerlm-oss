@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useContextValue } from "./context";
+import { computed } from 'vue';
+import { useContextValue } from './context';
 
 const ICON_RADIUS = 10;
 const ICON_VIEWBOX = 24;
@@ -21,8 +21,8 @@ const dashOffset = computed(() => {
 });
 
 const svgStyle = {
-  transformOrigin: "center",
-  transform: "rotate(-90deg)",
+  transformOrigin: 'center',
+  transform: 'rotate(-90deg)',
 };
 </script>
 

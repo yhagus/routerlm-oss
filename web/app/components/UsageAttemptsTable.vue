@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { attemptOutcomeLabel } from "~/lib/errorCaptures";
-import { formatDuration, type UsageLogAttempt } from "~/lib/usage";
+import { attemptOutcomeLabel } from '~/lib/errorCaptures';
+import { formatDuration, type UsageLogAttempt } from '~/lib/usage';
 
 defineProps<{
   attempts: UsageLogAttempt[];
@@ -24,20 +24,20 @@ defineProps<{
         <tr v-for="(attempt, index) in attempts" :key="attempt.id">
           <td class="tabular">{{ index + 1 }}</td>
           <td>
-            {{ attempt.providerName ?? "Deleted Provider" }}
+            {{ attempt.providerName ?? 'Deleted Provider' }}
             <span class="cell-note">{{
-              attempt.providerAccountName ?? "Deleted Provider Account"
+              attempt.providerAccountName ?? 'Deleted Provider Account'
             }}</span>
           </td>
-          <td>{{ attempt.upstreamModelName ?? attempt.upstreamModelId ?? "—" }}</td>
+          <td>{{ attempt.upstreamModelName ?? attempt.upstreamModelId ?? '—' }}</td>
           <td>
             <span
               class="status-badge"
               :class="attempt.failureReason ? 'status-badge--bad' : 'status-badge--good'"
-              >{{ attemptOutcomeLabel(attempt, "Answered") }}</span
+              >{{ attemptOutcomeLabel(attempt, 'Answered') }}</span
             >
           </td>
-          <td class="tabular">{{ attempt.upstreamRequestId ?? "—" }}</td>
+          <td class="tabular">{{ attempt.upstreamRequestId ?? '—' }}</td>
           <td class="tabular">{{ formatDuration(attempt.durationMs) }}</td>
         </tr>
       </tbody>

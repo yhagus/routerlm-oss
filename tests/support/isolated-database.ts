@@ -1,12 +1,12 @@
-import { randomUUID } from "node:crypto";
-import { Client } from "pg";
+import { randomUUID } from 'node:crypto';
+import { Client } from 'pg';
 
 export async function createEmptyDatabase(
   serverUrl: string,
   prefix: string,
-  suffix = "",
+  suffix = '',
 ): Promise<string> {
-  const name = `${prefix}_${randomUUID().replaceAll("-", "")}${suffix}`;
+  const name = `${prefix}_${randomUUID().replaceAll('-', '')}${suffix}`;
   const admin = new Client({ connectionString: serverUrl });
   await admin.connect();
   await admin.query(`CREATE DATABASE "${name}"`);

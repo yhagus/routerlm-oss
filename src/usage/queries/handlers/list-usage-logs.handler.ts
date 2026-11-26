@@ -1,12 +1,12 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { count, desc } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { usageLogs } from "@/db/schemas";
-import type { UsageLogPage } from "@/usage/models/usage";
-import { whereFilter } from "@/usage/models/usage-filters";
-import { usageLogSummaryColumns } from "@/usage/models/usage-log-columns";
-import { ListUsageLogsQuery } from "@/usage/queries/impl/list-usage-logs.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { count, desc } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { usageLogs } from '@/db/schemas';
+import type { UsageLogPage } from '@/usage/models/usage';
+import { whereFilter } from '@/usage/models/usage-filters';
+import { usageLogSummaryColumns } from '@/usage/models/usage-log-columns';
+import { ListUsageLogsQuery } from '@/usage/queries/impl/list-usage-logs.query';
 
 @QueryHandler(ListUsageLogsQuery)
 export class ListUsageLogsHandler implements IQueryHandler<ListUsageLogsQuery> {

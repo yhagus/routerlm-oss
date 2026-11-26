@@ -1,22 +1,22 @@
-import "reflect-metadata";
-import { Logger } from "@nestjs/common";
-import { NestFactory } from "@nestjs/core";
-import { CommandBus } from "@nestjs/cqrs";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
-import { DEMO_USER } from "@/demo/data/demo-fixtures";
-import { DemoModule } from "@/demo/demo.module";
-import { SeedDemoCommand } from "@/demo/commands/impl/seed-demo.command";
-import { assertDemoDatabase } from "@/demo/models/demo-database";
+import 'reflect-metadata';
+import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { CommandBus } from '@nestjs/cqrs';
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
+import { DEMO_USER } from '@/demo/data/demo-fixtures';
+import { DemoModule } from '@/demo/demo.module';
+import { SeedDemoCommand } from '@/demo/commands/impl/seed-demo.command';
+import { assertDemoDatabase } from '@/demo/models/demo-database';
 
 assertDemoDatabase(process.env.DATABASE_URL);
 
 const catalog = await loadCatalog(CATALOG_DIRECTORY);
 const app = await NestFactory.createApplicationContext(DemoModule, {
-  logger: ["error", "warn", "log"],
+  logger: ['error', 'warn', 'log'],
 });
 try {
   const result = await app.get(CommandBus).execute(new SeedDemoCommand(catalog, new Date()));
-  const logger = new Logger("Demo");
+  const logger = new Logger('Demo');
   logger.log(
     `Seeded ${result.usageLogCount} Usage Logs and ${result.errorCaptureCount} Error Captures`,
   );

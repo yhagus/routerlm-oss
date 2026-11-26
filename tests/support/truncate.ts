@@ -1,9 +1,9 @@
-import type { SQL } from "drizzle-orm";
-import { sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { hasPostgresErrorCode } from "@/libs/models/postgres-errors";
+import type { SQL } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { hasPostgresErrorCode } from '@/libs/models/postgres-errors';
 
-const DEADLOCK_DETECTED = "40P01";
+const DEADLOCK_DETECTED = '40P01';
 const ATTEMPTS = 5;
 const RETRY_DELAY_MS = 50;
 

@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="Value extends string">
-import { Check, ChevronDown } from "@lucide/vue";
+import { Check, ChevronDown } from '@lucide/vue';
 import {
   ListboxContent,
   ListboxItem,
@@ -8,7 +8,7 @@ import {
   PopoverPortal,
   PopoverRoot,
   PopoverTrigger,
-} from "reka-ui";
+} from 'reka-ui';
 
 type SelectOption = { label: string; value: Value };
 
@@ -23,15 +23,15 @@ const props = withDefaults(
     label: string;
     placeholder: string;
     noun: string;
-    match?: "any" | "all";
+    match?: 'any' | 'all';
     emptyText?: string;
   }>(),
-  { match: "any" },
+  { match: 'any' },
 );
-const emit = defineEmits<{ "update:modelValue": [value: Value[]] }>();
+const emit = defineEmits<{ 'update:modelValue': [value: Value[]] }>();
 
 const open = ref(false);
-const listbox = useTemplateRef("listbox");
+const listbox = useTemplateRef('listbox');
 
 const hasPicks = computed(() => props.modelValue.length > 0);
 const pickedLabels = computed(() =>
@@ -40,7 +40,7 @@ const pickedLabels = computed(() =>
 const summary = computed(() => {
   const count = pickedLabels.value.length;
   if (count === 0) return props.placeholder;
-  if (count <= MAX_NAMED_PICKS) return pickedLabels.value.join(", ");
+  if (count <= MAX_NAMED_PICKS) return pickedLabels.value.join(', ');
   return `${count} ${props.noun}`;
 });
 
@@ -54,11 +54,11 @@ function handlePicksChange(picked: unknown): void {
     .filter((option) => pickedValues.includes(option.value))
     .map((option) => option.value);
   const isEveryOptionPicked = props.options.length > 1 && next.length === props.options.length;
-  emit("update:modelValue", props.match === "any" && isEveryOptionPicked ? [] : next);
+  emit('update:modelValue', props.match === 'any' && isEveryOptionPicked ? [] : next);
 }
 
 function clearPicks(): void {
-  emit("update:modelValue", []);
+  emit('update:modelValue', []);
   void listbox.value?.highlightSelected();
 }
 

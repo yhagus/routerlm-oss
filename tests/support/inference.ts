@@ -1,7 +1,7 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
-import type { Database } from "@/db/schemas/relations";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import { ApiKeyAuth } from '@/api-keys/providers/api-key-auth';
+import type { Database } from '@/db/schemas/relations';
 import {
   apiKeys,
   type AuthStyle,
@@ -13,14 +13,14 @@ import {
   routes,
   type UpstreamProtocol,
   upstreamModels,
-} from "@/db/schemas";
-import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+} from '@/db/schemas';
+import type { CatalogProviderQuirks } from '@/catalog/schemas/catalog.schema';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
 
-export const UPSTREAM_KEY = "sk-upstream-secret-0123456789";
-export const UPSTREAM_MODEL_ID = "acme-large-2026";
-export const ALL_CAPABILITIES: Capability[] = ["vision", "tools", "reasoning", "structured-output"];
+export const UPSTREAM_KEY = 'sk-upstream-secret-0123456789';
+export const UPSTREAM_MODEL_ID = 'acme-large-2026';
+export const ALL_CAPABILITIES: Capability[] = ['vision', 'tools', 'reasoning', 'structured-output'];
 
 export interface InsertedModel {
   modelId: string;
@@ -62,7 +62,7 @@ export function insertOpenAiChatModel(
   db: Database,
   options: ModelOptions,
 ): Promise<InsertedModel> {
-  return insertModel(app, db, { protocol: "openai-chat", authStyle: "bearer" }, options);
+  return insertModel(app, db, { protocol: 'openai-chat', authStyle: 'bearer' }, options);
 }
 
 export function insertAnthropicMessagesModel(
@@ -70,7 +70,7 @@ export function insertAnthropicMessagesModel(
   db: Database,
   options: ModelOptions,
 ): Promise<InsertedModel> {
-  return insertModel(app, db, { protocol: "anthropic-messages", authStyle: "x-api-key" }, options);
+  return insertModel(app, db, { protocol: 'anthropic-messages', authStyle: 'x-api-key' }, options);
 }
 
 export function insertDashScopeImageModel(
@@ -81,8 +81,8 @@ export function insertDashScopeImageModel(
   return insertModel(
     app,
     db,
-    { protocol: "dashscope-image", authStyle: "bearer" },
-    { ...options, kind: "image", capabilities: [] },
+    { protocol: 'dashscope-image', authStyle: 'bearer' },
+    { ...options, kind: 'image', capabilities: [] },
   );
 }
 
@@ -91,13 +91,13 @@ export async function addDashScopeImageRoute(
   db: Database,
   modelId: string,
   options: RouteOptions,
-): Promise<Omit<InsertedModel, "modelId">> {
+): Promise<Omit<InsertedModel, 'modelId'>> {
   const route = await insertRoute(
     db,
     app.get(ProviderKeyCipher),
     modelId,
-    { protocol: "dashscope-image", authStyle: "bearer" },
-    { ...options, kind: "image", capabilities: [] },
+    { protocol: 'dashscope-image', authStyle: 'bearer' },
+    { ...options, kind: 'image', capabilities: [] },
   );
   await app.get(SnapshotService).changed();
   return route;
@@ -111,8 +111,8 @@ export function insertDashScopeVideoModel(
   return insertModel(
     app,
     db,
-    { protocol: "dashscope-video", authStyle: "bearer" },
-    { capabilities: ["text-to-video"], ...options, kind: "video" },
+    { protocol: 'dashscope-video', authStyle: 'bearer' },
+    { capabilities: ['text-to-video'], ...options, kind: 'video' },
   );
 }
 
@@ -121,13 +121,13 @@ export async function addDashScopeVideoRoute(
   db: Database,
   modelId: string,
   options: RouteOptions,
-): Promise<Omit<InsertedModel, "modelId">> {
+): Promise<Omit<InsertedModel, 'modelId'>> {
   const route = await insertRoute(
     db,
     app.get(ProviderKeyCipher),
     modelId,
-    { protocol: "dashscope-video", authStyle: "bearer" },
-    { capabilities: ["text-to-video"], ...options, kind: "video" },
+    { protocol: 'dashscope-video', authStyle: 'bearer' },
+    { capabilities: ['text-to-video'], ...options, kind: 'video' },
   );
   await app.get(SnapshotService).changed();
   return route;
@@ -141,8 +141,8 @@ export function insertDashScopeSpeechModel(
   return insertModel(
     app,
     db,
-    { protocol: "dashscope-speech", authStyle: "bearer" },
-    { ...options, kind: "speech", capabilities: [] },
+    { protocol: 'dashscope-speech', authStyle: 'bearer' },
+    { ...options, kind: 'speech', capabilities: [] },
   );
 }
 
@@ -154,8 +154,8 @@ export function insertDashScopeTranscriptionModel(
   return insertModel(
     app,
     db,
-    { protocol: "dashscope-transcription", authStyle: "bearer" },
-    { ...options, kind: "transcription", capabilities: [] },
+    { protocol: 'dashscope-transcription', authStyle: 'bearer' },
+    { ...options, kind: 'transcription', capabilities: [] },
   );
 }
 
@@ -164,7 +164,7 @@ export function insertOpenAiResponsesModel(
   db: Database,
   options: ModelOptions,
 ): Promise<InsertedModel> {
-  return insertModel(app, db, { protocol: "openai-responses", authStyle: "bearer" }, options);
+  return insertModel(app, db, { protocol: 'openai-responses', authStyle: 'bearer' }, options);
 }
 
 async function insertModel(
@@ -197,12 +197,12 @@ export async function addOpenAiChatRoute(
   db: Database,
   modelId: string,
   options: RouteOptions,
-): Promise<Omit<InsertedModel, "modelId">> {
+): Promise<Omit<InsertedModel, 'modelId'>> {
   const route = await insertRoute(
     db,
     app.get(ProviderKeyCipher),
     modelId,
-    { protocol: "openai-chat", authStyle: "bearer" },
+    { protocol: 'openai-chat', authStyle: 'bearer' },
     options,
   );
   await app.get(SnapshotService).changed();
@@ -215,14 +215,14 @@ async function insertRoute(
   modelId: string,
   speaks: { protocol: UpstreamProtocol; authStyle: AuthStyle },
   options: RouteOptions,
-): Promise<Omit<InsertedModel, "modelId">> {
+): Promise<Omit<InsertedModel, 'modelId'>> {
   const [provider] = await db
     .insert(providers)
     .values({
       slug: options.providerSlug,
-      name: "Acme",
+      name: 'Acme',
       endpoints: [
-        { kind: options.kind ?? "chat", protocol: speaks.protocol, baseUrl: options.baseUrl },
+        { kind: options.kind ?? 'chat', protocol: speaks.protocol, baseUrl: options.baseUrl },
       ],
       authStyle: speaks.authStyle,
     })
@@ -231,7 +231,7 @@ async function insertRoute(
     .insert(providerAccounts)
     .values({
       providerId: provider.id,
-      name: "main",
+      name: 'main',
       encryptedKey: cipher.encrypt(UPSTREAM_KEY),
       keyLastFour: UPSTREAM_KEY.slice(-4),
     })
@@ -244,7 +244,7 @@ async function insertRoute(
       kind: options.kind,
       capabilities: options.capabilities ?? ALL_CAPABILITIES,
       contextSize:
-        options.kind === undefined || options.kind === "chat"
+        options.kind === undefined || options.kind === 'chat'
           ? (options.contextSize ?? 128_000)
           : null,
       maxOutputTokens: options.maxOutputTokens,
@@ -303,7 +303,7 @@ export async function insertApiKey(
   const { key, id: keyId, hash } = app.get(ApiKeyAuth).generate();
   const [row] = await db
     .insert(apiKeys)
-    .values({ id, name: "client", keyId, hash, allowedModelIds })
+    .values({ id, name: 'client', keyId, hash, allowedModelIds })
     .returning({ id: apiKeys.id });
   await app.get(SnapshotService).changed();
   return { key, id: row.id };

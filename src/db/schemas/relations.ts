@@ -1,11 +1,11 @@
-import { defineRelations } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import * as schema from "@/db/schemas";
+import { defineRelations } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import * as schema from '@/db/schemas';
 
 export const relations = defineRelations(schema, (r) => ({
   users: {
-    createdBy: r.one.users({ from: r.users.createdById, to: r.users.id, alias: "createdUsers" }),
-    createdUsers: r.many.users({ alias: "createdUsers" }),
+    createdBy: r.one.users({ from: r.users.createdById, to: r.users.id, alias: 'createdUsers' }),
+    createdUsers: r.many.users({ alias: 'createdUsers' }),
     sessions: r.many.sessions(),
     apiKeys: r.many.apiKeys(),
   },
@@ -95,4 +95,4 @@ export const relations = defineRelations(schema, (r) => ({
 
 export type Database = NodePgDatabase<typeof relations>;
 
-export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];

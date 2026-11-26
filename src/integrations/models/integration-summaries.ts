@@ -1,8 +1,8 @@
-import { desc, eq, max, type SQL } from "drizzle-orm";
-import { findModelNames } from "@/libs/models/allowed-models";
-import type { Database } from "@/db/schemas/relations";
-import { integrationRotations, integrations, users } from "@/db/schemas";
-import type { IntegrationSummary } from "./integration";
+import { desc, eq, max, type SQL } from 'drizzle-orm';
+import { findModelNames } from '@/libs/models/allowed-models';
+import type { Database } from '@/db/schemas/relations';
+import { integrationRotations, integrations, users } from '@/db/schemas';
+import type { IntegrationSummary } from './integration';
 
 export async function selectIntegrationSummaries(
   db: Database,
@@ -11,11 +11,11 @@ export async function selectIntegrationSummaries(
   const lastRotations = db
     .select({
       integrationId: integrationRotations.integrationId,
-      lastRotatedAt: max(integrationRotations.rotatedAt).as("last_rotated_at"),
+      lastRotatedAt: max(integrationRotations.rotatedAt).as('last_rotated_at'),
     })
     .from(integrationRotations)
     .groupBy(integrationRotations.integrationId)
-    .as("last_rotations");
+    .as('last_rotations');
   const rows = await db
     .select({
       id: integrations.id,

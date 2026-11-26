@@ -1,14 +1,14 @@
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { routes } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import type { ModelDetail } from "@/routing/models/model";
-import { findModelDetail } from "@/routing/models/model-detail";
-import { assertRouteKindFits } from "@/routing/models/route-kind";
-import { toRouteWriteError } from "@/routing/models/write-errors";
-import { AddRouteCommand } from "@/routing/commands/impl/add-route.command";
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { sql } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { routes } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import type { ModelDetail } from '@/routing/models/model';
+import { findModelDetail } from '@/routing/models/model-detail';
+import { assertRouteKindFits } from '@/routing/models/route-kind';
+import { toRouteWriteError } from '@/routing/models/write-errors';
+import { AddRouteCommand } from '@/routing/commands/impl/add-route.command';
 
 @CommandHandler(AddRouteCommand)
 export class AddRouteHandler implements ICommandHandler<AddRouteCommand> {

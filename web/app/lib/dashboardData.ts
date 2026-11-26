@@ -1,33 +1,33 @@
-import type { ChartPoint, ChartSeries } from "./chart";
+import type { ChartPoint, ChartSeries } from './chart';
 
-export type RangeKey = "24h" | "7d" | "30d";
+export type RangeKey = '24h' | '7d' | '30d';
 
 export const rangeOptions: { label: string; value: RangeKey }[] = [
-  { label: "Last 24 hours", value: "24h" },
-  { label: "Last 7 days", value: "7d" },
-  { label: "Last 30 days", value: "30d" },
+  { label: 'Last 24 hours', value: '24h' },
+  { label: 'Last 7 days', value: '7d' },
+  { label: 'Last 30 days', value: '30d' },
 ];
 
 export const providerSeries: ChartSeries[] = [
-  { key: "OpenAI", name: "OpenAI", color: "var(--series-1)" },
-  { key: "Anthropic", name: "Anthropic", color: "var(--series-2)" },
-  { key: "Alibaba", name: "Alibaba", color: "var(--series-3)" },
-  { key: "CommandCode", name: "CommandCode", color: "var(--series-4)" },
+  { key: 'OpenAI', name: 'OpenAI', color: 'var(--series-1)' },
+  { key: 'Anthropic', name: 'Anthropic', color: 'var(--series-2)' },
+  { key: 'Alibaba', name: 'Alibaba', color: 'var(--series-3)' },
+  { key: 'CommandCode', name: 'CommandCode', color: 'var(--series-4)' },
 ];
 
 export const providerColor = (name: string) =>
-  providerSeries.find((series) => series.key === name)?.color ?? "var(--bar-fill)";
+  providerSeries.find((series) => series.key === name)?.color ?? 'var(--bar-fill)';
 
 export const tokenSeries: ChartSeries[] = [
-  { key: "input", name: "Uncached input", color: "var(--token-input)" },
-  { key: "inputCached", name: "Cached input", color: "var(--token-input-cached)" },
-  { key: "output", name: "Uncached output / write", color: "var(--token-output)" },
-  { key: "outputCached", name: "Cached output / write", color: "var(--token-output-cached)" },
+  { key: 'input', name: 'Uncached input', color: 'var(--token-input)' },
+  { key: 'inputCached', name: 'Cached input', color: 'var(--token-input-cached)' },
+  { key: 'output', name: 'Uncached output / write', color: 'var(--token-output)' },
+  { key: 'outputCached', name: 'Cached output / write', color: 'var(--token-output-cached)' },
 ];
 
 const PROVIDER_SHARES = [0.443, 0.294, 0.177, 0.086];
 const REQUESTS_PER_DAY = 2_840_000_000;
-const SEED_BY_RANGE: Record<RangeKey, number> = { "24h": 24, "7d": 7, "30d": 30 };
+const SEED_BY_RANGE: Record<RangeKey, number> = { '24h': 24, '7d': 7, '30d': 30 };
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
@@ -46,11 +46,11 @@ const diurnal = (hour: number) => 1 + 0.42 * Math.sin(((hour - 9) / 24) * Math.P
 const weekly = (date: Date) => ([0, 6].includes(date.getUTCDay()) ? 0.74 : 1.08);
 
 const hourLabel = (date: Date) =>
-  date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+  date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 const dayLabel = (date: Date) =>
-  date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 const weekdayLabel = (date: Date) =>
-  date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
 interface Bucket {
   start: Date;
@@ -61,7 +61,7 @@ interface Bucket {
 
 function buckets(range: RangeKey, now = new Date()): Bucket[] {
   const end = new Date(Math.floor(now.getTime() / HOUR) * HOUR);
-  if (range === "24h") {
+  if (range === '24h') {
     return Array.from({ length: 24 }, (_, index) => {
       const start = new Date(end.getTime() - (23 - index) * HOUR);
       return {
@@ -72,7 +72,7 @@ function buckets(range: RangeKey, now = new Date()): Bucket[] {
       };
     });
   }
-  if (range === "7d") {
+  if (range === '7d') {
     const anchor = Math.floor(end.getTime() / (6 * HOUR)) * 6 * HOUR;
     return Array.from({ length: 28 }, (_, index) => {
       const start = new Date(anchor - (27 - index) * 6 * HOUR);
@@ -129,7 +129,7 @@ export function buildTraffic(range: RangeKey): TrafficData {
 
 export function buildDailyTokens(): ChartPoint[] {
   const random = seeded(2026);
-  return buckets("30d").map((bucket) => {
+  return buckets('30d').map((bucket) => {
     const factor = weekly(bucket.start) * (0.94 + random() * 0.12);
     return {
       tick: bucket.tick,

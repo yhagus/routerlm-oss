@@ -1,8 +1,8 @@
-import { Processor, WorkerHost } from "@nestjs/bullmq";
-import type { Job } from "bullmq";
-import { USAGE_QUEUE } from "@/queue/models/queue-names";
-import type { UsageJob } from "@/usage/models/usage-job";
-import { UsageWriter } from "@/usage/providers/usage-writer";
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import type { Job } from 'bullmq';
+import { USAGE_QUEUE } from '@/queue/models/queue-names';
+import type { UsageJob } from '@/usage/models/usage-job';
+import { UsageWriter } from '@/usage/providers/usage-writer';
 
 @Processor(USAGE_QUEUE)
 export class UsageProcessor extends WorkerHost {

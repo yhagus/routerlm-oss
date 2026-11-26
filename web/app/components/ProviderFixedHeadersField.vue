@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Plus, Trash2 } from "@lucide/vue";
-import { type FixedHeaderForm, fixedHeaderFormFor } from "~/lib/providerForm";
+import { Plus, Trash2 } from '@lucide/vue';
+import { type FixedHeaderForm, fixedHeaderFormFor } from '~/lib/providerForm';
 
 const headers = defineModel<FixedHeaderForm[]>({ required: true });
 
 function rowLabel(header: FixedHeaderForm): string {
-  return header.name.trim() === "" ? "new header" : header.name.trim();
+  return header.name.trim() === '' ? 'new header' : header.name.trim();
 }
 
 function handleAdd(): void {

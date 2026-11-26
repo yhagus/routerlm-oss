@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { Copy, TriangleAlert } from "@lucide/vue";
-import type { CreatedIntegration } from "~/lib/integrations";
+import { Copy, TriangleAlert } from '@lucide/vue';
+import type { CreatedIntegration } from '~/lib/integrations';
 
 const props = defineProps<{
   integration: CreatedIntegration;
-  verb: "created" | "rotated";
+  verb: 'created' | 'rotated';
 }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const { showToast } = useToast();
 
 const description = computed(() =>
-  props.verb === "rotated"
-    ? "Give this Integration Secret to the application. The old one no longer works."
-    : "Give this Integration Secret to the application, so it can issue API Keys to its Customers.",
+  props.verb === 'rotated'
+    ? 'Give this Integration Secret to the application. The old one no longer works.'
+    : 'Give this Integration Secret to the application, so it can issue API Keys to its Customers.',
 );
 
 async function copySecret(): Promise<void> {
   try {
     await navigator.clipboard.writeText(props.integration.secret);
-    showToast("Integration Secret copied");
+    showToast('Integration Secret copied');
   } catch {
     showToast("Couldn't copy. Select the Integration Secret and copy it yourself.");
   }

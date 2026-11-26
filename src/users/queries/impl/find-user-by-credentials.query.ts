@@ -1,5 +1,5 @@
-import { Query } from "@nestjs/cqrs";
-import type { User } from "@/users/models/user";
+import { Query } from '@nestjs/cqrs';
+import type { User } from '@/users/models/user';
 
 export class FindUserByCredentialsQuery extends Query<User | null> {
   constructor(

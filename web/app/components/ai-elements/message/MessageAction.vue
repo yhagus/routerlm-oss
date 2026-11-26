@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import type { ButtonVariants } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { ButtonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Props {
   tooltip?: string;
   label?: string;
-  variant?: ButtonVariants["variant"];
-  size?: ButtonVariants["size"];
+  variant?: ButtonVariants['variant'];
+  size?: ButtonVariants['size'];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: "ghost",
-  size: "icon-sm",
+  variant: 'ghost',
+  size: 'icon-sm',
 });
 
 const buttonProps = {
   variant: props.variant,
   size: props.size,
-  type: "button" as const,
+  type: 'button' as const,
 };
 </script>
 

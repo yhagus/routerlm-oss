@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import { getUsage } from "tokenlens";
-import { computed } from "vue";
-import { useContextValue } from "./context";
+import type { HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
+import { getUsage } from 'tokenlens';
+import { computed } from 'vue';
+import { useContextValue } from './context';
 
 const props = defineProps<{
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }>();
 
 const { modelId, usage } = useContextValue();
@@ -22,9 +22,9 @@ const totalCost = computed(() => {
     },
   }).costUSD?.totalUSD;
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
   }).format(costUSD ?? 0);
 });
 </script>

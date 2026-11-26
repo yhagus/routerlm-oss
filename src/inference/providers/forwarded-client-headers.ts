@@ -1,5 +1,5 @@
-import type { IncomingHttpHeaders } from "node:http";
-import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema";
+import type { IncomingHttpHeaders } from 'node:http';
+import type { CatalogProviderQuirks } from '@/catalog/schemas/catalog.schema';
 
 export function forwardedClientHeadersOf(
   quirks: CatalogProviderQuirks,
@@ -8,7 +8,7 @@ export function forwardedClientHeadersOf(
   const forwarded: Record<string, string> = {};
   for (const name of quirks.forwardedClientHeaders ?? []) {
     const value = clientHeaders[name];
-    if (typeof value === "string" && value !== "") {
+    if (typeof value === 'string' && value !== '') {
       forwarded[name] = value;
     }
   }

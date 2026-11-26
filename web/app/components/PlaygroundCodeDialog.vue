@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref } from 'vue';
 import {
   CodeBlock,
   CodeBlockActions,
   CodeBlockCopyButton,
   CodeBlockHeader,
-} from "@/components/ai-elements/code-block";
+} from '@/components/ai-elements/code-block';
 
 const props = defineProps<{
   request: { body: Record<string, unknown> } | { problem: string };
 }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const FORMATS = [
-  { value: "curl", label: "curl" },
-  { value: "typescript", label: "TypeScript" },
+  { value: 'curl', label: 'curl' },
+  { value: 'typescript', label: 'TypeScript' },
 ] as const;
-type Format = (typeof FORMATS)[number]["value"];
-const format = ref<Format>("curl");
-const language = computed(() => (format.value === "curl" ? "bash" : "typescript"));
+type Format = (typeof FORMATS)[number]['value'];
+const format = ref<Format>('curl');
+const language = computed(() => (format.value === 'curl' ? 'bash' : 'typescript'));
 
 function withoutImageData(value: unknown): unknown {
-  if (typeof value === "string" && /^(data|blob):/.test(value)) return "<image data URL>";
+  if (typeof value === 'string' && /^(data|blob):/.test(value)) return '<image data URL>';
   if (Array.isArray(value)) return value.map(withoutImageData);
-  if (typeof value === "object" && value !== null) {
+  if (typeof value === 'object' && value !== null) {
     return Object.fromEntries(
       Object.entries(value).map(([key, entry]) => [key, withoutImageData(entry)]),
     );
@@ -32,34 +32,34 @@ function withoutImageData(value: unknown): unknown {
 }
 
 function indented(text: string, spaces: number): string {
-  return text.replaceAll("\n", `\n${" ".repeat(spaces)}`);
+  return text.replaceAll('\n', `\n${' '.repeat(spaces)}`);
 }
 
 const code = computed(() => {
-  if ("problem" in props.request) return "";
+  if ('problem' in props.request) return '';
   const json = JSON.stringify(withoutImageData(props.request.body), null, 2);
-  if (format.value === "curl") {
+  if (format.value === 'curl') {
     return [
       'curl "$ROUTERLM_BASE_URL/v1/chat/completions" \\',
       '  -H "Authorization: Bearer $ROUTERLM_API_KEY" \\',
       '  -H "Content-Type: application/json" \\',
       `  -d '${indented(json.replaceAll("'", "'\\''"), 2)}'`,
-    ].join("\n");
+    ].join('\n');
   }
   return [
     'import OpenAI from "openai";',
-    "",
-    "const client = new OpenAI({",
-    "  baseURL: `${process.env.ROUTERLM_BASE_URL}/v1`,",
-    "  apiKey: process.env.ROUTERLM_API_KEY,",
-    "});",
-    "",
+    '',
+    'const client = new OpenAI({',
+    '  baseURL: `${process.env.ROUTERLM_BASE_URL}/v1`,',
+    '  apiKey: process.env.ROUTERLM_API_KEY,',
+    '});',
+    '',
     `const stream = await client.chat.completions.create(${json});`,
-    "",
-    "for await (const chunk of stream) {",
+    '',
+    'for await (const chunk of stream) {',
     '  process.stdout.write(chunk.choices[0]?.delta?.content ?? "");',
-    "}",
-  ].join("\n");
+    '}',
+  ].join('\n');
 });
 </script>
 

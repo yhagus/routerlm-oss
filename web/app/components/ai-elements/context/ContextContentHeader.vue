@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
-import { computed } from "vue";
-import { useContextValue } from "./context";
+import type { HTMLAttributes } from 'vue';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+import { computed } from 'vue';
+import { useContextValue } from './context';
 
 const props = defineProps<{
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }>();
 
 const PERCENT_MAX = 100;
 
 const { usedTokens, maxTokens } = useContextValue();
 
-const formatter = new Intl.NumberFormat("en-US", { notation: "compact" });
+const formatter = new Intl.NumberFormat('en-US', { notation: 'compact' });
 
 const usedPercent = computed(() => {
   if (maxTokens.value === 0) return 0;
   return usedTokens.value / maxTokens.value;
 });
 const displayPct = computed(() => {
-  return new Intl.NumberFormat("en-US", {
-    style: "percent",
+  return new Intl.NumberFormat('en-US', {
+    style: 'percent',
     maximumFractionDigits: 1,
   }).format(usedPercent.value);
 });

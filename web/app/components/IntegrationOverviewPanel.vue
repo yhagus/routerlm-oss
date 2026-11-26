@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { CloudOff, RefreshCw } from "@lucide/vue";
-import { isOverviewRange, OVERVIEW_RANGES, type OverviewRange } from "~/lib/overview";
-import { timeRangeStart, type UsageSummary } from "~/lib/usage";
+import { CloudOff, RefreshCw } from '@lucide/vue';
+import { isOverviewRange, OVERVIEW_RANGES, type OverviewRange } from '~/lib/overview';
+import { timeRangeStart, type UsageSummary } from '~/lib/usage';
 
 const props = defineProps<{ integrationId: string }>();
 
-const range = useQueryParam<OverviewRange>("range", { default: "7d", isValid: isOverviewRange });
+const range = useQueryParam<OverviewRange>('range', { default: '7d', isValid: isOverviewRange });
 const rangeOptions = Object.entries(OVERVIEW_RANGES).map(([value, label]) => ({ value, label }));
 
 function pickRange(value: string): void {
@@ -22,14 +22,14 @@ const {
   status,
   error: loadError,
   refresh: refreshSummary,
-} = useDashboardApi<UsageSummary>("/usage/totals", {
+} = useDashboardApi<UsageSummary>('/usage/totals', {
   query: computed(() => ({ integrationId: props.integrationId, from: from.value })),
 });
 
 async function refresh(): Promise<void> {
   from.value = timeRangeStart(range.value, Date.now());
   await nextTick();
-  await refreshSummary({ dedupe: "defer" });
+  await refreshSummary({ dedupe: 'defer' });
 }
 </script>
 

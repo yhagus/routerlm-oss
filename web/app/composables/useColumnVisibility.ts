@@ -1,14 +1,14 @@
-import type { ColumnVisibilityState } from "@tanstack/vue-table";
-import { onMounted, shallowRef, watch, type ShallowRef } from "vue";
+import type { ColumnVisibilityState } from '@tanstack/vue-table';
+import { onMounted, shallowRef, watch, type ShallowRef } from 'vue';
 
-const STORAGE_PREFIX = "routerlm:columns:";
+const STORAGE_PREFIX = 'routerlm:columns:';
 
 function isVisibilityState(value: unknown): value is ColumnVisibilityState {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
     !Array.isArray(value) &&
-    Object.values(value).every((isVisible) => typeof isVisible === "boolean")
+    Object.values(value).every((isVisible) => typeof isVisible === 'boolean')
   );
 }
 

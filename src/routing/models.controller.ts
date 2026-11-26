@@ -8,23 +8,23 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-} from "@nestjs/common";
-import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
-import { CreateModelCommand } from "./commands/impl/create-model.command";
-import { DeleteModelCommand } from "./commands/impl/delete-model.command";
-import { UpdateModelCommand } from "./commands/impl/update-model.command";
-import type { Model, ModelDetail, ModelSummary } from "./models/model";
-import { GetModelQuery } from "./queries/impl/get-model.query";
-import { ListModelsQuery } from "./queries/impl/list-models.query";
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { DashboardController } from '@/auth/decorators/dashboard-controller.decorator';
+import { CreateModelCommand } from './commands/impl/create-model.command';
+import { DeleteModelCommand } from './commands/impl/delete-model.command';
+import { UpdateModelCommand } from './commands/impl/update-model.command';
+import type { Model, ModelDetail, ModelSummary } from './models/model';
+import { GetModelQuery } from './queries/impl/get-model.query';
+import { ListModelsQuery } from './queries/impl/list-models.query';
 import {
   type ModelChanges,
   modelChangesSchema,
   type NewModel,
   newModelSchema,
-} from "./schemas/routing.schema";
+} from './schemas/routing.schema';
 
-@DashboardController("models")
+@DashboardController('models')
 export class ModelsController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -36,8 +36,8 @@ export class ModelsController {
     return this.queryBus.execute(new ListModelsQuery());
   }
 
-  @Get(":id")
-  getModel(@Param("id", ParseUUIDPipe) modelId: string): Promise<ModelDetail> {
+  @Get(':id')
+  getModel(@Param('id', ParseUUIDPipe) modelId: string): Promise<ModelDetail> {
     return this.queryBus.execute(new GetModelQuery(modelId));
   }
 
@@ -46,17 +46,17 @@ export class ModelsController {
     return this.commandBus.execute(new CreateModelCommand(newModel));
   }
 
-  @Patch(":id")
+  @Patch(':id')
   updateModel(
-    @Param("id", ParseUUIDPipe) modelId: string,
+    @Param('id', ParseUUIDPipe) modelId: string,
     @Body({ schema: modelChangesSchema }) changes: ModelChanges,
   ): Promise<Model> {
     return this.commandBus.execute(new UpdateModelCommand(modelId, changes));
   }
 
-  @Delete(":id")
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteModel(@Param("id", ParseUUIDPipe) modelId: string): Promise<void> {
+  deleteModel(@Param('id', ParseUUIDPipe) modelId: string): Promise<void> {
     return this.commandBus.execute(new DeleteModelCommand(modelId));
   }
 }

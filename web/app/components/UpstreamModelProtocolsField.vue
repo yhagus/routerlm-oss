@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ChevronDown, ChevronUp, Plus, X } from "@lucide/vue";
+import { ChevronDown, ChevronUp, Plus, X } from '@lucide/vue';
 import {
   MODEL_KIND_LABELS,
   type ModelKind,
   PROTOCOL_LABELS,
   type UpstreamProtocol,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 const props = defineProps<{
   endpointProtocols: readonly UpstreamProtocol[];

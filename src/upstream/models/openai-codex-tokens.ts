@@ -1,8 +1,8 @@
-import { z } from "zod";
-import { SECOND_MS } from "@/libs/models/duration";
+import { z } from 'zod';
+import { SECOND_MS } from '@/libs/models/duration';
 
-const OPENAI_AUTH_CLAIM = "https://api.openai.com/auth";
-const OPENAI_PROFILE_CLAIM = "https://api.openai.com/profile";
+const OPENAI_AUTH_CLAIM = 'https://api.openai.com/auth';
+const OPENAI_PROFILE_CLAIM = 'https://api.openai.com/profile';
 
 export interface CodexAccount {
   idToken: string;
@@ -25,12 +25,12 @@ const idTokenClaimsSchema = z.object({
 const accessTokenClaimsSchema = z.object({ exp: z.number() });
 
 function jwtClaimsOf(token: string): unknown {
-  const [, payload] = token.split(".");
+  const [, payload] = token.split('.');
   if (payload === undefined) {
     return null;
   }
   try {
-    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
   } catch {
     return null;
   }

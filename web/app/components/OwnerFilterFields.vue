@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { FilterOption } from "~/lib/queryFilters";
+import type { FilterOption } from '~/lib/queryFilters';
 
 defineProps<{ integrationOptions: FilterOption[] }>();
-const integrationIds = defineModel<string[]>("integrationIds", { required: true });
-const customerId = defineModel<string>("customerId", { required: true });
+const integrationIds = defineModel<string[]>('integrationIds', { required: true });
+const customerId = defineModel<string>('customerId', { required: true });
 
 const customerIdDraft = ref(customerId.value);
 watch(customerId, (next) => {

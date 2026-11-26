@@ -1,12 +1,12 @@
-import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { RunInferenceCommand } from "@/inference/commands/impl/run-inference.command";
-import { openAiChatClientConverter } from "@/inference/protocols/openai-chat/openai-chat-client-converter";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import type { UsageJob } from "@/usage/models/usage-job";
-import { playgroundSummaryOf } from "@/playground/models/playground-summary";
-import { SendPlaygroundChatCompletionCommand } from "@/playground/commands/impl/send-playground-chat-completion.command";
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { RunInferenceCommand } from '@/inference/commands/impl/run-inference.command';
+import { openAiChatClientConverter } from '@/inference/protocols/openai-chat/openai-chat-client-converter';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import type { UsageJob } from '@/usage/models/usage-job';
+import { playgroundSummaryOf } from '@/playground/models/playground-summary';
+import { SendPlaygroundChatCompletionCommand } from '@/playground/commands/impl/send-playground-chat-completion.command';
 
-export const SUMMARY_EVENT = "summary";
+export const SUMMARY_EVENT = 'summary';
 
 const encoder = new TextEncoder();
 
@@ -31,14 +31,14 @@ export class SendPlaygroundChatCompletionHandler implements ICommandHandler<Send
       new RunInferenceCommand(
         openAiChatClientConverter,
         body,
-        { kind: "playground", userId: user.id },
+        { kind: 'playground', userId: user.id },
         connection,
         reportUsage,
         target,
       ),
     );
-    if (result.kind !== "stream") {
-      throw new Error("A Playground request is always streamed");
+    if (result.kind !== 'stream') {
+      throw new Error('A Playground request is always streamed');
     }
     return this.followedBySummary(result.chunks, usage);
   }

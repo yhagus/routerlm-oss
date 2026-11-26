@@ -17,9 +17,9 @@ import {
   Stethoscope,
   Trash2,
   Wrench,
-} from "@lucide/vue";
-import type { Component, WritableComputedRef } from "vue";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+} from '@lucide/vue';
+import type { Component, WritableComputedRef } from 'vue';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   CAPABILITIES,
   CAPABILITY_LABELS,
@@ -40,11 +40,11 @@ import {
   type UpstreamModel,
   upstreamModelLabel,
   type UpstreamProtocol,
-} from "~/lib/upstream";
-import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
-import { formatNumberInput } from "~/lib/numberInput";
-import { SERVICE_TIER_LABELS, SERVICE_TIERS, type ServiceTier } from "~/lib/parameterPolicy";
+} from '~/lib/upstream';
+import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
+import { formatNumberInput } from '~/lib/numberInput';
+import { SERVICE_TIER_LABELS, SERVICE_TIERS, type ServiceTier } from '~/lib/parameterPolicy';
 import {
   groupBySharedId,
   groupCapabilities,
@@ -53,18 +53,18 @@ import {
   rangeOf,
   type UpstreamModelGroup,
   type UpstreamModelRow,
-} from "~/lib/upstreamModelGroups";
-import { formatCount } from "~/lib/usage";
+} from '~/lib/upstreamModelGroups';
+import { formatCount } from '~/lib/usage';
 import {
   type MediaForm,
   mediaFieldsFromForm,
   mediaFormFor,
   mediaLimitLines,
   unitPriceLines,
-} from "~/lib/upstreamModelMedia";
-import { priceSummary } from "~/lib/upstreamModelPrice";
-import { activePricingWindowOf } from "~/lib/pricingWindows";
-import { probeBlockReason } from "~/lib/probe";
+} from '~/lib/upstreamModelMedia';
+import { priceSummary } from '~/lib/upstreamModelPrice';
+import { activePricingWindowOf } from '~/lib/pricingWindows';
+import { probeBlockReason } from '~/lib/probe';
 
 const props = defineProps<{
   providers: Provider[];
@@ -76,32 +76,32 @@ const props = defineProps<{
 }>();
 
 type UpstreamModelDialog =
-  | { kind: "details"; upstreamModel: UpstreamModel }
-  | { kind: "create" }
-  | { kind: "edit"; upstreamModel: UpstreamModel }
-  | { kind: "delete"; upstreamModel: UpstreamModel }
-  | { kind: "pricing-windows"; upstreamModel: UpstreamModel };
+  | { kind: 'details'; upstreamModel: UpstreamModel }
+  | { kind: 'create' }
+  | { kind: 'edit'; upstreamModel: UpstreamModel }
+  | { kind: 'delete'; upstreamModel: UpstreamModel }
+  | { kind: 'pricing-windows'; upstreamModel: UpstreamModel };
 
 const CAPABILITY_HINTS: Record<Capability, string> = {
-  vision: "Image input (vision)",
-  tools: "Tool calls (function calling)",
-  reasoning: "Reasoning (extended thinking)",
-  "structured-output": "Structured output (JSON schema)",
-  "text-to-video": "Video from a text prompt alone",
-  "first-frame": "Video from a first frame",
-  "last-frame": "Video to a last frame",
-  "reference-images": "Video guided by reference images",
+  vision: 'Image input (vision)',
+  tools: 'Tool calls (function calling)',
+  reasoning: 'Reasoning (extended thinking)',
+  'structured-output': 'Structured output (JSON schema)',
+  'text-to-video': 'Video from a text prompt alone',
+  'first-frame': 'Video from a first frame',
+  'last-frame': 'Video to a last frame',
+  'reference-images': 'Video guided by reference images',
 };
 
 const CAPABILITY_ICONS: Record<Capability, Component> = {
   vision: Eye,
   tools: Wrench,
   reasoning: Brain,
-  "structured-output": Braces,
-  "text-to-video": Clapperboard,
-  "first-frame": SkipBack,
-  "last-frame": SkipForward,
-  "reference-images": Images,
+  'structured-output': Braces,
+  'text-to-video': Clapperboard,
+  'first-frame': SkipBack,
+  'last-frame': SkipForward,
+  'reference-images': Images,
 };
 
 const { $dashboardApi } = useNuxtApp();
@@ -122,48 +122,48 @@ const scopedModels = computed(() =>
     : props.upstreamModels,
 );
 
-const CONTEXT_MINIMUMS = ["", "32000", "128000", "200000", "256000", "1000000"] as const;
-const RELEASE_WINDOWS = ["", "30", "90", "180", "365"] as const;
+const CONTEXT_MINIMUMS = ['', '32000', '128000', '200000', '256000', '1000000'] as const;
+const RELEASE_WINDOWS = ['', '30', '90', '180', '365'] as const;
 const SORT_ORDERS = [
-  "newest",
-  "oldest",
-  "name",
-  "provider",
-  "input-asc",
-  "input-desc",
-  "output-asc",
-  "context-desc",
+  'newest',
+  'oldest',
+  'name',
+  'provider',
+  'input-asc',
+  'input-desc',
+  'output-asc',
+  'context-desc',
 ] as const;
 
-const MODEL_STATUSES = ["enabled", "disabled"] as const;
+const MODEL_STATUSES = ['enabled', 'disabled'] as const;
 
 const providerSlugs = computed(() => props.providers.map((each) => each.slug));
-const providerFilter = useQueryList("provider", {
+const providerFilter = useQueryList('provider', {
   isValid: anyText,
   order: providerSlugs,
 });
-const contextFilter = useQueryParam("context", {
-  default: "",
+const contextFilter = useQueryParam('context', {
+  default: '',
   isValid: oneOf(CONTEXT_MINIMUMS),
 });
-const releasedFilter = useQueryParam("released", {
-  default: "",
+const releasedFilter = useQueryParam('released', {
+  default: '',
   isValid: oneOf(RELEASE_WINDOWS),
 });
-const kindFilter = useQueryList("kind", {
+const kindFilter = useQueryList('kind', {
   isValid: oneOf(MODEL_KINDS),
   order: MODEL_KINDS,
 });
-const capabilityFilter = useQueryList("capability", {
+const capabilityFilter = useQueryList('capability', {
   isValid: oneOf(CAPABILITIES),
   order: CAPABILITIES,
 });
-const statusFilter = useQueryList("status", {
+const statusFilter = useQueryList('status', {
   isValid: oneOf(MODEL_STATUSES),
   order: MODEL_STATUSES,
 });
-const sortOrder = useQueryParam("sort", {
-  default: "newest",
+const sortOrder = useQueryParam('sort', {
+  default: 'newest',
   isValid: oneOf(SORT_ORDERS),
 });
 
@@ -175,41 +175,41 @@ const providerFilterOptions = computed(() => [
     .map((slug) => ({ label: `${slug} (not found)`, value: slug })),
 ]);
 const contextFilterOptions = [
-  { label: "Any context", value: "" },
-  { label: "32K+ context", value: "32000" },
-  { label: "128K+ context", value: "128000" },
-  { label: "200K+ context", value: "200000" },
-  { label: "256K+ context", value: "256000" },
-  { label: "1M+ context", value: "1000000" },
+  { label: 'Any context', value: '' },
+  { label: '32K+ context', value: '32000' },
+  { label: '128K+ context', value: '128000' },
+  { label: '200K+ context', value: '200000' },
+  { label: '256K+ context', value: '256000' },
+  { label: '1M+ context', value: '1000000' },
 ];
 const releasedFilterOptions = [
-  { label: "Any release date", value: "" },
-  { label: "Released in 30 days", value: "30" },
-  { label: "Released in 90 days", value: "90" },
-  { label: "Released in 6 months", value: "180" },
-  { label: "Released in 1 year", value: "365" },
+  { label: 'Any release date', value: '' },
+  { label: 'Released in 30 days', value: '30' },
+  { label: 'Released in 90 days', value: '90' },
+  { label: 'Released in 6 months', value: '180' },
+  { label: 'Released in 1 year', value: '365' },
 ];
 const capabilityFilterOptions = CAPABILITIES.map((capability) => ({
   label: CAPABILITY_LABELS[capability],
   value: capability,
 }));
 const statusFilterOptions = [
-  { label: "Enabled", value: "enabled" },
-  { label: "Disabled", value: "disabled" },
+  { label: 'Enabled', value: 'enabled' },
+  { label: 'Disabled', value: 'disabled' },
 ] satisfies { label: string; value: (typeof MODEL_STATUSES)[number] }[];
 const sortOptions = computed(() => [
-  { label: "Newest", value: "newest" },
-  { label: "Oldest", value: "oldest" },
-  { label: "Name", value: "name" },
-  ...(props.provider ? [] : [{ label: "Provider", value: "provider" }]),
-  { label: "Input price, lowest", value: "input-asc" },
-  { label: "Input price, highest", value: "input-desc" },
-  { label: "Output price, lowest", value: "output-asc" },
-  { label: "Context, largest", value: "context-desc" },
+  { label: 'Newest', value: 'newest' },
+  { label: 'Oldest', value: 'oldest' },
+  { label: 'Name', value: 'name' },
+  ...(props.provider ? [] : [{ label: 'Provider', value: 'provider' }]),
+  { label: 'Input price, lowest', value: 'input-asc' },
+  { label: 'Input price, highest', value: 'input-desc' },
+  { label: 'Output price, lowest', value: 'output-asc' },
+  { label: 'Context, largest', value: 'context-desc' },
 ]);
 
 function providerName(model: UpstreamModel): string {
-  return providerById.value.get(model.providerId)?.name ?? "—";
+  return providerById.value.get(model.providerId)?.name ?? '—';
 }
 
 function compareOptionalNumbers(
@@ -241,19 +241,19 @@ function compareModels(first: UpstreamModel, second: UpstreamModel): number {
     second.name ?? second.upstreamModelId,
   );
   switch (sortOrder.value) {
-    case "newest":
+    case 'newest':
       return compareReleaseDates(first.releaseDate, second.releaseDate, -1) || byName;
-    case "oldest":
+    case 'oldest':
       return compareReleaseDates(first.releaseDate, second.releaseDate, 1) || byName;
-    case "provider":
+    case 'provider':
       return providerName(first).localeCompare(providerName(second)) || byName;
-    case "input-asc":
+    case 'input-asc':
       return compareOptionalNumbers(first.inputPrice, second.inputPrice, 1) || byName;
-    case "input-desc":
+    case 'input-desc':
       return compareOptionalNumbers(first.inputPrice, second.inputPrice, -1) || byName;
-    case "output-asc":
+    case 'output-asc':
       return compareOptionalNumbers(first.outputPrice, second.outputPrice, 1) || byName;
-    case "context-desc":
+    case 'context-desc':
       return compareOptionalNumbers(first.contextSize, second.contextSize, -1) || byName;
     default:
       return byName;
@@ -264,21 +264,21 @@ const filteredModels = computed(() => {
   const minContext = Number(contextFilter.value || 0);
   const releasedSince = releasedFilter.value ? daysAgo(Number(releasedFilter.value)) : null;
   return scopedModels.value.filter((model) => {
-    const slug = providerById.value.get(model.providerId)?.slug ?? "";
+    const slug = providerById.value.get(model.providerId)?.slug ?? '';
     if (providerFilter.value.length && !providerFilter.value.includes(slug)) return false;
     if (kindFilter.value.length && !kindFilter.value.includes(model.kind)) return false;
     if ((model.contextSize ?? 0) < minContext) return false;
-    if (releasedSince !== null && (model.releaseDate ?? "") < releasedSince) return false;
+    if (releasedSince !== null && (model.releaseDate ?? '') < releasedSince) return false;
     if (!capabilityFilter.value.every((capability) => model.capabilities.includes(capability))) {
       return false;
     }
-    const status = model.isEnabled ? "enabled" : "disabled";
+    const status = model.isEnabled ? 'enabled' : 'disabled';
     return statusFilter.value.length === 0 || statusFilter.value.includes(status);
   });
 });
 
 function searchTextOf(model: UpstreamModel): string {
-  return [model.upstreamModelId, model.name ?? "", providerName(model)].join("\n");
+  return [model.upstreamModelId, model.name ?? '', providerName(model)].join('\n');
 }
 
 const search = useQuerySearch();
@@ -305,7 +305,7 @@ const filteredCountById = computed(() => {
 });
 
 function isNarrowedBySearch(group: UpstreamModelGroup): boolean {
-  if (searchQuery.value === "") return false;
+  if (searchQuery.value === '') return false;
   return (filteredCountById.value.get(group.upstreamModelId) ?? 0) > group.members.length;
 }
 
@@ -341,7 +341,7 @@ const countLabel = computed(() => {
   );
   if (props.provider) return undefined;
   if (modelCount === idCount) return `${formatCount(modelCount)} Upstream Models`;
-  return `${formatCount(modelCount)} Upstream Models · ${formatCount(idCount)} model ${idCount === 1 ? "id" : "ids"}`;
+  return `${formatCount(modelCount)} Upstream Models · ${formatCount(idCount)} model ${idCount === 1 ? 'id' : 'ids'}`;
 });
 
 function selectFilterTokens(
@@ -356,74 +356,74 @@ function selectFilterTokens(
       group,
       label: options.find((option) => option.value === selected.value)?.label ?? selected.value,
       remove: () => {
-        selected.value = "";
+        selected.value = '';
       },
     },
   ];
 }
 
 const activeFilters = computed<ActiveFilter[]>(() => [
-  ...listFilterTokens("Provider", providerFilter, providerFilterOptions.value),
-  ...listFilterTokens("Kind", kindFilter, MODEL_KIND_OPTIONS),
-  ...selectFilterTokens("Context", contextFilter, contextFilterOptions),
-  ...selectFilterTokens("Released", releasedFilter, releasedFilterOptions),
-  ...listFilterTokens("Capability", capabilityFilter, capabilityFilterOptions),
-  ...listFilterTokens("Status", statusFilter, statusFilterOptions),
+  ...listFilterTokens('Provider', providerFilter, providerFilterOptions.value),
+  ...listFilterTokens('Kind', kindFilter, MODEL_KIND_OPTIONS),
+  ...selectFilterTokens('Context', contextFilter, contextFilterOptions),
+  ...selectFilterTokens('Released', releasedFilter, releasedFilterOptions),
+  ...listFilterTokens('Capability', capabilityFilter, capabilityFilterOptions),
+  ...listFilterTokens('Status', statusFilter, statusFilterOptions),
 ]);
 
 function clearFilters(): void {
   providerFilter.value = [];
   kindFilter.value = [];
-  contextFilter.value = "";
-  releasedFilter.value = "";
+  contextFilter.value = '';
+  releasedFilter.value = '';
   capabilityFilter.value = [];
   statusFilter.value = [];
 }
 
 const columns: DataTableColumn<UpstreamModelRow>[] = [
   {
-    id: "upstreamModel",
-    header: "Upstream Model",
+    id: 'upstreamModel',
+    header: 'Upstream Model',
     enableHiding: false,
     accessorFn: (row) =>
-      isUpstreamModelGroup(row) ? row.members.map(searchTextOf).join("\n") : searchTextOf(row),
+      isUpstreamModelGroup(row) ? row.members.map(searchTextOf).join('\n') : searchTextOf(row),
   },
-  { id: "kind", header: "Kind" },
-  { id: "capabilities", header: "Capabilities" },
-  { id: "context", header: "Context" },
-  { id: "maxOutput", header: "Max output" },
-  { id: "price", header: "Price" },
-  { id: "released", header: "Released" },
-  { id: "status", header: "Status" },
+  { id: 'kind', header: 'Kind' },
+  { id: 'capabilities', header: 'Capabilities' },
+  { id: 'context', header: 'Context' },
+  { id: 'maxOutput', header: 'Max output' },
+  { id: 'price', header: 'Price' },
+  { id: 'released', header: 'Released' },
+  { id: 'status', header: 'Status' },
   actionsColumn(),
 ];
 
-const NUMERIC_COLUMNS = new Set(["context", "maxOutput", "price", "released"]);
-const FADED_WHEN_OFF_COLUMNS = new Set(["capabilities", "context", "maxOutput", "price"]);
+const NUMERIC_COLUMNS = new Set(['context', 'maxOutput', 'price', 'released']);
+const FADED_WHEN_OFF_COLUMNS = new Set(['capabilities', 'context', 'maxOutput', 'price']);
 
 function columnClass(columnId: string): Record<string, boolean> {
   return {
-    "model-table__num tabular": NUMERIC_COLUMNS.has(columnId),
-    "model-table__center": columnId === "status",
-    "model-table__fades": FADED_WHEN_OFF_COLUMNS.has(columnId),
+    'model-table__num tabular': NUMERIC_COLUMNS.has(columnId),
+    'model-table__center': columnId === 'status',
+    'model-table__fades': FADED_WHEN_OFF_COLUMNS.has(columnId),
   };
 }
 
-const tokenFormat = new Intl.NumberFormat("en-US", {
+const tokenFormat = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
-const compactTokenFormat = new Intl.NumberFormat("en-US", {
-  notation: "compact",
+const compactTokenFormat = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
   maximumFractionDigits: 1,
 });
-const priceFormat = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
+const priceFormat = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
   minimumFractionDigits: 0,
   maximumFractionDigits: 4,
 });
 function formatPrice(price: number | null): string {
-  return price === null ? "—" : priceFormat.format(price);
+  return price === null ? '—' : priceFormat.format(price);
 }
 
 function compareNumbers(first: number, second: number): number {
@@ -440,7 +440,7 @@ function formatRange<Value>(
   format: (value: Value) => string,
 ): string {
   const range = rangeOf(values, compare);
-  if (range === null) return "—";
+  if (range === null) return '—';
   const min = format(range.min);
   const max = format(range.max);
   return min === max ? min : `${min}–${max}`;
@@ -448,7 +448,7 @@ function formatRange<Value>(
 
 function groupTokenRange(
   group: UpstreamModelGroup,
-  tokens: "contextSize" | "maxOutputTokens",
+  tokens: 'contextSize' | 'maxOutputTokens',
 ): string {
   return formatRange(
     group.members.map((model) => model[tokens]),
@@ -478,26 +478,26 @@ function rowCapabilities(row: UpstreamModelRow): Capability[] {
   return isUpstreamModelGroup(row) ? groupCapabilities(row) : row.capabilities;
 }
 
-const shareFormat = new Intl.NumberFormat("en-US", {
-  style: "percent",
+const shareFormat = new Intl.NumberFormat('en-US', {
+  style: 'percent',
   maximumFractionDigits: 1,
 });
 
 function shareOf(price: number | null, base: number | null, baseName: string): string {
-  if (price === null || base === null || base === 0) return "";
+  if (price === null || base === null || base === 0) return '';
   return `${shareFormat.format(price / base)} of ${baseName}`;
 }
 
 const dateFormat = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
+  dateStyle: 'medium',
+  timeStyle: 'short',
 });
 
 function capabilitySummary(capabilities: Capability[]): string {
   const names = CAPABILITIES.filter((capability) => capabilities.includes(capability)).map(
     (capability) => CAPABILITY_LABELS[capability],
   );
-  return names.length ? `Capabilities: ${names.join(", ")}` : "No listed capabilities";
+  return names.length ? `Capabilities: ${names.join(', ')}` : 'No listed capabilities';
 }
 
 const {
@@ -510,7 +510,7 @@ const {
   submitDialog,
   deleteRow,
   toggleRow,
-} = useEditableList<UpstreamModelDialog>("/upstream-models", props.refresh);
+} = useEditableList<UpstreamModelDialog>('/upstream-models', props.refresh);
 
 type NumberInput = number | string;
 
@@ -536,18 +536,18 @@ interface UpstreamModelForm {
 type TierPriceFields = Record<keyof Required<TierPrices>, NumberInput>;
 
 const TIER_PRICE_FIELDS = [
-  { key: "inputPrice", label: "Input" },
-  { key: "outputPrice", label: "Output" },
-  { key: "cacheReadPrice", label: "Cache read" },
-  { key: "cacheWritePrice", label: "Cache write" },
+  { key: 'inputPrice', label: 'Input' },
+  { key: 'outputPrice', label: 'Output' },
+  { key: 'cacheReadPrice', label: 'Cache read' },
+  { key: 'cacheWritePrice', label: 'Cache write' },
 ] as const satisfies { key: keyof TierPrices; label: string }[];
 
 function tierPriceFields(prices: TierPrices | undefined): TierPriceFields {
   return {
-    inputPrice: prices?.inputPrice ?? "",
-    outputPrice: prices?.outputPrice ?? "",
-    cacheReadPrice: prices?.cacheReadPrice ?? "",
-    cacheWritePrice: prices?.cacheWritePrice ?? "",
+    inputPrice: prices?.inputPrice ?? '',
+    outputPrice: prices?.outputPrice ?? '',
+    cacheReadPrice: prices?.cacheReadPrice ?? '',
+    cacheWritePrice: prices?.cacheWritePrice ?? '',
   };
 }
 
@@ -571,21 +571,21 @@ function emptyForm(): UpstreamModelForm {
     providerId:
       props.provider?.id ||
       (providerFilter.value.length === 1
-        ? providerBySlug.value.get(providerFilter.value[0] ?? "")?.id
+        ? providerBySlug.value.get(providerFilter.value[0] ?? '')?.id
         : undefined) ||
-      (providerOptions.value[0]?.value ?? ""),
-    upstreamModelId: "",
-    name: "",
-    kind: "chat",
+      (providerOptions.value[0]?.value ?? ''),
+    upstreamModelId: '',
+    name: '',
+    kind: 'chat',
     protocols: [],
     capabilities: [],
-    contextSize: "",
-    maxOutputTokens: "",
-    inputPrice: "",
-    outputPrice: "",
-    cacheReadPrice: "",
-    cacheWritePrice: "",
-    releaseDate: "",
+    contextSize: '',
+    maxOutputTokens: '',
+    inputPrice: '',
+    outputPrice: '',
+    cacheReadPrice: '',
+    cacheWritePrice: '',
+    releaseDate: '',
     serviceTiers: [],
     tierPrices: { fast: tierPriceFields(undefined), flex: tierPriceFields(undefined) },
     media: mediaFormFor(),
@@ -596,7 +596,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
   return {
     providerId: upstreamModel.providerId,
     upstreamModelId: upstreamModel.upstreamModelId,
-    name: upstreamModel.name ?? "",
+    name: upstreamModel.name ?? '',
     kind: upstreamModel.kind,
     protocols: [...upstreamModel.protocols],
     capabilities: [...upstreamModel.capabilities],
@@ -606,7 +606,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
     outputPrice: numberField(upstreamModel.outputPrice),
     cacheReadPrice: numberField(upstreamModel.cacheReadPrice),
     cacheWritePrice: numberField(upstreamModel.cacheWritePrice),
-    releaseDate: upstreamModel.releaseDate ?? "",
+    releaseDate: upstreamModel.releaseDate ?? '',
     serviceTiers: SERVICE_TIERS.filter((tier) => upstreamModel.serviceTiers.includes(tier)),
     tierPrices: {
       fast: tierPriceFields(upstreamModel.tierPrices.fast),
@@ -624,7 +624,7 @@ const formKindOptions = computed(() => {
     (option) => option.value === form.value.kind || endpointKinds?.includes(option.value),
   );
 });
-const isChatForm = computed(() => form.value.kind === "chat");
+const isChatForm = computed(() => form.value.kind === 'chat');
 const formEndpointProtocols = computed(() =>
   endpointProtocolsOf(
     providerById.value.get(form.value.providerId)?.endpoints ?? [],
@@ -634,17 +634,17 @@ const formEndpointProtocols = computed(() =>
 const formCapabilities = computed(() => capabilitiesFor(form.value.kind));
 
 function protocolList(protocols: readonly UpstreamProtocol[]): string {
-  return protocols.map((protocol) => PROTOCOL_LABELS[protocol]).join(", ");
+  return protocols.map((protocol) => PROTOCOL_LABELS[protocol]).join(', ');
 }
 
 function openDialog(next: UpstreamModelDialog): void {
   showDialog(next);
-  if (next.kind === "create") form.value = emptyForm();
-  if (next.kind === "edit") form.value = formFor(next.upstreamModel);
+  if (next.kind === 'create') form.value = emptyForm();
+  if (next.kind === 'edit') form.value = formFor(next.upstreamModel);
 }
 
 function chatFieldsFromForm(current: UpstreamModelForm) {
-  const isChat = current.kind === "chat";
+  const isChat = current.kind === 'chat';
   return {
     maxOutputTokens: isChat ? optionalNumber(current.maxOutputTokens) : null,
     inputPrice: isChat ? optionalNumber(current.inputPrice) : null,
@@ -658,7 +658,7 @@ function chatFieldsFromForm(current: UpstreamModelForm) {
 
 async function saveUpstreamModel(): Promise<void> {
   const current = dialog.value;
-  if (!current || current.kind === "delete") return;
+  if (!current || current.kind === 'delete') return;
   const fields = {
     upstreamModelId: form.value.upstreamModelId,
     name: form.value.name.trim() || null,
@@ -675,11 +675,11 @@ async function saveUpstreamModel(): Promise<void> {
     ...mediaFieldsFromForm(form.value.media, form.value.kind),
   };
   const failureMessage = "Couldn't save the Upstream Model.";
-  if (current.kind === "create") {
+  if (current.kind === 'create') {
     await submitDialog(
       () =>
-        $dashboardApi("/upstream-models", {
-          method: "POST",
+        $dashboardApi('/upstream-models', {
+          method: 'POST',
           body: { providerId: form.value.providerId, ...fields },
         }),
       `Added ${upstreamModelLabel(fields)}`,
@@ -690,7 +690,7 @@ async function saveUpstreamModel(): Promise<void> {
   await submitDialog(
     () =>
       $dashboardApi(`/upstream-models/${current.upstreamModel.id}`, {
-        method: "PATCH",
+        method: 'PATCH',
         body: fields,
       }),
     `Saved ${upstreamModelLabel(fields)}`,
@@ -710,7 +710,7 @@ function toggleUpstreamModel(upstreamModel: UpstreamModel): Promise<void> {
   return toggleRow(upstreamModel, upstreamModelLabel(upstreamModel));
 }
 
-const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>("/provider-accounts");
+const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>('/provider-accounts');
 const {
   shownProbe,
   isDialogOpen: isProbeDialogOpen,
@@ -719,7 +719,7 @@ const {
 } = useUpstreamModelProbe();
 
 function probeUnavailableReason(upstreamModel: UpstreamModel): string | null {
-  if (isProbing(upstreamModel)) return "Probing…";
+  if (isProbing(upstreamModel)) return 'Probing…';
   return probeBlockReason(upstreamModel, providerAccounts.value);
 }
 
@@ -730,7 +730,7 @@ function handleProbeClick(upstreamModel: UpstreamModel): void {
 
 const detailsModel = computed(() => {
   const current = dialog.value;
-  if (current?.kind !== "details") return undefined;
+  if (current?.kind !== 'details') return undefined;
   return props.upstreamModels.find((model) => model.id === current.upstreamModel.id);
 });
 const isDetailsOpen = computed({
@@ -740,7 +740,7 @@ const isDetailsOpen = computed({
   },
 });
 
-defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
+defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
 </script>
 
 <template>
@@ -917,18 +917,18 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     </template>
     <template #cell-context="{ row }">
       <template v-if="isUpstreamModelGroup(row)">{{
-        groupTokenRange(row, "contextSize")
+        groupTokenRange(row, 'contextSize')
       }}</template>
       <template v-else>{{
-        row.contextSize === null ? "—" : tokenFormat.format(row.contextSize)
+        row.contextSize === null ? '—' : tokenFormat.format(row.contextSize)
       }}</template>
     </template>
     <template #cell-maxOutput="{ row }">
       <template v-if="isUpstreamModelGroup(row)">{{
-        groupTokenRange(row, "maxOutputTokens")
+        groupTokenRange(row, 'maxOutputTokens')
       }}</template>
       <template v-else>{{
-        row.maxOutputTokens === null ? "—" : tokenFormat.format(row.maxOutputTokens)
+        row.maxOutputTokens === null ? '—' : tokenFormat.format(row.maxOutputTokens)
       }}</template>
     </template>
     <template #cell-price="{ row }">
@@ -946,14 +946,14 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       </span>
     </template>
     <template #cell-released="{ row }">{{
-      isUpstreamModelGroup(row) ? groupReleaseRange(row) : (row.releaseDate ?? "—")
+      isUpstreamModelGroup(row) ? groupReleaseRange(row) : (row.releaseDate ?? '—')
     }}</template>
     <template #cell-status="{ row }">
       <span
         v-if="!isUpstreamModelGroup(row)"
         class="status-badge"
         :class="row.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-        >{{ row.isEnabled ? "Enabled" : "Disabled" }}</span
+        >{{ row.isEnabled ? 'Enabled' : 'Disabled' }}</span
       >
     </template>
     <template #cell-actions="{ row }">
@@ -1040,7 +1040,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         <span
           class="status-badge"
           :class="detailsModel.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-          >{{ detailsModel.isEnabled ? "Enabled" : "Disabled" }}</span
+          >{{ detailsModel.isEnabled ? 'Enabled' : 'Disabled' }}</span
         >
         <NuxtLink
           v-if="!provider"
@@ -1066,7 +1066,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             <component :is="CAPABILITY_ICONS[capability]" :size="14" aria-hidden="true" />
             {{ CAPABILITY_LABELS[capability] }}
             <span class="sr-only">{{
-              detailsModel.capabilities.includes(capability) ? "supported" : "not supported"
+              detailsModel.capabilities.includes(capability) ? 'supported' : 'not supported'
             }}</span>
           </li>
         </ul>
@@ -1104,7 +1104,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
             <div>
               <dt>Released</dt>
               <dd class="tabular">
-                {{ detailsModel.releaseDate ?? "Unknown" }}
+                {{ detailsModel.releaseDate ?? 'Unknown' }}
               </dd>
             </div>
           </dl>
@@ -1139,7 +1139,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
                 <span
                   v-if="shareOf(detailsModel.cacheReadPrice, detailsModel.inputPrice, 'input')"
                   >{{
-                    shareOf(detailsModel.cacheReadPrice, detailsModel.inputPrice, "input")
+                    shareOf(detailsModel.cacheReadPrice, detailsModel.inputPrice, 'input')
                   }}</span
                 >
               </dd>
@@ -1157,7 +1157,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
                 <span
                   v-if="shareOf(detailsModel.cacheWritePrice, detailsModel.outputPrice, 'output')"
                   >{{
-                    shareOf(detailsModel.cacheWritePrice, detailsModel.outputPrice, "output")
+                    shareOf(detailsModel.cacheWritePrice, detailsModel.outputPrice, 'output')
                   }}</span
                 >
               </dd>
@@ -1173,7 +1173,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
     </div>
     <div class="dialog__actions">
       <button class="button" type="button" @click="toggleUpstreamModel(detailsModel)">
-        <Power :size="14" /> {{ detailsModel.isEnabled ? "Disable" : "Enable" }}
+        <Power :size="14" /> {{ detailsModel.isEnabled ? 'Disable' : 'Enable' }}
       </button>
       <button
         class="button button--primary"
@@ -1337,7 +1337,7 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
       <div class="dialog__actions">
         <button class="button" type="button" @click="closeDialog">Cancel</button>
         <button class="button button--primary" type="submit" :disabled="isSaving">
-          {{ dialog.kind === "create" ? "Add Upstream Model" : "Save" }}
+          {{ dialog.kind === 'create' ? 'Add Upstream Model' : 'Save' }}
         </button>
       </div>
     </form>

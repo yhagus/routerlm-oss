@@ -1,18 +1,18 @@
-import { z } from "zod";
+import { z } from 'zod';
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind";
+} from '@/inference/models/media-kind';
 import type {
   SpeechSynthesisRequest,
   SynthesizedSpeech,
-} from "@/inference/models/speech-synthesis";
-import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
+} from '@/inference/models/speech-synthesis';
+import { dashScopeFailureReasonOf } from '@/inference/protocols/dashscope/dashscope-errors';
+import { UpstreamProtocolError } from '@/inference/protocols/upstream-protocol-converter';
 
-const SYNTHESIZER_PATH = "/services/audio/tts/SpeechSynthesizer";
+const SYNTHESIZER_PATH = '/services/audio/tts/SpeechSynthesizer';
 
 const responseSchema = z.object({
   output: z.object({ audio: z.object({ url: z.string().min(1) }) }),
@@ -58,7 +58,7 @@ export const dashScopeSpeechProtocol: MediaUpstreamProtocol<
   SpeechSynthesisRequest,
   SynthesizedSpeech
 > = {
-  protocol: "dashscope-speech",
+  protocol: 'dashscope-speech',
   failureReasonOf: dashScopeFailureReasonOf,
   generate,
 };

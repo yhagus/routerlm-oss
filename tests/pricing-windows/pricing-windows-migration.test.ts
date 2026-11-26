@@ -1,22 +1,22 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
 
-const PRICING_WINDOWS_MIGRATION_SUFFIX = "_pricing_windows";
+const PRICING_WINDOWS_MIGRATION_SUFFIX = '_pricing_windows';
 
-describe("Pricing Windows migrations (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('Pricing Windows migrations (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
   let databaseUrl: string;
   let pool: Pool;
 
   beforeAll(async () => {
     migrationsBefore = await copyMigrationsBefore(PRICING_WINDOWS_MIGRATION_SUFFIX);
-    databaseUrl = await createEmptyDatabase(serverUrl, "pricing_windows");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'pricing_windows');
     pool = new Pool({ connectionString: databaseUrl });
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: migrationsBefore });
   });
@@ -32,7 +32,7 @@ describe("Pricing Windows migrations (e2e)", () => {
     return rows[0].id;
   }
 
-  it("keeps existing Upstream Models without windows and gives existing Usage Logs no window name", async () => {
+  it('keeps existing Upstream Models without windows and gives existing Usage Logs no window name', async () => {
     const providerId = await insertReturningId(
       `insert into providers (slug, name, endpoints, auth_style)
        values ('acme', 'Acme AI', '[]', 'bearer')`,
@@ -55,7 +55,7 @@ describe("Pricing Windows migrations (e2e)", () => {
       `select pricing_window_name, cost from usage_logs where id = $1`,
       [usageLogId],
     );
-    expect(usageLogs.rows).toEqual([{ pricing_window_name: null, cost: "0.5000000000" }]);
+    expect(usageLogs.rows).toEqual([{ pricing_window_name: null, cost: '0.5000000000' }]);
     const upstreamModels = await pool.query(
       `select input_price,
          (select count(*)::int from upstream_model_pricing_windows w
@@ -63,6 +63,6 @@ describe("Pricing Windows migrations (e2e)", () => {
        from upstream_models where id = $1`,
       [upstreamModelId],
     );
-    expect(upstreamModels.rows).toEqual([{ input_price: "2.000000", window_count: 0 }]);
+    expect(upstreamModels.rows).toEqual([{ input_price: '2.000000', window_count: 0 }]);
   });
 });

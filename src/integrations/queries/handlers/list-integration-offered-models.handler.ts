@@ -1,15 +1,15 @@
-import { type IQueryHandler, QueryBus, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
+import { type IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq } from 'drizzle-orm';
 import {
   type ListModelsResponseJson,
   listModelsResponseJsonOf,
-} from "@/control-plane/models/proto-json";
-import { ListIntegrationModelsQuery } from "@/control-plane/queries/impl/list-integration-models.query";
-import type { Database } from "@/db/schemas/relations";
-import { integrations } from "@/db/schemas";
-import { integrationNotFound } from "@/integrations/models/integration-not-found";
-import { ListIntegrationOfferedModelsQuery } from "@/integrations/queries/impl/list-integration-offered-models.query";
+} from '@/control-plane/models/proto-json';
+import { ListIntegrationModelsQuery } from '@/control-plane/queries/impl/list-integration-models.query';
+import type { Database } from '@/db/schemas/relations';
+import { integrations } from '@/db/schemas';
+import { integrationNotFound } from '@/integrations/models/integration-not-found';
+import { ListIntegrationOfferedModelsQuery } from '@/integrations/queries/impl/list-integration-offered-models.query';
 
 @QueryHandler(ListIntegrationOfferedModelsQuery)
 export class ListIntegrationOfferedModelsHandler implements IQueryHandler<ListIntegrationOfferedModelsQuery> {

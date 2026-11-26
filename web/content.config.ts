@@ -1,4 +1,4 @@
-import { defineCollection, defineContentConfig, z } from "@nuxt/content";
+import { defineCollection, defineContentConfig, z } from '@nuxt/content';
 
 const docsPageSchema = z.object({
   endpoint: z.string().optional(),
@@ -8,13 +8,13 @@ const docsPageSchema = z.object({
 export default defineContentConfig({
   collections: {
     docs: defineCollection({
-      type: "page",
-      source: { include: "docs/*.md", prefix: "/docs" },
+      type: 'page',
+      source: { include: 'docs/*.md', prefix: '/docs' },
       schema: docsPageSchema,
     }),
     docs_id: defineCollection({
-      type: "page",
-      source: { include: "docs-id/*.md", prefix: "/id/docs" },
+      type: 'page',
+      source: { include: 'docs-id/*.md', prefix: '/id/docs' },
       schema: docsPageSchema,
     }),
   },

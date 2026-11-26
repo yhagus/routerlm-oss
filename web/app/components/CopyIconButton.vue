@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Check, Copy, X } from "@lucide/vue";
-import { computed } from "vue";
-import { useCopyFeedback } from "~/composables/useCopyFeedback";
+import { Check, Copy, X } from '@lucide/vue';
+import { computed } from 'vue';
+import { useCopyFeedback } from '~/composables/useCopyFeedback';
 
 const props = defineProps<{
   text: string;
@@ -11,8 +11,8 @@ const props = defineProps<{
 const { state, copy } = useCopyFeedback();
 
 const title = computed(() => {
-  if (state.value === "copied") return "Copied";
-  if (state.value === "failed") return "Couldn't copy";
+  if (state.value === 'copied') return 'Copied';
+  if (state.value === 'failed') return "Couldn't copy";
   return `Copy ${props.label}`;
 });
 </script>
@@ -28,6 +28,6 @@ const title = computed(() => {
     <Check v-if="state === 'copied'" :size="11" aria-hidden="true" />
     <X v-else-if="state === 'failed'" :size="11" aria-hidden="true" />
     <Copy v-else :size="11" aria-hidden="true" />
-    <span class="sr-only" aria-live="polite">{{ state === "copied" ? "Copied" : "" }}</span>
+    <span class="sr-only" aria-live="polite">{{ state === 'copied' ? 'Copied' : '' }}</span>
   </button>
 </template>

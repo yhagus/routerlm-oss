@@ -1,9 +1,9 @@
-import type { RecordedIntegration } from "~/lib/integrations";
+import type { RecordedIntegration } from '~/lib/integrations';
 
 export type FailedHop =
-  | { kind: "client-to-gateway" }
+  | { kind: 'client-to-gateway' }
   | {
-      kind: "gateway-to-provider-account";
+      kind: 'gateway-to-provider-account';
       attemptId: string;
       providerAccountId: string | null;
       providerAccountName: string | null;
@@ -37,21 +37,21 @@ export interface ErrorCaptureDetail extends ErrorCaptureSummary {
 }
 
 /** Which hop a capture failed at, as the backend's `FAILED_HOPS` says. */
-export const FAILED_HOPS = ["client-to-gateway", "gateway-to-provider-account"] as const;
+export const FAILED_HOPS = ['client-to-gateway', 'gateway-to-provider-account'] as const;
 export type FailedHopKind = (typeof FAILED_HOPS)[number];
 
 export const FAILED_HOP_LABELS: Record<FailedHopKind, string> = {
-  "client-to-gateway": "Client → gateway",
-  "gateway-to-provider-account": "Gateway → Provider",
+  'client-to-gateway': 'Client → gateway',
+  'gateway-to-provider-account': 'Gateway → Provider',
 };
 
 /** How the client's request ended despite the capture, as the backend's `CAPTURE_OUTCOMES` says. */
-export const CAPTURE_OUTCOMES = ["recovered", "failed"] as const;
+export const CAPTURE_OUTCOMES = ['recovered', 'failed'] as const;
 export type CaptureOutcome = (typeof CAPTURE_OUTCOMES)[number];
 
 export const CAPTURE_OUTCOME_LABELS: Record<CaptureOutcome, string> = {
-  recovered: "Recovered",
-  failed: "Failed",
+  recovered: 'Recovered',
+  failed: 'Failed',
 };
 
 export interface ErrorCapturePage {
@@ -62,21 +62,21 @@ export interface ErrorCapturePage {
 }
 
 const FAILURE_REASON_LABELS: Record<string, string> = {
-  rate_limited: "Rate limited",
-  server_error: "Server error",
-  timeout: "Timed out",
-  connection_error: "Connection error",
-  unauthorized: "Key refused",
-  bad_request: "Bad request",
-  stream_interrupted: "Stream interrupted",
-  exhausted: "Exhausted",
-  cancelled: "Cancelled",
+  rate_limited: 'Rate limited',
+  server_error: 'Server error',
+  timeout: 'Timed out',
+  connection_error: 'Connection error',
+  unauthorized: 'Key refused',
+  bad_request: 'Bad request',
+  stream_interrupted: 'Stream interrupted',
+  exhausted: 'Exhausted',
+  cancelled: 'Cancelled',
 };
 
 export function failedHopLabel(hop: FailedHop): string {
-  if (hop.kind === "client-to-gateway") return "Client → gateway";
-  const provider = hop.providerName ?? "Deleted Provider";
-  const account = hop.providerAccountName ?? "Deleted Provider Account";
+  if (hop.kind === 'client-to-gateway') return 'Client → gateway';
+  const provider = hop.providerName ?? 'Deleted Provider';
+  const account = hop.providerAccountName ?? 'Deleted Provider Account';
   return `Gateway → ${provider} · ${account}`;
 }
 
@@ -96,16 +96,16 @@ export function attemptOutcomeLabel(
     : `${reason} · HTTP ${attempt.upstreamStatus}`;
 }
 
-export function clientOutcome(capture: Pick<ErrorCaptureSummary, "httpStatus" | "errorCode">): {
+export function clientOutcome(capture: Pick<ErrorCaptureSummary, 'httpStatus' | 'errorCode'>): {
   label: string;
-  badgeClass: "status-badge--good" | "status-badge--bad";
+  badgeClass: 'status-badge--good' | 'status-badge--bad';
 } {
   if (capture.errorCode === null && capture.httpStatus < 400) {
-    return { label: `Recovered · ${capture.httpStatus}`, badgeClass: "status-badge--good" };
+    return { label: `Recovered · ${capture.httpStatus}`, badgeClass: 'status-badge--good' };
   }
   return {
-    label: `${capture.errorCode ?? "error"} · ${capture.httpStatus}`,
-    badgeClass: "status-badge--bad",
+    label: `${capture.errorCode ?? 'error'} · ${capture.httpStatus}`,
+    badgeClass: 'status-badge--bad',
   };
 }
 
@@ -117,13 +117,13 @@ export function upstreamErrorMessage(body: string | null): string | null {
   } catch {
     return null;
   }
-  if (typeof parsed !== "object" || parsed === null) return null;
-  const error = "error" in parsed ? parsed.error : undefined;
-  if (typeof error === "string") return error;
-  if (typeof error === "object" && error !== null && "message" in error) {
-    if (typeof error.message === "string") return error.message;
+  if (typeof parsed !== 'object' || parsed === null) return null;
+  const error = 'error' in parsed ? parsed.error : undefined;
+  if (typeof error === 'string') return error;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    if (typeof error.message === 'string') return error.message;
   }
-  return "message" in parsed && typeof parsed.message === "string" ? parsed.message : null;
+  return 'message' in parsed && typeof parsed.message === 'string' ? parsed.message : null;
 }
 
 export function readableBody(body: string): string {

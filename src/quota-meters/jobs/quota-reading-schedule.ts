@@ -1,16 +1,16 @@
-import { InjectQueue, Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable, Logger, type OnApplicationBootstrap } from "@nestjs/common";
-import { CommandBus } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Job, Queue } from "bullmq";
-import { and, eq, exists, isNotNull, isNull, lt, lte, or } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, providers, quotaMeters } from "@/db/schemas";
-import { QUOTA_METERS_QUEUE } from "@/queue/models/queue-names";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command";
+import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
+import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import type { Job, Queue } from 'bullmq';
+import { and, eq, exists, isNotNull, isNull, lt, lte, or } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, providers, quotaMeters } from '@/db/schemas';
+import { QUOTA_METERS_QUEUE } from '@/queue/models/queue-names';
+import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/read-provider-account-quota.command';
 
-export const QUOTA_READING_SCHEDULER = "quota-reading";
-const READ_DUE_ACCOUNTS_JOB = "read-due-accounts";
+export const QUOTA_READING_SCHEDULER = 'quota-reading';
+const READ_DUE_ACCOUNTS_JOB = 'read-due-accounts';
 
 const MINUTE_MS = 60 * 1000;
 const TICK_EVERY_MS = MINUTE_MS;
@@ -43,7 +43,7 @@ export class QuotaReadingSchedule implements OnApplicationBootstrap {
       dueAccountIds.map((id) => this.commandBus.execute(new ReadProviderAccountQuotaCommand(id))),
     );
     for (const reading of readings) {
-      if (reading.status === "rejected") {
+      if (reading.status === 'rejected') {
         this.logger.error(`A scheduled quota reading failed: ${String(reading.reason)}`);
       }
     }

@@ -1,11 +1,11 @@
-import { AuthenticationStorage, type SessionRecord } from "@nestjs/authentication";
-import { authenticationStoreContract } from "@nestjs/authentication/testing";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { DrizzleSessionStore } from "@/auth/providers/drizzle-session.store";
-import { type Database, relations } from "@/db/schemas/relations";
-import { users } from "@/db/schemas";
+import { AuthenticationStorage, type SessionRecord } from '@nestjs/authentication';
+import { authenticationStoreContract } from '@nestjs/authentication/testing';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { DrizzleSessionStore } from '@/auth/providers/drizzle-session.store';
+import { type Database, relations } from '@/db/schemas/relations';
+import { users } from '@/db/schemas';
 
-const CONTRACT_USER_PREFIX = "user-";
+const CONTRACT_USER_PREFIX = 'user-';
 
 class StoreForContractUsers extends DrizzleSessionStore {
   constructor(private readonly database: Database) {
@@ -16,7 +16,7 @@ class StoreForContractUsers extends DrizzleSessionStore {
     const userId = toDatabaseUserId(record.userId);
     await this.database
       .insert(users)
-      .values({ id: userId, email: `${userId}@contract.test`, passwordHash: "-" })
+      .values({ id: userId, email: `${userId}@contract.test`, passwordHash: '-' })
       .onConflictDoNothing();
     await super.createSession({ ...record, userId });
   }
@@ -44,8 +44,8 @@ function toContractSession(session: SessionRecord): SessionRecord {
   return { ...session, userId: `${CONTRACT_USER_PREFIX}${session.userId}`, extra: undefined };
 }
 
-describe("DrizzleSessionStore", () => {
-  const db = drizzle({ connection: process.env.DATABASE_URL ?? "", relations });
+describe('DrizzleSessionStore', () => {
+  const db = drizzle({ connection: process.env.DATABASE_URL ?? '', relations });
   const store = new StoreForContractUsers(db);
 
   afterAll(async () => {
@@ -53,12 +53,12 @@ describe("DrizzleSessionStore", () => {
   });
 
   const cases = authenticationStoreContract(() => ({ sessions: store }), {
-    contracts: ["sessions"],
+    contracts: ['sessions'],
     concurrent: true,
   });
 
   it.each(cases.map((contractCase) => [contractCase.name, contractCase] as const))(
-    "%s",
+    '%s',
     async (_name, contractCase) => {
       await contractCase.run();
     },

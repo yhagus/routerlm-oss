@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { fullNumber, type BarRow, type ChartSeries } from "~/lib/chart";
+import { computed, ref } from 'vue';
+import { fullNumber, type BarRow, type ChartSeries } from '~/lib/chart';
 
 const props = withDefaults(
   defineProps<{

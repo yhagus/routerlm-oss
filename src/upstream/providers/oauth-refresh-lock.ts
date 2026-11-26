@@ -1,9 +1,9 @@
-import { Injectable } from "@nestjs/common";
-import { type Lock, Locks } from "@nestjs/locks";
-import { CredentialUnavailableError } from "@/upstream/models/provider-account-credential";
+import { Injectable } from '@nestjs/common';
+import { type Lock, Locks } from '@nestjs/locks';
+import { CredentialUnavailableError } from '@/upstream/models/provider-account-credential';
 
-const LOCK_KEY_PREFIX = "oauth-refresh:";
-const LOCK_WAIT = "45s";
+const LOCK_KEY_PREFIX = 'oauth-refresh:';
+const LOCK_WAIT = '45s';
 
 @Injectable()
 export class OauthRefreshLock {
@@ -23,12 +23,12 @@ export class OauthRefreshLock {
     try {
       lock = await this.locks.acquire(LOCK_KEY_PREFIX + providerAccountId, { wait: LOCK_WAIT });
     } catch (error) {
-      throw new CredentialUnavailableError("The OAuth Login refresh lock is unreachable", {
+      throw new CredentialUnavailableError('The OAuth Login refresh lock is unreachable', {
         cause: error,
       });
     }
     if (lock === null) {
-      throw new CredentialUnavailableError("Another refresh of this OAuth Login did not finish");
+      throw new CredentialUnavailableError('Another refresh of this OAuth Login did not finish');
     }
     return lock;
   }

@@ -1,15 +1,15 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import { usageLogs } from "@/db/schemas";
-import type { Database } from "@/db/schemas/relations";
-import { createApiKey } from "@tests/support/api-keys";
-import type { ControlPlaneClient } from "@tests/support/control-plane-client";
-import { createIntegration } from "@tests/support/integrations";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
-import type { ControlPlaneTransport } from "./key-scenarios";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import { usageLogs } from '@/db/schemas';
+import type { Database } from '@/db/schemas/relations';
+import { createApiKey } from '@tests/support/api-keys';
+import type { ControlPlaneClient } from '@tests/support/control-plane-client';
+import { createIntegration } from '@tests/support/integrations';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import type { ControlPlaneTransport } from './key-scenarios';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const RECEIVED_AT = new Date("2026-11-20T09:30:00.000Z");
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const RECEIVED_AT = new Date('2026-11-20T09:30:00.000Z');
 
 interface UsageLogCaller {
   apiKeyId: string;
@@ -36,8 +36,8 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
       await db.execute(sql`truncate table integrations, api_keys, usage_logs cascade`);
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
-      acme = await createIntegration(app, adaCookie, { name: "Acme SaaS" });
-      acmeCaller = await customerCaller(acme, "Acme SaaS", "cus_1");
+      acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
+      acmeCaller = await customerCaller(acme, 'Acme SaaS', 'cus_1');
     });
 
     afterAll(async () => {
@@ -70,15 +70,15 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
         .insert(usageLogs)
         .values({
           ...usageLogOf(acmeCaller),
-          modelName: "acme-large",
+          modelName: 'acme-large',
           routeId: crypto.randomUUID(),
           upstreamModelId: crypto.randomUUID(),
-          upstreamModelName: "acme-large-2026",
-          providerSlug: "acme",
+          upstreamModelName: 'acme-large-2026',
+          providerSlug: 'acme',
           providerAccountId: crypto.randomUUID(),
-          providerAccountName: "main",
-          userAgent: "acme-sdk/1.0",
-          clientIp: "203.0.113.7",
+          providerAccountName: 'main',
+          userAgent: 'acme-sdk/1.0',
+          clientIp: '203.0.113.7',
           isStreamed: true,
           inputTokens: 1200,
           outputTokens: 300,
@@ -95,13 +95,13 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
       expect(page.usageLogs).toEqual([
         {
           id: usageLog.id,
-          receivedAt: "2026-11-20T09:30:00.000Z",
+          receivedAt: '2026-11-20T09:30:00.000Z',
           apiKeyId: acmeCaller.apiKeyId,
-          apiKeyName: "cus_1",
-          customerId: "cus_1",
-          modelName: "acme-large",
-          kind: "chat",
-          clientProtocol: "openai-chat",
+          apiKeyName: 'cus_1',
+          customerId: 'cus_1',
+          modelName: 'acme-large',
+          kind: 'chat',
+          clientProtocol: 'openai-chat',
           streamed: true,
           httpStatus: 200,
           inputTokens: 1200,
@@ -121,8 +121,8 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
       await db.insert(usageLogs).values({
         ...usageLogOf(acmeCaller),
         httpStatus: 403,
-        errorCode: "model_not_allowed",
-        errorOrigin: "client",
+        errorCode: 'model_not_allowed',
+        errorOrigin: 'client',
       });
 
       const page = await pull();
@@ -130,13 +130,13 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
       expect(page.usageLogs).toEqual([
         expect.objectContaining({
           httpStatus: 403,
-          errorCode: "model_not_allowed",
-          errorOrigin: "client",
+          errorCode: 'model_not_allowed',
+          errorOrigin: 'client',
         }),
       ]);
     });
 
-    it("pages oldest first after the cursor, and answers the same cursor when nothing is new", async () => {
+    it('pages oldest first after the cursor, and answers the same cursor when nothing is new', async () => {
       const [first, second, third] = await db
         .insert(usageLogs)
         .values([usageLogOf(acmeCaller), usageLogOf(acmeCaller), usageLogOf(acmeCaller)])
@@ -151,7 +151,7 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
       expect(emptyPage).toEqual({ usageLogs: [], nextCursor: secondPage.nextCursor });
     });
 
-    it("never skips a Usage Log whose transaction commits after one with a higher sequence", async () => {
+    it('never skips a Usage Log whose transaction commits after one with a higher sequence', async () => {
       const lateRow = startUsageLogTransaction(db, usageLogOf(acmeCaller));
       const lateRowId = await lateRow.inserted;
       const [earlyRow] = await db
@@ -171,15 +171,15 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
     });
 
     it("never returns another Integration's or an operator key's Usage Logs", async () => {
-      const globex = await createIntegration(app, adaCookie, { name: "Globex" });
-      const globexCaller = await customerCaller(globex, "Globex", "cus_1");
+      const globex = await createIntegration(app, adaCookie, { name: 'Globex' });
+      const globexCaller = await customerCaller(globex, 'Globex', 'cus_1');
       const operatorKey = await createApiKey(app, adaCookie);
       const [acmeRow] = await db
         .insert(usageLogs)
         .values([
           usageLogOf(acmeCaller),
           usageLogOf(globexCaller),
-          usageLogOf({ apiKeyId: operatorKey.id, apiKeyName: "CI" }),
+          usageLogOf({ apiKeyId: operatorKey.id, apiKeyName: 'CI' }),
         ])
         .returning({ id: usageLogs.id });
 
@@ -188,10 +188,10 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
       expect(page.usageLogs.map((usageLog) => usageLog.id)).toEqual([acmeRow.id]);
     });
 
-    it("refuses a cursor it did not hand out", async () => {
-      await expect(client.listUsageLogs(acme.secret, { after: "not-a-cursor" })).resolves.toEqual({
+    it('refuses a cursor it did not hand out', async () => {
+      await expect(client.listUsageLogs(acme.secret, { after: 'not-a-cursor' })).resolves.toEqual({
         ok: false,
-        code: "INVALID_ARGUMENT",
+        code: 'INVALID_ARGUMENT',
       });
     });
   });
@@ -231,8 +231,8 @@ function usageLogOf(caller: UsageLogCaller): typeof usageLogs.$inferInsert {
     integrationId: caller.integration?.id,
     integrationName: caller.integration?.name,
     customerId: caller.integration?.customerId,
-    modelName: "acme-large",
-    clientProtocol: "openai-chat",
+    modelName: 'acme-large',
+    clientProtocol: 'openai-chat',
     isStreamed: false,
     httpStatus: 200,
     requestBytes: 100,

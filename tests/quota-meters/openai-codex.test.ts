@@ -1,18 +1,18 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
-import type { CatalogProvider } from "@/catalog/schemas/catalog.schema";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, providers } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
+import type { CatalogProvider } from '@/catalog/schemas/catalog.schema';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, providers } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import {
   type FakeReply,
   FakeUpstream,
   openAiResponsesFixture,
   type ReceivedRequest,
-} from "@tests/support/fake-upstream";
-import { insertApiKey, insertOpenAiResponsesModel, UPSTREAM_KEY } from "@tests/support/inference";
+} from '@tests/support/fake-upstream';
+import { insertApiKey, insertOpenAiResponsesModel, UPSTREAM_KEY } from '@tests/support/inference';
 import {
   ACCOUNT_ID,
   accessToken,
@@ -21,7 +21,7 @@ import {
   offerCodexOauthLogin,
   TOKEN_PATH,
   tokensReply,
-} from "@tests/support/openai-codex-oauth";
+} from '@tests/support/openai-codex-oauth';
 import {
   FIVE_HOURS_IN_SECONDS,
   rateLimitOf,
@@ -30,39 +30,39 @@ import {
   usageReply,
   usageWindow,
   WEEK_IN_SECONDS,
-} from "@tests/support/openai-codex-usage";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/openai-codex-usage';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
-const RESPONSES_PATH = "/v1/responses";
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const TEXT_REQUEST = { model: 'smart', messages: [{ role: 'user', content: 'Hi' }] };
+const RESPONSES_PATH = '/v1/responses';
 const HOUR_SECONDS = 3600;
 const HOUR_MS = HOUR_SECONDS * 1000;
 const SHORT_LIFETIME_SECONDS = 60;
-const REFRESH_TOKEN = "codex-refresh-token-0123";
+const REFRESH_TOKEN = 'codex-refresh-token-0123';
 
 const STREAMED_RESPONSE: FakeReply = {
-  kind: "stream",
-  events: openAiResponsesFixture("upstream-stream-tool-call.sse"),
+  kind: 'stream',
+  events: openAiResponsesFixture('upstream-stream-tool-call.sse'),
 };
 
 function usageLimitReached(resetsAt: Date): FakeReply {
   return {
-    kind: "json",
+    kind: 'json',
     status: 429,
     body: {
       error: {
-        type: "usage_limit_reached",
-        message: "The usage limit has been reached",
-        plan_type: "pro",
+        type: 'usage_limit_reached',
+        message: 'The usage limit has been reached',
+        plan_type: 'pro',
         resets_at: Math.floor(resetsAt.getTime() / 1000),
       },
     },
   };
 }
 
-describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
+describe('Quota Meters of an OpenAI Codex Provider Account (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let openAi: FakeUpstream;
@@ -76,8 +76,8 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
     ({ app, db } = await createTestApp());
     openAi = await FakeUpstream.start();
     const catalog = await loadCatalog(CATALOG_DIRECTORY);
-    const codex = catalog.find((provider) => provider.slug === "openai-codex");
-    if (!codex) throw new Error("the Catalog has no OpenAI Codex Provider");
+    const codex = catalog.find((provider) => provider.slug === 'openai-codex');
+    if (!codex) throw new Error('the Catalog has no OpenAI Codex Provider');
     catalogCodex = codex;
   });
 
@@ -86,7 +86,7 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiResponsesModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: openAi.baseUrl,
     }));
     await db
@@ -95,7 +95,7 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
       .where(eq(providers.id, providerId));
     await offerCodexOauthLogin(db, providerId, openAi.origin);
     ({ key: apiKey } = await insertApiKey(app, db));
-    token = accessToken("granted", HOUR_SECONDS);
+    token = accessToken('granted', HOUR_SECONDS);
   });
 
   afterAll(async () => {
@@ -104,7 +104,7 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
   });
 
   function addLoginAccount(lifetimeSeconds = HOUR_SECONDS): Promise<string> {
-    token = accessToken("granted", lifetimeSeconds);
+    token = accessToken('granted', lifetimeSeconds);
     return addCodexLoginAccount(app, db, providerId, {
       accessToken: token,
       refreshToken: REFRESH_TOKEN,
@@ -114,21 +114,21 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
   function readQuotaNow(providerAccountId: string) {
     return request(app.getHttpServer())
       .post(`/api/provider-accounts/${providerAccountId}/quota-reading`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(200);
   }
 
   function chat() {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send(TEXT_REQUEST);
   }
 
   async function listedAccount(providerAccountId: string): Promise<Record<string, unknown>> {
     const list = await request(app.getHttpServer())
-      .get("/api/provider-accounts")
-      .set("Cookie", cookie)
+      .get('/api/provider-accounts')
+      .set('Cookie', cookie)
       .expect(200);
     return list.body.find((account: { id: string }) => account.id === providerAccountId);
   }
@@ -139,14 +139,14 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
 
   function attemptedCredentials(): string[] {
     return callsTo(RESPONSES_PATH).map((received) =>
-      String(received.headers.authorization).replace("Bearer ", ""),
+      String(received.headers.authorization).replace('Bearer ', ''),
     );
   }
 
-  it("reads both windows and every additional limit as the Codex CLI", async () => {
+  it('reads both windows and every additional limit as the Codex CLI', async () => {
     const accountId = await addLoginAccount();
-    const fiveHourReset = new Date("2026-11-17T15:00:00Z");
-    const weekReset = new Date("2026-11-21T00:00:00Z");
+    const fiveHourReset = new Date('2026-11-17T15:00:00Z');
+    const weekReset = new Date('2026-11-21T00:00:00Z');
     openAi.replyTo(
       USAGE_PATH,
       usageReply({
@@ -156,7 +156,7 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
         }),
         additionalRateLimits: [
           {
-            limit_name: "codex_other",
+            limit_name: 'codex_other',
             rate_limit: rateLimitOf({
               primary: usageWindow(10, FIVE_HOURS_IN_SECONDS, fiveHourReset),
             }),
@@ -169,17 +169,17 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
 
     expect(callsTo(USAGE_PATH)).toHaveLength(1);
     expect(openAi.lastRequest).toMatchObject({
-      method: "GET",
+      method: 'GET',
       headers: {
         authorization: `Bearer ${token}`,
-        "chatgpt-account-id": ACCOUNT_ID,
-        originator: "codex_cli_rs",
-        "user-agent": expect.stringMatching(new RegExp(`^codex_cli_rs/${CLI_VERSION} `)),
+        'chatgpt-account-id': ACCOUNT_ID,
+        originator: 'codex_cli_rs',
+        'user-agent': expect.stringMatching(new RegExp(`^codex_cli_rs/${CLI_VERSION} `)),
         version: CLI_VERSION,
       },
     });
     const percentMeter = {
-      unit: "percent",
+      unit: 'percent',
       limit: 100,
       isUnlimited: false,
       observedAt: expect.any(String),
@@ -190,8 +190,8 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
       quotaMeters: [
         {
           ...percentMeter,
-          key: "5h",
-          label: "5-hour limit",
+          key: '5h',
+          label: '5-hour limit',
           used: 25,
           remainingPercent: 75,
           windowSeconds: FIVE_HOURS_IN_SECONDS,
@@ -200,18 +200,18 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
         },
         {
           ...percentMeter,
-          key: "5h:codex_other",
-          label: "5-hour limit (codex_other)",
+          key: '5h:codex_other',
+          label: '5-hour limit (codex_other)',
           used: 10,
           remainingPercent: 90,
           windowSeconds: FIVE_HOURS_IN_SECONDS,
           resetsAt: fiveHourReset.toISOString(),
-          scope: "codex_other",
+          scope: 'codex_other',
         },
         {
           ...percentMeter,
-          key: "weekly",
-          label: "Weekly limit",
+          key: 'weekly',
+          label: 'Weekly limit',
           used: 60,
           remainingPercent: 40,
           windowSeconds: WEEK_IN_SECONDS,
@@ -223,9 +223,9 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
     });
   });
 
-  it("keys a window of another length by its duration and shows no meter for a missing window", async () => {
+  it('keys a window of another length by its duration and shows no meter for a missing window', async () => {
     const accountId = await addLoginAccount();
-    const resetsAt = new Date("2026-11-18T00:00:00Z");
+    const resetsAt = new Date('2026-11-18T00:00:00Z');
     openAi.replyTo(
       USAGE_PATH,
       usageReply({
@@ -236,13 +236,13 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
     const reading = await readQuotaNow(accountId);
 
     expect(reading.body.quotaMeters).toEqual([
-      expect.objectContaining({ key: "2h", windowSeconds: 7200, used: 5 }),
+      expect.objectContaining({ key: '2h', windowSeconds: 7200, used: 5 }),
     ]);
   });
 
-  it("refreshes a login about to run out before reading the quota", async () => {
+  it('refreshes a login about to run out before reading the quota', async () => {
     const accountId = await addLoginAccount(SHORT_LIFETIME_SECONDS);
-    const renewed = accessToken("renewed", HOUR_SECONDS);
+    const renewed = accessToken('renewed', HOUR_SECONDS);
     openAi.replyTo(TOKEN_PATH, tokensReply({ accessToken: renewed }));
     openAi.replyTo(USAGE_PATH, usageAtPercentReply(10, new Date(Date.now() + HOUR_MS)));
 
@@ -253,10 +253,10 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
     expect(callsTo(USAGE_PATH)[0].headers.authorization).toBe(`Bearer ${renewed}`);
   });
 
-  it("marks the account Exhausted until resets_at on usage_limit_reached, reads its quota and falls back", async () => {
+  it('marks the account Exhausted until resets_at on usage_limit_reached, reads its quota and falls back', async () => {
     const accountId = await addLoginAccount();
     const resetsAt = new Date(Math.floor((Date.now() + 3 * HOUR_MS) / 1000) * 1000);
-    openAi.replyTo(USAGE_PATH, { kind: "json", status: 500, body: {} });
+    openAi.replyTo(USAGE_PATH, { kind: 'json', status: 500, body: {} });
     openAi.reply(usageLimitReached(resetsAt));
     openAi.reply(STREAMED_RESPONSE);
 
@@ -264,29 +264,29 @@ describe("Quota Meters of an OpenAI Codex Provider Account (e2e)", () => {
 
     expect(attemptedCredentials()).toEqual([token, UPSTREAM_KEY]);
     expect(await listedAccount(accountId)).toMatchObject({
-      cooldownCause: "exhausted",
+      cooldownCause: 'exhausted',
       cooldownEndsAt: resetsAt.toISOString(),
     });
     await vi.waitFor(() => expect(callsTo(USAGE_PATH)).toHaveLength(1));
   });
 
-  it("starts a Cooldown on any other 429", async () => {
+  it('starts a Cooldown on any other 429', async () => {
     const accountId = await addLoginAccount();
     openAi.reply({
-      kind: "json",
+      kind: 'json',
       status: 429,
-      body: { error: { type: "rate_limit_exceeded", message: "Slow down" } },
+      body: { error: { type: 'rate_limit_exceeded', message: 'Slow down' } },
     });
     openAi.reply(STREAMED_RESPONSE);
 
     await chat().expect(200);
 
     expect(attemptedCredentials()).toEqual([token, UPSTREAM_KEY]);
-    expect(await listedAccount(accountId)).toMatchObject({ cooldownCause: "rate_limited" });
+    expect(await listedAccount(accountId)).toMatchObject({ cooldownCause: 'rate_limited' });
     expect(callsTo(USAGE_PATH)).toHaveLength(0);
   });
 
-  it("keeps routing to an account with a used-up plan that may continue when Exhausted", async () => {
+  it('keeps routing to an account with a used-up plan that may continue when Exhausted', async () => {
     const accountId = await addLoginAccount();
     await db
       .update(providerAccounts)

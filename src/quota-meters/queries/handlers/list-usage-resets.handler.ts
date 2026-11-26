@@ -1,9 +1,9 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations";
-import { selectUsageResets, type UsageReset } from "@/quota-meters/models/usage-reset";
-import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets";
-import { ListUsageResetsQuery } from "@/quota-meters/queries/impl/list-usage-resets.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import type { Database } from '@/db/schemas/relations';
+import { selectUsageResets, type UsageReset } from '@/quota-meters/models/usage-reset';
+import { UsageResetTargets } from '@/quota-meters/providers/usage-reset-targets';
+import { ListUsageResetsQuery } from '@/quota-meters/queries/impl/list-usage-resets.query';
 
 @QueryHandler(ListUsageResetsQuery)
 export class ListUsageResetsHandler implements IQueryHandler<ListUsageResetsQuery> {

@@ -1,5 +1,5 @@
-import { Query } from "@nestjs/cqrs";
-import type { QuotaMeter } from "@/quota-meters/models/quota-meter";
+import { Query } from '@nestjs/cqrs';
+import type { QuotaMeter } from '@/quota-meters/models/quota-meter';
 
 export type { QuotaMeter };
 

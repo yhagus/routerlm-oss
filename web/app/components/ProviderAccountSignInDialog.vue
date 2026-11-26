@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Copy, ExternalLink } from "@lucide/vue";
-import { useTimeoutPoll } from "@vueuse/core";
-import { apiErrorMessage } from "~/lib/api";
-import { isNotFound } from "~/lib/errors";
+import { Copy, ExternalLink } from '@lucide/vue';
+import { useTimeoutPoll } from '@vueuse/core';
+import { apiErrorMessage } from '~/lib/api';
+import { isNotFound } from '~/lib/errors';
 import {
   OAUTH_REGION_LABELS,
   OAUTH_REGIONS,
@@ -11,43 +11,43 @@ import {
   type PendingOauthSignIn,
   type Provider,
   type ProviderAccount,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 const props = defineProps<{ provider: Provider; account: ProviderAccount | null }>();
 const emit = defineEmits<{ completed: [account: ProviderAccount] }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 
-const SIGN_INS_PATH = "/provider-accounts/sign-ins";
+const SIGN_INS_PATH = '/provider-accounts/sign-ins';
 const POLL_INTERVAL_MS = 2000;
 const WEB_ADDRESS = /^https?:\/\//i;
 
 type SignInState =
-  | { step: "start" }
-  | { step: "pending"; signIn: PendingOauthSignIn }
-  | { step: "ended"; outcome: "denied" | "expired" };
+  | { step: 'start' }
+  | { step: 'pending'; signIn: PendingOauthSignIn }
+  | { step: 'ended'; outcome: 'denied' | 'expired' };
 
 const REGION_DESCRIPTION =
-  "Choose where the account is registered. Each region signs in on its own page.";
-const START_DESCRIPTION = "Asking the Provider for a sign-in code.";
+  'Choose where the account is registered. Each region signs in on its own page.';
+const START_DESCRIPTION = 'Asking the Provider for a sign-in code.';
 
-const DESCRIPTIONS: Record<Exclude<SignInState["step"], "start">, string> = {
-  pending: "Approve the sign-in on the verification page. This dialog finishes on its own.",
-  ended: "Nothing was saved. Start again to get a new code.",
+const DESCRIPTIONS: Record<Exclude<SignInState['step'], 'start'>, string> = {
+  pending: 'Approve the sign-in on the verification page. This dialog finishes on its own.',
+  ended: 'Nothing was saved. Start again to get a new code.',
 };
 
 const OUTCOME_MESSAGES = {
-  denied: "The sign-in was denied on the verification page.",
-  expired: "The code expired before the sign-in was approved.",
+  denied: 'The sign-in was denied on the verification page.',
+  expired: 'The code expired before the sign-in was approved.',
 } as const;
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "short" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: 'short' });
 
-const state = shallowRef<SignInState>({ step: "start" });
+const state = shallowRef<SignInState>({ step: 'start' });
 const isStarting = ref(false);
-const error = ref("");
+const error = ref('');
 
 let isAbandoned = false;
 onBeforeUnmount(() => {
@@ -63,32 +63,32 @@ const title = computed(() => {
 
 const regionAuthHosts = computed(() => {
   const oauthLogin = props.provider.oauthLogin;
-  return oauthLogin?.flow === "kimi-code" ? oauthLogin.authHosts : null;
+  return oauthLogin?.flow === 'kimi-code' ? oauthLogin.authHosts : null;
 });
 
 const regionHint = computed(() => {
   const hosts = regionAuthHosts.value;
-  if (!hosts) return "";
+  if (!hosts) return '';
   return `Global accounts sign in at ${hosts.global}, Chinese accounts at ${hosts.china}.`;
 });
 
 const canRetryStart = computed(
   () =>
-    state.value.step === "start" &&
+    state.value.step === 'start' &&
     !regionAuthHosts.value &&
     !isStarting.value &&
-    error.value !== "",
+    error.value !== '',
 );
 
 const description = computed(() => {
   const { step } = state.value;
-  if (step !== "start") return DESCRIPTIONS[step];
+  if (step !== 'start') return DESCRIPTIONS[step];
   return regionAuthHosts.value ? REGION_DESCRIPTION : START_DESCRIPTION;
 });
 
 const verificationUrl = computed(() => {
   const current = state.value;
-  if (current.step !== "pending") return null;
+  if (current.step !== 'pending') return null;
   const { verificationUri, verificationUriComplete } = current.signIn;
   const url = verificationUriComplete ?? verificationUri;
   return WEB_ADDRESS.test(url) ? url : null;
@@ -96,17 +96,17 @@ const verificationUrl = computed(() => {
 
 const waitingNote = computed(() => {
   const current = state.value;
-  if (current.step !== "pending") return "";
+  if (current.step !== 'pending') return '';
   const expiresAt = timeFormat.format(new Date(current.signIn.expiresAt));
   return `Waiting for approval. The code expires at ${expiresAt}.`;
 });
 
 async function startSignIn(region?: OauthRegion): Promise<void> {
   isStarting.value = true;
-  error.value = "";
+  error.value = '';
   try {
     const signIn = await $dashboardApi<PendingOauthSignIn>(SIGN_INS_PATH, {
-      method: "POST",
+      method: 'POST',
       body: {
         providerId: props.provider.id,
         ...(region ? { region } : {}),
@@ -114,7 +114,7 @@ async function startSignIn(region?: OauthRegion): Promise<void> {
       },
     });
     if (isAbandoned) return;
-    state.value = { step: "pending", signIn };
+    state.value = { step: 'pending', signIn };
     poll.resume();
   } catch (caught) {
     error.value = apiErrorMessage(caught, "Couldn't start the sign-in.");
@@ -125,23 +125,23 @@ async function startSignIn(region?: OauthRegion): Promise<void> {
 
 async function readSignIn(): Promise<void> {
   const pending = state.value;
-  if (pending.step !== "pending") return;
+  if (pending.step !== 'pending') return;
   try {
     const signIn = await $dashboardApi<OauthSignIn>(`${SIGN_INS_PATH}/${pending.signIn.id}`);
     if (isAbandoned || state.value !== pending) return;
-    error.value = "";
-    if (signIn.status === "pending") return;
+    error.value = '';
+    if (signIn.status === 'pending') return;
     poll.pause();
-    if (signIn.status === "completed") {
-      emit("completed", signIn.providerAccount);
+    if (signIn.status === 'completed') {
+      emit('completed', signIn.providerAccount);
       return;
     }
-    state.value = { step: "ended", outcome: signIn.status };
+    state.value = { step: 'ended', outcome: signIn.status };
   } catch (caught) {
     if (isAbandoned || state.value !== pending) return;
     if (isNotFound(caught)) {
       poll.pause();
-      state.value = { step: "ended", outcome: "expired" };
+      state.value = { step: 'ended', outcome: 'expired' };
       return;
     }
     error.value = apiErrorMessage(caught, "Couldn't check the sign-in. Trying again.");
@@ -149,8 +149,8 @@ async function readSignIn(): Promise<void> {
 }
 
 function startAgain(): void {
-  error.value = "";
-  state.value = { step: "start" };
+  error.value = '';
+  state.value = { step: 'start' };
   if (!regionAuthHosts.value) void startSignIn();
 }
 
@@ -161,7 +161,7 @@ onMounted(() => {
 async function copyCode(code: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(code);
-    showToast("Sign-in code copied");
+    showToast('Sign-in code copied');
   } catch {
     showToast("Couldn't copy. Select the code and copy it yourself.");
   }
@@ -225,7 +225,7 @@ function selectAll(event: FocusEvent): void {
     <p v-if="error" class="form__error" role="alert">{{ error }}</p>
     <div class="dialog__actions">
       <button class="button" type="button" @click="isOpen = false">
-        {{ state.step === "ended" ? "Close" : "Cancel" }}
+        {{ state.step === 'ended' ? 'Close' : 'Cancel' }}
       </button>
       <button
         v-if="state.step === 'ended'"

@@ -1,8 +1,8 @@
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
-import { quirksForeignToEndpoints } from "@/catalog/schemas/catalog.schema";
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
+import { quirksForeignToEndpoints } from '@/catalog/schemas/catalog.schema';
 
-describe("Catalog files shipped with the gateway", () => {
-  it("give every Provider a logo and only quirks its Protocols read", async () => {
+describe('Catalog files shipped with the gateway', () => {
+  it('give every Provider a logo and only quirks its Protocols read', async () => {
     const catalog = await loadCatalog(CATALOG_DIRECTORY);
 
     const misfits = catalog

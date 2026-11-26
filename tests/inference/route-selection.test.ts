@@ -1,28 +1,28 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { routes } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { type FakeReply, FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { routes } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { type FakeReply, FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
 import {
   addOpenAiChatRoute,
   ALL_CAPABILITIES,
   insertApiKey,
   insertOpenAiChatModel,
   type UpstreamModelLimits,
-} from "@tests/support/inference";
-import { createTestApp } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/inference';
+import { createTestApp } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
 const SUCCESS: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
-  body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+  body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
 };
-const SERVER_ERROR: FakeReply = { kind: "json", status: 503, body: { error: "overloaded" } };
+const SERVER_ERROR: FakeReply = { kind: 'json', status: 503, body: { error: 'overloaded' } };
 
-describe("Route selection (e2e)", () => {
+describe('Route selection (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let upstream: FakeUpstream;
@@ -51,7 +51,7 @@ describe("Route selection (e2e)", () => {
 
   function attemptedRoutes(): string[] {
     return upstream.requests.map((received) =>
-      received.path.replace("/v1/", "").replace("/chat/completions", ""),
+      received.path.replace('/v1/', '').replace('/chat/completions', ''),
     );
   }
 
@@ -60,7 +60,7 @@ describe("Route selection (e2e)", () => {
     limits: UpstreamModelLimits = {},
   ): Promise<void> {
     ({ modelId } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: baseUrlOf(routeName),
       ...limits,
     }));
@@ -77,71 +77,71 @@ describe("Route selection (e2e)", () => {
 
   function chat(body: object) {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${apiKey}`)
-      .send({ model: "smart", ...body });
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .send({ model: 'smart', ...body });
   }
 
-  it("tries the Routes in priority order, skipping a disabled one", async () => {
-    await insertModelWithRoute("first");
-    await addRoute("third", 3);
-    const { routeId: disabledRouteId } = await addRoute("disabled", 1);
-    await addRoute("second", 2);
+  it('tries the Routes in priority order, skipping a disabled one', async () => {
+    await insertModelWithRoute('first');
+    await addRoute('third', 3);
+    const { routeId: disabledRouteId } = await addRoute('disabled', 1);
+    await addRoute('second', 2);
     await db.update(routes).set({ isEnabled: false }).where(eq(routes.id, disabledRouteId));
     await app.get(SnapshotService).changed();
     upstream.reply(SERVER_ERROR);
     upstream.reply(SERVER_ERROR);
     upstream.reply(SUCCESS);
 
-    await chat({ messages: [{ role: "user", content: "Hi" }] }).expect(200);
+    await chat({ messages: [{ role: 'user', content: 'Hi' }] }).expect(200);
 
-    expect(attemptedRoutes()).toEqual(["first", "second", "third"]);
+    expect(attemptedRoutes()).toEqual(['first', 'second', 'third']);
   });
 
-  it("skips Routes whose Upstream Model lacks a Capability the request needs", async () => {
-    await insertModelWithRoute("text-only", { capabilities: [] });
-    await addRoute("no-reasoning", 1, { capabilities: ["vision", "tools", "structured-output"] });
-    await addRoute("everything", 2, { capabilities: ALL_CAPABILITIES });
+  it('skips Routes whose Upstream Model lacks a Capability the request needs', async () => {
+    await insertModelWithRoute('text-only', { capabilities: [] });
+    await addRoute('no-reasoning', 1, { capabilities: ['vision', 'tools', 'structured-output'] });
+    await addRoute('everything', 2, { capabilities: ALL_CAPABILITIES });
     upstream.reply(SUCCESS);
 
     await chat({
       messages: [
         {
-          role: "user",
-          content: [{ type: "image_url", image_url: { url: "https://images.example/cat.jpg" } }],
+          role: 'user',
+          content: [{ type: 'image_url', image_url: { url: 'https://images.example/cat.jpg' } }],
         },
       ],
-      tools: [{ type: "function", function: { name: "get_weather", parameters: {} } }],
+      tools: [{ type: 'function', function: { name: 'get_weather', parameters: {} } }],
       response_format: {
-        type: "json_schema",
-        json_schema: { name: "answer", schema: { type: "object" } },
+        type: 'json_schema',
+        json_schema: { name: 'answer', schema: { type: 'object' } },
       },
-      reasoning_effort: "high",
+      reasoning_effort: 'high',
     }).expect(200);
 
-    expect(attemptedRoutes()).toEqual(["everything"]);
+    expect(attemptedRoutes()).toEqual(['everything']);
   });
 
-  it("never tries a Route to an Upstream Model of another Kind, even one written past the API", async () => {
-    await insertModelWithRoute("chat");
-    await addRoute("image", -1, { kind: "image" });
+  it('never tries a Route to an Upstream Model of another Kind, even one written past the API', async () => {
+    await insertModelWithRoute('chat');
+    await addRoute('image', -1, { kind: 'image' });
     upstream.reply(SUCCESS);
 
-    await chat({ messages: [{ role: "user", content: "Hi" }] }).expect(200);
+    await chat({ messages: [{ role: 'user', content: 'Hi' }] }).expect(200);
 
-    expect(attemptedRoutes()).toEqual(["chat"]);
+    expect(attemptedRoutes()).toEqual(['chat']);
   });
 
-  it("skips Routes whose context is too small for the prompt and the requested output", async () => {
-    await insertModelWithRoute("small", { contextSize: 4_000 });
-    await addRoute("large", 1, { contextSize: 128_000 });
+  it('skips Routes whose context is too small for the prompt and the requested output', async () => {
+    await insertModelWithRoute('small', { contextSize: 4_000 });
+    await addRoute('large', 1, { contextSize: 128_000 });
     upstream.reply(SUCCESS);
 
     await chat({
-      messages: [{ role: "user", content: "word".repeat(100) }],
+      messages: [{ role: 'user', content: 'word'.repeat(100) }],
       max_tokens: 3_950,
     }).expect(200);
 
-    expect(attemptedRoutes()).toEqual(["large"]);
+    expect(attemptedRoutes()).toEqual(['large']);
   });
 });

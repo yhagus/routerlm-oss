@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ListFilter } from "@lucide/vue";
-import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { ListFilter } from '@lucide/vue';
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 
 const props = defineProps<{
   activeCount: number;
@@ -9,10 +9,10 @@ const emit = defineEmits<{ clearAll: [] }>();
 
 const hasActiveFilters = computed(() => props.activeCount > 0);
 const buttonText = computed(() =>
-  hasActiveFilters.value ? `Filters · ${props.activeCount}` : "Filters",
+  hasActiveFilters.value ? `Filters · ${props.activeCount}` : 'Filters',
 );
 const accessibleName = computed(() =>
-  hasActiveFilters.value ? `Filters, ${props.activeCount} active` : "Filters",
+  hasActiveFilters.value ? `Filters, ${props.activeCount} active` : 'Filters',
 );
 </script>
 

@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { OAUTH_REGIONS } from "@/db/schemas";
+import { z } from 'zod';
+import { OAUTH_REGIONS } from '@/db/schemas';
 
 export const newOauthSignInSchema = z.strictObject({
   providerId: z.uuid(),
@@ -19,11 +19,11 @@ export const storedOauthSignInSchema = z.object({
   verificationUriComplete: z.string().min(1).nullable(),
   expiresAt: z.number(),
   pollIntervalSeconds: z.number().positive(),
-  outcome: z.discriminatedUnion("status", [
-    z.object({ status: z.literal("pending") }),
-    z.object({ status: z.literal("completed"), providerAccountId: z.uuid() }),
-    z.object({ status: z.literal("denied") }),
-    z.object({ status: z.literal("expired") }),
+  outcome: z.discriminatedUnion('status', [
+    z.object({ status: z.literal('pending') }),
+    z.object({ status: z.literal('completed'), providerAccountId: z.uuid() }),
+    z.object({ status: z.literal('denied') }),
+    z.object({ status: z.literal('expired') }),
   ]),
 });
 export type StoredOauthSignIn = z.infer<typeof storedOauthSignInSchema>;

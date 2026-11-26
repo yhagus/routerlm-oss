@@ -1,14 +1,14 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq, sql } from "drizzle-orm";
-import type { Redis } from "ioredis";
-import { apiKeys } from "@/db/schemas";
-import type { Database } from "@/db/schemas/relations";
-import { RedisConnection } from "@/redis/providers/redis-connection";
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq, sql } from 'drizzle-orm';
+import type { Redis } from 'ioredis';
+import { apiKeys } from '@/db/schemas';
+import type { Database } from '@/db/schemas/relations';
+import { RedisConnection } from '@/redis/providers/redis-connection';
 
-const FLAG_KEY_PREFIX = "routerlm:spend-limit-reached:";
-const REACHED = "1";
-const NOT_REACHED = "0";
+const FLAG_KEY_PREFIX = 'routerlm:spend-limit-reached:';
+const REACHED = '1';
+const NOT_REACHED = '0';
 const FLAG_TTL_SECONDS = 600;
 
 @Injectable()
@@ -45,7 +45,7 @@ export class SpendLimitFlags {
       await this.redis.set(
         flagKey(apiKeyId),
         isReached ? REACHED : NOT_REACHED,
-        "EX",
+        'EX',
         FLAG_TTL_SECONDS,
       );
     } catch (error) {

@@ -1,18 +1,18 @@
-import { desc, eq, max, type SQL, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeyRotations, apiKeys, integrations, users } from "@/db/schemas";
-import { findModelNames } from "@/libs/models/allowed-models";
-import type { ApiKeySummary } from "./api-key";
+import { desc, eq, max, type SQL, sql } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeyRotations, apiKeys, integrations, users } from '@/db/schemas';
+import { findModelNames } from '@/libs/models/allowed-models';
+import type { ApiKeySummary } from './api-key';
 
 export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<ApiKeySummary[]> {
   const lastRotations = db
     .select({
       apiKeyId: apiKeyRotations.apiKeyId,
-      lastRotatedAt: max(apiKeyRotations.rotatedAt).as("last_rotated_at"),
+      lastRotatedAt: max(apiKeyRotations.rotatedAt).as('last_rotated_at'),
     })
     .from(apiKeyRotations)
     .groupBy(apiKeyRotations.apiKeyId)
-    .as("last_rotations");
+    .as('last_rotations');
   const rows = await db
     .select({
       id: apiKeys.id,

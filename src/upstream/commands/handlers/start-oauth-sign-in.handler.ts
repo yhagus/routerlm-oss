@@ -1,29 +1,29 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 import {
   BadGatewayException,
   BadRequestException,
   ConflictException,
   NotFoundException,
-} from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { type ProviderOauthLogin, providerAccounts, providers } from "@/db/schemas";
-import { SECOND_MS } from "@/libs/models/duration";
-import { OauthSignInPolling } from "@/upstream/jobs/oauth-sign-in-polling";
+} from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { type ProviderOauthLogin, providerAccounts, providers } from '@/db/schemas';
+import { SECOND_MS } from '@/libs/models/duration';
+import { OauthSignInPolling } from '@/upstream/jobs/oauth-sign-in-polling';
 import {
   type DeviceAuthorization,
   type OauthLoginEndpoint,
   OauthLoginError,
   oauthLoginEndpointOf,
   signInNeedsRegion,
-} from "@/upstream/models/oauth-device-grant";
-import type { OauthSignIn } from "@/upstream/models/oauth-sign-in";
-import { OauthLoginClient } from "@/upstream/providers/oauth-login-client";
-import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
-import { StartOauthSignInCommand } from "@/upstream/commands/impl/start-oauth-sign-in.command";
+} from '@/upstream/models/oauth-device-grant';
+import type { OauthSignIn } from '@/upstream/models/oauth-sign-in';
+import { OauthLoginClient } from '@/upstream/providers/oauth-login-client';
+import { OauthSignInStore } from '@/upstream/providers/oauth-sign-in-store';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
+import { StartOauthSignInCommand } from '@/upstream/commands/impl/start-oauth-sign-in.command';
 
 @CommandHandler(StartOauthSignInCommand)
 export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignInCommand> {
@@ -41,11 +41,11 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
     const region = signInNeedsRegion(oauthLogin) ? (newSignIn.region ?? null) : null;
     const deviceId =
       providerAccountId === undefined
-        ? randomUUID().replaceAll("-", "")
+        ? randomUUID().replaceAll('-', '')
         : await this.deviceIdOf(providerAccountId, providerId);
     const endpoint = oauthLoginEndpointOf(oauthLogin, region, deviceId);
     if (endpoint === null) {
-      throw new BadRequestException("Name the region the account lives in");
+      throw new BadRequestException('Name the region the account lives in');
     }
     const authorization = await this.authorizeDevice(endpoint);
 
@@ -65,7 +65,7 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
         verificationUriComplete: authorization.verificationUriComplete,
         expiresAt,
         pollIntervalSeconds: authorization.pollIntervalSeconds,
-        outcome: { status: "pending" },
+        outcome: { status: 'pending' },
       },
       startedAt,
     );
@@ -73,7 +73,7 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
 
     return {
       id: signInId,
-      status: "pending",
+      status: 'pending',
       userCode: authorization.userCode,
       verificationUri: authorization.verificationUri,
       verificationUriComplete: authorization.verificationUriComplete,
@@ -87,7 +87,7 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
       .from(providers)
       .where(eq(providers.id, providerId));
     if (!provider) {
-      throw new NotFoundException("Provider not found");
+      throw new NotFoundException('Provider not found');
     }
     if (provider.oauthLogin === null) {
       throw new ConflictException(`${provider.name} offers no OAuth Login`);
@@ -106,7 +106,7 @@ export class StartOauthSignInHandler implements ICommandHandler<StartOauthSignIn
         ),
       );
     if (!account) {
-      throw new NotFoundException("Provider Account not found");
+      throw new NotFoundException('Provider Account not found');
     }
     if (account.deviceId === null) {
       throw new ConflictException(

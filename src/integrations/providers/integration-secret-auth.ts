@@ -1,19 +1,19 @@
-import { Metadata } from "@grpc/grpc-js";
+import { Metadata } from '@grpc/grpc-js';
 import {
   ApiKeyProvider,
   type ApiKeyRecord,
   type ApiKeySession,
   AuthenticationRegistry,
   type AuthenticationResult,
-} from "@nestjs/authentication";
-import { type ExecutionContext, Injectable, Logger } from "@nestjs/common";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { integrations } from "@/db/schemas";
-import type { IntegrationPrincipal } from "@/integrations/models/integration";
+} from '@nestjs/authentication';
+import { type ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq, isNull, lt, or, sql } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { integrations } from '@/db/schemas';
+import type { IntegrationPrincipal } from '@/integrations/models/integration';
 
-export const INTEGRATION_SECRET_PREFIX = "rlmi";
+export const INTEGRATION_SECRET_PREFIX = 'rlmi';
 
 const INTEGRATION_SECRET_AUTH_ORDER = 2;
 
@@ -32,7 +32,7 @@ export class IntegrationSecretAuth extends ApiKeyProvider<IntegrationPrincipal> 
   }
 
   protected override header(context: ExecutionContext, name: string): string | undefined {
-    if (context.getType() !== "rpc") {
+    if (context.getType() !== 'rpc') {
       return super.header(context, name);
     }
     const metadata: unknown = context.switchToRpc().getContext();
@@ -40,7 +40,7 @@ export class IntegrationSecretAuth extends ApiKeyProvider<IntegrationPrincipal> 
       return undefined;
     }
     const [value] = metadata.get(name);
-    return typeof value === "string" ? value : undefined;
+    return typeof value === 'string' ? value : undefined;
   }
 
   override async authenticate(

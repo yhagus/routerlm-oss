@@ -1,9 +1,9 @@
-import type { UsageJob } from "@/usage/models/usage-job";
-import { ClientCancelledError } from "./attempt-failure";
-import { GatewayError } from "./gateway-error";
-import type { InferenceCaller } from "./inference";
-import type { PromptCacheKeyOwner } from "./prompt-cache-key";
-import type { UsageMeter } from "./usage-meter";
+import type { UsageJob } from '@/usage/models/usage-job';
+import { ClientCancelledError } from './attempt-failure';
+import { GatewayError } from './gateway-error';
+import type { InferenceCaller } from './inference';
+import type { PromptCacheKeyOwner } from './prompt-cache-key';
+import type { UsageMeter } from './usage-meter';
 
 const HTTP_INTERNAL_SERVER_ERROR = 500;
 const CLIENT_CLOSED_REQUEST = 499;
@@ -11,12 +11,12 @@ const CLIENT_CLOSED_REQUEST = 499;
 const encoder = new TextEncoder();
 
 export function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
-  if (caller.kind !== "api-key") {
-    return { kind: "playground", userId: caller.userId };
+  if (caller.kind !== 'api-key') {
+    return { kind: 'playground', userId: caller.userId };
   }
   const { apiKeyId, apiKeyName, customer } = caller.principal;
   return {
-    kind: "api-key",
+    kind: 'api-key',
     apiKeyId,
     apiKeyName,
     ...(customer && {

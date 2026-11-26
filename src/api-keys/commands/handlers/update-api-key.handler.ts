@@ -1,16 +1,16 @@
-import { ConflictException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, isNull } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags";
-import type { ApiKeySummary } from "@/api-keys/models/api-key";
-import { selectApiKeySummaries } from "@/api-keys/models/api-key-summaries";
-import { assertModelsExist } from "@/libs/models/allowed-models";
-import { assertUserOwnsKey, findUnrevokedApiKey } from "@/api-keys/models/find-unrevoked-api-key";
-import { UpdateApiKeyCommand } from "@/api-keys/commands/impl/update-api-key.command";
+import { ConflictException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq, isNull } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
+import type { ApiKeySummary } from '@/api-keys/models/api-key';
+import { selectApiKeySummaries } from '@/api-keys/models/api-key-summaries';
+import { assertModelsExist } from '@/libs/models/allowed-models';
+import { assertUserOwnsKey, findUnrevokedApiKey } from '@/api-keys/models/find-unrevoked-api-key';
+import { UpdateApiKeyCommand } from '@/api-keys/commands/impl/update-api-key.command';
 
 const REVOKED_MESSAGE = "A revoked API Key can't be changed.";
 

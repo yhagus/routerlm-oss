@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Plus, Trash2 } from "@lucide/vue";
-import { type EndpointForm, endpointFormFor } from "~/lib/providerForm";
+import { Plus, Trash2 } from '@lucide/vue';
+import { type EndpointForm, endpointFormFor } from '~/lib/providerForm';
 import {
   ENDPOINT_KIND_OPTIONS,
   MODEL_KIND_LABELS,
@@ -8,7 +8,7 @@ import {
   PROTOCOL_LABELS,
   protocolOptionsFor,
   UPSTREAM_PROTOCOLS,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 const endpoints = defineModel<EndpointForm[]>({ required: true });
 
@@ -32,7 +32,7 @@ function kindOptionsFor(endpoint: EndpointForm) {
 
 function kindLabel(kind: string): string {
   const known = MODEL_KINDS.find((modelKind) => modelKind === kind);
-  return known ? MODEL_KIND_LABELS[known] : "new";
+  return known ? MODEL_KIND_LABELS[known] : 'new';
 }
 
 function endpointLabel(endpoint: EndpointForm): string {
@@ -46,16 +46,16 @@ function handleKindChange(endpoint: EndpointForm, kind: string): void {
   endpoint.kind = kind;
   const protocols = freeProtocolsFor(kind, endpoint);
   if (!protocols.some((option) => option.value === endpoint.protocol)) {
-    endpoint.protocol = protocols[0]?.value ?? "";
+    endpoint.protocol = protocols[0]?.value ?? '';
   }
 }
 
 function handleAdd(): void {
-  const kind = addableKinds.value[0]?.value ?? "";
+  const kind = addableKinds.value[0]?.value ?? '';
   endpoints.value.push({
     ...endpointFormFor(),
     kind,
-    protocol: freeProtocolsFor(kind)[0]?.value ?? "",
+    protocol: freeProtocolsFor(kind)[0]?.value ?? '',
   });
 }
 

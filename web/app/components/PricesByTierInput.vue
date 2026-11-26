@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TierPriceForm } from "~/lib/upstreamModelMedia";
+import type { TierPriceForm } from '~/lib/upstreamModelMedia';
 
 defineProps<{
   tierLabel: string;

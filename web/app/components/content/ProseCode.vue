@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { VNode } from "vue";
+import type { VNode } from 'vue';
 
 defineSlots<{ default?: () => VNode[] }>();
 
 const { withGatewayUrl } = useGatewayUrl();
 
 function displayedTextOf(nodes: VNode[]): string | null {
-  let text = "";
+  let text = '';
   for (const node of nodes) {
-    if (typeof node.children !== "string") return null;
+    if (typeof node.children !== 'string') return null;
     text += node.children;
   }
   return withGatewayUrl(text);

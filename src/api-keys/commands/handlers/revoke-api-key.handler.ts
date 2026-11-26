@@ -1,11 +1,11 @@
-import { NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { RevokeApiKeyCommand } from "@/api-keys/commands/impl/revoke-api-key.command";
+import { NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq, sql } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { RevokeApiKeyCommand } from '@/api-keys/commands/impl/revoke-api-key.command';
 
 @CommandHandler(RevokeApiKeyCommand)
 export class RevokeApiKeyHandler implements ICommandHandler<RevokeApiKeyCommand> {
@@ -21,7 +21,7 @@ export class RevokeApiKeyHandler implements ICommandHandler<RevokeApiKeyCommand>
       .where(eq(apiKeys.id, id))
       .returning({ id: apiKeys.id });
     if (revoked.length === 0) {
-      throw new NotFoundException("API Key not found");
+      throw new NotFoundException('API Key not found');
     }
     await this.snapshot.changed();
   }

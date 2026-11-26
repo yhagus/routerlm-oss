@@ -1,21 +1,21 @@
-import { and, asc, gt, inArray, isNull, or, type SQL } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { usageResets } from "@/db/schemas";
+import { and, asc, gt, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { usageResets } from '@/db/schemas';
 import {
   CredentialUnavailableError,
   OauthLoginRefusedError,
   type ProviderAccountCredential,
-} from "@/upstream/models/provider-account-credential";
-import { type QuotaReaderProvider, QuotaReadError } from "./quota-reader";
+} from '@/upstream/models/provider-account-credential';
+import { type QuotaReaderProvider, QuotaReadError } from './quota-reader';
 
 export type UsageResetReading = Omit<
   typeof usageResets.$inferSelect,
-  "id" | "providerAccountId" | "observedAt"
+  'id' | 'providerAccountId' | 'observedAt'
 >;
 
 export type UsageReset = Pick<
   typeof usageResets.$inferSelect,
-  "id" | "title" | "grantedAt" | "expiresAt"
+  'id' | 'title' | 'grantedAt' | 'expiresAt'
 >;
 
 export interface UsageResetToSpend {
@@ -23,7 +23,7 @@ export interface UsageResetToSpend {
   idempotencyKey: string;
 }
 
-export type UsageResetOutcome = "reset" | "nothing-to-reset" | "unavailable";
+export type UsageResetOutcome = 'reset' | 'nothing-to-reset' | 'unavailable';
 
 export interface UsageResetPort {
   list(

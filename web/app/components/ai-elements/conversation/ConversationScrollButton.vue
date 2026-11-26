@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { ArrowDownIcon } from "@lucide/vue";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { computed } from "vue";
-import { useStickToBottomContext } from "vue-stick-to-bottom";
+import type { HTMLAttributes } from 'vue';
+import { ArrowDownIcon } from '@lucide/vue';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { computed } from 'vue';
+import { useStickToBottomContext } from 'vue-stick-to-bottom';
 
 interface Props {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();

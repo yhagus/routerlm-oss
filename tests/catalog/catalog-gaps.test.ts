@@ -1,36 +1,36 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import { providers, upstreamModels } from "@/db/schemas";
-import type { Database } from "@/db/schemas/relations";
-import { FakeUpstream } from "@tests/support/fake-upstream";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import { providers, upstreamModels } from '@/db/schemas';
+import type { Database } from '@/db/schemas/relations';
+import { FakeUpstream } from '@tests/support/fake-upstream';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
 const modelsDev = await FakeUpstream.start();
 process.env.MODELS_DEV_API_URL = `${modelsDev.origin}/api.json`;
-process.env.MODELS_DEV_TIMEOUT_MS = "1000";
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
+process.env.MODELS_DEV_TIMEOUT_MS = '1000';
+const { createTestApp, setUpFirstUser } = await import('@tests/support/test-app');
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
 
-const PROVIDER_SLUG = "anthropic";
-const HELD_MODEL_ID = "claude-held";
+const PROVIDER_SLUG = 'anthropic';
+const HELD_MODEL_ID = 'claude-held';
 
 function modelsDevModel(id: string, releaseDate: string) {
   return { id, name: `Name of ${id}`, release_date: releaseDate };
 }
 
 function replyWithAnthropicModels(models: Array<ReturnType<typeof modelsDevModel>>): void {
-  modelsDev.replyTo("/api.json", {
-    kind: "json",
+  modelsDev.replyTo('/api.json', {
+    kind: 'json',
     status: 200,
     body: {
       anthropic: { models: Object.fromEntries(models.map((model) => [model.id, model])) },
-      unmapped: { models: { "not-ours": modelsDevModel("not-ours", "2026-11-01") } },
+      unmapped: { models: { 'not-ours': modelsDevModel('not-ours', '2026-11-01') } },
     },
   });
 }
 
-describe("Catalog Gaps API (e2e)", () => {
+describe('Catalog Gaps API (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let cookie: string;
@@ -44,15 +44,15 @@ describe("Catalog Gaps API (e2e)", () => {
       .insert(providers)
       .values({
         slug: PROVIDER_SLUG,
-        name: "Anthropic",
+        name: 'Anthropic',
         endpoints: [
           {
-            kind: "chat",
-            protocol: "anthropic-messages",
-            baseUrl: "https://api.anthropic.example",
+            kind: 'chat',
+            protocol: 'anthropic-messages',
+            baseUrl: 'https://api.anthropic.example',
           },
         ],
-        authStyle: "x-api-key",
+        authStyle: 'x-api-key',
       })
       .returning({ id: providers.id });
     await db
@@ -69,13 +69,13 @@ describe("Catalog Gaps API (e2e)", () => {
   });
 
   function listGaps() {
-    return request(app.getHttpServer()).get("/api/catalog/gaps").set("Cookie", cookie);
+    return request(app.getHttpServer()).get('/api/catalog/gaps').set('Cookie', cookie);
   }
 
-  it("reports a newest model the Catalog lacks, and not one it holds", async () => {
+  it('reports a newest model the Catalog lacks, and not one it holds', async () => {
     replyWithAnthropicModels([
-      modelsDevModel(HELD_MODEL_ID, "2026-10-01"),
-      modelsDevModel("claude-new", "2026-11-05"),
+      modelsDevModel(HELD_MODEL_ID, '2026-10-01'),
+      modelsDevModel('claude-new', '2026-11-05'),
     ]);
 
     const response = await listGaps().expect(200);
@@ -83,58 +83,58 @@ describe("Catalog Gaps API (e2e)", () => {
     expect(response.body.gaps).toEqual([
       {
         providerSlug: PROVIDER_SLUG,
-        providerName: "Anthropic",
-        upstreamModelId: "claude-new",
-        name: "Name of claude-new",
-        releaseDate: "2026-11-05",
+        providerName: 'Anthropic',
+        upstreamModelId: 'claude-new',
+        name: 'Name of claude-new',
+        releaseDate: '2026-11-05',
       },
     ]);
     expect(new Date(response.body.checkedAt).getTime()).toBeGreaterThan(0);
   });
 
-  it("looks only at the five newest models across registered providers, newest gap first", async () => {
+  it('looks only at the five newest models across registered providers, newest gap first', async () => {
     replyWithAnthropicModels([
-      modelsDevModel("claude-oldest", "2025-01-01"),
-      modelsDevModel("claude-older", "2025-06-01"),
-      modelsDevModel("claude-d", "2026-01-01"),
-      modelsDevModel("claude-b", "2026-03-01"),
-      modelsDevModel(HELD_MODEL_ID, "2026-04-01"),
-      modelsDevModel("claude-c", "2026-02-01"),
-      modelsDevModel("claude-a", "2026-05-01"),
+      modelsDevModel('claude-oldest', '2025-01-01'),
+      modelsDevModel('claude-older', '2025-06-01'),
+      modelsDevModel('claude-d', '2026-01-01'),
+      modelsDevModel('claude-b', '2026-03-01'),
+      modelsDevModel(HELD_MODEL_ID, '2026-04-01'),
+      modelsDevModel('claude-c', '2026-02-01'),
+      modelsDevModel('claude-a', '2026-05-01'),
     ]);
 
     const response = await listGaps().expect(200);
 
     expect(
       response.body.gaps.map((gap: { upstreamModelId: string }) => gap.upstreamModelId),
-    ).toEqual(["claude-a", "claude-b", "claude-c", "claude-d"]);
+    ).toEqual(['claude-a', 'claude-b', 'claude-c', 'claude-d']);
   });
 
-  it("checks five models in total, not five per provider", async () => {
+  it('checks five models in total, not five per provider', async () => {
     await db.insert(providers).values({
-      slug: "deepseek",
-      name: "DeepSeek",
+      slug: 'deepseek',
+      name: 'DeepSeek',
       endpoints: [
-        { kind: "chat", protocol: "openai-chat", baseUrl: "https://api.deepseek.example" },
+        { kind: 'chat', protocol: 'openai-chat', baseUrl: 'https://api.deepseek.example' },
       ],
-      authStyle: "bearer",
+      authStyle: 'bearer',
     });
     const asModels = (ids: Array<[string, string]>) => ({
       models: Object.fromEntries(ids.map(([id, date]) => [id, modelsDevModel(id, date)])),
     });
-    modelsDev.replyTo("/api.json", {
-      kind: "json",
+    modelsDev.replyTo('/api.json', {
+      kind: 'json',
       status: 200,
       body: {
         anthropic: asModels([
-          ["claude-1", "2026-11-10"],
-          ["claude-2", "2026-11-08"],
-          ["claude-3", "2026-11-06"],
+          ['claude-1', '2026-11-10'],
+          ['claude-2', '2026-11-08'],
+          ['claude-3', '2026-11-06'],
         ]),
         deepseek: asModels([
-          ["ds-1", "2026-11-09"],
-          ["ds-2", "2026-11-07"],
-          ["ds-3", "2026-11-05"],
+          ['ds-1', '2026-11-09'],
+          ['ds-2', '2026-11-07'],
+          ['ds-3', '2026-11-05'],
         ]),
       },
     });
@@ -143,11 +143,11 @@ describe("Catalog Gaps API (e2e)", () => {
 
     expect(
       response.body.gaps.map((gap: { upstreamModelId: string }) => gap.upstreamModelId),
-    ).toEqual(["claude-1", "ds-1", "claude-2", "ds-2", "claude-3"]);
+    ).toEqual(['claude-1', 'ds-1', 'claude-2', 'ds-2', 'claude-3']);
   });
 
-  it("reads models.dev once, then answers from its cache", async () => {
-    replyWithAnthropicModels([modelsDevModel("claude-new", "2026-11-05")]);
+  it('reads models.dev once, then answers from its cache', async () => {
+    replyWithAnthropicModels([modelsDevModel('claude-new', '2026-11-05')]);
 
     await listGaps().expect(200);
     await listGaps().expect(200);
@@ -155,34 +155,34 @@ describe("Catalog Gaps API (e2e)", () => {
     expect(modelsDev.requests).toHaveLength(1);
   });
 
-  it("answers no gaps when models.dev cannot be reached", async () => {
-    modelsDev.reply({ kind: "reset" });
+  it('answers no gaps when models.dev cannot be reached', async () => {
+    modelsDev.reply({ kind: 'reset' });
 
     const response = await listGaps().expect(200);
 
     expect(response.body).toEqual({ checkedAt: null, gaps: [] });
   });
 
-  it("does not follow a redirect from models.dev", async () => {
-    modelsDev.replyTo("/api.json", {
-      kind: "json",
+  it('does not follow a redirect from models.dev', async () => {
+    modelsDev.replyTo('/api.json', {
+      kind: 'json',
       status: 302,
       body: {},
-      headers: { location: "/elsewhere.json" },
+      headers: { location: '/elsewhere.json' },
     });
-    modelsDev.replyTo("/elsewhere.json", {
-      kind: "json",
+    modelsDev.replyTo('/elsewhere.json', {
+      kind: 'json',
       status: 200,
-      body: { anthropic: { models: { "claude-new": modelsDevModel("claude-new", "2026-11-05") } } },
+      body: { anthropic: { models: { 'claude-new': modelsDevModel('claude-new', '2026-11-05') } } },
     });
 
     const response = await listGaps().expect(200);
 
     expect(response.body).toEqual({ checkedAt: null, gaps: [] });
-    expect(modelsDev.requests.map((received) => received.path)).toEqual(["/api.json"]);
+    expect(modelsDev.requests.map((received) => received.path)).toEqual(['/api.json']);
   });
 
-  it("rejects a request without a session", async () => {
-    await request(app.getHttpServer()).get("/api/catalog/gaps").expect(401);
+  it('rejects a request without a session', async () => {
+    await request(app.getHttpServer()).get('/api/catalog/gaps').expect(401);
   });
 });

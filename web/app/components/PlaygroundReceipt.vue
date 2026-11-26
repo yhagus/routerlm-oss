@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { PlaygroundSummary } from "~/lib/playground";
-import type { RouteSummary } from "~/lib/routing";
-import { formatCost, formatCount } from "~/lib/usage";
+import { computed } from 'vue';
+import type { PlaygroundSummary } from '~/lib/playground';
+import type { RouteSummary } from '~/lib/routing';
+import { formatCost, formatCount } from '~/lib/usage';
 
 const props = defineProps<{
   summary: PlaygroundSummary;
@@ -14,7 +14,7 @@ const props = defineProps<{
 
 const answered = computed(() => props.summary.route ?? props.summary.upstreamModel);
 const providerName = computed(() => {
-  if (!answered.value) return "";
+  if (!answered.value) return '';
   const slug = answered.value.providerSlug;
   return served.value?.providerName ?? props.providerNames.get(slug) ?? slug;
 });
@@ -36,34 +36,34 @@ const facts = computed(() => {
   if (units) {
     const list: { label: string; value: string }[] = [];
     if (units.imagesIn !== undefined) {
-      list.push({ label: "Images in", value: formatCount(units.imagesIn) });
+      list.push({ label: 'Images in', value: formatCount(units.imagesIn) });
     }
     if (units.imagesOut !== undefined) {
-      list.push({ label: "Images out", value: formatCount(units.imagesOut) });
+      list.push({ label: 'Images out', value: formatCount(units.imagesOut) });
     }
     if (units.characters !== undefined) {
-      list.push({ label: "Characters", value: formatCount(units.characters) });
+      list.push({ label: 'Characters', value: formatCount(units.characters) });
     }
     if (units.outputSeconds !== undefined) {
-      list.push({ label: "Video seconds", value: formatCount(units.outputSeconds) });
+      list.push({ label: 'Video seconds', value: formatCount(units.outputSeconds) });
     }
     if (units.audioSeconds !== undefined) {
-      list.push({ label: "Audio seconds", value: formatCount(units.audioSeconds) });
+      list.push({ label: 'Audio seconds', value: formatCount(units.audioSeconds) });
     }
-    if (units.tier !== undefined) list.push({ label: "Tier", value: units.tier });
-    list.push({ label: "Cost", value: formatCost(props.summary.cost) });
+    if (units.tier !== undefined) list.push({ label: 'Tier', value: units.tier });
+    list.push({ label: 'Cost', value: formatCost(props.summary.cost) });
     return list;
   }
   const list = [
-    { label: "Input", value: formatCount(usage.inputTokens) },
-    { label: "Output", value: formatCount(usage.outputTokens) },
-    { label: "Cache read", value: formatCount(usage.cacheReadTokens) },
-    { label: "Cache write", value: formatCount(usage.cacheWriteTokens) },
+    { label: 'Input', value: formatCount(usage.inputTokens) },
+    { label: 'Output', value: formatCount(usage.outputTokens) },
+    { label: 'Cache read', value: formatCount(usage.cacheReadTokens) },
+    { label: 'Cache write', value: formatCount(usage.cacheWriteTokens) },
   ];
   if (usage.reasoningTokens !== null) {
-    list.push({ label: "Reasoning", value: formatCount(usage.reasoningTokens) });
+    list.push({ label: 'Reasoning', value: formatCount(usage.reasoningTokens) });
   }
-  list.push({ label: "Cost", value: formatCost(props.summary.cost) });
+  list.push({ label: 'Cost', value: formatCost(props.summary.cost) });
   return list;
 });
 </script>
@@ -87,11 +87,11 @@ const facts = computed(() => {
           >Route {{ served.order }} of {{ served.total }}</span
         >
         <span v-if="served && served.order > 1" class="status-badge status-badge--warn"
-          >Fell back past {{ served.order - 1 }} {{ served.order === 2 ? "Route" : "Routes" }}</span
+          >Fell back past {{ served.order - 1 }} {{ served.order === 2 ? 'Route' : 'Routes' }}</span
         >
       </template>
       <span v-else class="receipt__served">{{
-        direct ? "The Upstream Model didn't answer" : "No Route served this request"
+        direct ? "The Upstream Model didn't answer" : 'No Route served this request'
       }}</span>
       <span v-if="summary.providerAccount" class="chip receipt__account">{{
         summary.providerAccount.name

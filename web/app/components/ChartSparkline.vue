@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { useElementWidth } from "~/lib/chart";
+import { computed, ref } from 'vue';
+import { useElementWidth } from '~/lib/chart';
 
 const props = withDefaults(
   defineProps<{
@@ -29,7 +29,7 @@ const y = (value: number) =>
   PAD + (props.height - PAD * 2) * (1 - (value - range.value.min) / range.value.span);
 
 const line = computed(() =>
-  props.values.map((value, index) => `${index ? "L" : "M"}${x(index)},${y(value)}`).join(""),
+  props.values.map((value, index) => `${index ? 'L' : 'M'}${x(index)},${y(value)}`).join(''),
 );
 const area = computed(
   () => `${line.value}L${x(props.values.length - 1)},${props.height}L${x(0)},${props.height}Z`,
@@ -63,7 +63,7 @@ function onPointer(event: PointerEvent) {
     </svg>
     <span v-if="active !== null" class="sparkline__readout"
       ><strong>{{ formatValue(values[active]!) }}</strong
-      >{{ labels[active] ? ` · ${labels[active]}` : "" }}</span
+      >{{ labels[active] ? ` · ${labels[active]}` : '' }}</span
     >
   </div>
 </template>

@@ -1,9 +1,9 @@
-import { HttpClientError, HttpResponseError, HttpTimeoutError } from "@nestjs/http-client";
-import { chatEndpointOf, providerQuirksSchema } from "@/catalog/schemas/catalog.schema";
-import type { ProviderEndpoint } from "@/db/schemas";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
-import type { QuotaMeterReading } from "./quota-meter";
-import type { UsageResetPort } from "./usage-reset";
+import { HttpClientError, HttpResponseError, HttpTimeoutError } from '@nestjs/http-client';
+import { chatEndpointOf, providerQuirksSchema } from '@/catalog/schemas/catalog.schema';
+import type { ProviderEndpoint } from '@/db/schemas';
+import type { ProviderAccountCredential } from '@/upstream/models/provider-account-credential';
+import type { QuotaMeterReading } from './quota-meter';
+import type { UsageResetPort } from './usage-reset';
 
 export interface QuotaReader {
   read(credential: ProviderAccountCredential, provider: QuotaReaderProvider): Promise<QuotaReading>;
@@ -26,7 +26,7 @@ export function quotaReaderProviderOf(provider: {
 }): QuotaReaderProvider {
   const chatEndpoint = chatEndpointOf(provider.endpoints);
   if (chatEndpoint === undefined) {
-    throw new QuotaReadError("The Provider has no chat endpoint to reach its quota endpoints from");
+    throw new QuotaReadError('The Provider has no chat endpoint to reach its quota endpoints from');
   }
   const { quotaBaseUrl } = providerQuirksSchema.parse(provider.quirks);
   return { baseUrl: chatEndpoint.baseUrl, quotaBaseUrl };

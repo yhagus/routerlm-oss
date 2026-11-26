@@ -1,17 +1,17 @@
-import { randomUUID } from "node:crypto";
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import type { UsageJob } from "@/usage/models/usage-job";
+import { randomUUID } from 'node:crypto';
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import type { UsageJob } from '@/usage/models/usage-job';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
-const { UsageProducer } = await import("@/usage/jobs/usage.producer");
+const { createTestApp } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
+const { UsageProducer } = await import('@/usage/jobs/usage.producer');
 
 const ALL_ATTEMPTS_TIMEOUT_MS = 15_000;
 const POLL_INTERVAL_MS = 100;
@@ -20,9 +20,9 @@ function unwritableUsageJob(): UsageJob {
   return {
     usageLogId: randomUUID(),
     receivedAt: new Date().toISOString(),
-    caller: { kind: "api-key", apiKeyId: randomUUID() },
+    caller: { kind: 'api-key', apiKeyId: randomUUID() },
     modelId: null,
-    clientProtocol: "openai-chat",
+    clientProtocol: 'openai-chat',
     isStreamed: false,
     httpStatus: 500,
     errorCode: null,
@@ -34,11 +34,11 @@ function unwritableUsageJob(): UsageJob {
     durationMs: 1,
     isCancelled: false,
     attempts: [],
-    errorCapture: { request: { headers: {}, body: "a secret prompt" }, failedAttempts: [] },
+    errorCapture: { request: { headers: {}, body: 'a secret prompt' }, failedAttempts: [] },
   };
 }
 
-describe("Usage jobs that fail (e2e)", () => {
+describe('Usage jobs that fail (e2e)', () => {
   let app: NestNodeApplication;
   let worker: TestingModule;
   let usageQueue: Queue;
@@ -58,15 +58,15 @@ describe("Usage jobs that fail (e2e)", () => {
   });
 
   it(
-    "leaves nothing in Redis once a job has failed all its attempts",
+    'leaves nothing in Redis once a job has failed all its attempts',
     async () => {
       app.get(UsageProducer).enqueue(unwritableUsageJob());
 
       const deadline = Date.now() + ALL_ATTEMPTS_TIMEOUT_MS;
-      let counts = await usageQueue.getJobCounts("waiting", "active", "delayed", "failed");
+      let counts = await usageQueue.getJobCounts('waiting', 'active', 'delayed', 'failed');
       let sawJob = false;
       while (Date.now() < deadline) {
-        counts = await usageQueue.getJobCounts("waiting", "active", "delayed", "failed");
+        counts = await usageQueue.getJobCounts('waiting', 'active', 'delayed', 'failed');
         const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
         sawJob ||= total > 0;
         if (sawJob && total === 0) break;
@@ -75,7 +75,7 @@ describe("Usage jobs that fail (e2e)", () => {
 
       expect(sawJob).toBe(true);
       expect(counts.failed).toBe(0);
-      expect(await usageQueue.getJobCountByTypes("failed", "completed")).toBe(0);
+      expect(await usageQueue.getJobCountByTypes('failed', 'completed')).toBe(0);
     },
     ALL_ATTEMPTS_TIMEOUT_MS + 5_000,
   );

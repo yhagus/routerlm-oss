@@ -1,6 +1,6 @@
-import type { AttemptFailureReason } from "@/db/schemas";
-import { GatewayError } from "./gateway-error";
-import { upstreamRequestIdOf } from "./upstream-request-id";
+import type { AttemptFailureReason } from '@/db/schemas';
+import { GatewayError } from './gateway-error';
+import { upstreamRequestIdOf } from './upstream-request-id';
 
 export interface UpstreamFailureResponse {
   headers: Record<string, string>;
@@ -16,11 +16,11 @@ export class AttemptFailedError extends Error {
     options?: ErrorOptions,
   ) {
     super(message, options);
-    this.name = "AttemptFailedError";
+    this.name = 'AttemptFailedError';
   }
 
   get retryAfter(): string | null {
-    return this.upstreamResponse?.headers["retry-after"] ?? null;
+    return this.upstreamResponse?.headers['retry-after'] ?? null;
   }
 
   get upstreamRequestId(): string | null {
@@ -30,31 +30,31 @@ export class AttemptFailedError extends Error {
 
 export class ClientCancelledError extends Error {
   constructor() {
-    super("The client disconnected");
-    this.name = "ClientCancelledError";
+    super('The client disconnected');
+    this.name = 'ClientCancelledError';
   }
 }
 
 const FAILURE_MESSAGES = {
   rate_limited: [
-    "upstream_rate_limited",
-    "The upstream is rate limiting requests; try again later",
+    'upstream_rate_limited',
+    'The upstream is rate limiting requests; try again later',
   ],
-  timeout: ["upstream_timeout", "The upstream did not answer in time"],
-  bad_request: ["invalid_request", "The upstream refused the request as invalid"],
-  server_error: ["upstream_error", "The upstream failed to answer"],
-  connection_error: ["upstream_error", "The upstream could not be reached"],
-  unauthorized: ["upstream_error", "The upstream failed to answer"],
-  stream_interrupted: ["upstream_error", "The upstream stream broke off"],
+  timeout: ['upstream_timeout', 'The upstream did not answer in time'],
+  bad_request: ['invalid_request', 'The upstream refused the request as invalid'],
+  server_error: ['upstream_error', 'The upstream failed to answer'],
+  connection_error: ['upstream_error', 'The upstream could not be reached'],
+  unauthorized: ['upstream_error', 'The upstream failed to answer'],
+  stream_interrupted: ['upstream_error', 'The upstream stream broke off'],
   exhausted: [
-    "upstream_rate_limited",
+    'upstream_rate_limited',
     "The Provider Account's Quota Meter has run out (Exhausted); try again later",
   ],
-} as const satisfies Record<AttemptFailureReason, readonly [GatewayError["code"], string]>;
+} as const satisfies Record<AttemptFailureReason, readonly [GatewayError['code'], string]>;
 
 export function gatewayErrorFor(failure: AttemptFailedError): GatewayError {
   const [code, message] = FAILURE_MESSAGES[failure.reason];
-  return new GatewayError(code, message, "upstream");
+  return new GatewayError(code, message, 'upstream');
 }
 
 export function exhaustionError(
@@ -65,21 +65,21 @@ export function exhaustionError(
   if (!firstFailure) {
     const isEveryAccountSkippedFor = (reason: AttemptFailureReason): boolean =>
       cooldownCauses.length > 0 && cooldownCauses.every((cause) => cause === reason);
-    if (isEveryAccountSkippedFor("rate_limited")) {
-      return new GatewayError(...FAILURE_MESSAGES.rate_limited, "upstream");
+    if (isEveryAccountSkippedFor('rate_limited')) {
+      return new GatewayError(...FAILURE_MESSAGES.rate_limited, 'upstream');
     }
-    if (isEveryAccountSkippedFor("exhausted")) {
-      return new GatewayError(...FAILURE_MESSAGES.exhausted, "upstream");
+    if (isEveryAccountSkippedFor('exhausted')) {
+      return new GatewayError(...FAILURE_MESSAGES.exhausted, 'upstream');
     }
     return new GatewayError(
-      "upstream_error",
-      "No upstream is available for this Model",
-      "upstream",
+      'upstream_error',
+      'No upstream is available for this Model',
+      'upstream',
     );
   }
   const failedTheSameWay = failures.every((failure) => failure.reason === firstFailure.reason);
   if (failedTheSameWay) {
     return gatewayErrorFor(firstFailure);
   }
-  return new GatewayError("upstream_error", "The upstream failed to answer", "upstream");
+  return new GatewayError('upstream_error', 'The upstream failed to answer', 'upstream');
 }

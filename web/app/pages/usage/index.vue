@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { SearchX } from "@lucide/vue";
-import { computed, nextTick, ref, watch } from "vue";
-import type { ApiKeySummary, ModelChoice } from "~/lib/api-keys";
+import { SearchX } from '@lucide/vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import type { ApiKeySummary, ModelChoice } from '~/lib/api-keys';
 import {
   formatCost,
   formatCount,
@@ -18,28 +18,28 @@ import {
   usageStatusOf,
   type UsageSummary,
   USAGE_STATUSES,
-} from "~/lib/usage";
-import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
-import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
-import { dateTimeFormat } from "~/lib/dateFormats";
-import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from "~/lib/errorOrigins";
-import { SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/parameterPolicy";
-import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from "~/lib/queryFilters";
+} from '~/lib/usage';
+import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
+import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from '~/lib/dataTable';
+import { dateTimeFormat } from '~/lib/dateFormats';
+import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from '~/lib/errorOrigins';
+import { SERVICE_TIER_LABELS, SERVICE_TIERS } from '~/lib/parameterPolicy';
+import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from '~/lib/queryFilters';
 
-useHead({ title: "Usage" });
+useHead({ title: 'Usage' });
 
-const timeRange = useQueryParam<TimeRange>("range", { default: "24h", isValid: isTimeRange });
-const modelFilter = useQueryList("model", { isValid: isUuid });
-const apiKeyFilter = useQueryList("key", { isValid: isApiKeyChoice, order: [PLAYGROUND] });
-const statusFilter = useQueryList("status", {
+const timeRange = useQueryParam<TimeRange>('range', { default: '24h', isValid: isTimeRange });
+const modelFilter = useQueryList('model', { isValid: isUuid });
+const apiKeyFilter = useQueryList('key', { isValid: isApiKeyChoice, order: [PLAYGROUND] });
+const statusFilter = useQueryList('status', {
   isValid: oneOf(USAGE_STATUSES),
   order: USAGE_STATUSES,
 });
-const errorOriginFilter = useQueryList("errorOrigin", {
+const errorOriginFilter = useQueryList('errorOrigin', {
   isValid: oneOf(ERROR_ORIGINS),
   order: ERROR_ORIGINS,
 });
-const serviceTierFilter = useQueryList("serviceTier", {
+const serviceTierFilter = useQueryList('serviceTier', {
   isValid: oneOf(SERVICE_TIERS),
   order: SERVICE_TIERS,
 });
@@ -76,8 +76,8 @@ watch(timeRange, () => {
   page.value = 1;
 });
 
-const { data: modelChoices } = useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
-const { data: apiKeys } = useDashboardApi<ApiKeySummary[]>("/api-keys");
+const { data: modelChoices } = useDashboardApi<ModelChoice[]>('/api-keys/model-choices');
+const { data: apiKeys } = useDashboardApi<ApiKeySummary[]>('/api-keys');
 
 const timeRangeOptions = Object.entries(TIME_RANGES).map(([value, { label }]) => ({
   value,
@@ -89,7 +89,7 @@ const modelOptions = computed(() => {
 });
 const apiKeyOptions = computed(() => {
   const known = [
-    { value: PLAYGROUND, label: "Playground" },
+    { value: PLAYGROUND, label: 'Playground' },
     ...(apiKeys.value ?? []).map((apiKey) => ({ value: apiKey.id, label: apiKey.name })),
   ];
   return [...known, ...missingOptions(apiKeyFilter.value, known)];
@@ -105,11 +105,11 @@ const serviceTierOptions = SERVICE_TIERS.map((value) => ({
 }));
 
 const activeFilters = computed<ActiveFilter[]>(() => [
-  ...listFilterTokens("Model", modelFilter, modelOptions.value),
-  ...listFilterTokens("API Key", apiKeyFilter, apiKeyOptions.value),
-  ...listFilterTokens("Status", statusFilter, statusOptions),
-  ...listFilterTokens("Error Origin", errorOriginFilter, errorOriginOptions),
-  ...listFilterTokens("Tier", serviceTierFilter, serviceTierOptions),
+  ...listFilterTokens('Model', modelFilter, modelOptions.value),
+  ...listFilterTokens('API Key', apiKeyFilter, apiKeyOptions.value),
+  ...listFilterTokens('Status', statusFilter, statusOptions),
+  ...listFilterTokens('Error Origin', errorOriginFilter, errorOriginOptions),
+  ...listFilterTokens('Tier', serviceTierFilter, serviceTierOptions),
   ...ownerFilterTokens.value,
 ]);
 
@@ -131,7 +131,7 @@ const {
   error: loadError,
   status: usagePageStatus,
   refresh: refreshLogs,
-} = useDashboardApi<UsageLogPage>("/usage", {
+} = useDashboardApi<UsageLogPage>('/usage', {
   query: computed(() => ({
     ...filterQuery.value,
     page: page.value,
@@ -142,32 +142,32 @@ const {
   data: summary,
   status: summaryStatus,
   refresh: refreshSummary,
-} = useDashboardApi<UsageSummary>("/usage/totals", { query: filterQuery });
+} = useDashboardApi<UsageSummary>('/usage/totals', { query: filterQuery });
 
 async function refresh(): Promise<void> {
   refreshTimeRange();
   await nextTick();
-  await Promise.all([refreshLogs({ dedupe: "defer" }), refreshSummary({ dedupe: "defer" })]);
+  await Promise.all([refreshLogs({ dedupe: 'defer' }), refreshSummary({ dedupe: 'defer' })]);
 }
 
-const isLoadingLogs = computed(() => usagePageStatus.value === "pending" && !usagePage.value);
+const isLoadingLogs = computed(() => usagePageStatus.value === 'pending' && !usagePage.value);
 
 const columns: DataTableColumn<UsageLogSummary>[] = [
-  { id: "time", header: "Time", enableHiding: false },
-  { id: "model", header: "Model" },
-  { id: "apiKey", header: "API Key" },
-  { id: "integration", header: "Integration" },
-  { id: "customer", header: "Customer" },
-  { id: "status", header: "Status" },
-  { id: "serviceTier", header: "Tier" },
-  { id: "inputTokens", header: "Input" },
-  { id: "outputTokens", header: "Output" },
-  { id: "cacheReadTokens", header: "Cache read" },
-  { id: "cacheWriteTokens", header: "Cache write" },
-  { id: "cost", header: "Cost" },
-  { id: "timeToFirstToken", header: "First token" },
-  { id: "duration", header: "Duration" },
-  { id: "attempts", header: "Attempts" },
+  { id: 'time', header: 'Time', enableHiding: false },
+  { id: 'model', header: 'Model' },
+  { id: 'apiKey', header: 'API Key' },
+  { id: 'integration', header: 'Integration' },
+  { id: 'customer', header: 'Customer' },
+  { id: 'status', header: 'Status' },
+  { id: 'serviceTier', header: 'Tier' },
+  { id: 'inputTokens', header: 'Input' },
+  { id: 'outputTokens', header: 'Output' },
+  { id: 'cacheReadTokens', header: 'Cache read' },
+  { id: 'cacheWriteTokens', header: 'Cache write' },
+  { id: 'cost', header: 'Cost' },
+  { id: 'timeToFirstToken', header: 'First token' },
+  { id: 'duration', header: 'Duration' },
+  { id: 'attempts', header: 'Attempts' },
   actionsColumn(),
 ];
 </script>
@@ -264,17 +264,17 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
         <span class="tabular">{{ dateTimeFormat.format(new Date(log.createdAt)) }}</span>
       </template>
       <template #cell-model="{ row: log }">
-        {{ log.modelName ?? (log.modelId ? "Deleted Model" : "—") }}
+        {{ log.modelName ?? (log.modelId ? 'Deleted Model' : '—') }}
       </template>
       <template #cell-apiKey="{ row: log }">
         {{
           log.isPlayground
-            ? "Playground"
-            : (log.apiKeyName ?? (log.apiKeyId ? "Deleted API Key" : "—"))
+            ? 'Playground'
+            : (log.apiKeyName ?? (log.apiKeyId ? 'Deleted API Key' : '—'))
         }}
       </template>
-      <template #cell-integration="{ row: log }">{{ log.integrationName ?? "—" }}</template>
-      <template #cell-customer="{ row: log }">{{ log.customerId ?? "—" }}</template>
+      <template #cell-integration="{ row: log }">{{ log.integrationName ?? '—' }}</template>
+      <template #cell-customer="{ row: log }">{{ log.customerId ?? '—' }}</template>
       <template #cell-status="{ row: log }">
         <span class="status-badge" :class="USAGE_STATUS_BADGES[usageStatusOf(log)]">
           {{ USAGE_STATUS_LABELS[usageStatusOf(log)] }} · {{ log.errorCode ?? log.httpStatus }}
@@ -291,7 +291,7 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
         >
       </template>
       <template #cell-serviceTier="{ row: log }">
-        {{ log.serviceTier ? SERVICE_TIER_LABELS[log.serviceTier] : "Default" }}
+        {{ log.serviceTier ? SERVICE_TIER_LABELS[log.serviceTier] : 'Default' }}
       </template>
       <template #cell-inputTokens="{ row: log }">
         <span class="tabular">{{ formatCount(log.inputTokens) }}</span>

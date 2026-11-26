@@ -1,27 +1,27 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
 
 const ANTHROPIC_ENDPOINTS = [
-  { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.acme.example/v1" },
+  { kind: 'chat', protocol: 'anthropic-messages', baseUrl: 'https://api.acme.example/v1' },
 ];
 const RESPONSES_ENDPOINTS = [
-  { kind: "chat", protocol: "openai-responses", baseUrl: "https://api.acme.example/v1" },
+  { kind: 'chat', protocol: 'openai-responses', baseUrl: 'https://api.acme.example/v1' },
 ];
 
 const ACME = {
-  slug: "acme",
-  name: "Acme AI",
-  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
-  authStyle: "bearer",
+  slug: 'acme',
+  name: 'Acme AI',
+  endpoints: [{ kind: 'chat', protocol: 'openai-chat', baseUrl: 'https://api.acme.example/v1' }],
+  authStyle: 'bearer',
 };
-const TIER_VALUES = { fast: "priority", flex: "flex" };
+const TIER_VALUES = { fast: 'priority', flex: 'flex' };
 
-describe("Provider Service Tier rules (e2e)", () => {
+describe('Provider Service Tier rules (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let cookie: string;
@@ -40,15 +40,15 @@ describe("Provider Service Tier rules (e2e)", () => {
   });
 
   const post = (path: string, body: object) =>
-    request(app.getHttpServer()).post(path).set("Cookie", cookie).send(body);
+    request(app.getHttpServer()).post(path).set('Cookie', cookie).send(body);
   const patch = (path: string, body: object) =>
-    request(app.getHttpServer()).patch(path).set("Cookie", cookie).send(body);
+    request(app.getHttpServer()).patch(path).set('Cookie', cookie).send(body);
 
-  it("lets a Provider on a Protocol that sends a tier map Service Tiers", async () => {
-    const chat = await post("/api/providers", { ...ACME, serviceTierValues: TIER_VALUES });
-    const responses = await post("/api/providers", {
+  it('lets a Provider on a Protocol that sends a tier map Service Tiers', async () => {
+    const chat = await post('/api/providers', { ...ACME, serviceTierValues: TIER_VALUES });
+    const responses = await post('/api/providers', {
       ...ACME,
-      slug: "acme-responses",
+      slug: 'acme-responses',
       endpoints: RESPONSES_ENDPOINTS,
       serviceTierValues: TIER_VALUES,
     });
@@ -57,20 +57,20 @@ describe("Provider Service Tier rules (e2e)", () => {
     expect(chat.body.serviceTierValues).toEqual(TIER_VALUES);
   });
 
-  it("refuses Service Tiers on a Protocol that never sends one, naming them", async () => {
-    const created = await post("/api/providers", {
+  it('refuses Service Tiers on a Protocol that never sends one, naming them', async () => {
+    const created = await post('/api/providers', {
       ...ACME,
       endpoints: ANTHROPIC_ENDPOINTS,
-      authStyle: "x-api-key",
-      serviceTierValues: { fast: "priority" },
+      authStyle: 'x-api-key',
+      serviceTierValues: { fast: 'priority' },
     }).expect(400);
 
-    expect(created.body.message).toContain("fast");
-    expect(created.body.message).toContain("anthropic-messages");
+    expect(created.body.message).toContain('fast');
+    expect(created.body.message).toContain('anthropic-messages');
   });
 
-  it("refuses a change of Protocol that would leave Service Tiers on a Protocol that never sends one", async () => {
-    const { body } = await post("/api/providers", {
+  it('refuses a change of Protocol that would leave Service Tiers on a Protocol that never sends one', async () => {
+    const { body } = await post('/api/providers', {
       ...ACME,
       serviceTierValues: TIER_VALUES,
     }).expect(201);
@@ -86,14 +86,14 @@ describe("Provider Service Tier rules (e2e)", () => {
     }).expect(200);
   });
 
-  it("refuses to stop mapping a tier an Upstream Model lists, naming the Model", async () => {
-    const { body } = await post("/api/providers", {
+  it('refuses to stop mapping a tier an Upstream Model lists, naming the Model', async () => {
+    const { body } = await post('/api/providers', {
       ...ACME,
       serviceTierValues: TIER_VALUES,
     }).expect(201);
-    await post("/api/upstream-models", {
+    await post('/api/upstream-models', {
       providerId: body.id,
-      upstreamModelId: "acme-large",
+      upstreamModelId: 'acme-large',
       capabilities: [],
       contextSize: 100_000,
       maxOutputTokens: null,
@@ -101,15 +101,15 @@ describe("Provider Service Tier rules (e2e)", () => {
       outputPrice: 2,
       cacheReadPrice: null,
       cacheWritePrice: null,
-      serviceTiers: ["fast"],
+      serviceTiers: ['fast'],
     }).expect(201);
 
     const refused = await patch(`/api/providers/${body.id}`, {
-      serviceTierValues: { flex: "flex" },
+      serviceTierValues: { flex: 'flex' },
     }).expect(409);
-    expect(refused.body.message).toContain("acme-large");
+    expect(refused.body.message).toContain('acme-large');
 
-    await patch(`/api/providers/${body.id}`, { serviceTierValues: { fast: "priority" } }).expect(
+    await patch(`/api/providers/${body.id}`, { serviceTierValues: { fast: 'priority' } }).expect(
       200,
     );
   });

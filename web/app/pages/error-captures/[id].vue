@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ArrowLeft, CloudOff, Unplug } from "@lucide/vue";
-import { isNotFound } from "~/lib/errors";
+import { ArrowLeft, CloudOff, Unplug } from '@lucide/vue';
+import { isNotFound } from '~/lib/errors';
 
 import {
   attemptOutcomeLabel,
@@ -8,25 +8,25 @@ import {
   type ErrorCaptureDetail,
   failedHopLabel,
   upstreamErrorMessage,
-} from "~/lib/errorCaptures";
+} from '~/lib/errorCaptures';
 
 const { data: capture, error: loadError } = useDashboardApi<ErrorCaptureDetail>(
   `/error-captures/${String(useRoute().params.id)}`,
 );
-useMissingResource(() => isNotFound(loadError.value), "Error Capture");
+useMissingResource(() => isNotFound(loadError.value), 'Error Capture');
 
-useHead({ title: "Error Capture" });
+useHead({ title: 'Error Capture' });
 
 const backTo = computed(() => {
   const previous: unknown = window.history.state?.back;
-  return typeof previous === "string" && /^\/error-captures(\?|$)/.test(previous)
+  return typeof previous === 'string' && /^\/error-captures(\?|$)/.test(previous)
     ? previous
-    : "/error-captures";
+    : '/error-captures';
 });
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' });
 
-const NOTICE = "Credentials are redacted; bodies over 256 KB are truncated.";
+const NOTICE = 'Credentials are redacted; bodies over 256 KB are truncated.';
 const description = computed(() =>
   capture.value
     ? `Captured ${timeFormat.format(new Date(capture.value.createdAt))}. ${NOTICE}`
@@ -34,7 +34,7 @@ const description = computed(() =>
 );
 const cause = computed(() => upstreamErrorMessage(capture.value?.responseBody ?? null));
 const attemptHop = computed(() =>
-  capture.value?.failedHop.kind === "gateway-to-provider-account" ? capture.value.failedHop : null,
+  capture.value?.failedHop.kind === 'gateway-to-provider-account' ? capture.value.failedHop : null,
 );
 </script>
 
@@ -61,7 +61,7 @@ const attemptHop = computed(() =>
               <h2>Failed at: {{ failedHopLabel(capture.failedHop) }}</h2>
               <p v-if="attemptHop">
                 The gateway's Attempt on this Provider Account failed:
-                {{ attemptOutcomeLabel(attemptHop, "Failed") }}.
+                {{ attemptOutcomeLabel(attemptHop, 'Failed') }}.
               </p>
               <p v-else>The request failed at the gateway, before any Attempt failed.</p>
             </div>
@@ -79,20 +79,20 @@ const attemptHop = computed(() =>
           <dl class="capture-facts">
             <div>
               <dt>Model</dt>
-              <dd>{{ capture.modelName ?? "—" }}</dd>
+              <dd>{{ capture.modelName ?? '—' }}</dd>
             </div>
             <div>
               <dt>API Key</dt>
-              <dd>{{ capture.isPlayground ? "Playground" : (capture.apiKeyName ?? "—") }}</dd>
+              <dd>{{ capture.isPlayground ? 'Playground' : (capture.apiKeyName ?? '—') }}</dd>
             </div>
             <template v-if="capture.integrationId">
               <div>
                 <dt>Integration</dt>
-                <dd>{{ capture.integrationName ?? "—" }}</dd>
+                <dd>{{ capture.integrationName ?? '—' }}</dd>
               </div>
               <div>
                 <dt>Customer</dt>
-                <dd>{{ capture.customerId ?? "—" }}</dd>
+                <dd>{{ capture.customerId ?? '—' }}</dd>
               </div>
             </template>
             <div>
@@ -101,19 +101,19 @@ const attemptHop = computed(() =>
             </div>
             <div>
               <dt>Upstream Protocol</dt>
-              <dd>{{ capture.upstreamProtocol ?? "—" }}</dd>
+              <dd>{{ capture.upstreamProtocol ?? '—' }}</dd>
             </div>
             <div>
               <dt>User-Agent</dt>
-              <dd>{{ capture.userAgent ?? "—" }}</dd>
+              <dd>{{ capture.userAgent ?? '—' }}</dd>
             </div>
             <div>
               <dt>IP</dt>
-              <dd class="tabular">{{ capture.clientIp ?? "—" }}</dd>
+              <dd class="tabular">{{ capture.clientIp ?? '—' }}</dd>
             </div>
             <div v-if="attemptHop">
               <dt>Provider request id</dt>
-              <dd class="tabular">{{ attemptHop.upstreamRequestId ?? "—" }}</dd>
+              <dd class="tabular">{{ attemptHop.upstreamRequestId ?? '—' }}</dd>
             </div>
             <div>
               <dt>Usage Log</dt>

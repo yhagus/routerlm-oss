@@ -1,4 +1,4 @@
-import { computed, type ComputedRef } from "vue";
+import { computed, type ComputedRef } from 'vue';
 
 export interface DocsContentsEntry {
   path: string;
@@ -7,11 +7,11 @@ export interface DocsContentsEntry {
 }
 
 export function formatPageNumber(pageNumber: number): string {
-  return String(pageNumber).padStart(2, "0");
+  return String(pageNumber).padStart(2, '0');
 }
 
 function pageNumberOf(stem: string): number {
-  const fileName = stem.split("/").at(-1) ?? "";
+  const fileName = stem.split('/').at(-1) ?? '';
   return Number.parseInt(fileName, 10);
 }
 
@@ -31,7 +31,7 @@ export function useDocsContents(): {
 
   const { data, status } = useAsyncData(
     () => `docs-contents-${locale.value}`,
-    () => queryCollection(collection.value).select("title", "path", "stem").all(),
+    () => queryCollection(collection.value).select('title', 'path', 'stem').all(),
     { lazy: true },
   );
 
@@ -55,7 +55,7 @@ export function useDocsContents(): {
 
   return {
     pages,
-    isLoading: computed(() => status.value === "pending" && !data.value),
+    isLoading: computed(() => status.value === 'pending' && !data.value),
     currentPage,
     pageCount,
     pageCounter,

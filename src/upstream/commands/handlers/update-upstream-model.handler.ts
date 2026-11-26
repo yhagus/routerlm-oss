@@ -1,19 +1,19 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providers, routes, upstreamModels } from "@/db/schemas";
-import { attachedPricingWindowNames } from "@/pricing-windows/models/upstream-model-pricing-windows";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providers, routes, upstreamModels } from '@/db/schemas';
+import { attachedPricingWindowNames } from '@/pricing-windows/models/upstream-model-pricing-windows';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import {
   assertProtocolsFitProvider,
   assertProviderServesKind,
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
   type UpstreamModel,
-} from "@/upstream/models/upstream-model";
-import { UpdateUpstreamModelCommand } from "@/upstream/commands/impl/update-upstream-model.command";
+} from '@/upstream/models/upstream-model';
+import { UpdateUpstreamModelCommand } from '@/upstream/commands/impl/update-upstream-model.command';
 
 @CommandHandler(UpdateUpstreamModelCommand)
 export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstreamModelCommand> {
@@ -38,7 +38,7 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
           .from(upstreamModels)
           .innerJoin(providers, eq(providers.id, upstreamModels.providerId))
           .where(eq(upstreamModels.id, upstreamModelId))
-          .for("update", { of: upstreamModels });
+          .for('update', { of: upstreamModels });
         if (!stored) {
           return undefined;
         }
@@ -58,7 +58,7 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
           const pricingWindowNames = await attachedPricingWindowNames(tx, upstreamModelId);
           if (pricingWindowNames.length > 0) {
             throw new BadRequestException(
-              `The Pricing Windows ${pricingWindowNames.join(", ")} give this Upstream Model Window Prices, so its Kind can't change; detach them first`,
+              `The Pricing Windows ${pricingWindowNames.join(', ')} give this Upstream Model Window Prices, so its Kind can't change; detach them first`,
             );
           }
         }
@@ -87,7 +87,7 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
       throw toUpstreamModelWriteError(error, changes.upstreamModelId);
     }
     if (!updated) {
-      throw new NotFoundException("Upstream Model not found");
+      throw new NotFoundException('Upstream Model not found');
     }
     await this.snapshot.changed();
     return updated;

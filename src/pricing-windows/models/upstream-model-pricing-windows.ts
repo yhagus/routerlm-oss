@@ -1,10 +1,10 @@
-import { eq, type SQL } from "drizzle-orm";
-import type { PricingWindowRange } from "@/db/schemas";
-import { pricingWindows, upstreamModelPricingWindows } from "@/db/schemas";
-import type { Database } from "@/db/schemas/relations";
-import type { UpstreamModelPrices } from "@/usage/models/usage-job";
-import { type WindowPricesStatus, windowPricesStatusAt } from "./pricing-window-activity";
-import { type ValidityPeriod, validityInstantsOf } from "./validity-period";
+import { eq, type SQL } from 'drizzle-orm';
+import type { PricingWindowRange } from '@/db/schemas';
+import { pricingWindows, upstreamModelPricingWindows } from '@/db/schemas';
+import type { Database } from '@/db/schemas/relations';
+import type { UpstreamModelPrices } from '@/usage/models/usage-job';
+import { type WindowPricesStatus, windowPricesStatusAt } from './pricing-window-activity';
+import { type ValidityPeriod, validityInstantsOf } from './validity-period';
 
 export interface AttachedPricingWindow extends UpstreamModelPrices, ValidityPeriod {
   pricingWindowId: string;
@@ -15,11 +15,11 @@ export interface AttachedPricingWindow extends UpstreamModelPrices, ValidityPeri
   status: WindowPricesStatus;
 }
 
-export type AttachedPricingWindowRow = Omit<AttachedPricingWindow, "status"> & {
+export type AttachedPricingWindowRow = Omit<AttachedPricingWindow, 'status'> & {
   upstreamModelId: string;
 };
 
-type Reader = Pick<Database, "select">;
+type Reader = Pick<Database, 'select'>;
 
 export async function selectAttachedPricingWindows(
   db: Reader,

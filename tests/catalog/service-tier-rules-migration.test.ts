@@ -1,15 +1,15 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
 
-const RULES_MIGRATION_SUFFIX = "_service_tier_rules";
+const RULES_MIGRATION_SUFFIX = '_service_tier_rules';
 
-describe("Service Tier rules migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('Service Tier rules migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
   let databaseUrl: string;
   let pool: Pool;
@@ -19,7 +19,7 @@ describe("Service Tier rules migration (e2e)", () => {
   });
 
   beforeEach(async () => {
-    databaseUrl = await createEmptyDatabase(serverUrl, "service_tier_rules");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'service_tier_rules');
     pool = new Pool({ connectionString: databaseUrl });
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: migrationsBefore });
   });
@@ -54,34 +54,34 @@ describe("Service Tier rules migration (e2e)", () => {
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: MIGRATIONS_FOLDER });
   }
 
-  it("clears tiers on a Protocol that never sends one and prices of unlisted tiers, and keeps the rest", async () => {
-    const tiers = { fast: "priority", flex: "flex" };
-    const anthropic = await insertProvider("anthropic-ish", "anthropic-messages", tiers);
-    await insertModel(anthropic, "{fast}", { fast: { inputPrice: 1 } });
-    const openai = await insertProvider("openai-ish", "openai-chat", tiers);
-    await insertModel(openai, "{fast}", { fast: { inputPrice: 1 }, flex: { inputPrice: 2 } });
+  it('clears tiers on a Protocol that never sends one and prices of unlisted tiers, and keeps the rest', async () => {
+    const tiers = { fast: 'priority', flex: 'flex' };
+    const anthropic = await insertProvider('anthropic-ish', 'anthropic-messages', tiers);
+    await insertModel(anthropic, '{fast}', { fast: { inputPrice: 1 } });
+    const openai = await insertProvider('openai-ish', 'openai-chat', tiers);
+    await insertModel(openai, '{fast}', { fast: { inputPrice: 1 }, flex: { inputPrice: 2 } });
 
     await migrateToLatest();
 
     const providers = await pool.query(
-      "select slug, service_tier_values from providers order by slug",
+      'select slug, service_tier_values from providers order by slug',
     );
     const models = await pool.query(
       `select p.slug, m.service_tiers, m.tier_prices
        from upstream_models m join providers p on p.id = m.provider_id order by p.slug`,
     );
     expect(providers.rows).toEqual([
-      { slug: "anthropic-ish", service_tier_values: {} },
-      { slug: "openai-ish", service_tier_values: tiers },
+      { slug: 'anthropic-ish', service_tier_values: {} },
+      { slug: 'openai-ish', service_tier_values: tiers },
     ]);
     expect(models.rows).toEqual([
-      { slug: "anthropic-ish", service_tiers: [], tier_prices: {} },
-      { slug: "openai-ish", service_tiers: ["fast"], tier_prices: { fast: { inputPrice: 1 } } },
+      { slug: 'anthropic-ish', service_tiers: [], tier_prices: {} },
+      { slug: 'openai-ish', service_tiers: ['fast'], tier_prices: { fast: { inputPrice: 1 } } },
     ]);
   });
 
-  it("makes the database refuse what the rules refuse", async () => {
-    const anthropic = await insertProvider("a", "anthropic-messages", {});
+  it('makes the database refuse what the rules refuse', async () => {
+    const anthropic = await insertProvider('a', 'anthropic-messages', {});
     await migrateToLatest();
 
     await expect(
@@ -89,7 +89,7 @@ describe("Service Tier rules migration (e2e)", () => {
         anthropic,
       ]),
     ).rejects.toThrow(/providers_service_tier_values_protocol_check/);
-    await expect(insertModel(anthropic, "{}", { fast: { inputPrice: 1 } })).rejects.toThrow(
+    await expect(insertModel(anthropic, '{}', { fast: { inputPrice: 1 } })).rejects.toThrow(
       /upstream_models_tier_prices_listed_check/,
     );
   });

@@ -1,4 +1,4 @@
-import type { WritableComputedRef } from "vue";
+import type { WritableComputedRef } from 'vue';
 
 export interface ActiveFilter {
   key: string;
@@ -32,25 +32,25 @@ export function searchFilterTokens(search: WritableComputedRef<string>): ActiveF
   if (!text) return [];
   return [
     {
-      key: "search",
-      group: "Search",
+      key: 'search',
+      group: 'Search',
       label: text,
       remove: () => {
-        search.value = "";
+        search.value = '';
       },
     },
   ];
 }
 
 export function textFilterTokens(group: string, text: WritableComputedRef<string>): ActiveFilter[] {
-  if (text.value === "") return [];
+  if (text.value === '') return [];
   return [
     {
       key: group,
       group,
       label: text.value,
       remove: () => {
-        text.value = "";
+        text.value = '';
       },
     },
   ];

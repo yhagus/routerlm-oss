@@ -1,21 +1,21 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
 
-const MEDIA_ENDPOINTS_MIGRATION_SUFFIX = "_give_alibaba_its_media_endpoints";
-const NATIVE_API = "https://dashscope-intl.aliyuncs.com/api/v1";
+const MEDIA_ENDPOINTS_MIGRATION_SUFFIX = '_give_alibaba_its_media_endpoints';
+const NATIVE_API = 'https://dashscope-intl.aliyuncs.com/api/v1';
 const CHAT_ENDPOINT = {
-  kind: "chat",
-  protocol: "openai-chat",
-  baseUrl: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+  kind: 'chat',
+  protocol: 'openai-chat',
+  baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
 };
 
-describe("Alibaba media endpoints migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('Alibaba media endpoints migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
   let databaseUrl: string;
   let pool: Pool;
@@ -25,7 +25,7 @@ describe("Alibaba media endpoints migration (e2e)", () => {
   });
 
   beforeEach(async () => {
-    databaseUrl = await createEmptyDatabase(serverUrl, "alibaba_media_endpoints");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'alibaba_media_endpoints');
     pool = new Pool({ connectionString: databaseUrl });
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: migrationsBefore });
   });
@@ -58,25 +58,25 @@ describe("Alibaba media endpoints migration (e2e)", () => {
     return rows[0]?.endpoints;
   }
 
-  it("adds the image, speech, transcription and video endpoints to a seeded Provider", async () => {
+  it('adds the image, speech, transcription and video endpoints to a seeded Provider', async () => {
     await insertSeededAlibaba([CHAT_ENDPOINT]);
 
     await migrateToLatest();
 
     expect(await readEndpoints()).toEqual([
       CHAT_ENDPOINT,
-      { kind: "image", protocol: "dashscope-image", baseUrl: NATIVE_API },
-      { kind: "speech", protocol: "dashscope-speech", baseUrl: NATIVE_API },
-      { kind: "transcription", protocol: "dashscope-transcription", baseUrl: NATIVE_API },
-      { kind: "video", protocol: "dashscope-video", baseUrl: NATIVE_API },
+      { kind: 'image', protocol: 'dashscope-image', baseUrl: NATIVE_API },
+      { kind: 'speech', protocol: 'dashscope-speech', baseUrl: NATIVE_API },
+      { kind: 'transcription', protocol: 'dashscope-transcription', baseUrl: NATIVE_API },
+      { kind: 'video', protocol: 'dashscope-video', baseUrl: NATIVE_API },
     ]);
   });
 
-  it("keeps an endpoint the Provider already has for a media Kind", async () => {
+  it('keeps an endpoint the Provider already has for a media Kind', async () => {
     const workspaceImage = {
-      kind: "image",
-      protocol: "dashscope-image",
-      baseUrl: "https://workspace.example.com/api/v1",
+      kind: 'image',
+      protocol: 'dashscope-image',
+      baseUrl: 'https://workspace.example.com/api/v1',
     };
     await insertSeededAlibaba([CHAT_ENDPOINT, workspaceImage]);
 
@@ -85,9 +85,9 @@ describe("Alibaba media endpoints migration (e2e)", () => {
     expect(await readEndpoints()).toEqual([
       CHAT_ENDPOINT,
       workspaceImage,
-      { kind: "speech", protocol: "dashscope-speech", baseUrl: NATIVE_API },
-      { kind: "transcription", protocol: "dashscope-transcription", baseUrl: NATIVE_API },
-      { kind: "video", protocol: "dashscope-video", baseUrl: NATIVE_API },
+      { kind: 'speech', protocol: 'dashscope-speech', baseUrl: NATIVE_API },
+      { kind: 'transcription', protocol: 'dashscope-transcription', baseUrl: NATIVE_API },
+      { kind: 'video', protocol: 'dashscope-video', baseUrl: NATIVE_API },
     ]);
   });
 });

@@ -1,6 +1,6 @@
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
 
-describe("The Command Code and OpenCode Go Catalog files", () => {
+describe('The Command Code and OpenCode Go Catalog files', () => {
   async function shipped(slug: string) {
     const catalog = await loadCatalog(CATALOG_DIRECTORY);
     const provider = catalog.find((entry) => entry.slug === slug);
@@ -9,13 +9,13 @@ describe("The Command Code and OpenCode Go Catalog files", () => {
   }
 
   it("makes OpenCode Go forward the client's user agent and session", async () => {
-    const { quirks } = await shipped("opencode-go");
+    const { quirks } = await shipped('opencode-go');
 
-    expect(quirks.forwardedClientHeaders).toEqual(["user-agent", "x-opencode-session"]);
+    expect(quirks.forwardedClientHeaders).toEqual(['user-agent', 'x-opencode-session']);
   });
 
-  it.each(["commandcode", "opencode-go"])(
-    "leaves %s with no exhausted error codes and no quota reader until a real Error Capture shows them",
+  it.each(['commandcode', 'opencode-go'])(
+    'leaves %s with no exhausted error codes and no quota reader until a real Error Capture shows them',
     async (slug) => {
       const provider = await shipped(slug);
 

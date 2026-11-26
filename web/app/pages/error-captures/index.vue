@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { SearchX, ShieldCheck } from "@lucide/vue";
-import { computed, nextTick, ref, watch } from "vue";
-import type { ApiKeySummary, ModelChoice } from "~/lib/api-keys";
-import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
-import { RECORDED_ATTEMPT_FAILURES } from "~/lib/attemptFailures";
-import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
-import { dateTimeFormat } from "~/lib/dateFormats";
+import { SearchX, ShieldCheck } from '@lucide/vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import type { ApiKeySummary, ModelChoice } from '~/lib/api-keys';
+import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
+import { RECORDED_ATTEMPT_FAILURES } from '~/lib/attemptFailures';
+import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from '~/lib/dataTable';
+import { dateTimeFormat } from '~/lib/dateFormats';
 import {
   CAPTURE_OUTCOME_LABELS,
   CAPTURE_OUTCOMES,
@@ -16,36 +16,36 @@ import {
   failureReasonLabel,
   type ErrorCapturePage,
   type ErrorCaptureSummary,
-} from "~/lib/errorCaptures";
-import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from "~/lib/errorOrigins";
-import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from "~/lib/queryFilters";
-import type { ProviderAccount } from "~/lib/upstream";
-import { isTimeRange, TIME_RANGES, type TimeRange, timeRangeStart } from "~/lib/usage";
+} from '~/lib/errorCaptures';
+import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from '~/lib/errorOrigins';
+import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from '~/lib/queryFilters';
+import type { ProviderAccount } from '~/lib/upstream';
+import { isTimeRange, TIME_RANGES, type TimeRange, timeRangeStart } from '~/lib/usage';
 
-useHead({ title: "Error Captures" });
+useHead({ title: 'Error Captures' });
 
 const route = useRoute();
 const usageLogId = computed(() =>
-  typeof route.query.usageLogId === "string" ? route.query.usageLogId : undefined,
+  typeof route.query.usageLogId === 'string' ? route.query.usageLogId : undefined,
 );
 
-const timeRange = useQueryParam<TimeRange>("range", { default: "all", isValid: isTimeRange });
-const failedAtFilter = useQueryList("failedAt", {
+const timeRange = useQueryParam<TimeRange>('range', { default: 'all', isValid: isTimeRange });
+const failedAtFilter = useQueryList('failedAt', {
   isValid: oneOf(FAILED_HOPS),
   order: FAILED_HOPS,
 });
-const providerAccountFilter = useQueryList("account", { isValid: isUuid });
-const failureReasonFilter = useQueryList("failureReason", {
+const providerAccountFilter = useQueryList('account', { isValid: isUuid });
+const failureReasonFilter = useQueryList('failureReason', {
   isValid: oneOf(RECORDED_ATTEMPT_FAILURES),
   order: RECORDED_ATTEMPT_FAILURES,
 });
-const outcomeFilter = useQueryList("outcome", {
+const outcomeFilter = useQueryList('outcome', {
   isValid: oneOf(CAPTURE_OUTCOMES),
   order: CAPTURE_OUTCOMES,
 });
-const modelFilter = useQueryList("model", { isValid: isUuid });
-const apiKeyFilter = useQueryList("key", { isValid: isApiKeyChoice, order: [PLAYGROUND] });
-const errorOriginFilter = useQueryList("errorOrigin", {
+const modelFilter = useQueryList('model', { isValid: isUuid });
+const apiKeyFilter = useQueryList('key', { isValid: isApiKeyChoice, order: [PLAYGROUND] });
+const errorOriginFilter = useQueryList('errorOrigin', {
   isValid: oneOf(ERROR_ORIGINS),
   order: ERROR_ORIGINS,
 });
@@ -87,9 +87,9 @@ watch(usageLogId, () => {
   page.value = 1;
 });
 
-const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>("/provider-accounts");
-const { data: modelChoices } = useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
-const { data: apiKeys } = useDashboardApi<ApiKeySummary[]>("/api-keys");
+const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>('/provider-accounts');
+const { data: modelChoices } = useDashboardApi<ModelChoice[]>('/api-keys/model-choices');
+const { data: apiKeys } = useDashboardApi<ApiKeySummary[]>('/api-keys');
 
 const timeRangeOptions = Object.entries(TIME_RANGES).map(([value, { label }]) => ({
   value,
@@ -117,7 +117,7 @@ const modelOptions = computed(() => {
 });
 const apiKeyOptions = computed(() => {
   const known = [
-    { value: PLAYGROUND, label: "Playground" },
+    { value: PLAYGROUND, label: 'Playground' },
     ...(apiKeys.value ?? []).map((apiKey) => ({ value: apiKey.id, label: apiKey.name })),
   ];
   return [...known, ...missingOptions(apiKeyFilter.value, known)];
@@ -128,18 +128,18 @@ const errorOriginOptions = ERROR_ORIGINS.map((value) => ({
 }));
 
 const activeFilters = computed<ActiveFilter[]>(() => [
-  ...listFilterTokens("Failed at", failedAtFilter, failedAtOptions),
-  ...listFilterTokens("Provider Account", providerAccountFilter, providerAccountOptions.value),
-  ...listFilterTokens("Failure reason", failureReasonFilter, failureReasonOptions),
-  ...listFilterTokens("Client got", outcomeFilter, outcomeOptions),
-  ...listFilterTokens("Model", modelFilter, modelOptions.value),
-  ...listFilterTokens("API Key", apiKeyFilter, apiKeyOptions.value),
-  ...listFilterTokens("Error Origin", errorOriginFilter, errorOriginOptions),
+  ...listFilterTokens('Failed at', failedAtFilter, failedAtOptions),
+  ...listFilterTokens('Provider Account', providerAccountFilter, providerAccountOptions.value),
+  ...listFilterTokens('Failure reason', failureReasonFilter, failureReasonOptions),
+  ...listFilterTokens('Client got', outcomeFilter, outcomeOptions),
+  ...listFilterTokens('Model', modelFilter, modelOptions.value),
+  ...listFilterTokens('API Key', apiKeyFilter, apiKeyOptions.value),
+  ...listFilterTokens('Error Origin', errorOriginFilter, errorOriginOptions),
   ...ownerFilterTokens.value,
 ]);
 
 const isNarrowed = computed(
-  () => activeFilters.value.length > 0 || search.value.trim() !== "" || timeRange.value !== "all",
+  () => activeFilters.value.length > 0 || search.value.trim() !== '' || timeRange.value !== 'all',
 );
 
 const {
@@ -147,7 +147,7 @@ const {
   status: captureStatus,
   error: loadError,
   refresh: refreshCaptures,
-} = useDashboardApi<ErrorCapturePage>("/error-captures", {
+} = useDashboardApi<ErrorCapturePage>('/error-captures', {
   query: computed(() => ({
     usageLogId: usageLogId.value,
     from: from.value,
@@ -170,19 +170,19 @@ const {
 async function refresh(): Promise<void> {
   refreshTimeRange();
   await nextTick();
-  await refreshCaptures({ dedupe: "defer" });
+  await refreshCaptures({ dedupe: 'defer' });
 }
 
-const isLoading = computed(() => captureStatus.value === "pending" && !capturePage.value);
+const isLoading = computed(() => captureStatus.value === 'pending' && !capturePage.value);
 
 const columns: DataTableColumn<ErrorCaptureSummary>[] = [
-  { id: "time", header: "Time", enableHiding: false },
-  { id: "failedAt", header: "Failed at" },
-  { id: "model", header: "Model" },
-  { id: "apiKey", header: "API Key" },
-  { id: "integration", header: "Integration" },
-  { id: "customer", header: "Customer" },
-  { id: "clientGot", header: "Client got" },
+  { id: 'time', header: 'Time', enableHiding: false },
+  { id: 'failedAt', header: 'Failed at' },
+  { id: 'model', header: 'Model' },
+  { id: 'apiKey', header: 'API Key' },
+  { id: 'integration', header: 'Integration' },
+  { id: 'customer', header: 'Customer' },
+  { id: 'clientGot', header: 'Client got' },
   actionsColumn(),
 ];
 </script>
@@ -304,12 +304,12 @@ const columns: DataTableColumn<ErrorCaptureSummary>[] = [
       <template #cell-failedAt="{ row: capture }">
         <strong>{{ failedHopLabel(capture.failedHop) }}</strong>
       </template>
-      <template #cell-model="{ row: capture }">{{ capture.modelName ?? "—" }}</template>
+      <template #cell-model="{ row: capture }">{{ capture.modelName ?? '—' }}</template>
       <template #cell-apiKey="{ row: capture }">
-        {{ capture.isPlayground ? "Playground" : (capture.apiKeyName ?? "—") }}
+        {{ capture.isPlayground ? 'Playground' : (capture.apiKeyName ?? '—') }}
       </template>
-      <template #cell-integration="{ row: capture }">{{ capture.integrationName ?? "—" }}</template>
-      <template #cell-customer="{ row: capture }">{{ capture.customerId ?? "—" }}</template>
+      <template #cell-integration="{ row: capture }">{{ capture.integrationName ?? '—' }}</template>
+      <template #cell-customer="{ row: capture }">{{ capture.customerId ?? '—' }}</template>
       <template #cell-clientGot="{ row: capture }">
         <span :class="['status-badge', clientOutcome(capture).badgeClass]">{{
           clientOutcome(capture).label

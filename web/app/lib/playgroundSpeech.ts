@@ -3,24 +3,24 @@ import {
   type PlaygroundError,
   type PlaygroundSummary,
   readProperty,
-} from "~/lib/playground";
-import type { RouteSummary } from "~/lib/routing";
+} from '~/lib/playground';
+import type { RouteSummary } from '~/lib/routing';
 
 /** The formats the gateway's speech endpoint takes, as the backend's `AUDIO_FORMATS` says. */
-export const AUDIO_FORMATS = ["mp3", "wav", "pcm", "opus"] as const;
+export const AUDIO_FORMATS = ['mp3', 'wav', 'pcm', 'opus'] as const;
 export type AudioFormat = (typeof AUDIO_FORMATS)[number];
 
-export const DEFAULT_AUDIO_FORMAT: AudioFormat = "mp3";
+export const DEFAULT_AUDIO_FORMAT: AudioFormat = 'mp3';
 
 export const AUDIO_FORMAT_LABELS: Record<AudioFormat, string> = {
-  mp3: "MP3",
-  wav: "WAV",
-  pcm: "PCM (download only)",
-  opus: "Opus",
+  mp3: 'MP3',
+  wav: 'WAV',
+  pcm: 'PCM (download only)',
+  opus: 'Opus',
 };
 
 export function isPlayableFormat(format: AudioFormat): boolean {
-  return format !== "pcm";
+  return format !== 'pcm';
 }
 
 export interface PlaygroundSpeechSettings {
@@ -30,10 +30,10 @@ export interface PlaygroundSpeechSettings {
 }
 
 export type SpeechAnswerState =
-  | { kind: "pending" }
-  | { kind: "done"; audioUrl: string; summary: PlaygroundSummary }
-  | { kind: "failed"; error: PlaygroundError }
-  | { kind: "stopped" };
+  | { kind: 'pending' }
+  | { kind: 'done'; audioUrl: string; summary: PlaygroundSummary }
+  | { kind: 'failed'; error: PlaygroundError }
+  | { kind: 'stopped' };
 
 export interface SpeechExchange {
   id: number;
@@ -60,12 +60,12 @@ export function speechRequestOf(
 export function speechAnswerOf(
   payload: unknown,
 ): { audioUrl: string; summary: PlaygroundSummary } | null {
-  const summary = readProperty(payload, "summary");
-  const audio = readProperty(payload, "audio");
-  const contentType = readProperty(audio, "contentType");
-  const base64 = readProperty(audio, "base64");
-  if (!isPlaygroundSummary(summary) || typeof contentType !== "string") return null;
-  if (typeof base64 !== "string") return null;
+  const summary = readProperty(payload, 'summary');
+  const audio = readProperty(payload, 'audio');
+  const contentType = readProperty(audio, 'contentType');
+  const base64 = readProperty(audio, 'base64');
+  if (!isPlaygroundSummary(summary) || typeof contentType !== 'string') return null;
+  if (typeof base64 !== 'string') return null;
   return { audioUrl: `data:${contentType};base64,${base64}`, summary };
 }
 

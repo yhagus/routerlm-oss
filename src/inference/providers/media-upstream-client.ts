@@ -1,18 +1,18 @@
-import { Injectable } from "@nestjs/common";
-import { HttpClient } from "@nestjs/http-client";
-import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version";
-import { AttemptFailedError } from "@/inference/models/attempt-failure";
-import type { AttemptFailureReason } from "@/db/schemas";
+import { Injectable } from '@nestjs/common';
+import { HttpClient } from '@nestjs/http-client';
+import { GATEWAY_USER_AGENT } from '@/libs/models/gateway-version';
+import { AttemptFailedError } from '@/inference/models/attempt-failure';
+import type { AttemptFailureReason } from '@/db/schemas';
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind";
-import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
-import { AttemptDeadlines, type AttemptTimeouts } from "./upstream-client";
-import { MediaFetcher } from "./media-fetcher";
+} from '@/inference/models/media-kind';
+import { upstreamRequestIdOf } from '@/inference/models/upstream-request-id';
+import { UpstreamProtocolError } from '@/inference/protocols/upstream-protocol-converter';
+import { AttemptDeadlines, type AttemptTimeouts } from './upstream-client';
+import { MediaFetcher } from './media-fetcher';
 
 export interface MediaConnection {
   authHeaders: Record<string, string>;
@@ -27,7 +27,7 @@ export interface AnsweredMediaAttempt<Result> extends MediaOutcome<Result> {
 
 export interface MediaUpstreamCall<Request, Result> extends Omit<
   MediaConnection,
-  "failureReasonOf"
+  'failureReasonOf'
 > {
   protocol: MediaUpstreamProtocol<Request, Result>;
   request: Request;
@@ -35,7 +35,7 @@ export interface MediaUpstreamCall<Request, Result> extends Omit<
 }
 
 interface MediaHttpRequest {
-  method: "GET" | "POST";
+  method: 'GET' | 'POST';
   body?: string;
   headers: Record<string, string>;
 }
@@ -72,7 +72,7 @@ export class MediaUpstreamClient {
     use: (exchange: MediaExchange) => Promise<Answer>,
   ): Promise<{ answer: Answer; upstreamRequestId: string | null }> {
     const deadlines = new AttemptDeadlines(connection.timeouts, connection.clientSignal);
-    deadlines.start("totalMs");
+    deadlines.start('totalMs');
     let upstreamRequestId: string | null = null;
     const sendCapturingRequestId = async (
       url: string,
@@ -86,11 +86,11 @@ export class MediaUpstreamClient {
       const answer = await use({
         postJson: (url, body, headers = {}) =>
           sendCapturingRequestId(url, {
-            method: "POST",
+            method: 'POST',
             body: JSON.stringify(body),
-            headers: { "content-type": "application/json", ...headers },
+            headers: { 'content-type': 'application/json', ...headers },
           }),
-        getJson: (url) => sendCapturingRequestId(url, { method: "GET", headers: {} }),
+        getJson: (url) => sendCapturingRequestId(url, { method: 'GET', headers: {} }),
         fetchMedia: (url) => this.fetcher.fetch(url, deadlines.signal),
       });
       return { answer, upstreamRequestId };
@@ -111,15 +111,15 @@ export class MediaUpstreamClient {
       method: request.method,
       body: request.body,
       headers: {
-        "user-agent": GATEWAY_USER_AGENT,
+        'user-agent': GATEWAY_USER_AGENT,
         ...request.headers,
         ...connection.authHeaders,
       },
-      responseType: "response",
+      responseType: 'response',
       signal,
       retry: false,
       throwOnHttpError: false,
-      redirect: "error",
+      redirect: 'error',
     });
     const text = await response.data.text();
     const headers = Object.fromEntries(response.headers.entries());
@@ -134,7 +134,7 @@ export class MediaUpstreamClient {
     try {
       return { body: JSON.parse(text), upstreamRequestId: upstreamRequestIdOf(headers) };
     } catch (error) {
-      throw new UpstreamProtocolError("The upstream answered with a body that is not JSON", {
+      throw new UpstreamProtocolError('The upstream answered with a body that is not JSON', {
         cause: error,
       });
     }

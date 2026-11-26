@@ -1,13 +1,13 @@
-import { fileURLToPath } from "node:url";
-import { type GrpcOptions, Transport } from "@nestjs/microservices";
+import { fileURLToPath } from 'node:url';
+import { type GrpcOptions, Transport } from '@nestjs/microservices';
 
 export const CONTROL_PLANE_PROTO_PATH = fileURLToPath(
-  new URL("../data/control_plane.proto", import.meta.url),
+  new URL('../data/control_plane.proto', import.meta.url),
 );
 
-export const CONTROL_PLANE_SERVICE = "ControlPlane";
+export const CONTROL_PLANE_SERVICE = 'ControlPlane';
 
-const CONTROL_PLANE_PACKAGE = "routerlm.integration.v1";
+const CONTROL_PLANE_PACKAGE = 'routerlm.integration.v1';
 
 export function controlPlaneGrpcOptions(port: number): GrpcOptions {
   return {

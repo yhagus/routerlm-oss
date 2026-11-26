@@ -1,12 +1,12 @@
-import { NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { upstreamModels } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { deleteUnlessRouted } from "@/upstream/models/routed-models";
-import { DeleteUpstreamModelCommand } from "@/upstream/commands/impl/delete-upstream-model.command";
+import { NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { upstreamModels } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { deleteUnlessRouted } from '@/upstream/models/routed-models';
+import { DeleteUpstreamModelCommand } from '@/upstream/commands/impl/delete-upstream-model.command';
 
 @CommandHandler(DeleteUpstreamModelCommand)
 export class DeleteUpstreamModelHandler implements ICommandHandler<DeleteUpstreamModelCommand> {
@@ -21,7 +21,7 @@ export class DeleteUpstreamModelHandler implements ICommandHandler<DeleteUpstrea
       .from(upstreamModels)
       .where(eq(upstreamModels.id, upstreamModelId));
     if (!upstreamModel) {
-      throw new NotFoundException("Upstream Model not found");
+      throw new NotFoundException('Upstream Model not found');
     }
     await deleteUnlessRouted(
       this.db,

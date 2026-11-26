@@ -1,4 +1,4 @@
-import type { ReasoningEffort } from "~/lib/parameterPolicy";
+import type { ReasoningEffort } from '~/lib/parameterPolicy';
 
 export interface PlaygroundUnits {
   imagesOut?: number;
@@ -30,19 +30,19 @@ export interface PlaygroundError {
 }
 
 export type AnswerState =
-  | { kind: "streaming" }
-  | { kind: "done"; summary: PlaygroundSummary | null }
-  | { kind: "failed"; error: PlaygroundError; summary: PlaygroundSummary | null }
-  | { kind: "stopped" };
+  | { kind: 'streaming' }
+  | { kind: 'done'; summary: PlaygroundSummary | null }
+  | { kind: 'failed'; error: PlaygroundError; summary: PlaygroundSummary | null }
+  | { kind: 'stopped' };
 
 export interface UserMessage {
-  role: "user";
+  role: 'user';
   text: string;
   imageUrls: string[];
 }
 
 export interface AssistantMessage {
-  role: "assistant";
+  role: 'assistant';
   text: string;
   reasoning: string;
   state: AnswerState;
@@ -64,14 +64,14 @@ export function chatCompletionRequest(
   conversation: PlaygroundMessage[],
 ): Record<string, unknown> {
   const messages: unknown[] = [];
-  if (settings.systemPrompt.trim() !== "") {
-    messages.push({ role: "system", content: settings.systemPrompt });
+  if (settings.systemPrompt.trim() !== '') {
+    messages.push({ role: 'system', content: settings.systemPrompt });
   }
   for (const message of conversation) {
-    if (message.role === "user") {
-      messages.push({ role: "user", content: userContentOf(message) });
-    } else if (message.state.kind === "done" && message.text !== "") {
-      messages.push({ role: "assistant", content: message.text });
+    if (message.role === 'user') {
+      messages.push({ role: 'user', content: userContentOf(message) });
+    } else if (message.state.kind === 'done' && message.text !== '') {
+      messages.push({ role: 'assistant', content: message.text });
     }
   }
   return {
@@ -90,31 +90,31 @@ function userContentOf(message: UserMessage): unknown {
     return message.text;
   }
   return [
-    ...(message.text === "" ? [] : [{ type: "text", text: message.text }]),
-    ...message.imageUrls.map((url) => ({ type: "image_url", image_url: { url } })),
+    ...(message.text === '' ? [] : [{ type: 'text', text: message.text }]),
+    ...message.imageUrls.map((url) => ({ type: 'image_url', image_url: { url } })),
   ];
 }
 
 export type StreamEvent =
-  | { kind: "text"; text: string }
-  | { kind: "reasoning"; text: string }
-  | { kind: "error"; error: PlaygroundError }
-  | { kind: "summary"; summary: PlaygroundSummary };
+  | { kind: 'text'; text: string }
+  | { kind: 'reasoning'; text: string }
+  | { kind: 'error'; error: PlaygroundError }
+  | { kind: 'summary'; summary: PlaygroundSummary };
 
-const EVENT_SEPARATOR = "\n\n";
-const SUMMARY_EVENT = "summary";
-const DONE_DATA = "[DONE]";
+const EVENT_SEPARATOR = '\n\n';
+const SUMMARY_EVENT = 'summary';
+const DONE_DATA = '[DONE]';
 
 export async function* streamEventsOf(
   body: ReadableStream<Uint8Array>,
 ): AsyncIterable<StreamEvent> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
-  let buffered = "";
+  let buffered = '';
   for (;;) {
     const { done, value } = await reader.read();
     if (done) return;
-    buffered += decoder.decode(value, { stream: true }).replaceAll("\r\n", "\n");
+    buffered += decoder.decode(value, { stream: true }).replaceAll('\r\n', '\n');
     let end = buffered.indexOf(EVENT_SEPARATOR);
     while (end !== -1) {
       const event = streamEventOf(buffered.slice(0, end));
@@ -126,44 +126,44 @@ export async function* streamEventsOf(
 }
 
 function streamEventOf(block: string): StreamEvent | null {
-  let name = "";
+  let name = '';
   const dataLines: string[] = [];
-  for (const line of block.split("\n")) {
-    if (line.startsWith("event:")) name = line.slice("event:".length).trim();
-    if (line.startsWith("data:")) dataLines.push(line.slice("data:".length).trim());
+  for (const line of block.split('\n')) {
+    if (line.startsWith('event:')) name = line.slice('event:'.length).trim();
+    if (line.startsWith('data:')) dataLines.push(line.slice('data:'.length).trim());
   }
-  const data = dataLines.join("\n");
-  if (data === "" || data === DONE_DATA) return null;
+  const data = dataLines.join('\n');
+  if (data === '' || data === DONE_DATA) return null;
   const payload: unknown = JSON.parse(data);
   if (name === SUMMARY_EVENT) {
-    return isPlaygroundSummary(payload) ? { kind: "summary", summary: payload } : null;
+    return isPlaygroundSummary(payload) ? { kind: 'summary', summary: payload } : null;
   }
   const error = playgroundErrorOf(payload);
-  if (error) return { kind: "error", error };
-  const delta = readProperty(readProperty(readProperty(payload, "choices"), 0), "delta");
-  const reasoning = readProperty(delta, "reasoning_content");
-  if (typeof reasoning === "string" && reasoning !== "")
-    return { kind: "reasoning", text: reasoning };
-  const content = readProperty(delta, "content");
-  if (typeof content === "string" && content !== "") return { kind: "text", text: content };
+  if (error) return { kind: 'error', error };
+  const delta = readProperty(readProperty(readProperty(payload, 'choices'), 0), 'delta');
+  const reasoning = readProperty(delta, 'reasoning_content');
+  if (typeof reasoning === 'string' && reasoning !== '')
+    return { kind: 'reasoning', text: reasoning };
+  const content = readProperty(delta, 'content');
+  if (typeof content === 'string' && content !== '') return { kind: 'text', text: content };
   return null;
 }
 
 export function isPlaygroundSummary(payload: unknown): payload is PlaygroundSummary {
-  const usage = readProperty(payload, "usage");
-  const cost = readProperty(payload, "cost");
-  return typeof usage === "object" && usage !== null && (cost === null || typeof cost === "number");
+  const usage = readProperty(payload, 'usage');
+  const cost = readProperty(payload, 'cost');
+  return typeof usage === 'object' && usage !== null && (cost === null || typeof cost === 'number');
 }
 
 export function playgroundErrorOf(payload: unknown): PlaygroundError | null {
-  const error = readProperty(payload, "error");
-  const code = readProperty(error, "code");
-  const message = readProperty(error, "message");
-  return typeof code === "string" && typeof message === "string" ? { code, message } : null;
+  const error = readProperty(payload, 'error');
+  const code = readProperty(error, 'code');
+  const message = readProperty(error, 'message');
+  return typeof code === 'string' && typeof message === 'string' ? { code, message } : null;
 }
 
 export async function playgroundErrorOfFailure(failure: unknown): Promise<PlaygroundError | null> {
-  const data = readProperty(failure, "data");
+  const data = readProperty(failure, 'data');
   if (!(data instanceof ReadableStream)) return playgroundErrorOf(data);
   try {
     return playgroundErrorOf(JSON.parse(await new Response(data).text()));
@@ -177,17 +177,17 @@ export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export function dataUrlOf(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      if (typeof reader.result === "string") resolve(reader.result);
-      else reject(new Error("The image could not be read"));
+    reader.addEventListener('load', () => {
+      if (typeof reader.result === 'string') resolve(reader.result);
+      else reject(new Error('The image could not be read'));
     });
-    reader.addEventListener("error", () => reject(reader.error));
+    reader.addEventListener('error', () => reject(reader.error));
     reader.readAsDataURL(file);
   });
 }
 
 export function readProperty(value: unknown, key: string | number): unknown {
-  if (typeof value !== "object" || value === null) {
+  if (typeof value !== 'object' || value === null) {
     return undefined;
   }
   return Reflect.get(value, key);

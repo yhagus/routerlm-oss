@@ -1,4 +1,4 @@
-import type { ErrorOrigin, GatewayErrorCode } from "@/db/schemas";
+import type { ErrorOrigin, GatewayErrorCode } from '@/db/schemas';
 
 export const GATEWAY_ERROR_STATUS = {
   invalid_request: 400,
@@ -25,7 +25,7 @@ export class GatewayError extends Error {
     readonly origin: ErrorOrigin,
   ) {
     super(message);
-    this.name = "GatewayError";
+    this.name = 'GatewayError';
     this.status = GATEWAY_ERROR_STATUS[code];
   }
 }

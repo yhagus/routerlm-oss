@@ -1,11 +1,11 @@
-import type * as Crypto from "node:crypto";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+import type * as Crypto from 'node:crypto';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-vi.mock("node:crypto", async (importOriginal) => {
+vi.mock('node:crypto', async (importOriginal) => {
   const crypto = await importOriginal<typeof Crypto>();
   return {
     ...crypto,
@@ -13,11 +13,11 @@ vi.mock("node:crypto", async (importOriginal) => {
   };
 });
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const PROVIDER_ACCOUNT_KEY = "sk-acme-0123456789abcdefWXYZ";
-const ALWAYS_GENERATED_NAME = "Andromeda Antlia";
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const PROVIDER_ACCOUNT_KEY = 'sk-acme-0123456789abcdefWXYZ';
+const ALWAYS_GENERATED_NAME = 'Andromeda Antlia';
 
-describe("Provider Account names generated while the name is taken (e2e)", () => {
+describe('Provider Account names generated while the name is taken (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let cookie: string;
@@ -37,15 +37,15 @@ describe("Provider Account names generated while the name is taken (e2e)", () =>
 
   async function createProvider(slug: string): Promise<string> {
     const provider = await request(app.getHttpServer())
-      .post("/api/providers")
-      .set("Cookie", cookie)
+      .post('/api/providers')
+      .set('Cookie', cookie)
       .send({
         slug,
         name: `${slug} AI`,
         endpoints: [
-          { kind: "chat", protocol: "openai-chat", baseUrl: `https://api.${slug}.example/v1` },
+          { kind: 'chat', protocol: 'openai-chat', baseUrl: `https://api.${slug}.example/v1` },
         ],
-        authStyle: "bearer",
+        authStyle: 'bearer',
       })
       .expect(201);
     return provider.body.id;
@@ -53,15 +53,15 @@ describe("Provider Account names generated while the name is taken (e2e)", () =>
 
   async function createUnnamedAccount(providerId: string): Promise<string> {
     const created = await request(app.getHttpServer())
-      .post("/api/provider-accounts")
-      .set("Cookie", cookie)
+      .post('/api/provider-accounts')
+      .set('Cookie', cookie)
       .send({ providerId, key: PROVIDER_ACCOUNT_KEY })
       .expect(201);
     return created.body.name;
   }
 
   it("numbers the name, from 2, when every generated name is taken by the Provider's accounts", async () => {
-    const providerId = await createProvider("acme");
+    const providerId = await createProvider('acme');
 
     const names = [
       await createUnnamedAccount(providerId),

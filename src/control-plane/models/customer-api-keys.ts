@@ -1,11 +1,11 @@
-import { and, desc, eq, type SQL } from "drizzle-orm";
-import { z } from "zod";
-import { assertModelsExist } from "@/libs/models/allowed-models";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys } from "@/db/schemas";
-import type { IntegrationPrincipal } from "@/integrations/models/integration";
-import { apiKeyNotFound, ControlPlaneError } from "./control-plane-error";
-import type { CustomerApiKey } from "./customer-api-key";
+import { and, desc, eq, type SQL } from 'drizzle-orm';
+import { z } from 'zod';
+import { assertModelsExist } from '@/libs/models/allowed-models';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys } from '@/db/schemas';
+import type { IntegrationPrincipal } from '@/integrations/models/integration';
+import { apiKeyNotFound, ControlPlaneError } from './control-plane-error';
+import type { CustomerApiKey } from './customer-api-key';
 
 const customerApiKeyColumns = {
   id: apiKeys.id,
@@ -34,7 +34,7 @@ export async function selectCustomerApiKeys(
     .where(and(eq(apiKeys.integrationId, integrationId), where))
     .orderBy(...NEWEST_KEYS_FIRST);
   const rows = limit === undefined ? await query : await query.limit(limit);
-  return rows.map((row) => ({ ...row, customerId: row.customerId ?? "" }));
+  return rows.map((row) => ({ ...row, customerId: row.customerId ?? '' }));
 }
 
 export async function findCustomerApiKey(
@@ -60,7 +60,7 @@ export async function findUnrevokedCustomerApiKey(
 ): Promise<CustomerApiKey> {
   const found = await findCustomerApiKey(db, integrationId, id);
   if (found.revokedAt !== null) {
-    throw new ControlPlaneError("FAILED_PRECONDITION", revokedMessage);
+    throw new ControlPlaneError('FAILED_PRECONDITION', revokedMessage);
   }
   return found;
 }
@@ -74,8 +74,8 @@ export async function assertWithinCeiling(
   const outside = modelIds.filter((id) => ceiling.length > 0 && !ceiling.includes(id));
   if (outside.length > 0) {
     throw new ControlPlaneError(
-      "INVALID_ARGUMENT",
-      `Not among the Integration's allowed Models: ${outside.join(", ")}`,
+      'INVALID_ARGUMENT',
+      `Not among the Integration's allowed Models: ${outside.join(', ')}`,
     );
   }
   await assertModelsExist(db, modelIds);

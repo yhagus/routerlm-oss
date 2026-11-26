@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Component } from "vue";
+import type { Component } from 'vue';
 
-withDefaults(defineProps<{ icon: Component; tone?: "neutral" | "error" }>(), {
-  tone: "neutral",
+withDefaults(defineProps<{ icon: Component; tone?: 'neutral' | 'error' }>(), {
+  tone: 'neutral',
 });
 </script>
 

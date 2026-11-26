@@ -1,13 +1,13 @@
-export const REDACTED = "[REDACTED]";
+export const REDACTED = '[REDACTED]';
 
 export const MAX_CAPTURED_BODY_BYTES = 256 * 1024;
 
 const CREDENTIAL_HEADERS = new Set([
-  "authorization",
-  "proxy-authorization",
-  "x-api-key",
-  "cookie",
-  "set-cookie",
+  'authorization',
+  'proxy-authorization',
+  'x-api-key',
+  'cookie',
+  'set-cookie',
 ]);
 
 const UTF8_CONTINUATION_MASK = 0b1100_0000;
@@ -23,7 +23,7 @@ export function capturedHeaders(headers: RawHeaders, secrets: string[]): Record<
     }
     captured[name] = CREDENTIAL_HEADERS.has(name.toLowerCase())
       ? REDACTED
-      : withoutSecrets(Array.isArray(value) ? value.join(", ") : value, secrets);
+      : withoutSecrets(Array.isArray(value) ? value.join(', ') : value, secrets);
   }
   return captured;
 }
@@ -43,7 +43,7 @@ export function capturedBody(body: string, secrets: string[]): string {
 
 function withoutSecrets(text: string, secrets: string[]): string {
   return secrets.reduce(
-    (redacted, secret) => (secret === "" ? redacted : redacted.replaceAll(secret, REDACTED)),
+    (redacted, secret) => (secret === '' ? redacted : redacted.replaceAll(secret, REDACTED)),
     text,
   );
 }

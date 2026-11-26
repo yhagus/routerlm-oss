@@ -1,12 +1,12 @@
-import cluster, { type Worker } from "node:cluster";
-import { Logger } from "@nestjs/common";
-import { SECOND_MS } from "./duration";
+import cluster, { type Worker } from 'node:cluster';
+import { Logger } from '@nestjs/common';
+import { SECOND_MS } from './duration';
 
 const MAX_UNEXPECTED_EXITS = 5;
 const UNEXPECTED_EXIT_WINDOW_MS = 60 * SECOND_MS;
-const SHUTDOWN_SIGNALS = ["SIGTERM", "SIGINT"] as const;
+const SHUTDOWN_SIGNALS = ['SIGTERM', 'SIGINT'] as const;
 
-const logger = new Logger("GatewayProcesses");
+const logger = new Logger('GatewayProcesses');
 
 export async function runGatewayProcesses(
   processCount: number,
@@ -15,7 +15,7 @@ export async function runGatewayProcesses(
   if (cluster.isWorker || processCount === 1) {
     return startGateway();
   }
-  if (process.platform !== "linux") {
+  if (process.platform !== 'linux') {
     logger.warn(
       `BACKEND_PROCESSES=${processCount} needs Linux to share a port between processes; running one process`,
     );
@@ -42,7 +42,7 @@ function superviseWorkers(processCount: number): void {
     for (const worker of workers) worker.process.kill(signal);
   };
 
-  cluster.on("exit", (worker, code, signal) => {
+  cluster.on('exit', (worker, code, signal) => {
     workers.delete(worker);
     if (isStopping) {
       if (workers.size === 0) process.exit();
@@ -57,7 +57,7 @@ function superviseWorkers(processCount: number): void {
       logger.error(
         `Gateway process ${worker.process.pid} exited (${exitReason}); more than ${MAX_UNEXPECTED_EXITS} exits within ${UNEXPECTED_EXIT_WINDOW_MS / SECOND_MS} s, stopping`,
       );
-      stopAll("SIGTERM", 1);
+      stopAll('SIGTERM', 1);
       return;
     }
     logger.warn(`Gateway process ${worker.process.pid} exited (${exitReason}); replacing it`);

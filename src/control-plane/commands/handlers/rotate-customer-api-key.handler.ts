@@ -1,17 +1,17 @@
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, isNull } from "drizzle-orm";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeyRotations, apiKeys } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { ControlPlaneError } from "@/control-plane/models/control-plane-error";
-import type { IssuedCustomerApiKey } from "@/control-plane/models/customer-api-key";
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq, isNull } from 'drizzle-orm';
+import { ApiKeyAuth } from '@/api-keys/providers/api-key-auth';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeyRotations, apiKeys } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { ControlPlaneError } from '@/control-plane/models/control-plane-error';
+import type { IssuedCustomerApiKey } from '@/control-plane/models/customer-api-key';
 import {
   findCustomerApiKey,
   findUnrevokedCustomerApiKey,
-} from "@/control-plane/models/customer-api-keys";
-import { RotateCustomerApiKeyCommand } from "@/control-plane/commands/impl/rotate-customer-api-key.command";
+} from '@/control-plane/models/customer-api-keys';
+import { RotateCustomerApiKeyCommand } from '@/control-plane/commands/impl/rotate-customer-api-key.command';
 
 const REVOKED_MESSAGE = "A revoked API Key can't be rotated.";
 
@@ -38,9 +38,9 @@ export class RotateCustomerApiKeyHandler implements ICommandHandler<RotateCustom
             isNull(apiKeys.revokedAt),
           ),
         )
-        .for("update");
+        .for('update');
       if (!current) {
-        throw new ControlPlaneError("FAILED_PRECONDITION", REVOKED_MESSAGE);
+        throw new ControlPlaneError('FAILED_PRECONDITION', REVOKED_MESSAGE);
       }
       await tx.update(apiKeys).set({ keyId, hash }).where(eq(apiKeys.id, id));
       await tx

@@ -1,7 +1,7 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { videoObjectOf } from "@/inference/protocols/openai-videos/openai-videos-client-contract";
-import { VideoTaskReader } from "@/inference/providers/video-task-reader";
-import { RetrieveVideoJobQuery } from "@/inference/queries/impl/retrieve-video-job.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { videoObjectOf } from '@/inference/protocols/openai-videos/openai-videos-client-contract';
+import { VideoTaskReader } from '@/inference/providers/video-task-reader';
+import { RetrieveVideoJobQuery } from '@/inference/queries/impl/retrieve-video-job.query';
 
 @QueryHandler(RetrieveVideoJobQuery)
 export class RetrieveVideoJobHandler implements IQueryHandler<RetrieveVideoJobQuery> {

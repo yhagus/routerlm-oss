@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarRange, Plus, Trash2 } from "@lucide/vue";
+import { CalendarRange, Plus, Trash2 } from '@lucide/vue';
 import {
   ALWAYS_RANGE,
   END_TIME_PATTERN,
@@ -10,7 +10,7 @@ import {
   START_TIME_PATTERN,
   WEEKDAY_NAMES,
   WEEKDAY_SHORT_NAMES,
-} from "~/lib/pricingWindows";
+} from '~/lib/pricingWindows';
 
 const ranges = defineModel<RangeForm[]>({ required: true });
 

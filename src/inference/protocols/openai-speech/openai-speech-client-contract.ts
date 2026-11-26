@@ -1,25 +1,25 @@
-import { z } from "zod";
-import type { ParameterPolicy } from "@/db/schemas";
-import { GatewayError } from "@/inference/models/gateway-error";
-import type { MediaClientContract, MediaReply } from "@/inference/models/media-kind";
+import { z } from 'zod';
+import type { ParameterPolicy } from '@/db/schemas';
+import { GatewayError } from '@/inference/models/gateway-error';
+import type { MediaClientContract, MediaReply } from '@/inference/models/media-kind';
 import {
   AUDIO_FORMATS,
   type AudioFormat,
   type SpeechSynthesisRequest,
   type SynthesizedSpeech,
-} from "@/inference/models/speech-synthesis";
-import { dashScopeSpeechProtocol } from "@/inference/protocols/dashscope-speech/dashscope-speech-protocol";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
+} from '@/inference/models/speech-synthesis';
+import { dashScopeSpeechProtocol } from '@/inference/protocols/dashscope-speech/dashscope-speech-protocol';
+import { writeOpenAiError } from '@/inference/protocols/openai-chat/openai-error';
 
 const MIN_SPEED = 0.25;
 const MAX_SPEED = 4;
-const DEFAULT_FORMAT: AudioFormat = "mp3";
+const DEFAULT_FORMAT: AudioFormat = 'mp3';
 
 const CONTENT_TYPES = {
-  mp3: "audio/mpeg",
-  wav: "audio/wav",
-  pcm: "audio/pcm",
-  opus: "audio/opus",
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  pcm: 'audio/pcm',
+  opus: 'audio/opus',
 } as const satisfies Record<AudioFormat, string>;
 
 const requestSchema = z.object({
@@ -40,9 +40,9 @@ function parseRequest(body: unknown): SpeechSynthesisRequest {
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `Invalid request: ${z.prettifyError(parsed.error)}`,
-      "client",
+      'client',
     );
   }
   const { model, input, voice, response_format, speed } = parsed.data;
@@ -55,11 +55,11 @@ function refuseUnsupportedFeatures(body: unknown): void {
     return;
   }
   const { response_format, stream_format } = features.data;
-  if (typeof response_format === "string" && !isAudioFormat(response_format)) {
+  if (typeof response_format === 'string' && !isAudioFormat(response_format)) {
     throw unsupported(`the response_format "${response_format}"`);
   }
-  if (stream_format !== undefined && stream_format !== "audio") {
-    throw unsupported("`stream_format` other than `audio`");
+  if (stream_format !== undefined && stream_format !== 'audio') {
+    throw unsupported('`stream_format` other than `audio`');
   }
 }
 
@@ -68,7 +68,7 @@ function isAudioFormat(format: string): format is AudioFormat {
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
+  return new GatewayError('invalid_request', `Not supported: ${feature}`, 'client');
 }
 
 function applyParameterPolicy(
@@ -87,10 +87,10 @@ export const openAiSpeechClientContract: MediaClientContract<
   SpeechSynthesisRequest,
   SynthesizedSpeech
 > = {
-  protocol: "openai-speech",
+  protocol: 'openai-speech',
   parseRequest,
   unservableReason: () => null,
-  upstreamProtocols: { "dashscope-speech": dashScopeSpeechProtocol },
+  upstreamProtocols: { 'dashscope-speech': dashScopeSpeechProtocol },
   applyParameterPolicy,
   writeResponse,
   writeError: writeOpenAiError,

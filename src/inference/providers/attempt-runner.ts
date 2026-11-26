@@ -1,37 +1,37 @@
-import { HttpStatus, Injectable, Logger } from "@nestjs/common";
-import { CommandBus } from "@nestjs/cqrs";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command";
-import type { UpstreamProtocol } from "@/db/schemas";
-import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot";
-import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command";
-import { SIGN_IN_AGAIN_REASON } from "@/upstream/models/oauth-login";
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/read-provider-account-quota.command';
+import type { UpstreamProtocol } from '@/db/schemas';
+import type { SnapshotProviderAccount } from '@/snapshot/models/snapshot';
+import { MarkProviderAccountExhaustedCommand } from '@/upstream/commands/impl/mark-provider-account-exhausted.command';
+import { SIGN_IN_AGAIN_REASON } from '@/upstream/models/oauth-login';
 import {
   apiKeyCredential,
   CredentialUnavailableError,
   OauthLoginRefusedError,
   type ProviderAccountCredential,
-} from "@/upstream/models/provider-account-credential";
-import { CooldownStore } from "@/upstream/providers/cooldown-store";
+} from '@/upstream/models/provider-account-credential';
+import { CooldownStore } from '@/upstream/providers/cooldown-store';
 import {
   type CredentialReadOptions,
   ProviderAccountCredentials,
-} from "@/upstream/providers/provider-account-credentials";
-import { ProviderAccountHealth } from "@/upstream/providers/provider-account-health";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+} from '@/upstream/providers/provider-account-credentials';
+import { ProviderAccountHealth } from '@/upstream/providers/provider-account-health';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
 import {
   AttemptFailedError,
   exhaustionError,
   gatewayErrorFor,
-} from "@/inference/models/attempt-failure";
-import { exhaustedUntilOf } from "@/inference/models/quota-exhausted-error";
+} from '@/inference/models/attempt-failure';
+import { exhaustedUntilOf } from '@/inference/models/quota-exhausted-error';
 import {
   type AttemptPath,
   type AttemptTarget,
   attemptTargets,
-} from "@/inference/models/route-selection";
-import type { Destination } from "@/inference/models/destination";
-import type { SentServiceTier } from "@/inference/models/service-tier";
-import type { UsageMeter } from "@/inference/models/usage-meter";
+} from '@/inference/models/route-selection';
+import type { Destination } from '@/inference/models/destination';
+import type { SentServiceTier } from '@/inference/models/service-tier';
+import type { UsageMeter } from '@/inference/models/usage-meter';
 
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
@@ -63,7 +63,7 @@ export class AttemptRunner {
     meter: UsageMeter,
     prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
   ): Promise<Answer> {
-    if (destination.kind === "probe") {
+    if (destination.kind === 'probe') {
       return this.probeAnswer(destination.target, meter, prepare);
     }
     return this.firstAnswer(destination.paths, meter, prepare);
@@ -85,7 +85,7 @@ export class AttemptRunner {
         return false;
       }
       if (
-        cooldowns.get(accountId)?.cause === "exhausted" &&
+        cooldowns.get(accountId)?.cause === 'exhausted' &&
         !recordedExhaustedAccountIds.has(accountId)
       ) {
         recordedExhaustedAccountIds.add(accountId);
@@ -114,7 +114,7 @@ export class AttemptRunner {
         failures.push(error);
         skippedAccountIds.add(target.providerAccount.id);
         await this.afterFailedAttempt(error, target);
-        if (error.reason === "bad_request") {
+        if (error.reason === 'bad_request') {
           throw gatewayErrorFor(error);
         }
       }
@@ -152,40 +152,40 @@ export class AttemptRunner {
   ): Promise<void> {
     const path = route ? `Route ${route.id}` : `Upstream Model ${upstreamModel.id} (direct)`;
     this.logger.warn(
-      `Attempt failed (${failure.reason}, status ${failure.upstreamStatus ?? "none"}) ` +
+      `Attempt failed (${failure.reason}, status ${failure.upstreamStatus ?? 'none'}) ` +
         `on ${path}, Provider Account ${providerAccount.id}: ${failure.message}`,
     );
     const lastError = `${failure.reason}: ${failure.message}`;
     switch (failure.reason) {
-      case "bad_request":
+      case 'bad_request':
         return;
-      case "unauthorized":
+      case 'unauthorized':
         if (failure.upstreamStatus === HttpStatus.FORBIDDEN) {
           await this.afterForbiddenAttempt(failure, providerAccount.id, lastError);
           return;
         }
         void this.providerAccountHealth.disable(
           providerAccount.id,
-          providerAccount.credential.kind === "oauth-login"
+          providerAccount.credential.kind === 'oauth-login'
             ? SIGN_IN_AGAIN_REASON
-            : `The upstream refused this key (HTTP ${failure.upstreamStatus ?? "unknown"})`,
+            : `The upstream refused this key (HTTP ${failure.upstreamStatus ?? 'unknown'})`,
           lastError,
         );
         return;
-      case "rate_limited":
-      case "server_error":
-      case "timeout":
-      case "connection_error":
-      case "stream_interrupted":
+      case 'rate_limited':
+      case 'server_error':
+      case 'timeout':
+      case 'connection_error':
+      case 'stream_interrupted':
         void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
         await this.cooldowns.startCooldown(providerAccount.id, failure.reason, failure.retryAfter);
         return;
-      case "exhausted":
+      case 'exhausted':
         void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
         await this.commandBus.execute(
           new MarkProviderAccountExhaustedCommand(
             providerAccount.id,
-            exhaustedUntilOf(failure.upstreamResponse?.body ?? ""),
+            exhaustedUntilOf(failure.upstreamResponse?.body ?? ''),
           ),
         );
         void this.readQuota(providerAccount.id);
@@ -211,7 +211,7 @@ export class AttemptRunner {
       }
       this.logger.warn(
         `The Provider answered 401 to the OAuth Login of Provider Account ${account.id}; ` +
-          "refreshing it and trying once more",
+          'refreshing it and trying once more',
       );
       meter.attemptFailed(error);
       meter.attemptStarted(target, attempt.upstreamProtocol, attempt.sentServiceTier);
@@ -227,7 +227,7 @@ export class AttemptRunner {
     account: SnapshotProviderAccount,
     options: CredentialReadOptions = DISABLES_REFUSED_LOGIN,
   ): Promise<ProviderAccountCredential> {
-    if (account.credential.kind === "api-key") {
+    if (account.credential.kind === 'api-key') {
       return Promise.resolve(
         apiKeyCredential(this.cipher.decrypt(account.credential.encryptedKey)),
       );
@@ -270,7 +270,7 @@ function isRejectedOauthLogin(
   account: SnapshotProviderAccount,
 ): error is AttemptFailedError {
   return (
-    account.credential.kind === "oauth-login" &&
+    account.credential.kind === 'oauth-login' &&
     error instanceof AttemptFailedError &&
     error.upstreamStatus === HttpStatus.UNAUTHORIZED
   );
@@ -283,10 +283,10 @@ async function asAttemptFailure(
     return await readCredential();
   } catch (error) {
     if (error instanceof OauthLoginRefusedError) {
-      throw new AttemptFailedError("unauthorized", null, error.message, null, { cause: error });
+      throw new AttemptFailedError('unauthorized', null, error.message, null, { cause: error });
     }
     if (error instanceof CredentialUnavailableError) {
-      throw new AttemptFailedError("connection_error", null, error.message, null, { cause: error });
+      throw new AttemptFailedError('connection_error', null, error.message, null, { cause: error });
     }
     throw error;
   }

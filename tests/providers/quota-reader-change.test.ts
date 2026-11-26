@@ -1,21 +1,21 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, quotaMeters } from "@/db/schemas";
-import { addProviderAccount, UPSTREAM_KEY } from "@tests/support/inference";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, quotaMeters } from '@/db/schemas';
+import { addProviderAccount, UPSTREAM_KEY } from '@tests/support/inference';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const CHECKED_AT = new Date("2026-11-16T08:00:00Z");
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const CHECKED_AT = new Date('2026-11-16T08:00:00Z');
 
 const ACME = {
-  slug: "acme",
-  name: "Acme AI",
-  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
-  authStyle: "bearer",
-  quotaReader: "kimi-code",
+  slug: 'acme',
+  name: 'Acme AI',
+  endpoints: [{ kind: 'chat', protocol: 'openai-chat', baseUrl: 'https://api.acme.example/v1' }],
+  authStyle: 'bearer',
+  quotaReader: 'kimi-code',
 };
 
 describe("Changing a Provider's quota reader (e2e)", () => {
@@ -33,8 +33,8 @@ describe("Changing a Provider's quota reader (e2e)", () => {
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
     const created = await request(app.getHttpServer())
-      .post("/api/providers")
-      .set("Cookie", cookie)
+      .post('/api/providers')
+      .set('Cookie', cookie)
       .send(ACME)
       .expect(201);
     providerId = created.body.id;
@@ -52,23 +52,23 @@ describe("Changing a Provider's quota reader (e2e)", () => {
   async function recordReading(accountId: string): Promise<void> {
     await db.insert(quotaMeters).values({
       providerAccountId: accountId,
-      key: "weekly",
-      label: "Weekly",
-      unit: "percent",
+      key: 'weekly',
+      label: 'Weekly',
+      unit: 'percent',
       remainingPercent: 40,
       observedAt: CHECKED_AT,
       raw: {},
     });
     await db
       .update(providerAccounts)
-      .set({ quotaCheckedAt: CHECKED_AT, quotaError: "upstream returned 500" })
+      .set({ quotaCheckedAt: CHECKED_AT, quotaError: 'upstream returned 500' })
       .where(eq(providerAccounts.id, accountId));
   }
 
   function updateProvider(changes: object) {
     return request(app.getHttpServer())
       .patch(`/api/providers/${providerId}`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .send(changes)
       .expect(200);
   }
@@ -89,7 +89,7 @@ describe("Changing a Provider's quota reader (e2e)", () => {
   }
 
   it("clears every reading of the Provider's accounts when the reader changes", async () => {
-    await updateProvider({ quotaReader: "minimax-m-plan" });
+    await updateProvider({ quotaReader: 'minimax-m-plan' });
 
     expect(await readingOf(providerAccountId)).toEqual({
       meters: [],
@@ -98,19 +98,19 @@ describe("Changing a Provider's quota reader (e2e)", () => {
     });
   });
 
-  it("clears them when the reader is removed", async () => {
+  it('clears them when the reader is removed', async () => {
     await updateProvider({ quotaReader: null });
 
     expect(await readingOf(providerAccountId)).toMatchObject({ meters: [], quotaCheckedAt: null });
   });
 
-  it("keeps them when the reader stays the same", async () => {
-    await updateProvider({ name: "Acme", quotaReader: "kimi-code" });
+  it('keeps them when the reader stays the same', async () => {
+    await updateProvider({ name: 'Acme', quotaReader: 'kimi-code' });
 
     expect(await readingOf(providerAccountId)).toEqual({
-      meters: [{ key: "weekly" }],
+      meters: [{ key: 'weekly' }],
       quotaCheckedAt: CHECKED_AT,
-      quotaError: "upstream returned 500",
+      quotaError: 'upstream returned 500',
     });
   });
 });

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { CalendarClock, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
-import type { RowAction } from "~/components/RowActionsMenu.vue";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
+import { CalendarClock, Pencil, Plus, Power, Trash2 } from '@lucide/vue';
+import type { RowAction } from '~/components/RowActionsMenu.vue';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
 import {
   formatRange,
   ianaTimeZones,
@@ -9,17 +9,17 @@ import {
   type RangeForm,
   rangeFormFor,
   rangesFromForm,
-} from "~/lib/pricingWindows";
-import { browserTimeZone, utcOffsetLabel } from "~/lib/timeZones";
+} from '~/lib/pricingWindows';
+import { browserTimeZone, utcOffsetLabel } from '~/lib/timeZones';
 
-useHead({ title: "Pricing Windows" });
+useHead({ title: 'Pricing Windows' });
 
 type PricingWindowDialog =
-  | { kind: "create" }
-  | { kind: "edit"; pricingWindow: PricingWindow }
-  | { kind: "delete"; pricingWindow: PricingWindow };
+  | { kind: 'create' }
+  | { kind: 'edit'; pricingWindow: PricingWindow }
+  | { kind: 'delete'; pricingWindow: PricingWindow };
 
-type RowActionId = "edit" | "toggle" | "delete";
+type RowActionId = 'edit' | 'toggle' | 'delete';
 
 const { $dashboardApi } = useNuxtApp();
 const {
@@ -27,24 +27,24 @@ const {
   status,
   error: loadError,
   refresh,
-} = useDashboardApi<PricingWindow[]>("/pricing-windows");
+} = useDashboardApi<PricingWindow[]>('/pricing-windows');
 
-const isLoading = computed(() => status.value === "pending" && !pricingWindows.value);
+const isLoading = computed(() => status.value === 'pending' && !pricingWindows.value);
 
 const columns: DataTableColumn<PricingWindow>[] = [
-  { id: "name", header: "Pricing Window", enableHiding: false, accessorFn: (row) => row.name },
-  { id: "schedule", header: "Schedule" },
-  { id: "timeZone", header: "Time zone", accessorFn: (row) => row.timeZone },
-  { id: "status", header: "Status" },
-  { id: "upstreamModels", header: "Upstream Models" },
+  { id: 'name', header: 'Pricing Window', enableHiding: false, accessorFn: (row) => row.name },
+  { id: 'schedule', header: 'Schedule' },
+  { id: 'timeZone', header: 'Time zone', accessorFn: (row) => row.timeZone },
+  { id: 'status', header: 'Status' },
+  { id: 'upstreamModels', header: 'Upstream Models' },
   actionsColumn(),
 ];
 
 function rowActionsFor(pricingWindow: PricingWindow): RowAction<RowActionId>[] {
   return [
-    { id: "edit", label: "Edit", icon: Pencil },
-    { id: "toggle", label: pricingWindow.isEnabled ? "Disable" : "Enable", icon: Power },
-    { id: "delete", label: "Delete", icon: Trash2, isDestructive: true },
+    { id: 'edit', label: 'Edit', icon: Pencil },
+    { id: 'toggle', label: pricingWindow.isEnabled ? 'Disable' : 'Enable', icon: Power },
+    { id: 'delete', label: 'Delete', icon: Trash2, isDestructive: true },
   ];
 }
 
@@ -58,7 +58,7 @@ const {
   submitDialog,
   deleteRow,
   toggleRow,
-} = useEditableList<PricingWindowDialog>("/pricing-windows", refresh);
+} = useEditableList<PricingWindowDialog>('/pricing-windows', refresh);
 
 interface PricingWindowForm {
   name: string;
@@ -69,7 +69,7 @@ interface PricingWindowForm {
 const form = ref<PricingWindowForm>(emptyForm());
 
 function emptyForm(): PricingWindowForm {
-  return { name: "", timeZone: browserTimeZone(), ranges: [rangeFormFor()] };
+  return { name: '', timeZone: browserTimeZone(), ranges: [rangeFormFor()] };
 }
 
 function formFor(pricingWindow: PricingWindow): PricingWindowForm {
@@ -81,13 +81,13 @@ function formFor(pricingWindow: PricingWindow): PricingWindowForm {
 }
 
 function openDialog(next: PricingWindowDialog): void {
-  if (next.kind === "create") form.value = emptyForm();
-  if (next.kind === "edit") form.value = formFor(next.pricingWindow);
+  if (next.kind === 'create') form.value = emptyForm();
+  if (next.kind === 'edit') form.value = formFor(next.pricingWindow);
   showDialog(next);
 }
 
 function handleRowAction(id: RowActionId, pricingWindow: PricingWindow): void {
-  if (id === "toggle") {
+  if (id === 'toggle') {
     void toggleRow(pricingWindow, pricingWindow.name);
     return;
   }
@@ -111,17 +111,17 @@ async function savePricingWindow(): Promise<void> {
     timeZone: form.value.timeZone,
     ranges: rangesFromForm(form.value.ranges),
   };
-  if (current?.kind === "edit") {
+  if (current?.kind === 'edit') {
     await submitDialog(
       () =>
-        $dashboardApi(`/pricing-windows/${current.pricingWindow.id}`, { method: "PATCH", body }),
+        $dashboardApi(`/pricing-windows/${current.pricingWindow.id}`, { method: 'PATCH', body }),
       `Saved ${body.name}`,
       "Couldn't save the Pricing Window.",
     );
     return;
   }
   await submitDialog(
-    () => $dashboardApi("/pricing-windows", { method: "POST", body }),
+    () => $dashboardApi('/pricing-windows', { method: 'POST', body }),
     `Added ${body.name}`,
     "Couldn't add the Pricing Window.",
   );
@@ -135,8 +135,8 @@ function deleteDescription(pricingWindow: PricingWindow): string {
   const count = pricingWindow.attachedUpstreamModelCount;
   const reach =
     count === 0
-      ? "No Upstream Model uses it."
-      : `${count} Upstream ${count === 1 ? "Model loses its" : "Models lose their"} Window Prices for it.`;
+      ? 'No Upstream Model uses it.'
+      : `${count} Upstream ${count === 1 ? 'Model loses its' : 'Models lose their'} Window Prices for it.`;
   return `${pricingWindow.name} is deleted. ${reach} This can't be undone.`;
 }
 </script>
@@ -235,7 +235,7 @@ function deleteDescription(pricingWindow: PricingWindow): string {
         <div class="dialog__actions">
           <button class="button" type="button" @click="closeDialog">Cancel</button>
           <button class="button button--primary" type="submit" :disabled="isSaving">
-            {{ dialog.kind === "create" ? "Add Pricing Window" : "Save" }}
+            {{ dialog.kind === 'create' ? 'Add Pricing Window' : 'Save' }}
           </button>
         </div>
       </form>

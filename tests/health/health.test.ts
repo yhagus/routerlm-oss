@@ -1,14 +1,14 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import request from "supertest";
-import { relations } from "@/db/schemas/relations";
-import { createTestApp } from "@tests/support/test-app";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import request from 'supertest';
+import { relations } from '@/db/schemas/relations';
+import { createTestApp } from '@tests/support/test-app';
 
-const UNREACHABLE_DATABASE_URL = "postgres://routerlm:routerlm@127.0.0.1:1/routerlm";
+const UNREACHABLE_DATABASE_URL = 'postgres://routerlm:routerlm@127.0.0.1:1/routerlm';
 
-describe("GET /health (e2e)", () => {
-  describe("when Postgres answers", () => {
+describe('GET /health (e2e)', () => {
+  describe('when Postgres answers', () => {
     let app: NestNodeApplication;
 
     beforeAll(async () => {
@@ -19,14 +19,14 @@ describe("GET /health (e2e)", () => {
       await app?.close();
     });
 
-    it("reports healthy to a caller without a session", async () => {
-      const response = await request(app.getHttpServer()).get("/health").expect(200);
+    it('reports healthy to a caller without a session', async () => {
+      const response = await request(app.getHttpServer()).get('/health').expect(200);
 
-      expect(response.body).toMatchObject({ status: "ok", info: { database: { status: "up" } } });
+      expect(response.body).toMatchObject({ status: 'ok', info: { database: { status: 'up' } } });
     });
   });
 
-  describe("when Postgres does not answer", () => {
+  describe('when Postgres does not answer', () => {
     let app: NestNodeApplication;
     let unreachablePool: Pool;
 
@@ -42,12 +42,12 @@ describe("GET /health (e2e)", () => {
       await unreachablePool?.end();
     });
 
-    it("reports the database down with 503 and no internal error text", async () => {
-      const response = await request(app.getHttpServer()).get("/health").expect(503);
+    it('reports the database down with 503 and no internal error text', async () => {
+      const response = await request(app.getHttpServer()).get('/health').expect(503);
 
       expect(response.body).toMatchObject({
-        status: "error",
-        error: { database: { status: "down" } },
+        status: 'error',
+        error: { database: { status: 'down' } },
       });
       expect(JSON.stringify(response.body)).not.toMatch(/ECONNREFUSED|127\.0\.0\.1|connect/i);
     });

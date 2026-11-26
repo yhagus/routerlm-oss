@@ -1,23 +1,23 @@
-import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import {
   kindsWithoutEndpoint,
   serviceTiersWithoutWireValue,
   tierPricesWithoutListedTier,
-} from "@/catalog/schemas/catalog.schema";
-import type { ModelKind, ProviderEndpoint, ServiceTierValues } from "@/db/schemas";
-import type { ServiceTier } from "@/inference/models/internal-format";
+} from '@/catalog/schemas/catalog.schema';
+import type { ModelKind, ProviderEndpoint, ServiceTierValues } from '@/db/schemas';
+import type { ServiceTier } from '@/inference/models/internal-format';
 import {
   FOREIGN_KEY_VIOLATION,
   hasPostgresErrorCode,
   UNIQUE_VIOLATION,
-} from "@/libs/models/postgres-errors";
+} from '@/libs/models/postgres-errors';
 import {
   kindOf,
   type ProtocolListing,
   protocolsWithoutEndpoint,
-} from "@/libs/models/provider-protocols";
-import type { upstreamModels } from "@/db/schemas";
-import type { AttachedPricingWindow } from "@/pricing-windows/models/upstream-model-pricing-windows";
+} from '@/libs/models/provider-protocols';
+import type { upstreamModels } from '@/db/schemas';
+import type { AttachedPricingWindow } from '@/pricing-windows/models/upstream-model-pricing-windows';
 
 export type UpstreamModel = typeof upstreamModels.$inferSelect;
 
@@ -31,11 +31,11 @@ export function toUpstreamModelWriteError(
 ): unknown {
   if (hasPostgresErrorCode(error, UNIQUE_VIOLATION)) {
     return new ConflictException(
-      `The Provider already has an Upstream Model named "${providerModelName ?? ""}"`,
+      `The Provider already has an Upstream Model named "${providerModelName ?? ''}"`,
     );
   }
   if (hasPostgresErrorCode(error, FOREIGN_KEY_VIOLATION)) {
-    return new NotFoundException("Provider not found");
+    return new NotFoundException('Provider not found');
   }
   return error;
 }
@@ -50,7 +50,7 @@ export function assertServiceTiersFitProvider(
   const unmapped = serviceTiersWithoutWireValue(upstreamModel.serviceTiers, serviceTierValues);
   if (unmapped.length > 0) {
     throw new BadRequestException(
-      `The Provider maps no wire value for the Service Tiers ${unmapped.join(", ")}`,
+      `The Provider maps no wire value for the Service Tiers ${unmapped.join(', ')}`,
     );
   }
   const unlisted = tierPricesWithoutListedTier(
@@ -59,7 +59,7 @@ export function assertServiceTiersFitProvider(
   );
   if (unlisted.length > 0) {
     throw new BadRequestException(
-      `The Upstream Model prices the Service Tiers ${unlisted.join(", ")} but doesn't list them`,
+      `The Upstream Model prices the Service Tiers ${unlisted.join(', ')} but doesn't list them`,
     );
   }
 }
@@ -80,7 +80,7 @@ export function assertProtocolsFitProvider(
   const unserved = protocolsWithoutEndpoint(upstreamModel, endpoints);
   if (unserved.length > 0) {
     throw new BadRequestException(
-      `The Provider has no ${kindOf(upstreamModel)} endpoint for the Protocols ${unserved.join(", ")}`,
+      `The Provider has no ${kindOf(upstreamModel)} endpoint for the Protocols ${unserved.join(', ')}`,
     );
   }
 }

@@ -6,10 +6,10 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "reka-ui";
+} from 'reka-ui';
 
 defineProps<{ title: string; description: string; wide?: boolean }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 </script>
 
 <template>

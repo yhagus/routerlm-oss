@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref } from 'vue';
 import {
   compactNumber,
   fullNumber,
@@ -8,7 +8,7 @@ import {
   useElementWidth,
   type ChartPoint,
   type ChartSeries,
-} from "~/lib/chart";
+} from '~/lib/chart';
 
 const props = withDefaults(
   defineProps<{
@@ -29,7 +29,7 @@ const props = withDefaults(
     formatValue: fullNumber,
     formatTick: compactNumber,
     scaleFloor: 1,
-    unit: "",
+    unit: '',
     toggleable: false,
   },
 );
@@ -42,7 +42,7 @@ defineSlots<{
   tooltip?: (props: { index: number; rows: TooltipRow[] }) => unknown;
 }>();
 
-const NO_DATA = "No data";
+const NO_DATA = 'No data';
 
 const PAD = { top: 10, right: 10, bottom: 26, left: 46 };
 
@@ -115,14 +115,14 @@ function runsOf(values: (number | null)[]): PlottedValue[][] {
 }
 
 function linePath(run: PlottedValue[]): string {
-  return run.map(({ index, value }, step) => `${step ? "L" : "M"}${x(index)},${y(value)}`).join("");
+  return run.map(({ index, value }, step) => `${step ? 'L' : 'M'}${x(index)},${y(value)}`).join('');
 }
 
 function areaPath(run: PlottedValue[], base: (number | null)[] | undefined): string {
   const back = run
     .toReversed()
     .map(({ index }) => `L${x(index)},${y(base?.[index] ?? 0)}`)
-    .join("");
+    .join('');
   return `${linePath(run)}${back}Z`;
 }
 
@@ -135,8 +135,8 @@ const shapes = computed(() =>
       key: series.key,
       color: series.color,
       tops: seriesTops,
-      line: runs.map(linePath).join(""),
-      area: runs.map((run) => areaPath(run, base)).join(""),
+      line: runs.map(linePath).join(''),
+      area: runs.map((run) => areaPath(run, base)).join(''),
       isolated: runs.flatMap((run) => (run.length === 1 ? run : [])),
     };
   }),
@@ -197,9 +197,9 @@ function onPointer(event: PointerEvent) {
 }
 function onKey(event: KeyboardEvent) {
   const last = props.points.length - 1;
-  if (event.key === "ArrowRight") active.value = Math.min(last, (active.value ?? -1) + 1);
-  else if (event.key === "ArrowLeft") active.value = Math.max(0, (active.value ?? last + 1) - 1);
-  else if (event.key === "Escape") active.value = null;
+  if (event.key === 'ArrowRight') active.value = Math.min(last, (active.value ?? -1) + 1);
+  else if (event.key === 'ArrowLeft') active.value = Math.max(0, (active.value ?? last + 1) - 1);
+  else if (event.key === 'Escape') active.value = null;
   else return;
   event.preventDefault();
 }

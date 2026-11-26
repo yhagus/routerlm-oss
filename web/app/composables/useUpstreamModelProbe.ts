@@ -1,12 +1,12 @@
-import { computed, shallowRef } from "vue";
-import { apiErrorMessage } from "~/lib/api";
-import { playgroundErrorOf, readProperty } from "~/lib/playground";
-import { probePath, type ProbeResult, type ProbeResults } from "~/lib/probe";
-import type { UpstreamModel } from "~/lib/upstream";
+import { computed, shallowRef } from 'vue';
+import { apiErrorMessage } from '~/lib/api';
+import { playgroundErrorOf, readProperty } from '~/lib/playground';
+import { probePath, type ProbeResult, type ProbeResults } from '~/lib/probe';
+import type { UpstreamModel } from '~/lib/upstream';
 
 export type UpstreamModelProbe =
-  | { status: "done"; upstreamModel: UpstreamModel; results: ProbeResult[] }
-  | { status: "refused"; upstreamModel: UpstreamModel; message: string };
+  | { status: 'done'; upstreamModel: UpstreamModel; results: ProbeResult[] }
+  | { status: 'refused'; upstreamModel: UpstreamModel; message: string };
 
 export function useUpstreamModelProbe() {
   const { $dashboardApi } = useNuxtApp();
@@ -43,16 +43,16 @@ export function useUpstreamModelProbe() {
   async function probeOnce(upstreamModel: UpstreamModel): Promise<UpstreamModelProbe> {
     try {
       const { results } = await $dashboardApi<ProbeResults>(probePath(upstreamModel), {
-        method: "POST",
+        method: 'POST',
       });
-      return { status: "done", upstreamModel, results };
+      return { status: 'done', upstreamModel, results };
     } catch (failure) {
-      const refusal = playgroundErrorOf(readProperty(failure, "data"));
+      const refusal = playgroundErrorOf(readProperty(failure, 'data'));
       return {
-        status: "refused",
+        status: 'refused',
         upstreamModel,
         message:
-          refusal?.message ?? apiErrorMessage(failure, "The probe did not reach the gateway."),
+          refusal?.message ?? apiErrorMessage(failure, 'The probe did not reach the gateway.'),
       };
     }
   }

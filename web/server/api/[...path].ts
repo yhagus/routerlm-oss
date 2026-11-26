@@ -1,7 +1,7 @@
-import { createError, defineEventHandler, getRequestURL, proxyRequest } from "h3";
-import { useRuntimeConfig } from "nitropack/runtime";
+import { createError, defineEventHandler, getRequestURL, proxyRequest } from 'h3';
+import { useRuntimeConfig } from 'nitropack/runtime';
 
-const DASHBOARD_API_PATH = "/api/";
+const DASHBOARD_API_PATH = '/api/';
 
 export default defineEventHandler((event) => {
   const { pathname, search } = getRequestURL(event);
@@ -11,7 +11,7 @@ export default defineEventHandler((event) => {
   const { backendUrl } = useRuntimeConfig(event);
   const backendCall = new AbortController();
   const { res } = event.node;
-  res.once("close", () => {
+  res.once('close', () => {
     if (!res.writableFinished) backendCall.abort();
   });
   return proxyRequest(event, new URL(`${pathname}${search}`, backendUrl).toString(), {

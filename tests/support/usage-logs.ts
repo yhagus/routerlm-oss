@@ -1,5 +1,5 @@
-import { usageLogs } from "@/db/schemas";
-import type { Database } from "@/db/schemas/relations";
+import { usageLogs } from '@/db/schemas';
+import type { Database } from '@/db/schemas/relations';
 
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;
@@ -13,7 +13,7 @@ export async function writtenUsageLogs(db: Database): Promise<(typeof usageLogs.
     }
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
-  throw new Error("The worker wrote no Usage Log");
+  throw new Error('The worker wrote no Usage Log');
 }
 
 export async function writtenUsageLog(db: Database): Promise<typeof usageLogs.$inferSelect> {

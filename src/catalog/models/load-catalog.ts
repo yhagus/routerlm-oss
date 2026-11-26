@@ -1,7 +1,7 @@
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-import type { z } from "zod";
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { z } from 'zod';
 import {
   type CatalogProvider,
   catalogProviderSchema,
@@ -10,21 +10,21 @@ import {
   serviceTierValuesForeignToEndpoints,
   serviceTiersWithoutWireValue,
   tierPricesWithoutListedTier,
-} from "@/catalog/schemas/catalog.schema";
+} from '@/catalog/schemas/catalog.schema';
 import {
   describeProtocols,
   kindOf,
   protocolsWithoutEndpoint,
-} from "@/libs/models/provider-protocols";
+} from '@/libs/models/provider-protocols';
 
-export const CATALOG_DIRECTORY = fileURLToPath(new URL("../data", import.meta.url));
+export const CATALOG_DIRECTORY = fileURLToPath(new URL('../data', import.meta.url));
 
 export async function loadCatalog(directory: string): Promise<CatalogProvider[]> {
-  const fileNames = (await readdir(directory)).filter((name) => name.endsWith(".json")).sort();
+  const fileNames = (await readdir(directory)).filter((name) => name.endsWith('.json')).sort();
   const providers: CatalogProvider[] = [];
 
   for (const fileName of fileNames) {
-    const provider = parseProviderFile(fileName, await readFile(join(directory, fileName), "utf8"));
+    const provider = parseProviderFile(fileName, await readFile(join(directory, fileName), 'utf8'));
     if (providers.some((loaded) => loaded.slug === provider.slug)) {
       throw new Error(
         `Catalog ${fileName}: slug "${provider.slug}" is already used by another file`,
@@ -55,13 +55,13 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
   const result = catalogProviderSchema.safeParse(json);
   if (!result.success) {
     const problems = result.error.issues.map((issue) => describeIssue(json, issue));
-    throw new Error(`Catalog ${fileName}: ${problems.join("; ")}`);
+    throw new Error(`Catalog ${fileName}: ${problems.join('; ')}`);
   }
 
   const unservedKinds = kindsWithoutEndpoint(result.data.upstreamModels, result.data.endpoints);
   if (unservedKinds.length > 0) {
     throw new Error(
-      `Catalog ${fileName}: the Provider has no endpoint for the Kind ${unservedKinds.join(", ")} of its Upstream Models`,
+      `Catalog ${fileName}: the Provider has no endpoint for the Kind ${unservedKinds.join(', ')} of its Upstream Models`,
     );
   }
 
@@ -70,7 +70,7 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
     const unserved = protocolsWithoutEndpoint(model, endpoints);
     if (unserved.length > 0) {
       throw new Error(
-        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" lists Protocols ${unserved.join(", ")} that the Provider has no ${kindOf(model)} endpoint for`,
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" lists Protocols ${unserved.join(', ')} that the Provider has no ${kindOf(model)} endpoint for`,
       );
     }
   }
@@ -78,7 +78,7 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
   const foreignQuirks = quirksForeignToEndpoints(endpoints, result.data.quirks);
   if (foreignQuirks.length > 0) {
     throw new Error(
-      `Catalog ${fileName}: quirks ${foreignQuirks.join(", ")} don't apply to ${describeProtocols(endpoints)}`,
+      `Catalog ${fileName}: quirks ${foreignQuirks.join(', ')} don't apply to ${describeProtocols(endpoints)}`,
     );
   }
 
@@ -86,7 +86,7 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
   const foreignTiers = serviceTierValuesForeignToEndpoints(endpoints, serviceTierValues);
   if (foreignTiers.length > 0) {
     throw new Error(
-      `Catalog ${fileName}: Service Tiers ${foreignTiers.join(", ")} don't apply to ${describeProtocols(endpoints)}`,
+      `Catalog ${fileName}: Service Tiers ${foreignTiers.join(', ')} don't apply to ${describeProtocols(endpoints)}`,
     );
   }
   for (const model of result.data.upstreamModels) {
@@ -94,13 +94,13 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
     const unmapped = serviceTiersWithoutWireValue(serviceTiers, serviceTierValues);
     if (unmapped.length > 0) {
       throw new Error(
-        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" lists Service Tiers ${unmapped.join(", ")} that the Provider maps to no wire value`,
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" lists Service Tiers ${unmapped.join(', ')} that the Provider maps to no wire value`,
       );
     }
     const unlisted = tierPricesWithoutListedTier(model.tierPrices ?? {}, serviceTiers);
     if (unlisted.length > 0) {
       throw new Error(
-        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" prices Service Tiers ${unlisted.join(", ")} that it doesn't list`,
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" prices Service Tiers ${unlisted.join(', ')} that it doesn't list`,
       );
     }
   }
@@ -108,7 +108,7 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
   const windowNames = pricingWindowNamesOf(result.data);
   for (const model of result.data.upstreamModels) {
     if (model.windowPrices === undefined) continue;
-    if ((model.kind ?? "chat") !== "chat") {
+    if ((model.kind ?? 'chat') !== 'chat') {
       throw new Error(
         `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" has Window Prices, which only a chat model can have`,
       );
@@ -138,21 +138,21 @@ function pricingWindowNamesOf(provider: CatalogProvider): string[] {
 
 function describeIssue(json: unknown, issue: z.core.$ZodIssue): string {
   const [section, index, ...rest] = issue.path;
-  if (section !== "upstreamModels" || typeof index !== "number") {
-    return `${issue.path.join(".") || "(file)"}: ${issue.message}`;
+  if (section !== 'upstreamModels' || typeof index !== 'number') {
+    return `${issue.path.join('.') || '(file)'}: ${issue.message}`;
   }
 
   const modelId = readUpstreamModelId(json, index);
-  const entry = `upstreamModels[${index}]${modelId === undefined ? "" : ` (${modelId})`}`;
-  return [entry, ...rest].join(".") + `: ${issue.message}`;
+  const entry = `upstreamModels[${index}]${modelId === undefined ? '' : ` (${modelId})`}`;
+  return [entry, ...rest].join('.') + `: ${issue.message}`;
 }
 
 function readUpstreamModelId(json: unknown, index: number): string | undefined {
-  if (typeof json !== "object" || json === null || !("upstreamModels" in json)) return undefined;
+  if (typeof json !== 'object' || json === null || !('upstreamModels' in json)) return undefined;
   const models = json.upstreamModels;
   if (!Array.isArray(models)) return undefined;
   const model: unknown = models[index];
-  if (typeof model !== "object" || model === null || !("upstreamModelId" in model))
+  if (typeof model !== 'object' || model === null || !('upstreamModelId' in model))
     return undefined;
-  return typeof model.upstreamModelId === "string" ? model.upstreamModelId : undefined;
+  return typeof model.upstreamModelId === 'string' ? model.upstreamModelId : undefined;
 }

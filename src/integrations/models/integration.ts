@@ -1,4 +1,4 @@
-import type { AllowedModel, ApiKeyRotation } from "@/api-keys/models/api-key";
+import type { AllowedModel, ApiKeyRotation } from '@/api-keys/models/api-key';
 
 export interface IntegrationSummary {
   id: string;

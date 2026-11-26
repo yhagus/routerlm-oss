@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 1024;

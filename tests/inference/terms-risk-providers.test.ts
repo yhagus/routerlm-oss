@@ -1,42 +1,42 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { providers, settings, upstreamModels } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { type FakeReply, FakeUpstream } from "@tests/support/fake-upstream";
-import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { providers, settings, upstreamModels } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { type FakeReply, FakeUpstream } from '@tests/support/fake-upstream';
+import { ALL_CAPABILITIES, insertApiKey, insertOpenAiChatModel } from '@tests/support/inference';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const TEXT_REQUEST = { model: 'smart', messages: [{ role: 'user', content: 'Hi' }] };
 const COMPLETION: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
   body: {
-    id: "chatcmpl-1",
-    object: "chat.completion",
-    model: "acme-large-2026",
+    id: 'chatcmpl-1',
+    object: 'chat.completion',
+    model: 'acme-large-2026',
     choices: [
-      { index: 0, message: { role: "assistant", content: "Hello." }, finish_reason: "stop" },
+      { index: 0, message: { role: 'assistant', content: 'Hello.' }, finish_reason: 'stop' },
     ],
     usage: { prompt_tokens: 3, completion_tokens: 2 },
   },
 };
 
 const COMPLETION_STREAM: FakeReply = {
-  kind: "stream",
+  kind: 'stream',
   events: [
-    { choices: [{ index: 0, delta: { role: "assistant", content: "Hello." } }] },
-    { choices: [{ index: 0, delta: {}, finish_reason: "stop" }] },
+    { choices: [{ index: 0, delta: { role: 'assistant', content: 'Hello.' } }] },
+    { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] },
   ]
     .map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`)
-    .concat("data: [DONE]\n\n")
-    .join(""),
+    .concat('data: [DONE]\n\n')
+    .join(''),
 };
 
-describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () => {
+describe('A Terms Risk Provider is unusable unless a User allows it (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let upstream: FakeUpstream;
@@ -53,10 +53,10 @@ describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () =
     upstream.reset();
     upstream.reply(COMPLETION);
     await deleteAllUpstreamData(db);
-    await db.delete(settings).where(eq(settings.key, "allowTermsRiskProviders"));
+    await db.delete(settings).where(eq(settings.key, 'allowTermsRiskProviders'));
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: upstream.baseUrl,
     }));
     await db.update(providers).set({ termsRisk: true }).where(eq(providers.id, providerId));
@@ -71,23 +71,23 @@ describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () =
 
   function allowTermsRiskProviders(allowed: boolean) {
     return request(app.getHttpServer())
-      .put("/api/settings/terms-risk-providers")
-      .set("Cookie", cookie)
+      .put('/api/settings/terms-risk-providers')
+      .set('Cookie', cookie)
       .send({ allowed })
       .expect(200);
   }
 
   function chat() {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send(TEXT_REQUEST);
   }
 
   async function offeredCapabilities(): Promise<string[]> {
     const response = await request(app.getHttpServer())
-      .get("/v1/models")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .get('/v1/models')
+      .set('Authorization', `Bearer ${apiKey}`)
       .expect(200);
     return response.body.data[0].capabilities;
   }
@@ -99,8 +99,8 @@ describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () =
       .where(eq(upstreamModels.providerId, providerId));
     const response = await request(app.getHttpServer())
       .post(`/api/playground/upstream-models/${upstreamModel.id}/chat/completions`)
-      .set("Cookie", cookie)
-      .send({ model: "acme", stream: true, messages: [{ role: "user", content: "Hi" }] });
+      .set('Cookie', cookie)
+      .send({ model: 'acme', stream: true, messages: [{ role: 'user', content: 'Hi' }] });
     return response.status;
   }
 
@@ -112,7 +112,7 @@ describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () =
     return provider.isEnabled;
   }
 
-  it("serves nothing, lists nothing and stays enabled while the Setting is off", async () => {
+  it('serves nothing, lists nothing and stays enabled while the Setting is off', async () => {
     await chat().expect(400);
     expect(await playgroundDirectCallStatus()).toBe(404);
 
@@ -121,7 +121,7 @@ describe("A Terms Risk Provider is unusable unless a User allows it (e2e)", () =
     expect(await storedIsEnabled()).toBe(true);
   });
 
-  it("serves and lists the Provider as soon as a User allows it, and stops again when they block it", async () => {
+  it('serves and lists the Provider as soon as a User allows it, and stops again when they block it', async () => {
     await allowTermsRiskProviders(true);
 
     await chat().expect(200);

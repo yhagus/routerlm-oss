@@ -1,5 +1,5 @@
-import type { Logger } from "@nestjs/common";
-import type { Job, JobsOptions, Queue } from "bullmq";
+import type { Logger } from '@nestjs/common';
+import type { Job, JobsOptions, Queue } from 'bullmq';
 
 export async function addJobOrLog<Data>(
   queue: Queue,

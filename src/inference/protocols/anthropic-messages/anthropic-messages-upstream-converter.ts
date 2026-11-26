@@ -1,4 +1,4 @@
-import { GatewayError } from "@/inference/models/gateway-error";
+import { GatewayError } from '@/inference/models/gateway-error';
 import type {
   AssistantContentPart,
   CacheMarker,
@@ -12,28 +12,28 @@ import type {
   ToolCallPart,
   ToolChoice,
   UserContentPart,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 import type {
   UpstreamHttpRequest,
   UpstreamProtocolConverter,
   UpstreamTarget,
-} from "@/inference/protocols/upstream-protocol-converter";
-import { parseMessagesResponse, startMessagesStream } from "./anthropic-messages-response";
+} from '@/inference/protocols/upstream-protocol-converter';
+import { parseMessagesResponse, startMessagesStream } from './anthropic-messages-response';
 
-const MESSAGES_PATH = "/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
+const MESSAGES_PATH = '/v1/messages';
+const ANTHROPIC_VERSION = '2023-06-01';
 const DEFAULT_MAX_OUTPUT_TOKENS = 8192;
 
 const EFFORT_LEVELS = {
-  minimal: "low",
-  low: "low",
-  medium: "medium",
-  high: "high",
-  xhigh: "xhigh",
-} as const satisfies Record<Exclude<ReasoningEffort, "none">, string>;
+  minimal: 'low',
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  xhigh: 'xhigh',
+} as const satisfies Record<Exclude<ReasoningEffort, 'none'>, string>;
 
 type ContentBlock = Record<string, unknown>;
-type MessageParam = { role: "user" | "assistant"; content: ContentBlock[] };
+type MessageParam = { role: 'user' | 'assistant'; content: ContentBlock[] };
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
   const body: Record<string, unknown> = {
@@ -73,8 +73,8 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     body.stream = true;
   }
   return {
-    url: `${target.baseUrl.replace(/\/+$/, "")}${MESSAGES_PATH}`,
-    headers: { "content-type": "application/json", "anthropic-version": ANTHROPIC_VERSION },
+    url: `${target.baseUrl.replace(/\/+$/, '')}${MESSAGES_PATH}`,
+    headers: { 'content-type': 'application/json', 'anthropic-version': ANTHROPIC_VERSION },
     body: JSON.stringify(body),
   };
 }
@@ -95,54 +95,54 @@ function writeMessages(messages: InferenceMessage[]): MessageParam[] {
 
 function writeMessage(message: InferenceMessage): MessageParam {
   switch (message.role) {
-    case "user":
-      return { role: "user", content: writeUserBlocks(message.content) };
-    case "tool":
+    case 'user':
+      return { role: 'user', content: writeUserBlocks(message.content) };
+    case 'tool':
       return {
-        role: "user",
+        role: 'user',
         content: [
           {
-            type: "tool_result",
+            type: 'tool_result',
             tool_use_id: message.toolCallId,
             content: writeUserBlocks(message.content),
           },
         ],
       };
-    case "assistant":
-      return { role: "assistant", content: message.content.flatMap(writeAssistantBlock) };
+    case 'assistant':
+      return { role: 'assistant', content: message.content.flatMap(writeAssistantBlock) };
   }
 }
 
 function writeUserBlocks(content: UserContentPart[]): ContentBlock[] {
   return content.flatMap((part) =>
-    part.type === "text" ? writeTextBlocks([part]) : [writeImageBlock(part)],
+    part.type === 'text' ? writeTextBlocks([part]) : [writeImageBlock(part)],
   );
 }
 
 function writeTextBlocks(parts: TextPart[]): ContentBlock[] {
   return parts
-    .filter((part) => part.text !== "")
-    .map((part) => withCacheControl({ type: "text", text: part.text }, part.cacheMarker));
+    .filter((part) => part.text !== '')
+    .map((part) => withCacheControl({ type: 'text', text: part.text }, part.cacheMarker));
 }
 
 function writeImageBlock(part: ImagePart): ContentBlock {
   const source =
-    part.source.type === "url"
-      ? { type: "url", url: part.source.url }
-      : { type: "base64", media_type: part.source.mediaType, data: part.source.data };
-  return withCacheControl({ type: "image", source }, part.cacheMarker);
+    part.source.type === 'url'
+      ? { type: 'url', url: part.source.url }
+      : { type: 'base64', media_type: part.source.mediaType, data: part.source.data };
+  return withCacheControl({ type: 'image', source }, part.cacheMarker);
 }
 
 function writeAssistantBlock(part: AssistantContentPart): ContentBlock[] {
   switch (part.type) {
-    case "text":
+    case 'text':
       return writeTextBlocks([part]);
-    case "reasoning":
+    case 'reasoning':
       return part.signature === undefined
         ? []
-        : [{ type: "thinking", thinking: part.text, signature: part.signature }];
-    case "tool-call":
-      return [{ type: "tool_use", id: part.id, name: part.name, input: toolInputOf(part) }];
+        : [{ type: 'thinking', thinking: part.text, signature: part.signature }];
+    case 'tool-call':
+      return [{ type: 'tool_use', id: part.id, name: part.name, input: toolInputOf(part) }];
   }
 }
 
@@ -155,16 +155,16 @@ function toolInputOf(call: ToolCallPart): Record<string, unknown> {
   }
   if (!isJsonObject(input)) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `The arguments of tool call ${call.id} must be a JSON object.`,
-      "client",
+      'client',
     );
   }
   return input;
 }
 
 function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function writeTool(tool: FunctionTool): ContentBlock {
@@ -181,12 +181,12 @@ function writeTool(tool: FunctionTool): ContentBlock {
 
 function writeToolChoice(request: InferenceRequest): ContentBlock | undefined {
   const isParallelDisabled = request.parallelToolCalls === false;
-  const choice = request.toolChoice ?? (isParallelDisabled ? { type: "auto" } : undefined);
+  const choice = request.toolChoice ?? (isParallelDisabled ? { type: 'auto' } : undefined);
   if (!choice) {
     return undefined;
   }
   const written = toolChoiceBlockOf(choice);
-  if (isParallelDisabled && choice.type !== "none") {
+  if (isParallelDisabled && choice.type !== 'none') {
     written.disable_parallel_tool_use = true;
   }
   return written;
@@ -194,31 +194,31 @@ function writeToolChoice(request: InferenceRequest): ContentBlock | undefined {
 
 function toolChoiceBlockOf(choice: ToolChoice): ContentBlock {
   switch (choice.type) {
-    case "auto":
-      return { type: "auto" };
-    case "none":
-      return { type: "none" };
-    case "required":
-      return { type: "any" };
-    case "tool":
-      return { type: "tool", name: choice.name };
+    case 'auto':
+      return { type: 'auto' };
+    case 'none':
+      return { type: 'none' };
+    case 'required':
+      return { type: 'any' };
+    case 'tool':
+      return { type: 'tool', name: choice.name };
   }
 }
 
-function writeThinking(reasoning: InferenceRequest["reasoning"]): ContentBlock | undefined {
+function writeThinking(reasoning: InferenceRequest['reasoning']): ContentBlock | undefined {
   if (reasoning?.budgetTokens !== undefined) {
-    return { type: "enabled", budget_tokens: reasoning.budgetTokens };
+    return { type: 'enabled', budget_tokens: reasoning.budgetTokens };
   }
-  if (reasoning?.effort === undefined || reasoning.effort === "none") {
+  if (reasoning?.effort === undefined || reasoning.effort === 'none') {
     return undefined;
   }
-  return { type: "adaptive", display: "summarized" };
+  return { type: 'adaptive', display: 'summarized' };
 }
 
 function writeOutputConfig(request: InferenceRequest): ContentBlock | undefined {
   const outputConfig: ContentBlock = {};
   const effort = request.reasoning?.effort;
-  if (request.reasoning?.budgetTokens === undefined && effort !== undefined && effort !== "none") {
+  if (request.reasoning?.budgetTokens === undefined && effort !== undefined && effort !== 'none') {
     outputConfig.effort = EFFORT_LEVELS[effort];
   }
   const format = writeOutputFormat(request.responseFormat);
@@ -229,17 +229,17 @@ function writeOutputConfig(request: InferenceRequest): ContentBlock | undefined 
 }
 
 function writeOutputFormat(format: ResponseFormat | undefined): ContentBlock | undefined {
-  if (format?.type !== "json-schema") {
+  if (format?.type !== 'json-schema') {
     return undefined;
   }
-  return { type: "json_schema", schema: format.schema };
+  return { type: 'json_schema', schema: format.schema };
 }
 
 function withCacheControl(block: ContentBlock, marker: CacheMarker | undefined): ContentBlock {
   if (!marker) {
     return block;
   }
-  const cacheControl: ContentBlock = { type: "ephemeral" };
+  const cacheControl: ContentBlock = { type: 'ephemeral' };
   if (marker.ttl !== undefined) {
     cacheControl.ttl = marker.ttl;
   }
@@ -247,7 +247,7 @@ function withCacheControl(block: ContentBlock, marker: CacheMarker | undefined):
 }
 
 export const anthropicMessagesUpstreamConverter: UpstreamProtocolConverter = {
-  protocol: "anthropic-messages",
+  protocol: 'anthropic-messages',
   writeRequest,
   parseResponse: parseMessagesResponse,
   startStream: startMessagesStream,

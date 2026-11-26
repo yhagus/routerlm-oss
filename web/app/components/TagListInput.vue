@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { X } from "@lucide/vue";
+import { X } from '@lucide/vue';
 import {
   TagsInputInput,
   TagsInputItem,
   TagsInputItemDelete,
   TagsInputItemText,
   TagsInputRoot,
-} from "reka-ui";
+} from 'reka-ui';
 
 defineProps<{
   label: string;

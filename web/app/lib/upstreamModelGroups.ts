@@ -1,4 +1,4 @@
-import { CAPABILITIES, type Capability, type UpstreamModel } from "~/lib/upstream";
+import { CAPABILITIES, type Capability, type UpstreamModel } from '~/lib/upstream';
 
 export interface UpstreamModelGroup {
   upstreamModelId: string;
@@ -8,7 +8,7 @@ export interface UpstreamModelGroup {
 export type UpstreamModelRow = UpstreamModel | UpstreamModelGroup;
 
 export function isUpstreamModelGroup(row: UpstreamModelRow): row is UpstreamModelGroup {
-  return "members" in row;
+  return 'members' in row;
 }
 
 export function groupBySharedId(

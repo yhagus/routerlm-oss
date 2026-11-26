@@ -1,6 +1,6 @@
 .datasheet {
   --ds-head-height: 56px;
-  --ds-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --ds-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, Menlo, monospace;
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--paper);
@@ -148,7 +148,7 @@
 .ds-language__option:hover {
   color: var(--ink);
 }
-.ds-language__option[aria-current="page"] {
+.ds-language__option[aria-current='page'] {
   background: var(--panel);
   color: var(--ink);
   font-weight: 600;
@@ -523,13 +523,13 @@ h3.ds-heading {
 }
 h2.ds-heading::before {
   min-width: 2.2em;
-  content: counter(ds-page) "." counter(ds-section);
+  content: counter(ds-page) '.' counter(ds-section);
 }
 h3.ds-heading::before {
   min-width: 3.2em;
   font-size: 0.75em;
   vertical-align: 0.06em;
-  content: counter(ds-page) "." counter(ds-section) "." counter(ds-subsection);
+  content: counter(ds-page) '.' counter(ds-section) '.' counter(ds-subsection);
 }
 .ds-heading__anchor {
   display: inline-flex;
@@ -646,7 +646,7 @@ h3.ds-heading::before {
   font-variant-numeric: tabular-nums;
 }
 .ds-figure__number::after {
-  content: " " counter(ds-page, decimal-leading-zero) "-" counter(ds-figure);
+  content: ' ' counter(ds-page, decimal-leading-zero) '-' counter(ds-figure);
 }
 
 .ds-table {
@@ -763,11 +763,11 @@ a.ds-pager__link:hover {
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
-:root[data-theme="dark"] .ds-search::backdrop {
+:root[data-theme='dark'] .ds-search::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .ds-search::backdrop {
+  :root:not([data-theme='light']) .ds-search::backdrop {
     background: rgba(0, 0, 0, 0.5);
   }
 }
@@ -1080,7 +1080,7 @@ a.ds-pager__link:hover {
     font-weight: 600;
   }
   .ds-table tr:has(td:nth-child(3)) td:first-child::after {
-    content: " · ";
+    content: ' · ';
     color: var(--faint);
   }
   .ds-table tr:has(td:nth-child(3)) td:nth-child(3) {

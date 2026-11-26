@@ -1,12 +1,12 @@
-import { z } from "zod";
-import { ERROR_ORIGINS } from "@/db/schemas";
-import { SERVICE_TIERS } from "@/inference/models/internal-format";
+import { z } from 'zod';
+import { ERROR_ORIGINS } from '@/db/schemas';
+import { SERVICE_TIERS } from '@/inference/models/internal-format';
 
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_SEARCH_LENGTH = 200;
 
-export const USAGE_STATUSES = ["succeeded", "failed", "cancelled"] as const;
+export const USAGE_STATUSES = ['succeeded', 'failed', 'cancelled'] as const;
 export type UsageStatus = (typeof USAGE_STATUSES)[number];
 
 export const instant = z.iso.datetime({ offset: true }).pipe(z.coerce.date());
@@ -14,7 +14,7 @@ export const instant = z.iso.datetime({ offset: true }).pipe(z.coerce.date());
 export function commaSeparated<Element extends z.ZodType<unknown, string>>(element: Element) {
   return z
     .string()
-    .transform((list) => list.split(","))
+    .transform((list) => list.split(','))
     .pipe(z.array(element));
 }
 
@@ -22,7 +22,7 @@ export const searchTextSchema = z
   .string()
   .trim()
   .max(MAX_SEARCH_LENGTH)
-  .transform((text) => (text === "" ? undefined : text));
+  .transform((text) => (text === '' ? undefined : text));
 
 const MAX_CUSTOMER_ID_LENGTH = 200;
 

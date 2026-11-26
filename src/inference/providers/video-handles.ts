@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
-import { z } from "zod";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
-import type { InferenceCaller } from "@/inference/models/inference";
-import { VIDEO_RESOLUTIONS } from "@/inference/models/video-generation";
+import { Injectable } from '@nestjs/common';
+import { z } from 'zod';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
+import type { InferenceCaller } from '@/inference/models/inference';
+import { VIDEO_RESOLUTIONS } from '@/inference/models/video-generation';
 
-const VIDEO_ID_PREFIX = "video_";
-const VIDEO_HANDLE_PURPOSE = "video-handle";
+const VIDEO_ID_PREFIX = 'video_';
+const VIDEO_HANDLE_PURPOSE = 'video-handle';
 
 const videoJobHandleSchema = z.object({
   owner: z.string(),
@@ -22,7 +22,7 @@ const videoJobHandleSchema = z.object({
 export type VideoJobHandle = z.infer<typeof videoJobHandleSchema>;
 
 export function videoJobOwnerOf(caller: InferenceCaller): string {
-  return caller.kind === "api-key"
+  return caller.kind === 'api-key'
     ? `api-key:${caller.principal.apiKeyId}`
     : `user:${caller.userId}`;
 }

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { ChevronRight, CircleAlert, Pencil, Plug, Plus, Power, Trash2 } from "@lucide/vue";
-import { computed, ref } from "vue";
+import { ChevronRight, CircleAlert, Pencil, Plug, Plus, Power, Trash2 } from '@lucide/vue';
+import { computed, ref } from 'vue';
 import {
   baseUrlHost,
   providerStats,
   type ProviderStats,
   unroutableReason,
   unroutableShort,
-} from "~/lib/providerOverview";
+} from '~/lib/providerOverview';
 import {
   type Provider,
   type ProviderAccount,
@@ -15,39 +15,39 @@ import {
   mainBaseUrl,
   PROTOCOL_OPTIONS,
   UPSTREAM_PROTOCOLS,
-} from "~/lib/upstream";
-import { TERMS_RISK_BLOCKED_HINT } from "~/lib/settings";
-import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
+} from '~/lib/upstream';
+import { TERMS_RISK_BLOCKED_HINT } from '~/lib/settings';
+import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
 
-useHead({ title: "Providers" });
+useHead({ title: 'Providers' });
 
 type ProviderDialog =
-  | { kind: "create" }
-  | { kind: "edit"; provider: Provider }
-  | { kind: "delete"; provider: Provider };
+  | { kind: 'create' }
+  | { kind: 'edit'; provider: Provider }
+  | { kind: 'delete'; provider: Provider };
 
 const {
   data: providers,
   status: providersStatus,
   error: loadError,
   refresh: refreshProviders,
-} = useDashboardApi<Provider[]>("/providers");
+} = useDashboardApi<Provider[]>('/providers');
 const { isBlocked } = useTermsRiskAllowed();
 const {
   data: accounts,
   status: accountsStatus,
   error: accountsError,
   refresh: refreshAccounts,
-} = useDashboardApi<ProviderAccount[]>("/provider-accounts");
+} = useDashboardApi<ProviderAccount[]>('/provider-accounts');
 const {
   data: models,
   status: modelsStatus,
   error: modelsError,
   refresh: refreshModels,
-} = useDashboardApi<UpstreamModel[]>("/upstream-models");
+} = useDashboardApi<UpstreamModel[]>('/upstream-models');
 
-const isLoadingProviders = computed(() => providersStatus.value === "pending" && !providers.value);
+const isLoadingProviders = computed(() => providersStatus.value === 'pending' && !providers.value);
 
 const loadedAt = ref(Date.now());
 
@@ -58,8 +58,8 @@ async function refresh(): Promise<void> {
 
 const isLoadingStats = computed(
   () =>
-    (accountsStatus.value === "pending" && !accounts.value) ||
-    (modelsStatus.value === "pending" && !models.value),
+    (accountsStatus.value === 'pending' && !accounts.value) ||
+    (modelsStatus.value === 'pending' && !models.value),
 );
 const hasStatsError = computed(() => Boolean(accountsError.value || modelsError.value));
 const hasStats = computed(() => !isLoadingStats.value && !hasStatsError.value);
@@ -92,31 +92,31 @@ const summary = computed(() => {
   };
 });
 
-const PROVIDER_STATUSES = ["enabled", "disabled", "attention"] as const;
+const PROVIDER_STATUSES = ['enabled', 'disabled', 'attention'] as const;
 type ProviderStatus = (typeof PROVIDER_STATUSES)[number];
-const protocolFilter = useQueryList("protocol", {
+const protocolFilter = useQueryList('protocol', {
   isValid: oneOf(UPSTREAM_PROTOCOLS),
   order: UPSTREAM_PROTOCOLS,
 });
-const statusFilter = useQueryList("status", {
+const statusFilter = useQueryList('status', {
   isValid: oneOf(PROVIDER_STATUSES),
   order: PROVIDER_STATUSES,
 });
 const statusFilterOptions = [
-  { label: "Enabled", value: "enabled" },
-  { label: "Disabled", value: "disabled" },
-  { label: "Needs attention", value: "attention" },
+  { label: 'Enabled', value: 'enabled' },
+  { label: 'Disabled', value: 'disabled' },
+  { label: 'Needs attention', value: 'attention' },
 ] satisfies { label: string; value: ProviderStatus }[];
 
 function hasStatus(provider: Provider, stats: ProviderStats, status: ProviderStatus): boolean {
-  if (status === "enabled") return provider.isEnabled;
-  if (status === "disabled") return !provider.isEnabled;
+  if (status === 'enabled') return provider.isEnabled;
+  if (status === 'disabled') return !provider.isEnabled;
   return stats.isUnroutable;
 }
 
 const activeFilters = computed<ActiveFilter[]>(() => [
-  ...listFilterTokens("Protocol", protocolFilter, PROTOCOL_OPTIONS),
-  ...listFilterTokens("Status", statusFilter, statusFilterOptions),
+  ...listFilterTokens('Protocol', protocolFilter, PROTOCOL_OPTIONS),
+  ...listFilterTokens('Status', statusFilter, statusFilterOptions),
 ]);
 
 const filteredRows = computed(() =>
@@ -142,30 +142,30 @@ function clearFilters(): void {
 
 const columns: DataTableColumn<ProviderRow>[] = [
   {
-    id: "provider",
-    header: "Provider",
+    id: 'provider',
+    header: 'Provider',
     enableHiding: false,
     accessorFn: ({ provider }) =>
       [provider.name, provider.slug, ...provider.endpoints.map(({ baseUrl }) => baseUrl)].join(
-        "\n",
+        '\n',
       ),
   },
-  { id: "protocol", header: "Endpoints" },
-  { id: "status", header: "Status" },
-  { id: "accounts", header: "Accounts" },
-  { id: "models", header: "Models" },
+  { id: 'protocol', header: 'Endpoints' },
+  { id: 'status', header: 'Status' },
+  { id: 'accounts', header: 'Accounts' },
+  { id: 'models', header: 'Models' },
   actionsColumn(),
 ];
 
 function accountSegments(stats: ProviderStats) {
   return [
-    { key: "ready", name: "Ready", value: stats.accounts.ready },
-    { key: "cooldown", name: "Cooling down", value: stats.accounts.cooldown },
-    { key: "disabled", name: "Disabled", value: stats.accounts.disabled },
+    { key: 'ready', name: 'Ready', value: stats.accounts.ready },
+    { key: 'cooldown', name: 'Cooling down', value: stats.accounts.cooldown },
+    { key: 'disabled', name: 'Disabled', value: stats.accounts.disabled },
   ].filter((segment) => segment.value > 0);
 }
 
-function detailPath(provider: Provider, tab?: "accounts" | "models"): string {
+function detailPath(provider: Provider, tab?: 'accounts' | 'models'): string {
   const path = `/providers/${provider.id}`;
   return tab ? `${path}?tab=${tab}` : path;
 }
@@ -179,16 +179,16 @@ const {
   closeDialog,
   deleteRow,
   toggleRow,
-} = useEditableList<ProviderDialog>("/providers", refresh);
+} = useEditableList<ProviderDialog>('/providers', refresh);
 
 const isFormOpen = computed({
-  get: () => dialog.value !== null && dialog.value.kind !== "delete",
+  get: () => dialog.value !== null && dialog.value.kind !== 'delete',
   set: (open) => {
     if (!open) closeDialog();
   },
 });
 const editedProvider = computed(() =>
-  dialog.value?.kind === "edit" ? dialog.value.provider : undefined,
+  dialog.value?.kind === 'edit' ? dialog.value.provider : undefined,
 );
 
 function deleteProvider(provider: Provider): Promise<void> {
@@ -234,15 +234,15 @@ function toggleProvider(provider: Provider): Promise<void> {
         <span>Ready accounts</span>
         <strong v-if="isLoadingProviders || isLoadingStats"><AppSpinner label="" /></strong>
         <template v-else>
-          <strong class="tabular">{{ hasStats ? summary.readyAccounts : "—" }}</strong>
-          <small class="tabular">of {{ hasStats ? summary.accounts : "—" }} keys</small>
+          <strong class="tabular">{{ hasStats ? summary.readyAccounts : '—' }}</strong>
+          <small class="tabular">of {{ hasStats ? summary.accounts : '—' }} keys</small>
         </template>
       </div>
       <div class="executive-band__stat">
         <span>Cooling down</span>
         <strong v-if="isLoadingProviders || isLoadingStats"><AppSpinner label="" /></strong>
         <template v-else>
-          <strong class="tabular">{{ hasStats ? summary.coolingAccounts : "—" }}</strong>
+          <strong class="tabular">{{ hasStats ? summary.coolingAccounts : '—' }}</strong>
           <small>keys resting after errors</small>
         </template>
       </div>
@@ -250,8 +250,8 @@ function toggleProvider(provider: Provider): Promise<void> {
         <span>Enabled models</span>
         <strong v-if="isLoadingProviders || isLoadingStats"><AppSpinner label="" /></strong>
         <template v-else>
-          <strong class="tabular">{{ hasStats ? summary.enabledModels : "—" }}</strong>
-          <small class="tabular">of {{ hasStats ? summary.models : "—" }} Upstream Models</small>
+          <strong class="tabular">{{ hasStats ? summary.enabledModels : '—' }}</strong>
+          <small class="tabular">of {{ hasStats ? summary.models : '—' }} Upstream Models</small>
         </template>
       </div>
     </section>
@@ -332,7 +332,7 @@ function toggleProvider(provider: Provider): Promise<void> {
         <span
           class="status-badge"
           :class="provider.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-          >{{ provider.isEnabled ? "Enabled" : "Disabled" }}</span
+          >{{ provider.isEnabled ? 'Enabled' : 'Disabled' }}</span
         >
         <span
           v-if="hasStats && stats.isUnroutable"

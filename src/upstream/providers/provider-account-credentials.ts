@@ -1,30 +1,30 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, providers } from "@/db/schemas";
-import { cliIdentityHeaders } from "@/upstream/models/cli-identity";
-import { codexInferenceHeaders } from "@/upstream/models/codex-cli-identity";
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, providers } from '@/db/schemas';
+import { cliIdentityHeaders } from '@/upstream/models/cli-identity';
+import { codexInferenceHeaders } from '@/upstream/models/codex-cli-identity';
 import {
   type OauthLoginEndpoint,
   oauthLoginEndpointOf,
-} from "@/upstream/models/oauth-device-grant";
+} from '@/upstream/models/oauth-device-grant';
 import {
   needsRefresh,
   type OauthLoginLifetime,
   SIGN_IN_AGAIN_REASON,
-} from "@/upstream/models/oauth-login";
+} from '@/upstream/models/oauth-login';
 import {
   apiKeyCredential,
   CredentialUnavailableError,
   OauthLoginRefusedError,
   type ProviderAccountCredential,
-} from "@/upstream/models/provider-account-credential";
-import { storedOauthTokens } from "@/upstream/models/provider-account";
-import { OauthLoginClient } from "./oauth-login-client";
-import { OauthRefreshLock } from "./oauth-refresh-lock";
-import { ProviderAccountHealth } from "./provider-account-health";
-import { ProviderKeyCipher } from "./provider-key-cipher";
+} from '@/upstream/models/provider-account-credential';
+import { storedOauthTokens } from '@/upstream/models/provider-account';
+import { OauthLoginClient } from './oauth-login-client';
+import { OauthRefreshLock } from './oauth-refresh-lock';
+import { ProviderAccountHealth } from './provider-account-health';
+import { ProviderKeyCipher } from './provider-key-cipher';
 
 interface StoredLogin extends OauthLoginLifetime {
   accessToken: string;
@@ -40,8 +40,8 @@ export interface CredentialReadOptions {
 const DISABLES_REFUSED_LOGIN: CredentialReadOptions = { disablesRefusedLogin: true };
 
 type StoredCredential =
-  | { kind: "api-key"; key: string }
-  | { kind: "oauth-login"; login: StoredLogin };
+  | { kind: 'api-key'; key: string }
+  | { kind: 'oauth-login'; login: StoredLogin };
 
 @Injectable()
 export class ProviderAccountCredentials {
@@ -60,7 +60,7 @@ export class ProviderAccountCredentials {
     options: CredentialReadOptions = DISABLES_REFUSED_LOGIN,
   ): Promise<ProviderAccountCredential> {
     const stored = await this.read(providerAccountId);
-    if (stored.kind === "api-key") {
+    if (stored.kind === 'api-key') {
       return apiKeyCredential(stored.key);
     }
     const { login } = stored;
@@ -104,8 +104,8 @@ export class ProviderAccountCredentials {
   ): Promise<ProviderAccountCredential> {
     return this.refreshLock.run(providerAccountId, async () => {
       const stored = await this.read(providerAccountId);
-      if (stored.kind !== "oauth-login") {
-        throw new CredentialUnavailableError("Provider Account holds no OAuth Login");
+      if (stored.kind !== 'oauth-login') {
+        throw new CredentialUnavailableError('Provider Account holds no OAuth Login');
       }
       if (!isStale(stored.login)) {
         return loginCredential(stored.login);
@@ -122,7 +122,7 @@ export class ProviderAccountCredentials {
     const grantedAt = new Date();
     const refresh = await this.oauthLoginClient.refreshTokens(login.endpoint, login.refreshToken);
     switch (refresh.kind) {
-      case "refreshed": {
+      case 'refreshed': {
         const columns = storedOauthTokens(this.keyCipher, refresh.tokens, grantedAt);
         await this.db
           .update(providerAccounts)
@@ -137,7 +137,7 @@ export class ProviderAccountCredentials {
           accountId: refresh.tokens.codexAccount?.accountId ?? login.accountId,
         };
       }
-      case "refused":
+      case 'refused':
         if (disablesRefusedLogin) {
           await this.health.disable(
             providerAccountId,
@@ -148,7 +148,7 @@ export class ProviderAccountCredentials {
         throw new OauthLoginRefusedError(
           `The auth host refused to refresh the OAuth Login (${refresh.reason})`,
         );
-      case "unanswered":
+      case 'unanswered':
         throw new CredentialUnavailableError(
           `The auth host did not refresh the OAuth Login (${refresh.reason})`,
         );
@@ -173,13 +173,13 @@ export class ProviderAccountCredentials {
       .innerJoin(providers, eq(providers.id, providerAccounts.providerId))
       .where(eq(providerAccounts.id, providerAccountId));
     if (!account) {
-      throw new NotFoundException("Provider Account not found");
+      throw new NotFoundException('Provider Account not found');
     }
-    if (account.credentialKind === "api-key") {
+    if (account.credentialKind === 'api-key') {
       if (account.encryptedKey === null) {
-        throw new CredentialUnavailableError("Provider Account holds no credential");
+        throw new CredentialUnavailableError('Provider Account holds no credential');
       }
-      return { kind: "api-key", key: this.keyCipher.decrypt(account.encryptedKey) };
+      return { kind: 'api-key', key: this.keyCipher.decrypt(account.encryptedKey) };
     }
     const { encryptedAccessToken, encryptedRefreshToken, expiresAt, deviceId } = account;
     if (
@@ -188,17 +188,17 @@ export class ProviderAccountCredentials {
       expiresAt === null ||
       deviceId === null
     ) {
-      throw new CredentialUnavailableError("Provider Account holds no credential");
+      throw new CredentialUnavailableError('Provider Account holds no credential');
     }
     if (account.oauthLogin === null) {
-      throw new CredentialUnavailableError("The Provider no longer offers OAuth Login");
+      throw new CredentialUnavailableError('The Provider no longer offers OAuth Login');
     }
     const endpoint = oauthLoginEndpointOf(account.oauthLogin, account.region, deviceId);
     if (endpoint === null) {
-      throw new CredentialUnavailableError("The OAuth Login names no region of the Provider");
+      throw new CredentialUnavailableError('The OAuth Login names no region of the Provider');
     }
     return {
-      kind: "oauth-login",
+      kind: 'oauth-login',
       login: {
         accessToken: this.keyCipher.decrypt(encryptedAccessToken),
         refreshToken: this.keyCipher.decrypt(encryptedRefreshToken),
@@ -224,9 +224,9 @@ function identityHeadersOf(
   accountId: string | null,
 ): Record<string, string> {
   switch (endpoint.flow) {
-    case "kimi-code":
+    case 'kimi-code':
       return cliIdentityHeaders(endpoint.identity);
-    case "openai-codex":
+    case 'openai-codex':
       return codexInferenceHeaders({ cliVersion: endpoint.cliVersion, accountId });
   }
 }

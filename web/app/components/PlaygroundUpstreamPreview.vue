@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { TriangleAlert } from "@lucide/vue";
-import { computed } from "vue";
+import { TriangleAlert } from '@lucide/vue';
+import { computed } from 'vue';
 import {
   mainBaseUrl,
   type Provider,
   type ProviderAccount,
   type UpstreamModel,
   upstreamModelLabel,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 const props = defineProps<{
   provider: Provider;
@@ -18,33 +18,33 @@ const props = defineProps<{
 const usableAccounts = computed(() => props.accounts.filter((account) => account.isEnabled));
 
 const blocker = computed(() => {
-  if (!props.provider.isEnabled) return "Provider disabled";
-  if (!props.upstreamModel.isEnabled) return "Upstream Model disabled";
-  if (usableAccounts.value.length === 0) return "No enabled Provider Account";
+  if (!props.provider.isEnabled) return 'Provider disabled';
+  if (!props.upstreamModel.isEnabled) return 'Upstream Model disabled';
+  if (usableAccounts.value.length === 0) return 'No enabled Provider Account';
   return null;
 });
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
 
-function accountState(account: ProviderAccount): { label: string; tone: "good" | "warn" | null } {
+function accountState(account: ProviderAccount): { label: string; tone: 'good' | 'warn' | null } {
   if (!account.isEnabled) {
     return {
-      label: account.disabledReason ? `Disabled: ${account.disabledReason}` : "Disabled",
-      tone: "warn",
+      label: account.disabledReason ? `Disabled: ${account.disabledReason}` : 'Disabled',
+      tone: 'warn',
     };
   }
   if (account.cooldownEndsAt && new Date(account.cooldownEndsAt) > new Date()) {
     return {
       label: `Cooling down until ${timeFormat.format(new Date(account.cooldownEndsAt))}`,
-      tone: "warn",
+      tone: 'warn',
     };
   }
-  return { label: "Ready", tone: "good" };
+  return { label: 'Ready', tone: 'good' };
 }
 
 function credentialNote(account: ProviderAccount): string {
-  return account.credentialKind === "oauth-login"
-    ? "OAuth Login"
+  return account.credentialKind === 'oauth-login'
+    ? 'OAuth Login'
     : `Key ending ${account.keyLastFour}`;
 }
 </script>
@@ -75,7 +75,7 @@ function credentialNote(account: ProviderAccount): string {
             <strong>{{ upstreamModelLabel(upstreamModel) }}</strong>
             <span class="route-list__meta">
               {{ provider.name }} · {{ usableAccounts.length }} of {{ accounts.length }}
-              {{ accounts.length === 1 ? "account" : "accounts" }} enabled
+              {{ accounts.length === 1 ? 'account' : 'accounts' }} enabled
             </span>
           </span>
           <span class="route-list__tags">

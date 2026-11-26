@@ -1,16 +1,16 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
 
 const ACME = {
-  slug: "acme",
-  name: "Acme AI",
-  endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" }],
-  authStyle: "bearer",
+  slug: 'acme',
+  name: 'Acme AI',
+  endpoints: [{ kind: 'chat', protocol: 'openai-chat', baseUrl: 'https://api.acme.example/v1' }],
+  authStyle: 'bearer',
 };
 
 describe("A Provider's logo and quota reader (e2e)", () => {
@@ -31,18 +31,18 @@ describe("A Provider's logo and quota reader (e2e)", () => {
     await app.close();
   });
 
-  it("stores a logo and a quota reader, and clears both", async () => {
+  it('stores a logo and a quota reader, and clears both', async () => {
     const server = app.getHttpServer();
     const created = await request(server)
-      .post("/api/providers")
-      .set("Cookie", cookie)
-      .send({ ...ACME, logo: "acme-ai", quotaReader: "kimi-code" })
+      .post('/api/providers')
+      .set('Cookie', cookie)
+      .send({ ...ACME, logo: 'acme-ai', quotaReader: 'kimi-code' })
       .expect(201);
-    expect(created.body).toMatchObject({ logo: "acme-ai", quotaReader: "kimi-code" });
+    expect(created.body).toMatchObject({ logo: 'acme-ai', quotaReader: 'kimi-code' });
 
     const cleared = await request(server)
       .patch(`/api/providers/${created.body.id}`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .send({ logo: null, quotaReader: null })
       .expect(200);
 
@@ -51,9 +51,9 @@ describe("A Provider's logo and quota reader (e2e)", () => {
 
   it("refuses a logo that isn't a lowercase key", async () => {
     await request(app.getHttpServer())
-      .post("/api/providers")
-      .set("Cookie", cookie)
-      .send({ ...ACME, logo: "Acme AI.svg" })
+      .post('/api/providers')
+      .set('Cookie', cookie)
+      .send({ ...ACME, logo: 'Acme AI.svg' })
       .expect(400);
   });
 });

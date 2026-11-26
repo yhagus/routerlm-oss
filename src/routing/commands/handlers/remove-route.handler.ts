@@ -1,11 +1,11 @@
-import { NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { routes } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { RemoveRouteCommand } from "@/routing/commands/impl/remove-route.command";
+import { NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { routes } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { RemoveRouteCommand } from '@/routing/commands/impl/remove-route.command';
 
 @CommandHandler(RemoveRouteCommand)
 export class RemoveRouteHandler implements ICommandHandler<RemoveRouteCommand> {
@@ -20,7 +20,7 @@ export class RemoveRouteHandler implements ICommandHandler<RemoveRouteCommand> {
       .where(and(eq(routes.id, routeId), eq(routes.modelId, modelId)))
       .returning({ id: routes.id });
     if (removed.length === 0) {
-      throw new NotFoundException("Route not found");
+      throw new NotFoundException('Route not found');
     }
     await this.snapshot.changed();
   }

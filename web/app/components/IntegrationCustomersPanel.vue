@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { UsersRound } from "@lucide/vue";
-import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from "~/lib/dataTable";
-import { dateTimeFormat } from "~/lib/dateFormats";
-import type { IntegrationCustomer, IntegrationCustomerPage } from "~/lib/integrations";
-import { formatCost, formatCount } from "~/lib/usage";
+import { UsersRound } from '@lucide/vue';
+import { actionsColumn, DATA_TABLE_PAGE_SIZE, type DataTableColumn } from '~/lib/dataTable';
+import { dateTimeFormat } from '~/lib/dateFormats';
+import type { IntegrationCustomer, IntegrationCustomerPage } from '~/lib/integrations';
+import { formatCost, formatCount } from '~/lib/usage';
 
 const props = defineProps<{ integrationId: string }>();
 
@@ -26,15 +26,15 @@ const {
   },
 );
 
-const isLoading = computed(() => status.value === "pending" && !customerPage.value);
+const isLoading = computed(() => status.value === 'pending' && !customerPage.value);
 
 const columns: DataTableColumn<IntegrationCustomer>[] = [
-  { id: "customer", header: "Customer", enableHiding: false },
-  { id: "apiKeys", header: "API Keys" },
-  { id: "spent", header: "Spent" },
-  { id: "requests", header: "Requests" },
-  { id: "cost", header: "Cost" },
-  { id: "lastRequest", header: "Last request" },
+  { id: 'customer', header: 'Customer', enableHiding: false },
+  { id: 'apiKeys', header: 'API Keys' },
+  { id: 'spent', header: 'Spent' },
+  { id: 'requests', header: 'Requests' },
+  { id: 'cost', header: 'Cost' },
+  { id: 'lastRequest', header: 'Last request' },
   actionsColumn(),
 ];
 

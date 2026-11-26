@@ -1,7 +1,7 @@
-import { z } from "zod";
-import { OVERVIEW_RANGES } from "@/overview/models/overview";
+import { z } from 'zod';
+import { OVERVIEW_RANGES } from '@/overview/models/overview';
 
 export const overviewQuerySchema = z.object({
-  range: z.enum(OVERVIEW_RANGES).default("24h"),
+  range: z.enum(OVERVIEW_RANGES).default('24h'),
 });
 export type OverviewQuery = z.infer<typeof overviewQuerySchema>;

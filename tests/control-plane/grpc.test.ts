@@ -1,25 +1,25 @@
-import { type ChildProcess, spawn } from "node:child_process";
-import { once } from "node:events";
-import { createServer } from "node:net";
-import { vi } from "vitest";
-import type { ControlPlaneTransport } from "./key-scenarios";
+import { type ChildProcess, spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { createServer } from 'node:net';
+import { vi } from 'vitest';
+import type { ControlPlaneTransport } from './key-scenarios';
 
 const WORKER_STARTUP_TIMEOUT_MS = 30_000;
 vi.setConfig({ hookTimeout: WORKER_STARTUP_TIMEOUT_MS });
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { portOf } = await import("@tests/support/port-of");
-const { grpcControlPlaneClient } = await import("@tests/support/grpc-control-plane-client");
-const { describeKeyScenarios } = await import("./key-scenarios");
-const { describeLastUsedScenarios } = await import("./last-used-scenarios");
-const { describeModelScenarios } = await import("./model-scenarios");
-const { describeUsageScenarios } = await import("./usage-scenarios");
+const { portOf } = await import('@tests/support/port-of');
+const { grpcControlPlaneClient } = await import('@tests/support/grpc-control-plane-client');
+const { describeKeyScenarios } = await import('./key-scenarios');
+const { describeLastUsedScenarios } = await import('./last-used-scenarios');
+const { describeModelScenarios } = await import('./model-scenarios');
+const { describeUsageScenarios } = await import('./usage-scenarios');
 
 async function freePort(): Promise<number> {
   const server = createServer().listen(0);
-  await once(server, "listening");
+  await once(server, 'listening');
   const port = portOf(server.address());
   server.close();
   return port;
@@ -27,8 +27,8 @@ async function freePort(): Promise<number> {
 
 async function stop(worker: ChildProcess): Promise<void> {
   if (worker.exitCode !== null || worker.signalCode !== null) return;
-  const exited = once(worker, "exit");
-  worker.kill("SIGTERM");
+  const exited = once(worker, 'exit');
+  worker.kill('SIGTERM');
   await exited;
 }
 
@@ -38,12 +38,12 @@ afterAll(async () => {
 });
 
 const GRPC_TRANSPORT: ControlPlaneTransport = {
-  name: "gRPC",
+  name: 'gRPC',
   connect: async () => {
     const port = await freePort();
-    const worker = spawn("bun", ["src/worker.ts"], {
+    const worker = spawn('bun', ['src/worker.ts'], {
       env: { ...process.env, CONTROL_PLANE_PORT: String(port) },
-      stdio: "inherit",
+      stdio: 'inherit',
     });
     startedWorkers.add(worker);
     try {

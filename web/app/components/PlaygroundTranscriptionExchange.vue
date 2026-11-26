@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { Shimmer } from "@/components/ai-elements/shimmer";
-import type { TranscriptionExchange } from "~/lib/playgroundTranscription";
+import { Message, MessageContent } from '@/components/ai-elements/message';
+import { Shimmer } from '@/components/ai-elements/shimmer';
+import type { TranscriptionExchange } from '~/lib/playgroundTranscription';
 
 defineProps<{ exchange: TranscriptionExchange }>();
 
@@ -15,7 +15,7 @@ const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget
     >
       <p class="exchange__text">{{ exchange.fileName }}</p>
       <p class="exchange__note">
-        {{ exchange.language === "" ? "Language detected" : `Language ${exchange.language}` }}
+        {{ exchange.language === '' ? 'Language detected' : `Language ${exchange.language}` }}
       </p>
     </MessageContent>
   </Message>
@@ -27,7 +27,7 @@ const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget
       <p v-else-if="exchange.state.kind === 'stopped'" class="exchange__note">Stopped.</p>
       <p v-else-if="exchange.state.kind === 'failed'" class="exchange__error" role="alert">
         <span class="status-badge status-badge--bad">{{
-          exchange.state.error.code ?? "Error"
+          exchange.state.error.code ?? 'Error'
         }}</span>
         {{ exchange.state.error.message }}
       </p>

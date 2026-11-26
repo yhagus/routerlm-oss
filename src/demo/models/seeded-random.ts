@@ -29,7 +29,7 @@ export function pickWeighted<T>(random: Random, entries: readonly Weighted<T>[])
   }
   const last = entries.at(-1);
   if (last === undefined) {
-    throw new Error("pickWeighted needs at least one entry");
+    throw new Error('pickWeighted needs at least one entry');
   }
   return last.value;
 }

@@ -1,15 +1,15 @@
-import { AuthenticationError } from "@nestjs/authentication";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { authenticateWithIntegrationSecret, createIntegration } from "@tests/support/integrations";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import { AuthenticationError } from '@nestjs/authentication';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { authenticateWithIntegrationSecret, createIntegration } from '@tests/support/integrations';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 
-describe("Disabling and enabling an Integration (e2e)", () => {
+describe('Disabling and enabling an Integration (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let adaCookie: string;
@@ -30,8 +30,8 @@ describe("Disabling and enabling an Integration (e2e)", () => {
 
   async function listIntegrations(): Promise<{ disabledAt: string | null }[]> {
     const list = await request(app.getHttpServer())
-      .get("/api/integrations")
-      .set("Cookie", adaCookie)
+      .get('/api/integrations')
+      .set('Cookie', adaCookie)
       .expect(200);
     return list.body;
   }
@@ -41,7 +41,7 @@ describe("Disabling and enabling an Integration (e2e)", () => {
 
     await request(app.getHttpServer())
       .post(`/api/integrations/${created.id}/disable`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(204);
 
     await expect(authenticateWithIntegrationSecret(app, created.secret)).rejects.toThrow(
@@ -52,16 +52,16 @@ describe("Disabling and enabling an Integration (e2e)", () => {
     ]);
   });
 
-  it("lets a re-enabled Integration sign in with the same secret", async () => {
+  it('lets a re-enabled Integration sign in with the same secret', async () => {
     const created = await createIntegration(app, adaCookie);
     await request(app.getHttpServer())
       .post(`/api/integrations/${created.id}/disable`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(204);
 
     await request(app.getHttpServer())
       .post(`/api/integrations/${created.id}/enable`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(204);
 
     await expect(authenticateWithIntegrationSecret(app, created.secret)).resolves.toMatchObject({
@@ -70,10 +70,10 @@ describe("Disabling and enabling an Integration (e2e)", () => {
     expect(await listIntegrations()).toEqual([expect.objectContaining({ disabledAt: null })]);
   });
 
-  it("answers 404 for an Integration that does not exist", async () => {
+  it('answers 404 for an Integration that does not exist', async () => {
     await request(app.getHttpServer())
       .post(`/api/integrations/${UNKNOWN_ID}/disable`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(404);
   });
 });

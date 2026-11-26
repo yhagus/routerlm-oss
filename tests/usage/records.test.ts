@@ -1,10 +1,10 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import { asc, eq } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import { asc, eq } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
 import {
   apiKeys,
   attempts,
@@ -13,34 +13,34 @@ import {
   upstreamModels,
   usageLogs,
   users,
-} from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+} from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import {
   anthropicMessagesFixture,
   FakeUpstream,
   openAiChatFixture,
-} from "@tests/support/fake-upstream";
+} from '@tests/support/fake-upstream';
 import {
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   setProviderQuirks,
   UPSTREAM_MODEL_ID,
-} from "@tests/support/inference";
-import { portOf } from "@tests/support/port-of";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
+} from '@tests/support/inference';
+import { portOf } from '@tests/support/port-of';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
+import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
+const { createTestApp, setUpFirstUser } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
 
-const PROMPT_TEXT = "Which umbrella should I pack for Lisbon?";
-const RESPONSE_TEXT = "Checking the weather.";
-const CHAT_REQUEST = { model: "smart", messages: [{ role: "user", content: PROMPT_TEXT }] };
+const PROMPT_TEXT = 'Which umbrella should I pack for Lisbon?';
+const RESPONSE_TEXT = 'Checking the weather.';
+const CHAT_REQUEST = { model: 'smart', messages: [{ role: 'user', content: PROMPT_TEXT }] };
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const FULL_USAGE = {
   prompt_tokens: 13_000,
@@ -49,9 +49,9 @@ const FULL_USAGE = {
   completion_tokens_details: { reasoning_tokens: 100 },
 };
 const POLL_INTERVAL_MS = 50;
-const OPS_EMAIL = "ops@example.com";
+const OPS_EMAIL = 'ops@example.com';
 
-describe("Usage Logs and Attempts (e2e)", () => {
+describe('Usage Logs and Attempts (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -84,7 +84,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
       providerId,
       providerAccountId: firstAccountId,
     } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: upstream.baseUrl,
     }));
     [{ id: upstreamModelId }] = await db
@@ -104,8 +104,8 @@ describe("Usage Logs and Attempts (e2e)", () => {
 
   function chat(body: object, key = apiKey) {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${key}`)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${key}`)
       .send(body);
   }
 
@@ -123,14 +123,14 @@ describe("Usage Logs and Attempts (e2e)", () => {
       }
       await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     }
-    throw new Error("The worker wrote no Usage Log");
+    throw new Error('The worker wrote no Usage Log');
   }
 
-  it("records a served request with its tokens, Cost and Attempt", async () => {
+  it('records a served request with its tokens, Cost and Attempt', async () => {
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
     });
 
     await chat(CHAT_REQUEST).expect(200);
@@ -142,7 +142,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
       isPlayground: false,
       modelId,
       routeId,
-      clientProtocol: "openai-chat",
+      clientProtocol: 'openai-chat',
       isStreamed: false,
       httpStatus: 200,
       errorCode: null,
@@ -165,9 +165,9 @@ describe("Usage Logs and Attempts (e2e)", () => {
 
   function upstreamAnswersWithUsage(usage: object): void {
     const answer: Record<string, unknown> = JSON.parse(
-      openAiChatFixture("upstream-response-tool-call.json"),
+      openAiChatFixture('upstream-response-tool-call.json'),
     );
-    upstream.reply({ kind: "json", status: 200, body: { ...answer, usage } });
+    upstream.reply({ kind: 'json', status: 200, body: { ...answer, usage } });
   }
 
   async function removeCacheWritePrice(): Promise<void> {
@@ -194,7 +194,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
     expect(usageLog.cost).toBeCloseTo(0.016, 10);
   });
 
-  it("leaves an unreported count empty, flags the Usage Log incomplete and prices only what was reported", async () => {
+  it('leaves an unreported count empty, flags the Usage Log incomplete and prices only what was reported', async () => {
     upstreamAnswersWithUsage({
       prompt_tokens: 3_000,
       completion_tokens: 500,
@@ -213,7 +213,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
     expect(usageLog.cost).toBeCloseTo(0.011, 10);
   });
 
-  it("does not flag a missing reasoning count, which only splits the output count", async () => {
+  it('does not flag a missing reasoning count, which only splits the output count', async () => {
     const { completion_tokens_details: _reasoning, ...withoutReasoning } = FULL_USAGE;
     upstreamAnswersWithUsage(withoutReasoning);
 
@@ -223,7 +223,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
     expect(usageLog).toMatchObject({ reasoningTokens: null, isIncomplete: false });
   });
 
-  it("leaves the Cost unknown when tokens were used at a price nobody entered", async () => {
+  it('leaves the Cost unknown when tokens were used at a price nobody entered', async () => {
     await removeCacheWritePrice();
     upstreamAnswersWithUsage(FULL_USAGE);
 
@@ -233,7 +233,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
     expect(usageLog.cost).toBeNull();
   });
 
-  it("needs no price for a count of zero", async () => {
+  it('needs no price for a count of zero', async () => {
     await removeCacheWritePrice();
     upstreamAnswersWithUsage({
       ...FULL_USAGE,
@@ -247,11 +247,11 @@ describe("Usage Logs and Attempts (e2e)", () => {
     expect(usageLog.cost).toBeCloseTo(0.011, 10);
   });
 
-  it("keeps the Cost a request had when the price changes before the worker writes it", async () => {
+  it('keeps the Cost a request had when the price changes before the worker writes it', async () => {
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
     });
     await worker.close();
 
@@ -267,13 +267,13 @@ describe("Usage Logs and Attempts (e2e)", () => {
     expect(written.usageLog.cost).toBeCloseTo(0.00041, 10);
   });
 
-  it("enqueues no prompt or response content", async () => {
+  it('enqueues no prompt or response content', async () => {
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
     });
-    const enqueued = vi.spyOn(usageQueue, "add");
+    const enqueued = vi.spyOn(usageQueue, 'add');
 
     const response = await chat(CHAT_REQUEST).expect(200);
 
@@ -282,14 +282,14 @@ describe("Usage Logs and Attempts (e2e)", () => {
     const jobPayload = JSON.stringify(enqueued.mock.calls[0][1]);
     expect(jobPayload).not.toContain(PROMPT_TEXT);
     expect(jobPayload).not.toContain(RESPONSE_TEXT);
-    expect(jobPayload).not.toContain("Paris");
+    expect(jobPayload).not.toContain('Paris');
   });
 
-  it("stores no prompt or response content in the Usage Log or its Attempts", async () => {
+  it('stores no prompt or response content in the Usage Log or its Attempts', async () => {
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
     });
 
     await chat(CHAT_REQUEST).expect(200);
@@ -297,19 +297,19 @@ describe("Usage Logs and Attempts (e2e)", () => {
     const stored = JSON.stringify(await writtenUsageLog());
     expect(stored).not.toContain(PROMPT_TEXT);
     expect(stored).not.toContain(RESPONSE_TEXT);
-    expect(stored).not.toContain("Paris");
+    expect(stored).not.toContain('Paris');
   });
 
-  it("records one Attempt per upstream call when Fallback moves to the next Provider Account", async () => {
+  it('records one Attempt per upstream call when Fallback moves to the next Provider Account', async () => {
     const secondAccountId = await addProviderAccount(app, db, providerId, {
-      key: "sk-second-account",
+      key: 'sk-second-account',
       priority: 1,
     });
-    upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+    upstream.reply({ kind: 'json', status: 500, body: { error: { message: 'down' } } });
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
     });
 
     await chat(CHAT_REQUEST).expect(200);
@@ -320,7 +320,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
       providerAccountId: secondAccountId,
     });
     expect(written.attempts).toEqual([
-      expect.objectContaining({ upstreamStatus: 500, failureReason: "server_error" }),
+      expect.objectContaining({ upstreamStatus: 500, failureReason: 'server_error' }),
       expect.objectContaining({
         providerAccountId: secondAccountId,
         upstreamStatus: 200,
@@ -330,54 +330,54 @@ describe("Usage Logs and Attempts (e2e)", () => {
   });
 
   it("records the upstream Protocol on the Usage Log and on a failed Attempt's Error Capture", async () => {
-    await addProviderAccount(app, db, providerId, { key: "sk-second-account", priority: 1 });
+    await addProviderAccount(app, db, providerId, { key: 'sk-second-account', priority: 1 });
     await db
       .update(providers)
       .set({
         endpoints: [
-          { kind: "chat", protocol: "openai-chat", baseUrl: upstream.baseUrl },
-          { kind: "chat", protocol: "anthropic-messages", baseUrl: `${upstream.origin}/anthropic` },
+          { kind: 'chat', protocol: 'openai-chat', baseUrl: upstream.baseUrl },
+          { kind: 'chat', protocol: 'anthropic-messages', baseUrl: `${upstream.origin}/anthropic` },
         ],
       })
       .where(eq(providers.id, providerId));
-    await db.update(upstreamModels).set({ protocols: ["anthropic-messages"] });
+    await db.update(upstreamModels).set({ protocols: ['anthropic-messages'] });
     await app.get(SnapshotService).changed();
-    upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+    upstream.reply({ kind: 'json', status: 500, body: { error: { message: 'down' } } });
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(anthropicMessagesFixture("upstream-response-tool-call.json")),
+      body: JSON.parse(anthropicMessagesFixture('upstream-response-tool-call.json')),
     });
 
     await chat(CHAT_REQUEST).expect(200);
 
     const { usageLog } = await writtenUsageLog();
     expect(usageLog).toMatchObject({
-      clientProtocol: "openai-chat",
-      upstreamProtocol: "anthropic-messages",
+      clientProtocol: 'openai-chat',
+      upstreamProtocol: 'anthropic-messages',
     });
     expect(await db.select().from(errorCaptures)).toEqual([
-      expect.objectContaining({ upstreamProtocol: "anthropic-messages" }),
+      expect.objectContaining({ upstreamProtocol: 'anthropic-messages' }),
     ]);
   });
 
-  it("records a Provider Account skipped as Exhausted as an Attempt with no upstream call", async () => {
+  it('records a Provider Account skipped as Exhausted as an Attempt with no upstream call', async () => {
     const secondAccountId = await addProviderAccount(app, db, providerId, {
-      key: "sk-second-account",
+      key: 'sk-second-account',
       priority: 1,
     });
     await setProviderQuirks(app, db, providerId, { exhaustedErrorCodes: [2056] });
-    const answer = JSON.parse(openAiChatFixture("upstream-response-tool-call.json"));
+    const answer = JSON.parse(openAiChatFixture('upstream-response-tool-call.json'));
     upstream.reply({
-      kind: "json",
+      kind: 'json',
       status: 429,
-      body: { base_resp: { status_code: 2056, status_msg: "usage limit exceeded" } },
+      body: { base_resp: { status_code: 2056, status_msg: 'usage limit exceeded' } },
     });
-    upstream.reply({ kind: "json", status: 200, body: answer });
+    upstream.reply({ kind: 'json', status: 200, body: answer });
     await chat(CHAT_REQUEST).expect(200);
     await writtenUsageLog();
     await db.delete(usageLogs);
-    upstream.reply({ kind: "json", status: 200, body: answer });
+    upstream.reply({ kind: 'json', status: 200, body: answer });
 
     await chat(CHAT_REQUEST).expect(200);
 
@@ -387,7 +387,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
       expect.objectContaining({
         providerAccountId: firstAccountId,
         upstreamStatus: null,
-        failureReason: "exhausted",
+        failureReason: 'exhausted',
         durationMs: 0,
       }),
       expect.objectContaining({ providerAccountId: secondAccountId, failureReason: null }),
@@ -395,16 +395,16 @@ describe("Usage Logs and Attempts (e2e)", () => {
     expect(upstream.requests).toHaveLength(3);
   });
 
-  it("flags a stream the client left as cancelled", async () => {
-    const firstChunk = openAiChatFixture("upstream-stream-tool-call.sse").split("\n\n")[0] + "\n\n";
-    upstream.reply({ kind: "stream", events: firstChunk, holdOpen: true });
-    const server = await app.listen(0, "127.0.0.1");
+  it('flags a stream the client left as cancelled', async () => {
+    const firstChunk = openAiChatFixture('upstream-stream-tool-call.sse').split('\n\n')[0] + '\n\n';
+    upstream.reply({ kind: 'stream', events: firstChunk, holdOpen: true });
+    const server = await app.listen(0, '127.0.0.1');
     const port = portOf(server.address());
     const client = new AbortController();
 
     const response = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      method: 'POST',
+      headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
       body: JSON.stringify({ ...CHAT_REQUEST, stream: true }),
       signal: client.signal,
     });
@@ -422,18 +422,18 @@ describe("Usage Logs and Attempts (e2e)", () => {
       cost: null,
     });
     expect(written.usageLog.timeToFirstTokenMs).not.toBeNull();
-    expect(written.attempts).toEqual([expect.objectContaining({ failureReason: "cancelled" })]);
+    expect(written.attempts).toEqual([expect.objectContaining({ failureReason: 'cancelled' })]);
   });
 
-  it("records a request refused before any Attempt, with its error code", async () => {
-    await chat({ ...CHAT_REQUEST, model: "no-such-model" }).expect(404);
+  it('records a request refused before any Attempt, with its error code', async () => {
+    await chat({ ...CHAT_REQUEST, model: 'no-such-model' }).expect(404);
 
     const written = await writtenUsageLog();
     expect(written.usageLog).toMatchObject({
       apiKeyId,
       modelId: null,
       httpStatus: 404,
-      errorCode: "model_not_found",
+      errorCode: 'model_not_found',
       attemptCount: 0,
       inputTokens: null,
       outputTokens: null,
@@ -442,23 +442,23 @@ describe("Usage Logs and Attempts (e2e)", () => {
     });
   });
 
-  it("records a request with a wrong API Key without a caller", async () => {
-    await chat(CHAT_REQUEST, "rlm_wrong_key").expect(401);
+  it('records a request with a wrong API Key without a caller', async () => {
+    await chat(CHAT_REQUEST, 'rlm_wrong_key').expect(401);
 
     const written = await writtenUsageLog();
     expect(written.usageLog).toMatchObject({
       apiKeyId: null,
       httpStatus: 401,
-      errorCode: "invalid_api_key",
-      clientProtocol: "openai-chat",
+      errorCode: 'invalid_api_key',
+      clientProtocol: 'openai-chat',
     });
   });
 
-  describe("as a snapshot of what served the request", () => {
+  describe('as a snapshot of what served the request', () => {
     let cookie: string;
 
     beforeEach(async () => {
-      cookie = await setUpFirstUser(app, { email: OPS_EMAIL, password: "ops password" });
+      cookie = await setUpFirstUser(app, { email: OPS_EMAIL, password: 'ops password' });
     });
 
     function dashboard() {
@@ -479,62 +479,62 @@ describe("Usage Logs and Attempts (e2e)", () => {
 
     function upstreamAnswers(): void {
       upstream.reply({
-        kind: "json",
+        kind: 'json',
         status: 200,
-        body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+        body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
       });
     }
 
-    it("copies the names of what served it onto the Usage Log and each Attempt", async () => {
+    it('copies the names of what served it onto the Usage Log and each Attempt', async () => {
       const secondAccountId = await addProviderAccount(app, db, providerId, {
-        key: "sk-second-account",
+        key: 'sk-second-account',
         priority: 1,
       });
-      upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+      upstream.reply({ kind: 'json', status: 500, body: { error: { message: 'down' } } });
       upstreamAnswers();
 
       await chat(CHAT_REQUEST).expect(200);
 
       const written = await writtenUsageLog();
       expect(written.usageLog).toMatchObject({
-        modelName: "smart",
-        apiKeyName: "client",
+        modelName: 'smart',
+        apiKeyName: 'client',
         upstreamModelId,
         upstreamModelName: UPSTREAM_MODEL_ID,
-        providerSlug: "acme-smart",
+        providerSlug: 'acme-smart',
         providerAccountId: secondAccountId,
-        providerAccountName: "account 1",
+        providerAccountName: 'account 1',
       });
       expect(written.attempts).toEqual([
         expect.objectContaining({
-          modelName: "smart",
-          apiKeyName: "client",
+          modelName: 'smart',
+          apiKeyName: 'client',
           upstreamModelId,
           upstreamModelName: UPSTREAM_MODEL_ID,
-          providerSlug: "acme-smart",
+          providerSlug: 'acme-smart',
           providerAccountId: firstAccountId,
-          providerAccountName: "main",
+          providerAccountName: 'main',
         }),
         expect.objectContaining({
           providerAccountId: secondAccountId,
-          providerAccountName: "account 1",
+          providerAccountName: 'account 1',
         }),
       ]);
     });
 
-    it("keeps its ids and names after the API Key, Model, Route and Provider Account are deleted", async () => {
+    it('keeps its ids and names after the API Key, Model, Route and Provider Account are deleted', async () => {
       upstreamAnswers();
       await chat(CHAT_REQUEST).expect(200);
       const before = await writtenUsageLog();
 
       await dashboard()
         .delete(`/api/models/${modelId}/routes/${routeId}`)
-        .set("Cookie", cookie)
+        .set('Cookie', cookie)
         .expect(204);
-      await dashboard().delete(`/api/models/${modelId}`).set("Cookie", cookie).expect(204);
+      await dashboard().delete(`/api/models/${modelId}`).set('Cookie', cookie).expect(204);
       await dashboard()
         .delete(`/api/provider-accounts/${firstAccountId}`)
-        .set("Cookie", cookie)
+        .set('Cookie', cookie)
         .expect(204);
       await db.delete(apiKeys).where(eq(apiKeys.id, apiKeyId));
 
@@ -542,69 +542,69 @@ describe("Usage Logs and Attempts (e2e)", () => {
       expect(after.usageLog).toEqual(before.usageLog);
       expect(after.usageLog).toMatchObject({
         apiKeyId,
-        apiKeyName: "client",
+        apiKeyName: 'client',
         modelId,
-        modelName: "smart",
+        modelName: 'smart',
         routeId,
         providerAccountId: firstAccountId,
-        providerAccountName: "main",
+        providerAccountName: 'main',
       });
       expect(after.attempts).toEqual(before.attempts);
     });
 
-    it("keeps the earlier names after the Model and API Key are renamed, and still finds them by id", async () => {
+    it('keeps the earlier names after the Model and API Key are renamed, and still finds them by id', async () => {
       upstreamAnswers();
       await chat(CHAT_REQUEST).expect(200);
       await writtenUsageLogs(1);
       await dashboard()
         .patch(`/api/models/${modelId}`)
-        .set("Cookie", cookie)
-        .send({ name: "clever" })
+        .set('Cookie', cookie)
+        .send({ name: 'clever' })
         .expect(200);
-      await db.update(apiKeys).set({ name: "renamed" }).where(eq(apiKeys.id, apiKeyId));
+      await db.update(apiKeys).set({ name: 'renamed' }).where(eq(apiKeys.id, apiKeyId));
       await app.get(SnapshotService).changed();
       upstreamAnswers();
 
-      await chat({ ...CHAT_REQUEST, model: "clever" }).expect(200);
+      await chat({ ...CHAT_REQUEST, model: 'clever' }).expect(200);
 
       const [earlier, later] = await writtenUsageLogs(2);
-      expect(earlier).toMatchObject({ modelName: "smart", apiKeyName: "client" });
-      expect(later).toMatchObject({ modelName: "clever", apiKeyName: "renamed" });
+      expect(earlier).toMatchObject({ modelName: 'smart', apiKeyName: 'client' });
+      expect(later).toMatchObject({ modelName: 'clever', apiKeyName: 'renamed' });
       const listed = await dashboard()
         .get(`/api/usage?modelId=${modelId}&apiKeyId=${apiKeyId}`)
-        .set("Cookie", cookie)
+        .set('Cookie', cookie)
         .expect(200);
       expect(listed.body.items).toEqual([
-        expect.objectContaining({ modelName: "clever", apiKeyName: "renamed" }),
-        expect.objectContaining({ modelName: "smart", apiKeyName: "client" }),
+        expect.objectContaining({ modelName: 'clever', apiKeyName: 'renamed' }),
+        expect.objectContaining({ modelName: 'smart', apiKeyName: 'client' }),
       ]);
     });
 
     it("keeps the Provider's earlier name on its Error Capture after the Provider is renamed", async () => {
-      await addProviderAccount(app, db, providerId, { key: "sk-second-account", priority: 1 });
-      upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+      await addProviderAccount(app, db, providerId, { key: 'sk-second-account', priority: 1 });
+      upstream.reply({ kind: 'json', status: 500, body: { error: { message: 'down' } } });
       upstreamAnswers();
       await chat(CHAT_REQUEST).expect(200);
       await writtenUsageLog();
 
       await dashboard()
         .patch(`/api/providers/${providerId}`)
-        .set("Cookie", cookie)
-        .send({ name: "Renamed Acme" })
+        .set('Cookie', cookie)
+        .send({ name: 'Renamed Acme' })
         .expect(200);
 
-      const listed = await dashboard().get("/api/error-captures").set("Cookie", cookie).expect(200);
+      const listed = await dashboard().get('/api/error-captures').set('Cookie', cookie).expect(200);
       expect(listed.body.items).toEqual([
         expect.objectContaining({
-          failedHop: expect.objectContaining({ providerAccountName: "main", providerName: "Acme" }),
+          failedHop: expect.objectContaining({ providerAccountName: 'main', providerName: 'Acme' }),
         }),
       ]);
     });
 
-    it("keeps the Upstream Model that served it after the Route is pointed at another", async () => {
+    it('keeps the Upstream Model that served it after the Route is pointed at another', async () => {
       const [{ id: otherUpstreamModelId }] = await db
         .insert(upstreamModels)
-        .values({ providerId, upstreamModelId: "acme-small-2026", contextSize: 128_000 })
+        .values({ providerId, upstreamModelId: 'acme-small-2026', contextSize: 128_000 })
         .returning({ id: upstreamModels.id });
       upstreamAnswers();
       await chat(CHAT_REQUEST).expect(200);
@@ -612,7 +612,7 @@ describe("Usage Logs and Attempts (e2e)", () => {
 
       await dashboard()
         .patch(`/api/models/${modelId}/routes/${routeId}`)
-        .set("Cookie", cookie)
+        .set('Cookie', cookie)
         .send({ upstreamModelId: otherUpstreamModelId })
         .expect(200);
 
@@ -622,13 +622,13 @@ describe("Usage Logs and Attempts (e2e)", () => {
 
     it("keeps only the User's id for a Playground request", async () => {
       upstream.reply({
-        kind: "stream",
-        events: openAiChatFixture("upstream-stream-tool-call.sse"),
+        kind: 'stream',
+        events: openAiChatFixture('upstream-stream-tool-call.sse'),
       });
 
       await dashboard()
-        .post("/api/playground/chat/completions")
-        .set("Cookie", cookie)
+        .post('/api/playground/chat/completions')
+        .set('Cookie', cookie)
         .send({ ...CHAT_REQUEST, stream: true })
         .expect(200);
 
@@ -639,15 +639,15 @@ describe("Usage Logs and Attempts (e2e)", () => {
         isPlayground: true,
         apiKeyId: null,
         apiKeyName: null,
-        modelName: "smart",
+        modelName: 'smart',
       });
       expect(JSON.stringify(usageLog)).not.toContain(OPS_EMAIL);
       expect(Object.keys(usageLog).filter((key) => /email|userName/i.test(key))).toEqual([]);
     });
 
-    it("deletes its Attempts and Error Captures with it", async () => {
-      await addProviderAccount(app, db, providerId, { key: "sk-second-account", priority: 1 });
-      upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+    it('deletes its Attempts and Error Captures with it', async () => {
+      await addProviderAccount(app, db, providerId, { key: 'sk-second-account', priority: 1 });
+      upstream.reply({ kind: 'json', status: 500, body: { error: { message: 'down' } } });
       upstreamAnswers();
       await chat(CHAT_REQUEST).expect(200);
       await writtenUsageLog();
@@ -660,55 +660,55 @@ describe("Usage Logs and Attempts (e2e)", () => {
     });
   });
 
-  describe("with Service Tiers", () => {
+  describe('with Service Tiers', () => {
     let cookie: string;
 
     beforeEach(async () => {
-      cookie = await setUpFirstUser(app, { email: "ops@example.com", password: "ops password" });
+      cookie = await setUpFirstUser(app, { email: 'ops@example.com', password: 'ops password' });
       await request(app.getHttpServer())
         .patch(`/api/providers/${providerId}`)
-        .set("Cookie", cookie)
-        .send({ serviceTierValues: { fast: "priority", flex: "flex" } })
+        .set('Cookie', cookie)
+        .send({ serviceTierValues: { fast: 'priority', flex: 'flex' } })
         .expect(200);
       await request(app.getHttpServer())
         .patch(`/api/upstream-models/${upstreamModelId}`)
-        .set("Cookie", cookie)
+        .set('Cookie', cookie)
         .send({
-          serviceTiers: ["fast", "flex"],
+          serviceTiers: ['fast', 'flex'],
           tierPrices: { flex: { inputPrice: 1, outputPrice: 4 } },
         })
         .expect(200);
     });
 
-    it("records the tier sent and prices it at that tier, falling back to standard prices", async () => {
+    it('records the tier sent and prices it at that tier, falling back to standard prices', async () => {
       upstream.reply({
-        kind: "json",
+        kind: 'json',
         status: 200,
-        body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+        body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
       });
 
-      await chat({ ...CHAT_REQUEST, service_tier: "flex" }).expect(200);
+      await chat({ ...CHAT_REQUEST, service_tier: 'flex' }).expect(200);
 
       const { usageLog } = await writtenUsageLog();
       expect(usageLog.cost).toBeCloseTo(0.00023, 10);
       const listed = await request(app.getHttpServer())
-        .get("/api/usage")
-        .set("Cookie", cookie)
+        .get('/api/usage')
+        .set('Cookie', cookie)
         .expect(200);
-      expect(listed.body.items).toEqual([expect.objectContaining({ serviceTier: "flex" })]);
+      expect(listed.body.items).toEqual([expect.objectContaining({ serviceTier: 'flex' })]);
     });
 
-    it("records the tier the upstream reports serving over the one sent", async () => {
+    it('records the tier the upstream reports serving over the one sent', async () => {
       const answer: Record<string, unknown> = JSON.parse(
-        openAiChatFixture("upstream-response-tool-call.json"),
+        openAiChatFixture('upstream-response-tool-call.json'),
       );
       upstream.reply({
-        kind: "json",
+        kind: 'json',
         status: 200,
-        body: { ...answer, usage: FULL_USAGE, service_tier: "default" },
+        body: { ...answer, usage: FULL_USAGE, service_tier: 'default' },
       });
 
-      await chat({ ...CHAT_REQUEST, service_tier: "flex" }).expect(200);
+      await chat({ ...CHAT_REQUEST, service_tier: 'flex' }).expect(200);
 
       const { usageLog } = await writtenUsageLog();
       expect(usageLog.serviceTier).toBeNull();

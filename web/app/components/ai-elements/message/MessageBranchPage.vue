@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { ButtonGroupText } from "@/components/ui/button-group";
-import { cn } from "@/lib/utils";
-import { useMessageBranchContext } from "./context";
+import type { HTMLAttributes } from 'vue';
+import { ButtonGroupText } from '@/components/ui/button-group';
+import { cn } from '@/lib/utils';
+import { useMessageBranchContext } from './context';
 
 interface Props {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();

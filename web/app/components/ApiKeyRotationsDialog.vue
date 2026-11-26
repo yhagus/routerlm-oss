@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { KeyRound, RefreshCw } from "@lucide/vue";
-import { apiErrorMessage } from "~/lib/api";
-import type { ApiKeyRotation, ApiKeySummary } from "~/lib/api-keys";
-import { dateTimeFormat } from "~/lib/dateFormats";
+import { KeyRound, RefreshCw } from '@lucide/vue';
+import { apiErrorMessage } from '~/lib/api';
+import type { ApiKeyRotation, ApiKeySummary } from '~/lib/api-keys';
+import { dateTimeFormat } from '~/lib/dateFormats';
 
 const props = defineProps<{ apiKey: ApiKeySummary }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const { $dashboardApi } = useNuxtApp();
 
 const rotations = ref<ApiKeyRotation[] | null>(null);
-const loadError = ref("");
+const loadError = ref('');
 
 async function load(): Promise<void> {
   rotations.value = null;
-  loadError.value = "";
+  loadError.value = '';
   try {
     rotations.value = await $dashboardApi<ApiKeyRotation[]>(
       `/api-keys/${props.apiKey.id}/rotations`,
@@ -69,7 +69,7 @@ function formatTime(value: string): string {
               >Current</span
             >
           </p>
-          <p class="rotation-log__by">by {{ rotation.rotatedBy?.email ?? "a deleted User" }}</p>
+          <p class="rotation-log__by">by {{ rotation.rotatedBy?.email ?? 'a deleted User' }}</p>
         </div>
       </li>
       <li class="rotation-log__entry rotation-log__entry--origin">
@@ -81,7 +81,7 @@ function formatTime(value: string): string {
               formatTime(apiKey.createdAt)
             }}</time>
           </p>
-          <p class="rotation-log__by">by {{ apiKey.createdBy?.email ?? "a deleted User" }}</p>
+          <p class="rotation-log__by">by {{ apiKey.createdBy?.email ?? 'a deleted User' }}</p>
         </div>
       </li>
     </ol>

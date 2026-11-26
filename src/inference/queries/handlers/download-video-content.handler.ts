@@ -1,11 +1,11 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { AttemptFailedError, gatewayErrorFor } from "@/inference/models/attempt-failure";
-import { GatewayError } from "@/inference/models/gateway-error";
-import { MediaFetcher } from "@/inference/providers/media-fetcher";
-import { VideoTaskReader, videoNotFound } from "@/inference/providers/video-task-reader";
-import { DownloadVideoContentQuery } from "@/inference/queries/impl/download-video-content.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { AttemptFailedError, gatewayErrorFor } from '@/inference/models/attempt-failure';
+import { GatewayError } from '@/inference/models/gateway-error';
+import { MediaFetcher } from '@/inference/providers/media-fetcher';
+import { VideoTaskReader, videoNotFound } from '@/inference/providers/video-task-reader';
+import { DownloadVideoContentQuery } from '@/inference/queries/impl/download-video-content.query';
 
-const VIDEO_CONTENT_TYPE = "video/mp4";
+const VIDEO_CONTENT_TYPE = 'video/mp4';
 
 @QueryHandler(DownloadVideoContentQuery)
 export class DownloadVideoContentHandler implements IQueryHandler<DownloadVideoContentQuery> {
@@ -16,29 +16,29 @@ export class DownloadVideoContentHandler implements IQueryHandler<DownloadVideoC
 
   async execute({ videoId, caller, clientSignal }: DownloadVideoContentQuery): Promise<Response> {
     const { state } = await this.tasks.read(videoId, caller, clientSignal);
-    if (state.status === "expired") {
+    if (state.status === 'expired') {
       throw videoNotFound();
     }
-    if (state.status !== "completed") {
+    if (state.status !== 'completed') {
       throw new GatewayError(
-        "video_not_ready",
+        'video_not_ready',
         `The video is ${state.status}, not completed`,
-        "client",
+        'client',
       );
     }
     try {
       const video = await this.fetcher.stream(state.videoUrl, clientSignal);
       return new Response(video.body, {
         status: 200,
-        headers: { "content-type": VIDEO_CONTENT_TYPE },
+        headers: { 'content-type': VIDEO_CONTENT_TYPE },
       });
     } catch (error) {
       throw error instanceof AttemptFailedError
         ? gatewayErrorFor(error)
         : new GatewayError(
-            "upstream_error",
-            "The generated video could not be fetched",
-            "upstream",
+            'upstream_error',
+            'The generated video could not be fetched',
+            'upstream',
           );
     }
   }

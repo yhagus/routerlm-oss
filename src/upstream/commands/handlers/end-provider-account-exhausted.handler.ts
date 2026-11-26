@@ -1,6 +1,6 @@
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { CooldownStore } from "@/upstream/providers/cooldown-store";
-import { EndProviderAccountExhaustedCommand } from "@/upstream/commands/impl/end-provider-account-exhausted.command";
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { CooldownStore } from '@/upstream/providers/cooldown-store';
+import { EndProviderAccountExhaustedCommand } from '@/upstream/commands/impl/end-provider-account-exhausted.command';
 
 @CommandHandler(EndProviderAccountExhaustedCommand)
 export class EndProviderAccountExhaustedHandler implements ICommandHandler<EndProviderAccountExhaustedCommand> {

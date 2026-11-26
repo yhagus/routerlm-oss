@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const usageResetSpendSchema = z.strictObject({ idempotencyKey: z.uuid() });
 

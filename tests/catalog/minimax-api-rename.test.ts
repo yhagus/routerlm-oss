@@ -1,25 +1,25 @@
-import { execFile } from "node:child_process";
-import { cp, mkdtemp, readdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { promisify } from "node:util";
-import { like } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { type Database, relations } from "@/db/schemas/relations";
-import * as schema from "@/db/schemas";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
+import { execFile } from 'node:child_process';
+import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+import { like } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { type Database, relations } from '@/db/schemas/relations';
+import * as schema from '@/db/schemas';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
 
 const runFile = promisify(execFile);
-const MIGRATIONS_FOLDER = "./drizzle";
-const RENAME_MIGRATION_SUFFIX = "_rename_minimax_to_minimax_api";
+const MIGRATIONS_FOLDER = './drizzle';
+const RENAME_MIGRATION_SUFFIX = '_rename_minimax_to_minimax_api';
 const SEED_TIMEOUT_MS = 30_000;
 
 type PreRenameDatabase = { databaseUrl: string; pool: Pool; db: Database };
 
-describe("MiniMax API rename migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('MiniMax API rename migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let preRenameMigrationsFolder: string;
   const opened: PreRenameDatabase[] = [];
 
@@ -37,7 +37,7 @@ describe("MiniMax API rename migration (e2e)", () => {
   });
 
   async function openPreRenameDatabase(): Promise<PreRenameDatabase> {
-    const databaseUrl = await createEmptyDatabase(serverUrl, "minimax_rename");
+    const databaseUrl = await createEmptyDatabase(serverUrl, 'minimax_rename');
     const pool = new Pool({ connectionString: databaseUrl });
     const db = drizzle({ client: pool, relations });
     await migrate(db, { migrationsFolder: preRenameMigrationsFolder });
@@ -47,14 +47,14 @@ describe("MiniMax API rename migration (e2e)", () => {
   }
 
   it(
-    "renames the MiniMax Provider in place, keeping its Provider Accounts and Routes, and the seeder adds no duplicate",
+    'renames the MiniMax Provider in place, keeping its Provider Accounts and Routes, and the seeder adds no duplicate',
     async () => {
       const database = await openPreRenameDatabase();
       const { databaseUrl, db } = database;
-      const minimax = await insertMiniMaxWithRoute(database, "MiniMax");
+      const minimax = await insertMiniMaxWithRoute(database, 'MiniMax');
 
       await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-      await runFile("bun", ["src/seed.ts"], {
+      await runFile('bun', ['src/seed.ts'], {
         env: { ...process.env, DATABASE_URL: databaseUrl },
         timeout: SEED_TIMEOUT_MS,
       });
@@ -63,10 +63,10 @@ describe("MiniMax API rename migration (e2e)", () => {
         where: { id: minimax.providerId },
         with: {
           providerAccounts: true,
-          upstreamModels: { where: { upstreamModelId: "MiniMax-M3" }, with: { routes: true } },
+          upstreamModels: { where: { upstreamModelId: 'MiniMax-M3' }, with: { routes: true } },
         },
       });
-      expect(provider).toMatchObject({ slug: "minimax-api", name: "MiniMax API" });
+      expect(provider).toMatchObject({ slug: 'minimax-api', name: 'MiniMax API' });
       expect(provider?.providerAccounts.map((account) => account.id)).toEqual([minimax.accountId]);
       expect(provider?.upstreamModels[0]?.routes.map((route) => route.id)).toEqual([
         minimax.routeId,
@@ -75,29 +75,29 @@ describe("MiniMax API rename migration (e2e)", () => {
       const minimaxProviders = await db
         .select({ id: schema.providers.id, slug: schema.providers.slug })
         .from(schema.providers)
-        .where(like(schema.providers.slug, "minimax%"));
+        .where(like(schema.providers.slug, 'minimax%'));
       expect(minimaxProviders.map((row) => row.slug).sort()).toEqual([
-        "minimax-api",
-        "minimax-m-plan",
+        'minimax-api',
+        'minimax-m-plan',
       ]);
     },
     SEED_TIMEOUT_MS,
   );
 
-  it("keeps the name an operator gave the Provider and changes only its slug", async () => {
+  it('keeps the name an operator gave the Provider and changes only its slug', async () => {
     const database = await openPreRenameDatabase();
     const { db } = database;
-    const minimax = await insertMiniMaxWithRoute(database, "MiniMax (team)");
+    const minimax = await insertMiniMaxWithRoute(database, 'MiniMax (team)');
 
     await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
 
     const provider = await db.query.providers.findFirst({ where: { id: minimax.providerId } });
-    expect(provider).toMatchObject({ slug: "minimax-api", name: "MiniMax (team)" });
+    expect(provider).toMatchObject({ slug: 'minimax-api', name: 'MiniMax (team)' });
   });
 });
 
 async function copyMigrationsBeforeRename(): Promise<string> {
-  const folder = await mkdtemp(join(tmpdir(), "routerlm-migrations-"));
+  const folder = await mkdtemp(join(tmpdir(), 'routerlm-migrations-'));
   const migrationNames = (await readdir(MIGRATIONS_FOLDER)).sort();
   const renameIndex = migrationNames.findIndex((name) => name.endsWith(RENAME_MIGRATION_SUFFIX));
   if (renameIndex === -1) {
@@ -152,6 +152,6 @@ async function insertMiniMaxWithRoute(
 async function insertReturningId(pool: Pool, insert: string, values: string[]): Promise<string> {
   const { rows } = await pool.query<{ id: string }>(insert, values);
   const id = rows[0]?.id;
-  if (id === undefined) throw new Error("the row was not inserted");
+  if (id === undefined) throw new Error('the row was not inserted');
   return id;
 }

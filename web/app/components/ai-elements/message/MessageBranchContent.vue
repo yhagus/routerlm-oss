@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import { computed, Fragment, isVNode, onMounted, useSlots, watch } from "vue";
-import { useMessageBranchContext } from "./context";
+import type { HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
+import { computed, Fragment, isVNode, onMounted, useSlots, watch } from 'vue';
+import { useMessageBranchContext } from './context';
 
 interface Props {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();
@@ -27,7 +27,7 @@ const branchVNodes = computed(() => {
 
   return allNodes.filter((node) => {
     if (!isVNode(node)) return false;
-    return node.type && typeof node.type === "object";
+    return node.type && typeof node.type === 'object';
   });
 });
 
@@ -35,7 +35,7 @@ const sync = () => setBranches(branchVNodes.value.length);
 onMounted(sync);
 watch(branchVNodes, sync);
 
-const baseClasses = computed(() => cn("grid gap-2 overflow-hidden [&>div]:pb-0", props.class));
+const baseClasses = computed(() => cn('grid gap-2 overflow-hidden [&>div]:pb-0', props.class));
 </script>
 
 <template>

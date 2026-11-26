@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type { HTMLAttributes, VNode } from "vue";
-import type { MessageBranchContextType } from "./context";
-import { cn } from "@/lib/utils";
-import { provide, readonly, ref } from "vue";
-import { MessageBranchKey } from "./context";
+import type { HTMLAttributes, VNode } from 'vue';
+import type { MessageBranchContextType } from './context';
+import { cn } from '@/lib/utils';
+import { provide, readonly, ref } from 'vue';
+import { MessageBranchKey } from './context';
 
 interface Props {
   defaultBranch?: number;
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 const props = withDefaults(defineProps<Props>(), {
   defaultBranch: 0,
 });
 
 const emits = defineEmits<{
-  (e: "branchChange", branchIndex: number): void;
+  (e: 'branchChange', branchIndex: number): void;
 }>();
 
 const currentBranch = ref<number>(props.defaultBranch);
@@ -23,7 +23,7 @@ const totalBranches = ref<number>(0);
 
 function handleBranchChange(index: number) {
   currentBranch.value = index;
-  emits("branchChange", index);
+  emits('branchChange', index);
 }
 
 function goToPrevious() {

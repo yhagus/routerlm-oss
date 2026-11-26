@@ -1,21 +1,21 @@
-import type { MediaRequest } from "./media-kind";
+import type { MediaRequest } from './media-kind';
 
 export const AUDIO_FILE_FORMATS = [
-  "aac",
-  "amr",
-  "flac",
-  "m4a",
-  "mp3",
-  "mp4",
-  "mpeg",
-  "ogg",
-  "opus",
-  "wav",
-  "webm",
+  'aac',
+  'amr',
+  'flac',
+  'm4a',
+  'mp3',
+  'mp4',
+  'mpeg',
+  'ogg',
+  'opus',
+  'wav',
+  'webm',
 ] as const;
 export type AudioFileFormat = (typeof AUDIO_FILE_FORMATS)[number];
 
-export const TRANSCRIPT_FORMATS = ["json", "text"] as const;
+export const TRANSCRIPT_FORMATS = ['json', 'text'] as const;
 export type TranscriptFormat = (typeof TRANSCRIPT_FORMATS)[number];
 
 export interface TranscriptionRequest extends MediaRequest {

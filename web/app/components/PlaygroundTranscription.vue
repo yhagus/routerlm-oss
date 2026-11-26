@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileMusic, SlidersHorizontal, Square, Trash2, X } from "@lucide/vue";
+import { FileMusic, SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
   DialogDescription,
@@ -7,53 +7,53 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "reka-ui";
-import { computed, reactive, ref, useTemplateRef } from "vue";
+} from 'reka-ui';
+import { computed, reactive, ref, useTemplateRef } from 'vue';
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import { apiErrorMessage } from "~/lib/api";
-import { playgroundErrorOfFailure } from "~/lib/playground";
+} from '@/components/ai-elements/conversation';
+import { apiErrorMessage } from '~/lib/api';
+import { playgroundErrorOfFailure } from '~/lib/playground';
 import {
   audioFileProblemOf,
   type PlaygroundTranscriptionSettings,
   type TranscriptionExchange,
   transcriptionAnswerOf,
   transcriptionFormOf,
-} from "~/lib/playgroundTranscription";
-import { formatCost } from "~/lib/usage";
+} from '~/lib/playgroundTranscription';
+import { formatCost } from '~/lib/usage';
 
 const { $dashboardApi } = useNuxtApp();
 const { source, modelDetail, canTry, requestModel, requestPath } =
-  usePlaygroundTarget("transcription");
+  usePlaygroundTarget('transcription');
 
-const language = ref("");
+const language = ref('');
 const isSettingsSheetOpen = ref(false);
 
 function readSettings(): { settings: PlaygroundTranscriptionSettings } | { problem: string } {
   const target = requestModel();
-  if ("problem" in target) return target;
+  if ('problem' in target) return target;
   return { settings: { model: target.model, language: language.value.trim() } };
 }
 
-const fileInput = useTemplateRef("fileInput");
+const fileInput = useTemplateRef('fileInput');
 const audioFile = ref<File | null>(null);
-const composerError = ref("");
+const composerError = ref('');
 
 function handleFileChange(event: Event): void {
   const input = event.target;
   if (!(input instanceof HTMLInputElement)) return;
   const file = input.files?.[0] ?? null;
-  input.value = "";
+  input.value = '';
   if (!file) return;
   const problem = audioFileProblemOf(file);
   if (problem) {
     composerError.value = problem;
     return;
   }
-  composerError.value = "";
+  composerError.value = '';
   audioFile.value = file;
 }
 
@@ -67,21 +67,21 @@ function handleSubmit(): void {
   if (isSending.value) return;
   const file = audioFile.value;
   if (!file) {
-    composerError.value = "Choose an audio file to transcribe.";
+    composerError.value = 'Choose an audio file to transcribe.';
     return;
   }
   const read = readSettings();
-  if ("problem" in read) {
+  if ('problem' in read) {
     composerError.value = read.problem;
     return;
   }
-  composerError.value = "";
+  composerError.value = '';
   audioFile.value = null;
   void send(read.settings, file);
 }
 
 async function send(settings: PlaygroundTranscriptionSettings, file: File): Promise<void> {
-  const isDirect = source.value === "upstream";
+  const isDirect = source.value === 'upstream';
   const exchange = reactive<TranscriptionExchange>({
     id: nextExchangeId++,
     fileName: file.name,
@@ -89,32 +89,32 @@ async function send(settings: PlaygroundTranscriptionSettings, file: File): Prom
     isDirect,
     routes:
       !isDirect && modelDetail.value?.name === settings.model ? modelDetail.value.routes : null,
-    state: { kind: "pending" },
+    state: { kind: 'pending' },
   });
   exchanges.value.push(exchange);
 
   const request = new AbortController();
   runningRequest.value = request;
   try {
-    const payload = await $dashboardApi(requestPath("audio/transcriptions"), {
-      method: "POST",
+    const payload = await $dashboardApi(requestPath('audio/transcriptions'), {
+      method: 'POST',
       body: transcriptionFormOf(settings, file),
       signal: request.signal,
     });
     const answer = transcriptionAnswerOf(payload);
     exchange.state = answer
-      ? { kind: "done", ...answer }
-      : { kind: "failed", error: { code: null, message: "The gateway's answer had no text." } };
+      ? { kind: 'done', ...answer }
+      : { kind: 'failed', error: { code: null, message: "The gateway's answer had no text." } };
   } catch (failure) {
     if (request.signal.aborted) {
-      exchange.state = { kind: "stopped" };
+      exchange.state = { kind: 'stopped' };
       return;
     }
     const error = (await playgroundErrorOfFailure(failure)) ?? {
       code: null,
-      message: apiErrorMessage(failure, "The request did not reach the gateway."),
+      message: apiErrorMessage(failure, 'The request did not reach the gateway.'),
     };
-    exchange.state = { kind: "failed", error };
+    exchange.state = { kind: 'failed', error };
   } finally {
     runningRequest.value = null;
   }
@@ -133,7 +133,7 @@ const totals = computed(() => {
   let transcripts = 0;
   let cost: number | null = null;
   for (const exchange of exchanges.value) {
-    if (exchange.state.kind !== "done") continue;
+    if (exchange.state.kind !== 'done') continue;
     transcripts += 1;
     const exchangeCost = exchange.state.summary.cost;
     if (exchangeCost !== null) cost = (cost ?? 0) + exchangeCost;
@@ -141,7 +141,7 @@ const totals = computed(() => {
   return { transcripts, cost };
 });
 
-const settingsHint = "Leave the language empty to let the model detect it.";
+const settingsHint = 'Leave the language empty to let the model detect it.';
 </script>
 
 <template>
@@ -156,7 +156,7 @@ const settingsHint = "Leave the language empty to let the model detect it.";
         <p v-if="totals.transcripts > 0" class="bench-bar__totals tabular">
           <span
             >{{ totals.transcripts }}
-            {{ totals.transcripts === 1 ? "transcript" : "transcripts" }}</span
+            {{ totals.transcripts === 1 ? 'transcript' : 'transcripts' }}</span
           >
           <span>{{ formatCost(totals.cost) }}</span>
         </p>
@@ -214,7 +214,7 @@ const settingsHint = "Leave the language empty to let the model detect it.";
             @click="fileInput?.click()"
           >
             <FileMusic :size="14" />
-            <span>{{ audioFile?.name ?? "Choose an audio file" }}</span>
+            <span>{{ audioFile?.name ?? 'Choose an audio file' }}</span>
           </button>
           <span class="composer__hint">Up to 25 MB</span>
           <button

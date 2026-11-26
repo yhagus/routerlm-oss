@@ -1,17 +1,17 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { upstreamModels } from "@/db/schemas";
-import { dashScopeImageFixture, FakeUpstream } from "@tests/support/fake-upstream";
-import { insertDashScopeImageModel, UPSTREAM_MODEL_ID } from "@tests/support/inference";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { upstreamModels } from '@/db/schemas';
+import { dashScopeImageFixture, FakeUpstream } from '@tests/support/fake-upstream';
+import { insertDashScopeImageModel, UPSTREAM_MODEL_ID } from '@tests/support/inference';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const GENERATION_PATH = "/api/v1/services/aigc/multimodal-generation/generation";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const GENERATION_PATH = '/api/v1/services/aigc/multimodal-generation/generation';
 const IMAGE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 7]);
 
-describe("Playground image generation (e2e)", () => {
+describe('Playground image generation (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let upstream: FakeUpstream;
@@ -31,20 +31,20 @@ describe("Playground image generation (e2e)", () => {
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
     ({ routeId, providerAccountId } = await insertDashScopeImageModel(app, db, {
-      modelName: "painter",
+      modelName: 'painter',
       baseUrl: `${upstream.origin}/api/v1`,
-      pricePerImageBySize: { "1K": 0.04 },
+      pricePerImageBySize: { '1K': 0.04 },
     }));
     [{ id: upstreamModelRowId }] = await db.select({ id: upstreamModels.id }).from(upstreamModels);
-    const answer = dashScopeImageFixture("upstream-response.json")
-      .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl("/media/a.png"))
-      .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl("/media/b.png"));
-    upstream.replyTo(GENERATION_PATH, { kind: "json", status: 200, body: JSON.parse(answer) });
-    for (const path of ["/media/a.png", "/media/b.png"]) {
+    const answer = dashScopeImageFixture('upstream-response.json')
+      .replace(/https:\/\/[^"]*first\.png[^"]*/, upstream.mediaUrl('/media/a.png'))
+      .replace(/https:\/\/[^"]*second\.png[^"]*/, upstream.mediaUrl('/media/b.png'));
+    upstream.replyTo(GENERATION_PATH, { kind: 'json', status: 200, body: JSON.parse(answer) });
+    for (const path of ['/media/a.png', '/media/b.png']) {
       upstream.replyTo(path, {
-        kind: "binary",
+        kind: 'binary',
         status: 200,
-        contentType: "image/png",
+        contentType: 'image/png',
         body: IMAGE,
       });
     }
@@ -55,19 +55,19 @@ describe("Playground image generation (e2e)", () => {
     await app.close();
   });
 
-  it("generates images from a Model, with a summary of the images, Cost and what served them", async () => {
+  it('generates images from a Model, with a summary of the images, Cost and what served them', async () => {
     const response = await request(app.getHttpServer())
-      .post("/api/playground/images/generations")
-      .set("Cookie", adaCookie)
-      .send({ model: "painter", prompt: "A red fox in snow", n: 2 })
+      .post('/api/playground/images/generations')
+      .set('Cookie', adaCookie)
+      .send({ model: 'painter', prompt: 'A red fox in snow', n: 2 })
       .expect(200);
 
     expect(response.body.response.data).toEqual([
-      { b64_json: Buffer.from(IMAGE).toString("base64") },
-      { b64_json: Buffer.from(IMAGE).toString("base64") },
+      { b64_json: Buffer.from(IMAGE).toString('base64') },
+      { b64_json: Buffer.from(IMAGE).toString('base64') },
     ]);
     expect(response.body.summary).toMatchObject({
-      units: { imagesOut: 2, tier: "1K" },
+      units: { imagesOut: 2, tier: '1K' },
       cost: 0.08,
       route: { id: routeId },
       upstreamModel: { id: upstreamModelRowId, upstreamModelId: UPSTREAM_MODEL_ID },
@@ -75,11 +75,11 @@ describe("Playground image generation (e2e)", () => {
     });
   });
 
-  it("generates images from an Upstream Model directly, without a Route", async () => {
+  it('generates images from an Upstream Model directly, without a Route', async () => {
     const response = await request(app.getHttpServer())
       .post(`/api/playground/upstream-models/${upstreamModelRowId}/images/generations`)
-      .set("Cookie", adaCookie)
-      .send({ model: UPSTREAM_MODEL_ID, prompt: "A red fox in snow", n: 2 })
+      .set('Cookie', adaCookie)
+      .send({ model: UPSTREAM_MODEL_ID, prompt: 'A red fox in snow', n: 2 })
       .expect(200);
 
     expect(response.body.response.data).toHaveLength(2);
@@ -89,20 +89,20 @@ describe("Playground image generation (e2e)", () => {
     });
   });
 
-  it("needs a signed-in User", async () => {
+  it('needs a signed-in User', async () => {
     await request(app.getHttpServer())
-      .post("/api/playground/images/generations")
-      .send({ model: "painter", prompt: "A red fox in snow" })
+      .post('/api/playground/images/generations')
+      .send({ model: 'painter', prompt: 'A red fox in snow' })
       .expect(401);
   });
 
-  it("edits uploaded images with a Model, counting the input images in the summary", async () => {
+  it('edits uploaded images with a Model, counting the input images in the summary', async () => {
     const response = await request(app.getHttpServer())
-      .post("/api/playground/images/edits")
-      .set("Cookie", adaCookie)
-      .field("model", "painter")
-      .field("prompt", "Make the fox blue")
-      .attach("image[]", Buffer.from(IMAGE), { filename: "fox.png", contentType: "image/png" })
+      .post('/api/playground/images/edits')
+      .set('Cookie', adaCookie)
+      .field('model', 'painter')
+      .field('prompt', 'Make the fox blue')
+      .attach('image[]', Buffer.from(IMAGE), { filename: 'fox.png', contentType: 'image/png' })
       .expect(200);
 
     expect(response.body.response.data).toHaveLength(2);
@@ -112,14 +112,14 @@ describe("Playground image generation (e2e)", () => {
     });
   });
 
-  it("edits images with an Upstream Model directly, without a Route", async () => {
+  it('edits images with an Upstream Model directly, without a Route', async () => {
     const response = await request(app.getHttpServer())
       .post(`/api/playground/upstream-models/${upstreamModelRowId}/images/edits`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .send({
         model: UPSTREAM_MODEL_ID,
-        prompt: "Make the fox blue",
-        images: [{ image_url: "https://images.example.com/fox.png" }],
+        prompt: 'Make the fox blue',
+        images: [{ image_url: 'https://images.example.com/fox.png' }],
       })
       .expect(200);
 

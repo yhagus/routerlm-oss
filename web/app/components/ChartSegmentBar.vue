@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { fullNumber, percent, type Segment } from "~/lib/chart";
+import { computed, ref } from 'vue';
+import { fullNumber, percent, type Segment } from '~/lib/chart';
 
 const props = withDefaults(
   defineProps<{

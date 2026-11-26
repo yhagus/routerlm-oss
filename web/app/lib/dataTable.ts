@@ -1,4 +1,4 @@
-import { h } from "vue";
+import { h } from 'vue';
 import {
   columnFilteringFeature,
   columnVisibilityFeature,
@@ -11,7 +11,7 @@ import {
   tableFeatures,
   type ColumnDef,
   type RowData,
-} from "@tanstack/vue-table";
+} from '@tanstack/vue-table';
 
 export const DATA_TABLE_PAGE_SIZE = 50;
 
@@ -30,8 +30,8 @@ export type DataTableColumn<Row extends RowData> = ColumnDef<typeof dataTableFea
 
 export function actionsColumn<Row extends RowData>(): DataTableColumn<Row> {
   return {
-    id: "actions",
-    header: () => h("span", { class: "sr-only" }, "Actions"),
+    id: 'actions',
+    header: () => h('span', { class: 'sr-only' }, 'Actions'),
     enableHiding: false,
   };
 }

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ImageIcon } from "@lucide/vue";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { usePromptInput } from "./context";
+import { ImageIcon } from '@lucide/vue';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { usePromptInput } from './context';
 
-type PromptInputActionAddAttachmentsProps = InstanceType<typeof DropdownMenuItem>["$props"];
+type PromptInputActionAddAttachmentsProps = InstanceType<typeof DropdownMenuItem>['$props'];
 
 interface Props extends /* @vue-ignore */ PromptInputActionAddAttachmentsProps {
   label?: string;
@@ -17,6 +17,6 @@ const { openFileDialog } = usePromptInput();
 <template>
   <DropdownMenuItem @select.prevent="openFileDialog">
     <ImageIcon class="mr-2 size-4" />
-    {{ props.label || "Add photos or files" }}
+    {{ props.label || 'Add photos or files' }}
   </DropdownMenuItem>
 </template>

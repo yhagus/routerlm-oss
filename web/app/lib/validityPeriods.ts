@@ -1,5 +1,5 @@
-import { parseDateTime, toCalendarDateTime, toTimeZone, toZoned } from "@internationalized/date";
-import type { PricingWindowRange } from "~/lib/pricingWindows";
+import { parseDateTime, toCalendarDateTime, toTimeZone, toZoned } from '@internationalized/date';
+import type { PricingWindowRange } from '~/lib/pricingWindows';
 
 export interface ValidityPeriod {
   validFrom: string | null;
@@ -27,9 +27,9 @@ export function hasOpenBound(period: ValidityPeriod): boolean {
  */
 export function formatValidityPeriod(period: ValidityPeriod): string {
   const parts: string[] = [];
-  if (period.validFrom !== null) parts.push(`from ${period.validFrom.replace("T", " ")}`);
-  if (period.validUntil !== null) parts.push(`until ${period.validUntil.replace("T", " ")}`);
-  return parts.length > 0 ? parts.join(" ") : "always";
+  if (period.validFrom !== null) parts.push(`from ${period.validFrom.replace('T', ' ')}`);
+  if (period.validUntil !== null) parts.push(`until ${period.validUntil.replace('T', ' ')}`);
+  return parts.length > 0 ? parts.join(' ') : 'always';
 }
 
 export function mayApplyTogether(first: WindowPricesTiming, second: WindowPricesTiming): boolean {
@@ -112,6 +112,6 @@ function weekSpansOf(range: PricingWindowRange): [number, number][] {
 }
 
 function minutesOf(time: string): number {
-  const [hours = 0, minutes = 0] = time.split(":").map(Number);
+  const [hours = 0, minutes = 0] = time.split(':').map(Number);
   return hours * MINUTES_PER_HOUR + minutes;
 }

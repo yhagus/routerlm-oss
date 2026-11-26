@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { Collapsible } from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
-import { useVModel } from "@vueuse/core";
-import { computed, provide, ref, watch } from "vue";
-import { ReasoningKey } from "./context";
+import type { HTMLAttributes } from 'vue';
+import { Collapsible } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import { useVModel } from '@vueuse/core';
+import { computed, provide, ref, watch } from 'vue';
+import { ReasoningKey } from './context';
 
 interface Props {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
   isStreaming?: boolean;
   open?: boolean;
   defaultOpen?: boolean;
@@ -21,11 +21,11 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: "update:open", value: boolean): void;
-  (e: "update:duration", value: number): void;
+  (e: 'update:open', value: boolean): void;
+  (e: 'update:duration', value: number): void;
 }>();
 
-const isOpen = useVModel(props, "open", emit, {
+const isOpen = useVModel(props, 'open', emit, {
   defaultValue: props.defaultOpen,
   passive: true,
 });
@@ -41,7 +41,7 @@ watch(
 
 function updateDuration(val: number) {
   internalDuration.value = val;
-  emit("update:duration", val);
+  emit('update:duration', val);
 }
 
 const hasAutoClosed = ref(false);

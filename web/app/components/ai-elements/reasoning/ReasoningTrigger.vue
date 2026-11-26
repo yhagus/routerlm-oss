@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { BrainIcon, ChevronDownIcon } from "@lucide/vue";
-import { CollapsibleTrigger } from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
-import { computed } from "vue";
-import { Shimmer } from "../shimmer";
-import { useReasoningContext } from "./context";
+import type { HTMLAttributes } from 'vue';
+import { BrainIcon, ChevronDownIcon } from '@lucide/vue';
+import { CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import { computed } from 'vue';
+import { Shimmer } from '../shimmer';
+import { useReasoningContext } from './context';
 
 interface Props {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();
@@ -17,12 +17,12 @@ const { isStreaming, isOpen, duration } = useReasoningContext();
 
 const thinkingMessage = computed(() => {
   if (isStreaming.value || duration.value === 0) {
-    return "thinking";
+    return 'thinking';
   }
   if (duration.value === undefined) {
-    return "default_done";
+    return 'default_done';
   }
-  return "duration_done";
+  return 'duration_done';
 });
 </script>
 
@@ -47,7 +47,7 @@ const thinkingMessage = computed(() => {
       </template>
 
       <template v-else>
-        <p>Thought for {{ duration }} {{ duration === 1 ? "second" : "seconds" }}</p>
+        <p>Thought for {{ duration }} {{ duration === 1 ? 'second' : 'seconds' }}</p>
       </template>
 
       <ChevronDownIcon

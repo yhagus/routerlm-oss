@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { RefreshCw } from "@lucide/vue";
-import { apiErrorMessage } from "~/lib/api";
-import { checkedAgo, usageResetCount } from "~/lib/quotaMeters";
-import type { ProviderAccount, ProviderAccountQuota } from "~/lib/upstream";
+import { RefreshCw } from '@lucide/vue';
+import { apiErrorMessage } from '~/lib/api';
+import { checkedAgo, usageResetCount } from '~/lib/quotaMeters';
+import type { ProviderAccount, ProviderAccountQuota } from '~/lib/upstream';
 
 const props = defineProps<{
   account: ProviderAccount;
@@ -25,7 +25,7 @@ async function handleRefresh(): Promise<void> {
   try {
     const reading = await $dashboardApi<ProviderAccountQuota>(
       `/provider-accounts/${props.account.id}/quota-reading`,
-      { method: "POST" },
+      { method: 'POST' },
     );
     if (reading.quotaError) showToast(`Couldn't read the Quota Meters of ${props.account.name}.`);
     await props.refresh();

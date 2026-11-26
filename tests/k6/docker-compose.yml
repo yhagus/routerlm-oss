@@ -30,25 +30,25 @@ services:
     cpus: 1
     mem_limit: 1g
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U routerlm -d routerlm"]
+      test: ['CMD-SHELL', 'pg_isready -U routerlm -d routerlm']
       interval: 2s
       timeout: 5s
       retries: 30
 
   redis:
     image: redis:8-alpine
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
     cpus: 0.5
     mem_limit: 512m
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 2s
       timeout: 5s
       retries: 30
 
   migrate:
     <<: *backend-image
-    command: ["bun", "dist/migrate.js"]
+    command: ['bun', 'dist/migrate.js']
     environment: *app-env
     depends_on:
       db:
@@ -62,7 +62,7 @@ services:
       context: ../..
       dockerfile: Dockerfile
       target: base
-    command: ["bun", "tests/k6/seed.ts"]
+    command: ['bun', 'tests/k6/seed.ts']
     environment:
       <<: *app-env
       PERF_API_KEY: ${PERF_API_KEY:-rlm_0123456789abcdef_perfperfperfperfperfperfperfperfperfperfper}
@@ -74,7 +74,7 @@ services:
   # Plays every Provider, with a fixed latency and a streamed answer.
   fake-upstream:
     image: oven/bun:1.4-slim
-    command: ["bun", "/app/fake-upstream.js"]
+    command: ['bun', '/app/fake-upstream.js']
     environment:
       PORT: 4000
       UPSTREAM_LATENCY_MS: ${UPSTREAM_LATENCY_MS:-200}
@@ -196,7 +196,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8080/health']
       interval: 5s
       timeout: 5s
       retries: 12
@@ -208,7 +208,7 @@ services:
 
   worker:
     <<: *backend-image
-    command: ["bun", "dist/worker.js"]
+    command: ['bun', 'dist/worker.js']
     environment: *app-env
     cpus: 1
     mem_limit: 1g
@@ -222,7 +222,7 @@ services:
     image: grafana/k6:latest
     # Root, so the mounted results folder is writable on Linux hosts too.
     user: root
-    command: ["run", "--summary-export=/results/summary.json", "/scripts/gateway.js"]
+    command: ['run', '--summary-export=/results/summary.json', '/scripts/gateway.js']
     environment:
       # run.sh sets BASE_URL for the topology.
       BASE_URL: ${BASE_URL:-http://lb:8080}

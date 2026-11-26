@@ -1,10 +1,10 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { HttpClient, HttpClientError, InjectHttpClient } from "@nestjs/http-client";
-import { z } from "zod";
-import type { Env } from "@/config/schemas/env.schema";
-import type { ModelsDevModel, ModelsDevSnapshot } from "@/catalog/models/models-dev";
-import { MODELS_DEV_HTTP_CLIENT } from "./models-dev-http-client";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { HttpClient, HttpClientError, InjectHttpClient } from '@nestjs/http-client';
+import { z } from 'zod';
+import type { Env } from '@/config/schemas/env.schema';
+import type { ModelsDevModel, ModelsDevSnapshot } from '@/catalog/models/models-dev';
+import { MODELS_DEV_HTTP_CLIENT } from './models-dev-http-client';
 
 const NEWEST_MODEL_COUNT = 5;
 const CACHE_LIFETIME_MS = 6 * 60 * 60 * 1000;
@@ -53,9 +53,9 @@ export class ModelsDevReader {
   }
 
   private async fetchApi(): Promise<unknown> {
-    const url = this.config.get("MODELS_DEV_API_URL", { infer: true });
+    const url = this.config.get('MODELS_DEV_API_URL', { infer: true });
     try {
-      const response = await this.http.get(url, { headers: { accept: "application/json" } });
+      const response = await this.http.get(url, { headers: { accept: 'application/json' } });
       return response.data;
     } catch (error) {
       if (!(error instanceof HttpClientError)) throw error;

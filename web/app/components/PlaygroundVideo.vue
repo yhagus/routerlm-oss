@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SlidersHorizontal, Square, Trash2, X } from "@lucide/vue";
+import { SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
   DialogDescription,
@@ -7,13 +7,13 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "reka-ui";
-import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
+} from 'reka-ui';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
+} from '@/components/ai-elements/conversation';
 import {
   PromptInput,
   PromptInputBody,
@@ -24,9 +24,9 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputProvider,
-} from "@/components/ai-elements/prompt-input";
-import { apiErrorMessage } from "~/lib/api";
-import { type PlaygroundError, playgroundErrorOfFailure } from "~/lib/playground";
+} from '@/components/ai-elements/prompt-input';
+import { apiErrorMessage } from '~/lib/api';
+import { type PlaygroundError, playgroundErrorOfFailure } from '~/lib/playground';
 import {
   DEFAULT_VIDEO_SECONDS,
   isVideoResolution,
@@ -46,8 +46,8 @@ import {
   videoParameterLabels,
   videoRequestOf,
   waitFor,
-} from "~/lib/playgroundVideo";
-import { formatCost } from "~/lib/usage";
+} from '~/lib/playgroundVideo';
+import { formatCost } from '~/lib/usage';
 
 const { $dashboardApi } = useNuxtApp();
 const {
@@ -58,16 +58,16 @@ const {
   canTry,
   requestModel,
   requestPath,
-} = usePlaygroundTarget("video");
+} = usePlaygroundTarget('video');
 
-const seconds = ref("");
+const seconds = ref('');
 const resolution = ref<ResolutionChoice>(MODEL_DEFAULT);
 const aspectRatio = ref<RatioChoice>(MODEL_DEFAULT);
-const seed = ref("");
+const seed = ref('');
 const isSettingsSheetOpen = ref(false);
 
 const targetUpstreamModels = computed(() => {
-  if (source.value === "upstream") {
+  if (source.value === 'upstream') {
     return selectedUpstreamModel.value ? [selectedUpstreamModel.value] : [];
   }
   const routedIds = new Set(
@@ -85,7 +85,7 @@ const resolutionOptions = computed(() => {
       ? VIDEO_RESOLUTIONS
       : VIDEO_RESOLUTIONS.filter((candidate) => listed.has(candidate));
   const options: { value: ResolutionChoice; label: string }[] = [
-    { value: MODEL_DEFAULT, label: "Model default" },
+    { value: MODEL_DEFAULT, label: 'Model default' },
     ...resolutions.map((option) => ({ value: option, label: option })),
   ];
   return options;
@@ -107,16 +107,16 @@ const durationPlaceholder = computed(() => {
 });
 
 function wholeNumberField(text: string, min: number, max: number): number | undefined | null {
-  if (text.trim() === "") return undefined;
+  if (text.trim() === '') return undefined;
   const value = Number(text);
   return Number.isInteger(value) && value >= min && value <= max ? value : null;
 }
 
 function readParameters(): { parameters: VideoParameters } | { problem: string } {
   const parsedSeconds = wholeNumberField(seconds.value, 1, Number.MAX_SAFE_INTEGER);
-  if (parsedSeconds === null) return { problem: "Duration must be a whole number of seconds." };
+  if (parsedSeconds === null) return { problem: 'Duration must be a whole number of seconds.' };
   const parsedSeed = wholeNumberField(seed.value, 0, MAX_VIDEO_SEED);
-  if (parsedSeed === null) return { problem: "Seed must be a whole number from 0 up." };
+  if (parsedSeed === null) return { problem: 'Seed must be a whole number from 0 up.' };
   return {
     parameters: {
       seconds: parsedSeconds,
@@ -129,20 +129,20 @@ function readParameters(): { parameters: VideoParameters } | { problem: string }
 
 function readSettings(): { settings: PlaygroundVideoSettings } | { problem: string } {
   const target = requestModel();
-  if ("problem" in target) return target;
+  if ('problem' in target) return target;
   const read = readParameters();
-  if ("problem" in read) return read;
+  if ('problem' in read) return read;
   return { settings: { model: target.model, ...read.parameters } };
 }
 
 const sentParameters = computed(() => {
   const read = readParameters();
-  return "parameters" in read ? videoParameterLabels(read.parameters) : [];
+  return 'parameters' in read ? videoParameterLabels(read.parameters) : [];
 });
 
 const exchanges = ref<VideoExchange[]>([]);
 let nextExchangeId = 1;
-const composerError = ref("");
+const composerError = ref('');
 const runningSubmit = ref<AbortController | null>(null);
 const isSubmitting = computed(() => runningSubmit.value !== null);
 let polling = new AbortController();
@@ -153,21 +153,21 @@ const promptInput = usePromptInputProvider({
   onError: (error) => (composerError.value = error.message),
 });
 const canSend = computed(
-  () => !isSubmitting.value && canTry.value && promptInput.textInput.value.trim() !== "",
+  () => !isSubmitting.value && canTry.value && promptInput.textInput.value.trim() !== '',
 );
 
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSubmitting.value) return;
   const prompt = message.text.trim();
-  if (prompt === "") throw new Error("Describe the video to generate.");
+  if (prompt === '') throw new Error('Describe the video to generate.');
   const read = readSettings();
-  if ("problem" in read) throw new Error(read.problem);
-  composerError.value = "";
+  if ('problem' in read) throw new Error(read.problem);
+  composerError.value = '';
   void send(read.settings, prompt);
 }
 
 async function send(settings: PlaygroundVideoSettings, prompt: string): Promise<void> {
-  const isDirect = source.value === "upstream";
+  const isDirect = source.value === 'upstream';
   const exchange = reactive<VideoExchange>({
     id: nextExchangeId++,
     prompt,
@@ -176,22 +176,22 @@ async function send(settings: PlaygroundVideoSettings, prompt: string): Promise<
     routes:
       !isDirect && modelDetail.value?.name === settings.model ? modelDetail.value.routes : null,
     submittedAt: Date.now(),
-    state: { kind: "submitting" },
+    state: { kind: 'submitting' },
   });
   exchanges.value.push(exchange);
 
   const request = new AbortController();
   runningSubmit.value = request;
   try {
-    const payload = await $dashboardApi(requestPath("videos"), {
-      method: "POST",
+    const payload = await $dashboardApi(requestPath('videos'), {
+      method: 'POST',
       body: videoRequestOf(settings, prompt),
       signal: request.signal,
     });
     const job = submittedVideoJobOf(payload);
     if (!job) {
       exchange.state = {
-        kind: "failed",
+        kind: 'failed',
         error: { code: null, message: "The gateway's answer had no Video Job." },
         summary: null,
       };
@@ -200,10 +200,10 @@ async function send(settings: PlaygroundVideoSettings, prompt: string): Promise<
     exchange.state = videoAnswerStateOf(job.video, job.summary);
   } catch (failure) {
     if (request.signal.aborted) {
-      exchange.state = { kind: "stopped" };
+      exchange.state = { kind: 'stopped' };
       return;
     }
-    exchange.state = { kind: "failed", error: await errorOf(failure), summary: null };
+    exchange.state = { kind: 'failed', error: await errorOf(failure), summary: null };
     return;
   } finally {
     runningSubmit.value = null;
@@ -212,7 +212,7 @@ async function send(settings: PlaygroundVideoSettings, prompt: string): Promise<
 }
 
 async function poll(exchange: VideoExchange, signal: AbortSignal): Promise<void> {
-  while (exchange.state.kind === "running") {
+  while (exchange.state.kind === 'running') {
     const { videoId, summary } = exchange.state;
     try {
       await waitFor(VIDEO_POLL_INTERVAL_MS, signal);
@@ -220,13 +220,13 @@ async function poll(exchange: VideoExchange, signal: AbortSignal): Promise<void>
       exchange.state = video
         ? videoAnswerStateOf(video, summary)
         : {
-            kind: "failed",
+            kind: 'failed',
             error: { code: null, message: "The gateway's answer was not a Video Job." },
             summary,
           };
     } catch (failure) {
       if (signal.aborted) return;
-      exchange.state = { kind: "failed", error: await errorOf(failure), summary };
+      exchange.state = { kind: 'failed', error: await errorOf(failure), summary };
     }
   }
 }
@@ -235,7 +235,7 @@ async function errorOf(failure: unknown): Promise<PlaygroundError> {
   return (
     (await playgroundErrorOfFailure(failure)) ?? {
       code: null,
-      message: apiErrorMessage(failure, "The request did not reach the gateway."),
+      message: apiErrorMessage(failure, 'The request did not reach the gateway.'),
     }
   );
 }
@@ -255,7 +255,7 @@ const totals = computed(() => {
   let jobs = 0;
   let cost: number | null = null;
   for (const exchange of exchanges.value) {
-    if (!("summary" in exchange.state) || !exchange.state.summary) continue;
+    if (!('summary' in exchange.state) || !exchange.state.summary) continue;
     jobs += 1;
     const jobCost = exchange.state.summary.cost;
     if (jobCost !== null) cost = (cost ?? 0) + jobCost;
@@ -278,7 +278,7 @@ const settingsHint =
           }}</span>
         </p>
         <p v-if="totals.jobs > 0" class="bench-bar__totals tabular">
-          <span>{{ totals.jobs }} {{ totals.jobs === 1 ? "video" : "videos" }}</span>
+          <span>{{ totals.jobs }} {{ totals.jobs === 1 ? 'video' : 'videos' }}</span>
           <span>{{ formatCost(totals.cost) }}</span>
         </p>
         <div class="bench-bar__tools">

@@ -1,31 +1,31 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, providers } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { codexAccountOf, secondsUntilExpiryOf } from "@/upstream/models/openai-codex-tokens";
-import { storedOauthTokens } from "@/upstream/models/provider-account";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
-import type { FakeReply } from "./fake-upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, providers } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { codexAccountOf, secondsUntilExpiryOf } from '@/upstream/models/openai-codex-tokens';
+import { storedOauthTokens } from '@/upstream/models/provider-account';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
+import type { FakeReply } from './fake-upstream';
 
-export const ISSUER_PATH = "/auth";
+export const ISSUER_PATH = '/auth';
 export const USER_CODE_PATH = `${ISSUER_PATH}/api/accounts/deviceauth/usercode`;
 export const DEVICE_TOKEN_PATH = `${ISSUER_PATH}/api/accounts/deviceauth/token`;
 export const TOKEN_PATH = `${ISSUER_PATH}/oauth/token`;
 
-export const CLIENT_ID = "app_codex-client-id";
-export const CLI_VERSION = "0.169.0";
-export const DEVICE_AUTH_ID = "deviceauth_0123456789";
-export const USER_CODE = "ABCD-1234";
-export const AUTHORIZATION_CODE = "authorization-code-0123";
-export const CODE_VERIFIER = "code-verifier-0123456789";
-export const ACCOUNT_ID = "chatgpt-account-0123";
-export const EMAIL = "ada@example.com";
-export const PLAN_TYPE = "pro";
+export const CLIENT_ID = 'app_codex-client-id';
+export const CLI_VERSION = '0.169.0';
+export const DEVICE_AUTH_ID = 'deviceauth_0123456789';
+export const USER_CODE = 'ABCD-1234';
+export const AUTHORIZATION_CODE = 'authorization-code-0123';
+export const CODE_VERIFIER = 'code-verifier-0123456789';
+export const ACCOUNT_ID = 'chatgpt-account-0123';
+export const EMAIL = 'ada@example.com';
+export const PLAN_TYPE = 'pro';
 
 export function jwtWith(claims: Record<string, unknown>): string {
-  const encode = (part: object) => Buffer.from(JSON.stringify(part)).toString("base64url");
-  return `${encode({ alg: "none", typ: "JWT" })}.${encode(claims)}.signature`;
+  const encode = (part: object) => Buffer.from(JSON.stringify(part)).toString('base64url');
+  return `${encode({ alg: 'none', typ: 'JWT' })}.${encode(claims)}.signature`;
 }
 
 export function accessToken(label: string, lifetimeSeconds: number): string {
@@ -39,34 +39,34 @@ export function idToken(
     ...(account.email === undefined ? {} : { email: account.email }),
     ...(account.profileEmail === undefined
       ? {}
-      : { "https://api.openai.com/profile": { email: account.profileEmail } }),
-    "https://api.openai.com/auth": {
+      : { 'https://api.openai.com/profile': { email: account.profileEmail } }),
+    'https://api.openai.com/auth': {
       chatgpt_account_id: account.accountId ?? ACCOUNT_ID,
       chatgpt_plan_type: account.planType ?? PLAN_TYPE,
     },
   });
 }
 
-export function userCodeReply(interval = "5"): FakeReply {
+export function userCodeReply(interval = '5'): FakeReply {
   return {
-    kind: "json",
+    kind: 'json',
     status: 200,
     body: { device_auth_id: DEVICE_AUTH_ID, user_code: USER_CODE, interval },
   };
 }
 
 export const PENDING_REPLY: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 403,
-  body: { error: { message: "Device authorization is pending" } },
+  body: { error: { message: 'Device authorization is pending' } },
 };
 
 export const APPROVED_REPLY: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
   body: {
     authorization_code: AUTHORIZATION_CODE,
-    code_challenge: "code-challenge",
+    code_challenge: 'code-challenge',
     code_verifier: CODE_VERIFIER,
   },
 };
@@ -77,7 +77,7 @@ export function tokensReply(tokens: {
   idToken?: string;
 }): FakeReply {
   return {
-    kind: "json",
+    kind: 'json',
     status: 200,
     body: {
       access_token: tokens.accessToken,
@@ -96,7 +96,7 @@ export async function offerCodexOauthLogin(
     .update(providers)
     .set({
       oauthLogin: {
-        flow: "openai-codex",
+        flow: 'openai-codex',
         issuer: `${origin}${ISSUER_PATH}`,
         clientId: CLIENT_ID,
         cliVersion: CLI_VERSION,
@@ -123,8 +123,8 @@ export async function addCodexLoginAccount(
     .insert(providerAccounts)
     .values({
       providerId,
-      name: "signed in",
-      credentialKind: "oauth-login",
+      name: 'signed in',
+      credentialKind: 'oauth-login',
       ...storedOauthTokens(
         app.get(ProviderKeyCipher),
         {
@@ -135,7 +135,7 @@ export async function addCodexLoginAccount(
         },
         now,
       ),
-      oauthDeviceId: "device-id-of-the-account",
+      oauthDeviceId: 'device-id-of-the-account',
       priority: login.priority ?? -1,
     })
     .returning({ id: providerAccounts.id });

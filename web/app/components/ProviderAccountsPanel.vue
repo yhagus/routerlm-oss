@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { KeyRound, LogIn, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
-import { resetCountdown, usageResetCount } from "~/lib/quotaMeters";
+import { KeyRound, LogIn, Pencil, Plus, Power, Trash2 } from '@lucide/vue';
+import { resetCountdown, usageResetCount } from '~/lib/quotaMeters';
 import {
   acceptsApiKey,
   MIN_PROVIDER_ACCOUNT_KEY_LENGTH,
@@ -10,7 +10,7 @@ import {
   optionalNumber,
   type Provider,
   type ProviderAccount,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 const props = defineProps<{
   provider: Provider;
@@ -20,19 +20,19 @@ const props = defineProps<{
 }>();
 
 type ProviderAccountDialog =
-  | { kind: "create" }
-  | { kind: "edit"; account: ProviderAccount }
-  | { kind: "delete"; account: ProviderAccount }
-  | { kind: "sign-in"; account: ProviderAccount | null };
+  | { kind: 'create' }
+  | { kind: 'edit'; account: ProviderAccount }
+  | { kind: 'delete'; account: ProviderAccount }
+  | { kind: 'sign-in'; account: ProviderAccount | null };
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
+  dateStyle: 'medium',
+  timeStyle: 'short',
 });
-const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: "medium" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { timeStyle: 'medium' });
 
 const hasQuota = computed(() => props.provider.quotaReader !== null);
 
@@ -44,7 +44,7 @@ onMounted(() => {
 });
 onUnmounted(() => clearInterval(countdownTimer));
 
-type AccountStatusKind = "exhausted" | "cooldown" | "ready" | "disabled";
+type AccountStatusKind = 'exhausted' | 'cooldown' | 'ready' | 'disabled';
 
 interface AccountStatus {
   kind: AccountStatusKind;
@@ -52,33 +52,33 @@ interface AccountStatus {
 }
 
 const STATUS_BADGES: Record<AccountStatusKind, { label: string; badgeClass: string }> = {
-  exhausted: { label: "Exhausted", badgeClass: "status-badge--bad" },
-  cooldown: { label: "Cooling down", badgeClass: "status-badge--warn" },
-  ready: { label: "Ready", badgeClass: "status-badge--good" },
-  disabled: { label: "Disabled", badgeClass: "status-badge--warn" },
+  exhausted: { label: 'Exhausted', badgeClass: 'status-badge--bad' },
+  cooldown: { label: 'Cooling down', badgeClass: 'status-badge--warn' },
+  ready: { label: 'Ready', badgeClass: 'status-badge--good' },
+  disabled: { label: 'Disabled', badgeClass: 'status-badge--warn' },
 };
 
 function accountStatus(account: ProviderAccount): AccountStatus {
-  if (!account.isEnabled) return { kind: "disabled", note: account.disabledReason };
+  if (!account.isEnabled) return { kind: 'disabled', note: account.disabledReason };
   const endsAt = account.cooldownEndsAt ? new Date(account.cooldownEndsAt) : null;
-  if (!endsAt || endsAt.getTime() <= now.value) return { kind: "ready", note: null };
-  if (account.cooldownCause === "exhausted") {
-    return { kind: "exhausted", note: resetCountdown(account.cooldownEndsAt, now.value) };
+  if (!endsAt || endsAt.getTime() <= now.value) return { kind: 'ready', note: null };
+  if (account.cooldownCause === 'exhausted') {
+    return { kind: 'exhausted', note: resetCountdown(account.cooldownEndsAt, now.value) };
   }
-  return { kind: "cooldown", note: `until ${timeFormat.format(endsAt)}` };
+  return { kind: 'cooldown', note: `until ${timeFormat.format(endsAt)}` };
 }
 
 function oauthLoginNote(account: ProviderAccount): string | null {
   if (account.oauthRegion) return OAUTH_REGION_LABELS[account.oauthRegion];
   const identity = [account.oauthEmail, account.oauthPlanType].filter(Boolean);
-  return identity.length > 0 ? identity.join(" · ") : null;
+  return identity.length > 0 ? identity.join(' · ') : null;
 }
 
 function accountCredential(account: ProviderAccount): { label: string; note: string | null } {
-  if (account.credentialKind === "oauth-login") {
-    return { label: "OAuth Login", note: oauthLoginNote(account) };
+  if (account.credentialKind === 'oauth-login') {
+    return { label: 'OAuth Login', note: oauthLoginNote(account) };
   }
-  return { label: "API key", note: account.keyLastFour ? `…${account.keyLastFour}` : null };
+  return { label: 'API key', note: account.keyLastFour ? `…${account.keyLastFour}` : null };
 }
 
 const accountRows = computed(() =>
@@ -96,9 +96,9 @@ const accountRows = computed(() =>
 function addAccountHint(provider: Provider): string {
   const canAddKey = acceptsApiKey(provider);
   const canSignIn = offersSignIn(provider);
-  if (canAddKey && canSignIn) return "Add an API key or sign in";
-  if (canSignIn) return "Sign in";
-  return "Add an API key";
+  if (canAddKey && canSignIn) return 'Add an API key or sign in';
+  if (canSignIn) return 'Sign in';
+  return 'Add an API key';
 }
 
 const emptyStateHint = computed(
@@ -115,7 +115,7 @@ const {
   submitDialog,
   deleteRow,
   toggleRow,
-} = useEditableList<ProviderAccountDialog>("/provider-accounts", props.refresh);
+} = useEditableList<ProviderAccountDialog>('/provider-accounts', props.refresh);
 
 interface ProviderAccountForm {
   name: string;
@@ -125,8 +125,8 @@ interface ProviderAccountForm {
 }
 
 const EMPTY_FORM: ProviderAccountForm = {
-  name: "",
-  key: "",
+  name: '',
+  key: '',
   priority: 0,
   continueWhenExhausted: false,
 };
@@ -135,33 +135,33 @@ const form = ref<ProviderAccountForm>({ ...EMPTY_FORM });
 
 function openDialog(next: ProviderAccountDialog): void {
   showDialog(next);
-  if (next.kind === "create") form.value = { ...EMPTY_FORM };
-  if (next.kind === "edit") {
+  if (next.kind === 'create') form.value = { ...EMPTY_FORM };
+  if (next.kind === 'edit') {
     const { name, priority, continueWhenExhausted } = next.account;
-    form.value = { name, key: "", priority, continueWhenExhausted };
+    form.value = { name, key: '', priority, continueWhenExhausted };
   }
 }
 
 const editsOauthLogin = computed(() => {
   const current = dialog.value;
-  return current?.kind === "edit" && current.account.credentialKind === "oauth-login";
+  return current?.kind === 'edit' && current.account.credentialKind === 'oauth-login';
 });
 
 const accountDialogDescription = computed(() => {
   if (editsOauthLogin.value) {
-    return "This Provider Account holds an OAuth Login, which the gateway keeps valid. The login itself is never shown.";
+    return 'This Provider Account holds an OAuth Login, which the gateway keeps valid. The login itself is never shown.';
   }
-  return "The key is encrypted before it is stored. The dashboard only ever shows its last four characters.";
+  return 'The key is encrypted before it is stored. The dashboard only ever shows its last four characters.';
 });
 
 function deleteDescription(account: ProviderAccount): string {
-  const credential = account.credentialKind === "oauth-login" ? "OAuth Login" : "key";
+  const credential = account.credentialKind === 'oauth-login' ? 'OAuth Login' : 'key';
   return `${account.name} and its stored ${credential} are deleted. Past Usage Logs keep their totals. This can't be undone.`;
 }
 
 async function saveAccount(): Promise<void> {
   const current = dialog.value;
-  if (!current || current.kind === "delete" || current.kind === "sign-in") return;
+  if (!current || current.kind === 'delete' || current.kind === 'sign-in') return;
   const quotaFields = hasQuota.value
     ? { continueWhenExhausted: form.value.continueWhenExhausted }
     : {};
@@ -171,13 +171,13 @@ async function saveAccount(): Promise<void> {
     ...quotaFields,
   };
   const failureMessage = "Couldn't save the Provider Account.";
-  if (current.kind === "create") {
+  if (current.kind === 'create') {
     const name = form.value.name.trim();
     let addedName = name;
     await submitDialog(
       async () => {
-        const created = await $dashboardApi<Pick<ProviderAccount, "name">>("/provider-accounts", {
-          method: "POST",
+        const created = await $dashboardApi<Pick<ProviderAccount, 'name'>>('/provider-accounts', {
+          method: 'POST',
           body: {
             providerId: props.provider.id,
             key: form.value.key,
@@ -187,21 +187,21 @@ async function saveAccount(): Promise<void> {
           },
         });
         addedName = created.name;
-        form.value.key = "";
+        form.value.key = '';
       },
       () => `Added ${addedName}`,
       failureMessage,
     );
     return;
   }
-  const key = form.value.key === "" ? {} : { key: form.value.key };
+  const key = form.value.key === '' ? {} : { key: form.value.key };
   await submitDialog(
     async () => {
       await $dashboardApi(`/provider-accounts/${current.account.id}`, {
-        method: "PATCH",
+        method: 'PATCH',
         body: { ...fields, ...key },
       });
-      form.value.key = "";
+      form.value.key = '';
     },
     `Saved ${fields.name}`,
     failureMessage,
@@ -218,7 +218,7 @@ function toggleAccount(account: ProviderAccount): Promise<void> {
 
 async function handleSignedIn(account: ProviderAccount): Promise<void> {
   const current = dialog.value;
-  const isSignInAgain = current?.kind === "sign-in" && current.account !== null;
+  const isSignInAgain = current?.kind === 'sign-in' && current.account !== null;
   closeDialog();
   showToast(isSignInAgain ? `Signed in again: ${account.name}` : `Added ${account.name}`);
   await props.refresh();
@@ -369,7 +369,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
     >
       <label class="field"
         ><span class="field__label">{{
-          dialog.kind === "create" ? "Name (optional)" : "Name"
+          dialog.kind === 'create' ? 'Name (optional)' : 'Name'
         }}</span
         ><input
           v-model="form.name"
@@ -384,7 +384,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
       /></label>
       <label v-if="!editsOauthLogin" class="field"
         ><span class="field__label">{{
-          dialog.kind === "create" ? "API key" : "New API key (optional)"
+          dialog.kind === 'create' ? 'API key' : 'New API key (optional)'
         }}</span
         ><input
           v-model="form.key"
@@ -410,7 +410,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
       <div class="dialog__actions">
         <button class="button" type="button" @click="closeDialog">Cancel</button>
         <button class="button button--primary" type="submit" :disabled="isSaving">
-          {{ dialog.kind === "create" ? "Add Account" : "Save" }}
+          {{ dialog.kind === 'create' ? 'Add Account' : 'Save' }}
         </button>
       </div>
     </form>

@@ -1,8 +1,8 @@
-import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, count, eq, inArray } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations";
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, count, eq, inArray } from 'drizzle-orm';
+import type { Database, Transaction } from '@/db/schemas/relations';
 import {
   type ProviderEndpoint,
   providerAccounts,
@@ -10,16 +10,16 @@ import {
   quotaMeters,
   type ServiceTierValues,
   upstreamModels,
-} from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { serviceTiersWithoutWireValue } from "@/catalog/schemas/catalog.schema";
-import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols";
+} from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { serviceTiersWithoutWireValue } from '@/catalog/schemas/catalog.schema';
+import { protocolsWithoutEndpoint } from '@/libs/models/provider-protocols';
 import {
   assertQuirksFitEndpoints,
   assertServiceTierValuesFitEndpoints,
   type Provider,
-} from "@/upstream/models/provider";
-import { UpdateProviderCommand } from "@/upstream/commands/impl/update-provider.command";
+} from '@/upstream/models/provider';
+import { UpdateProviderCommand } from '@/upstream/commands/impl/update-provider.command';
 
 @CommandHandler(UpdateProviderCommand)
 export class UpdateProviderHandler implements ICommandHandler<UpdateProviderCommand> {
@@ -34,9 +34,9 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
         .select()
         .from(providers)
         .where(eq(providers.id, providerId))
-        .for("update");
+        .for('update');
       if (!stored) {
-        throw new NotFoundException("Provider not found");
+        throw new NotFoundException('Provider not found');
       }
 
       const endpoints = changes.endpoints ?? stored.endpoints;
@@ -88,7 +88,7 @@ async function refuseWhileModelsListUnmappedTiers(
   );
   if (affected.length === 0) return;
 
-  const names = affected.map((model) => `"${model.upstreamModelId}"`).join(", ");
+  const names = affected.map((model) => `"${model.upstreamModelId}"`).join(', ');
   throw new ConflictException(
     `The Upstream Models ${names} list Service Tiers this change would leave unmapped; remove the tiers from them first`,
   );
@@ -110,7 +110,7 @@ async function refuseWhileModelsListRemovedProtocols(
   const affected = models.filter((model) => protocolsWithoutEndpoint(model, endpoints).length > 0);
   if (affected.length === 0) return;
 
-  const names = affected.map((model) => `"${model.upstreamModelId}"`).join(", ");
+  const names = affected.map((model) => `"${model.upstreamModelId}"`).join(', ');
   throw new BadRequestException(
     `The Upstream Models ${names} list Protocols whose endpoints this change would remove; remove the Protocols from them first`,
   );
@@ -126,12 +126,12 @@ async function refuseWhileOauthLoginAccountsExist(
     .where(
       and(
         eq(providerAccounts.providerId, providerId),
-        eq(providerAccounts.credentialKind, "oauth-login"),
+        eq(providerAccounts.credentialKind, 'oauth-login'),
       ),
     );
   if (total === 0) return;
 
-  const accounts = total === 1 ? "1 Provider Account signs" : `${total} Provider Accounts sign`;
+  const accounts = total === 1 ? '1 Provider Account signs' : `${total} Provider Accounts sign`;
   throw new ConflictException(
     `${accounts} in with OAuth; remove them or switch them to an API key first`,
   );

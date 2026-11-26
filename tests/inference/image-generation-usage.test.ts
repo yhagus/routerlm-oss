@@ -1,23 +1,23 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { FakeUpstream, replyWithTwoDashScopeImages } from "@tests/support/fake-upstream";
-import { insertApiKey, insertDashScopeImageModel } from "@tests/support/inference";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
-import { writtenUsageLog } from "@tests/support/usage-logs";
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { FakeUpstream, replyWithTwoDashScopeImages } from '@tests/support/fake-upstream';
+import { insertApiKey, insertDashScopeImageModel } from '@tests/support/inference';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
+import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
+import { writtenUsageLog } from '@tests/support/usage-logs';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
+const { createTestApp } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
 
-describe("Usage Logs of image generation (e2e)", () => {
+describe('Usage Logs of image generation (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -39,9 +39,9 @@ describe("Usage Logs of image generation (e2e)", () => {
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     await insertDashScopeImageModel(app, db, {
-      modelName: "painter",
+      modelName: 'painter',
       baseUrl: `${upstream.origin}/api/v1`,
-      pricePerImageBySize: { "1K": 0.04, "2K": 0.075 },
+      pricePerImageBySize: { '1K': 0.04, '2K': 0.075 },
       pricePerInputImage: 0.003,
     });
     ({ key: apiKey } = await insertApiKey(app, db));
@@ -58,16 +58,16 @@ describe("Usage Logs of image generation (e2e)", () => {
     replyWithTwoDashScopeImages(upstream);
 
     await request(app.getHttpServer())
-      .post("/v1/images/generations")
-      .set("Authorization", `Bearer ${apiKey}`)
-      .send({ model: "painter", prompt: "A red fox in snow", n: 2 })
+      .post('/v1/images/generations')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .send({ model: 'painter', prompt: 'A red fox in snow', n: 2 })
       .expect(200);
 
     expect(await writtenUsageLog(db)).toMatchObject({
-      kind: "image",
-      clientProtocol: "openai-images",
+      kind: 'image',
+      clientProtocol: 'openai-images',
       imagesOut: 2,
-      unitTier: "1K",
+      unitTier: '1K',
       cost: 0.08,
       inputTokens: null,
       outputTokens: null,
@@ -80,26 +80,26 @@ describe("Usage Logs of image generation (e2e)", () => {
     replyWithTwoDashScopeImages(upstream, { width: 1328, height: 1328 });
 
     await request(app.getHttpServer())
-      .post("/v1/images/generations")
-      .set("Authorization", `Bearer ${apiKey}`)
-      .send({ model: "painter", prompt: "A red fox in snow", n: 2 })
+      .post('/v1/images/generations')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .send({ model: 'painter', prompt: 'A red fox in snow', n: 2 })
       .expect(200);
 
-    expect(await writtenUsageLog(db)).toMatchObject({ unitTier: "1K", cost: 0.08 });
+    expect(await writtenUsageLog(db)).toMatchObject({ unitTier: '1K', cost: 0.08 });
   });
 
-  it("records the input images of an edit, and prices them into its Cost", async () => {
+  it('records the input images of an edit, and prices them into its Cost', async () => {
     replyWithTwoDashScopeImages(upstream);
 
     await request(app.getHttpServer())
-      .post("/v1/images/edits")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/images/edits')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send({
-        model: "painter",
-        prompt: "Swap the cat for the fox",
+        model: 'painter',
+        prompt: 'Swap the cat for the fox',
         images: [
-          { image_url: "https://images.example.com/fox.png" },
-          { image_url: "https://images.example.com/cat.png" },
+          { image_url: 'https://images.example.com/fox.png' },
+          { image_url: 'https://images.example.com/cat.png' },
         ],
       })
       .expect(200);

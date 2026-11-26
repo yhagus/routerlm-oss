@@ -1,5 +1,5 @@
-import { computed, ref, shallowRef } from "vue";
-import { apiErrorMessage } from "~/lib/api";
+import { computed, ref, shallowRef } from 'vue';
+import { apiErrorMessage } from '~/lib/api';
 
 interface ToggleableRow {
   id: string;
@@ -21,11 +21,11 @@ export function useEditableList<Dialog extends object>(
     },
   });
   const isSaving = ref(false);
-  const dialogError = ref("");
+  const dialogError = ref('');
 
   function showDialog(next: Dialog): void {
     dialog.value = next;
-    dialogError.value = "";
+    dialogError.value = '';
   }
 
   function closeDialog(): void {
@@ -38,10 +38,10 @@ export function useEditableList<Dialog extends object>(
     failureMessage: string,
   ): Promise<void> {
     isSaving.value = true;
-    dialogError.value = "";
+    dialogError.value = '';
     try {
       await write();
-      showToast(typeof doneMessage === "function" ? doneMessage() : doneMessage);
+      showToast(typeof doneMessage === 'function' ? doneMessage() : doneMessage);
       dialog.value = null;
       await refresh();
     } catch (error) {
@@ -53,7 +53,7 @@ export function useEditableList<Dialog extends object>(
 
   function deleteRow(row: { id: string }, name: string, failureMessage: string): Promise<void> {
     return submitDialog(
-      () => $dashboardApi(`${resourcePath}/${row.id}`, { method: "DELETE" }),
+      () => $dashboardApi(`${resourcePath}/${row.id}`, { method: 'DELETE' }),
       `Deleted ${name}`,
       failureMessage,
     );
@@ -62,10 +62,10 @@ export function useEditableList<Dialog extends object>(
   async function toggleRow(row: ToggleableRow, name: string): Promise<void> {
     try {
       await $dashboardApi(`${resourcePath}/${row.id}`, {
-        method: "PATCH",
+        method: 'PATCH',
         body: { isEnabled: !row.isEnabled },
       });
-      showToast(`${row.isEnabled ? "Disabled" : "Enabled"} ${name}`);
+      showToast(`${row.isEnabled ? 'Disabled' : 'Enabled'} ${name}`);
       await refresh();
     } catch (error) {
       showToast(apiErrorMessage(error, `Couldn't update ${name}.`));

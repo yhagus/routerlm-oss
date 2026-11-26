@@ -1,12 +1,12 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { count, desc, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { attempts, errorCaptures, usageLogs } from "@/db/schemas";
-import type { ErrorCapturePage } from "@/error-captures/models/error-capture";
-import { whereErrorCaptureFilter } from "@/error-captures/models/error-capture-filters";
-import { selectSummaryRows, summaryOf } from "@/error-captures/models/error-capture-summaries";
-import { ListErrorCapturesQuery } from "@/error-captures/queries/impl/list-error-captures.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { count, desc, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { attempts, errorCaptures, usageLogs } from '@/db/schemas';
+import type { ErrorCapturePage } from '@/error-captures/models/error-capture';
+import { whereErrorCaptureFilter } from '@/error-captures/models/error-capture-filters';
+import { selectSummaryRows, summaryOf } from '@/error-captures/models/error-capture-summaries';
+import { ListErrorCapturesQuery } from '@/error-captures/queries/impl/list-error-captures.query';
 
 @QueryHandler(ListErrorCapturesQuery)
 export class ListErrorCapturesHandler implements IQueryHandler<ListErrorCapturesQuery> {

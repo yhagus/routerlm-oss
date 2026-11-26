@@ -11,7 +11,7 @@ import {
   RULE_KINDS,
   SERVICE_TIER_LABELS,
   SERVICE_TIERS,
-} from "~/lib/parameterPolicy";
+} from '~/lib/parameterPolicy';
 
 const props = defineProps<{
   policy: ParameterPolicy | null;
@@ -22,39 +22,39 @@ const props = defineProps<{
 const emit = defineEmits<{ save: [policy: ParameterPolicy] }>();
 
 const form = ref(formFromPolicy(props.policy));
-const problem = ref("");
+const problem = ref('');
 watch(
   () => props.policy,
   (policy) => {
     form.value = formFromPolicy(policy);
-    problem.value = "";
+    problem.value = '';
   },
 );
 
 const uncoveredCaps = computed(() => capsWithoutDefault(form.value));
 
 const effortOptions = [
-  { label: "Not set", value: "" },
+  { label: 'Not set', value: '' },
   ...REASONING_EFFORTS.map((effort) => ({ label: effort, value: effort })),
 ];
 const serviceTierOptions = [
-  { label: "None", value: "" },
+  { label: 'None', value: '' },
   ...SERVICE_TIERS.map((tier) => ({ label: SERVICE_TIER_LABELS[tier], value: tier })),
 ];
 const watermarkOptions = [
-  { label: "Not set", value: "" },
-  { label: "On", value: "true" },
-  { label: "Off", value: "false" },
+  { label: 'Not set', value: '' },
+  { label: 'On', value: 'true' },
+  { label: 'Off', value: 'false' },
 ];
 
 function submit(): void {
   const result = policyFromForm(form.value);
-  if ("problem" in result) {
+  if ('problem' in result) {
     problem.value = result.problem;
     return;
   }
-  problem.value = "";
-  emit("save", result.policy);
+  problem.value = '';
+  emit('save', result.policy);
 }
 </script>
 
@@ -131,7 +131,7 @@ function submit(): void {
     </div>
     <p v-if="uncoveredCaps.length > 0" class="form__hint" role="status">
       A Cap only lowers a value that is sent. With no default beside it, an omitted parameter stays
-      omitted: {{ uncoveredCaps.join(", ") }}.
+      omitted: {{ uncoveredCaps.join(', ') }}.
     </p>
     <label class="field policy-form__prompt"
       ><span class="field__label">System prompt</span

@@ -1,5 +1,5 @@
-import { z } from "zod";
-import type { CatalogProviderQuirks } from "@/catalog/schemas/catalog.schema";
+import { z } from 'zod';
+import type { CatalogProviderQuirks } from '@/catalog/schemas/catalog.schema';
 import type {
   AssistantContentPart,
   CacheMarker,
@@ -12,29 +12,29 @@ import type {
   ResponseFormat,
   ToolChoice,
   UserContentPart,
-} from "@/inference/models/internal-format";
-import { isJsonObject } from "@/inference/protocols/json-object";
-import type { ServerSentEvent } from "@/inference/protocols/server-sent-events";
+} from '@/inference/models/internal-format';
+import { isJsonObject } from '@/inference/protocols/json-object';
+import type { ServerSentEvent } from '@/inference/protocols/server-sent-events';
 import {
   type UpstreamHttpRequest,
   UpstreamProtocolError,
   type UpstreamProtocolConverter,
   type UpstreamStreamParser,
   type UpstreamTarget,
-} from "@/inference/protocols/upstream-protocol-converter";
+} from '@/inference/protocols/upstream-protocol-converter';
 import {
   type OpenAiUsage,
   openAiFinishReasonSchema,
   stopReasonOf,
   tokenUsageOf,
   usageSchema,
-} from "./openai-chat-usage";
+} from './openai-chat-usage';
 
-type ReasoningAsThinking = NonNullable<CatalogProviderQuirks["reasoningAsThinking"]>;
+type ReasoningAsThinking = NonNullable<CatalogProviderQuirks['reasoningAsThinking']>;
 
-const CHAT_COMPLETIONS_PATH = "/chat/completions";
-const STREAM_END = "[DONE]";
-const REASONING_PLACEHOLDER = " ";
+const CHAT_COMPLETIONS_PATH = '/chat/completions';
+const STREAM_END = '[DONE]';
+const REASONING_PLACEHOLDER = ' ';
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
   const { quirks } = target;
@@ -42,7 +42,7 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     model: target.upstreamModelId,
     messages: [
       ...request.system.map((part) => ({
-        role: "system",
+        role: 'system',
         content: keepsCacheMarkers(quirks, [part]) ? [writeTextPart(part, quirks)] : part.text,
       })),
       ...request.messages.map((message) => writeMessage(message, quirks)),
@@ -66,7 +66,7 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     body.reasoning_effort = request.reasoning.effort;
   }
   if (request.maxOutputTokens !== undefined) {
-    body[quirks.usesMaxCompletionTokens ? "max_completion_tokens" : "max_tokens"] =
+    body[quirks.usesMaxCompletionTokens ? 'max_completion_tokens' : 'max_tokens'] =
       request.maxOutputTokens;
   }
   if (request.temperature !== undefined) {
@@ -91,8 +91,8 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     body.stream_options = { include_usage: true };
   }
   return {
-    url: `${target.baseUrl.replace(/\/+$/, "")}${CHAT_COMPLETIONS_PATH}`,
-    headers: { "content-type": "application/json" },
+    url: `${target.baseUrl.replace(/\/+$/, '')}${CHAT_COMPLETIONS_PATH}`,
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   };
 }
@@ -103,9 +103,9 @@ function writeThinking(
   { efforts, upstreamModelsWithoutEffort = [] }: ReasoningAsThinking,
 ): Record<string, unknown> {
   if (effort === undefined || upstreamModelsWithoutEffort.includes(target.upstreamModelId)) {
-    return { type: "enabled" };
+    return { type: 'enabled' };
   }
-  return { type: "enabled", effort: efforts[effort] };
+  return { type: 'enabled', effort: efforts[effort] };
 }
 
 function writeMessage(
@@ -113,15 +113,15 @@ function writeMessage(
   quirks: CatalogProviderQuirks,
 ): Record<string, unknown> {
   switch (message.role) {
-    case "user":
-      return { role: "user", content: writeUserContent(message.content, quirks) };
-    case "tool":
+    case 'user':
+      return { role: 'user', content: writeUserContent(message.content, quirks) };
+    case 'tool':
       return {
-        role: "tool",
+        role: 'tool',
         tool_call_id: message.toolCallId,
         content: writeUserContent(message.content, quirks),
       };
-    case "assistant":
+    case 'assistant':
       return writeAssistantMessage(message.content, quirks);
   }
 }
@@ -131,14 +131,14 @@ function writeUserContent(
   quirks: CatalogProviderQuirks,
 ): string | Record<string, unknown>[] {
   const [first] = content;
-  if (content.length === 1 && first.type === "text" && !keepsCacheMarkers(quirks, content)) {
+  if (content.length === 1 && first.type === 'text' && !keepsCacheMarkers(quirks, content)) {
     return first.text;
   }
   return content.map((part) =>
-    part.type === "text"
+    part.type === 'text'
       ? writeTextPart(part, quirks)
       : withCacheControl(
-          { type: "image_url", image_url: { url: imageUrlOf(part.source) } },
+          { type: 'image_url', image_url: { url: imageUrlOf(part.source) } },
           part.cacheMarker,
           quirks,
         ),
@@ -156,7 +156,7 @@ function writeTextPart(
   part: { text: string; cacheMarker?: CacheMarker },
   quirks: CatalogProviderQuirks,
 ): Record<string, unknown> {
-  return withCacheControl({ type: "text", text: part.text }, part.cacheMarker, quirks);
+  return withCacheControl({ type: 'text', text: part.text }, part.cacheMarker, quirks);
 }
 
 function withCacheControl(
@@ -167,11 +167,11 @@ function withCacheControl(
   if (!marker || !quirks.acceptsCacheControl) {
     return part;
   }
-  return { ...part, cache_control: { type: "ephemeral" } };
+  return { ...part, cache_control: { type: 'ephemeral' } };
 }
 
-function imageUrlOf(source: Extract<UserContentPart, { type: "image" }>["source"]): string {
-  return source.type === "url" ? source.url : `data:${source.mediaType};base64,${source.data}`;
+function imageUrlOf(source: Extract<UserContentPart, { type: 'image' }>['source']): string {
+  return source.type === 'url' ? source.url : `data:${source.mediaType};base64,${source.data}`;
 }
 
 function writeAssistantMessage(
@@ -179,21 +179,21 @@ function writeAssistantMessage(
   quirks: CatalogProviderQuirks,
 ): Record<string, unknown> {
   const reasoning = content
-    .flatMap((part) => (part.type === "reasoning" ? [part.text] : []))
-    .join("");
-  const toolCalls = content.flatMap((part) => (part.type === "tool-call" ? [part] : []));
+    .flatMap((part) => (part.type === 'reasoning' ? [part.text] : []))
+    .join('');
+  const toolCalls = content.flatMap((part) => (part.type === 'tool-call' ? [part] : []));
 
   const message: Record<string, unknown> = {
-    role: "assistant",
+    role: 'assistant',
     content: writeAssistantText(content, quirks),
   };
   if (mustCarryReasoning(quirks, toolCalls.length > 0)) {
-    message.reasoning_content = reasoning === "" ? REASONING_PLACEHOLDER : reasoning;
+    message.reasoning_content = reasoning === '' ? REASONING_PLACEHOLDER : reasoning;
   }
   if (toolCalls.length > 0) {
     message.tool_calls = toolCalls.map((call) => ({
       id: call.id,
-      type: "function",
+      type: 'function',
       function: { name: call.name, arguments: call.arguments },
     }));
   }
@@ -204,19 +204,19 @@ function writeAssistantText(
   content: AssistantContentPart[],
   quirks: CatalogProviderQuirks,
 ): string | Record<string, unknown>[] | null {
-  const textParts = content.flatMap((part) => (part.type === "text" ? [part] : []));
+  const textParts = content.flatMap((part) => (part.type === 'text' ? [part] : []));
   if (keepsCacheMarkers(quirks, textParts)) {
     return textParts.map((part) => writeTextPart(part, quirks));
   }
-  const text = textParts.map((part) => part.text).join("");
-  return text === "" ? null : text;
+  const text = textParts.map((part) => part.text).join('');
+  return text === '' ? null : text;
 }
 
 function mustCarryReasoning(quirks: CatalogProviderQuirks, hasToolCalls: boolean): boolean {
   switch (quirks.reasoningContentInHistory) {
-    case "all-assistant-turns":
+    case 'all-assistant-turns':
       return true;
-    case "tool-call-turns":
+    case 'tool-call-turns':
       return hasToolCalls;
     case undefined:
       return false;
@@ -232,27 +232,27 @@ function writeTool(tool: FunctionTool): Record<string, unknown> {
   if (tool.strict !== undefined) {
     definition.strict = tool.strict;
   }
-  return { type: "function", function: definition };
+  return { type: 'function', function: definition };
 }
 
 function writeToolChoice(choice: ToolChoice): unknown {
-  return choice.type === "tool"
-    ? { type: "function", function: { name: choice.name } }
+  return choice.type === 'tool'
+    ? { type: 'function', function: { name: choice.name } }
     : choice.type;
 }
 
 function writeResponseFormat(format: ResponseFormat): Record<string, unknown> {
   switch (format.type) {
-    case "text":
-      return { type: "text" };
-    case "json-object":
-      return { type: "json_object" };
-    case "json-schema": {
+    case 'text':
+      return { type: 'text' };
+    case 'json-object':
+      return { type: 'json_object' };
+    case 'json-schema': {
       const jsonSchema: Record<string, unknown> = { name: format.name, schema: format.schema };
       if (format.strict !== undefined) {
         jsonSchema.strict = format.strict;
       }
-      return { type: "json_schema", json_schema: jsonSchema };
+      return { type: 'json_schema', json_schema: jsonSchema };
     }
   }
 }
@@ -288,14 +288,14 @@ function parseResponse(body: unknown): InferenceResponse {
   const [{ message, finish_reason, usage: usageInChoice }] = parsed.data.choices;
   const content: AssistantContentPart[] = [];
   if (message.reasoning_content) {
-    content.push({ type: "reasoning", text: message.reasoning_content });
+    content.push({ type: 'reasoning', text: message.reasoning_content });
   }
   if (message.content) {
-    content.push({ type: "text", text: message.content });
+    content.push({ type: 'text', text: message.content });
   }
   for (const call of message.tool_calls ?? []) {
     content.push({
-      type: "tool-call",
+      type: 'tool-call',
       id: call.id,
       name: call.function.name,
       arguments: call.function.arguments,
@@ -364,12 +364,12 @@ function parseJson(data: string): unknown {
   try {
     return JSON.parse(data);
   } catch (error) {
-    throw new UpstreamProtocolError("A stream chunk is not JSON", { cause: error });
+    throw new UpstreamProtocolError('A stream chunk is not JSON', { cause: error });
   }
 }
 
 function eventsOfTokenChunk(json: unknown): InferenceStreamEvent[] | undefined {
-  if (!isJsonObject(json) || "error" in json || !Array.isArray(json.choices)) {
+  if (!isJsonObject(json) || 'error' in json || !Array.isArray(json.choices)) {
     return undefined;
   }
   if (!isNullish(json.usage) || !isNullishString(json.service_tier)) {
@@ -393,10 +393,10 @@ function eventsOfTokenChunk(json: unknown): InferenceStreamEvent[] | undefined {
       return undefined;
     }
     if (delta.reasoning_content) {
-      events.push({ type: "reasoning-delta", text: delta.reasoning_content });
+      events.push({ type: 'reasoning-delta', text: delta.reasoning_content });
     }
     if (delta.content) {
-      events.push({ type: "text-delta", text: delta.content });
+      events.push({ type: 'text-delta', text: delta.content });
     }
   }
   return events;
@@ -407,7 +407,7 @@ function isNullish(value: unknown): value is null | undefined {
 }
 
 function isNullishString(value: unknown): value is string | null | undefined {
-  return typeof value === "string" || isNullish(value);
+  return typeof value === 'string' || isNullish(value);
 }
 
 function* eventsOfChunk(json: unknown): Iterable<InferenceStreamEvent> {
@@ -423,31 +423,31 @@ function* eventsOfChunk(json: unknown): Iterable<InferenceStreamEvent> {
   for (const choice of chunk.data.choices) {
     const delta = choice.delta;
     if (delta?.reasoning_content) {
-      yield { type: "reasoning-delta", text: delta.reasoning_content };
+      yield { type: 'reasoning-delta', text: delta.reasoning_content };
     }
     if (delta?.content) {
-      yield { type: "text-delta", text: delta.content };
+      yield { type: 'text-delta', text: delta.content };
     }
     for (const call of delta?.tool_calls ?? []) {
       if (call.id && call.function?.name) {
-        yield { type: "tool-call-start", index: call.index, id: call.id, name: call.function.name };
+        yield { type: 'tool-call-start', index: call.index, id: call.id, name: call.function.name };
       }
       if (call.function?.arguments) {
         yield {
-          type: "tool-call-delta",
+          type: 'tool-call-delta',
           index: call.index,
           argumentsDelta: call.function.arguments,
         };
       }
     }
     if (choice.finish_reason) {
-      yield { type: "finish", stopReason: stopReasonOf(choice.finish_reason) };
+      yield { type: 'finish', stopReason: stopReasonOf(choice.finish_reason) };
     }
   }
   const usage: OpenAiUsage | null | undefined = chunk.data.usage ?? chunk.data.choices[0]?.usage;
   if (usage) {
     yield {
-      type: "usage",
+      type: 'usage',
       usage: tokenUsageOf(usage),
       ...(chunk.data.service_tier && { servedTierValue: chunk.data.service_tier }),
     };
@@ -455,7 +455,7 @@ function* eventsOfChunk(json: unknown): Iterable<InferenceStreamEvent> {
 }
 
 export const openAiChatUpstreamConverter: UpstreamProtocolConverter = {
-  protocol: "openai-chat",
+  protocol: 'openai-chat',
   writeRequest,
   parseResponse,
   startStream,

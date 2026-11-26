@@ -1,5 +1,5 @@
-import { Query } from "@nestjs/cqrs";
-import type { IntegrationRotation } from "@/integrations/models/integration";
+import { Query } from '@nestjs/cqrs';
+import type { IntegrationRotation } from '@/integrations/models/integration';
 
 export class ListIntegrationRotationsQuery extends Query<IntegrationRotation[]> {
   constructor(readonly integrationId: string) {

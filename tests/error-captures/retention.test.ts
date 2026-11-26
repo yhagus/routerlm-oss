@@ -1,23 +1,23 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import { eq, sql } from "drizzle-orm";
-import { getDrizzleToken } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations";
-import { errorCaptures, settings, usageLogs } from "@/db/schemas";
+import { getQueueToken } from '@nestjs/bullmq';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import { eq, sql } from 'drizzle-orm';
+import { getDrizzleToken } from '@nestjs/drizzle';
+import type { Database } from '@/db/schemas/relations';
+import { errorCaptures, settings, usageLogs } from '@/db/schemas';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { WorkerModule } = await import("@/worker.module");
-const { ERROR_CAPTURES_QUEUE } = await import("@/queue/models/queue-names");
+const { WorkerModule } = await import('@/worker.module');
+const { ERROR_CAPTURES_QUEUE } = await import('@/queue/models/queue-names');
 const { ErrorCaptureRetention, ERROR_CAPTURE_RETENTION_SCHEDULER } =
-  await import("@/error-captures/jobs/error-capture-retention");
+  await import('@/error-captures/jobs/error-capture-retention');
 
-const NOW = new Date("2026-11-15T12:00:00Z");
+const NOW = new Date('2026-11-15T12:00:00Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-describe("Error Capture retention (e2e)", () => {
+describe('Error Capture retention (e2e)', () => {
   let worker: TestingModule;
   let db: Database;
 
@@ -32,7 +32,7 @@ describe("Error Capture retention (e2e)", () => {
     await worker.close();
   });
 
-  it("schedules the repeating deletion job when the worker starts", async () => {
+  it('schedules the repeating deletion job when the worker starts', async () => {
     const queue = worker.get<Queue>(getQueueToken(ERROR_CAPTURES_QUEUE));
 
     expect(await queue.getJobScheduler(ERROR_CAPTURE_RETENTION_SCHEDULER)).toBeTruthy();
@@ -44,7 +44,7 @@ describe("Error Capture retention (e2e)", () => {
       .insert(usageLogs)
       .values({
         createdAt: NOW,
-        clientProtocol: "openai-chat",
+        clientProtocol: 'openai-chat',
         isStreamed: false,
         httpStatus: 502,
         requestBytes: 0,
@@ -53,7 +53,7 @@ describe("Error Capture retention (e2e)", () => {
         attemptCount: 0,
       })
       .returning({ id: usageLogs.id });
-    const capture = { usageLogId, requestHeaders: {}, requestBody: "{}" };
+    const capture = { usageLogId, requestHeaders: {}, requestBody: '{}' };
     await db.insert(errorCaptures).values(
       ageDays.map((age) => ({
         ...capture,
@@ -72,26 +72,26 @@ describe("Error Capture retention (e2e)", () => {
   }
 
   beforeEach(async () => {
-    await db.delete(settings).where(eq(settings.key, "errorCaptureRetentionDays"));
+    await db.delete(settings).where(eq(settings.key, 'errorCaptureRetentionDays'));
   });
 
-  it("deletes the captures older than the default 7 days and keeps the rest", async () => {
+  it('deletes the captures older than the default 7 days and keeps the rest', async () => {
     await insertCapturesAged(8, 6);
 
     await worker.get(ErrorCaptureRetention).deleteExpiredCaptures(NOW);
 
-    expect(await bodiesLeft()).toEqual(["6 days old"]);
+    expect(await bodiesLeft()).toEqual(['6 days old']);
   });
 
-  it("applies a changed Retention Period on the next run without a restart", async () => {
+  it('applies a changed Retention Period on the next run without a restart', async () => {
     const retention = worker.get(ErrorCaptureRetention);
     await insertCapturesAged(4, 2);
     await retention.deleteExpiredCaptures(NOW);
-    expect(await bodiesLeft()).toEqual(["2 days old", "4 days old"]);
+    expect(await bodiesLeft()).toEqual(['2 days old', '4 days old']);
 
-    await db.insert(settings).values({ key: "errorCaptureRetentionDays", value: 3 });
+    await db.insert(settings).values({ key: 'errorCaptureRetentionDays', value: 3 });
     await retention.deleteExpiredCaptures(NOW);
 
-    expect(await bodiesLeft()).toEqual(["2 days old"]);
+    expect(await bodiesLeft()).toEqual(['2 days old']);
   });
 });

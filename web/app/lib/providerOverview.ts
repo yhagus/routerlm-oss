@@ -1,11 +1,11 @@
-import type { Provider, ProviderAccount, UpstreamModel } from "~/lib/upstream";
+import type { Provider, ProviderAccount, UpstreamModel } from '~/lib/upstream';
 
-export type AccountState = "ready" | "cooldown" | "disabled";
+export type AccountState = 'ready' | 'cooldown' | 'disabled';
 
 export function accountStateOf(account: ProviderAccount, now: number): AccountState {
-  if (!account.isEnabled) return "disabled";
-  if (account.cooldownEndsAt && new Date(account.cooldownEndsAt).getTime() > now) return "cooldown";
-  return "ready";
+  if (!account.isEnabled) return 'disabled';
+  if (account.cooldownEndsAt && new Date(account.cooldownEndsAt).getTime() > now) return 'cooldown';
+  return 'ready';
 }
 
 export interface ProviderStats {
@@ -46,15 +46,15 @@ export function baseUrlHost(baseUrl: string): string {
 }
 
 export function unroutableReason(stats: ProviderStats): string {
-  if (stats.accounts.total === 0) return "No Provider Account: add a key before routing here.";
+  if (stats.accounts.total === 0) return 'No Provider Account: add a key before routing here.';
   if (stats.accounts.ready === 0) {
-    return "No ready Provider Account: every key is disabled or cooling down.";
+    return 'No ready Provider Account: every key is disabled or cooling down.';
   }
-  return "No enabled Upstream Model: enable one before routing here.";
+  return 'No enabled Upstream Model: enable one before routing here.';
 }
 
 export function unroutableShort(stats: ProviderStats): string {
-  if (stats.accounts.total === 0) return "No account";
-  if (stats.accounts.ready === 0) return "No ready account";
-  return "No enabled model";
+  if (stats.accounts.total === 0) return 'No account';
+  if (stats.accounts.ready === 0) return 'No ready account';
+  return 'No enabled model';
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Boxes, CloudOff } from "@lucide/vue";
+import { Boxes, CloudOff } from '@lucide/vue';
 
 defineProps<{ isLogEmpty: boolean }>();
 

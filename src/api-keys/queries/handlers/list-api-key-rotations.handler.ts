@@ -1,11 +1,11 @@
-import { NotFoundException } from "@nestjs/common";
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { desc, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeyRotations, apiKeys, users } from "@/db/schemas";
-import type { ApiKeyRotation } from "@/api-keys/models/api-key";
-import { ListApiKeyRotationsQuery } from "@/api-keys/queries/impl/list-api-key-rotations.query";
+import { NotFoundException } from '@nestjs/common';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { desc, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeyRotations, apiKeys, users } from '@/db/schemas';
+import type { ApiKeyRotation } from '@/api-keys/models/api-key';
+import { ListApiKeyRotationsQuery } from '@/api-keys/queries/impl/list-api-key-rotations.query';
 
 @QueryHandler(ListApiKeyRotationsQuery)
 export class ListApiKeyRotationsHandler implements IQueryHandler<ListApiKeyRotationsQuery> {
@@ -17,7 +17,7 @@ export class ListApiKeyRotationsHandler implements IQueryHandler<ListApiKeyRotat
       .from(apiKeys)
       .where(eq(apiKeys.id, apiKeyId));
     if (!apiKey) {
-      throw new NotFoundException("API Key not found");
+      throw new NotFoundException('API Key not found');
     }
     const rows = await this.db
       .select({

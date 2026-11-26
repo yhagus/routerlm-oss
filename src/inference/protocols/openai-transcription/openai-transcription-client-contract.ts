@@ -1,42 +1,42 @@
-import { z } from "zod";
+import { z } from 'zod';
 import {
   AUDIO_FILE_FORMATS,
   type AudioFileFormat,
   TRANSCRIPT_FORMATS,
   type Transcript,
   type TranscriptionRequest,
-} from "@/inference/models/audio-transcription";
-import { GatewayError } from "@/inference/models/gateway-error";
+} from '@/inference/models/audio-transcription';
+import { GatewayError } from '@/inference/models/gateway-error';
 import {
   jsonReply,
   type MediaClientContract,
   type MediaReply,
-} from "@/inference/models/media-kind";
-import { dashScopeTranscriptionProtocol } from "@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol";
-import { writeOpenAiError } from "@/inference/protocols/openai-chat/openai-error";
-import type { TranscriptionFile } from "./openai-transcription-form";
+} from '@/inference/models/media-kind';
+import { dashScopeTranscriptionProtocol } from '@/inference/protocols/dashscope-transcription/dashscope-transcription-protocol';
+import { writeOpenAiError } from '@/inference/protocols/openai-chat/openai-error';
+import type { TranscriptionFile } from './openai-transcription-form';
 
-const PLAIN_TEXT_CONTENT_TYPE = "text/plain; charset=utf-8";
+const PLAIN_TEXT_CONTENT_TYPE = 'text/plain; charset=utf-8';
 
 const FORMATS_BY_CONTENT_TYPE: Record<string, AudioFileFormat> = {
-  "audio/aac": "aac",
-  "audio/amr": "amr",
-  "audio/flac": "flac",
-  "audio/x-flac": "flac",
-  "audio/m4a": "m4a",
-  "audio/x-m4a": "m4a",
-  "audio/mp4": "m4a",
-  "audio/mpeg": "mp3",
-  "audio/mp3": "mp3",
-  "audio/ogg": "ogg",
-  "audio/opus": "opus",
-  "audio/wav": "wav",
-  "audio/wave": "wav",
-  "audio/x-wav": "wav",
-  "audio/webm": "webm",
-  "video/mp4": "mp4",
-  "video/mpeg": "mpeg",
-  "video/webm": "webm",
+  'audio/aac': 'aac',
+  'audio/amr': 'amr',
+  'audio/flac': 'flac',
+  'audio/x-flac': 'flac',
+  'audio/m4a': 'm4a',
+  'audio/x-m4a': 'm4a',
+  'audio/mp4': 'm4a',
+  'audio/mpeg': 'mp3',
+  'audio/mp3': 'mp3',
+  'audio/ogg': 'ogg',
+  'audio/opus': 'opus',
+  'audio/wav': 'wav',
+  'audio/wave': 'wav',
+  'audio/x-wav': 'wav',
+  'audio/webm': 'webm',
+  'video/mp4': 'mp4',
+  'video/mpeg': 'mpeg',
+  'video/webm': 'webm',
 };
 
 const FILE_EXTENSION = /\.([a-z0-9]+)$/i;
@@ -51,7 +51,7 @@ const requestSchema = z.object({
   model: z.string().min(1),
   file: fileSchema,
   language: z.string().min(1).optional(),
-  response_format: z.enum(TRANSCRIPT_FORMATS).default("json"),
+  response_format: z.enum(TRANSCRIPT_FORMATS).default('json'),
 });
 
 const featureRefusedSchema = z.object({
@@ -64,9 +64,9 @@ function parseRequest(body: unknown): TranscriptionRequest {
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `Invalid request: ${z.prettifyError(parsed.error)}`,
-      "client",
+      'client',
     );
   }
   const { model, file, language, response_format } = parsed.data;
@@ -84,11 +84,11 @@ function refuseUnsupportedFeatures(body: unknown): void {
     return;
   }
   const { response_format, stream } = features.data;
-  if (typeof response_format === "string" && !isTranscriptFormat(response_format)) {
+  if (typeof response_format === 'string' && !isTranscriptFormat(response_format)) {
     throw unsupported(`the response_format "${response_format}"`);
   }
-  if (stream === true || stream === "true") {
-    throw unsupported("`stream`");
+  if (stream === true || stream === 'true') {
+    throw unsupported('`stream`');
   }
 }
 
@@ -110,24 +110,24 @@ function audioFileFormatOf({ contentType, fileName }: TranscriptionFile): AudioF
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
+  return new GatewayError('invalid_request', `Not supported: ${feature}`, 'client');
 }
 
 function writeResponse({ text, seconds, responseFormat }: Transcript): MediaReply {
-  if (responseFormat === "text") {
+  if (responseFormat === 'text') {
     return { contentType: PLAIN_TEXT_CONTENT_TYPE, body: new TextEncoder().encode(text) };
   }
-  return jsonReply({ text, usage: { type: "duration", seconds } });
+  return jsonReply({ text, usage: { type: 'duration', seconds } });
 }
 
 export const openAiTranscriptionClientContract: MediaClientContract<
   TranscriptionRequest,
   Transcript
 > = {
-  protocol: "openai-transcription",
+  protocol: 'openai-transcription',
   parseRequest,
   unservableReason: () => null,
-  upstreamProtocols: { "dashscope-transcription": dashScopeTranscriptionProtocol },
+  upstreamProtocols: { 'dashscope-transcription': dashScopeTranscriptionProtocol },
   writeResponse,
   writeError: writeOpenAiError,
 };

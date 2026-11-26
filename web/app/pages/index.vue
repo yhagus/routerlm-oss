@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { CloudOff, RefreshCw } from "@lucide/vue";
-import { computed, ref } from "vue";
-import { compactNumber, percent, type ChartPoint, type ChartSeries } from "~/lib/chart";
-import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS, type ErrorOrigin } from "~/lib/errorOrigins";
+import { CloudOff, RefreshCw } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import { compactNumber, percent, type ChartPoint, type ChartSeries } from '~/lib/chart';
+import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS, type ErrorOrigin } from '~/lib/errorOrigins';
 import {
   bucketLabels,
   formatCostTick,
@@ -12,23 +12,23 @@ import {
   OVERVIEW_RANGES,
   type OverviewRange,
   type OverviewStats,
-} from "~/lib/overview";
-import { formatCost, formatCount } from "~/lib/usage";
+} from '~/lib/overview';
+import { formatCost, formatCount } from '~/lib/usage';
 
-useHead({ title: "Overview" });
+useHead({ title: 'Overview' });
 
-const SERIES_COLOR = "var(--series-1)";
+const SERIES_COLOR = 'var(--series-1)';
 const REQUESTS_SCALE_FLOOR = 4;
 const COST_SCALE_FLOOR = 0.01;
 const ERROR_RATE_SCALE_FLOOR = 0.05;
 const FULL_RATE = 1;
 const ORIGIN_COLORS: Record<ErrorOrigin, string> = {
-  client: "var(--series-1)",
-  upstream: "var(--series-2)",
-  gateway: "var(--series-3)",
+  client: 'var(--series-1)',
+  upstream: 'var(--series-2)',
+  gateway: 'var(--series-3)',
 };
 
-const range = useQueryParam<OverviewRange>("range", { default: "24h", isValid: isOverviewRange });
+const range = useQueryParam<OverviewRange>('range', { default: '24h', isValid: isOverviewRange });
 const rangeOptions = Object.entries(OVERVIEW_RANGES).map(([value, label]) => ({ value, label }));
 
 function pickRange(value: string): void {
@@ -39,11 +39,11 @@ const {
   data: overview,
   error: loadError,
   refresh,
-} = useDashboardApi<Overview>("/overview", {
+} = useDashboardApi<Overview>('/overview', {
   query: computed(() => ({ range: range.value })),
 });
 
-type SingleStatKey = Exclude<keyof OverviewStats, "errorsByOrigin">;
+type SingleStatKey = Exclude<keyof OverviewStats, 'errorsByOrigin'>;
 
 interface OverviewChart {
   key: SingleStatKey;
@@ -56,27 +56,27 @@ interface OverviewChart {
 
 const CHARTS: OverviewChart[] = [
   {
-    key: "requestCount",
-    title: "Requests",
-    description: "Client requests received, whatever their outcome.",
+    key: 'requestCount',
+    title: 'Requests',
+    description: 'Client requests received, whatever their outcome.',
     formatValue: formatCount,
     formatTick: compactNumber,
     scaleFloor: REQUESTS_SCALE_FLOOR,
   },
   {
-    key: "cost",
-    title: "Cost",
+    key: 'cost',
+    title: 'Cost',
     description:
-      "At the prices in force when each request was served. Unknown Costs count as zero.",
+      'At the prices in force when each request was served. Unknown Costs count as zero.',
     formatValue: formatCost,
     formatTick: formatCostTick,
     scaleFloor: COST_SCALE_FLOOR,
   },
   {
-    key: "cacheHitRate",
-    title: "Cache hit rate",
+    key: 'cacheHitRate',
+    title: 'Cache hit rate',
     description:
-      "Cache-read tokens ÷ total input tokens, where total input = input + cache-read + cache-write tokens.",
+      'Cache-read tokens ÷ total input tokens, where total input = input + cache-read + cache-write tokens.',
     formatValue: (value) => percent(value),
     formatTick: (value) => percent(value, 0),
     scaleFloor: FULL_RATE,
@@ -110,10 +110,10 @@ const originPoints = computed<ChartPoint[]>(() => {
 const bandStats = computed(() => {
   const totals = overview.value?.totals;
   return [
-    { label: "Requests", value: totals ? formatCount(totals.requestCount) : null },
-    { label: "Cost", value: totals ? formatCost(totals.cost) : null },
-    { label: "Cache hit rate", value: totals ? formatRate(totals.cacheHitRate) : null },
-    { label: "Error rate", value: totals ? formatRate(totals.errorRate) : null },
+    { label: 'Requests', value: totals ? formatCount(totals.requestCount) : null },
+    { label: 'Cost', value: totals ? formatCost(totals.cost) : null },
+    { label: 'Cache hit rate', value: totals ? formatRate(totals.cacheHitRate) : null },
+    { label: 'Error rate', value: totals ? formatRate(totals.errorRate) : null },
   ];
 });
 
@@ -127,8 +127,8 @@ const originTiles = computed(() => {
       rate: errors ? formatRate(errors.rate) : null,
       failed: errors ? `${formatCount(errors.count)} failed` : null,
       to: {
-        path: "/usage",
-        query: { errorOrigin: origin, status: "failed", range: range.value },
+        path: '/usage',
+        query: { errorOrigin: origin, status: 'failed', range: range.value },
       },
     };
   });
@@ -169,17 +169,17 @@ const rangeLabel = computed(() => OVERVIEW_RANGES[range.value].toLowerCase());
       </header>
       <ol class="setup-steps">
         <li>
-          <NuxtLink to="/providers">Add a Provider Account</NuxtLink>{{ " "
+          <NuxtLink to="/providers">Add a Provider Account</NuxtLink>{{ ' '
           }}<span
             >on a Provider's Accounts tab, with the upstream API key the gateway will call.</span
           >
         </li>
         <li>
-          <NuxtLink to="/models">Create a Model</NuxtLink>{{ " "
+          <NuxtLink to="/models">Create a Model</NuxtLink>{{ ' '
           }}<span>that routes to one of that Provider's Upstream Models.</span>
         </li>
         <li>
-          <NuxtLink to="/api-keys">Create an API Key</NuxtLink>{{ " "
+          <NuxtLink to="/api-keys">Create an API Key</NuxtLink>{{ ' '
           }}<span>and send a request with it.</span>
         </li>
       </ol>

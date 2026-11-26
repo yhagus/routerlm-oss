@@ -7,24 +7,24 @@ import {
   Pencil,
   RefreshCw,
   Trash2,
-} from "@lucide/vue";
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "reka-ui";
-import type { IntegrationConfirmation } from "~/components/IntegrationConfirmDialog.vue";
-import type { RowAction } from "~/components/RowActionsMenu.vue";
-import { apiErrorMessage } from "~/lib/api";
-import type { ModelChoice } from "~/lib/api-keys";
-import { dateFormat } from "~/lib/dateFormats";
-import { isNotFound } from "~/lib/errors";
+} from '@lucide/vue';
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
+import type { IntegrationConfirmation } from '~/components/IntegrationConfirmDialog.vue';
+import type { RowAction } from '~/components/RowActionsMenu.vue';
+import { apiErrorMessage } from '~/lib/api';
+import type { ModelChoice } from '~/lib/api-keys';
+import { dateFormat } from '~/lib/dateFormats';
+import { isNotFound } from '~/lib/errors';
 import {
   type CreatedIntegration,
   INTEGRATION_STATUS_LABELS,
   type IntegrationDetail,
   type IntegrationSummary,
   integrationStatus,
-} from "~/lib/integrations";
-import { formatCount } from "~/lib/usage";
+} from '~/lib/integrations';
+import { formatCount } from '~/lib/usage';
 
-const TABS = ["overview", "api-keys", "customers", "usage", "models", "secret-history"] as const;
+const TABS = ['overview', 'api-keys', 'customers', 'usage', 'models', 'secret-history'] as const;
 type Tab = (typeof TABS)[number];
 
 const integrationId = String(useRoute().params.id);
@@ -37,22 +37,22 @@ const {
   error: loadError,
   refresh,
 } = useDashboardApi<IntegrationDetail>(integrationPath);
-useMissingResource(() => isNotFound(loadError.value), "Integration");
+useMissingResource(() => isNotFound(loadError.value), 'Integration');
 const { data: modelChoices, status: modelChoicesStatus } =
-  useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
+  useDashboardApi<ModelChoice[]>('/api-keys/model-choices');
 const isLoadingModelChoices = computed(
-  () => modelChoicesStatus.value === "pending" && !modelChoices.value,
+  () => modelChoicesStatus.value === 'pending' && !modelChoices.value,
 );
 
-useHead({ title: () => integration.value?.name ?? "Integration" });
+useHead({ title: () => integration.value?.name ?? 'Integration' });
 
 const status = computed(() => (integration.value ? integrationStatus(integration.value) : null));
 
-const activeTab = useQueryParam<Tab>("tab", { default: "overview", isValid: oneOf(TABS) });
+const activeTab = useQueryParam<Tab>('tab', { default: 'overview', isValid: oneOf(TABS) });
 const search = useQuerySearch();
 const page = useQueryPage();
 watch(activeTab, () => {
-  search.value = "";
+  search.value = '';
   page.value = 1;
 });
 
@@ -71,10 +71,10 @@ async function handleUpdated(updated: IntegrationSummary): Promise<void> {
 async function toggleEnabled(): Promise<void> {
   if (!integration.value) return;
   const { name } = integration.value;
-  const action = status.value === "enabled" ? "disable" : "enable";
+  const action = status.value === 'enabled' ? 'disable' : 'enable';
   try {
-    await $dashboardApi(`${integrationPath}/${action}`, { method: "POST" });
-    showToast(`${action === "enable" ? "Enabled" : "Disabled"} ${name}`);
+    await $dashboardApi(`${integrationPath}/${action}`, { method: 'POST' });
+    showToast(`${action === 'enable' ? 'Enabled' : 'Disabled'} ${name}`);
     await refresh();
   } catch (error) {
     showToast(apiErrorMessage(error, `Couldn't ${action} ${name}.`));
@@ -83,7 +83,7 @@ async function toggleEnabled(): Promise<void> {
 
 const confirming = ref<IntegrationConfirmation | null>(null);
 
-function openConfirm(kind: IntegrationConfirmation["kind"]): void {
+function openConfirm(kind: IntegrationConfirmation['kind']): void {
   if (integration.value) confirming.value = { kind, integration: integration.value };
 }
 
@@ -100,24 +100,24 @@ async function handleRotated(integrationWithSecret: CreatedIntegration): Promise
   await refresh();
 }
 
-type MoreActionId = "rotate" | "toggle" | "delete";
+type MoreActionId = 'rotate' | 'toggle' | 'delete';
 
 const moreActions = computed<RowAction<MoreActionId>[]>(() => [
-  { id: "rotate", label: "Rotate secret", icon: RefreshCw },
-  status.value === "enabled"
-    ? { id: "toggle", label: "Disable", icon: CirclePause }
-    : { id: "toggle", label: "Enable", icon: CirclePlay },
-  { id: "delete", label: "Delete", icon: Trash2, isDestructive: true },
+  { id: 'rotate', label: 'Rotate secret', icon: RefreshCw },
+  status.value === 'enabled'
+    ? { id: 'toggle', label: 'Disable', icon: CirclePause }
+    : { id: 'toggle', label: 'Enable', icon: CirclePlay },
+  { id: 'delete', label: 'Delete', icon: Trash2, isDestructive: true },
 ]);
 
 function handleMoreAction(id: MoreActionId): void {
-  if (id === "toggle") void toggleEnabled();
+  if (id === 'toggle') void toggleEnabled();
   else openConfirm(id);
 }
 
 async function handleDeleted(deleted: IntegrationSummary): Promise<void> {
   showToast(`Deleted ${deleted.name}`);
-  await navigateTo("/integrations");
+  await navigateTo('/integrations');
 }
 </script>
 

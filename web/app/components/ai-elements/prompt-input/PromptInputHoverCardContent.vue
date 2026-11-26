@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { HoverCardContent } from "@/components/ui/hover-card";
+import { HoverCardContent } from '@/components/ui/hover-card';
 
-type PromptInputHoverCardContentProps = InstanceType<typeof HoverCardContent>["$props"];
+type PromptInputHoverCardContentProps = InstanceType<typeof HoverCardContent>['$props'];
 
 interface Props extends /* @vue-ignore */ PromptInputHoverCardContentProps {}
 
 const props = withDefaults(defineProps<Props>(), {
-  align: "start",
+  align: 'start',
 });
 
 const { align, ...restProps } = props;

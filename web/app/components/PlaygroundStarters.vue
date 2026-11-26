@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { ImagePlus, Play } from "@lucide/vue";
+import { ImagePlus, Play } from '@lucide/vue';
 
 defineProps<{ canSeeImages: boolean }>();
 const emit = defineEmits<{ start: [prompt: string, withImage: boolean] }>();
 
 const STARTERS = [
-  { label: "Say hello", prompt: "Say hello in one sentence." },
+  { label: 'Say hello', prompt: 'Say hello in one sentence.' },
   {
-    label: "Which model are you?",
-    prompt: "Which model are you, and which company trained you? Answer in one sentence.",
+    label: 'Which model are you?',
+    prompt: 'Which model are you, and which company trained you? Answer in one sentence.',
   },
-  { label: "Count to 20", prompt: "Count from 1 to 20, one number per line." },
+  { label: 'Count to 20', prompt: 'Count from 1 to 20, one number per line.' },
 ];
-const IMAGE_STARTER = "Describe this image in one sentence.";
+const IMAGE_STARTER = 'Describe this image in one sentence.';
 </script>
 
 <template>

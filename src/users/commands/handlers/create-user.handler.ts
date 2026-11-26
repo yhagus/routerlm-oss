@@ -1,13 +1,13 @@
-import { PasswordHasher } from "@nestjs/authentication";
-import { ConflictException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations";
-import { users } from "@/db/schemas";
-import { normalizeEmail, type User, userColumns } from "@/users/models/user";
-import { CreateUserCommand } from "@/users/commands/impl/create-user.command";
+import { PasswordHasher } from '@nestjs/authentication';
+import { ConflictException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import type { Database } from '@/db/schemas/relations';
+import { users } from '@/db/schemas';
+import { normalizeEmail, type User, userColumns } from '@/users/models/user';
+import { CreateUserCommand } from '@/users/commands/impl/create-user.command';
 
-const UNIQUE_VIOLATION = "23505";
+const UNIQUE_VIOLATION = '23505';
 
 @CommandHandler(CreateUserCommand)
 export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
@@ -26,7 +26,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
       return created;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new ConflictException("A User with this email already exists");
+        throw new ConflictException('A User with this email already exists');
       }
       throw error;
     }
@@ -39,9 +39,9 @@ function isUniqueViolation(error: unknown): boolean {
   }
   const driverError = error.cause ?? error;
   return (
-    typeof driverError === "object" &&
+    typeof driverError === 'object' &&
     driverError !== null &&
-    "code" in driverError &&
+    'code' in driverError &&
     driverError.code === UNIQUE_VIOLATION
   );
 }

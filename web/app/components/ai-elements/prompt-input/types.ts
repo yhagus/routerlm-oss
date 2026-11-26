@@ -1,5 +1,5 @@
-import type { FileUIPart } from "ai";
-import type { Ref } from "vue";
+import type { FileUIPart } from 'ai';
+import type { Ref } from 'vue';
 
 export interface PromptInputMessage {
   text: string;
@@ -25,4 +25,4 @@ export interface PromptInputContext {
   submitForm: () => void;
 }
 
-export const PROMPT_INPUT_KEY = Symbol("PromptInputContext");
+export const PROMPT_INPUT_KEY = Symbol('PromptInputContext');

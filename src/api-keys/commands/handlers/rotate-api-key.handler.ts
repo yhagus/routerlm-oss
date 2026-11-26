@@ -1,16 +1,16 @@
-import { ConflictException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, isNull } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeyRotations, apiKeys } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
-import { ApiKeyAuth } from "@/api-keys/providers/api-key-auth";
-import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from "@/api-keys/models/api-key";
-import { selectApiKeySummaries } from "@/api-keys/models/api-key-summaries";
-import { assertUserOwnsKey, findUnrevokedApiKey } from "@/api-keys/models/find-unrevoked-api-key";
-import { RotateApiKeyCommand } from "@/api-keys/commands/impl/rotate-api-key.command";
+import { ConflictException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq, isNull } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeyRotations, apiKeys } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
+import { ApiKeyAuth } from '@/api-keys/providers/api-key-auth';
+import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from '@/api-keys/models/api-key';
+import { selectApiKeySummaries } from '@/api-keys/models/api-key-summaries';
+import { assertUserOwnsKey, findUnrevokedApiKey } from '@/api-keys/models/find-unrevoked-api-key';
+import { RotateApiKeyCommand } from '@/api-keys/commands/impl/rotate-api-key.command';
 
 const REVOKED_MESSAGE = "A revoked API Key can't be rotated.";
 
@@ -31,7 +31,7 @@ export class RotateApiKeyHandler implements ICommandHandler<RotateApiKeyCommand>
         .select({ keyId: apiKeys.keyId })
         .from(apiKeys)
         .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
-        .for("update");
+        .for('update');
       if (!current) {
         throw new ConflictException(REVOKED_MESSAGE);
       }

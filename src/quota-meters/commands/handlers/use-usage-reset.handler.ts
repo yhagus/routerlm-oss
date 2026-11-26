@@ -1,24 +1,24 @@
-import { BadGatewayException, ConflictException, NotFoundException } from "@nestjs/common";
-import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { usageResets } from "@/db/schemas";
-import { GetProviderAccountCredentialQuery } from "@/upstream/queries/impl/get-provider-account-credential.query";
-import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command";
-import { RefreshUsageResetsCommand } from "@/quota-meters/commands/impl/refresh-usage-resets.command";
-import { UseUsageResetCommand } from "@/quota-meters/commands/impl/use-usage-reset.command";
-import { type ProviderAccountQuota, recordQuotaError } from "@/quota-meters/models/quota-meter";
+import { BadGatewayException, ConflictException, NotFoundException } from '@nestjs/common';
+import { CommandBus, CommandHandler, type ICommandHandler, QueryBus } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { usageResets } from '@/db/schemas';
+import { GetProviderAccountCredentialQuery } from '@/upstream/queries/impl/get-provider-account-credential.query';
+import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/read-provider-account-quota.command';
+import { RefreshUsageResetsCommand } from '@/quota-meters/commands/impl/refresh-usage-resets.command';
+import { UseUsageResetCommand } from '@/quota-meters/commands/impl/use-usage-reset.command';
+import { type ProviderAccountQuota, recordQuotaError } from '@/quota-meters/models/quota-meter';
 import {
   isUnexpired,
   isUsageResetCallFailure,
   type UsageResetOutcome,
-} from "@/quota-meters/models/usage-reset";
-import { UsageResetTargets } from "@/quota-meters/providers/usage-reset-targets";
+} from '@/quota-meters/models/usage-reset';
+import { UsageResetTargets } from '@/quota-meters/providers/usage-reset-targets';
 
-const UNSUPPORTED_MESSAGE = "The Provider of this Provider Account has no usage resets";
-const NOTHING_TO_RESET_MESSAGE = "No meter is low enough to reset yet";
-const UNAVAILABLE_MESSAGE = "That reset is no longer available";
+const UNSUPPORTED_MESSAGE = 'The Provider of this Provider Account has no usage resets';
+const NOTHING_TO_RESET_MESSAGE = 'No meter is low enough to reset yet';
+const UNAVAILABLE_MESSAGE = 'That reset is no longer available';
 
 @CommandHandler(UseUsageResetCommand)
 export class UseUsageResetHandler implements ICommandHandler<UseUsageResetCommand> {
@@ -46,12 +46,12 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
     }
 
     switch (outcome) {
-      case "nothing-to-reset":
+      case 'nothing-to-reset':
         throw new ConflictException(NOTHING_TO_RESET_MESSAGE);
-      case "unavailable":
+      case 'unavailable':
         await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
         throw new ConflictException(UNAVAILABLE_MESSAGE);
-      case "reset":
+      case 'reset':
         await this.commandBus.execute(new RefreshUsageResetsCommand(providerAccountId));
         return this.commandBus.execute(new ReadProviderAccountQuotaCommand(providerAccountId));
     }
@@ -85,7 +85,7 @@ export class UseUsageResetHandler implements ICommandHandler<UseUsageResetComman
         ),
       );
     if (!reset) {
-      throw new NotFoundException("Usage reset not found");
+      throw new NotFoundException('Usage reset not found');
     }
     return reset.externalId;
   }

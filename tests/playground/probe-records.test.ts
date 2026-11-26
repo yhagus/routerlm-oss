@@ -1,29 +1,29 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { errorCaptures, upstreamModels } from "@/db/schemas";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
-import { addProviderAccount, insertOpenAiChatModel, UPSTREAM_KEY } from "@tests/support/inference";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { errorCaptures, upstreamModels } from '@/db/schemas';
+import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
+import { addProviderAccount, insertOpenAiChatModel, UPSTREAM_KEY } from '@tests/support/inference';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
+import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
-const { writtenUsageLogs } = await import("@tests/support/usage-logs");
+const { createTestApp, setUpFirstUser } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
+const { writtenUsageLogs } = await import('@tests/support/usage-logs');
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const BACKUP_KEY = "sk-backup-secret-9876543210";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const BACKUP_KEY = 'sk-backup-secret-9876543210';
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 
-describe("Records of a Probe (e2e)", () => {
+describe('Records of a Probe (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -50,7 +50,7 @@ describe("Records of a Probe (e2e)", () => {
     adaCookie = await setUpFirstUser(app, ADA);
     let providerId: string;
     ({ providerId, providerAccountId: mainAccountId } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: upstream.baseUrl,
     }));
     backupAccountId = await addProviderAccount(app, db, providerId, {
@@ -69,19 +69,19 @@ describe("Records of a Probe (e2e)", () => {
 
   it("writes each call's Usage Log as Playground traffic, and the Error Capture its result names", async () => {
     upstream.replyWithCredential(UPSTREAM_KEY, {
-      kind: "json",
+      kind: 'json',
       status: 200,
-      body: JSON.parse(openAiChatFixture("upstream-response-tool-call.json")),
+      body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
     });
     upstream.replyWithCredential(BACKUP_KEY, {
-      kind: "json",
+      kind: 'json',
       status: 503,
-      body: { error: "overloaded" },
+      body: { error: 'overloaded' },
     });
 
     const response = await request(app.getHttpServer())
       .post(`/api/playground/upstream-models/${upstreamModelRowId}/probe`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(200);
 
     await vi.waitFor(async () => expect(await writtenUsageLogs(db)).toHaveLength(2), {

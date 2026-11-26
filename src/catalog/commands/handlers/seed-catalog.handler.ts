@@ -1,8 +1,8 @@
-import { Logger } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { type AnyColumn, and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations";
+import { Logger } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { type AnyColumn, and, eq, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import type { Database, Transaction } from '@/db/schemas/relations';
 import {
   pricingWindows,
   type ProviderEndpoint,
@@ -10,19 +10,19 @@ import {
   upstreamModelPricingWindows,
   upstreamModels,
   type UpstreamProtocol,
-} from "@/db/schemas";
-import { SeedCatalogCommand, type SeedResult } from "@/catalog/commands/impl/seed-catalog.command";
+} from '@/db/schemas';
+import { SeedCatalogCommand, type SeedResult } from '@/catalog/commands/impl/seed-catalog.command';
 import {
   type CatalogPricingWindow,
   type CatalogUpstreamModel,
   type CatalogWindowPrices,
-} from "@/catalog/schemas/catalog.schema";
-import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols";
-import { selectAttachedPricingWindows } from "@/pricing-windows/models/upstream-model-pricing-windows";
+} from '@/catalog/schemas/catalog.schema';
+import { protocolsWithoutEndpoint } from '@/libs/models/provider-protocols';
+import { selectAttachedPricingWindows } from '@/pricing-windows/models/upstream-model-pricing-windows';
 import {
   doWindowPricesOverlap,
   type WindowPricesTiming,
-} from "@/pricing-windows/models/window-prices-overlap";
+} from '@/pricing-windows/models/window-prices-overlap';
 
 type NamedWindowPricesTiming = WindowPricesTiming & { name: string };
 
@@ -41,10 +41,10 @@ function protocolsServedBy(
 function fillEmpty(
   column: AnyColumn,
   catalogValue: unknown,
-  sqlType: "integer" | "jsonb" | "text[]",
+  sqlType: 'integer' | 'jsonb' | 'text[]',
 ): SQL {
   const value =
-    sqlType === "jsonb" && catalogValue != null ? JSON.stringify(catalogValue) : catalogValue;
+    sqlType === 'jsonb' && catalogValue != null ? JSON.stringify(catalogValue) : catalogValue;
   return sql`coalesce(${column}, ${sql.param(value ?? null)}::${sql.raw(sqlType)})`;
 }
 
@@ -126,7 +126,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
         result.createdPricingWindows += createdWindowNames.size;
         const servedKinds = new Set(provider.endpoints.map((endpoint) => endpoint.kind));
         const servableModels = entry.upstreamModels.filter((model) =>
-          servedKinds.has(model.kind ?? "chat"),
+          servedKinds.has(model.kind ?? 'chat'),
         );
         if (servableModels.length === 0) continue;
 
@@ -144,7 +144,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               outputPrice: model.outputPrice,
               cacheReadPrice: model.cacheReadPrice,
               cacheWritePrice: model.cacheWritePrice,
-              kind: model.kind ?? "chat",
+              kind: model.kind ?? 'chat',
               protocols: protocolsServedBy(provider.endpoints, model),
               pricePerImage: model.pricePerImage ?? null,
               pricePerImageBySize: model.pricePerImageBySize ?? null,
@@ -183,7 +183,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               pricePerImageBySize: fillEmpty(
                 upstreamModels.pricePerImageBySize,
                 model.pricePerImageBySize,
-                "jsonb",
+                'jsonb',
               ),
               pricePerInputImage: fillPrice(
                 upstreamModels.pricePerInputImage,
@@ -192,7 +192,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               pricePerSecondByResolution: fillEmpty(
                 upstreamModels.pricePerSecondByResolution,
                 model.pricePerSecondByResolution,
-                "jsonb",
+                'jsonb',
               ),
               pricePerMillionCharacters: fillPrice(
                 upstreamModels.pricePerMillionCharacters,
@@ -205,20 +205,20 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               maxInputImages: fillEmpty(
                 upstreamModels.maxInputImages,
                 model.maxInputImages,
-                "integer",
+                'integer',
               ),
               minDurationSeconds: fillEmpty(
                 upstreamModels.minDurationSeconds,
                 model.minDurationSeconds,
-                "integer",
+                'integer',
               ),
               maxDurationSeconds: fillEmpty(
                 upstreamModels.maxDurationSeconds,
                 model.maxDurationSeconds,
-                "integer",
+                'integer',
               ),
-              resolutions: fillEmpty(upstreamModels.resolutions, model.resolutions, "text[]"),
-              sizes: fillEmpty(upstreamModels.sizes, model.sizes, "text[]"),
+              resolutions: fillEmpty(upstreamModels.resolutions, model.resolutions, 'text[]'),
+              sizes: fillEmpty(upstreamModels.sizes, model.sizes, 'text[]'),
             })
             .where(
               and(

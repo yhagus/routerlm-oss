@@ -1,6 +1,6 @@
-import { Module } from "@nestjs/common";
-import { RedisModule } from "@/redis/redis.module";
-import { SpendLimitFlags } from "./providers/spend-limit-flags";
+import { Module } from '@nestjs/common';
+import { RedisModule } from '@/redis/redis.module';
+import { SpendLimitFlags } from './providers/spend-limit-flags';
 
 @Module({
   imports: [RedisModule],

@@ -1,13 +1,13 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { eq } from "drizzle-orm";
-import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
-import type { CatalogProvider } from "@/catalog/schemas/catalog.schema";
-import type { Database } from "@/db/schemas/relations";
-import { providers } from "@/db/schemas";
-import { type FakeReply, FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream";
-import { insertApiKey, insertOpenAiChatModel } from "@tests/support/inference";
-import { ALL_LIMITS, USAGES_PATH, usagesReply } from "@tests/support/kimi-code-usages";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { eq } from 'drizzle-orm';
+import request from 'supertest';
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
+import type { CatalogProvider } from '@/catalog/schemas/catalog.schema';
+import type { Database } from '@/db/schemas/relations';
+import { providers } from '@/db/schemas';
+import { type FakeReply, FakeUpstream, type ReceivedRequest } from '@tests/support/fake-upstream';
+import { insertApiKey, insertOpenAiChatModel } from '@tests/support/inference';
+import { ALL_LIMITS, USAGES_PATH, usagesReply } from '@tests/support/kimi-code-usages';
 import {
   ACCESS_TOKEN,
   addOauthLoginAccount,
@@ -15,33 +15,33 @@ import {
   refreshedTokensReply,
   REFRESH_TOKEN,
   TOKEN_PATH,
-} from "@tests/support/kimi-oauth";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/kimi-oauth';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
-const CHAT_PATH = "/v1/chat/completions";
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const TEXT_REQUEST = { model: 'smart', messages: [{ role: 'user', content: 'Hi' }] };
+const CHAT_PATH = '/v1/chat/completions';
 const GLOBAL_TOKEN_PATH = `/global${TOKEN_PATH}`;
 const HOUR_SECONDS = 3600;
 const SHORT_LIFETIME_SECONDS = 60;
-const RENEWED = { accessToken: "access-token-2", refreshToken: "refresh-token-2" };
+const RENEWED = { accessToken: 'access-token-2', refreshToken: 'refresh-token-2' };
 
 const COMPLETION: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
   body: {
-    id: "chatcmpl-kimi-1",
-    object: "chat.completion",
-    model: "k3",
+    id: 'chatcmpl-kimi-1',
+    object: 'chat.completion',
+    model: 'k3',
     choices: [
-      { index: 0, message: { role: "assistant", content: "Hello." }, finish_reason: "stop" },
+      { index: 0, message: { role: 'assistant', content: 'Hello.' }, finish_reason: 'stop' },
     ],
     usage: { prompt_tokens: 12, completion_tokens: 8 },
   },
 };
 
-describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () => {
+describe('Quota Meters of a Provider Account holding an OAuth Login (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let kimi: FakeUpstream;
@@ -54,8 +54,8 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
     ({ app, db } = await createTestApp());
     kimi = await FakeUpstream.start();
     const catalog = await loadCatalog(CATALOG_DIRECTORY);
-    const kimiCode = catalog.find((provider) => provider.slug === "kimi-code");
-    if (!kimiCode) throw new Error("the Catalog has no Kimi Code Provider");
+    const kimiCode = catalog.find((provider) => provider.slug === 'kimi-code');
+    if (!kimiCode) throw new Error('the Catalog has no Kimi Code Provider');
     catalogKimiCode = kimiCode;
   });
 
@@ -64,7 +64,7 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: kimi.baseUrl,
     }));
     await db
@@ -83,13 +83,13 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
   function readQuotaNow(providerAccountId: string) {
     return request(app.getHttpServer())
       .post(`/api/provider-accounts/${providerAccountId}/quota-reading`)
-      .set("Cookie", cookie);
+      .set('Cookie', cookie);
   }
 
   async function listedAccount(providerAccountId: string): Promise<Record<string, unknown>> {
     const list = await request(app.getHttpServer())
-      .get("/api/provider-accounts")
-      .set("Cookie", cookie)
+      .get('/api/provider-accounts')
+      .set('Cookie', cookie)
       .expect(200);
     return list.body.find((account: { id: string }) => account.id === providerAccountId);
   }
@@ -98,7 +98,7 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
     return kimi.requests.filter((received) => received.path === path);
   }
 
-  it("reads the quota with the access token and no CLI identity", async () => {
+  it('reads the quota with the access token and no CLI identity', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: HOUR_SECONDS,
     });
@@ -111,14 +111,14 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
     expect(kimi.requests).toHaveLength(1);
     expect(kimi.lastRequest.headers).toMatchObject({
       authorization: `Bearer ${ACCESS_TOKEN}`,
-      accept: "application/json",
+      accept: 'application/json',
     });
-    expect(kimi.lastRequest.headers).not.toHaveProperty("x-msh-platform");
-    expect(kimi.lastRequest.headers).not.toHaveProperty("x-msh-device-id");
-    expect(kimi.lastRequest.headers["user-agent"]).not.toContain("kimi-code-cli");
+    expect(kimi.lastRequest.headers).not.toHaveProperty('x-msh-platform');
+    expect(kimi.lastRequest.headers).not.toHaveProperty('x-msh-device-id');
+    expect(kimi.lastRequest.headers['user-agent']).not.toContain('kimi-code-cli');
   });
 
-  it("refreshes a login about to run out before reading the quota", async () => {
+  it('refreshes a login about to run out before reading the quota', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: SHORT_LIFETIME_SECONDS,
     });
@@ -129,12 +129,12 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
 
     expect(reading.body.quotaError).toBeNull();
     expect(callsTo(GLOBAL_TOKEN_PATH).map((refresh) => refresh.body)).toEqual([
-      expect.objectContaining({ grant_type: "refresh_token", refresh_token: REFRESH_TOKEN }),
+      expect.objectContaining({ grant_type: 'refresh_token', refresh_token: REFRESH_TOKEN }),
     ]);
     expect(callsTo(USAGES_PATH)[0].headers.authorization).toBe(`Bearer ${RENEWED.accessToken}`);
   });
 
-  it("refreshes once when a quota reading and an inference request arrive together", async () => {
+  it('refreshes once when a quota reading and an inference request arrive together', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: SHORT_LIFETIME_SECONDS,
     });
@@ -150,7 +150,7 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
       readQuotaNow(accountId),
       request(app.getHttpServer())
         .post(CHAT_PATH)
-        .set("Authorization", `Bearer ${apiKey}`)
+        .set('Authorization', `Bearer ${apiKey}`)
         .send(TEXT_REQUEST),
     ]);
 
@@ -161,19 +161,19 @@ describe("Quota Meters of a Provider Account holding an OAuth Login (e2e)", () =
     expect(callsTo(CHAT_PATH)[0].headers.authorization).toBe(`Bearer ${RENEWED.accessToken}`);
   });
 
-  it("disables the account with a sign-in-again reason when the refresh before a reading is refused", async () => {
+  it('disables the account with a sign-in-again reason when the refresh before a reading is refused', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: SHORT_LIFETIME_SECONDS,
     });
     kimi.replyTo(GLOBAL_TOKEN_PATH, {
-      kind: "json",
+      kind: 'json',
       status: 400,
-      body: { error: "invalid_grant" },
+      body: { error: 'invalid_grant' },
     });
 
     const reading = await readQuotaNow(accountId).expect(200);
 
-    expect(reading.body.quotaError).toEqual(expect.stringContaining("invalid_grant"));
+    expect(reading.body.quotaError).toEqual(expect.stringContaining('invalid_grant'));
     expect(callsTo(USAGES_PATH)).toHaveLength(0);
     expect(await listedAccount(accountId)).toMatchObject({
       isEnabled: false,

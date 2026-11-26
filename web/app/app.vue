@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useHead({ titleTemplate: (title) => (title ? `${title} · RouterLM` : "RouterLM") });
+useHead({ titleTemplate: (title) => (title ? `${title} · RouterLM` : 'RouterLM') });
 </script>
 
 <template>

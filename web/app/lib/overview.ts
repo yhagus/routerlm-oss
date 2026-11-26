@@ -1,11 +1,11 @@
-import { percent } from "./chart";
-import type { ErrorOrigin } from "./errorOrigins";
-import type { TimeRange } from "./usage";
+import { percent } from './chart';
+import type { ErrorOrigin } from './errorOrigins';
+import type { TimeRange } from './usage';
 
 export const OVERVIEW_RANGES = {
-  "24h": "Last 24 hours",
-  "7d": "Last 7 days",
-  "30d": "Last 30 days",
+  '24h': 'Last 24 hours',
+  '7d': 'Last 7 days',
+  '30d': 'Last 30 days',
 } as const satisfies Partial<Record<TimeRange, string>>;
 export type OverviewRange = keyof typeof OVERVIEW_RANGES;
 
@@ -40,9 +40,9 @@ export interface Overview {
 }
 
 const tickCostFormat = new Intl.NumberFormat(undefined, {
-  style: "currency",
-  currency: "USD",
-  notation: "compact",
+  style: 'currency',
+  currency: 'USD',
+  notation: 'compact',
   maximumSignificantDigits: 2,
 });
 
@@ -53,15 +53,15 @@ export function formatCostTick(cost: number): string {
 const HOUR_SECONDS = 3600;
 const DAY_SECONDS = 24 * HOUR_SECONDS;
 
-const hourTick = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" });
-const weekdayHourTick = new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "2-digit" });
-const timeTitle = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+const hourTick = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+const weekdayHourTick = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: '2-digit' });
+const timeTitle = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 const utcDay = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
 });
-const utcDayTitle = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeZone: "UTC" });
+const utcDayTitle = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 
 export function bucketLabels(
   start: string,
@@ -79,7 +79,7 @@ export function bucketLabels(
   };
 }
 
-const NO_DATA = "—";
+const NO_DATA = '—';
 
 export function formatRate(rate: number | null): string {
   return rate === null ? NO_DATA : percent(rate);

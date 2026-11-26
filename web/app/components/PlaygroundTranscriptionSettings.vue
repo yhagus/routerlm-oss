@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const language = defineModel<string>("language", { required: true });
+const language = defineModel<string>('language', { required: true });
 </script>
 
 <template>

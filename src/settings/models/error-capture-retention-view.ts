@@ -1,6 +1,6 @@
-import type { ErrorCaptureRetention } from "./error-capture-retention";
-import { SETTING_DEFINITIONS } from "./setting-definitions";
-import type { SettingValue } from "@/settings/providers/settings-store";
+import type { ErrorCaptureRetention } from './error-capture-retention';
+import { SETTING_DEFINITIONS } from './setting-definitions';
+import type { SettingValue } from '@/settings/providers/settings-store';
 
 const { default: defaultDays, min, max } = SETTING_DEFINITIONS.errorCaptureRetentionDays;
 

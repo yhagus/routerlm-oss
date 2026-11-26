@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { LanguageModelUsage } from "ai";
-import type { ModelId } from "./context";
-import { HoverCard } from "@/components/ui/hover-card";
-import { computed, provide } from "vue";
-import { ContextKey } from "./context";
+import type { LanguageModelUsage } from 'ai';
+import type { ModelId } from './context';
+import { HoverCard } from '@/components/ui/hover-card';
+import { computed, provide } from 'vue';
+import { ContextKey } from './context';
 
 interface Props {
   usedTokens: number;

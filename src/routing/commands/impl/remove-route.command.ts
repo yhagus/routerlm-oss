@@ -1,4 +1,4 @@
-import { Command } from "@nestjs/cqrs";
+import { Command } from '@nestjs/cqrs';
 
 export class RemoveRouteCommand extends Command<void> {
   constructor(

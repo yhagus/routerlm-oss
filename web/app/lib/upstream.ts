@@ -1,25 +1,25 @@
-import type { ReasoningEffort, ServiceTier } from "~/lib/parameterPolicy";
-import type { AttachedPricingWindow } from "~/lib/pricingWindows";
+import type { ReasoningEffort, ServiceTier } from '~/lib/parameterPolicy';
+import type { AttachedPricingWindow } from '~/lib/pricingWindows';
 
 export const UPSTREAM_PROTOCOLS = [
-  "openai-chat",
-  "anthropic-messages",
-  "openai-responses",
-  "dashscope-image",
-  "dashscope-video",
-  "dashscope-speech",
-  "dashscope-transcription",
+  'openai-chat',
+  'anthropic-messages',
+  'openai-responses',
+  'dashscope-image',
+  'dashscope-video',
+  'dashscope-speech',
+  'dashscope-transcription',
 ] as const;
 export type UpstreamProtocol = (typeof UPSTREAM_PROTOCOLS)[number];
 
 export const PROTOCOL_LABELS: Record<UpstreamProtocol, string> = {
-  "openai-chat": "Chat Completions",
-  "anthropic-messages": "Messages",
-  "openai-responses": "Responses",
-  "dashscope-image": "DashScope Image",
-  "dashscope-video": "DashScope Video",
-  "dashscope-speech": "DashScope Speech",
-  "dashscope-transcription": "DashScope Transcription",
+  'openai-chat': 'Chat Completions',
+  'anthropic-messages': 'Messages',
+  'openai-responses': 'Responses',
+  'dashscope-image': 'DashScope Image',
+  'dashscope-video': 'DashScope Video',
+  'dashscope-speech': 'DashScope Speech',
+  'dashscope-transcription': 'DashScope Transcription',
 };
 
 export const PROTOCOL_OPTIONS = UPSTREAM_PROTOCOLS.map((protocol) => ({
@@ -27,15 +27,15 @@ export const PROTOCOL_OPTIONS = UPSTREAM_PROTOCOLS.map((protocol) => ({
   value: protocol,
 }));
 
-export const MODEL_KINDS = ["chat", "image", "speech", "transcription", "video"] as const;
+export const MODEL_KINDS = ['chat', 'image', 'speech', 'transcription', 'video'] as const;
 export type ModelKind = (typeof MODEL_KINDS)[number];
 
 export const MODEL_KIND_LABELS: Record<ModelKind, string> = {
-  chat: "Chat",
-  image: "Image",
-  speech: "Speech",
-  transcription: "Transcription",
-  video: "Video",
+  chat: 'Chat',
+  image: 'Image',
+  speech: 'Speech',
+  transcription: 'Transcription',
+  video: 'Video',
 };
 
 export const MODEL_KIND_OPTIONS = MODEL_KINDS.map((kind) => ({
@@ -45,13 +45,13 @@ export const MODEL_KIND_OPTIONS = MODEL_KINDS.map((kind) => ({
 
 /** The Model Kind each Protocol serves, as the backend's `PROTOCOL_KINDS` says. */
 export const PROTOCOL_KINDS = {
-  "openai-chat": "chat",
-  "anthropic-messages": "chat",
-  "openai-responses": "chat",
-  "dashscope-image": "image",
-  "dashscope-video": "video",
-  "dashscope-speech": "speech",
-  "dashscope-transcription": "transcription",
+  'openai-chat': 'chat',
+  'anthropic-messages': 'chat',
+  'openai-responses': 'chat',
+  'dashscope-image': 'image',
+  'dashscope-video': 'video',
+  'dashscope-speech': 'speech',
+  'dashscope-transcription': 'transcription',
 } as const satisfies Record<UpstreamProtocol, ModelKind>;
 
 export function protocolOptionsFor(kind: string): { label: string; value: UpstreamProtocol }[] {
@@ -85,45 +85,45 @@ export function endpointProtocolsOf(
 }
 
 export function mainBaseUrl(endpoints: readonly { kind: string; baseUrl: string }[]): string {
-  return (endpoints.find((endpoint) => endpoint.kind === "chat") ?? endpoints[0])?.baseUrl ?? "";
+  return (endpoints.find((endpoint) => endpoint.kind === 'chat') ?? endpoints[0])?.baseUrl ?? '';
 }
 
-export const AUTH_STYLES = ["bearer", "x-api-key"] as const;
+export const AUTH_STYLES = ['bearer', 'x-api-key'] as const;
 export type AuthStyle = (typeof AUTH_STYLES)[number];
 
 export const CAPABILITIES = [
-  "vision",
-  "tools",
-  "reasoning",
-  "structured-output",
-  "text-to-video",
-  "first-frame",
-  "last-frame",
-  "reference-images",
+  'vision',
+  'tools',
+  'reasoning',
+  'structured-output',
+  'text-to-video',
+  'first-frame',
+  'last-frame',
+  'reference-images',
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
 export const CAPABILITY_LABELS: Record<Capability, string> = {
-  vision: "Vision",
-  tools: "Tool calls",
-  reasoning: "Reasoning",
-  "structured-output": "Structured output",
-  "text-to-video": "Text to video",
-  "first-frame": "First frame",
-  "last-frame": "Last frame",
-  "reference-images": "Reference images",
+  vision: 'Vision',
+  tools: 'Tool calls',
+  reasoning: 'Reasoning',
+  'structured-output': 'Structured output',
+  'text-to-video': 'Text to video',
+  'first-frame': 'First frame',
+  'last-frame': 'Last frame',
+  'reference-images': 'Reference images',
 };
 
 export const VIDEO_CAPABILITIES = [
-  "text-to-video",
-  "first-frame",
-  "last-frame",
-  "reference-images",
+  'text-to-video',
+  'first-frame',
+  'last-frame',
+  'reference-images',
 ] as const satisfies readonly Capability[];
 
 export function capabilitiesFor(kind: ModelKind): readonly Capability[] {
-  if (kind === "video") return VIDEO_CAPABILITIES;
-  if (kind === "chat") return CAPABILITIES.filter((capability) => !isVideoCapability(capability));
+  if (kind === 'video') return VIDEO_CAPABILITIES;
+  if (kind === 'chat') return CAPABILITIES.filter((capability) => !isVideoCapability(capability));
   return [];
 }
 
@@ -131,9 +131,9 @@ function isVideoCapability(capability: Capability): boolean {
   return VIDEO_CAPABILITIES.some((video) => video === capability);
 }
 
-export const REASONING_CONTENT_IN_HISTORY = ["all-assistant-turns", "tool-call-turns"] as const;
+export const REASONING_CONTENT_IN_HISTORY = ['all-assistant-turns', 'tool-call-turns'] as const;
 
-export const DROPPABLE_PARAMETERS = ["temperature", "top_p", "max_output_tokens"] as const;
+export const DROPPABLE_PARAMETERS = ['temperature', 'top_p', 'max_output_tokens'] as const;
 export type DroppableParameter = (typeof DROPPABLE_PARAMETERS)[number];
 
 export interface ProviderQuirks {
@@ -157,41 +157,41 @@ export interface ProviderQuirks {
   quotaBaseUrl?: string;
 }
 
-export const QUOTA_READERS = ["minimax-m-plan", "kimi-code", "openai-codex"] as const;
+export const QUOTA_READERS = ['minimax-m-plan', 'kimi-code', 'openai-codex'] as const;
 export type QuotaReader = (typeof QUOTA_READERS)[number];
 
 export const QUOTA_READER_OPTIONS = [
-  { label: "None", value: "" },
-  { label: "MiniMax M Plan", value: "minimax-m-plan" },
-  { label: "Kimi Code", value: "kimi-code" },
-  { label: "OpenAI Codex", value: "openai-codex" },
-] satisfies { label: string; value: QuotaReader | "" }[];
+  { label: 'None', value: '' },
+  { label: 'MiniMax M Plan', value: 'minimax-m-plan' },
+  { label: 'Kimi Code', value: 'kimi-code' },
+  { label: 'OpenAI Codex', value: 'openai-codex' },
+] satisfies { label: string; value: QuotaReader | '' }[];
 
-export const OAUTH_REGIONS = ["global", "china"] as const;
+export const OAUTH_REGIONS = ['global', 'china'] as const;
 export type OauthRegion = (typeof OAUTH_REGIONS)[number];
 
 export const OAUTH_REGION_LABELS: Record<OauthRegion, string> = {
-  global: "Global account",
-  china: "Chinese account",
+  global: 'Global account',
+  china: 'Chinese account',
 };
 
-export const OAUTH_LOGIN_FLOWS = ["kimi-code", "openai-codex"] as const;
+export const OAUTH_LOGIN_FLOWS = ['kimi-code', 'openai-codex'] as const;
 export type OauthLoginFlow = (typeof OAUTH_LOGIN_FLOWS)[number];
 
 export const OAUTH_LOGIN_FLOW_LABELS: Record<OauthLoginFlow, string> = {
-  "kimi-code": "Kimi Code device code",
-  "openai-codex": "OpenAI Codex CLI device code",
+  'kimi-code': 'Kimi Code device code',
+  'openai-codex': 'OpenAI Codex CLI device code',
 };
 
 export interface KimiCodeOauthLogin {
-  flow: "kimi-code";
+  flow: 'kimi-code';
   authHosts: Record<OauthRegion, string>;
   clientId: string;
   cliVersion: string;
 }
 
 export interface OpenAiCodexOauthLogin {
-  flow: "openai-codex";
+  flow: 'openai-codex';
   issuer: string;
   clientId: string;
   cliVersion: string;
@@ -199,12 +199,12 @@ export interface OpenAiCodexOauthLogin {
 
 export type ProviderOauthLogin = KimiCodeOauthLogin | OpenAiCodexOauthLogin;
 
-export const CREDENTIAL_KINDS = ["api-key", "oauth-login"] as const;
+export const CREDENTIAL_KINDS = ['api-key', 'oauth-login'] as const;
 export type CredentialKind = (typeof CREDENTIAL_KINDS)[number];
 
 export const CREDENTIAL_KIND_LABELS: Record<CredentialKind, string> = {
-  "api-key": "API key",
-  "oauth-login": "OAuth Login",
+  'api-key': 'API key',
+  'oauth-login': 'OAuth Login',
 };
 
 export interface TierPrices {
@@ -269,11 +269,11 @@ export interface UpstreamModel {
   updatedAt: string;
 }
 
-export function upstreamModelLabel(model: Pick<UpstreamModel, "name" | "upstreamModelId">): string {
+export function upstreamModelLabel(model: Pick<UpstreamModel, 'name' | 'upstreamModelId'>): string {
   return model.name === null ? model.upstreamModelId : `${model.name} (${model.upstreamModelId})`;
 }
 
-export type QuotaMeterUnit = "percent" | "count" | "tokens" | "usd";
+export type QuotaMeterUnit = 'percent' | 'count' | 'tokens' | 'usd';
 
 export interface QuotaMeter {
   key: string;
@@ -298,7 +298,7 @@ export interface UsageReset {
 
 export type ProviderAccountQuota = Pick<
   ProviderAccount,
-  "quotaCheckedAt" | "quotaError" | "quotaMeters" | "usageResets"
+  'quotaCheckedAt' | 'quotaError' | 'quotaMeters' | 'usageResets'
 >;
 
 export interface ProviderAccount {
@@ -328,7 +328,7 @@ export interface ProviderAccount {
 
 export interface PendingOauthSignIn {
   id: string;
-  status: "pending";
+  status: 'pending';
   userCode: string;
   verificationUri: string;
   verificationUriComplete: string | null;
@@ -337,36 +337,36 @@ export interface PendingOauthSignIn {
 
 export type OauthSignIn =
   | PendingOauthSignIn
-  | { id: string; status: "completed"; providerAccount: ProviderAccount }
-  | { id: string; status: "denied" }
-  | { id: string; status: "expired" };
+  | { id: string; status: 'completed'; providerAccount: ProviderAccount }
+  | { id: string; status: 'denied' }
+  | { id: string; status: 'expired' };
 
 export function needsNewSignIn(account: ProviderAccount): boolean {
   return (
-    account.credentialKind === "oauth-login" &&
+    account.credentialKind === 'oauth-login' &&
     !account.isEnabled &&
     account.disabledReason !== null
   );
 }
 
 export function acceptsApiKey(provider: Provider): boolean {
-  return provider.credentialKinds.includes("api-key");
+  return provider.credentialKinds.includes('api-key');
 }
 
 export function offersSignIn(provider: Provider): boolean {
-  return provider.oauthLogin !== null && provider.credentialKinds.includes("oauth-login");
+  return provider.oauthLogin !== null && provider.credentialKinds.includes('oauth-login');
 }
 
 export const MIN_PROVIDER_ACCOUNT_KEY_LENGTH = 12;
 
 export function optionalNumber(typed: string | number): number | null {
-  if (typeof typed === "number") return typed;
-  return typed.trim() === "" ? null : Number(typed);
+  if (typeof typed === 'number') return typed;
+  return typed.trim() === '' ? null : Number(typed);
 }
 
 export function numberField(value: number | null): string {
-  return value === null ? "" : String(value);
+  return value === null ? '' : String(value);
 }
 
 export const TERMS_RISK_HINT =
-  "Using this Provider through a gateway may breach its terms of use. Blocked until Allow terms-risk providers is turned on in Settings.";
+  'Using this Provider through a gateway may breach its terms of use. Blocked until Allow terms-risk providers is turned on in Settings.';

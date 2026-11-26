@@ -1,11 +1,11 @@
-import { PasswordHasher } from "@nestjs/authentication";
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { users } from "@/db/schemas";
-import { normalizeEmail, type User, userColumns } from "@/users/models/user";
-import { FindUserByCredentialsQuery } from "@/users/queries/impl/find-user-by-credentials.query";
+import { PasswordHasher } from '@nestjs/authentication';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { users } from '@/db/schemas';
+import { normalizeEmail, type User, userColumns } from '@/users/models/user';
+import { FindUserByCredentialsQuery } from '@/users/queries/impl/find-user-by-credentials.query';
 
 @QueryHandler(FindUserByCredentialsQuery)
 export class FindUserByCredentialsHandler implements IQueryHandler<FindUserByCredentialsQuery> {

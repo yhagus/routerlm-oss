@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import { getUsage } from "tokenlens";
-import { computed } from "vue";
-import { useContextValue } from "./context";
-import TokensWithCost from "./TokensWithCost.vue";
+import type { HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
+import { getUsage } from 'tokenlens';
+import { computed } from 'vue';
+import { useContextValue } from './context';
+import TokensWithCost from './TokensWithCost.vue';
 
 const props = defineProps<{
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }>();
 
 const { usage, modelId } = useContextValue();
@@ -22,9 +22,9 @@ const cacheCostText = computed(() => {
     usage: { cacheReads: cacheTokens.value, input: 0, output: 0 },
   }).costUSD?.totalUSD;
 
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
   }).format(cacheCost ?? 0);
 });
 </script>

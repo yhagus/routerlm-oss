@@ -1,11 +1,11 @@
-import { HttpException } from "@nestjs/common";
-import { RpcException } from "@nestjs/microservices";
+import { HttpException } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 
 export const CONTROL_PLANE_ERROR_CODES = [
-  "UNAUTHENTICATED",
-  "INVALID_ARGUMENT",
-  "NOT_FOUND",
-  "FAILED_PRECONDITION",
+  'UNAUTHENTICATED',
+  'INVALID_ARGUMENT',
+  'NOT_FOUND',
+  'FAILED_PRECONDITION',
 ] as const;
 export type ControlPlaneErrorCode = (typeof CONTROL_PLANE_ERROR_CODES)[number];
 
@@ -29,7 +29,7 @@ export class ControlPlaneError extends Error {
 }
 
 export function apiKeyNotFound(): ControlPlaneError {
-  return new ControlPlaneError("NOT_FOUND", "API Key not found");
+  return new ControlPlaneError('NOT_FOUND', 'API Key not found');
 }
 
 export function controlPlaneErrorOf(exception: unknown): ControlPlaneError | null {
@@ -51,7 +51,7 @@ function httpStatusOf(exception: unknown): number | undefined {
     return undefined;
   }
   const error = exception.getError();
-  if (typeof error === "object" && "statusCode" in error && typeof error.statusCode === "number") {
+  if (typeof error === 'object' && 'statusCode' in error && typeof error.statusCode === 'number') {
     return error.statusCode;
   }
   return undefined;

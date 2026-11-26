@@ -1,4 +1,4 @@
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
+import type { ProviderAccountCredential } from '@/upstream/models/provider-account-credential';
 
 export function codexBackendRequestOf(
   { secret, identityHeaders }: ProviderAccountCredential,
@@ -7,6 +7,6 @@ export function codexBackendRequestOf(
 ): { url: string; headers: Record<string, string> } {
   return {
     url: `${new URL(baseUrl).origin}${path}`,
-    headers: { ...identityHeaders, authorization: `Bearer ${secret}`, accept: "application/json" },
+    headers: { ...identityHeaders, authorization: `Bearer ${secret}`, accept: 'application/json' },
   };
 }

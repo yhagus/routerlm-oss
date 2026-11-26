@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Unlink } from "@lucide/vue";
-import { apiErrorMessage } from "~/lib/api";
+import { Unlink } from '@lucide/vue';
+import { apiErrorMessage } from '~/lib/api';
 import {
   formatWindowPriceChange,
   type PricingWindow,
@@ -8,8 +8,8 @@ import {
   WINDOW_PRICES_STATUS_BADGES,
   type WindowPrices,
   type WindowPricesStatus,
-} from "~/lib/pricingWindows";
-import { optionalNumber, type UpstreamModel, upstreamModelLabel } from "~/lib/upstream";
+} from '~/lib/pricingWindows';
+import { optionalNumber, type UpstreamModel, upstreamModelLabel } from '~/lib/upstream';
 import {
   type AttachedWindowForm,
   attachedWindowFormOf,
@@ -17,24 +17,24 @@ import {
   newAttachedWindowForm,
   splitOpenEndedAround,
   windowPricesBody,
-} from "~/lib/windowPricesForm";
+} from '~/lib/windowPricesForm';
 
 const props = defineProps<{
   upstreamModel: UpstreamModel;
   refresh: () => Promise<unknown>;
 }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
-const { data: pricingWindows, status } = useDashboardApi<PricingWindow[]>("/pricing-windows");
+const { data: pricingWindows, status } = useDashboardApi<PricingWindow[]>('/pricing-windows');
 
 const attached = ref<AttachedWindowForm[]>(
   props.upstreamModel.pricingWindows.map(attachedWindowFormOf),
 );
 const splitOffer = shallowRef<AttachedWindowForm[]>();
 const isSaving = ref(false);
-const saveError = ref("");
+const saveError = ref('');
 
 const title = computed(() => `Pricing Windows of ${upstreamModelLabel(props.upstreamModel)}`);
 
@@ -45,13 +45,13 @@ const attachOptions = computed(() =>
   })),
 );
 const attachPlaceholder = computed(() => {
-  if (status.value === "pending") return "Loading Pricing Windows…";
-  return attachOptions.value.length > 0 ? "Attach a Pricing Window" : "No Pricing Windows yet";
+  if (status.value === 'pending') return 'Loading Pricing Windows…';
+  return attachOptions.value.length > 0 ? 'Attach a Pricing Window' : 'No Pricing Windows yet';
 });
 
 function standardPlaceholder(key: keyof WindowPrices): string {
   const standard = props.upstreamModel[key];
-  return standard === null ? "Standard (none)" : `${standard} (standard)`;
+  return standard === null ? 'Standard (none)' : `${standard} (standard)`;
 }
 
 function priceChange(entry: AttachedWindowForm, key: keyof WindowPrices): string | undefined {
@@ -62,7 +62,7 @@ function priceChange(entry: AttachedWindowForm, key: keyof WindowPrices): string
 
 function statusBadgeClass(entryStatus: WindowPricesStatus): string[] {
   const { tone } = WINDOW_PRICES_STATUS_BADGES[entryStatus];
-  return tone === "neutral" ? ["status-badge"] : ["status-badge", `status-badge--${tone}`];
+  return tone === 'neutral' ? ['status-badge'] : ['status-badge', `status-badge--${tone}`];
 }
 
 function handleAttach(pricingWindowId: string): void {
@@ -75,7 +75,7 @@ function handleDetach(key: number): void {
 }
 
 function handleSave(): void {
-  saveError.value = "";
+  saveError.value = '';
   const emptyPeriodEntry = emptyPeriodEntryOf(attached.value);
   if (emptyPeriodEntry) {
     saveError.value = `${emptyPeriodEntry.name}: the start must be before the end.`;
@@ -100,7 +100,7 @@ async function save(entries: readonly AttachedWindowForm[]): Promise<void> {
   isSaving.value = true;
   try {
     await $dashboardApi(`/upstream-models/${props.upstreamModel.id}/pricing-windows`, {
-      method: "PUT",
+      method: 'PUT',
       body: entries.map(windowPricesBody),
     });
     showToast(`Saved the Pricing Windows of ${upstreamModelLabel(props.upstreamModel)}`);

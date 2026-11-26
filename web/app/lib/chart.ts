@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 
 export interface ChartSeries {
   key: string;
@@ -26,11 +26,11 @@ export interface BarRow {
   note?: string;
 }
 
-const compactFormatter = new Intl.NumberFormat("en-US", {
-  notation: "compact",
+const compactFormatter = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
   maximumFractionDigits: 1,
 });
-const fullFormatter = new Intl.NumberFormat("en-US");
+const fullFormatter = new Intl.NumberFormat('en-US');
 
 export const compactNumber = (value: number) => compactFormatter.format(value);
 export const fullNumber = (value: number) => fullFormatter.format(Math.round(value));

@@ -22,16 +22,16 @@
       --default-font-family,
       -apple-system,
       BlinkMacSystemFont,
-      "Segoe UI",
+      'Segoe UI',
       Roboto,
-      "Helvetica Neue",
-      "Noto Sans",
+      'Helvetica Neue',
+      'Noto Sans',
       Arial,
       sans-serif,
-      "Apple Color Emoji",
-      "Segoe UI Emoji",
-      "Segoe UI Symbol",
-      "Noto Color Emoji"
+      'Apple Color Emoji',
+      'Segoe UI Emoji',
+      'Segoe UI Symbol',
+      'Noto Color Emoji'
     );
     font-feature-settings: --theme(--default-font-feature-settings, normal);
     font-variation-settings: --theme(--default-font-variation-settings, normal);
@@ -90,8 +90,8 @@
       Menlo,
       Monaco,
       Consolas,
-      "Liberation Mono",
-      "Courier New",
+      'Liberation Mono',
+      'Courier New',
       monospace
     );
     font-feature-settings: --theme(--default-mono-font-feature-settings, normal);
@@ -265,8 +265,8 @@
   }
   :where(.tw-scope, [data-slot]) button,
   button:where(.tw-scope, [data-slot]),
-  :where(.tw-scope, [data-slot]) input:where([type="button"], [type="reset"], [type="submit"]),
-  input:where([type="button"], [type="reset"], [type="submit"]):where(.tw-scope, [data-slot]),
+  :where(.tw-scope, [data-slot]) input:where([type='button'], [type='reset'], [type='submit']),
+  input:where([type='button'], [type='reset'], [type='submit']):where(.tw-scope, [data-slot]),
   :where(.tw-scope, [data-slot]) ::file-selector-button,
   :where(.tw-scope, [data-slot])::file-selector-button {
     appearance: button;
@@ -277,8 +277,8 @@
   :where(.tw-scope, [data-slot])::-webkit-outer-spin-button {
     height: auto;
   }
-  :where(.tw-scope, [data-slot]) [hidden]:where(:not([hidden="until-found"])),
-  [hidden]:where(:not([hidden="until-found"])):where(.tw-scope, [data-slot]) {
+  :where(.tw-scope, [data-slot]) [hidden]:where(:not([hidden='until-found'])),
+  [hidden]:where(:not([hidden='until-found'])):where(.tw-scope, [data-slot]) {
     display: none !important;
   }
 }

@@ -1,7 +1,7 @@
-import { providerAccounts } from "@/db/schemas";
-import { SECOND_MS } from "@/libs/models/duration";
-import type { CodexAccount } from "./openai-codex-tokens";
-import type { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+import { providerAccounts } from '@/db/schemas';
+import { SECOND_MS } from '@/libs/models/duration';
+import type { CodexAccount } from './openai-codex-tokens';
+import type { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
 
 const KEY_HINT_LENGTH = 4;
 
@@ -28,14 +28,14 @@ export const providerAccountColumns = {
 
 export type ProviderAccount = Omit<
   typeof providerAccounts.$inferSelect,
-  | "encryptedKey"
-  | "oauthEncryptedAccessToken"
-  | "oauthEncryptedRefreshToken"
-  | "oauthGrantedAt"
-  | "oauthExpiresAt"
-  | "oauthDeviceId"
-  | "oauthEncryptedIdToken"
-  | "oauthAccountId"
+  | 'encryptedKey'
+  | 'oauthEncryptedAccessToken'
+  | 'oauthEncryptedRefreshToken'
+  | 'oauthGrantedAt'
+  | 'oauthExpiresAt'
+  | 'oauthDeviceId'
+  | 'oauthEncryptedIdToken'
+  | 'oauthAccountId'
 >;
 
 type StoredKey = { encryptedKey: string; keyLastFour: string };

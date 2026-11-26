@@ -1,8 +1,8 @@
-import type { User } from "~/lib/users";
+import type { User } from '~/lib/users';
 
-const LOGIN_PATH = "/login";
-const SETUP_PATH = "/setup";
-const DOCS_PATHS = ["/docs", "/id/docs"];
+const LOGIN_PATH = '/login';
+const SETUP_PATH = '/setup';
+const DOCS_PATHS = ['/docs', '/id/docs'];
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (isDocsPath(to.path)) {
@@ -16,11 +16,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isSignInPage = to.path === LOGIN_PATH || to.path === SETUP_PATH;
   if (currentUser.value) {
-    return isSignInPage ? navigateTo("/") : undefined;
+    return isSignInPage ? navigateTo('/') : undefined;
   }
 
   const { $dashboardApi } = useNuxtApp();
-  const { isSetupRequired } = await $dashboardApi<{ isSetupRequired: boolean }>("/auth/setup");
+  const { isSetupRequired } = await $dashboardApi<{ isSetupRequired: boolean }>('/auth/setup');
   if (isSetupRequired) {
     return to.path === SETUP_PATH ? undefined : navigateTo(SETUP_PATH);
   }
@@ -36,7 +36,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 async function fetchCurrentUser(): Promise<User | null> {
   const { $dashboardApi } = useNuxtApp();
   try {
-    return await $dashboardApi<User>("/auth/me");
+    return await $dashboardApi<User>('/auth/me');
   } catch {
     return null;
   }

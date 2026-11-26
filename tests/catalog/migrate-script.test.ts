@@ -1,29 +1,29 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import { providers } from "@/db/schemas";
-import { type Database, relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import { providers } from '@/db/schemas';
+import { type Database, relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
 
 const runFile = promisify(execFile);
 const MIGRATE_TIMEOUT_MS = 60_000;
 const SHIPPED_PROVIDER_COUNT = 21;
 
-describe("production migrate entrypoint (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('production migrate entrypoint (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let databaseUrl: string;
   let pool: Pool;
   let db: Database;
 
   const runMigrate = () =>
-    runFile("bun", ["src/migrate.ts"], {
+    runFile('bun', ['src/migrate.ts'], {
       env: { ...process.env, DATABASE_URL: databaseUrl },
       timeout: MIGRATE_TIMEOUT_MS,
     });
 
   beforeAll(async () => {
-    databaseUrl = await createEmptyDatabase(serverUrl, "migrate_script");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'migrate_script');
     pool = new Pool({ connectionString: databaseUrl });
     db = drizzle({ client: pool, relations });
   });
@@ -34,7 +34,7 @@ describe("production migrate entrypoint (e2e)", () => {
   });
 
   it(
-    "migrates an empty database and seeds the Catalog Providers",
+    'migrates an empty database and seeds the Catalog Providers',
     async () => {
       await runMigrate();
 
@@ -45,7 +45,7 @@ describe("production migrate entrypoint (e2e)", () => {
   );
 
   it(
-    "succeeds again on an already migrated database without seeding twice",
+    'succeeds again on an already migrated database without seeding twice',
     async () => {
       await runMigrate();
 

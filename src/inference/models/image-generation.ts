@@ -1,4 +1,4 @@
-import type { FetchedMedia, MediaRequest } from "./media-kind";
+import type { FetchedMedia, MediaRequest } from './media-kind';
 
 export interface ImageSize {
   width: number;
@@ -27,10 +27,10 @@ export function clientSizeOf({ width, height }: ImageSize): string {
 }
 
 const SIZE_TIERS = [
-  { tier: "1K", maxPixels: 1536 * 1536 },
-  { tier: "2K", maxPixels: 2048 * 2048 },
+  { tier: '1K', maxPixels: 1536 * 1536 },
+  { tier: '2K', maxPixels: 2048 * 2048 },
 ] as const;
-const LARGEST_TIER = "4K";
+const LARGEST_TIER = '4K';
 
 export function sizeTierOf({ width, height }: ImageSize): string {
   const pixels = width * height;

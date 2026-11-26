@@ -1,25 +1,25 @@
-import { Injectable } from "@nestjs/common";
-import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
-import { z } from "zod";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
+import { Injectable } from '@nestjs/common';
+import { HttpClient, InjectHttpClient } from '@nestjs/http-client';
+import { z } from 'zod';
+import type { ProviderAccountCredential } from '@/upstream/models/provider-account-credential';
 import {
   asQuotaReadError,
   type QuotaReaderProvider,
   QuotaReadError,
-} from "@/quota-meters/models/quota-reader";
+} from '@/quota-meters/models/quota-reader';
 import type {
   UsageResetOutcome,
   UsageResetPort,
   UsageResetReading,
   UsageResetToSpend,
-} from "@/quota-meters/models/usage-reset";
-import { codexBackendRequestOf } from "./openai-codex-backend";
-import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client";
+} from '@/quota-meters/models/usage-reset';
+import { codexBackendRequestOf } from './openai-codex-backend';
+import { QUOTA_READER_HTTP_CLIENT } from './quota-reader-http-client';
 
-const RESET_CREDITS_PATH = "/backend-api/wham/rate-limit-reset-credits";
+const RESET_CREDITS_PATH = '/backend-api/wham/rate-limit-reset-credits';
 const CONSUME_PATH = `${RESET_CREDITS_PATH}/consume`;
 
-const UNTITLED_RESET = "Usage reset";
+const UNTITLED_RESET = 'Usage reset';
 
 const creditSchema = z.looseObject({
   id: z.string().min(1),
@@ -34,10 +34,10 @@ const creditsResponseSchema = z.looseObject({ credits: z.array(creditSchema) });
 const consumeResponseSchema = z.looseObject({ code: z.string() });
 
 const OUTCOMES_BY_CODE: ReadonlyMap<string, UsageResetOutcome> = new Map([
-  ["reset", "reset"],
-  ["nothing_to_reset", "nothing-to-reset"],
-  ["no_credit", "unavailable"],
-  ["already_redeemed", "unavailable"],
+  ['reset', 'reset'],
+  ['nothing_to_reset', 'nothing-to-reset'],
+  ['no_credit', 'unavailable'],
+  ['already_redeemed', 'unavailable'],
 ]);
 
 @Injectable()
@@ -52,12 +52,12 @@ export class OpenAiCodexUsageResets implements UsageResetPort {
     const body = await this.call(() => this.http.get(url, { headers }));
     const parsed = creditsResponseSchema.safeParse(body);
     if (!parsed.success) {
-      throw new QuotaReadError("OpenAI answered the usage reset list in an unknown shape", {
+      throw new QuotaReadError('OpenAI answered the usage reset list in an unknown shape', {
         cause: parsed.error,
       });
     }
     return parsed.data.credits
-      .filter((credit) => credit.status === "available")
+      .filter((credit) => credit.status === 'available')
       .map((credit) => ({
         externalId: credit.id,
         title: credit.title ?? UNTITLED_RESET,
@@ -82,7 +82,7 @@ export class OpenAiCodexUsageResets implements UsageResetPort {
     const parsed = consumeResponseSchema.safeParse(body);
     const outcome = parsed.success ? OUTCOMES_BY_CODE.get(parsed.data.code) : undefined;
     if (outcome === undefined) {
-      throw new QuotaReadError("OpenAI answered spending a usage reset in an unknown shape", {
+      throw new QuotaReadError('OpenAI answered spending a usage reset in an unknown shape', {
         cause: parsed.error,
       });
     }
@@ -94,7 +94,7 @@ export class OpenAiCodexUsageResets implements UsageResetPort {
       const response = await send();
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "OpenAI usage resets");
+      throw asQuotaReadError(error, 'OpenAI usage resets');
     }
   }
 }

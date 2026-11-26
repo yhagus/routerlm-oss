@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import type { Component, CSSProperties, HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import { motion } from "motion-v";
-import { computed, useSlots } from "vue";
+import type { Component, CSSProperties, HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
+import { motion } from 'motion-v';
+import { computed, useSlots } from 'vue';
 
 export interface TextShimmerProps {
   as?: keyof HTMLElementTagNameMap;
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
   duration?: number;
   spread?: number;
 }
 
 const props = withDefaults(defineProps<TextShimmerProps>(), {
-  as: "p",
+  as: 'p',
   duration: 2,
   spread: 2,
 });
@@ -21,16 +21,16 @@ const slots = useSlots();
 
 const textContent = computed(() => {
   const defaultSlot = slots.default?.();
-  if (!defaultSlot || defaultSlot.length === 0) return "";
+  if (!defaultSlot || defaultSlot.length === 0) return '';
 
   return defaultSlot
     .map((vnode) => {
-      if (typeof vnode.children === "string") {
+      if (typeof vnode.children === 'string') {
         return vnode.children;
       }
-      return "";
+      return '';
     })
-    .join("");
+    .join('');
 });
 
 const dynamicSpread = computed(() => {
@@ -39,16 +39,16 @@ const dynamicSpread = computed(() => {
 
 const componentClasses = computed(() =>
   cn(
-    "relative inline-block bg-[length:250%_100%,auto] bg-clip-text text-transparent",
-    "[--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--color-background),#0000_calc(50%+var(--spread)))] [background-repeat:no-repeat,padding-box]",
+    'relative inline-block bg-[length:250%_100%,auto] bg-clip-text text-transparent',
+    '[--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--color-background),#0000_calc(50%+var(--spread)))] [background-repeat:no-repeat,padding-box]',
     props.class,
   ),
 );
 
 const componentStyle = computed((): CSSProperties => ({
-  "--spread": `${dynamicSpread.value}px`,
+  '--spread': `${dynamicSpread.value}px`,
   backgroundImage:
-    "var(--bg), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))",
+    'var(--bg), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))',
 }));
 
 const MotionComponent = computed(() => {

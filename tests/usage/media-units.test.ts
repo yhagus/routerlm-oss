@@ -1,31 +1,31 @@
-import { randomUUID } from "node:crypto";
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { usageLogs } from "@/db/schemas";
-import type { UsageJob } from "@/usage/models/usage-job";
+import { randomUUID } from 'node:crypto';
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { usageLogs } from '@/db/schemas';
+import type { UsageJob } from '@/usage/models/usage-job';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
-const { UsageProducer } = await import("@/usage/jobs/usage.producer");
+const { createTestApp } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
+const { UsageProducer } = await import('@/usage/jobs/usage.producer');
 
 const WORKER_WRITE_TIMEOUT_MS = 5_000;
 const POLL_INTERVAL_MS = 50;
 
-function servedUsageJob(units: UsageJob["units"]): UsageJob {
+function servedUsageJob(units: UsageJob['units']): UsageJob {
   return {
     usageLogId: randomUUID(),
     receivedAt: new Date().toISOString(),
-    caller: { kind: "unidentified" },
+    caller: { kind: 'unidentified' },
     modelId: null,
-    clientProtocol: "openai-chat",
+    clientProtocol: 'openai-chat',
     isStreamed: false,
     httpStatus: 200,
     errorCode: null,
@@ -42,7 +42,7 @@ function servedUsageJob(units: UsageJob["units"]): UsageJob {
   };
 }
 
-describe("Usage Log units (e2e)", () => {
+describe('Usage Log units (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -72,10 +72,10 @@ describe("Usage Log units (e2e)", () => {
       }
       await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     }
-    throw new Error("The worker wrote no Usage Log");
+    throw new Error('The worker wrote no Usage Log');
   }
 
-  it("records the units a media request counted, and the tier that priced them", async () => {
+  it('records the units a media request counted, and the tier that priced them', async () => {
     const usageLog = await writtenUsageLog(
       servedUsageJob({
         imagesOut: 2,
@@ -83,7 +83,7 @@ describe("Usage Log units (e2e)", () => {
         outputSeconds: 5,
         audioSeconds: 12.5,
         characters: 300,
-        tier: "2K",
+        tier: '2K',
       }),
     );
 
@@ -93,15 +93,15 @@ describe("Usage Log units (e2e)", () => {
       outputSeconds: 5,
       audioSeconds: 12.5,
       characters: 300,
-      unitTier: "2K",
+      unitTier: '2K',
     });
   });
 
-  it("records a chat request with its Kind and no units", async () => {
+  it('records a chat request with its Kind and no units', async () => {
     const usageLog = await writtenUsageLog(servedUsageJob(null));
 
     expect(usageLog).toMatchObject({
-      kind: "chat",
+      kind: 'chat',
       imagesOut: null,
       imagesIn: null,
       outputSeconds: null,

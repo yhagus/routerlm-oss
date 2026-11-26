@@ -1,4 +1,4 @@
-import { instantOfWallClock } from "./wall-clock";
+import { instantOfWallClock } from './wall-clock';
 
 export interface ValidityPeriod {
   validFrom: string | null;
@@ -36,9 +36,9 @@ export function describeValidityPeriod(period: ValidityPeriod): string {
   if (period.validUntil !== null) {
     bounds.push(`until ${readableWallClock(period.validUntil)}`);
   }
-  return bounds.join(" ");
+  return bounds.join(' ');
 }
 
 function readableWallClock(wallClock: string): string {
-  return wallClock.replace("T", " ");
+  return wallClock.replace('T', ' ');
 }

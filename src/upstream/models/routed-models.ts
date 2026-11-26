@@ -1,8 +1,8 @@
-import { ConflictException } from "@nestjs/common";
-import { asc, eq, type SQL } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from "@/libs/models/postgres-errors";
-import { models, routes, upstreamModels } from "@/db/schemas";
+import { ConflictException } from '@nestjs/common';
+import { asc, eq, type SQL } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from '@/libs/models/postgres-errors';
+import { models, routes, upstreamModels } from '@/db/schemas';
 
 async function findModelsRoutingTo(
   db: Database,
@@ -27,7 +27,7 @@ export async function deleteUnlessRouted(
   const routedModels = await findModelsRoutingTo(db, upstreamModelFilter);
   if (routedModels.length > 0) {
     throw new ConflictException(
-      `${what} is used by Routes of these Models: ${routedModels.join(", ")}. Remove those Routes first.`,
+      `${what} is used by Routes of these Models: ${routedModels.join(', ')}. Remove those Routes first.`,
     );
   }
   try {

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import { computed, useSlots } from "vue";
-import { Markdown } from "vue-stream-markdown";
-import { useMarkdownExtensions } from "./useMarkdownExtensions";
-import "vue-stream-markdown/index.css";
-import "katex/dist/katex.min.css";
+import type { HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
+import { computed, useSlots } from 'vue';
+import { Markdown } from 'vue-stream-markdown';
+import { useMarkdownExtensions } from './useMarkdownExtensions';
+import 'vue-stream-markdown/index.css';
+import 'katex/dist/katex.min.css';
 
 interface Props {
   content?: string;
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();
@@ -20,14 +20,14 @@ const slotContent = computed<string | undefined>(() => {
   if (!Array.isArray(nodes)) {
     return undefined;
   }
-  let text = "";
+  let text = '';
   for (const node of nodes) {
-    if (typeof node.children === "string") text += node.children;
+    if (typeof node.children === 'string') text += node.children;
   }
   return text || undefined;
 });
 
-const md = computed(() => (slotContent.value ?? props.content ?? "") as string);
+const md = computed(() => (slotContent.value ?? props.content ?? '') as string);
 
 const { extensions } = useMarkdownExtensions();
 </script>

@@ -1,25 +1,25 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { dashScopeSpeechFixture, FakeUpstream } from "@tests/support/fake-upstream";
-import { insertApiKey, insertDashScopeSpeechModel } from "@tests/support/inference";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
-import { writtenUsageLog } from "@tests/support/usage-logs";
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { dashScopeSpeechFixture, FakeUpstream } from '@tests/support/fake-upstream';
+import { insertApiKey, insertDashScopeSpeechModel } from '@tests/support/inference';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
+import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
+import { writtenUsageLog } from '@tests/support/usage-logs';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
+const { createTestApp } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
 
-const SYNTHESIZER_PATH = "/api/v1/services/audio/tts/SpeechSynthesizer";
+const SYNTHESIZER_PATH = '/api/v1/services/audio/tts/SpeechSynthesizer';
 
-describe("Usage Logs of speech (e2e)", () => {
+describe('Usage Logs of speech (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -41,7 +41,7 @@ describe("Usage Logs of speech (e2e)", () => {
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     await insertDashScopeSpeechModel(app, db, {
-      modelName: "narrator",
+      modelName: 'narrator',
       baseUrl: `${upstream.origin}/api/v1`,
       pricePerMillionCharacters: 20,
     });
@@ -55,28 +55,28 @@ describe("Usage Logs of speech (e2e)", () => {
     await app.close();
   });
 
-  it("records the characters DashScope counted and their Cost at the price per million", async () => {
-    const answer = dashScopeSpeechFixture("upstream-response.json").replace(
+  it('records the characters DashScope counted and their Cost at the price per million', async () => {
+    const answer = dashScopeSpeechFixture('upstream-response.json').replace(
       /https:\/\/[^"]*speech\.mp3[^"]*/,
-      upstream.mediaUrl("/media/speech.mp3"),
+      upstream.mediaUrl('/media/speech.mp3'),
     );
-    upstream.replyTo(SYNTHESIZER_PATH, { kind: "json", status: 200, body: JSON.parse(answer) });
-    upstream.replyTo("/media/speech.mp3", {
-      kind: "binary",
+    upstream.replyTo(SYNTHESIZER_PATH, { kind: 'json', status: 200, body: JSON.parse(answer) });
+    upstream.replyTo('/media/speech.mp3', {
+      kind: 'binary',
       status: 200,
-      contentType: "audio/mpeg",
+      contentType: 'audio/mpeg',
       body: new Uint8Array([1, 2, 3]),
     });
 
     await request(app.getHttpServer())
-      .post("/v1/audio/speech")
-      .set("Authorization", `Bearer ${apiKey}`)
-      .send({ model: "narrator", input: "Hello from the gateway", voice: "Cherry" })
+      .post('/v1/audio/speech')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .send({ model: 'narrator', input: 'Hello from the gateway', voice: 'Cherry' })
       .expect(200);
 
     expect(await writtenUsageLog(db)).toMatchObject({
-      kind: "speech",
-      clientProtocol: "openai-speech",
+      kind: 'speech',
+      clientProtocol: 'openai-speech',
       characters: 22,
       cost: 0.00044,
       inputTokens: null,

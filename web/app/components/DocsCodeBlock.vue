@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Check, Copy } from "@lucide/vue";
-import { computed, useTemplateRef } from "vue";
-import { type CodeExample, labelOf } from "~/lib/docsCode";
+import { Check, Copy } from '@lucide/vue';
+import { computed, useTemplateRef } from 'vue';
+import { type CodeExample, labelOf } from '~/lib/docsCode';
 
 const props = defineProps<{ examples: CodeExample[] }>();
 
@@ -9,7 +9,7 @@ const { t } = useDocsLocale();
 const { preferredLanguage, choose } = useDocsCodeLanguage();
 const { withGatewayUrl } = useGatewayUrl();
 const { state: copyState, copy } = useCopyFeedback();
-const codeElement = useTemplateRef<HTMLElement>("code");
+const codeElement = useTemplateRef<HTMLElement>('code');
 
 const tabs = computed(() =>
   props.examples.map((example) => ({
@@ -24,18 +24,18 @@ const visibleTab = computed(
 );
 
 const copyLabel = computed(() => {
-  if (copyState.value === "copied") return t("copied");
-  if (copyState.value === "manual") return t("pressShortcut", { shortcut: copyShortcut() });
-  return t("copy");
+  if (copyState.value === 'copied') return t('copied');
+  if (copyState.value === 'manual') return t('pressShortcut', { shortcut: copyShortcut() });
+  return t('copy');
 });
 const copyAnnouncement = computed(() => {
-  if (copyState.value === "copied") return t("codeCopied");
-  if (copyState.value === "manual") return t("codeSelected", { shortcut: copyShortcut() });
-  return "";
+  if (copyState.value === 'copied') return t('codeCopied');
+  if (copyState.value === 'manual') return t('codeSelected', { shortcut: copyShortcut() });
+  return '';
 });
 
 const captionLabel = computed(() =>
-  copyState.value === "copied" ? t("copied") : (visibleTab.value?.label ?? ""),
+  copyState.value === 'copied' ? t('copied') : (visibleTab.value?.label ?? ''),
 );
 
 async function handleCopy(): Promise<void> {
@@ -73,7 +73,7 @@ async function handleCopy(): Promise<void> {
     </div>
     <pre tabindex="0"><code ref="code">{{ visibleTab.code }}</code></pre>
     <figcaption class="ds-figure__caption">
-      <span class="ds-figure__number">{{ t("figure") }}</span> · {{ captionLabel }}
+      <span class="ds-figure__number">{{ t('figure') }}</span> · {{ captionLabel }}
     </figcaption>
   </figure>
 </template>

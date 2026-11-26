@@ -1,6 +1,6 @@
-import type { ClientProtocol } from "@/db/schemas";
+import type { ClientProtocol } from '@/db/schemas';
 
-export const DEMO_USER = { email: "admin@example.com", password: "routerlm-demo" } as const;
+export const DEMO_USER = { email: 'admin@example.com', password: 'routerlm-demo' } as const;
 
 export interface DemoProviderAccount {
   providerSlug: string;
@@ -10,24 +10,24 @@ export interface DemoProviderAccount {
 }
 
 export const DEMO_PROVIDER_ACCOUNTS: DemoProviderAccount[] = [
-  { providerSlug: "anthropic", name: "Orion", key: "sk-demo-anthropic-orion-7Qe2", priority: 0 },
-  { providerSlug: "openai", name: "Lyra", key: "sk-demo-openai-lyra-4Kd9", priority: 0 },
-  { providerSlug: "openai", name: "Vega", key: "sk-demo-openai-vega-8Wm1", priority: 1 },
-  { providerSlug: "moonshot", name: "Cygnus", key: "sk-demo-moonshot-cygnus-2Pz6", priority: 0 },
-  { providerSlug: "kimi-code", name: "Draco", key: "sk-demo-kimi-code-draco-5Hx3", priority: 0 },
+  { providerSlug: 'anthropic', name: 'Orion', key: 'sk-demo-anthropic-orion-7Qe2', priority: 0 },
+  { providerSlug: 'openai', name: 'Lyra', key: 'sk-demo-openai-lyra-4Kd9', priority: 0 },
+  { providerSlug: 'openai', name: 'Vega', key: 'sk-demo-openai-vega-8Wm1', priority: 1 },
+  { providerSlug: 'moonshot', name: 'Cygnus', key: 'sk-demo-moonshot-cygnus-2Pz6', priority: 0 },
+  { providerSlug: 'kimi-code', name: 'Draco', key: 'sk-demo-kimi-code-draco-5Hx3', priority: 0 },
   {
-    providerSlug: "minimax-m-plan",
-    name: "Pegasus",
-    key: "sk-demo-minimax-pegasus-9Ta4",
+    providerSlug: 'minimax-m-plan',
+    name: 'Pegasus',
+    key: 'sk-demo-minimax-pegasus-9Ta4',
     priority: 0,
   },
   {
-    providerSlug: "alibaba-model-studio-intl",
-    name: "Aquila",
-    key: "sk-demo-alibaba-aquila-3Lc8",
+    providerSlug: 'alibaba-model-studio-intl',
+    name: 'Aquila',
+    key: 'sk-demo-alibaba-aquila-3Lc8',
     priority: 0,
   },
-  { providerSlug: "deepseek", name: "Hydra", key: "sk-demo-deepseek-hydra-6Rv5", priority: 0 },
+  { providerSlug: 'deepseek', name: 'Hydra', key: 'sk-demo-deepseek-hydra-6Rv5', priority: 0 },
 ];
 
 export interface TrafficProfile {
@@ -44,7 +44,7 @@ export interface DemoRoute {
   upstreamModelId: string;
 }
 
-export const DEMO_MODEL_NAMES = ["smart", "coder", "fast", "reasoning", "vision"] as const;
+export const DEMO_MODEL_NAMES = ['smart', 'coder', 'fast', 'reasoning', 'vision'] as const;
 export type DemoModelName = (typeof DEMO_MODEL_NAMES)[number];
 
 export interface DemoModel {
@@ -55,11 +55,11 @@ export interface DemoModel {
 
 export const DEMO_MODELS: DemoModel[] = [
   {
-    name: "smart",
+    name: 'smart',
     routes: [
-      { providerSlug: "anthropic", upstreamModelId: "claude-sonnet-5-5" },
-      { providerSlug: "openai", upstreamModelId: "gpt-6-sol" },
-      { providerSlug: "moonshot", upstreamModelId: "kimi-k3.1-pro" },
+      { providerSlug: 'anthropic', upstreamModelId: 'claude-sonnet-5-5' },
+      { providerSlug: 'openai', upstreamModelId: 'gpt-6-sol' },
+      { providerSlug: 'moonshot', upstreamModelId: 'kimi-k3.1-pro' },
     ],
     profile: {
       contextTokens: 6_000,
@@ -71,11 +71,11 @@ export const DEMO_MODELS: DemoModel[] = [
     },
   },
   {
-    name: "coder",
+    name: 'coder',
     routes: [
-      { providerSlug: "kimi-code", upstreamModelId: "kimi-for-coding" },
-      { providerSlug: "minimax-m-plan", upstreamModelId: "MiniMax-M3" },
-      { providerSlug: "alibaba-model-studio-intl", upstreamModelId: "qwen3.8-max" },
+      { providerSlug: 'kimi-code', upstreamModelId: 'kimi-for-coding' },
+      { providerSlug: 'minimax-m-plan', upstreamModelId: 'MiniMax-M3' },
+      { providerSlug: 'alibaba-model-studio-intl', upstreamModelId: 'qwen3.8-max' },
     ],
     profile: {
       contextTokens: 14_000,
@@ -87,11 +87,11 @@ export const DEMO_MODELS: DemoModel[] = [
     },
   },
   {
-    name: "fast",
+    name: 'fast',
     routes: [
-      { providerSlug: "anthropic", upstreamModelId: "claude-haiku-5-5" },
-      { providerSlug: "openai", upstreamModelId: "gpt-5.4-mini" },
-      { providerSlug: "deepseek", upstreamModelId: "deepseek-flash" },
+      { providerSlug: 'anthropic', upstreamModelId: 'claude-haiku-5-5' },
+      { providerSlug: 'openai', upstreamModelId: 'gpt-5.4-mini' },
+      { providerSlug: 'deepseek', upstreamModelId: 'deepseek-flash' },
     ],
     profile: {
       contextTokens: 1_800,
@@ -103,11 +103,11 @@ export const DEMO_MODELS: DemoModel[] = [
     },
   },
   {
-    name: "reasoning",
+    name: 'reasoning',
     routes: [
-      { providerSlug: "openai", upstreamModelId: "gpt-6.1-sol" },
-      { providerSlug: "anthropic", upstreamModelId: "claude-opus-5-5" },
-      { providerSlug: "deepseek", upstreamModelId: "deepseek-v4-pro" },
+      { providerSlug: 'openai', upstreamModelId: 'gpt-6.1-sol' },
+      { providerSlug: 'anthropic', upstreamModelId: 'claude-opus-5-5' },
+      { providerSlug: 'deepseek', upstreamModelId: 'deepseek-v4-pro' },
     ],
     profile: {
       contextTokens: 5_000,
@@ -119,11 +119,11 @@ export const DEMO_MODELS: DemoModel[] = [
     },
   },
   {
-    name: "vision",
+    name: 'vision',
     routes: [
-      { providerSlug: "openai", upstreamModelId: "gpt-6-luna" },
-      { providerSlug: "alibaba-model-studio-intl", upstreamModelId: "qwen3-vl-plus" },
-      { providerSlug: "anthropic", upstreamModelId: "claude-sonnet-5-5" },
+      { providerSlug: 'openai', upstreamModelId: 'gpt-6-luna' },
+      { providerSlug: 'alibaba-model-studio-intl', upstreamModelId: 'qwen3-vl-plus' },
+      { providerSlug: 'anthropic', upstreamModelId: 'claude-sonnet-5-5' },
     ],
     profile: {
       contextTokens: 3_200,
@@ -150,48 +150,48 @@ export interface DemoCaller {
 
 export const DEMO_CALLERS: DemoCaller[] = [
   {
-    apiKeyName: "Claude Code",
+    apiKeyName: 'Claude Code',
     weight: 34,
-    clientProtocol: "anthropic-messages",
+    clientProtocol: 'anthropic-messages',
     streamedShare: 1,
-    userAgent: "claude-cli/3.4.2 (external, cli)",
-    clientIp: "10.20.0.14",
+    userAgent: 'claude-cli/3.4.2 (external, cli)',
+    clientIp: '10.20.0.14',
     models: { smart: 5, coder: 3, fast: 2 },
   },
   {
-    apiKeyName: "Cursor",
+    apiKeyName: 'Cursor',
     weight: 30,
-    clientProtocol: "openai-chat",
+    clientProtocol: 'openai-chat',
     streamedShare: 0.95,
-    userAgent: "Cursor/2.8.1",
-    clientIp: "10.20.0.27",
+    userAgent: 'Cursor/2.8.1',
+    clientIp: '10.20.0.27',
     models: { coder: 5, smart: 3, fast: 2 },
   },
   {
-    apiKeyName: "Internal tools",
+    apiKeyName: 'Internal tools',
     weight: 16,
-    clientProtocol: "openai-responses",
+    clientProtocol: 'openai-responses',
     streamedShare: 0.4,
-    userAgent: "OpenAI/Python 2.31.0",
-    clientIp: "10.30.1.5",
+    userAgent: 'OpenAI/Python 2.31.0',
+    clientIp: '10.30.1.5',
     models: { fast: 4, vision: 3, reasoning: 2, smart: 1 },
   },
   {
-    apiKeyName: "CI",
+    apiKeyName: 'CI',
     weight: 12,
-    clientProtocol: "openai-chat",
+    clientProtocol: 'openai-chat',
     streamedShare: 0,
-    userAgent: "OpenAI/JS 7.57.0",
-    clientIp: "10.40.2.9",
+    userAgent: 'OpenAI/JS 7.57.0',
+    clientIp: '10.40.2.9',
     models: { coder: 3, fast: 3, reasoning: 1 },
   },
   {
     apiKeyName: null,
     weight: 8,
-    clientProtocol: "openai-chat",
+    clientProtocol: 'openai-chat',
     streamedShare: 1,
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_6) AppleWebKit/605.1.15",
-    clientIp: "10.20.0.31",
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_6) AppleWebKit/605.1.15',
+    clientIp: '10.20.0.31',
     models: { smart: 3, reasoning: 2, vision: 1, fast: 1, coder: 1 },
   },
 ];
@@ -200,7 +200,7 @@ export interface DemoQuotaMeter {
   providerSlug: string;
   key: string;
   label: string;
-  unit: "percent" | "count";
+  unit: 'percent' | 'count';
   used: number;
   limit: number;
   windowSeconds: number;
@@ -212,40 +212,40 @@ const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
 export const DEMO_QUOTA_METERS: DemoQuotaMeter[] = [
   {
-    providerSlug: "kimi-code",
-    key: "5h",
-    label: "5-hour limit",
-    unit: "percent",
+    providerSlug: 'kimi-code',
+    key: '5h',
+    label: '5-hour limit',
+    unit: 'percent',
     used: 38,
     limit: 100,
     windowSeconds: FIVE_HOURS_IN_SECONDS,
     resetsInSeconds: 2 * 60 * 60 + 14 * 60,
   },
   {
-    providerSlug: "kimi-code",
-    key: "7d",
-    label: "7-day limit",
-    unit: "percent",
+    providerSlug: 'kimi-code',
+    key: '7d',
+    label: '7-day limit',
+    unit: 'percent',
     used: 61,
     limit: 100,
     windowSeconds: SEVEN_DAYS_IN_SECONDS,
     resetsInSeconds: 2 * 24 * 60 * 60 + 5 * 60 * 60,
   },
   {
-    providerSlug: "minimax-m-plan",
-    key: "5h",
-    label: "5-hour window",
-    unit: "count",
+    providerSlug: 'minimax-m-plan',
+    key: '5h',
+    label: '5-hour window',
+    unit: 'count',
     used: 212,
     limit: 600,
     windowSeconds: FIVE_HOURS_IN_SECONDS,
     resetsInSeconds: 3 * 60 * 60 + 40 * 60,
   },
   {
-    providerSlug: "minimax-m-plan",
-    key: "weekly",
-    label: "Weekly window",
-    unit: "count",
+    providerSlug: 'minimax-m-plan',
+    key: 'weekly',
+    label: 'Weekly window',
+    unit: 'count',
     used: 2_450,
     limit: 6_000,
     windowSeconds: SEVEN_DAYS_IN_SECONDS,

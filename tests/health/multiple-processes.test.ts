@@ -1,8 +1,8 @@
-import { type ChildProcess, spawn } from "node:child_process";
-import { once } from "node:events";
-import { createServer } from "node:net";
-import { vi } from "vitest";
-import { portOf } from "@tests/support/port-of";
+import { type ChildProcess, spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { createServer } from 'node:net';
+import { vi } from 'vitest';
+import { portOf } from '@tests/support/port-of';
 
 const PROCESS_COUNT = 2;
 const STARTUP_TIMEOUT_MS = 30_000;
@@ -11,7 +11,7 @@ const STARTED_PROCESS_LINE = /Gateway process (\d+) started/g;
 
 async function freePort(): Promise<number> {
   const server = createServer().listen(0);
-  await once(server, "listening");
+  await once(server, 'listening');
   const port = portOf(server.address());
   server.close();
   return port;
@@ -26,10 +26,10 @@ function isRunning(pid: number): boolean {
   }
 }
 
-describe.runIf(process.platform === "linux")("Backend with BACKEND_PROCESSES=2 (e2e)", () => {
+describe.runIf(process.platform === 'linux')('Backend with BACKEND_PROCESSES=2 (e2e)', () => {
   let primary: ChildProcess;
   let healthUrl: string;
-  let output = "";
+  let output = '';
 
   const startedPids = (): number[] =>
     [...output.matchAll(STARTED_PROCESS_LINE)].map((match) => Number(match[1]));
@@ -42,32 +42,32 @@ describe.runIf(process.platform === "linux")("Backend with BACKEND_PROCESSES=2 (
   beforeAll(async () => {
     const port = await freePort();
     healthUrl = `http://127.0.0.1:${port}/health`;
-    primary = spawn("bun", ["src/main.ts"], {
+    primary = spawn('bun', ['src/main.ts'], {
       env: {
         ...process.env,
         PORT: String(port),
         BACKEND_PROCESSES: String(PROCESS_COUNT),
-        NO_COLOR: "1",
+        NO_COLOR: '1',
       },
-      stdio: ["ignore", "pipe", "inherit"],
+      stdio: ['ignore', 'pipe', 'inherit'],
     });
-    primary.stdout?.on("data", (chunk: Buffer) => {
+    primary.stdout?.on('data', (chunk: Buffer) => {
       output += chunk.toString();
     });
     await vi.waitFor(expectHealthy, { timeout: STARTUP_TIMEOUT_MS, interval: POLL_INTERVAL_MS });
   }, STARTUP_TIMEOUT_MS);
 
   afterAll(() => {
-    if (primary.exitCode === null) primary.kill("SIGKILL");
+    if (primary.exitCode === null) primary.kill('SIGKILL');
   });
 
   it(
-    "replaces a gateway process that dies and keeps serving",
+    'replaces a gateway process that dies and keeps serving',
     async () => {
       expect(startedPids()).toHaveLength(PROCESS_COUNT);
       const [killedPid] = startedPids();
 
-      process.kill(killedPid, "SIGKILL");
+      process.kill(killedPid, 'SIGKILL');
 
       await vi.waitFor(() => expect(startedPids()).toHaveLength(PROCESS_COUNT + 1), {
         timeout: STARTUP_TIMEOUT_MS,
@@ -80,11 +80,11 @@ describe.runIf(process.platform === "linux")("Backend with BACKEND_PROCESSES=2 (
   );
 
   it(
-    "stops every gateway process and exits 0 on SIGTERM",
+    'stops every gateway process and exits 0 on SIGTERM',
     async () => {
-      const exited = once(primary, "exit");
+      const exited = once(primary, 'exit');
 
-      primary.kill("SIGTERM");
+      primary.kill('SIGTERM');
 
       const [exitCode] = await exited;
       expect(exitCode).toBe(0);

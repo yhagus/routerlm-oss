@@ -1,18 +1,18 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { count, type SQL, sql } from "drizzle-orm";
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import type { Database } from "@/db/schemas/relations";
-import { type ErrorOrigin, usageLogs } from "@/db/schemas";
-import type { UsageSummary } from "@/usage/models/usage";
-import { byErrorOrigin } from "@/usage/models/by-error-origin";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { count, type SQL, sql } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
+import type { Database } from '@/db/schemas/relations';
+import { type ErrorOrigin, usageLogs } from '@/db/schemas';
+import type { UsageSummary } from '@/usage/models/usage';
+import { byErrorOrigin } from '@/usage/models/by-error-origin';
 import {
   failedWithOriginCondition,
   statusCondition,
   whereFilter,
-} from "@/usage/models/usage-filters";
-import type { UsageStatus } from "@/usage/schemas/usage.schema";
-import { SummarizeUsageQuery } from "@/usage/queries/impl/summarize-usage.query";
+} from '@/usage/models/usage-filters';
+import type { UsageStatus } from '@/usage/schemas/usage.schema';
+import { SummarizeUsageQuery } from '@/usage/queries/impl/summarize-usage.query';
 
 const MEDIAN = 0.5;
 const P95 = 0.95;
@@ -25,10 +25,10 @@ export class SummarizeUsageHandler implements IQueryHandler<SummarizeUsageQuery>
     const [summary] = await this.db
       .select({
         requestCount: count(),
-        succeededCount: countWithStatus("succeeded"),
-        failedCount: countWithStatus("failed"),
+        succeededCount: countWithStatus('succeeded'),
+        failedCount: countWithStatus('failed'),
         failedByOrigin: byErrorOrigin(countFailedWithOrigin),
-        cancelledCount: countWithStatus("cancelled"),
+        cancelledCount: countWithStatus('cancelled'),
         inputTokens: summed(usageLogs.inputTokens),
         outputTokens: summed(usageLogs.outputTokens),
         cacheReadTokens: summed(usageLogs.cacheReadTokens),

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Blocks, CloudOff, RefreshCw } from "@lucide/vue";
-import { dateTimeFormat } from "~/lib/dateFormats";
-import type { IntegrationRotation, IntegrationSummary } from "~/lib/integrations";
+import { Blocks, CloudOff, RefreshCw } from '@lucide/vue';
+import { dateTimeFormat } from '~/lib/dateFormats';
+import type { IntegrationRotation, IntegrationSummary } from '~/lib/integrations';
 
 const props = defineProps<{ integration: IntegrationSummary }>();
 
@@ -14,7 +14,7 @@ const {
   { watch: [() => props.integration.lastRotatedAt] },
 );
 
-const isLoading = computed(() => status.value === "pending" && !rotations.value);
+const isLoading = computed(() => status.value === 'pending' && !rotations.value);
 
 function formatTime(value: string): string {
   return dateTimeFormat.format(new Date(value));
@@ -45,7 +45,7 @@ function formatTime(value: string): string {
             <span>rlmi_{{ rotation.newKeyId }}</span>
             <span v-if="index === 0" class="rotation-log__current">Current</span>
           </p>
-          <p class="rotation-log__by">by {{ rotation.rotatedBy?.email ?? "a deleted User" }}</p>
+          <p class="rotation-log__by">by {{ rotation.rotatedBy?.email ?? 'a deleted User' }}</p>
         </div>
       </li>
       <li class="rotation-log__entry rotation-log__entry--origin">
@@ -57,7 +57,7 @@ function formatTime(value: string): string {
               formatTime(integration.createdAt)
             }}</time>
           </p>
-          <p class="rotation-log__by">by {{ integration.createdBy?.email ?? "a deleted User" }}</p>
+          <p class="rotation-log__by">by {{ integration.createdBy?.email ?? 'a deleted User' }}</p>
         </div>
       </li>
     </ol>

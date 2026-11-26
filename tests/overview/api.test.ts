@@ -1,11 +1,11 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { usageLogs } from "@/db/schemas";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { usageLogs } from '@/db/schemas';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
+const ADA = { email: 'ada@example.com', password: "ada's password" };
 
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
@@ -13,8 +13,8 @@ const DAY_MS = 24 * HOUR_MS;
 
 type NewUsageLog = typeof usageLogs.$inferInsert;
 
-const SERVED_REQUEST: Omit<NewUsageLog, "createdAt"> = {
-  clientProtocol: "openai-chat",
+const SERVED_REQUEST: Omit<NewUsageLog, 'createdAt'> = {
+  clientProtocol: 'openai-chat',
   isStreamed: false,
   httpStatus: 200,
   inputTokens: 100,
@@ -28,10 +28,10 @@ const SERVED_REQUEST: Omit<NewUsageLog, "createdAt"> = {
   attemptCount: 1,
 };
 
-const FAILED_REQUEST: Omit<NewUsageLog, "createdAt"> = {
+const FAILED_REQUEST: Omit<NewUsageLog, 'createdAt'> = {
   ...SERVED_REQUEST,
   httpStatus: 502,
-  errorCode: "upstream_error",
+  errorCode: 'upstream_error',
   inputTokens: null,
   outputTokens: null,
   cacheReadTokens: null,
@@ -49,7 +49,7 @@ function currentBucketStart(sizeMs: number): number {
   return Math.floor(Date.now() / sizeMs) * sizeMs;
 }
 
-describe("Overview API (e2e)", () => {
+describe('Overview API (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let adaCookie: string;
@@ -71,10 +71,10 @@ describe("Overview API (e2e)", () => {
   function getOverview(range: string) {
     return request(app.getHttpServer())
       .get(`/api/overview?range=${range}`)
-      .set("Cookie", adaCookie);
+      .set('Cookie', adaCookie);
   }
 
-  it("charts requests, Cost, cache hit rate and error rate per hour over the last 24 hours", async () => {
+  it('charts requests, Cost, cache hit rate and error rate per hour over the last 24 hours', async () => {
     const currentHour = currentBucketStart(HOUR_MS);
     const threeHoursAgo = currentHour - 3 * HOUR_MS;
     await db.insert(usageLogs).values([
@@ -84,7 +84,7 @@ describe("Overview API (e2e)", () => {
       { ...SERVED_REQUEST, createdAt: new Date(currentHour - 2 * DAY_MS) },
     ]);
 
-    const response = await getOverview("24h").expect(200);
+    const response = await getOverview('24h').expect(200);
 
     expect(response.body.hasUsageLogs).toBe(true);
     expect(response.body.bucketSeconds).toBe(3600);
@@ -114,19 +114,19 @@ describe("Overview API (e2e)", () => {
     });
   });
 
-  it("counts failed requests, origin or not, and splits them by Error Origin per bucket and in the totals", async () => {
+  it('counts failed requests, origin or not, and splits them by Error Origin per bucket and in the totals', async () => {
     const currentHour = currentBucketStart(HOUR_MS);
     const twoHoursAgo = currentHour - 2 * HOUR_MS;
     await db.insert(usageLogs).values([
-      { ...FAILED_REQUEST, errorOrigin: "client", createdAt: new Date(twoHoursAgo) },
-      { ...FAILED_REQUEST, errorOrigin: "upstream", createdAt: new Date(twoHoursAgo) },
-      { ...FAILED_REQUEST, errorOrigin: "upstream", createdAt: new Date(twoHoursAgo) },
+      { ...FAILED_REQUEST, errorOrigin: 'client', createdAt: new Date(twoHoursAgo) },
+      { ...FAILED_REQUEST, errorOrigin: 'upstream', createdAt: new Date(twoHoursAgo) },
+      { ...FAILED_REQUEST, errorOrigin: 'upstream', createdAt: new Date(twoHoursAgo) },
       { ...FAILED_REQUEST, errorOrigin: null, createdAt: new Date(twoHoursAgo) },
       { ...SERVED_REQUEST, createdAt: new Date(currentHour) },
-      { ...FAILED_REQUEST, errorOrigin: "gateway", createdAt: new Date(currentHour) },
+      { ...FAILED_REQUEST, errorOrigin: 'gateway', createdAt: new Date(currentHour) },
     ]);
 
-    const response = await getOverview("24h").expect(200);
+    const response = await getOverview('24h').expect(200);
 
     expect(response.body.buckets[0].errorsByOrigin).toEqual(NO_ERRORS_BY_ORIGIN);
     expect(response.body.buckets[21]).toMatchObject({
@@ -157,15 +157,15 @@ describe("Overview API (e2e)", () => {
     });
   });
 
-  it("charts six-hour buckets over 7 days and daily buckets over 30 days", async () => {
+  it('charts six-hour buckets over 7 days and daily buckets over 30 days', async () => {
     const currentDay = currentBucketStart(DAY_MS);
     await db.insert(usageLogs).values([
       { ...SERVED_REQUEST, createdAt: new Date(currentDay - 2 * DAY_MS) },
       { ...SERVED_REQUEST, createdAt: new Date(currentDay - 20 * DAY_MS) },
     ]);
 
-    const week = await getOverview("7d").expect(200);
-    const month = await getOverview("30d").expect(200);
+    const week = await getOverview('7d').expect(200);
+    const month = await getOverview('30d').expect(200);
 
     expect(week.body.buckets).toHaveLength(28);
     expect(week.body.totals.requestCount).toBe(1);
@@ -177,12 +177,12 @@ describe("Overview API (e2e)", () => {
     expect(month.body.totals.requestCount).toBe(2);
   });
 
-  it("tells an empty database apart from a range with no requests", async () => {
-    const empty = await getOverview("24h").expect(200);
+  it('tells an empty database apart from a range with no requests', async () => {
+    const empty = await getOverview('24h').expect(200);
     await db
       .insert(usageLogs)
       .values({ ...SERVED_REQUEST, createdAt: new Date(Date.now() - 40 * DAY_MS) });
-    const quiet = await getOverview("24h").expect(200);
+    const quiet = await getOverview('24h').expect(200);
 
     expect(empty.body.hasUsageLogs).toBe(false);
     expect(quiet.body.hasUsageLogs).toBe(true);
@@ -196,11 +196,11 @@ describe("Overview API (e2e)", () => {
     });
   });
 
-  it("refuses a range it does not offer", async () => {
-    await getOverview("1y").expect(400);
+  it('refuses a range it does not offer', async () => {
+    await getOverview('1y').expect(400);
   });
 
-  it("is only for signed-in Users", async () => {
-    await request(app.getHttpServer()).get("/api/overview?range=24h").expect(401);
+  it('is only for signed-in Users', async () => {
+    await request(app.getHttpServer()).get('/api/overview?range=24h').expect(401);
   });
 });

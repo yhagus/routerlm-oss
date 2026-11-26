@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="Value extends string">
-import { Check, ChevronDown, Search } from "@lucide/vue";
+import { Check, ChevronDown, Search } from '@lucide/vue';
 import {
   ListboxContent,
   ListboxFilter,
@@ -10,7 +10,7 @@ import {
   PopoverPortal,
   PopoverRoot,
   PopoverTrigger,
-} from "reka-ui";
+} from 'reka-ui';
 
 type SelectOption = { label: string; value: Value };
 
@@ -25,26 +25,26 @@ const props = withDefaults(
     placeholder?: string;
     searchable?: boolean;
     menuClass?: string;
-    menuAlign?: "start" | "end";
+    menuAlign?: 'start' | 'end';
     emptyText?: string;
   }>(),
   {
-    placeholder: "Select an option",
+    placeholder: 'Select an option',
     searchable: false,
-    menuAlign: "start",
-    emptyText: "No options yet",
+    menuAlign: 'start',
+    emptyText: 'No options yet',
   },
 );
-const emit = defineEmits<{ "update:modelValue": [value: Value] }>();
+const emit = defineEmits<{ 'update:modelValue': [value: Value] }>();
 
 const open = ref(false);
-const query = ref("");
-const listbox = useTemplateRef("listbox");
+const query = ref('');
+const listbox = useTemplateRef('listbox');
 const listId = useId();
 
 const visibleOptions = computed(() => {
   const needle = query.value.trim().toLowerCase();
-  if (!props.searchable || needle === "") return props.options;
+  if (!props.searchable || needle === '') return props.options;
   return props.options.filter((option) => option.label.toLowerCase().includes(needle));
 });
 const selectedLabel = computed(
@@ -54,7 +54,7 @@ const selectedLabel = computed(
 
 function handleOpenChange(isOpen: boolean): void {
   open.value = isOpen;
-  if (!isOpen) query.value = "";
+  if (!isOpen) query.value = '';
 }
 
 function handleOpenAutoFocus(event: Event): void {
@@ -64,7 +64,7 @@ function handleOpenAutoFocus(event: Event): void {
 
 function handleSelect(value: unknown): void {
   const option = props.options.find((each) => each.value === value);
-  if (option) emit("update:modelValue", option.value);
+  if (option) emit('update:modelValue', option.value);
   handleOpenChange(false);
 }
 

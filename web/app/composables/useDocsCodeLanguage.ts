@@ -1,6 +1,6 @@
-import type { Ref } from "vue";
+import type { Ref } from 'vue';
 
-const STORAGE_KEY = "routerlm-docs-code-language";
+const STORAGE_KEY = 'routerlm-docs-code-language';
 
 function readStoredLanguage(): string | null {
   try {
@@ -14,7 +14,7 @@ export function useDocsCodeLanguage(): {
   preferredLanguage: Readonly<Ref<string | null>>;
   choose: (language: string) => void;
 } {
-  const preferredLanguage = useState<string | null>("docs-code-language", readStoredLanguage);
+  const preferredLanguage = useState<string | null>('docs-code-language', readStoredLanguage);
 
   function choose(language: string): void {
     preferredLanguage.value = language;

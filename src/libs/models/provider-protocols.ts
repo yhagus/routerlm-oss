@@ -1,10 +1,10 @@
-import type { StoredProviderQuirks } from "@/catalog/schemas/catalog.schema";
+import type { StoredProviderQuirks } from '@/catalog/schemas/catalog.schema';
 import {
   type ModelKind,
   PROTOCOLS_WITH_SERVICE_TIERS,
   type ProviderEndpoint,
   type UpstreamProtocol,
-} from "@/db/schemas";
+} from '@/db/schemas';
 
 type QuirkKey = keyof StoredProviderQuirks;
 
@@ -13,32 +13,32 @@ export interface ProtocolListing {
   protocols?: readonly UpstreamProtocol[];
 }
 
-const QUIRKS_OF_EVERY_PROTOCOL: readonly QuirkKey[] = ["exhaustedErrorCodes", "quotaBaseUrl"];
+const QUIRKS_OF_EVERY_PROTOCOL: readonly QuirkKey[] = ['exhaustedErrorCodes', 'quotaBaseUrl'];
 
 const QUIRKS_OF_ONE_PROTOCOL = {
-  "openai-chat": [
-    "reasoningContentInHistory",
-    "acceptsCacheControl",
-    "reasoningAsThinking",
-    "forwardsClientPromptCacheKey",
-    "acceptsPromptCacheKey",
-    "usesMaxCompletionTokens",
-    "forwardedClientHeaders",
-    "fixedHeaders",
+  'openai-chat': [
+    'reasoningContentInHistory',
+    'acceptsCacheControl',
+    'reasoningAsThinking',
+    'forwardsClientPromptCacheKey',
+    'acceptsPromptCacheKey',
+    'usesMaxCompletionTokens',
+    'forwardedClientHeaders',
+    'fixedHeaders',
   ],
-  "anthropic-messages": ["cacheMarkerLimit"],
-  "openai-responses": [
-    "forwardsClientPromptCacheKey",
-    "acceptsPromptCacheKey",
-    "alwaysStreams",
-    "includesEncryptedReasoning",
-    "systemAsDeveloperMessage",
-    "droppedParameters",
+  'anthropic-messages': ['cacheMarkerLimit'],
+  'openai-responses': [
+    'forwardsClientPromptCacheKey',
+    'acceptsPromptCacheKey',
+    'alwaysStreams',
+    'includesEncryptedReasoning',
+    'systemAsDeveloperMessage',
+    'droppedParameters',
   ],
-  "dashscope-image": [],
-  "dashscope-video": [],
-  "dashscope-speech": [],
-  "dashscope-transcription": [],
+  'dashscope-image': [],
+  'dashscope-video': [],
+  'dashscope-speech': [],
+  'dashscope-transcription': [],
 } as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
 
 export function protocolsOf(endpoints: readonly ProviderEndpoint[]): UpstreamProtocol[] {
@@ -46,11 +46,11 @@ export function protocolsOf(endpoints: readonly ProviderEndpoint[]): UpstreamPro
 }
 
 export function describeProtocols(endpoints: readonly ProviderEndpoint[]): string {
-  return protocolsOf(endpoints).join(" or ");
+  return protocolsOf(endpoints).join(' or ');
 }
 
 export function kindOf(upstreamModel: ProtocolListing): ModelKind {
-  return upstreamModel.kind ?? "chat";
+  return upstreamModel.kind ?? 'chat';
 }
 
 export function protocolsWithoutEndpoint(

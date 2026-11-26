@@ -5,8 +5,8 @@ import {
   watch,
   type MaybeRefOrGetter,
   type WritableComputedRef,
-} from "vue";
-import type { LocationQuery, Router } from "vue-router";
+} from 'vue';
+import type { LocationQuery, Router } from 'vue-router';
 
 let pendingPatch: Record<string, string | undefined> = {};
 let isFlushScheduled = false;
@@ -28,7 +28,7 @@ function scheduleQueryPatch(router: Router, patch: Record<string, string | undef
 }
 
 export function anyText(value: string): value is string {
-  return value !== "";
+  return value !== '';
 }
 
 export function oneOf<Value extends string>(values: readonly Value[]) {
@@ -50,7 +50,7 @@ export function useQueryParam<Value extends string>(
 
   function fromUrl(): Value {
     const raw = route.query[key];
-    return typeof raw === "string" && options.isValid(raw) ? raw : options.default;
+    return typeof raw === 'string' && options.isValid(raw) ? raw : options.default;
   }
 
   const text = shallowRef<string>(fromUrl());
@@ -63,7 +63,7 @@ export function useQueryParam<Value extends string>(
   let lastWritten: string = value.value;
 
   const initial = route.query[key];
-  if (typeof initial === "string" && (initial !== value.value || initial === options.default)) {
+  if (typeof initial === 'string' && (initial !== value.value || initial === options.default)) {
     scheduleQueryPatch(router, { [key]: undefined });
   }
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -97,13 +97,13 @@ interface QueryListOptions<Value extends string> {
   order?: MaybeRefOrGetter<readonly string[]>;
 }
 
-const LIST_SEPARATOR = ",";
+const LIST_SEPARATOR = ',';
 
 export function useQueryList<Value extends string>(
   key: string,
   options: QueryListOptions<Value>,
 ): WritableComputedRef<Value[]> {
-  const text = useQueryParam(key, { default: "", isValid: anyText });
+  const text = useQueryParam(key, { default: '', isValid: anyText });
 
   function canonical(values: readonly string[]): Value[] {
     const order = toValue(options.order) ?? [];
@@ -141,14 +141,14 @@ function isPageNumber(value: string): value is string {
 
 function useRouteQueryParam<Value extends string>(
   key: string,
-  options: Pick<QueryParamOptions<Value>, "default" | "isValid">,
+  options: Pick<QueryParamOptions<Value>, 'default' | 'isValid'>,
 ): WritableComputedRef<Value> {
   const route = useRoute();
   const router = useRouter();
   return computed<Value>({
     get: () => {
       const raw = route.query[key];
-      return typeof raw === "string" && options.isValid(raw) ? raw : options.default;
+      return typeof raw === 'string' && options.isValid(raw) ? raw : options.default;
     },
     set: (next) => {
       scheduleQueryPatch(router, { [key]: next === options.default ? undefined : next });
@@ -157,15 +157,15 @@ function useRouteQueryParam<Value extends string>(
 }
 
 export function useQuerySearch(): WritableComputedRef<string> {
-  return useRouteQueryParam("q", { default: "", isValid: anyText });
+  return useRouteQueryParam('q', { default: '', isValid: anyText });
 }
 
 export function useQueryPage(): WritableComputedRef<number> {
-  const raw = useRouteQueryParam("page", { default: "1", isValid: isPageNumber });
+  const raw = useRouteQueryParam('page', { default: '1', isValid: isPageNumber });
   return computed({
     get: () => Number(raw.value),
     set: (page) => {
-      raw.value = page > 1 ? String(Math.floor(page)) : "1";
+      raw.value = page > 1 ? String(Math.floor(page)) : '1';
     },
   });
 }

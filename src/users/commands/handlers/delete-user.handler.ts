@@ -1,11 +1,11 @@
-import { ConflictException, NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { count, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { users } from "@/db/schemas";
-import { lockUsers } from "@/users/models/lock-users";
-import { DeleteUserCommand } from "@/users/commands/impl/delete-user.command";
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { count, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { users } from '@/db/schemas';
+import { lockUsers } from '@/users/models/lock-users';
+import { DeleteUserCommand } from '@/users/commands/impl/delete-user.command';
 
 @CommandHandler(DeleteUserCommand)
 export class DeleteUserHandler implements ICommandHandler<DeleteUserCommand> {
@@ -16,7 +16,7 @@ export class DeleteUserHandler implements ICommandHandler<DeleteUserCommand> {
       await lockUsers(tx);
       const [target] = await tx.select({ id: users.id }).from(users).where(eq(users.id, userId));
       if (!target) {
-        throw new NotFoundException("User not found");
+        throw new NotFoundException('User not found');
       }
       const [{ userCount }] = await tx.select({ userCount: count() }).from(users);
       if (userCount === 1) {

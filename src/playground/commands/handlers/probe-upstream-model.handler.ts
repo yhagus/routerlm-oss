@@ -1,21 +1,21 @@
-import { Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import type { Env } from "@/config/schemas/env.schema";
-import { GatewayError } from "@/inference/models/gateway-error";
-import type { ClientConnection } from "@/libs/models/client-connection";
-import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import type { User } from "@/users/models/user";
-import { PlaygroundUsage } from "@/playground/models/playground-usage";
-import { type ProbePlan, probePlanFor } from "@/playground/models/probe-plan";
-import { probeCommandFor } from "@/playground/models/probe-requests";
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import type { Env } from '@/config/schemas/env.schema';
+import { GatewayError } from '@/inference/models/gateway-error';
+import type { ClientConnection } from '@/libs/models/client-connection';
+import type { SnapshotProviderAccount } from '@/snapshot/models/snapshot';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import type { User } from '@/users/models/user';
+import { PlaygroundUsage } from '@/playground/models/playground-usage';
+import { type ProbePlan, probePlanFor } from '@/playground/models/probe-plan';
+import { probeCommandFor } from '@/playground/models/probe-requests';
 import {
   type ProbeResult,
   type ProbeResults,
   probeResultOf,
-} from "@/playground/models/probe-result";
-import { ProbeUpstreamModelCommand } from "@/playground/commands/impl/probe-upstream-model.command";
+} from '@/playground/models/probe-result';
+import { ProbeUpstreamModelCommand } from '@/playground/commands/impl/probe-upstream-model.command';
 
 @CommandHandler(ProbeUpstreamModelCommand)
 export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamModelCommand> {
@@ -51,15 +51,15 @@ export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamM
     const command = probeCommandFor(kind, {
       upstreamModel,
       target: {
-        kind: "probe",
+        kind: 'probe',
         upstreamModelId: upstreamModel.id,
         providerAccountId: providerAccount.id,
         totalTimeoutMs: this.config.get(
-          kind === "image" ? "PROBE_IMAGE_TIMEOUT_MS" : "PROBE_TIMEOUT_MS",
+          kind === 'image' ? 'PROBE_IMAGE_TIMEOUT_MS' : 'PROBE_TIMEOUT_MS',
           { infer: true },
         ),
       },
-      caller: { kind: "playground", userId: user.id },
+      caller: { kind: 'playground', userId: user.id },
       connection,
       onUsage: usage.record,
     });

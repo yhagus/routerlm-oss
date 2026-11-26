@@ -1,5 +1,5 @@
-import { z } from "zod";
-import type { StopReason, TokenUsage } from "@/inference/models/internal-format";
+import { z } from 'zod';
+import type { StopReason, TokenUsage } from '@/inference/models/internal-format';
 
 export const usageSchema = z.object({
   prompt_tokens: z.number().nullish(),
@@ -55,20 +55,20 @@ export function writeUsage(usage: TokenUsage): Record<string, unknown> {
 }
 
 export const openAiFinishReasonSchema = z.enum([
-  "stop",
-  "length",
-  "tool_calls",
-  "content_filter",
-  "function_call",
+  'stop',
+  'length',
+  'tool_calls',
+  'content_filter',
+  'function_call',
 ]);
 type OpenAiFinishReason = z.infer<typeof openAiFinishReasonSchema>;
 
 const STOP_REASONS = {
-  stop: "end",
-  length: "max-tokens",
-  tool_calls: "tool-calls",
-  content_filter: "content-filter",
-  function_call: "tool-calls",
+  stop: 'end',
+  length: 'max-tokens',
+  tool_calls: 'tool-calls',
+  content_filter: 'content-filter',
+  function_call: 'tool-calls',
 } as const satisfies Record<OpenAiFinishReason, StopReason>;
 
 export function stopReasonOf(finishReason: OpenAiFinishReason): StopReason {
@@ -76,11 +76,11 @@ export function stopReasonOf(finishReason: OpenAiFinishReason): StopReason {
 }
 
 const FINISH_REASONS = {
-  end: "stop",
-  "stop-sequence": "stop",
-  "max-tokens": "length",
-  "tool-calls": "tool_calls",
-  "content-filter": "content_filter",
+  end: 'stop',
+  'stop-sequence': 'stop',
+  'max-tokens': 'length',
+  'tool-calls': 'tool_calls',
+  'content-filter': 'content_filter',
 } as const satisfies Record<StopReason, OpenAiFinishReason>;
 
 export function finishReasonOf(stopReason: StopReason): OpenAiFinishReason {

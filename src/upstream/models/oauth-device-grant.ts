@@ -1,10 +1,10 @@
-import type { OauthRegion, ProviderOauthLogin } from "@/db/schemas";
-import type { CliIdentity } from "./cli-identity";
-import type { OauthTokens } from "./provider-account";
+import type { OauthRegion, ProviderOauthLogin } from '@/db/schemas';
+import type { CliIdentity } from './cli-identity';
+import type { OauthTokens } from './provider-account';
 
 export type OauthLoginEndpoint =
-  | { flow: "kimi-code"; authHost: string; clientId: string; identity: CliIdentity }
-  | { flow: "openai-codex"; issuer: string; clientId: string; cliVersion: string };
+  | { flow: 'kimi-code'; authHost: string; clientId: string; identity: CliIdentity }
+  | { flow: 'openai-codex'; issuer: string; clientId: string; cliVersion: string };
 
 export function oauthLoginEndpointOf(
   oauthLogin: ProviderOauthLogin,
@@ -12,19 +12,19 @@ export function oauthLoginEndpointOf(
   deviceId: string,
 ): OauthLoginEndpoint | null {
   switch (oauthLogin.flow) {
-    case "kimi-code":
+    case 'kimi-code':
       if (region === null) {
         return null;
       }
       return {
-        flow: "kimi-code",
+        flow: 'kimi-code',
         authHost: oauthLogin.authHosts[region],
         clientId: oauthLogin.clientId,
         identity: { cliVersion: oauthLogin.cliVersion, deviceId },
       };
-    case "openai-codex":
+    case 'openai-codex':
       return {
-        flow: "openai-codex",
+        flow: 'openai-codex',
         issuer: oauthLogin.issuer,
         clientId: oauthLogin.clientId,
         cliVersion: oauthLogin.cliVersion,
@@ -33,7 +33,7 @@ export function oauthLoginEndpointOf(
 }
 
 export function signInNeedsRegion(oauthLogin: ProviderOauthLogin): boolean {
-  return oauthLogin.flow === "kimi-code";
+  return oauthLogin.flow === 'kimi-code';
 }
 
 export class OauthLoginError extends Error {}
@@ -53,17 +53,17 @@ export interface DeviceAuthorization {
 }
 
 export type TokenPoll =
-  | { kind: "granted"; tokens: OauthTokens }
-  | { kind: "pending" }
-  | { kind: "slow-down" }
-  | { kind: "denied" }
-  | { kind: "expired" }
-  | { kind: "unanswered"; reason: string };
+  | { kind: 'granted'; tokens: OauthTokens }
+  | { kind: 'pending' }
+  | { kind: 'slow-down' }
+  | { kind: 'denied' }
+  | { kind: 'expired' }
+  | { kind: 'unanswered'; reason: string };
 
 export type TokenRefresh =
-  | { kind: "refreshed"; tokens: OauthTokens }
-  | { kind: "refused"; reason: string }
-  | { kind: "unanswered"; reason: string };
+  | { kind: 'refreshed'; tokens: OauthTokens }
+  | { kind: 'refused'; reason: string }
+  | { kind: 'unanswered'; reason: string };
 
 export interface OauthProfile {
   nickname: string | null;

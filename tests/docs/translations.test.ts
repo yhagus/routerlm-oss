@@ -1,11 +1,11 @@
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
 import {
   codeBlocksOf,
   type DocsPage,
   DOCS_ID_DIRECTORY,
   proseOf,
   readDocsPages,
-} from "@tests/support/docs-examples";
+} from '@tests/support/docs-examples';
 
 const englishPages = readDocsPages();
 const indonesianPages = readDocsPages(DOCS_ID_DIRECTORY);
@@ -15,30 +15,30 @@ function examplesOf(page: DocsPage): { language: string; code: string }[] {
 }
 
 function blockMarkersOf(page: DocsPage): string[] {
-  return page.markdown.split("\n").filter((line) => line.startsWith("::"));
+  return page.markdown.split('\n').filter((line) => line.startsWith('::'));
 }
 
 function iconOf(page: DocsPage): string | undefined {
   return /^icon:\s*(\S+)\s*$/m.exec(page.markdown)?.[1];
 }
 
-describe("Indonesian client documentation", () => {
-  it("translates every English page and adds none", () => {
+describe('Indonesian client documentation', () => {
+  it('translates every English page and adds none', () => {
     expect(indonesianPages.map((page) => page.fileName)).toEqual(
       englishPages.map((page) => page.fileName),
     );
   });
 
   describe.each(englishPages.map((page) => [page.fileName, page] as const))(
-    "%s",
+    '%s',
     (fileName, english) => {
       const indonesian = indonesianPages.find((page) => page.fileName === fileName);
 
-      it("keeps the English examples, unchanged and in order", () => {
+      it('keeps the English examples, unchanged and in order', () => {
         expect(indonesian && examplesOf(indonesian)).toEqual(examplesOf(english));
       });
 
-      it("groups the examples into the same tabs", () => {
+      it('groups the examples into the same tabs', () => {
         expect(indonesian && blockMarkersOf(indonesian)).toEqual(blockMarkersOf(english));
       });
 
@@ -46,13 +46,13 @@ describe("Indonesian client documentation", () => {
         expect(indonesian && iconOf(indonesian)).toBe(iconOf(english));
       });
 
-      it("links to Indonesian pages", () => {
+      it('links to Indonesian pages', () => {
         expect(indonesian?.markdown).not.toMatch(/\]\(\/docs(\/|\)|#)/);
       });
     },
   );
 
-  it("names no Provider in prose", async () => {
+  it('names no Provider in prose', async () => {
     const providerNames = (await loadCatalog(CATALOG_DIRECTORY)).map((provider) => provider.name);
     const named = indonesianPages.flatMap((page) => {
       const prose = proseOf(page).toLowerCase();

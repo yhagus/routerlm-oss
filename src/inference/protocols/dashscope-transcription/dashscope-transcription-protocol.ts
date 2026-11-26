@@ -1,15 +1,15 @@
-import { z } from "zod";
-import type { Transcript, TranscriptionRequest } from "@/inference/models/audio-transcription";
+import { z } from 'zod';
+import type { Transcript, TranscriptionRequest } from '@/inference/models/audio-transcription';
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind";
-import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
+} from '@/inference/models/media-kind';
+import { dashScopeFailureReasonOf } from '@/inference/protocols/dashscope/dashscope-errors';
+import { UpstreamProtocolError } from '@/inference/protocols/upstream-protocol-converter';
 
-const GENERATION_PATH = "/services/aigc/multimodal-generation/generation";
+const GENERATION_PATH = '/services/aigc/multimodal-generation/generation';
 
 const responseSchema = z.object({
   output: z.object({ text: z.string() }),
@@ -22,8 +22,8 @@ function requestBodyOf(request: TranscriptionRequest, upstreamModelId: string): 
     input: {
       messages: [
         {
-          role: "user",
-          content: [{ type: "input_audio", input_audio: { data: request.audio.dataUri } }],
+          role: 'user',
+          content: [{ type: 'input_audio', input_audio: { data: request.audio.dataUri } }],
         },
       ],
     },
@@ -61,7 +61,7 @@ export const dashScopeTranscriptionProtocol: MediaUpstreamProtocol<
   TranscriptionRequest,
   Transcript
 > = {
-  protocol: "dashscope-transcription",
+  protocol: 'dashscope-transcription',
   failureReasonOf: dashScopeFailureReasonOf,
   generate,
 };

@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
+import { z } from 'zod';
+import { hasAnyField, nothingToChange } from '@/libs/schemas/partial-update.schema';
 
 export const MAX_NAME_LENGTH = 100;
 export const MAX_CUSTOMER_ID_LENGTH = 200;
@@ -16,7 +16,7 @@ export const expiresAtSchema = z.iso
   .datetime({ offset: true })
   .pipe(z.coerce.date())
   .refine((expiresAt) => expiresAt.getTime() > Date.now(), {
-    error: "The expiry must be in the future",
+    error: 'The expiry must be in the future',
   })
   .nullable();
 

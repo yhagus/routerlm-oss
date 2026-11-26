@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { passwordSchema } from "./password.schema";
+import { z } from 'zod';
+import { passwordSchema } from './password.schema';
 
 export const newUserSchema = z.object({
   email: z.string().trim().pipe(z.email()),

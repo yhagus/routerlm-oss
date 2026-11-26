@@ -1,12 +1,12 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { createApiKey } from "@tests/support/api-keys";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { createApiKey } from '@tests/support/api-keys';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 
 describe("An API Key's rotation history (e2e)", () => {
   let app: NestNodeApplication;
@@ -30,22 +30,22 @@ describe("An API Key's rotation history (e2e)", () => {
   async function rotate(id: string): Promise<void> {
     await request(app.getHttpServer())
       .post(`/api/api-keys/${id}/rotate`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(201);
   }
 
   function listRotations(id: string): request.Test {
     return request(app.getHttpServer())
       .get(`/api/api-keys/${id}/rotations`)
-      .set("Cookie", adaCookie);
+      .set('Cookie', adaCookie);
   }
 
-  it("is empty for a key that was never rotated", async () => {
+  it('is empty for a key that was never rotated', async () => {
     const created = await createApiKey(app, adaCookie);
 
     const list = await request(app.getHttpServer())
-      .get("/api/api-keys")
-      .set("Cookie", adaCookie)
+      .get('/api/api-keys')
+      .set('Cookie', adaCookie)
       .expect(200);
     const rotations = await listRotations(created.id).expect(200);
 
@@ -53,16 +53,16 @@ describe("An API Key's rotation history (e2e)", () => {
     expect(rotations.body).toEqual([]);
   });
 
-  it("lists each rotation newest first, chained, with who rotated it", async () => {
+  it('lists each rotation newest first, chained, with who rotated it', async () => {
     const created = await createApiKey(app, adaCookie);
-    const originalKeyId = created.key.split("_")[1];
+    const originalKeyId = created.key.split('_')[1];
     await rotate(created.id);
     await rotate(created.id);
 
     const rotations = await listRotations(created.id).expect(200);
     const list = await request(app.getHttpServer())
-      .get("/api/api-keys")
-      .set("Cookie", adaCookie)
+      .get('/api/api-keys')
+      .set('Cookie', adaCookie)
       .expect(200);
 
     const [latest, first] = rotations.body;
@@ -77,12 +77,12 @@ describe("An API Key's rotation history (e2e)", () => {
     expect(list.body[0].lastRotatedAt).toBe(latest.rotatedAt);
   });
 
-  it("keeps the history of a revoked key", async () => {
+  it('keeps the history of a revoked key', async () => {
     const created = await createApiKey(app, adaCookie);
     await rotate(created.id);
     await request(app.getHttpServer())
       .post(`/api/api-keys/${created.id}/revoke`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .expect(204);
 
     const rotations = await listRotations(created.id).expect(200);
@@ -90,7 +90,7 @@ describe("An API Key's rotation history (e2e)", () => {
     expect(rotations.body).toHaveLength(1);
   });
 
-  it("answers 404 for an unknown key", async () => {
+  it('answers 404 for an unknown key', async () => {
     await listRotations(UNKNOWN_ID).expect(404);
   });
 });

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { MicIcon } from "@lucide/vue";
-import { cn } from "@/lib/utils";
-import { onMounted, onUnmounted, ref } from "vue";
-import { usePromptInput } from "./context";
-import PromptInputButton from "./PromptInputButton.vue";
+import type { HTMLAttributes } from 'vue';
+import { MicIcon } from '@lucide/vue';
+import { cn } from '@/lib/utils';
+import { onMounted, onUnmounted, ref } from 'vue';
+import { usePromptInput } from './context';
+import PromptInputButton from './PromptInputButton.vue';
 
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -56,10 +56,10 @@ declare global {
   }
 }
 
-type PromptInputSpeechButtonProps = InstanceType<typeof PromptInputButton>["$props"];
+type PromptInputSpeechButtonProps = InstanceType<typeof PromptInputButton>['$props'];
 
 interface Props extends /* @vue-ignore */ PromptInputSpeechButtonProps {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();
@@ -76,28 +76,28 @@ onMounted(() => {
     const sr = new SpeechRecognition();
     sr.continuous = true;
     sr.interimResults = true;
-    sr.lang = "en-US";
+    sr.lang = 'en-US';
 
     sr.onstart = () => (isListening.value = true);
     sr.onend = () => (isListening.value = false);
 
     sr.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = "";
+      let finalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result?.isFinal) {
-          finalTranscript += result[0]?.transcript ?? "";
+          finalTranscript += result[0]?.transcript ?? '';
         }
       }
 
       if (finalTranscript) {
-        const newValue = textInput.value + (textInput.value ? " " : "") + finalTranscript;
+        const newValue = textInput.value + (textInput.value ? ' ' : '') + finalTranscript;
         setTextInput(newValue);
       }
     };
 
     sr.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("Speech recognition error:", event.error);
+      console.error('Speech recognition error:', event.error);
       isListening.value = false;
     };
 

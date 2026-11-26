@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Columns3 } from "@lucide/vue";
+import { Columns3 } from '@lucide/vue';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -7,8 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
-import type { HideableColumn } from "~/lib/dataTable";
+} from '~/components/ui/dropdown-menu';
+import type { HideableColumn } from '~/lib/dataTable';
 
 defineProps<{ columns: HideableColumn[] }>();
 const emit = defineEmits<{
@@ -16,7 +16,7 @@ const emit = defineEmits<{
   reset: [];
 }>();
 
-const ITEM_CLASS = "rounded-md py-2 text-xs text-(--ink-2) focus:bg-(--control-hover)";
+const ITEM_CLASS = 'rounded-md py-2 text-xs text-(--ink-2) focus:bg-(--control-hover)';
 </script>
 
 <template>

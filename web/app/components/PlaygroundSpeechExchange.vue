@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Download } from "@lucide/vue";
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Download } from '@lucide/vue';
+import { Message, MessageContent } from '@/components/ai-elements/message';
+import { Shimmer } from '@/components/ai-elements/shimmer';
 import {
   AUDIO_FORMAT_LABELS,
   isPlayableFormat,
   type SpeechExchange,
   speechFileName,
-} from "~/lib/playgroundSpeech";
+} from '~/lib/playgroundSpeech';
 
 defineProps<{ exchange: SpeechExchange }>();
 
@@ -33,7 +33,7 @@ const { providerNamesBySlug, providerLogosBySlug } = useInjectedPlaygroundTarget
       <p v-else-if="exchange.state.kind === 'stopped'" class="exchange__note">Stopped.</p>
       <p v-else-if="exchange.state.kind === 'failed'" class="exchange__error" role="alert">
         <span class="status-badge status-badge--bad">{{
-          exchange.state.error.code ?? "Error"
+          exchange.state.error.code ?? 'Error'
         }}</span>
         {{ exchange.state.error.message }}
       </p>

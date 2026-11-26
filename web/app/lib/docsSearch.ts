@@ -17,7 +17,7 @@ export interface SearchSnippet {
 }
 
 export interface SearchRow {
-  kind: "page" | "section";
+  kind: 'page' | 'section';
   to: string;
   title: string;
   pageNumber?: number;
@@ -27,41 +27,41 @@ export interface SearchRow {
 
 export function normalizeText(text: string): string {
   return text
-    .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, "$1 $2")
+    .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, '$1 $2')
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
 }
 
 export function searchTermsOf(query: string): string[] {
-  return normalizeText(query).split(" ").filter(Boolean);
+  return normalizeText(query).split(' ').filter(Boolean);
 }
 
 const RELATED_WORDS: readonly (readonly string[])[] = [
-  ["tier", "priority", "fast", "flex", "speed", "latency"],
+  ['tier', 'priority', 'fast', 'flex', 'speed', 'latency'],
   [
-    "key",
-    "apikey",
-    "token",
-    "bearer",
-    "credential",
-    "authentication",
-    "authorization",
-    "secret",
-    "kunci",
+    'key',
+    'apikey',
+    'token',
+    'bearer',
+    'credential',
+    'authentication',
+    'authorization',
+    'secret',
+    'kunci',
   ],
-  ["limit", "quota", "throttle", "throttling", "ratelimit", "429"],
-  ["stream", "streaming", "sse", "events", "chunk", "delta"],
-  ["image", "images", "vision", "photo", "picture", "base64", "gambar"],
-  ["tool", "tools", "function", "functions", "alat", "fungsi"],
-  ["error", "errors", "failure", "failed", "status", "galat", "gagal"],
-  ["retry", "retries", "backoff", "fallback", "ulang", "percobaan"],
-  ["reasoning", "thinking", "effort"],
-  ["json", "schema", "structured", "terstruktur"],
-  ["model", "models", "capability", "capabilities"],
-  ["cache", "caching", "cached"],
-  ["timeout", "slow", "504"],
-  ["size", "large", "413", "mb", "ukuran"],
+  ['limit', 'quota', 'throttle', 'throttling', 'ratelimit', '429'],
+  ['stream', 'streaming', 'sse', 'events', 'chunk', 'delta'],
+  ['image', 'images', 'vision', 'photo', 'picture', 'base64', 'gambar'],
+  ['tool', 'tools', 'function', 'functions', 'alat', 'fungsi'],
+  ['error', 'errors', 'failure', 'failed', 'status', 'galat', 'gagal'],
+  ['retry', 'retries', 'backoff', 'fallback', 'ulang', 'percobaan'],
+  ['reasoning', 'thinking', 'effort'],
+  ['json', 'schema', 'structured', 'terstruktur'],
+  ['model', 'models', 'capability', 'capabilities'],
+  ['cache', 'caching', 'cached'],
+  ['timeout', 'slow', '504'],
+  ['size', 'large', '413', 'mb', 'ukuran'],
 ];
 
 const RELATED_BY_WORD = new Map<string, readonly string[]>();
@@ -129,8 +129,8 @@ function wordsOf(section: Section): { title: string[]; text: string[] } {
   const known = wordsOfSection.get(section);
   if (known) return known;
   const words = {
-    title: normalizeText(section.title).split(" ").filter(Boolean),
-    text: normalizeText(section.content).split(" ").filter(Boolean),
+    title: normalizeText(section.title).split(' ').filter(Boolean),
+    text: normalizeText(section.content).split(' ').filter(Boolean),
   };
   wordsOfSection.set(section, words);
   return words;
@@ -149,7 +149,7 @@ function snippetOf(content: string, terms: string[]): SearchSnippet | null {
   const spans = [...content.matchAll(/[\p{L}\p{N}_]+/gu)];
   const bestSpan = (minimum: Strength) =>
     spans.find((span) => {
-      const subwords = normalizeText(span[0]).split(" ").filter(Boolean);
+      const subwords = normalizeText(span[0]).split(' ').filter(Boolean);
       return terms.some((term) => subwords.some((word) => strengthOf(term, word) >= minimum));
     });
   const span = bestSpan(2) ?? bestSpan(1);
@@ -159,14 +159,14 @@ function snippetOf(content: string, terms: string[]): SearchSnippet | null {
   const from = Math.max(0, start - SNIPPET_BEFORE);
   const to = Math.min(content.length, end + SNIPPET_AFTER);
   return {
-    before: (from > 0 ? "…" : "") + content.slice(from, start),
+    before: (from > 0 ? '…' : '') + content.slice(from, start),
     match: content.slice(start, end),
-    after: content.slice(end, to) + (to < content.length ? "…" : ""),
+    after: content.slice(end, to) + (to < content.length ? '…' : ''),
   };
 }
 
 function pagePathOf(sectionId: string): string {
-  return sectionId.split("#")[0] ?? sectionId;
+  return sectionId.split('#')[0] ?? sectionId;
 }
 
 export function searchSections(
@@ -204,7 +204,7 @@ export function searchSections(
   return [...matchesByPage].flatMap(([pagePath, pageMatches]) => {
     const pageMatch = pageMatches.find((section) => section.level === 1);
     const pageRow: SearchRow = {
-      kind: "page",
+      kind: 'page',
       to: pagePath,
       title: pageTitles.get(pagePath) ?? pageMatches[0]?.titles[0] ?? pagePath,
       pageNumber: pageNumberOf(pagePath),
@@ -214,7 +214,7 @@ export function searchSections(
     const sectionRows = pageMatches
       .filter((section) => section.level > 1)
       .map((section): SearchRow => ({
-        kind: "section",
+        kind: 'section',
         to: section.id,
         title: section.title,
         isMatch: true,

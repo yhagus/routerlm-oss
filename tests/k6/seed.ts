@@ -1,6 +1,6 @@
-import { createHash } from "node:crypto";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { createHash } from 'node:crypto';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import {
   apiKeys,
   type AuthStyle,
@@ -11,8 +11,8 @@ import {
   settings,
   type UpstreamProtocol,
   upstreamModels,
-} from "@/db/schemas";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
+} from '@/db/schemas';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
 
 const API_KEY_PATTERN = /^rlm_([0-9a-f]{16})_[A-Za-z0-9_-]{43}$/;
 
@@ -24,21 +24,21 @@ function required(name: string): string {
   return value;
 }
 
-const apiKey = required("PERF_API_KEY");
+const apiKey = required('PERF_API_KEY');
 const keyMatch = API_KEY_PATTERN.exec(apiKey);
 if (!keyMatch) {
-  throw new Error("PERF_API_KEY must look like rlm_<16 hex>_<43 base64url characters>");
+  throw new Error('PERF_API_KEY must look like rlm_<16 hex>_<43 base64url characters>');
 }
-const upstreamOrigin = required("UPSTREAM_ORIGIN");
-const cipher = new ProviderKeyCipher(required("ENCRYPTION_KEY"));
+const upstreamOrigin = required('UPSTREAM_ORIGIN');
+const cipher = new ProviderKeyCipher(required('ENCRYPTION_KEY'));
 
 interface Speaks {
   protocol: UpstreamProtocol;
   authStyle: AuthStyle;
 }
-const OPENAI_CHAT: Speaks = { protocol: "openai-chat", authStyle: "bearer" };
-const ANTHROPIC_MESSAGES: Speaks = { protocol: "anthropic-messages", authStyle: "x-api-key" };
-const OPENAI_RESPONSES: Speaks = { protocol: "openai-responses", authStyle: "bearer" };
+const OPENAI_CHAT: Speaks = { protocol: 'openai-chat', authStyle: 'bearer' };
+const ANTHROPIC_MESSAGES: Speaks = { protocol: 'anthropic-messages', authStyle: 'x-api-key' };
+const OPENAI_RESPONSES: Speaks = { protocol: 'openai-responses', authStyle: 'bearer' };
 
 const ACCOUNTS_PER_PROVIDER = 2;
 
@@ -47,10 +47,10 @@ const LARGE_CONTEXT = 1_000_000;
 
 const FAULT_ROUTE_TIMEOUTS = { firstTokenTimeoutMs: 2000, totalTimeoutMs: 5000 };
 
-const FAULT_KINDS = ["5xx", "429", "timeout", "reset", "midstream", "malformed", "flap"];
-const FAILOVER_KINDS = ["5xx", "429", "timeout", "reset", "flap"];
+const FAULT_KINDS = ['5xx', '429', 'timeout', 'reset', 'midstream', 'malformed', 'flap'];
+const FAILOVER_KINDS = ['5xx', '429', 'timeout', 'reset', 'flap'];
 
-const pool = new Pool({ connectionString: required("DATABASE_URL") });
+const pool = new Pool({ connectionString: required('DATABASE_URL') });
 try {
   const db = drizzle({ client: pool });
   await db.transaction(async (tx) => {
@@ -67,7 +67,7 @@ try {
           slug,
           name: slug,
           endpoints: [
-            { kind: "chat", protocol: speaks.protocol, baseUrl: `${upstreamOrigin}${path}/v1` },
+            { kind: 'chat', protocol: speaks.protocol, baseUrl: `${upstreamOrigin}${path}/v1` },
           ],
           authStyle: speaks.authStyle,
         })
@@ -86,8 +86,8 @@ try {
         .insert(upstreamModels)
         .values({
           providerId: provider.id,
-          upstreamModelId: "perf-upstream-model",
-          capabilities: ["tools"],
+          upstreamModelId: 'perf-upstream-model',
+          capabilities: ['tools'],
           contextSize,
         })
         .returning({ id: upstreamModels.id });
@@ -121,14 +121,14 @@ try {
       await addRoute(modelId, upstreamModelId, 0, timeouts);
     }
 
-    await simpleModel("perf-chat", OPENAI_CHAT, "/paced");
-    await simpleModel("perf-messages", ANTHROPIC_MESSAGES, "/paced");
-    await simpleModel("perf-responses", OPENAI_RESPONSES, "/paced");
-    await simpleModel("perf-large", OPENAI_CHAT, "/paced", LARGE_CONTEXT);
+    await simpleModel('perf-chat', OPENAI_CHAT, '/paced');
+    await simpleModel('perf-messages', ANTHROPIC_MESSAGES, '/paced');
+    await simpleModel('perf-responses', OPENAI_RESPONSES, '/paced');
+    await simpleModel('perf-large', OPENAI_CHAT, '/paced', LARGE_CONTEXT);
 
-    await simpleModel("raw-chat", OPENAI_CHAT, "/instant");
-    await simpleModel("raw-messages", ANTHROPIC_MESSAGES, "/instant");
-    await simpleModel("raw-responses", OPENAI_RESPONSES, "/instant");
+    await simpleModel('raw-chat', OPENAI_CHAT, '/instant');
+    await simpleModel('raw-messages', ANTHROPIC_MESSAGES, '/instant');
+    await simpleModel('raw-responses', OPENAI_RESPONSES, '/instant');
 
     for (const kind of FAULT_KINDS) {
       await simpleModel(
@@ -153,21 +153,21 @@ try {
       const backup = await addProvider(
         `failover-${kind}-backup`,
         OPENAI_CHAT,
-        "/paced",
+        '/paced',
         DEFAULT_CONTEXT,
       );
       await addRoute(modelId, backup, 1);
     }
 
-    await tx.insert(settings).values({ key: "allowPrivateUpstreams", value: true });
+    await tx.insert(settings).values({ key: 'allowPrivateUpstreams', value: true });
 
     await tx.insert(apiKeys).values({
-      name: "k6",
+      name: 'k6',
       keyId: keyMatch[1],
-      hash: createHash("sha256").update(apiKey).digest("base64url"),
+      hash: createHash('sha256').update(apiKey).digest('base64url'),
     });
   });
-  console.log("Seeded the k6 Models and API Key");
+  console.log('Seeded the k6 Models and API Key');
 } finally {
   await pool.end();
 }

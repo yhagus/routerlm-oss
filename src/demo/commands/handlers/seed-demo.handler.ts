@@ -1,10 +1,10 @@
-import { PasswordHasher } from "@nestjs/authentication";
-import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq, sql } from "drizzle-orm";
-import type { PgTable } from "drizzle-orm/pg-core";
-import { SeedCatalogCommand } from "@/catalog/commands/impl/seed-catalog.command";
-import type { Database } from "@/db/schemas/relations";
+import { PasswordHasher } from '@nestjs/authentication';
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq, sql } from 'drizzle-orm';
+import type { PgTable } from 'drizzle-orm/pg-core';
+import { SeedCatalogCommand } from '@/catalog/commands/impl/seed-catalog.command';
+import type { Database } from '@/db/schemas/relations';
 import {
   apiKeys,
   attempts,
@@ -18,11 +18,11 @@ import {
   upstreamModels,
   usageLogs,
   users,
-} from "@/db/schemas";
-import { SECOND_MS } from "@/libs/models/duration";
-import { storedKey } from "@/upstream/models/provider-account";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
-import { normalizeEmail } from "@/users/models/user";
+} from '@/db/schemas';
+import { SECOND_MS } from '@/libs/models/duration';
+import { storedKey } from '@/upstream/models/provider-account';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
+import { normalizeEmail } from '@/users/models/user';
 import {
   DEMO_CALLERS,
   DEMO_MODELS,
@@ -30,16 +30,16 @@ import {
   DEMO_QUOTA_METERS,
   DEMO_USER,
   type DemoModelName,
-} from "@/demo/data/demo-fixtures";
+} from '@/demo/data/demo-fixtures';
 import {
   generateDemoTraffic,
   type TrafficCaller,
   type TrafficModel,
   type TrafficProviderAccount,
-} from "@/demo/models/demo-traffic";
-import { DemoApiKeyGenerator } from "@/demo/providers/demo-api-key-generator";
-import { SeedDemoCommand, type SeedDemoResult } from "@/demo/commands/impl/seed-demo.command";
-import { API_KEY_CIPHER_PURPOSE } from "@/api-keys/models/api-key";
+} from '@/demo/models/demo-traffic';
+import { DemoApiKeyGenerator } from '@/demo/providers/demo-api-key-generator';
+import { SeedDemoCommand, type SeedDemoResult } from '@/demo/commands/impl/seed-demo.command';
+import { API_KEY_CIPHER_PURPOSE } from '@/api-keys/models/api-key';
 
 const APP_TABLES: PgTable[] = [
   errorCaptures,
@@ -115,7 +115,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
       const [created] = await this.db
         .insert(providerAccounts)
         .values({
-          providerId: requireValue(providerIds, account.providerSlug, "Provider"),
+          providerId: requireValue(providerIds, account.providerSlug, 'Provider'),
           name: account.name,
           priority: account.priority,
           ...storedKey(this.keyCipher, account.key),
@@ -131,7 +131,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
   private async createQuotaMeters(accountsBySlug: AccountsBySlug, now: Date): Promise<void> {
     await this.db.insert(quotaMeters).values(
       DEMO_QUOTA_METERS.flatMap((meter) =>
-        requireValue(accountsBySlug, meter.providerSlug, "Provider Account").map(
+        requireValue(accountsBySlug, meter.providerSlug, 'Provider Account').map(
           ({ id: providerAccountId }) => ({
             providerAccountId,
             key: meter.key,
@@ -181,7 +181,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
         const upstreamModel = requireValue(
           upstreamModelsByKey,
           `${route.providerSlug}/${route.upstreamModelId}`,
-          "Catalog Upstream Model",
+          'Catalog Upstream Model',
         );
         const [created] = await this.db
           .insert(routes)
@@ -194,7 +194,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
           providerSlug: route.providerSlug,
           providerName: upstreamModel.providerName,
           prices: upstreamModel,
-          providerAccounts: requireValue(accountsBySlug, route.providerSlug, "Provider Account"),
+          providerAccounts: requireValue(accountsBySlug, route.providerSlug, 'Provider Account'),
         });
       }
       trafficModels.set(demoModel.name, {
@@ -211,7 +211,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
     const callers: TrafficCaller[] = [];
     for (const caller of DEMO_CALLERS) {
       if (caller.apiKeyName === null) {
-        callers.push({ source: { kind: "playground", userId }, caller });
+        callers.push({ source: { kind: 'playground', userId }, caller });
         continue;
       }
       const { key, id: keyId, hash } = this.apiKeyGenerator.generate();
@@ -226,7 +226,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
         })
         .returning({ id: apiKeys.id });
       callers.push({
-        source: { kind: "api-key", apiKeyId: created.id, apiKeyName: caller.apiKeyName },
+        source: { kind: 'api-key', apiKeyId: created.id, apiKeyName: caller.apiKeyName },
         caller,
       });
     }

@@ -1,12 +1,12 @@
-import { NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providers, upstreamModels } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { deleteUnlessRouted } from "@/upstream/models/routed-models";
-import { DeleteProviderCommand } from "@/upstream/commands/impl/delete-provider.command";
+import { NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providers, upstreamModels } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { deleteUnlessRouted } from '@/upstream/models/routed-models';
+import { DeleteProviderCommand } from '@/upstream/commands/impl/delete-provider.command';
 
 @CommandHandler(DeleteProviderCommand)
 export class DeleteProviderHandler implements ICommandHandler<DeleteProviderCommand> {
@@ -21,7 +21,7 @@ export class DeleteProviderHandler implements ICommandHandler<DeleteProviderComm
       .from(providers)
       .where(eq(providers.id, providerId));
     if (!provider) {
-      throw new NotFoundException("Provider not found");
+      throw new NotFoundException('Provider not found');
     }
     await deleteUnlessRouted(
       this.db,

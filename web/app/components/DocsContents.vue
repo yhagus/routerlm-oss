@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { pickHeading } from "~/composables/useActiveHeading";
-import { formatPageNumber } from "~/composables/useDocsContents";
+import { computed } from 'vue';
+import { pickHeading } from '~/composables/useActiveHeading';
+import { formatPageNumber } from '~/composables/useDocsContents';
 
 const emit = defineEmits<{ sectionPicked: [] }>();
 
@@ -23,7 +23,7 @@ const activeHeadingId = useActiveHeading(headingIds);
 
 function handleSectionClick(id: string): void {
   pickHeading(id);
-  emit("sectionPicked");
+  emit('sectionPicked');
 }
 
 function isActiveSection(section: { id: string; childIds: string[] }): boolean {
@@ -34,8 +34,8 @@ function isActiveSection(section: { id: string; childIds: string[] }): boolean {
 
 <template>
   <nav class="ds-contents" :aria-label="t('contents')">
-    <p class="ds-contents__label" aria-hidden="true">{{ t("contents") }}</p>
-    <p v-if="isLoading" class="ds-contents__status">{{ t("loading") }}</p>
+    <p class="ds-contents__label" aria-hidden="true">{{ t('contents') }}</p>
+    <p v-if="isLoading" class="ds-contents__status">{{ t('loading') }}</p>
     <ol class="ds-contents__pages">
       <li v-for="entry in pages" :key="entry.path">
         <NuxtLink

@@ -1,41 +1,41 @@
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { CLIENT_PROTOCOL_KINDS, type ModelKind, type ParameterPolicy } from "@/db/schemas";
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { CLIENT_PROTOCOL_KINDS, type ModelKind, type ParameterPolicy } from '@/db/schemas';
 import {
   isUpstreamModelUsable,
   type SnapshotRoute,
   type SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
-import type { UsageJob } from "@/usage/models/usage-job";
-import { UsageProducer } from "@/usage/jobs/usage.producer";
+} from '@/snapshot/models/snapshot';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import type { ProviderAccountCredential } from '@/upstream/models/provider-account-credential';
+import type { UsageJob } from '@/usage/models/usage-job';
+import { UsageProducer } from '@/usage/jobs/usage.producer';
 import {
   assertKindServedHere,
   type Destination,
   probeDestination,
   upstreamModelServedHere,
   usableModel,
-} from "@/inference/models/destination";
-import { GatewayError } from "@/inference/models/gateway-error";
-import type { InferenceCaller } from "@/inference/models/inference";
+} from '@/inference/models/destination';
+import { GatewayError } from '@/inference/models/gateway-error';
+import type { InferenceCaller } from '@/inference/models/inference';
 import type {
   MediaClientContract,
   MediaReply,
   MediaRequest,
   MediaUpstreamProtocol,
-} from "@/inference/models/media-kind";
-import { withMediaPlaceholders } from "@/inference/models/media-placeholders";
-import { effectiveParameterPolicy, isWatermarkedUnder } from "@/inference/models/parameter-policy";
-import { failedRequestUsage, requestOwnerOf } from "@/inference/models/request-usage";
-import { type AttemptTarget, endpointOf, routePath } from "@/inference/models/route-selection";
-import { UsageMeter } from "@/inference/models/usage-meter";
-import { type CallableEndpoint, callableEndpointOf } from "@/inference/models/callable-endpoint";
-import { upstreamAuthHeaders } from "@/inference/protocols/converters";
-import { AttemptRunner } from "@/inference/providers/attempt-runner";
-import { CallerLimits } from "@/inference/providers/caller-limits";
-import { MediaUpstreamClient } from "@/inference/providers/media-upstream-client";
-import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "@/inference/providers/upstream-client";
-import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command";
+} from '@/inference/models/media-kind';
+import { withMediaPlaceholders } from '@/inference/models/media-placeholders';
+import { effectiveParameterPolicy, isWatermarkedUnder } from '@/inference/models/parameter-policy';
+import { failedRequestUsage, requestOwnerOf } from '@/inference/models/request-usage';
+import { type AttemptTarget, endpointOf, routePath } from '@/inference/models/route-selection';
+import { UsageMeter } from '@/inference/models/usage-meter';
+import { type CallableEndpoint, callableEndpointOf } from '@/inference/models/callable-endpoint';
+import { upstreamAuthHeaders } from '@/inference/protocols/converters';
+import { AttemptRunner } from '@/inference/providers/attempt-runner';
+import { CallerLimits } from '@/inference/providers/caller-limits';
+import { MediaUpstreamClient } from '@/inference/providers/media-upstream-client';
+import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from '@/inference/providers/upstream-client';
+import { RunMediaInferenceCommand } from '@/inference/commands/impl/run-media-inference.command';
 
 const HTTP_OK = 200;
 
@@ -122,11 +122,11 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
   ): Destination {
     const kind = CLIENT_PROTOCOL_KINDS[contract.protocol];
     switch (target.kind) {
-      case "named-model":
+      case 'named-model':
         return this.resolveNamedModel(contract, request, caller, kind, meter);
-      case "upstream-model":
+      case 'upstream-model':
         return this.resolveUpstreamModel(contract, request, target.upstreamModelId, kind);
-      case "probe":
+      case 'probe':
         return probeDestination(this.snapshot.current, target, kind);
     }
   }
@@ -147,13 +147,13 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     );
     if (servingRoutes.length === 0) {
       throw new GatewayError(
-        "no_capable_route",
+        'no_capable_route',
         `No Route of the Model "${model.name}" can serve ${firstReasonOf(contract, enabledRoutes, request)}`,
-        "client",
+        'client',
       );
     }
     return {
-      kind: "fallback",
+      kind: 'fallback',
       model,
       id: model.id,
       name: model.name,
@@ -171,13 +171,13 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     const reason = unservableReasonOf(contract, upstreamModel, request);
     if (reason !== null) {
       throw new GatewayError(
-        "no_capable_route",
+        'no_capable_route',
         `The Upstream Model "${upstreamModel.upstreamModelId}" can't serve ${reason}`,
-        "client",
+        'client',
       );
     }
     return {
-      kind: "fallback",
+      kind: 'fallback',
       model: null,
       id: upstreamModel.id,
       name: upstreamModel.upstreamModelId,
@@ -253,7 +253,7 @@ function firstReasonOf(
       return reason;
     }
   }
-  return "this request";
+  return 'this request';
 }
 
 function unservableReasonOf(
@@ -267,7 +267,7 @@ function unservableReasonOf(
     endpoint === undefined ||
     contract.upstreamProtocols[endpoint.protocol] === undefined
   ) {
-    return "this request";
+    return 'this request';
   }
   return contract.unservableReason(upstreamModel, request);
 }

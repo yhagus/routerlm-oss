@@ -1,16 +1,16 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
 
-const SERVICE_TIERS_MIGRATION_SUFFIX = "_give_openai_its_service_tiers";
-const OPENAI_TIER_VALUES = { fast: "priority", flex: "flex" };
+const SERVICE_TIERS_MIGRATION_SUFFIX = '_give_openai_its_service_tiers';
+const OPENAI_TIER_VALUES = { fast: 'priority', flex: 'flex' };
 
-describe("OpenAI Service Tiers migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('OpenAI Service Tiers migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
   let databaseUrl: string;
   let pool: Pool;
@@ -20,7 +20,7 @@ describe("OpenAI Service Tiers migration (e2e)", () => {
   });
 
   beforeEach(async () => {
-    databaseUrl = await createEmptyDatabase(serverUrl, "openai_service_tiers");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'openai_service_tiers');
     pool = new Pool({ connectionString: databaseUrl });
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: migrationsBefore });
   });
@@ -71,7 +71,7 @@ describe("OpenAI Service Tiers migration (e2e)", () => {
 
     expect(await readOpenAi()).toEqual({
       service_tier_values: OPENAI_TIER_VALUES,
-      service_tiers: ["fast", "flex"],
+      service_tiers: ['fast', 'flex'],
       tier_prices: {
         fast: { inputPrice: 4, outputPrice: 20, cacheReadPrice: 0.4, cacheWritePrice: 5 },
         flex: { inputPrice: 1, outputPrice: 5, cacheReadPrice: 0.1, cacheWritePrice: 1.25 },
@@ -79,7 +79,7 @@ describe("OpenAI Service Tiers migration (e2e)", () => {
     });
   });
 
-  it("keeps Service Tiers an operator already set", async () => {
+  it('keeps Service Tiers an operator already set', async () => {
     await insertSeededOpenAi();
     await pool.query(
       `update providers set service_tier_values = '{"flex":"flex"}' where slug = 'openai'`,
@@ -89,8 +89,8 @@ describe("OpenAI Service Tiers migration (e2e)", () => {
     await migrateToLatest();
 
     expect(await readOpenAi()).toMatchObject({
-      service_tier_values: { flex: "flex" },
-      service_tiers: ["flex"],
+      service_tier_values: { flex: 'flex' },
+      service_tiers: ['flex'],
       tier_prices: {},
     });
   });

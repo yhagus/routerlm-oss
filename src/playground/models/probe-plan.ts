@@ -1,12 +1,12 @@
-import type { ModelKind } from "@/db/schemas";
-import { GatewayError } from "@/inference/models/gateway-error";
+import type { ModelKind } from '@/db/schemas';
+import { GatewayError } from '@/inference/models/gateway-error';
 import type {
   Snapshot,
   SnapshotProviderAccount,
   SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot";
+} from '@/snapshot/models/snapshot';
 
-const PROBED_KINDS = ["chat", "image", "speech", "transcription"] as const;
+const PROBED_KINDS = ['chat', 'image', 'speech', 'transcription'] as const;
 export type ProbedKind = (typeof PROBED_KINDS)[number];
 
 export interface ProbePlan {
@@ -19,32 +19,32 @@ export function probePlanFor(snapshot: Snapshot, upstreamModelId: string): Probe
   const upstreamModel = snapshot.upstreamModelsById.get(upstreamModelId);
   if (!upstreamModel) {
     throw new GatewayError(
-      "model_not_found",
+      'model_not_found',
       `The Upstream Model "${upstreamModelId}" does not exist`,
-      "client",
+      'client',
     );
   }
   const { kind, provider } = upstreamModel;
   if (!isProbedKind(kind)) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `A Probe can't check an Upstream Model of the Kind ${kind}`,
-      "client",
+      'client',
     );
   }
   if (provider.isRefusedForTermsRisk) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `The Provider "${provider.name}" has a Terms Risk, and terms-risk Providers are not allowed`,
-      "client",
+      'client',
     );
   }
   const providerAccounts = provider.providerAccounts.filter((account) => account.isEnabled);
   if (providerAccounts.length === 0) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `The Provider "${provider.name}" has no enabled Provider Account to probe with`,
-      "client",
+      'client',
     );
   }
   return { upstreamModel, kind, providerAccounts };

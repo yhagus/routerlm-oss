@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { apiErrorMessage } from "~/lib/api";
+import { computed, ref, watch } from 'vue';
+import { apiErrorMessage } from '~/lib/api';
 import {
   ERROR_CAPTURE_RETENTION_PATH,
   type ErrorCaptureImpact,
@@ -10,9 +10,9 @@ import {
   type PrivateUpstreamsSetting,
   TERMS_RISK_PROVIDERS_PATH,
   type TermsRiskProvidersSetting,
-} from "~/lib/settings";
+} from '~/lib/settings';
 
-useHead({ title: "Settings" });
+useHead({ title: 'Settings' });
 
 interface PendingShortening {
   days: number;
@@ -30,9 +30,9 @@ const {
   key: ERROR_CAPTURE_RETENTION_PATH,
 });
 
-const isLoading = computed(() => retentionStatus.value === "pending" && !retention.value);
+const isLoading = computed(() => retentionStatus.value === 'pending' && !retention.value);
 
-const daysInput = ref("");
+const daysInput = ref('');
 watch(
   () => retention.value?.days,
   (days) => {
@@ -41,7 +41,7 @@ watch(
   { immediate: true },
 );
 
-const enteredDays = computed(() => (daysInput.value === "" ? Number.NaN : Number(daysInput.value)));
+const enteredDays = computed(() => (daysInput.value === '' ? Number.NaN : Number(daysInput.value)));
 const isEnteredDaysValid = computed(
   () =>
     retention.value !== undefined &&
@@ -60,21 +60,21 @@ const {
   status: termsRiskStatus,
   refresh: refreshTermsRisk,
 } = useTermsRiskAllowed();
-const isTermsRiskLoading = computed(() => termsRiskStatus.value === "pending" && !termsRisk.value);
+const isTermsRiskLoading = computed(() => termsRiskStatus.value === 'pending' && !termsRisk.value);
 const isTermsRiskBusy = ref(false);
-const termsRiskError = ref("");
+const termsRiskError = ref('');
 const isAllowConfirmOpen = ref(false);
 
 async function putTermsRiskAllowed(allowed: boolean): Promise<void> {
   isTermsRiskBusy.value = true;
-  termsRiskError.value = "";
+  termsRiskError.value = '';
   try {
     await $dashboardApi<TermsRiskProvidersSetting>(TERMS_RISK_PROVIDERS_PATH, {
-      method: "PUT",
+      method: 'PUT',
       body: { allowed },
     });
     await refreshNuxtData(TERMS_RISK_PROVIDERS_PATH);
-    showToast(allowed ? "Terms-risk Providers allowed" : "Terms-risk Providers blocked");
+    showToast(allowed ? 'Terms-risk Providers allowed' : 'Terms-risk Providers blocked');
   } catch (error) {
     termsRiskError.value = apiErrorMessage(error, "Couldn't update the setting.");
   } finally {
@@ -100,21 +100,21 @@ const {
   key: PRIVATE_UPSTREAMS_PATH,
 });
 const isPrivateUpstreamsLoading = computed(
-  () => privateUpstreamsStatus.value === "pending" && !privateUpstreams.value,
+  () => privateUpstreamsStatus.value === 'pending' && !privateUpstreams.value,
 );
 const isPrivateUpstreamsBusy = ref(false);
-const privateUpstreamsError = ref("");
+const privateUpstreamsError = ref('');
 const isPrivateConfirmOpen = ref(false);
 
 async function putPrivateUpstreamsAllowed(allowed: boolean): Promise<void> {
   isPrivateUpstreamsBusy.value = true;
-  privateUpstreamsError.value = "";
+  privateUpstreamsError.value = '';
   try {
     privateUpstreams.value = await $dashboardApi<PrivateUpstreamsSetting>(PRIVATE_UPSTREAMS_PATH, {
-      method: "PUT",
+      method: 'PUT',
       body: { allowed },
     });
-    showToast(allowed ? "Private upstreams allowed" : "Private upstreams blocked");
+    showToast(allowed ? 'Private upstreams allowed' : 'Private upstreams blocked');
   } catch (error) {
     privateUpstreamsError.value = apiErrorMessage(error, "Couldn't update the setting.");
   } finally {
@@ -132,7 +132,7 @@ function handlePrivateUpstreamsToggle(event: Event): void {
 }
 
 const isBusy = ref(false);
-const saveError = ref("");
+const saveError = ref('');
 const pendingShortening = ref<PendingShortening | null>(null);
 const isConfirmOpen = computed({
   get: () => pendingShortening.value !== null,
@@ -144,7 +144,7 @@ const isConfirmOpen = computed({
 async function requestChange(days: number, apply: () => Promise<void>): Promise<void> {
   if (!retention.value) return;
   isBusy.value = true;
-  saveError.value = "";
+  saveError.value = '';
   try {
     if (days < retention.value.days) {
       const { deleteCount } = await $dashboardApi<ErrorCaptureImpact>(
@@ -166,7 +166,7 @@ async function requestChange(days: number, apply: () => Promise<void>): Promise<
 
 async function putDays(days: number): Promise<void> {
   retention.value = await $dashboardApi<ErrorCaptureRetention>(ERROR_CAPTURE_RETENTION_PATH, {
-    method: "PUT",
+    method: 'PUT',
     body: { days },
   });
   showToast(`Retention Period set to ${formatDays(retention.value.days)}`);
@@ -174,7 +174,7 @@ async function putDays(days: number): Promise<void> {
 
 async function deleteCustomDays(): Promise<void> {
   retention.value = await $dashboardApi<ErrorCaptureRetention>(ERROR_CAPTURE_RETENTION_PATH, {
-    method: "DELETE",
+    method: 'DELETE',
   });
   showToast(`Retention Period reset to ${formatDays(retention.value.days)}`);
 }
@@ -194,7 +194,7 @@ async function confirmShortening(): Promise<void> {
   const shortening = pendingShortening.value;
   if (!shortening || !retention.value) return;
   isBusy.value = true;
-  saveError.value = "";
+  saveError.value = '';
   try {
     if (shortening.days === retention.value.defaultDays) await deleteCustomDays();
     else await putDays(shortening.days);
@@ -244,7 +244,7 @@ async function confirmShortening(): Promise<void> {
         <p class="model-choices__hint">
           Allowed: {{ retention.min }} to {{ retention.max }} days. The default is
           {{ formatDays(retention.defaultDays) }};
-          {{ retention.isDefault ? "this is the default." : "a custom value is set." }}
+          {{ retention.isDefault ? 'this is the default.' : 'a custom value is set.' }}
         </p>
         <p class="model-choices__hint">
           Error Captures older than this are deleted by the hourly clean-up. Lengthening it never

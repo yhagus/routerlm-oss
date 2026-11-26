@@ -1,42 +1,42 @@
-import { type ChildProcess, spawn } from "node:child_process";
-import { getQueueToken } from "@nestjs/bullmq";
-import { Test, type TestingModule } from "@nestjs/testing";
-import { type Queue, QueueEvents } from "bullmq";
+import { type ChildProcess, spawn } from 'node:child_process';
+import { getQueueToken } from '@nestjs/bullmq';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { type Queue, QueueEvents } from 'bullmq';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { AppModule } = await import("@/app.module");
-const { PingProducer } = await import("@/queue/jobs/ping.producer");
-const { PING_QUEUE } = await import("@/queue/models/queue-names");
+const { AppModule } = await import('@/app.module');
+const { PingProducer } = await import('@/queue/jobs/ping.producer');
+const { PING_QUEUE } = await import('@/queue/models/queue-names');
 
 const WORKER_STARTUP_AND_JOB_TIMEOUT_MS = 20_000;
 
-describe("Worker (e2e)", () => {
+describe('Worker (e2e)', () => {
   let backend: TestingModule;
   let worker: ChildProcess;
   let pingEvents: QueueEvents;
 
   beforeAll(async () => {
-    backend = await Test.createTestingModule({ imports: [AppModule.forRole("all")] }).compile();
+    backend = await Test.createTestingModule({ imports: [AppModule.forRole('all')] }).compile();
     await backend.init();
     pingEvents = new QueueEvents(PING_QUEUE, { connection: { url: redisUrl.toString() } });
     await pingEvents.waitUntilReady();
-    worker = spawn("bun", ["src/worker.ts"], { env: process.env, stdio: "inherit" });
+    worker = spawn('bun', ['src/worker.ts'], { env: process.env, stdio: 'inherit' });
   });
 
   afterAll(async () => {
-    worker.kill("SIGTERM");
+    worker.kill('SIGTERM');
     await pingEvents.close();
     await backend.get<Queue>(getQueueToken(PING_QUEUE)).obliterate({ force: true });
     await backend.close();
   });
 
   it(
-    "processes a job enqueued by the backend in the worker process",
+    'processes a job enqueued by the backend in the worker process',
     async () => {
       const job = await backend.get(PingProducer).ping();
-      if (!job) throw new Error("the ping job was not enqueued");
+      if (!job) throw new Error('the ping job was not enqueued');
 
       const result: unknown = await job.waitUntilFinished(pingEvents);
 

@@ -1,7 +1,7 @@
-import { computed, type ComputedRef, type WritableComputedRef } from "vue";
-import { type ActiveFilter, listFilterTokens, textFilterTokens } from "~/lib/activeFilters";
-import type { IntegrationSummary, RecordedIntegration } from "~/lib/integrations";
-import { type FilterOption, isUuid, missingOptions } from "~/lib/queryFilters";
+import { computed, type ComputedRef, type WritableComputedRef } from 'vue';
+import { type ActiveFilter, listFilterTokens, textFilterTokens } from '~/lib/activeFilters';
+import type { IntegrationSummary, RecordedIntegration } from '~/lib/integrations';
+import { type FilterOption, isUuid, missingOptions } from '~/lib/queryFilters';
 
 export interface OwnerFilters {
   integrationFilter: WritableComputedRef<string[]>;
@@ -14,10 +14,10 @@ export interface OwnerFilters {
 export function useOwnerFilters(
   shownRecords: () => readonly RecordedIntegration[] = () => [],
 ): OwnerFilters {
-  const integrationFilter = useQueryList("integration", { isValid: isUuid });
-  const customerFilter = useQueryParam("customer", { default: "", isValid: anyText });
+  const integrationFilter = useQueryList('integration', { isValid: isUuid });
+  const customerFilter = useQueryParam('customer', { default: '', isValid: anyText });
 
-  const { data: integrations } = useDashboardApi<IntegrationSummary[]>("/integrations");
+  const { data: integrations } = useDashboardApi<IntegrationSummary[]>('/integrations');
   const integrationOptions = computed(() => {
     const existing = (integrations.value ?? []).map((integration) => ({
       value: integration.id,
@@ -29,13 +29,13 @@ export function useOwnerFilters(
   });
 
   const ownerFilterTokens = computed(() => [
-    ...listFilterTokens("Integration", integrationFilter, integrationOptions.value),
-    ...textFilterTokens("Customer", customerFilter),
+    ...listFilterTokens('Integration', integrationFilter, integrationOptions.value),
+    ...textFilterTokens('Customer', customerFilter),
   ]);
 
   function clearOwnerFilters(): void {
     integrationFilter.value = [];
-    customerFilter.value = "";
+    customerFilter.value = '';
   }
 
   return {

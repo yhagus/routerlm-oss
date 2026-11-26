@@ -1,16 +1,16 @@
-import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
-import { attempts, errorCaptures, usageLogs } from "@/db/schemas";
+import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from 'drizzle-orm';
+import { attempts, errorCaptures, usageLogs } from '@/db/schemas';
 import {
   callerCondition,
   containing,
   customerCondition,
   namesOrErrorCodeContain,
-} from "@/usage/models/usage-filters";
+} from '@/usage/models/usage-filters';
 import type {
   CaptureOutcome,
   ErrorCapturePageQuery,
   FailedHopKind,
-} from "@/error-captures/schemas/error-capture-page-query.schema";
+} from '@/error-captures/schemas/error-capture-page-query.schema';
 
 const FIRST_ERROR_STATUS = 400;
 
@@ -37,18 +37,18 @@ export function whereErrorCaptureFilter(query: ErrorCapturePageQuery): SQL | und
 
 function failedAtCondition(hop: FailedHopKind): SQL {
   switch (hop) {
-    case "client-to-gateway":
+    case 'client-to-gateway':
       return isNull(errorCaptures.attemptId);
-    case "gateway-to-provider-account":
+    case 'gateway-to-provider-account':
       return isNotNull(errorCaptures.attemptId);
   }
 }
 
 function outcomeCondition(outcome: CaptureOutcome): SQL | undefined {
   switch (outcome) {
-    case "recovered":
+    case 'recovered':
       return and(isNull(usageLogs.errorCode), lt(usageLogs.httpStatus, FIRST_ERROR_STATUS));
-    case "failed":
+    case 'failed':
       return or(isNotNull(usageLogs.errorCode), gte(usageLogs.httpStatus, FIRST_ERROR_STATUS));
   }
 }

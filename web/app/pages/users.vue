@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { KeyRound, Trash2, UserRound } from "@lucide/vue";
-import { computed, ref } from "vue";
-import type { RowAction } from "~/components/RowActionsMenu.vue";
-import { apiErrorMessage } from "~/lib/api";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
-import { dateFormat } from "~/lib/dateFormats";
-import { MIN_PASSWORD_LENGTH, type User } from "~/lib/users";
+import { KeyRound, Trash2, UserRound } from '@lucide/vue';
+import { computed, ref } from 'vue';
+import type { RowAction } from '~/components/RowActionsMenu.vue';
+import { apiErrorMessage } from '~/lib/api';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
+import { dateFormat } from '~/lib/dateFormats';
+import { MIN_PASSWORD_LENGTH, type User } from '~/lib/users';
 
-useHead({ title: "Users" });
+useHead({ title: 'Users' });
 
-type UserAction = { kind: "reset-password"; user: User } | { kind: "delete"; user: User };
+type UserAction = { kind: 'reset-password'; user: User } | { kind: 'delete'; user: User };
 
-const USER_ACTIONS: RowAction<UserAction["kind"]>[] = [
-  { id: "reset-password", label: "Reset password", icon: KeyRound },
-  { id: "delete", label: "Delete", icon: Trash2, isDestructive: true },
+const USER_ACTIONS: RowAction<UserAction['kind']>[] = [
+  { id: 'reset-password', label: 'Reset password', icon: KeyRound },
+  { id: 'delete', label: 'Delete', icon: Trash2, isDestructive: true },
 ];
 
 const { $dashboardApi } = useNuxtApp();
@@ -24,38 +24,38 @@ const {
   error: loadError,
   status: usersStatus,
   refresh,
-} = useDashboardApi<User[]>("/users");
+} = useDashboardApi<User[]>('/users');
 
-const isLoadingUsers = computed(() => usersStatus.value === "pending" && !users.value);
+const isLoadingUsers = computed(() => usersStatus.value === 'pending' && !users.value);
 
 const emailById = computed(() => new Map((users.value ?? []).map((user) => [user.id, user.email])));
 
 function addedByLabel(user: User): string {
-  return (user.createdById && emailById.value.get(user.createdById)) || "—";
+  return (user.createdById && emailById.value.get(user.createdById)) || '—';
 }
 
 const columns: DataTableColumn<User>[] = [
-  { id: "user", header: "User", enableHiding: false, accessorFn: (user) => user.email },
-  { id: "added", header: "Added" },
-  { id: "addedBy", header: "Added by", accessorFn: addedByLabel },
+  { id: 'user', header: 'User', enableHiding: false, accessorFn: (user) => user.email },
+  { id: 'added', header: 'Added' },
+  { id: 'addedBy', header: 'Added by', accessorFn: addedByLabel },
   actionsColumn(),
 ];
 
-const newEmail = ref("");
-const newPassword = ref("");
+const newEmail = ref('');
+const newPassword = ref('');
 const isCreating = ref(false);
-const createError = ref("");
+const createError = ref('');
 
 async function createUser(): Promise<void> {
   isCreating.value = true;
-  createError.value = "";
+  createError.value = '';
   try {
-    const created = await $dashboardApi<User>("/users", {
-      method: "POST",
+    const created = await $dashboardApi<User>('/users', {
+      method: 'POST',
       body: { email: newEmail.value, password: newPassword.value },
     });
-    newEmail.value = "";
-    newPassword.value = "";
+    newEmail.value = '';
+    newPassword.value = '';
     showToast(`Created ${created.email}`);
     await refresh();
   } catch (error) {
@@ -66,9 +66,9 @@ async function createUser(): Promise<void> {
 }
 
 const action = ref<UserAction | null>(null);
-const resetPasswordValue = ref("");
+const resetPasswordValue = ref('');
 const isActing = ref(false);
-const actionError = ref("");
+const actionError = ref('');
 const isActionOpen = computed({
   get: () => action.value !== null,
   set: (isOpen) => {
@@ -78,24 +78,24 @@ const isActionOpen = computed({
 
 function startAction(next: UserAction): void {
   action.value = next;
-  resetPasswordValue.value = "";
-  actionError.value = "";
+  resetPasswordValue.value = '';
+  actionError.value = '';
 }
 
 async function runAction(): Promise<void> {
   const current = action.value;
   if (!current) return;
   isActing.value = true;
-  actionError.value = "";
+  actionError.value = '';
   try {
-    if (current.kind === "reset-password") {
+    if (current.kind === 'reset-password') {
       await $dashboardApi(`/users/${current.user.id}/password`, {
-        method: "PUT",
+        method: 'PUT',
         body: { password: resetPasswordValue.value },
       });
       showToast(`Password reset for ${current.user.email}`);
     } else {
-      await $dashboardApi(`/users/${current.user.id}`, { method: "DELETE" });
+      await $dashboardApi(`/users/${current.user.id}`, { method: 'DELETE' });
       showToast(`Deleted ${current.user.email}`);
     }
     action.value = null;
@@ -108,9 +108,9 @@ async function runAction(): Promise<void> {
 }
 
 async function afterAction(done: UserAction): Promise<void> {
-  if (done.kind === "delete" && done.user.id === currentUser.value?.id) {
+  if (done.kind === 'delete' && done.user.id === currentUser.value?.id) {
     currentUser.value = null;
-    await navigateTo("/login");
+    await navigateTo('/login');
     return;
   }
   await refresh();

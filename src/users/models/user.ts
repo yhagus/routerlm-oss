@@ -1,6 +1,6 @@
-import { users } from "@/db/schemas";
+import { users } from '@/db/schemas';
 
-export type User = Omit<typeof users.$inferSelect, "passwordHash">;
+export type User = Omit<typeof users.$inferSelect, 'passwordHash'>;
 
 export const userColumns = {
   id: users.id,

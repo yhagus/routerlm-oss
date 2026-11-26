@@ -4,17 +4,17 @@ import {
   RATIO_OPTIONS,
   type RatioChoice,
   type ResolutionChoice,
-} from "~/lib/playgroundVideo";
+} from '~/lib/playgroundVideo';
 
 defineProps<{
   resolutionOptions: { value: ResolutionChoice; label: string }[];
   durationPlaceholder: string;
 }>();
 
-const seconds = defineModel<string>("seconds", { required: true });
-const resolution = defineModel<ResolutionChoice>("resolution", { required: true });
-const aspectRatio = defineModel<RatioChoice>("aspectRatio", { required: true });
-const seed = defineModel<string>("seed", { required: true });
+const seconds = defineModel<string>('seconds', { required: true });
+const resolution = defineModel<ResolutionChoice>('resolution', { required: true });
+const aspectRatio = defineModel<RatioChoice>('aspectRatio', { required: true });
+const seed = defineModel<string>('seed', { required: true });
 </script>
 
 <template>

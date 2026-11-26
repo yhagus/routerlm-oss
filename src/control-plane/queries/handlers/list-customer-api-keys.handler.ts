@@ -1,13 +1,13 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq, type SQL, sql } from "drizzle-orm";
-import { z } from "zod";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys } from "@/db/schemas";
-import { ControlPlaneError } from "@/control-plane/models/control-plane-error";
-import type { CustomerApiKeyPage } from "@/control-plane/models/customer-api-key";
-import { selectCustomerApiKeys } from "@/control-plane/models/customer-api-keys";
-import { ListCustomerApiKeysQuery } from "@/control-plane/queries/impl/list-customer-api-keys.query";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq, type SQL, sql } from 'drizzle-orm';
+import { z } from 'zod';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys } from '@/db/schemas';
+import { ControlPlaneError } from '@/control-plane/models/control-plane-error';
+import type { CustomerApiKeyPage } from '@/control-plane/models/customer-api-key';
+import { selectCustomerApiKeys } from '@/control-plane/models/customer-api-keys';
+import { ListCustomerApiKeysQuery } from '@/control-plane/queries/impl/list-customer-api-keys.query';
 
 @QueryHandler(ListCustomerApiKeysQuery)
 export class ListCustomerApiKeysHandler implements IQueryHandler<ListCustomerApiKeysQuery> {
@@ -31,13 +31,13 @@ export class ListCustomerApiKeysHandler implements IQueryHandler<ListCustomerApi
 }
 
 function pageTokenAfter(lastKeyId: string): string {
-  return Buffer.from(lastKeyId).toString("base64url");
+  return Buffer.from(lastKeyId).toString('base64url');
 }
 
 function lastKeyIdOf(pageToken: string): string {
-  const decoded = z.uuid().safeParse(Buffer.from(pageToken, "base64url").toString());
+  const decoded = z.uuid().safeParse(Buffer.from(pageToken, 'base64url').toString());
   if (!decoded.success) {
-    throw new ControlPlaneError("INVALID_ARGUMENT", "Invalid pageToken");
+    throw new ControlPlaneError('INVALID_ARGUMENT', 'Invalid pageToken');
   }
   return decoded.data;
 }

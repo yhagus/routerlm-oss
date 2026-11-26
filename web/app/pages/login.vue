@@ -1,34 +1,34 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import type { Credentials } from "~/components/CredentialsForm.vue";
-import { apiErrorMessage } from "~/lib/api";
-import type { User } from "~/lib/users";
+import { ref } from 'vue';
+import type { Credentials } from '~/components/CredentialsForm.vue';
+import { apiErrorMessage } from '~/lib/api';
+import type { User } from '~/lib/users';
 
-definePageMeta({ layout: "auth" });
-useHead({ title: "Sign in" });
+definePageMeta({ layout: 'auth' });
+useHead({ title: 'Sign in' });
 
 const route = useRoute();
 const currentUser = useCurrentUser();
 const { $dashboardApi } = useNuxtApp();
 const isSubmitting = ref(false);
-const errorMessage = ref("");
+const errorMessage = ref('');
 
 function redirectTarget(): string {
   const redirect = route.query.redirect;
   const isLocalPath =
-    typeof redirect === "string" &&
-    redirect.startsWith("/") &&
-    !redirect.startsWith("//") &&
-    !redirect.includes("\\");
-  return isLocalPath ? redirect : "/";
+    typeof redirect === 'string' &&
+    redirect.startsWith('/') &&
+    !redirect.startsWith('//') &&
+    !redirect.includes('\\');
+  return isLocalPath ? redirect : '/';
 }
 
 async function signIn(credentials: Credentials): Promise<void> {
   isSubmitting.value = true;
-  errorMessage.value = "";
+  errorMessage.value = '';
   try {
-    currentUser.value = await $dashboardApi<User>("/auth/login", {
-      method: "POST",
+    currentUser.value = await $dashboardApi<User>('/auth/login', {
+      method: 'POST',
       body: credentials,
     });
     await navigateTo(redirectTarget());

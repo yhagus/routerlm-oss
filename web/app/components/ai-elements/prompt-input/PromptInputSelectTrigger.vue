@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { SelectTrigger } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from 'vue';
+import { SelectTrigger } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
-type SelectTriggerProps = InstanceType<typeof SelectTrigger>["$props"];
+type SelectTriggerProps = InstanceType<typeof SelectTrigger>['$props'];
 
 interface Props extends /* @vue-ignore */ SelectTriggerProps {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();

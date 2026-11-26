@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ChevronLeft, ChevronRight } from "@lucide/vue";
-import { formatCount } from "~/lib/usage";
+import { ChevronLeft, ChevronRight } from '@lucide/vue';
+import { formatCount } from '~/lib/usage';
 
 const props = defineProps<{
   rowCount: number;
   pageCount: number;
   countLabel?: string;
 }>();
-const page = defineModel<number>("page", { required: true });
+const page = defineModel<number>('page', { required: true });
 
-const resultsLabel = computed(() => (props.rowCount === 1 ? "result" : "results"));
+const resultsLabel = computed(() => (props.rowCount === 1 ? 'result' : 'results'));
 const summaryCount = computed(
   () => props.countLabel ?? `${formatCount(props.rowCount)} ${resultsLabel.value}`,
 );

@@ -1,7 +1,7 @@
-import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from "drizzle-orm";
-import { z } from "zod";
-import { type ErrorOrigin, usageLogs } from "@/db/schemas";
-import type { UsageFilter, UsageStatus } from "@/usage/schemas/usage.schema";
+import { and, eq, gte, ilike, inArray, isNotNull, isNull, lt, or, type SQL } from 'drizzle-orm';
+import { z } from 'zod';
+import { type ErrorOrigin, usageLogs } from '@/db/schemas';
+import type { UsageFilter, UsageStatus } from '@/usage/schemas/usage.schema';
 
 const FIRST_ERROR_STATUS = 400;
 
@@ -58,7 +58,7 @@ function escapeLikeWildcards(text: string): string {
 export function callerCondition({
   apiKeyId,
   isPlayground,
-}: Pick<UsageFilter, "apiKeyId" | "isPlayground">): SQL | undefined {
+}: Pick<UsageFilter, 'apiKeyId' | 'isPlayground'>): SQL | undefined {
   const listedKeysCondition =
     apiKeyId === undefined ? undefined : inArray(usageLogs.apiKeyId, apiKeyId);
   if (isPlayground === undefined) return listedKeysCondition;
@@ -72,7 +72,7 @@ export function callerCondition({
 export function customerCondition({
   integrationId,
   customerId,
-}: Pick<UsageFilter, "integrationId" | "customerId">): SQL | undefined {
+}: Pick<UsageFilter, 'integrationId' | 'customerId'>): SQL | undefined {
   return and(
     integrationId === undefined ? undefined : inArray(usageLogs.integrationId, integrationId),
     customerId === undefined ? undefined : eq(usageLogs.customerId, customerId),
@@ -80,19 +80,19 @@ export function customerCondition({
 }
 
 export function failedWithOriginCondition(origin: ErrorOrigin): SQL | undefined {
-  return and(statusCondition("failed"), eq(usageLogs.errorOrigin, origin));
+  return and(statusCondition('failed'), eq(usageLogs.errorOrigin, origin));
 }
 
 export function statusCondition(status: UsageStatus): SQL | undefined {
   switch (status) {
-    case "cancelled":
+    case 'cancelled':
       return eq(usageLogs.isCancelled, true);
-    case "failed":
+    case 'failed':
       return and(
         eq(usageLogs.isCancelled, false),
         or(isNotNull(usageLogs.errorCode), gte(usageLogs.httpStatus, FIRST_ERROR_STATUS)),
       );
-    case "succeeded":
+    case 'succeeded':
       return and(
         eq(usageLogs.isCancelled, false),
         isNull(usageLogs.errorCode),

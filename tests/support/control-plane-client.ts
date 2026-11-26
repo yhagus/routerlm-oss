@@ -1,13 +1,13 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { ControlPlaneErrorCode } from "@/control-plane/models/control-plane-error";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { ControlPlaneErrorCode } from '@/control-plane/models/control-plane-error';
 import type {
   ApiKeyJson,
   IssuedKeyJson,
   ListKeysResponseJson,
   ListModelsResponseJson,
   ListUsageLogsResponseJson,
-} from "@/control-plane/models/proto-json";
+} from '@/control-plane/models/proto-json';
 
 export type ControlPlaneOutcome<T> =
   | { ok: true; body: T }
@@ -33,7 +33,7 @@ export interface ControlPlaneClient {
   ): Promise<ControlPlaneOutcome<ListUsageLogsResponseJson>>;
 }
 
-const PREFIX = "/integration/v1";
+const PREFIX = '/integration/v1';
 
 export function httpControlPlaneClient(app: NestNodeApplication): ControlPlaneClient {
   const server = app.getHttpServer();
@@ -43,7 +43,7 @@ export function httpControlPlaneClient(app: NestNodeApplication): ControlPlaneCl
   ): Promise<ControlPlaneOutcome<T>> => {
     const response = await (secret === undefined
       ? call
-      : call.set("Authorization", `Bearer ${secret}`));
+      : call.set('Authorization', `Bearer ${secret}`));
     if (response.status < 400) {
       return { ok: true, body: response.body };
     }

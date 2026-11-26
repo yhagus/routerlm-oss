@@ -1,24 +1,24 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto';
 import {
   Injectable,
   Logger,
   type OnApplicationBootstrap,
   type OnApplicationShutdown,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { SchedulerRegistry } from "@nestjs/schedule";
-import type { Redis } from "ioredis";
-import type { Env } from "@/config/schemas/env.schema";
-import type { Database } from "@/db/schemas/relations";
-import { publishPrivateUpstreamsAllowed } from "@/libs/models/private-upstreams-policy";
-import { RedisConnection } from "@/redis/providers/redis-connection";
-import { loadSnapshot } from "@/snapshot/models/load-snapshot";
-import { EMPTY_SNAPSHOT, type Snapshot } from "@/snapshot/models/snapshot";
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import type { Redis } from 'ioredis';
+import type { Env } from '@/config/schemas/env.schema';
+import type { Database } from '@/db/schemas/relations';
+import { publishPrivateUpstreamsAllowed } from '@/libs/models/private-upstreams-policy';
+import { RedisConnection } from '@/redis/providers/redis-connection';
+import { loadSnapshot } from '@/snapshot/models/load-snapshot';
+import { EMPTY_SNAPSHOT, type Snapshot } from '@/snapshot/models/snapshot';
 
-export const SNAPSHOT_CHANGED_CHANNEL = "routerlm:snapshot-changed";
+export const SNAPSHOT_CHANGED_CHANNEL = 'routerlm:snapshot-changed';
 
-const RELOAD_INTERVAL_NAME = "snapshot-reload";
+const RELOAD_INTERVAL_NAME = 'snapshot-reload';
 const FIRST_RETRY_DELAY_MS = 100;
 const MAX_RETRY_DELAY_MS = 5000;
 
@@ -48,12 +48,12 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
 
   async onApplicationBootstrap(): Promise<void> {
     await this.reload();
-    this.subscriber.on("message", (_channel: string, publisherId: string) => {
+    this.subscriber.on('message', (_channel: string, publisherId: string) => {
       if (publisherId !== this.instanceId) {
         void this.reload();
       }
     });
-    this.subscriber.on("ready", () => void this.reload());
+    this.subscriber.on('ready', () => void this.reload());
     this.subscriber.subscribe(SNAPSHOT_CHANGED_CHANNEL).catch((error: unknown) => {
       this.logger.warn(`Not subscribed to snapshot changes: ${String(error)}`);
     });
@@ -61,7 +61,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
       RELOAD_INTERVAL_NAME,
       setInterval(
         () => void this.reload(),
-        this.config.get("SNAPSHOT_RELOAD_INTERVAL_MS", { infer: true }),
+        this.config.get('SNAPSHOT_RELOAD_INTERVAL_MS', { infer: true }),
       ),
     );
   }

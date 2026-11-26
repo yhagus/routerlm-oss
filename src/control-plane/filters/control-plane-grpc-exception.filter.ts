@@ -1,10 +1,10 @@
-import { type ArgumentsHost, Catch, type RpcExceptionFilter } from "@nestjs/common";
-import { GrpcException, GrpcExceptionFilter } from "@nestjs/microservices";
-import { type Observable, throwError } from "rxjs";
+import { type ArgumentsHost, Catch, type RpcExceptionFilter } from '@nestjs/common';
+import { GrpcException, GrpcExceptionFilter } from '@nestjs/microservices';
+import { type Observable, throwError } from 'rxjs';
 import {
   CONTROL_PLANE_ERRORS,
   controlPlaneErrorOf,
-} from "@/control-plane/models/control-plane-error";
+} from '@/control-plane/models/control-plane-error';
 
 @Catch()
 export class ControlPlaneGrpcExceptionFilter implements RpcExceptionFilter {

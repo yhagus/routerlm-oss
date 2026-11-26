@@ -1,16 +1,16 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys, models, usageLogs, users } from "@/db/schemas";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys, models, usageLogs, users } from '@/db/schemas';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
+const ADA = { email: 'ada@example.com', password: "ada's password" };
 
 type NewUsageLog = typeof usageLogs.$inferInsert;
 
-const SERVED_REQUEST: Omit<NewUsageLog, "createdAt"> = {
-  clientProtocol: "openai-chat",
+const SERVED_REQUEST: Omit<NewUsageLog, 'createdAt'> = {
+  clientProtocol: 'openai-chat',
   isStreamed: false,
   httpStatus: 200,
   inputTokens: 100,
@@ -24,7 +24,7 @@ const SERVED_REQUEST: Omit<NewUsageLog, "createdAt"> = {
   attemptCount: 1,
 };
 
-describe("Usage API: summary totals (e2e)", () => {
+describe('Usage API: summary totals (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let adaCookie: string;
@@ -42,13 +42,13 @@ describe("Usage API: summary totals (e2e)", () => {
     adaCookie = await setUpFirstUser(app, ADA);
     [{ id: smartId }] = await db
       .insert(models)
-      .values({ name: "smart" })
+      .values({ name: 'smart' })
       .returning({ id: models.id });
     [{ id: ciKeyId }, { id: laptopKeyId }] = await db
       .insert(apiKeys)
       .values([
-        { name: "CI", keyId: "ci", hash: "hash-ci" },
-        { name: "Laptop", keyId: "laptop", hash: "hash-laptop" },
+        { name: 'CI', keyId: 'ci', hash: 'hash-ci' },
+        { name: 'Laptop', keyId: 'laptop', hash: 'hash-laptop' },
       ])
       .returning({ id: apiKeys.id });
   });
@@ -58,11 +58,11 @@ describe("Usage API: summary totals (e2e)", () => {
   });
 
   function getUsage(path: string) {
-    return request(app.getHttpServer()).get(`/api/usage${path}`).set("Cookie", adaCookie);
+    return request(app.getHttpServer()).get(`/api/usage${path}`).set('Cookie', adaCookie);
   }
 
-  it("summarizes statuses, tokens, Cost and latency percentiles over the filtered logs", async () => {
-    const createdAt = new Date("2026-11-02T10:00:00Z");
+  it('summarizes statuses, tokens, Cost and latency percentiles over the filtered logs', async () => {
+    const createdAt = new Date('2026-11-02T10:00:00Z');
     await db.insert(usageLogs).values([
       {
         ...SERVED_REQUEST,
@@ -78,16 +78,16 @@ describe("Usage API: summary totals (e2e)", () => {
         createdAt,
         durationMs: 300,
         httpStatus: 502,
-        errorCode: "upstream_error",
+        errorCode: 'upstream_error',
         inputTokens: null,
         outputTokens: null,
       },
       { ...SERVED_REQUEST, createdAt, durationMs: 400, isCancelled: true },
       { ...SERVED_REQUEST, createdAt, durationMs: 500 },
-      { ...SERVED_REQUEST, createdAt: new Date("2026-10-01T10:00:00Z"), durationMs: 9000 },
+      { ...SERVED_REQUEST, createdAt: new Date('2026-10-01T10:00:00Z'), durationMs: 9000 },
     ]);
 
-    const response = await getUsage("/totals?from=2026-11-01T00:00:00Z").expect(200);
+    const response = await getUsage('/totals?from=2026-11-01T00:00:00Z').expect(200);
 
     expect(response.body).toEqual({
       requestCount: 5,
@@ -107,8 +107,8 @@ describe("Usage API: summary totals (e2e)", () => {
     });
   });
 
-  it("summarizes no logs as zeros with no percentiles", async () => {
-    const response = await getUsage("/totals").expect(200);
+  it('summarizes no logs as zeros with no percentiles', async () => {
+    const response = await getUsage('/totals').expect(200);
 
     expect(response.body).toEqual({
       requestCount: 0,
@@ -128,17 +128,17 @@ describe("Usage API: summary totals (e2e)", () => {
     });
   });
 
-  it("splits the failed count by Error Origin over the filtered logs", async () => {
-    const createdAt = new Date("2026-11-02T10:00:00Z");
+  it('splits the failed count by Error Origin over the filtered logs', async () => {
+    const createdAt = new Date('2026-11-02T10:00:00Z');
     const clientFailure = {
       httpStatus: 400,
-      errorCode: "invalid_request",
-      errorOrigin: "client",
+      errorCode: 'invalid_request',
+      errorOrigin: 'client',
     } satisfies Partial<NewUsageLog>;
     const upstreamFailure = {
       httpStatus: 502,
-      errorCode: "upstream_error",
-      errorOrigin: "upstream",
+      errorCode: 'upstream_error',
+      errorOrigin: 'upstream',
     } satisfies Partial<NewUsageLog>;
     await db.insert(usageLogs).values([
       { ...SERVED_REQUEST, createdAt, modelId: smartId },
@@ -159,13 +159,13 @@ describe("Usage API: summary totals (e2e)", () => {
     );
   });
 
-  it("matches the listed API Keys or the Playground when both are asked for", async () => {
+  it('matches the listed API Keys or the Playground when both are asked for', async () => {
     const [{ id: adaId }] = await db.select({ id: users.id }).from(users);
     const [{ id: scriptKeyId }] = await db
       .insert(apiKeys)
-      .values({ name: "Script", keyId: "script", hash: "hash-script" })
+      .values({ name: 'Script', keyId: 'script', hash: 'hash-script' })
       .returning({ id: apiKeys.id });
-    const createdAt = new Date("2026-11-02T10:00:00Z");
+    const createdAt = new Date('2026-11-02T10:00:00Z');
     await db.insert(usageLogs).values([
       { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: ciKeyId },
       { ...SERVED_REQUEST, createdAt, modelId: smartId, apiKeyId: laptopKeyId },

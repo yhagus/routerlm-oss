@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { LogOut, Menu, Monitor, Moon, ShieldCheck, Sun, X } from "@lucide/vue";
-import { computed, ref, watch } from "vue";
-import { findNavigationItem, navigationGroups } from "~/lib/navigation";
+import { LogOut, Menu, Monitor, Moon, ShieldCheck, Sun, X } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
+import { findNavigationItem, navigationGroups } from '~/lib/navigation';
 
 const route = useRoute();
 const theme = useTheme();
@@ -19,20 +19,20 @@ const activeItem = computed(() => findNavigationItem(route.path));
 const pageError = useError();
 const pageTitle = computed(() => {
   if (activeItem.value) return activeItem.value.label;
-  if (!pageError.value) return "";
-  return pageError.value.statusCode === 404 ? "Not found" : "Error";
+  if (!pageError.value) return '';
+  return pageError.value.statusCode === 404 ? 'Not found' : 'Error';
 });
 const themeIcon = computed(() => {
-  if (theme.preference.value === "dark") return Moon;
-  if (theme.preference.value === "light") return Sun;
+  if (theme.preference.value === 'dark') return Moon;
+  if (theme.preference.value === 'light') return Sun;
   return Monitor;
 });
-const userInitial = computed(() => currentUser.value?.email.charAt(0).toUpperCase() ?? "");
+const userInitial = computed(() => currentUser.value?.email.charAt(0).toUpperCase() ?? '');
 
 async function signOut(): Promise<void> {
-  await $dashboardApi("/auth/logout", { method: "POST" });
+  await $dashboardApi('/auth/logout', { method: 'POST' });
   currentUser.value = null;
-  await navigateTo("/login");
+  await navigateTo('/login');
 }
 </script>
 

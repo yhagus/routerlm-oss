@@ -1,19 +1,19 @@
-import { Injectable } from "@nestjs/common";
-import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
-import { z } from "zod";
-import { withoutTrailingSlash } from "@/libs/models/url";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
-import type { QuotaMeterReading } from "@/quota-meters/models/quota-meter";
+import { Injectable } from '@nestjs/common';
+import { HttpClient, InjectHttpClient } from '@nestjs/http-client';
+import { z } from 'zod';
+import { withoutTrailingSlash } from '@/libs/models/url';
+import type { ProviderAccountCredential } from '@/upstream/models/provider-account-credential';
+import type { QuotaMeterReading } from '@/quota-meters/models/quota-meter';
 import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
   type QuotaReading,
   QuotaReadError,
-} from "@/quota-meters/models/quota-reader";
-import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client";
+} from '@/quota-meters/models/quota-reader';
+import { QUOTA_READER_HTTP_CLIENT } from './quota-reader-http-client';
 
-const USAGES_PATH = "usages";
+const USAGES_PATH = 'usages';
 
 const FULL_PERCENT = 100;
 const PERCENT_DECIMALS = 4;
@@ -21,7 +21,7 @@ const FIVE_HOURS_IN_SECONDS = 5 * 60 * 60;
 const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
 
 function isNumeric(text: string): boolean {
-  return text.trim() !== "" && Number.isFinite(Number(text));
+  return text.trim() !== '' && Number.isFinite(Number(text));
 }
 
 const limitSchema = z.looseObject({
@@ -38,7 +38,7 @@ const usagesResponseSchema = z.object({
     limit_month_code: limitSchema.nullish(),
   }),
 });
-type LimitField = keyof z.infer<typeof usagesResponseSchema>["usages"];
+type LimitField = keyof z.infer<typeof usagesResponseSchema>['usages'];
 
 interface PlanLimit {
   field: LimitField;
@@ -48,13 +48,13 @@ interface PlanLimit {
 }
 
 const PLAN_LIMITS = [
-  { field: "limit_5h", key: "5h", label: "5-hour limit", windowSeconds: FIVE_HOURS_IN_SECONDS },
-  { field: "limit_7d", key: "7d", label: "7-day limit", windowSeconds: SEVEN_DAYS_IN_SECONDS },
-  { field: "limit_month_total", key: "month-total", label: "Monthly limit", windowSeconds: null },
+  { field: 'limit_5h', key: '5h', label: '5-hour limit', windowSeconds: FIVE_HOURS_IN_SECONDS },
+  { field: 'limit_7d', key: '7d', label: '7-day limit', windowSeconds: SEVEN_DAYS_IN_SECONDS },
+  { field: 'limit_month_total', key: 'month-total', label: 'Monthly limit', windowSeconds: null },
   {
-    field: "limit_month_code",
-    key: "month-code",
-    label: "Monthly code limit",
+    field: 'limit_month_code',
+    key: 'month-code',
+    label: 'Monthly code limit',
     windowSeconds: null,
   },
 ] as const satisfies PlanLimit[];
@@ -70,7 +70,7 @@ export class KimiCodeQuotaReader implements QuotaReader {
     const body = await this.fetchUsages(bearerCredential, baseUrl);
     const parsed = usagesResponseSchema.safeParse(body);
     if (!parsed.success) {
-      throw new QuotaReadError("Kimi answered the quota reading in an unknown shape", {
+      throw new QuotaReadError('Kimi answered the quota reading in an unknown shape', {
         cause: parsed.error,
       });
     }
@@ -86,11 +86,11 @@ export class KimiCodeQuotaReader implements QuotaReader {
     const url = `${withoutTrailingSlash(baseUrl)}/${USAGES_PATH}`;
     try {
       const response = await this.http.get(url, {
-        headers: { authorization: `Bearer ${bearerCredential}`, accept: "application/json" },
+        headers: { authorization: `Bearer ${bearerCredential}`, accept: 'application/json' },
       });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "Kimi quota");
+      throw asQuotaReadError(error, 'Kimi quota');
     }
   }
 }
@@ -100,7 +100,7 @@ function meterOf(planLimit: PlanLimit, limit: UsagesLimit): QuotaMeterReading {
   return {
     key: planLimit.key,
     label: planLimit.label,
-    unit: "percent",
+    unit: 'percent',
     used: usedPercent,
     limit: FULL_PERCENT,
     remainingPercent: Math.max(0, FULL_PERCENT - usedPercent),

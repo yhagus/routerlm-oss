@@ -1,16 +1,16 @@
-import { PasswordHasher } from "@nestjs/authentication";
-import { getDrizzleToken } from "@nestjs/drizzle";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test } from "@nestjs/testing";
-import { sql } from "drizzle-orm";
-import type { Response } from "supertest";
-import request from "supertest";
-import { AppModule } from "@/app.module";
-import type { BackendRole } from "@/config/schemas/env.schema";
-import { configureApp, createNodeAdapter } from "@/configure-app";
-import type { Database } from "@/db/schemas/relations";
-import { allowPrivateUpstreams } from "./private-upstreams";
-import { truncateTables } from "./truncate";
+import { PasswordHasher } from '@nestjs/authentication';
+import { getDrizzleToken } from '@nestjs/drizzle';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test } from '@nestjs/testing';
+import { sql } from 'drizzle-orm';
+import type { Response } from 'supertest';
+import request from 'supertest';
+import { AppModule } from '@/app.module';
+import type { BackendRole } from '@/config/schemas/env.schema';
+import { configureApp, createNodeAdapter } from '@/configure-app';
+import type { Database } from '@/db/schemas/relations';
+import { allowPrivateUpstreams } from './private-upstreams';
+import { truncateTables } from './truncate';
 
 const CHEAP_PASSWORD_HASHER = new PasswordHasher({ logN: 10 });
 
@@ -23,7 +23,7 @@ export async function createTestApp(
   database?: Database,
   {
     allowsPrivateUpstreams = true,
-    role = "all",
+    role = 'all',
   }: { allowsPrivateUpstreams?: boolean; role?: BackendRole } = {},
 ): Promise<TestApp> {
   const moduleBuilder = Test.createTestingModule({ imports: [AppModule.forRole(role)] })
@@ -39,16 +39,16 @@ export async function createTestApp(
 }
 
 export async function deleteAllUsers(db: Database): Promise<void> {
-  await truncateTables(db, sql.raw("users"));
+  await truncateTables(db, sql.raw('users'));
 }
 
 export function sessionCookieOf(response: Response): string {
-  const setCookie = response.get("Set-Cookie") ?? [];
-  const sessionCookie = setCookie.find((cookie) => cookie.startsWith("__Host-sid="));
+  const setCookie = response.get('Set-Cookie') ?? [];
+  const sessionCookie = setCookie.find((cookie) => cookie.startsWith('__Host-sid='));
   if (!sessionCookie) {
-    throw new Error(`Expected a session cookie, got: ${setCookie.join("; ")}`);
+    throw new Error(`Expected a session cookie, got: ${setCookie.join('; ')}`);
   }
-  return sessionCookie.split(";")[0];
+  return sessionCookie.split(';')[0];
 }
 
 export async function setUpFirstUser(
@@ -56,7 +56,7 @@ export async function setUpFirstUser(
   credentials: { email: string; password: string },
 ): Promise<string> {
   const response = await request(app.getHttpServer())
-    .post("/api/auth/setup")
+    .post('/api/auth/setup')
     .send(credentials)
     .expect(201);
   return sessionCookieOf(response);

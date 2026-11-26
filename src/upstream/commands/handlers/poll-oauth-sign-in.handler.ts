@@ -1,22 +1,22 @@
-import { Logger } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, eq } from "drizzle-orm";
-import { chatEndpointOf } from "@/catalog/schemas/catalog.schema";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, providers } from "@/db/schemas";
-import { SECOND_MS } from "@/libs/models/duration";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { OauthSignInPolling } from "@/upstream/jobs/oauth-sign-in-polling";
-import { unusedConstellationName } from "@/upstream/models/constellation-name";
-import { oauthLoginEndpointOf } from "@/upstream/models/oauth-device-grant";
-import { type OauthTokens, storedOauthTokens } from "@/upstream/models/provider-account";
-import { OauthLoginClient } from "@/upstream/providers/oauth-login-client";
-import { OauthRefreshLock } from "@/upstream/providers/oauth-refresh-lock";
-import { OauthSignInStore } from "@/upstream/providers/oauth-sign-in-store";
-import { ProviderKeyCipher } from "@/upstream/providers/provider-key-cipher";
-import type { StoredOauthSignIn } from "@/upstream/schemas/oauth-sign-in.schema";
-import { PollOauthSignInCommand } from "@/upstream/commands/impl/poll-oauth-sign-in.command";
+import { Logger } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, eq } from 'drizzle-orm';
+import { chatEndpointOf } from '@/catalog/schemas/catalog.schema';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, providers } from '@/db/schemas';
+import { SECOND_MS } from '@/libs/models/duration';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { OauthSignInPolling } from '@/upstream/jobs/oauth-sign-in-polling';
+import { unusedConstellationName } from '@/upstream/models/constellation-name';
+import { oauthLoginEndpointOf } from '@/upstream/models/oauth-device-grant';
+import { type OauthTokens, storedOauthTokens } from '@/upstream/models/provider-account';
+import { OauthLoginClient } from '@/upstream/providers/oauth-login-client';
+import { OauthRefreshLock } from '@/upstream/providers/oauth-refresh-lock';
+import { OauthSignInStore } from '@/upstream/providers/oauth-sign-in-store';
+import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
+import type { StoredOauthSignIn } from '@/upstream/schemas/oauth-sign-in.schema';
+import { PollOauthSignInCommand } from '@/upstream/commands/impl/poll-oauth-sign-in.command';
 
 const SLOW_DOWN_SECONDS = 5;
 
@@ -36,7 +36,7 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
 
   async execute({ signInId }: PollOauthSignInCommand): Promise<void> {
     const signIn = await this.signIns.find(signInId);
-    if (signIn?.outcome.status !== "pending") {
+    if (signIn?.outcome.status !== 'pending') {
       return;
     }
     const outcome = await this.poll(signIn);
@@ -46,51 +46,51 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       pollIntervalSeconds: signIn.pollIntervalSeconds + (outcome.slowDown ? SLOW_DOWN_SECONDS : 0),
     };
     await this.signIns.save(signInId, polled, new Date());
-    if (outcome.status === "pending") {
+    if (outcome.status === 'pending') {
       await this.polling.pollIn(signInId, polled.pollIntervalSeconds * SECOND_MS);
     }
   }
 
   private async poll(
     signIn: StoredOauthSignIn,
-  ): Promise<StoredOauthSignIn["outcome"] & { slowDown?: boolean }> {
+  ): Promise<StoredOauthSignIn['outcome'] & { slowDown?: boolean }> {
     const createdProviderAccountId = await this.providerAccountCreatedBy(signIn);
     if (createdProviderAccountId !== undefined) {
-      return { status: "completed", providerAccountId: createdProviderAccountId };
+      return { status: 'completed', providerAccountId: createdProviderAccountId };
     }
     if (Date.now() >= signIn.expiresAt) {
-      return { status: "expired" };
+      return { status: 'expired' };
     }
     const [provider] = await this.db
       .select({ endpoints: providers.endpoints, oauthLogin: providers.oauthLogin })
       .from(providers)
       .where(eq(providers.id, signIn.providerId));
     if (!provider?.oauthLogin) {
-      return { status: "denied" };
+      return { status: 'denied' };
     }
 
     const endpoint = oauthLoginEndpointOf(provider.oauthLogin, signIn.region, signIn.deviceId);
     if (endpoint === null) {
-      return { status: "denied" };
+      return { status: 'denied' };
     }
     const poll = await this.oauthLoginClient.pollToken(endpoint, {
       deviceCode: this.keyCipher.decrypt(signIn.encryptedDeviceCode),
       userCode: signIn.userCode,
     });
     switch (poll.kind) {
-      case "granted":
+      case 'granted':
         return this.keepLogin(signIn, chatEndpointOf(provider.endpoints)?.baseUrl, poll.tokens);
-      case "pending":
-        return { status: "pending" };
-      case "slow-down":
-        return { status: "pending", slowDown: true };
-      case "denied":
-        return { status: "denied" };
-      case "expired":
-        return { status: "expired" };
-      case "unanswered":
+      case 'pending':
+        return { status: 'pending' };
+      case 'slow-down':
+        return { status: 'pending', slowDown: true };
+      case 'denied':
+        return { status: 'denied' };
+      case 'expired':
+        return { status: 'expired' };
+      case 'unanswered':
         this.logger.warn(`A sign-in poll got no usable answer (${poll.reason}); polling again`);
-        return { status: "pending" };
+        return { status: 'pending' };
     }
   }
 
@@ -114,14 +114,14 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     signIn: StoredOauthSignIn,
     chatBaseUrl: string | undefined,
     tokens: OauthTokens,
-  ): Promise<StoredOauthSignIn["outcome"]> {
+  ): Promise<StoredOauthSignIn['outcome']> {
     try {
       return await this.storeLogin(signIn, chatBaseUrl, tokens);
     } catch (error) {
       this.logger.error(
         `A sign-in was approved, but its OAuth Login could not be kept: ${failureOf(error)}`,
       );
-      return { status: "denied" };
+      return { status: 'denied' };
     }
   }
 
@@ -129,10 +129,10 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     signIn: StoredOauthSignIn,
     chatBaseUrl: string | undefined,
     tokens: OauthTokens,
-  ): Promise<StoredOauthSignIn["outcome"]> {
+  ): Promise<StoredOauthSignIn['outcome']> {
     if (signIn.providerAccountId === undefined) {
       return {
-        status: "completed",
+        status: 'completed',
         providerAccountId: await this.createProviderAccount(signIn, chatBaseUrl, tokens),
       };
     }
@@ -140,9 +140,9 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       this.logger.warn(
         `Provider Account ${signIn.providerAccountId} was deleted before its sign-in was approved`,
       );
-      return { status: "denied" };
+      return { status: 'denied' };
     }
-    return { status: "completed", providerAccountId: signIn.providerAccountId };
+    return { status: 'completed', providerAccountId: signIn.providerAccountId };
   }
 
   private async replaceLogin(
@@ -184,7 +184,7 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
       .values({
         providerId: signIn.providerId,
         name,
-        credentialKind: "oauth-login",
+        credentialKind: 'oauth-login',
         ...storedOauthTokens(this.keyCipher, tokens, grantedAt),
         oauthRegion: signIn.region,
         oauthDeviceId: signIn.deviceId,
@@ -194,7 +194,7 @@ export class PollOauthSignInHandler implements ICommandHandler<PollOauthSignInCo
     if (created === undefined) {
       const existing = await this.providerAccountCreatedBy(signIn);
       if (existing === undefined) {
-        throw new Error("The Provider Account of this sign-in vanished after a conflict");
+        throw new Error('The Provider Account of this sign-in vanished after a conflict');
       }
       return existing;
     }

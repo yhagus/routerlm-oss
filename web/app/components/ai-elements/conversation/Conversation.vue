@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import { reactiveOmit } from "@vueuse/core";
-import { StickToBottom } from "vue-stick-to-bottom";
-import { MarkdownProvider } from "vue-stream-markdown";
-import { useMarkdownExtensions } from "../message/useMarkdownExtensions";
+import type { HTMLAttributes } from 'vue';
+import { cn } from '@/lib/utils';
+import { reactiveOmit } from '@vueuse/core';
+import { StickToBottom } from 'vue-stick-to-bottom';
+import { MarkdownProvider } from 'vue-stream-markdown';
+import { useMarkdownExtensions } from '../message/useMarkdownExtensions';
 
 interface Props {
   ariaLabel?: string;
-  class?: HTMLAttributes["class"];
-  initial?: boolean | "instant" | { damping?: number; stiffness?: number; mass?: number };
-  resize?: "instant" | { damping?: number; stiffness?: number; mass?: number };
+  class?: HTMLAttributes['class'];
+  initial?: boolean | 'instant' | { damping?: number; stiffness?: number; mass?: number };
+  resize?: 'instant' | { damping?: number; stiffness?: number; mass?: number };
   damping?: number;
   stiffness?: number;
   mass?: number;
-  anchor?: "auto" | "none";
+  anchor?: 'auto' | 'none';
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  ariaLabel: "Conversation",
+  ariaLabel: 'Conversation',
   initial: true,
   damping: 0.7,
   stiffness: 0.05,
   mass: 1.25,
-  anchor: "none",
+  anchor: 'none',
 });
-const delegatedProps = reactiveOmit(props, "class");
+const delegatedProps = reactiveOmit(props, 'class');
 const { provider, extensions } = useMarkdownExtensions();
 </script>
 

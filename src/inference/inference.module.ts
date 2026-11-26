@@ -3,26 +3,26 @@ import {
   type MiddlewareConsumer,
   Module,
   type NestModule,
-} from "@nestjs/common";
-import { APP_FILTER } from "@nestjs/core";
-import { HttpClientModule } from "@nestjs/http-client";
-import { OutboundFetch } from "@/libs/providers/outbound-fetch";
-import { SnapshotModule } from "@/snapshot/snapshot.module";
-import { SpendLimitsModule } from "@/spend-limits/spend-limits.module";
-import { UpstreamModule } from "@/upstream/upstream.module";
-import { UsageModule } from "@/usage/usage.module";
-import { ApiKeyHeaderMiddleware } from "./middleware/api-key-header.middleware";
-import { CommandHandlers } from "./commands/handlers";
-import { InferenceExceptionFilter } from "./filters/inference-exception.filter";
-import { INFERENCE_API_PREFIX, InferenceController } from "./inference.controller";
-import { QueryHandlers } from "./queries/handlers";
-import { AttemptRunner } from "./providers/attempt-runner";
-import { CallerLimits } from "./providers/caller-limits";
-import { MediaFetcher } from "./providers/media-fetcher";
-import { MediaUpstreamClient } from "./providers/media-upstream-client";
-import { UpstreamClient } from "./providers/upstream-client";
-import { VideoHandles } from "./providers/video-handles";
-import { VideoTaskReader } from "./providers/video-task-reader";
+} from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
+import { HttpClientModule } from '@nestjs/http-client';
+import { OutboundFetch } from '@/libs/providers/outbound-fetch';
+import { SnapshotModule } from '@/snapshot/snapshot.module';
+import { SpendLimitsModule } from '@/spend-limits/spend-limits.module';
+import { UpstreamModule } from '@/upstream/upstream.module';
+import { UsageModule } from '@/usage/usage.module';
+import { ApiKeyHeaderMiddleware } from './middleware/api-key-header.middleware';
+import { CommandHandlers } from './commands/handlers';
+import { InferenceExceptionFilter } from './filters/inference-exception.filter';
+import { INFERENCE_API_PREFIX, InferenceController } from './inference.controller';
+import { QueryHandlers } from './queries/handlers';
+import { AttemptRunner } from './providers/attempt-runner';
+import { CallerLimits } from './providers/caller-limits';
+import { MediaFetcher } from './providers/media-fetcher';
+import { MediaUpstreamClient } from './providers/media-upstream-client';
+import { UpstreamClient } from './providers/upstream-client';
+import { VideoHandles } from './providers/video-handles';
+import { VideoTaskReader } from './providers/video-task-reader';
 
 @Module({
   imports: [

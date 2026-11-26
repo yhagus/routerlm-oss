@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { InputGroupTextarea } from "@/components/ui/input-group";
-import { cn } from "@/lib/utils";
-import { computed, ref } from "vue";
-import { usePromptInput } from "./context";
+import type { HTMLAttributes } from 'vue';
+import { InputGroupTextarea } from '@/components/ui/input-group';
+import { cn } from '@/lib/utils';
+import { computed, ref } from 'vue';
+import { usePromptInput } from './context';
 
-type PromptInputTextareaProps = InstanceType<typeof InputGroupTextarea>["$props"];
+type PromptInputTextareaProps = InstanceType<typeof InputGroupTextarea>['$props'];
 
 interface Props extends /* @vue-ignore */ PromptInputTextareaProps {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();
@@ -17,7 +17,7 @@ const { textInput, setTextInput, addFiles, files, removeFile } = usePromptInput(
 const isComposing = ref(false);
 
 function handleKeyDown(e: KeyboardEvent) {
-  if (e.key === "Enter") {
+  if (e.key === 'Enter') {
     if (isComposing.value || e.isComposing || e.shiftKey) return;
 
     e.preventDefault();
@@ -33,7 +33,7 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 
   // Remove last attachment on backspace if input is empty
-  if (e.key === "Backspace" && textInput.value === "" && files.value.length > 0) {
+  if (e.key === 'Backspace' && textInput.value === '' && files.value.length > 0) {
     e.preventDefault();
 
     const lastFile = files.value[files.value.length - 1];
@@ -49,7 +49,7 @@ function handlePaste(e: ClipboardEvent) {
 
   const pastedFiles: File[] = [];
   for (const item of Array.from(items)) {
-    if (item.kind === "file") {
+    if (item.kind === 'file') {
       const file = item.getAsFile();
       if (file) pastedFiles.push(file);
     }

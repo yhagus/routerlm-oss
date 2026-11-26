@@ -1,22 +1,22 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
 
-const SNAPSHOTS_MIGRATION_SUFFIX = "_usage_log_snapshots";
+const SNAPSHOTS_MIGRATION_SUFFIX = '_usage_log_snapshots';
 
-describe("Usage Log snapshots migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('Usage Log snapshots migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
   let databaseUrl: string;
   let pool: Pool;
 
   beforeAll(async () => {
     migrationsBefore = await copyMigrationsBefore(SNAPSHOTS_MIGRATION_SUFFIX);
-    databaseUrl = await createEmptyDatabase(serverUrl, "usage_log_snapshots");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'usage_log_snapshots');
     pool = new Pool({ connectionString: databaseUrl });
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: migrationsBefore });
   });
@@ -66,7 +66,7 @@ describe("Usage Log snapshots migration (e2e)", () => {
     );
   }
 
-  it("keeps existing Usage Logs and Attempts, copying the names of what still exists", async () => {
+  it('keeps existing Usage Logs and Attempts, copying the names of what still exists', async () => {
     const providerId = await insertReturningId(
       `insert into providers (slug, name, protocol, base_url, auth_style)
        values ('acme', 'Acme AI', 'openai-chat', 'https://api.acme.example/v1', 'bearer')`,
@@ -77,9 +77,9 @@ describe("Usage Log snapshots migration (e2e)", () => {
          values ($1, $2, 'ciphertext', 'AAAA')`,
         [providerId, name],
       );
-    const providerAccountId = await insertProviderAccount("main");
-    const backupAccountId = await insertProviderAccount("backup");
-    const deletedAccountId = await insertProviderAccount("deleted");
+    const providerAccountId = await insertProviderAccount('main');
+    const backupAccountId = await insertProviderAccount('backup');
+    const deletedAccountId = await insertProviderAccount('deleted');
     const upstreamModelId = await insertReturningId(
       `insert into upstream_models (provider_id, upstream_model_id, context_size)
        values ($1, 'acme-large-2026', 128000)`,
@@ -97,7 +97,7 @@ describe("Usage Log snapshots migration (e2e)", () => {
       `insert into api_keys (name, key_id, hash) values ('CI', 'ci', 'hash-ci')`,
     );
     const resolvedLogId = await insertUsageLog({
-      createdAt: "2026-11-10T10:00:00Z",
+      createdAt: '2026-11-10T10:00:00Z',
       apiKeyId,
       modelId,
       routeId,
@@ -105,18 +105,18 @@ describe("Usage Log snapshots migration (e2e)", () => {
     });
     await insertAttempt({
       usageLogId: resolvedLogId,
-      startedAt: "2026-11-10T10:00:00Z",
+      startedAt: '2026-11-10T10:00:00Z',
       routeId,
       providerAccountId,
     });
     await insertAttempt({
       usageLogId: resolvedLogId,
-      startedAt: "2026-11-10T10:00:01Z",
+      startedAt: '2026-11-10T10:00:01Z',
       routeId,
       providerAccountId: backupAccountId,
     });
     const orphanLogId = await insertUsageLog({
-      createdAt: "2026-11-10T11:00:00Z",
+      createdAt: '2026-11-10T11:00:00Z',
       apiKeyId: null,
       modelId: null,
       routeId: deletedRouteId,
@@ -124,7 +124,7 @@ describe("Usage Log snapshots migration (e2e)", () => {
     });
     await insertAttempt({
       usageLogId: orphanLogId,
-      startedAt: "2026-11-10T11:00:00Z",
+      startedAt: '2026-11-10T11:00:00Z',
       routeId: deletedRouteId,
       providerAccountId: deletedAccountId,
     });
@@ -140,12 +140,12 @@ describe("Usage Log snapshots migration (e2e)", () => {
     expect(logs.rows).toEqual([
       {
         id: resolvedLogId,
-        model_name: "smart",
-        api_key_name: "CI",
+        model_name: 'smart',
+        api_key_name: 'CI',
         upstream_model_id: upstreamModelId,
-        upstream_model_name: "acme-large-2026",
-        provider_slug: "acme",
-        provider_account_name: "backup",
+        upstream_model_name: 'acme-large-2026',
+        provider_slug: 'acme',
+        provider_account_name: 'backup',
       },
       {
         id: orphanLogId,
@@ -164,23 +164,23 @@ describe("Usage Log snapshots migration (e2e)", () => {
     expect(attempts.rows).toEqual([
       {
         usage_log_id: resolvedLogId,
-        model_name: "smart",
-        api_key_name: "CI",
+        model_name: 'smart',
+        api_key_name: 'CI',
         upstream_model_id: upstreamModelId,
-        upstream_model_name: "acme-large-2026",
-        provider_slug: "acme",
-        provider_name: "Acme AI",
-        provider_account_name: "main",
+        upstream_model_name: 'acme-large-2026',
+        provider_slug: 'acme',
+        provider_name: 'Acme AI',
+        provider_account_name: 'main',
       },
       {
         usage_log_id: resolvedLogId,
-        model_name: "smart",
-        api_key_name: "CI",
+        model_name: 'smart',
+        api_key_name: 'CI',
         upstream_model_id: upstreamModelId,
-        upstream_model_name: "acme-large-2026",
-        provider_slug: "acme",
-        provider_name: "Acme AI",
-        provider_account_name: "backup",
+        upstream_model_name: 'acme-large-2026',
+        provider_slug: 'acme',
+        provider_name: 'Acme AI',
+        provider_account_name: 'backup',
       },
       {
         usage_log_id: orphanLogId,

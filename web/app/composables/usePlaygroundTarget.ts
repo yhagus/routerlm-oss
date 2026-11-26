@@ -1,5 +1,5 @@
-import { computed, type InjectionKey, inject, provide, ref, watch } from "vue";
-import type { ModelDetail, ModelSummary } from "~/lib/routing";
+import { computed, type InjectionKey, inject, provide, ref, watch } from 'vue';
+import type { ModelDetail, ModelSummary } from '~/lib/routing';
 import {
   MODEL_KIND_LABELS,
   type ModelKind,
@@ -7,13 +7,13 @@ import {
   type ProviderAccount,
   type UpstreamModel,
   upstreamModelLabel,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
-export type PlaygroundSource = "model" | "upstream";
+export type PlaygroundSource = 'model' | 'upstream';
 
 export type PlaygroundTarget = ReturnType<typeof createPlaygroundTarget>;
 
-const TARGET_KEY: InjectionKey<PlaygroundTarget> = Symbol("playground-target");
+const TARGET_KEY: InjectionKey<PlaygroundTarget> = Symbol('playground-target');
 
 export function usePlaygroundTarget(kind: ModelKind): PlaygroundTarget {
   const target = createPlaygroundTarget(kind);
@@ -23,7 +23,7 @@ export function usePlaygroundTarget(kind: ModelKind): PlaygroundTarget {
 
 export function useInjectedPlaygroundTarget(): PlaygroundTarget {
   const target = inject(TARGET_KEY);
-  if (!target) throw new Error("No Playground target: call usePlaygroundTarget in a parent");
+  if (!target) throw new Error('No Playground target: call usePlaygroundTarget in a parent');
   return target;
 }
 
@@ -32,7 +32,7 @@ function keepSelectionIn(selected: { value: string }, options: () => { value: st
     options,
     (current) => {
       if (!current.some((option) => option.value === selected.value)) {
-        selected.value = current[0]?.value ?? "";
+        selected.value = current[0]?.value ?? '';
       }
     },
     { immediate: true },
@@ -42,28 +42,28 @@ function keepSelectionIn(selected: { value: string }, options: () => { value: st
 function createPlaygroundTarget(kind: ModelKind) {
   const { $dashboardApi } = useNuxtApp();
   const kindLabel = MODEL_KIND_LABELS[kind].toLowerCase();
-  const source = ref<PlaygroundSource>("model");
+  const source = ref<PlaygroundSource>('model');
 
   const {
     data: models,
     error: modelsError,
     status: modelsStatus,
-  } = useDashboardApi<ModelSummary[]>("/models");
-  const isLoadingModels = computed(() => modelsStatus.value === "pending" && !models.value);
+  } = useDashboardApi<ModelSummary[]>('/models');
+  const isLoadingModels = computed(() => modelsStatus.value === 'pending' && !models.value);
   const enabledModels = computed(() =>
     (models.value ?? []).filter((model) => model.isEnabled && model.kind === kind),
   );
   const modelOptions = computed(() =>
     enabledModels.value.map((model) => ({ value: model.name, label: model.name })),
   );
-  const modelName = ref("");
+  const modelName = ref('');
   keepSelectionIn(modelName, () => modelOptions.value);
 
   const {
     data: providers,
     error: providersError,
     status: providersStatus,
-  } = useDashboardApi<Provider[]>("/providers");
+  } = useDashboardApi<Provider[]>('/providers');
   const { isBlocked } = useTermsRiskAllowed();
   const blockedProviderIds = computed(
     () => new Set((providers.value ?? []).filter(isBlocked).map((provider) => provider.id)),
@@ -72,12 +72,12 @@ function createPlaygroundTarget(kind: ModelKind) {
     data: upstreamModels,
     error: upstreamModelsError,
     status: upstreamModelsStatus,
-  } = useDashboardApi<UpstreamModel[]>("/upstream-models");
-  const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>("/provider-accounts");
+  } = useDashboardApi<UpstreamModel[]>('/upstream-models');
+  const { data: providerAccounts } = useDashboardApi<ProviderAccount[]>('/provider-accounts');
   const isLoadingUpstream = computed(
     () =>
-      (providersStatus.value === "pending" && !providers.value) ||
-      (upstreamModelsStatus.value === "pending" && !upstreamModels.value),
+      (providersStatus.value === 'pending' && !providers.value) ||
+      (upstreamModelsStatus.value === 'pending' && !upstreamModels.value),
   );
   const upstreamError = computed(() => providersError.value ?? upstreamModelsError.value);
 
@@ -101,7 +101,7 @@ function createPlaygroundTarget(kind: ModelKind) {
       .filter((provider) => withModels.has(provider.id))
       .map((provider) => ({ value: provider.id, label: provider.name }));
   });
-  const providerId = ref("");
+  const providerId = ref('');
   keepSelectionIn(providerId, () => providerOptions.value);
   const upstreamModelOptions = computed(() =>
     testableUpstreamModels.value
@@ -111,7 +111,7 @@ function createPlaygroundTarget(kind: ModelKind) {
         label: upstreamModelLabel(upstreamModel),
       })),
   );
-  const upstreamModelRowId = ref("");
+  const upstreamModelRowId = ref('');
   keepSelectionIn(upstreamModelRowId, () => upstreamModelOptions.value);
 
   const providerNamesBySlug = computed(
@@ -134,53 +134,53 @@ function createPlaygroundTarget(kind: ModelKind) {
   );
 
   const modelDetail = ref<ModelDetail | null>(null);
-  const modelDetailState = ref<"idle" | "loading" | "failed">("idle");
+  const modelDetailState = ref<'idle' | 'loading' | 'failed'>('idle');
   const selectedModelId = computed(
-    () => enabledModels.value.find((model) => model.name === modelName.value)?.id ?? "",
+    () => enabledModels.value.find((model) => model.name === modelName.value)?.id ?? '',
   );
   watch(
     selectedModelId,
     async (id) => {
       modelDetail.value = null;
-      if (id === "") {
-        modelDetailState.value = "idle";
+      if (id === '') {
+        modelDetailState.value = 'idle';
         return;
       }
-      modelDetailState.value = "loading";
+      modelDetailState.value = 'loading';
       try {
         const detail = await $dashboardApi<ModelDetail>(`/models/${id}`);
         if (selectedModelId.value !== id) return;
         modelDetail.value = detail;
-        modelDetailState.value = "idle";
+        modelDetailState.value = 'idle';
       } catch {
-        if (selectedModelId.value === id) modelDetailState.value = "failed";
+        if (selectedModelId.value === id) modelDetailState.value = 'failed';
       }
     },
     { immediate: true },
   );
 
   const canTry = computed(() =>
-    source.value === "model"
+    source.value === 'model'
       ? !modelsError.value && modelOptions.value.length > 0
       : !upstreamError.value && upstreamModelOptions.value.length > 0,
   );
   const isLoadingSource = computed(() =>
-    source.value === "model" ? isLoadingModels.value : isLoadingUpstream.value,
+    source.value === 'model' ? isLoadingModels.value : isLoadingUpstream.value,
   );
 
   function requestModel(): { model: string } | { problem: string } {
-    if (source.value === "model") {
-      return modelName.value === "" ? { problem: "Pick a Model." } : { model: modelName.value };
+    if (source.value === 'model') {
+      return modelName.value === '' ? { problem: 'Pick a Model.' } : { model: modelName.value };
     }
     const upstreamModel = selectedUpstreamModel.value;
     return upstreamModel
       ? { model: upstreamModel.upstreamModelId }
-      : { problem: "Pick an Upstream Model." };
+      : { problem: 'Pick an Upstream Model.' };
   }
 
   function requestPath(endpoint: string): string {
     const upstreamModel = selectedUpstreamModel.value;
-    return source.value === "upstream" && upstreamModel
+    return source.value === 'upstream' && upstreamModel
       ? `/playground/upstream-models/${upstreamModel.id}/${endpoint}`
       : `/playground/${endpoint}`;
   }

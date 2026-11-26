@@ -1,6 +1,6 @@
-import type { Snapshot } from "@/snapshot/models/snapshot";
-import type { UsageJob } from "@/usage/models/usage-job";
-import { type PlaygroundSummary, playgroundSummaryOf } from "./playground-summary";
+import type { Snapshot } from '@/snapshot/models/snapshot';
+import type { UsageJob } from '@/usage/models/usage-job';
+import { type PlaygroundSummary, playgroundSummaryOf } from './playground-summary';
 
 export class PlaygroundUsage {
   private reportedJob: UsageJob | undefined;
@@ -11,7 +11,7 @@ export class PlaygroundUsage {
 
   get job(): UsageJob {
     if (!this.reportedJob) {
-      throw new Error("An answered request always reports its usage");
+      throw new Error('An answered request always reports its usage');
     }
     return this.reportedJob;
   }

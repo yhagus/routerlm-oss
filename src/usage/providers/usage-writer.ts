@@ -1,10 +1,10 @@
-import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { eq, sql } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations";
-import { apiKeys, attempts, CLIENT_PROTOCOL_KINDS, errorCaptures, usageLogs } from "@/db/schemas";
-import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags";
+import { randomUUID } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { eq, sql } from 'drizzle-orm';
+import type { Database, Transaction } from '@/db/schemas/relations';
+import { apiKeys, attempts, CLIENT_PROTOCOL_KINDS, errorCaptures, usageLogs } from '@/db/schemas';
+import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
 import type {
   ErrorCaptureRecord,
   MediaUnits,
@@ -14,8 +14,8 @@ import type {
   UsageCaller,
   UsageCustomer,
   UsageJob,
-} from "@/usage/models/usage-job";
-import { unitCostOf, usageMeasurementsOf } from "@/usage/models/usage-measurements";
+} from '@/usage/models/usage-job';
+import { unitCostOf, usageMeasurementsOf } from '@/usage/models/usage-measurements';
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
 type StoredServingTarget = { [Field in keyof ServingTarget]: ServingTarget[Field] | null };
@@ -106,11 +106,11 @@ export class UsageWriter {
           .insert(errorCaptures)
           .values(errorCaptureRowsOf(job, job.errorCapture, attemptIds));
       }
-      return job.caller.kind === "api-key"
+      return job.caller.kind === 'api-key'
         ? addToSpent(transaction, job.caller.apiKeyId, measurements.cost)
         : false;
     });
-    if (job.caller.kind === "api-key" && hasSpentAgainstLimit) {
+    if (job.caller.kind === 'api-key' && hasSpentAgainstLimit) {
       await this.spendLimitFlags.recompute(job.caller.apiKeyId);
     }
   }
@@ -185,15 +185,15 @@ function unitColumnsOf(units: MediaUnits | null) {
 
 function callerColumnsOf(caller: UsageCaller) {
   switch (caller.kind) {
-    case "api-key":
+    case 'api-key':
       return {
         apiKeyId: caller.apiKeyId,
         integrationId: caller.customer?.integrationId ?? null,
         isPlayground: false,
       };
-    case "playground":
+    case 'playground':
       return { userId: caller.userId, isPlayground: true };
-    case "unidentified":
+    case 'unidentified':
       return { isPlayground: false };
   }
 }
@@ -211,7 +211,7 @@ function snapshotOf(job: UsageJob): JobSnapshot {
   return {
     requestNames: {
       modelName: job.modelName ?? null,
-      apiKeyName: job.caller.kind === "api-key" ? (job.caller.apiKeyName ?? null) : null,
+      apiKeyName: job.caller.kind === 'api-key' ? (job.caller.apiKeyName ?? null) : null,
     },
     customerNames: {
       integrationName: customerOf(job.caller)?.integrationName ?? null,
@@ -234,5 +234,5 @@ function servingTargetColumnsOf(target: StoredServingTarget) {
 }
 
 function customerOf(caller: UsageCaller): UsageCustomer | undefined {
-  return caller.kind === "api-key" ? caller.customer : undefined;
+  return caller.kind === 'api-key' ? caller.customer : undefined;
 }

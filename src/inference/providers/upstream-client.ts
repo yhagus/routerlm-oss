@@ -1,17 +1,17 @@
-import { Injectable } from "@nestjs/common";
-import { HttpClient, type HttpResponse } from "@nestjs/http-client";
-import type { AttemptFailureReason } from "@/db/schemas";
-import { GATEWAY_USER_AGENT } from "@/libs/models/gateway-version";
-import { AttemptFailedError, ClientCancelledError } from "@/inference/models/attempt-failure";
+import { Injectable } from '@nestjs/common';
+import { HttpClient, type HttpResponse } from '@nestjs/http-client';
+import type { AttemptFailureReason } from '@/db/schemas';
+import { GATEWAY_USER_AGENT } from '@/libs/models/gateway-version';
+import { AttemptFailedError, ClientCancelledError } from '@/inference/models/attempt-failure';
 import {
   type ExhaustedErrorCode,
   isQuotaExhaustedError,
-} from "@/inference/models/quota-exhausted-error";
+} from '@/inference/models/quota-exhausted-error';
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 import {
   parseUpstreamStream,
   type UpstreamHttpRequest,
@@ -19,15 +19,15 @@ import {
   UpstreamProtocolError,
   type UpstreamStreamParser,
   type UpstreamTarget,
-} from "@/inference/protocols/upstream-protocol-converter";
-import type { Destination } from "@/inference/models/destination";
-import type { SnapshotRoute } from "@/snapshot/models/snapshot";
-import { upstreamRequestIdOf } from "@/inference/models/upstream-request-id";
-import { gatherStream } from "@/inference/protocols/gather-stream";
+} from '@/inference/protocols/upstream-protocol-converter';
+import type { Destination } from '@/inference/models/destination';
+import type { SnapshotRoute } from '@/snapshot/models/snapshot';
+import { upstreamRequestIdOf } from '@/inference/models/upstream-request-id';
+import { gatherStream } from '@/inference/protocols/gather-stream';
 import {
   type ServerSentEvent,
   ServerSentEventDecoder,
-} from "@/inference/protocols/server-sent-events";
+} from '@/inference/protocols/server-sent-events';
 
 export const DEFAULT_TIMEOUTS: AttemptTimeouts = {
   connectMs: 10_000,
@@ -36,7 +36,7 @@ export const DEFAULT_TIMEOUTS: AttemptTimeouts = {
 };
 
 export function totalTimeoutMsOf(destination: Destination, route: SnapshotRoute | null): number {
-  if (destination.kind === "probe") {
+  if (destination.kind === 'probe') {
     return destination.totalTimeoutMs;
   }
   return route?.totalTimeoutMs ?? DEFAULT_TIMEOUTS.totalMs;
@@ -83,7 +83,7 @@ export class AttemptDeadlines {
     if (clientSignal.aborted) {
       this.onClientAbort();
     }
-    clientSignal.addEventListener("abort", this.onClientAbort, { once: true });
+    clientSignal.addEventListener('abort', this.onClientAbort, { once: true });
   }
 
   get signal(): AbortSignal {
@@ -107,7 +107,7 @@ export class AttemptDeadlines {
     for (const deadline of this.timers.keys()) {
       this.stop(deadline);
     }
-    this.clientSignal.removeEventListener("abort", this.onClientAbort);
+    this.clientSignal.removeEventListener('abort', this.onClientAbort);
     this.controller.abort(new ClientCancelledError());
   }
 
@@ -117,7 +117,7 @@ export class AttemptDeadlines {
       return reason;
     }
     if (reason instanceof DeadlineExceeded) {
-      return new AttemptFailedError("timeout", null, reason.message, null, { cause: error });
+      return new AttemptFailedError('timeout', null, reason.message, null, { cause: error });
     }
     if (error instanceof AttemptFailedError) {
       return error;
@@ -135,9 +135,9 @@ export class AttemptDeadlines {
 }
 
 function failureReasonOfThrown(error: unknown, whileStreaming: boolean): AttemptFailureReason {
-  if (whileStreaming) return "stream_interrupted";
-  if (error instanceof UpstreamProtocolError) return "server_error";
-  return "connection_error";
+  if (whileStreaming) return 'stream_interrupted';
+  if (error instanceof UpstreamProtocolError) return 'server_error';
+  return 'connection_error';
 }
 
 function describe(error: unknown): string {
@@ -245,7 +245,7 @@ export class UpstreamClient {
 
   async complete(call: UpstreamCall): Promise<CompletedAttempt> {
     const deadlines = new AttemptDeadlines(call.timeouts, call.clientSignal);
-    deadlines.start("totalMs");
+    deadlines.start('totalMs');
     try {
       const written = call.converter.writeRequest(call.request, call.target);
       const response = await this.send(call, written, deadlines.signal);
@@ -260,7 +260,7 @@ export class UpstreamClient {
       const body = await response.data.text();
       if (isQuotaExhaustedError(body, exhaustedErrorCodesOf(call.target))) {
         throw new AttemptFailedError(
-          "exhausted",
+          'exhausted',
           response.status,
           `The upstream answered ${response.status} with an Exhausted error code`,
           { headers, body },
@@ -276,19 +276,19 @@ export class UpstreamClient {
 
   async openStream(call: UpstreamCall): Promise<UpstreamStream> {
     const deadlines = new AttemptDeadlines(call.timeouts, call.clientSignal);
-    deadlines.start("totalMs");
+    deadlines.start('totalMs');
     try {
-      deadlines.start("connectMs");
+      deadlines.start('connectMs');
       const written = call.converter.writeRequest(call.request, call.target);
       const response = await this.send(call, written, deadlines.signal);
-      deadlines.stop("connectMs");
+      deadlines.stop('connectMs');
       const events = new UpstreamEventReader(
         streamBodyOf(response).getReader(),
         call.converter.startStream(),
       );
-      deadlines.start("firstTokenMs");
+      deadlines.start('firstTokenMs');
       const firstBatch = await events.nextBatch();
-      deadlines.stop("firstTokenMs");
+      deadlines.stop('firstTokenMs');
       return new UpstreamStream(
         firstBatch,
         events,
@@ -310,17 +310,17 @@ export class UpstreamClient {
     const response = await this.http.post<Response>(written.url, {
       body: written.body,
       headers: {
-        "user-agent": GATEWAY_USER_AGENT,
+        'user-agent': GATEWAY_USER_AGENT,
         ...call.forwardedHeaders,
         ...written.headers,
         ...call.target.quirks.fixedHeaders,
         ...call.authHeaders,
       },
-      responseType: "response",
+      responseType: 'response',
       signal,
       retry: false,
       throwOnHttpError: false,
-      redirect: "error",
+      redirect: 'error',
     });
     if (!response.ok) {
       throw await failedResponse(response, exhaustedErrorCodesOf(call.target));
@@ -332,7 +332,7 @@ export class UpstreamClient {
 function streamBodyOf(response: HttpResponse<Response>): ReadableStream<Uint8Array> {
   const body = response.data.body;
   if (!body) {
-    throw new UpstreamProtocolError("The upstream stream has no body");
+    throw new UpstreamProtocolError('The upstream stream has no body');
   }
   return body;
 }
@@ -341,7 +341,7 @@ function parseJsonBody(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch (error) {
-    throw new UpstreamProtocolError("The upstream answered with a body that is not JSON", {
+    throw new UpstreamProtocolError('The upstream answered with a body that is not JSON', {
       cause: error,
     });
   }
@@ -373,20 +373,20 @@ function failureReasonOf(
   exhaustedErrorCodes: ExhaustedErrorCode[],
 ): AttemptFailureReason {
   if (isQuotaExhaustedError(body, exhaustedErrorCodes)) {
-    return "exhausted";
+    return 'exhausted';
   }
   return failureReasonOfStatus(status);
 }
 
 export function failureReasonOfStatus(status: number): AttemptFailureReason {
   if (status === 429) {
-    return "rate_limited";
+    return 'rate_limited';
   }
   if (status === 401 || status === 403) {
-    return "unauthorized";
+    return 'unauthorized';
   }
   if (status >= 500) {
-    return "server_error";
+    return 'server_error';
   }
-  return "bad_request";
+  return 'bad_request';
 }

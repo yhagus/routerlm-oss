@@ -1,4 +1,4 @@
-import { TERMS_RISK_PROVIDERS_PATH, type TermsRiskProvidersSetting } from "~/lib/settings";
+import { TERMS_RISK_PROVIDERS_PATH, type TermsRiskProvidersSetting } from '~/lib/settings';
 
 export function useTermsRiskAllowed() {
   const {

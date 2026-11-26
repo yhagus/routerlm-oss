@@ -1,10 +1,10 @@
-import { type ArgumentsHost, Catch, type ExceptionFilter, Inject } from "@nestjs/common";
-import { BaseExceptionFilter, HttpAdapterHost } from "@nestjs/core";
+import { type ArgumentsHost, Catch, type ExceptionFilter, Inject } from '@nestjs/common';
+import { BaseExceptionFilter, HttpAdapterHost } from '@nestjs/core';
 import {
   CONTROL_PLANE_ERRORS,
   controlPlaneErrorOf,
-} from "@/control-plane/models/control-plane-error";
-import type { ErrorJson } from "@/control-plane/models/proto-json";
+} from '@/control-plane/models/control-plane-error';
+import type { ErrorJson } from '@/control-plane/models/proto-json';
 
 @Catch()
 export class ControlPlaneExceptionFilter implements ExceptionFilter {

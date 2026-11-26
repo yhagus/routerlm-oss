@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { Plus } from "@lucide/vue";
-import type { Provider, UpstreamModel } from "~/lib/upstream";
+import { Plus } from '@lucide/vue';
+import type { Provider, UpstreamModel } from '~/lib/upstream';
 
-useHead({ title: "Upstream Models" });
+useHead({ title: 'Upstream Models' });
 
 const {
   data: upstreamModels,
   status: upstreamModelsStatus,
   error: loadError,
   refresh: refreshUpstreamModels,
-} = useDashboardApi<UpstreamModel[]>("/upstream-models");
+} = useDashboardApi<UpstreamModel[]>('/upstream-models');
 const {
   data: providers,
   status: providersStatus,
   error: providersError,
   refresh: refreshProviders,
-} = useDashboardApi<Provider[]>("/providers");
+} = useDashboardApi<Provider[]>('/providers');
 
 async function refresh(): Promise<void> {
   await Promise.all([refreshUpstreamModels(), refreshProviders()]);
@@ -23,11 +23,11 @@ async function refresh(): Promise<void> {
 
 const isLoading = computed(
   () =>
-    (upstreamModelsStatus.value === "pending" && !upstreamModels.value) ||
-    (providersStatus.value === "pending" && !providers.value),
+    (upstreamModelsStatus.value === 'pending' && !upstreamModels.value) ||
+    (providersStatus.value === 'pending' && !providers.value),
 );
 
-const browser = useTemplateRef<{ openCreate: () => void }>("browser");
+const browser = useTemplateRef<{ openCreate: () => void }>('browser');
 </script>
 
 <template>

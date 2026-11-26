@@ -1,98 +1,98 @@
-import { Body, Delete, Get, Put, Query } from "@nestjs/common";
-import { CommandBus, QueryBus } from "@nestjs/cqrs";
-import { DashboardController } from "@/auth/decorators/dashboard-controller.decorator";
-import { ChangeErrorCaptureRetentionCommand } from "./commands/impl/change-error-capture-retention.command";
-import { ChangePrivateUpstreamsCommand } from "./commands/impl/change-private-upstreams.command";
-import { ChangeTermsRiskProvidersCommand } from "./commands/impl/change-terms-risk-providers.command";
-import { ResetErrorCaptureRetentionCommand } from "./commands/impl/reset-error-capture-retention.command";
-import { ResetPrivateUpstreamsCommand } from "./commands/impl/reset-private-upstreams.command";
-import { ResetTermsRiskProvidersCommand } from "./commands/impl/reset-terms-risk-providers.command";
+import { Body, Delete, Get, Put, Query } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { DashboardController } from '@/auth/decorators/dashboard-controller.decorator';
+import { ChangeErrorCaptureRetentionCommand } from './commands/impl/change-error-capture-retention.command';
+import { ChangePrivateUpstreamsCommand } from './commands/impl/change-private-upstreams.command';
+import { ChangeTermsRiskProvidersCommand } from './commands/impl/change-terms-risk-providers.command';
+import { ResetErrorCaptureRetentionCommand } from './commands/impl/reset-error-capture-retention.command';
+import { ResetPrivateUpstreamsCommand } from './commands/impl/reset-private-upstreams.command';
+import { ResetTermsRiskProvidersCommand } from './commands/impl/reset-terms-risk-providers.command';
 import type {
   ErrorCaptureRetention,
   ErrorCaptureRetentionImpact,
-} from "./models/error-capture-retention";
-import type { PrivateUpstreamsSetting } from "./models/private-upstreams";
-import type { TermsRiskProvidersSetting } from "./models/terms-risk-providers";
-import { CountCapturesExpiredByQuery } from "./queries/impl/count-captures-expired-by.query";
-import { ShowErrorCaptureRetentionQuery } from "./queries/impl/show-error-capture-retention.query";
-import { ShowPrivateUpstreamsQuery } from "./queries/impl/show-private-upstreams.query";
-import { ShowTermsRiskProvidersQuery } from "./queries/impl/show-terms-risk-providers.query";
+} from './models/error-capture-retention';
+import type { PrivateUpstreamsSetting } from './models/private-upstreams';
+import type { TermsRiskProvidersSetting } from './models/terms-risk-providers';
+import { CountCapturesExpiredByQuery } from './queries/impl/count-captures-expired-by.query';
+import { ShowErrorCaptureRetentionQuery } from './queries/impl/show-error-capture-retention.query';
+import { ShowPrivateUpstreamsQuery } from './queries/impl/show-private-upstreams.query';
+import { ShowTermsRiskProvidersQuery } from './queries/impl/show-terms-risk-providers.query';
 import {
   type NewPrivateUpstreams,
   newPrivateUpstreamsSchema,
-} from "./schemas/private-upstreams.schema";
+} from './schemas/private-upstreams.schema';
 import {
   type NewRetention,
   newRetentionSchema,
   type RetentionImpactQuery,
   retentionImpactQuerySchema,
-} from "./schemas/retention-days.schema";
+} from './schemas/retention-days.schema';
 import {
   type NewTermsRiskProviders,
   newTermsRiskProvidersSchema,
-} from "./schemas/terms-risk-providers.schema";
+} from './schemas/terms-risk-providers.schema';
 
-@DashboardController("settings")
+@DashboardController('settings')
 export class SettingsController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
   ) {}
 
-  @Get("error-capture-retention")
+  @Get('error-capture-retention')
   showErrorCaptureRetention(): Promise<ErrorCaptureRetention> {
     return this.queryBus.execute(new ShowErrorCaptureRetentionQuery());
   }
 
-  @Get("error-capture-retention/impact")
+  @Get('error-capture-retention/impact')
   showErrorCaptureRetentionImpact(
     @Query({ schema: retentionImpactQuerySchema }) { days }: RetentionImpactQuery,
   ): Promise<ErrorCaptureRetentionImpact> {
     return this.queryBus.execute(new CountCapturesExpiredByQuery(days));
   }
 
-  @Put("error-capture-retention")
+  @Put('error-capture-retention')
   changeErrorCaptureRetention(
     @Body({ schema: newRetentionSchema }) { days }: NewRetention,
   ): Promise<ErrorCaptureRetention> {
     return this.commandBus.execute(new ChangeErrorCaptureRetentionCommand(days));
   }
 
-  @Delete("error-capture-retention")
+  @Delete('error-capture-retention')
   resetErrorCaptureRetention(): Promise<ErrorCaptureRetention> {
     return this.commandBus.execute(new ResetErrorCaptureRetentionCommand());
   }
 
-  @Get("terms-risk-providers")
+  @Get('terms-risk-providers')
   showTermsRiskProviders(): Promise<TermsRiskProvidersSetting> {
     return this.queryBus.execute(new ShowTermsRiskProvidersQuery());
   }
 
-  @Put("terms-risk-providers")
+  @Put('terms-risk-providers')
   changeTermsRiskProviders(
     @Body({ schema: newTermsRiskProvidersSchema }) { allowed }: NewTermsRiskProviders,
   ): Promise<TermsRiskProvidersSetting> {
     return this.commandBus.execute(new ChangeTermsRiskProvidersCommand(allowed));
   }
 
-  @Delete("terms-risk-providers")
+  @Delete('terms-risk-providers')
   resetTermsRiskProviders(): Promise<TermsRiskProvidersSetting> {
     return this.commandBus.execute(new ResetTermsRiskProvidersCommand());
   }
 
-  @Get("private-upstreams")
+  @Get('private-upstreams')
   showPrivateUpstreams(): Promise<PrivateUpstreamsSetting> {
     return this.queryBus.execute(new ShowPrivateUpstreamsQuery());
   }
 
-  @Put("private-upstreams")
+  @Put('private-upstreams')
   changePrivateUpstreams(
     @Body({ schema: newPrivateUpstreamsSchema }) { allowed }: NewPrivateUpstreams,
   ): Promise<PrivateUpstreamsSetting> {
     return this.commandBus.execute(new ChangePrivateUpstreamsCommand(allowed));
   }
 
-  @Delete("private-upstreams")
+  @Delete('private-upstreams')
   resetPrivateUpstreams(): Promise<PrivateUpstreamsSetting> {
     return this.commandBus.execute(new ResetPrivateUpstreamsCommand());
   }

@@ -1,18 +1,18 @@
 @layer theme, base, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
-@import "./scoped-preflight.css";
-@import "tailwindcss/utilities.css" layer(utilities);
-@import "tw-animate-css";
-@import "./dashboard.css" layer(components);
+@import 'tailwindcss/theme.css' layer(theme);
+@import './scoped-preflight.css';
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import 'tw-animate-css';
+@import './dashboard.css' layer(components);
 
 @source not inline("text-input");
 
 @custom-variant dark {
-  &:where([data-theme="dark"], [data-theme="dark"] *) {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
     @slot;
   }
   @media (prefers-color-scheme: dark) {
-    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
       @slot;
     }
   }
@@ -20,7 +20,7 @@
 
 @theme inline {
   --font-sans:
-    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--panel);
   --color-foreground: var(--ink);
   --color-card: var(--panel);
@@ -58,8 +58,8 @@
   :where(.tw-scope, [data-slot]) {
     border-color: var(--line);
   }
-  :where(.tw-scope, [data-slot]) :is(button, [role="button"]):not(:disabled),
-  :is(button, [role="button"]):where([data-slot]):not(:disabled) {
+  :where(.tw-scope, [data-slot]) :is(button, [role='button']):not(:disabled),
+  :is(button, [role='button']):where([data-slot]):not(:disabled) {
     cursor: pointer;
   }
 }

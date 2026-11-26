@@ -1,9 +1,9 @@
-import { CommandBus, CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { SubmitVideoJobCommand } from "@/inference/commands/impl/submit-video-job.command";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import type { PlaygroundVideoJob } from "@/playground/models/playground-video-job";
-import { PlaygroundUsage } from "@/playground/models/playground-usage";
-import { SendPlaygroundVideoJobCommand } from "@/playground/commands/impl/send-playground-video-job.command";
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { SubmitVideoJobCommand } from '@/inference/commands/impl/submit-video-job.command';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import type { PlaygroundVideoJob } from '@/playground/models/playground-video-job';
+import { PlaygroundUsage } from '@/playground/models/playground-usage';
+import { SendPlaygroundVideoJobCommand } from '@/playground/commands/impl/send-playground-video-job.command';
 
 const decoder = new TextDecoder();
 
@@ -24,7 +24,7 @@ export class SendPlaygroundVideoJobHandler implements ICommandHandler<SendPlaygr
     const result = await this.commandBus.execute(
       new SubmitVideoJobCommand(
         body,
-        { kind: "playground", userId: user.id },
+        { kind: 'playground', userId: user.id },
         connection,
         usage.record,
         target,

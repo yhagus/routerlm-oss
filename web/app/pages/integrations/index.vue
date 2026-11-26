@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Blocks, CirclePause, CirclePlay, Eye, Pencil, Plus, RefreshCw, Trash2 } from "@lucide/vue";
-import type { IntegrationConfirmation } from "~/components/IntegrationConfirmDialog.vue";
-import type { RowAction } from "~/components/RowActionsMenu.vue";
-import { apiErrorMessage } from "~/lib/api";
-import type { ModelChoice } from "~/lib/api-keys";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
-import { dateFormat } from "~/lib/dateFormats";
+import { Blocks, CirclePause, CirclePlay, Eye, Pencil, Plus, RefreshCw, Trash2 } from '@lucide/vue';
+import type { IntegrationConfirmation } from '~/components/IntegrationConfirmDialog.vue';
+import type { RowAction } from '~/components/RowActionsMenu.vue';
+import { apiErrorMessage } from '~/lib/api';
+import type { ModelChoice } from '~/lib/api-keys';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
+import { dateFormat } from '~/lib/dateFormats';
 import {
   allowedModelsLabel,
   type CreatedIntegration,
@@ -13,9 +13,9 @@ import {
   type IntegrationStatus,
   type IntegrationSummary,
   integrationStatus,
-} from "~/lib/integrations";
+} from '~/lib/integrations';
 
-useHead({ title: "Integrations" });
+useHead({ title: 'Integrations' });
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
@@ -24,15 +24,15 @@ const {
   error: loadError,
   status: integrationsStatus,
   refresh,
-} = useDashboardApi<IntegrationSummary[]>("/integrations");
+} = useDashboardApi<IntegrationSummary[]>('/integrations');
 const { data: modelChoices, status: modelChoicesStatus } =
-  useDashboardApi<ModelChoice[]>("/api-keys/model-choices");
+  useDashboardApi<ModelChoice[]>('/api-keys/model-choices');
 
 const isLoadingIntegrations = computed(
-  () => integrationsStatus.value === "pending" && !integrations.value,
+  () => integrationsStatus.value === 'pending' && !integrations.value,
 );
 const isLoadingModelChoices = computed(
-  () => modelChoicesStatus.value === "pending" && !modelChoices.value,
+  () => modelChoicesStatus.value === 'pending' && !modelChoices.value,
 );
 
 function formatDate(value: string): string {
@@ -51,12 +51,12 @@ const rows = computed<IntegrationRow[]>(() =>
 );
 
 const columns: DataTableColumn<IntegrationRow>[] = [
-  { id: "name", header: "Name", enableHiding: false, accessorFn: (row) => row.name },
-  { id: "allowedModels", header: "Allowed Models", accessorFn: allowedModelsLabel },
-  { id: "created", header: "Created" },
-  { id: "createdBy", header: "Created by", accessorFn: (row) => row.createdBy?.email ?? "" },
-  { id: "lastRotated", header: "Last rotated" },
-  { id: "status", header: "Status" },
+  { id: 'name', header: 'Name', enableHiding: false, accessorFn: (row) => row.name },
+  { id: 'allowedModels', header: 'Allowed Models', accessorFn: allowedModelsLabel },
+  { id: 'created', header: 'Created' },
+  { id: 'createdBy', header: 'Created by', accessorFn: (row) => row.createdBy?.email ?? '' },
+  { id: 'lastRotated', header: 'Last rotated' },
+  { id: 'status', header: 'Status' },
   actionsColumn(),
 ];
 
@@ -70,7 +70,7 @@ function openCreateDialog(): void {
 
 async function handleCreated(integration: CreatedIntegration): Promise<void> {
   isFormOpen.value = false;
-  revealed.value = { integration, verb: "created" };
+  revealed.value = { integration, verb: 'created' };
   await refresh();
 }
 
@@ -80,7 +80,7 @@ async function handleUpdated(integration: IntegrationSummary): Promise<void> {
   await refresh();
 }
 
-const revealed = ref<{ integration: CreatedIntegration; verb: "created" | "rotated" } | null>(null);
+const revealed = ref<{ integration: CreatedIntegration; verb: 'created' | 'rotated' } | null>(null);
 const isRevealOpen = computed({
   get: () => revealed.value !== null,
   set: (isOpen) => {
@@ -89,10 +89,10 @@ const isRevealOpen = computed({
 });
 
 async function setEnabled(integration: IntegrationSummary, isEnabled: boolean): Promise<void> {
-  const action = isEnabled ? "enable" : "disable";
+  const action = isEnabled ? 'enable' : 'disable';
   try {
-    await $dashboardApi(`/integrations/${integration.id}/${action}`, { method: "POST" });
-    showToast(`${isEnabled ? "Enabled" : "Disabled"} ${integration.name}`);
+    await $dashboardApi(`/integrations/${integration.id}/${action}`, { method: 'POST' });
+    showToast(`${isEnabled ? 'Enabled' : 'Disabled'} ${integration.name}`);
     await refresh();
   } catch (error) {
     showToast(apiErrorMessage(error, `Couldn't ${action} ${integration.name}.`));
@@ -102,7 +102,7 @@ async function setEnabled(integration: IntegrationSummary, isEnabled: boolean): 
 const confirming = ref<IntegrationConfirmation | null>(null);
 
 async function handleRotated(integration: CreatedIntegration): Promise<void> {
-  revealed.value = { integration, verb: "rotated" };
+  revealed.value = { integration, verb: 'rotated' };
   await refresh();
 }
 
@@ -111,30 +111,30 @@ async function handleDeleted(integration: IntegrationSummary): Promise<void> {
   await refresh();
 }
 
-type IntegrationActionId = "detail" | "edit" | "rotate" | "disable" | "enable" | "delete";
+type IntegrationActionId = 'detail' | 'edit' | 'rotate' | 'disable' | 'enable' | 'delete';
 
 function actionsFor(integration: IntegrationRow): RowAction<IntegrationActionId>[] {
   const toggle: RowAction<IntegrationActionId> =
-    integration.status === "enabled"
-      ? { id: "disable", label: "Disable", icon: CirclePause }
-      : { id: "enable", label: "Enable", icon: CirclePlay };
+    integration.status === 'enabled'
+      ? { id: 'disable', label: 'Disable', icon: CirclePause }
+      : { id: 'enable', label: 'Enable', icon: CirclePlay };
   return [
-    { id: "detail", label: "Detail", icon: Eye },
-    { id: "edit", label: "Edit", icon: Pencil },
-    { id: "rotate", label: "Rotate secret", icon: RefreshCw },
+    { id: 'detail', label: 'Detail', icon: Eye },
+    { id: 'edit', label: 'Edit', icon: Pencil },
+    { id: 'rotate', label: 'Rotate secret', icon: RefreshCw },
     toggle,
-    { id: "delete", label: "Delete", icon: Trash2, isDestructive: true },
+    { id: 'delete', label: 'Delete', icon: Trash2, isDestructive: true },
   ];
 }
 
 function handleAction(integration: IntegrationRow, id: IntegrationActionId): void {
-  if (id === "detail") {
+  if (id === 'detail') {
     void navigateTo(`/integrations/${integration.id}`);
-  } else if (id === "edit") {
+  } else if (id === 'edit') {
     editing.value = integration;
     isFormOpen.value = true;
-  } else if (id === "disable" || id === "enable") {
-    void setEnabled(integration, id === "enable");
+  } else if (id === 'disable' || id === 'enable') {
+    void setEnabled(integration, id === 'enable');
   } else {
     confirming.value = { kind: id, integration };
   }
@@ -178,7 +178,7 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
         <span class="tabular">{{ formatDate(integration.createdAt) }}</span>
       </template>
       <template #cell-createdBy="{ row: integration }">{{
-        integration.createdBy?.email ?? "—"
+        integration.createdBy?.email ?? '—'
       }}</template>
       <template #cell-lastRotated="{ row: integration }">
         <span v-if="integration.lastRotatedAt" class="tabular">{{

@@ -1,7 +1,7 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
 import {
   apiKeys,
   attempts,
@@ -10,13 +10,13 @@ import {
   providerAccounts,
   providers,
   usageLogs,
-} from "@/db/schemas";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+} from '@/db/schemas';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const RECEIVED_AT = new Date("2026-11-10T10:00:00Z");
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const RECEIVED_AT = new Date('2026-11-10T10:00:00Z');
 
-describe("Error Captures API (e2e)", () => {
+describe('Error Captures API (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let adaCookie: string;
@@ -34,37 +34,37 @@ describe("Error Captures API (e2e)", () => {
     adaCookie = await setUpFirstUser(app, ADA);
     const [{ id: modelId }] = await db
       .insert(models)
-      .values({ name: "smart" })
+      .values({ name: 'smart' })
       .returning({ id: models.id });
     const [{ id: apiKeyId }] = await db
       .insert(apiKeys)
-      .values({ name: "CI", keyId: "ci", hash: "hash-ci" })
+      .values({ name: 'CI', keyId: 'ci', hash: 'hash-ci' })
       .returning({ id: apiKeys.id });
     const [{ id: providerId }] = await db
       .insert(providers)
       .values({
-        slug: "acme",
-        name: "Acme",
-        endpoints: [{ kind: "chat", protocol: "openai-chat", baseUrl: "https://acme.test/v1" }],
-        authStyle: "bearer",
+        slug: 'acme',
+        name: 'Acme',
+        endpoints: [{ kind: 'chat', protocol: 'openai-chat', baseUrl: 'https://acme.test/v1' }],
+        authStyle: 'bearer',
       })
       .returning({ id: providers.id });
     [{ id: providerAccountId }] = await db
       .insert(providerAccounts)
-      .values({ providerId, name: "Acme main", encryptedKey: "v1.x.y.z", keyLastFour: "1234" })
+      .values({ providerId, name: 'Acme main', encryptedKey: 'v1.x.y.z', keyLastFour: '1234' })
       .returning({ id: providerAccounts.id });
     [{ id: usageLogId }] = await db
       .insert(usageLogs)
       .values({
         createdAt: RECEIVED_AT,
         apiKeyId,
-        apiKeyName: "CI",
+        apiKeyName: 'CI',
         modelId,
-        modelName: "smart",
-        clientProtocol: "openai-chat",
+        modelName: 'smart',
+        clientProtocol: 'openai-chat',
         isStreamed: false,
         httpStatus: 502,
-        errorCode: "upstream_error",
+        errorCode: 'upstream_error',
         requestBytes: 20,
         responseBytes: 80,
         durationMs: 300,
@@ -76,13 +76,13 @@ describe("Error Captures API (e2e)", () => {
       .values({
         usageLogId,
         startedAt: RECEIVED_AT,
-        providerSlug: "acme",
-        providerName: "Acme",
+        providerSlug: 'acme',
+        providerName: 'Acme',
         providerAccountId,
-        providerAccountName: "Acme main",
+        providerAccountName: 'Acme main',
         upstreamStatus: 500,
-        failureReason: "server_error",
-        upstreamRequestId: "req_acme_42",
+        failureReason: 'server_error',
+        upstreamRequestId: 'req_acme_42',
         durationMs: 250,
       })
       .returning({ id: attempts.id });
@@ -93,7 +93,7 @@ describe("Error Captures API (e2e)", () => {
   });
 
   function getCaptures(path: string, cookie = adaCookie) {
-    return request(app.getHttpServer()).get(`/api/error-captures${path}`).set("Cookie", cookie);
+    return request(app.getHttpServer()).get(`/api/error-captures${path}`).set('Cookie', cookie);
   }
 
   it("lists a Usage Log's captures newest first, naming what failed", async () => {
@@ -101,19 +101,19 @@ describe("Error Captures API (e2e)", () => {
       {
         usageLogId,
         attemptId,
-        createdAt: new Date("2026-11-10T10:00:01Z"),
+        createdAt: new Date('2026-11-10T10:00:01Z'),
         requestHeaders: {},
-        requestBody: "{}",
+        requestBody: '{}',
         responseHeaders: {},
-        responseBody: "down",
-        userAgent: "OpenAI/Python 1.54.0",
-        clientIp: "203.0.113.7",
+        responseBody: 'down',
+        userAgent: 'OpenAI/Python 1.54.0',
+        clientIp: '203.0.113.7',
       },
       {
         usageLogId,
-        createdAt: new Date("2026-11-10T10:00:00Z"),
+        createdAt: new Date('2026-11-10T10:00:00Z'),
         requestHeaders: {},
-        requestBody: "{}",
+        requestBody: '{}',
       },
     ]);
 
@@ -123,75 +123,75 @@ describe("Error Captures API (e2e)", () => {
     expect(response.body.items).toEqual([
       expect.objectContaining({
         usageLogId,
-        modelName: "smart",
-        apiKeyName: "CI",
+        modelName: 'smart',
+        apiKeyName: 'CI',
         httpStatus: 502,
-        errorCode: "upstream_error",
-        userAgent: "OpenAI/Python 1.54.0",
-        clientIp: "203.0.113.7",
+        errorCode: 'upstream_error',
+        userAgent: 'OpenAI/Python 1.54.0',
+        clientIp: '203.0.113.7',
         failedHop: {
-          kind: "gateway-to-provider-account",
+          kind: 'gateway-to-provider-account',
           attemptId,
           providerAccountId,
-          providerAccountName: "Acme main",
-          providerName: "Acme",
+          providerAccountName: 'Acme main',
+          providerName: 'Acme',
           upstreamStatus: 500,
-          failureReason: "server_error",
-          upstreamRequestId: "req_acme_42",
+          failureReason: 'server_error',
+          upstreamRequestId: 'req_acme_42',
         },
       }),
-      expect.objectContaining({ failedHop: { kind: "client-to-gateway" } }),
+      expect.objectContaining({ failedHop: { kind: 'client-to-gateway' } }),
     ]);
-    expect(response.body.items[0]).not.toHaveProperty("requestBody");
+    expect(response.body.items[0]).not.toHaveProperty('requestBody');
   });
 
-  it("shows one capture with its headers and bodies, and 404 for an unknown one", async () => {
+  it('shows one capture with its headers and bodies, and 404 for an unknown one', async () => {
     const [{ id }] = await db
       .insert(errorCaptures)
       .values({
         usageLogId,
         attemptId,
-        requestHeaders: { "content-type": "application/json" },
+        requestHeaders: { 'content-type': 'application/json' },
         requestBody: '{"model":"smart"}',
-        responseHeaders: { "retry-after": "5" },
+        responseHeaders: { 'retry-after': '5' },
         responseBody: '{"error":"down"}',
       })
       .returning({ id: errorCaptures.id });
 
     const response = await getCaptures(`/${id}`).expect(200);
-    await getCaptures("/00000000-0000-4000-8000-000000000000").expect(404);
+    await getCaptures('/00000000-0000-4000-8000-000000000000').expect(404);
 
     expect(response.body).toMatchObject({
       id,
-      requestHeaders: { "content-type": "application/json" },
+      requestHeaders: { 'content-type': 'application/json' },
       requestBody: '{"model":"smart"}',
-      responseHeaders: { "retry-after": "5" },
+      responseHeaders: { 'retry-after': '5' },
       responseBody: '{"error":"down"}',
-      failedHop: expect.objectContaining({ kind: "gateway-to-provider-account" }),
+      failedHop: expect.objectContaining({ kind: 'gateway-to-provider-account' }),
     });
   });
 
-  it("searches Model names, API Key names and error codes, alongside the Usage Log filter", async () => {
+  it('searches Model names, API Key names and error codes, alongside the Usage Log filter', async () => {
     const [{ id: fastId }] = await db
       .insert(models)
-      .values({ name: "fast" })
+      .values({ name: 'fast' })
       .returning({ id: models.id });
     const [{ id: laptopKeyId }] = await db
       .insert(apiKeys)
-      .values({ name: "Laptop", keyId: "laptop", hash: "hash-laptop" })
+      .values({ name: 'Laptop', keyId: 'laptop', hash: 'hash-laptop' })
       .returning({ id: apiKeys.id });
     const [{ id: timedOutLogId }] = await db
       .insert(usageLogs)
       .values({
         createdAt: RECEIVED_AT,
         apiKeyId: laptopKeyId,
-        apiKeyName: "Laptop",
+        apiKeyName: 'Laptop',
         modelId: fastId,
-        modelName: "fast",
-        clientProtocol: "openai-chat",
+        modelName: 'fast',
+        clientProtocol: 'openai-chat',
         isStreamed: false,
         httpStatus: 504,
-        errorCode: "upstream_timeout",
+        errorCode: 'upstream_timeout',
         requestBytes: 20,
         responseBytes: 0,
         durationMs: 30000,
@@ -199,27 +199,27 @@ describe("Error Captures API (e2e)", () => {
       })
       .returning({ id: usageLogs.id });
     await db.insert(errorCaptures).values([
-      { usageLogId, requestHeaders: {}, requestBody: "{}" },
-      { usageLogId: timedOutLogId, requestHeaders: {}, requestBody: "{}" },
+      { usageLogId, requestHeaders: {}, requestBody: '{}' },
+      { usageLogId: timedOutLogId, requestHeaders: {}, requestBody: '{}' },
     ]);
 
-    const byModel = await getCaptures("?q=SMART").expect(200);
-    const byApiKey = await getCaptures("?q=laptop").expect(200);
-    const byErrorCode = await getCaptures("?q=Timeout").expect(200);
+    const byModel = await getCaptures('?q=SMART').expect(200);
+    const byApiKey = await getCaptures('?q=laptop').expect(200);
+    const byErrorCode = await getCaptures('?q=Timeout').expect(200);
     const withOtherLog = await getCaptures(`?q=smart&usageLogId=${timedOutLogId}`).expect(200);
 
     expect(byModel.body.items).toEqual([expect.objectContaining({ usageLogId })]);
     expect(byApiKey.body.items).toEqual([
-      expect.objectContaining({ usageLogId: timedOutLogId, apiKeyName: "Laptop" }),
+      expect.objectContaining({ usageLogId: timedOutLogId, apiKeyName: 'Laptop' }),
     ]);
     expect(byErrorCode.body.total).toBe(1);
     expect(byErrorCode.body.items).toEqual([
-      expect.objectContaining({ errorCode: "upstream_timeout" }),
+      expect.objectContaining({ errorCode: 'upstream_timeout' }),
     ]);
     expect(withOtherLog.body.total).toBe(0);
   });
 
-  it("refuses requests without a signed-in User", async () => {
-    await getCaptures("", "").expect(401);
+  it('refuses requests without a signed-in User', async () => {
+    await getCaptures('', '').expect(401);
   });
 });

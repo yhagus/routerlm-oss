@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ArrowRight, Ban, KeyRound } from "@lucide/vue";
-import type { RowAction } from "~/components/RowActionsMenu.vue";
-import { apiErrorMessage } from "~/lib/api";
+import { ArrowRight, Ban, KeyRound } from '@lucide/vue';
+import type { RowAction } from '~/components/RowActionsMenu.vue';
+import { apiErrorMessage } from '~/lib/api';
 import {
   API_KEY_CONFIRM_COPY,
   API_KEY_STATUS_LABELS,
@@ -10,9 +10,9 @@ import {
   apiKeyStatus,
   requestRateLabel,
   spendLimitLabel,
-} from "~/lib/api-keys";
-import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
-import { dateFormat } from "~/lib/dateFormats";
+} from '~/lib/api-keys';
+import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
+import { dateFormat } from '~/lib/dateFormats';
 
 const props = defineProps<{ integrationId: string }>();
 const emit = defineEmits<{ revoked: [] }>();
@@ -24,11 +24,11 @@ const {
   error: loadError,
   status,
   refresh,
-} = useDashboardApi<ApiKeySummary[]>("/api-keys", {
+} = useDashboardApi<ApiKeySummary[]>('/api-keys', {
   query: computed(() => ({ integrationId: props.integrationId })),
 });
 
-const isLoading = computed(() => status.value === "pending" && !apiKeys.value);
+const isLoading = computed(() => status.value === 'pending' && !apiKeys.value);
 
 interface ApiKeyRow extends ApiKeySummary {
   status: ApiKeyStatus;
@@ -39,14 +39,14 @@ const rows = computed<ApiKeyRow[]>(() =>
 );
 
 const columns: DataTableColumn<ApiKeyRow>[] = [
-  { id: "name", header: "Name", enableHiding: false, accessorFn: (row) => row.name },
-  { id: "customer", header: "Customer", accessorFn: (row) => row.customerId ?? "" },
-  { id: "keyId", header: "Key id", accessorFn: (row) => `rlm_${row.keyId}` },
-  { id: "spendLimit", header: "Spend Limit" },
-  { id: "requestRate", header: "Request Rate" },
-  { id: "expires", header: "Expires" },
-  { id: "status", header: "Status", accessorFn: (row) => API_KEY_STATUS_LABELS[row.status] },
-  { id: "created", header: "Created" },
+  { id: 'name', header: 'Name', enableHiding: false, accessorFn: (row) => row.name },
+  { id: 'customer', header: 'Customer', accessorFn: (row) => row.customerId ?? '' },
+  { id: 'keyId', header: 'Key id', accessorFn: (row) => `rlm_${row.keyId}` },
+  { id: 'spendLimit', header: 'Spend Limit' },
+  { id: 'requestRate', header: 'Request Rate' },
+  { id: 'expires', header: 'Expires' },
+  { id: 'status', header: 'Status', accessorFn: (row) => API_KEY_STATUS_LABELS[row.status] },
+  { id: 'created', header: 'Created' },
   actionsColumn(),
 ];
 
@@ -54,13 +54,13 @@ function formatDate(value: string | null, whenNull: string): string {
   return value ? dateFormat.format(new Date(value)) : whenNull;
 }
 
-const REVOKE_ACTIONS: RowAction<"revoke">[] = [
-  { id: "revoke", label: "Revoke", icon: Ban, isDestructive: true },
+const REVOKE_ACTIONS: RowAction<'revoke'>[] = [
+  { id: 'revoke', label: 'Revoke', icon: Ban, isDestructive: true },
 ];
 
 const revoking = ref<ApiKeySummary | null>(null);
 const isRevoking = ref(false);
-const revokeError = ref("");
+const revokeError = ref('');
 const isRevokeOpen = computed({
   get: () => revoking.value !== null,
   set: (open) => {
@@ -69,7 +69,7 @@ const isRevokeOpen = computed({
 });
 
 function openRevoke(apiKey: ApiKeySummary): void {
-  revokeError.value = "";
+  revokeError.value = '';
   revoking.value = apiKey;
 }
 
@@ -77,12 +77,12 @@ async function revoke(): Promise<void> {
   const apiKey = revoking.value;
   if (!apiKey) return;
   isRevoking.value = true;
-  revokeError.value = "";
+  revokeError.value = '';
   try {
-    await $dashboardApi(`/api-keys/${apiKey.id}/revoke`, { method: "POST" });
+    await $dashboardApi(`/api-keys/${apiKey.id}/revoke`, { method: 'POST' });
     showToast(`Revoked ${apiKey.name}`);
     revoking.value = null;
-    emit("revoked");
+    emit('revoked');
     await refresh();
   } catch (error) {
     revokeError.value = apiErrorMessage(error, API_KEY_CONFIRM_COPY.revoke.failed);
@@ -116,7 +116,7 @@ async function revoke(): Promise<void> {
       </div>
     </template>
     <template #cell-customer="{ row: apiKey }">
-      <span class="tabular">{{ apiKey.customerId ?? "—" }}</span>
+      <span class="tabular">{{ apiKey.customerId ?? '—' }}</span>
     </template>
     <template #cell-keyId="{ row: apiKey }">
       <span class="tabular">rlm_{{ apiKey.keyId }}_…</span>
@@ -128,7 +128,7 @@ async function revoke(): Promise<void> {
       <span class="tabular">{{ requestRateLabel(apiKey) }}</span>
     </template>
     <template #cell-expires="{ row: apiKey }">
-      <span class="tabular">{{ formatDate(apiKey.expiresAt, "Never") }}</span>
+      <span class="tabular">{{ formatDate(apiKey.expiresAt, 'Never') }}</span>
     </template>
     <template #cell-status="{ row: apiKey }">
       <span
@@ -138,7 +138,7 @@ async function revoke(): Promise<void> {
       >
     </template>
     <template #cell-created="{ row: apiKey }">
-      <span class="tabular">{{ formatDate(apiKey.createdAt, "—") }}</span>
+      <span class="tabular">{{ formatDate(apiKey.createdAt, '—') }}</span>
     </template>
     <template #cell-actions="{ row: apiKey }">
       <div class="row-actions">

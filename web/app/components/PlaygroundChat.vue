@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Code, ImagePlus, SlidersHorizontal, Square, Trash2, X } from "@lucide/vue";
+import { Code, ImagePlus, SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
   DialogDescription,
@@ -7,21 +7,21 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "reka-ui";
-import { computed, reactive, ref, watch } from "vue";
+} from 'reka-ui';
+import { computed, reactive, ref, watch } from 'vue';
 import {
   Context,
   ContextContent,
   ContextContentBody,
   ContextContentFooter,
   ContextTrigger,
-} from "@/components/ai-elements/context";
+} from '@/components/ai-elements/context';
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+} from '@/components/ai-elements/conversation';
+import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message';
 import {
   PromptInput,
   PromptInputBody,
@@ -33,15 +33,15 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputProvider,
-} from "@/components/ai-elements/prompt-input";
-import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
-import { Shimmer } from "@/components/ai-elements/shimmer";
-import { code } from "@stream-markdown/code";
-import { math } from "@stream-markdown/math";
-import { mermaid } from "@stream-markdown/mermaid";
-import { MarkdownProvider } from "vue-stream-markdown";
-import { apiErrorMessage } from "~/lib/api";
-import { REASONING_EFFORTS, type ReasoningEffort } from "~/lib/parameterPolicy";
+} from '@/components/ai-elements/prompt-input';
+import { Reasoning, ReasoningContent, ReasoningTrigger } from '@/components/ai-elements/reasoning';
+import { Shimmer } from '@/components/ai-elements/shimmer';
+import { code } from '@stream-markdown/code';
+import { math } from '@stream-markdown/math';
+import { mermaid } from '@stream-markdown/mermaid';
+import { MarkdownProvider } from 'vue-stream-markdown';
+import { apiErrorMessage } from '~/lib/api';
+import { REASONING_EFFORTS, type ReasoningEffort } from '~/lib/parameterPolicy';
 import {
   type AssistantMessage,
   chatCompletionRequest,
@@ -52,18 +52,18 @@ import {
   type PlaygroundSummary,
   playgroundErrorOfFailure,
   streamEventsOf,
-} from "~/lib/playground";
-import type { RouteSummary } from "~/lib/routing";
-import { formatCost, formatCount } from "~/lib/usage";
+} from '~/lib/playground';
+import type { RouteSummary } from '~/lib/routing';
+import { formatCost, formatCount } from '~/lib/usage';
 
 const isDark = useIsDark();
 const markdownExtensions = {
   code: code(),
   math: math(),
-  mermaid: mermaid({ config: { securityLevel: "strict" } }),
+  mermaid: mermaid({ config: { securityLevel: 'strict' } }),
 };
 
-const MODEL_DEFAULT = "default";
+const MODEL_DEFAULT = 'default';
 const { $dashboardApi } = useNuxtApp();
 
 const {
@@ -78,15 +78,15 @@ const {
   isLoadingSource,
   requestModel,
   requestPath,
-} = usePlaygroundTarget("chat");
+} = usePlaygroundTarget('chat');
 
-const systemPrompt = ref("");
-const temperature = ref("");
-const topP = ref("");
-const maxOutputTokens = ref("");
+const systemPrompt = ref('');
+const temperature = ref('');
+const topP = ref('');
+const maxOutputTokens = ref('');
 const reasoningEffort = ref(MODEL_DEFAULT);
 const reasoningOptions = [
-  { value: MODEL_DEFAULT, label: "Model default" },
+  { value: MODEL_DEFAULT, label: 'Model default' },
   ...REASONING_EFFORTS.map((effort) => ({ value: effort, label: effort })),
 ];
 const isSettingsSheetOpen = ref(false);
@@ -96,24 +96,24 @@ function isReasoningEffort(value: string): value is ReasoningEffort {
 }
 
 function numberField(text: string, isValid: (value: number) => boolean): number | undefined | null {
-  if (text.trim() === "") return undefined;
+  if (text.trim() === '') return undefined;
   const value = Number(text);
   return Number.isFinite(value) && isValid(value) ? value : null;
 }
 
 function readSettings(): { settings: PlaygroundSettings } | { problem: string } {
   const target = requestModel();
-  if ("problem" in target) return target;
+  if ('problem' in target) return target;
   const parsedTemperature = numberField(temperature.value, (value) => value >= 0 && value <= 2);
-  if (parsedTemperature === null) return { problem: "Temperature must be from 0 to 2." };
+  if (parsedTemperature === null) return { problem: 'Temperature must be from 0 to 2.' };
   const parsedTopP = numberField(topP.value, (value) => value >= 0 && value <= 1);
-  if (parsedTopP === null) return { problem: "Top P must be from 0 to 1." };
+  if (parsedTopP === null) return { problem: 'Top P must be from 0 to 1.' };
   const parsedMaxOutputTokens = numberField(
     maxOutputTokens.value,
     (value) => Number.isInteger(value) && value > 0,
   );
   if (parsedMaxOutputTokens === null) {
-    return { problem: "Max output tokens must be a whole number above 0." };
+    return { problem: 'Max output tokens must be a whole number above 0.' };
   }
   return {
     settings: {
@@ -129,10 +129,10 @@ function readSettings(): { settings: PlaygroundSettings } | { problem: string } 
 
 const sentParameters = computed(() => {
   const parameters: string[] = [];
-  if (systemPrompt.value.trim() !== "") parameters.push("System prompt");
-  if (temperature.value.trim() !== "") parameters.push(`Temperature ${temperature.value}`);
-  if (topP.value.trim() !== "") parameters.push(`Top P ${topP.value}`);
-  if (maxOutputTokens.value.trim() !== "") {
+  if (systemPrompt.value.trim() !== '') parameters.push('System prompt');
+  if (temperature.value.trim() !== '') parameters.push(`Temperature ${temperature.value}`);
+  if (topP.value.trim() !== '') parameters.push(`Top P ${topP.value}`);
+  if (maxOutputTokens.value.trim() !== '') {
     const tokens = Number(maxOutputTokens.value);
     parameters.push(
       `Max ${Number.isFinite(tokens) ? formatCount(tokens) : maxOutputTokens.value} tokens`,
@@ -143,8 +143,8 @@ const sentParameters = computed(() => {
 });
 
 const canSeeImages = computed(() =>
-  source.value === "upstream"
-    ? Boolean(selectedUpstreamModel.value?.capabilities.includes("vision"))
+  source.value === 'upstream'
+    ? Boolean(selectedUpstreamModel.value?.capabilities.includes('vision'))
     : (modelDetail.value?.routes ?? []).some(
         (route) =>
           route.isEnabled &&
@@ -152,7 +152,7 @@ const canSeeImages = computed(() =>
           !blockedProviderIds.value.has(route.provider.id) &&
           route.upstreamModel.isEnabled &&
           route.enabledProviderAccountCount > 0 &&
-          route.upstreamModel.capabilities.includes("vision"),
+          route.upstreamModel.capabilities.includes('vision'),
       ),
 );
 
@@ -166,23 +166,23 @@ function isDirect(message: AssistantMessage): boolean {
 }
 
 const conversation = ref<PlaygroundMessage[]>([]);
-const composerError = ref("");
+const composerError = ref('');
 const runningRequest = ref<AbortController | null>(null);
 const isSending = computed(() => runningRequest.value !== null);
 
 const INPUT_ERRORS: Record<string, string> = {
-  accept: "Only images can be attached.",
-  max_file_size: "Images must be 5 MB or smaller.",
+  accept: 'Only images can be attached.',
+  max_file_size: 'Images must be 5 MB or smaller.',
 };
 
 const promptInput = usePromptInputProvider({
-  accept: "image/*",
+  accept: 'image/*',
   maxFileSize: MAX_IMAGE_BYTES,
   onSubmit: submit,
   onError: (error) => (composerError.value = INPUT_ERRORS[error.code] ?? error.message),
 });
 const hasDraft = computed(
-  () => promptInput.textInput.value.trim() !== "" || promptInput.files.value.length > 0,
+  () => promptInput.textInput.value.trim() !== '' || promptInput.files.value.length > 0,
 );
 const canSend = computed(() => !isSending.value && canTry.value && hasDraft.value);
 const isActivated = useIsActivated();
@@ -190,12 +190,12 @@ const isActivated = useIsActivated();
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSending.value) return;
   const read = readSettings();
-  if ("problem" in read) throw new Error(read.problem);
+  if ('problem' in read) throw new Error(read.problem);
   const text = message.text.trim();
   const imageUrls = message.files.map((file) => file.url);
-  if (text === "" && imageUrls.length === 0) return;
-  composerError.value = "";
-  void send(read.settings, requestPath("chat/completions"), text, imageUrls);
+  if (text === '' && imageUrls.length === 0) return;
+  composerError.value = '';
+  void send(read.settings, requestPath('chat/completions'), text, imageUrls);
 }
 
 function start(prompt: string, withImage: boolean): void {
@@ -210,15 +210,15 @@ async function send(
   text: string,
   imageUrls: string[],
 ): Promise<void> {
-  conversation.value.push({ role: "user", text, imageUrls });
+  conversation.value.push({ role: 'user', text, imageUrls });
   const body = chatCompletionRequest(settings, conversation.value);
   const answer = reactive<AssistantMessage>({
-    role: "assistant",
-    text: "",
-    reasoning: "",
-    state: { kind: "streaming" },
+    role: 'assistant',
+    text: '',
+    reasoning: '',
+    state: { kind: 'streaming' },
   });
-  if (source.value === "upstream") {
+  if (source.value === 'upstream') {
     directAnswers.add(answer);
   } else if (modelDetail.value?.name === settings.model) {
     routesByAnswer.set(answer, modelDetail.value.routes);
@@ -229,32 +229,32 @@ async function send(
   runningRequest.value = request;
   try {
     const stream = await $dashboardApi(path, {
-      method: "POST",
+      method: 'POST',
       body,
-      responseType: "stream",
+      responseType: 'stream',
       signal: request.signal,
     });
     let streamError: PlaygroundError | null = null;
     let summary: PlaygroundSummary | null = null;
     for await (const event of streamEventsOf(stream)) {
-      if (event.kind === "text") answer.text += event.text;
-      else if (event.kind === "reasoning") answer.reasoning += event.text;
-      else if (event.kind === "error") streamError = event.error;
+      if (event.kind === 'text') answer.text += event.text;
+      else if (event.kind === 'reasoning') answer.reasoning += event.text;
+      else if (event.kind === 'error') streamError = event.error;
       else summary = event.summary;
     }
     answer.state = streamError
-      ? { kind: "failed", error: streamError, summary }
-      : { kind: "done", summary };
+      ? { kind: 'failed', error: streamError, summary }
+      : { kind: 'done', summary };
   } catch (failure) {
     if (request.signal.aborted) {
-      answer.state = { kind: "stopped" };
+      answer.state = { kind: 'stopped' };
       return;
     }
     const error = (await playgroundErrorOfFailure(failure)) ?? {
       code: null,
-      message: apiErrorMessage(failure, "The request did not reach the gateway."),
+      message: apiErrorMessage(failure, 'The request did not reach the gateway.'),
     };
-    answer.state = { kind: "failed", error, summary: null };
+    answer.state = { kind: 'failed', error, summary: null };
   } finally {
     runningRequest.value = null;
   }
@@ -270,7 +270,7 @@ function clearConversation(): void {
 }
 
 function isThinking(message: AssistantMessage): boolean {
-  return message.state.kind === "streaming" && message.text === "";
+  return message.state.kind === 'streaming' && message.text === '';
 }
 
 const sessionTotals = computed(() => {
@@ -284,9 +284,9 @@ const sessionTotals = computed(() => {
     cost: number | null;
   } = { requests: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0, cost: null };
   for (const message of conversation.value) {
-    if (message.role !== "assistant" || message.state.kind === "streaming") continue;
+    if (message.role !== 'assistant' || message.state.kind === 'streaming') continue;
     totals.requests += 1;
-    const summary = message.state.kind === "stopped" ? null : message.state.summary;
+    const summary = message.state.kind === 'stopped' ? null : message.state.summary;
     if (!summary) continue;
     totals.input += summary.usage.inputTokens ?? 0;
     totals.output += summary.usage.outputTokens ?? 0;
@@ -299,34 +299,34 @@ const sessionTotals = computed(() => {
 });
 const sessionRows = computed(() =>
   [
-    { label: "Input", value: sessionTotals.value.input },
-    { label: "Output", value: sessionTotals.value.output },
-    { label: "Cache read", value: sessionTotals.value.cacheRead },
-    { label: "Cache write", value: sessionTotals.value.cacheWrite },
-    { label: "Reasoning", value: sessionTotals.value.reasoning },
+    { label: 'Input', value: sessionTotals.value.input },
+    { label: 'Output', value: sessionTotals.value.output },
+    { label: 'Cache read', value: sessionTotals.value.cacheRead },
+    { label: 'Cache write', value: sessionTotals.value.cacheWrite },
+    { label: 'Reasoning', value: sessionTotals.value.reasoning },
   ].filter((row, index) => index < 2 || row.value > 0),
 );
 
 const settingsHint = computed(() =>
-  source.value === "model"
+  source.value === 'model'
     ? "Empty parameters leave the choice to the Model's Parameter Policy."
     : "Empty parameters aren't sent: a direct test applies no Parameter Policy.",
 );
 
 const isCodeOpen = ref(false);
 const codeRequest = computed(() => {
-  if (source.value === "upstream") {
+  if (source.value === 'upstream') {
     return {
       problem:
-        "Client applications reach Upstream Models only through a Model. Switch the source to Model to copy a request.",
+        'Client applications reach Upstream Models only through a Model. Switch the source to Model to copy a request.',
     };
   }
   const read = readSettings();
-  if ("problem" in read) return { problem: read.problem };
+  if ('problem' in read) return { problem: read.problem };
   const pending: PlaygroundMessage[] = hasDraft.value
     ? [
         {
-          role: "user",
+          role: 'user',
           text: promptInput.textInput.value.trim(),
           imageUrls: promptInput.files.value.map((file) => file.url),
         },
@@ -348,7 +348,7 @@ const codeRequest = computed(() => {
             }}</span>
           </template>
           <span v-else class="bench-bar__muted">{{
-            source === "model" ? "Parameters from the Model's policy" : "No parameters: sent as-is"
+            source === 'model' ? "Parameters from the Model's policy" : 'No parameters: sent as-is'
           }}</span>
         </p>
         <Context
@@ -360,7 +360,7 @@ const codeRequest = computed(() => {
             <button class="bench-bar__totals tabular" type="button">
               <span
                 >{{ sessionTotals.requests }}
-                {{ sessionTotals.requests === 1 ? "request" : "requests" }}</span
+                {{ sessionTotals.requests === 1 ? 'request' : 'requests' }}</span
               >
               <span>{{ formatCount(sessionTotals.input + sessionTotals.output) }} tokens</span>
               <span>{{ formatCost(sessionTotals.cost) }}</span>
@@ -469,7 +469,7 @@ const codeRequest = computed(() => {
                 <p v-if="message.state.kind === 'stopped'" class="exchange__note">Stopped.</p>
                 <p v-if="message.state.kind === 'failed'" class="exchange__error" role="alert">
                   <span class="status-badge status-badge--bad">{{
-                    message.state.error.code ?? "Error"
+                    message.state.error.code ?? 'Error'
                   }}</span>
                   {{ message.state.error.message }}
                 </p>

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 defineProps<{ reasoningOptions: { value: string; label: string }[] }>();
 
-const systemPrompt = defineModel<string>("systemPrompt", { required: true });
-const temperature = defineModel<string>("temperature", { required: true });
-const topP = defineModel<string>("topP", { required: true });
-const maxOutputTokens = defineModel<string>("maxOutputTokens", { required: true });
-const reasoningEffort = defineModel<string>("reasoningEffort", { required: true });
+const systemPrompt = defineModel<string>('systemPrompt', { required: true });
+const temperature = defineModel<string>('temperature', { required: true });
+const topP = defineModel<string>('topP', { required: true });
+const maxOutputTokens = defineModel<string>('maxOutputTokens', { required: true });
+const reasoningEffort = defineModel<string>('reasoningEffort', { required: true });
 </script>
 
 <template>

@@ -1,6 +1,6 @@
-import { dataUriOf, type MediaUpload } from "@/inference/models/media-upload";
+import { dataUriOf, type MediaUpload } from '@/inference/models/media-upload';
 
-export const TRANSCRIPTION_FILE_FIELD = "file";
+export const TRANSCRIPTION_FILE_FIELD = 'file';
 
 export interface TranscriptionFile {
   contentType: string;
@@ -17,5 +17,5 @@ export function transcriptionBodyOf(body: unknown, file: MediaUpload | undefined
     fileName: file.originalname,
     dataUri: dataUriOf(file),
   };
-  return { ...(typeof body === "object" && body), file: transcriptionFile };
+  return { ...(typeof body === 'object' && body), file: transcriptionFile };
 }

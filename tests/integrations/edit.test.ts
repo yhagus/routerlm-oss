@@ -1,15 +1,15 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { models } from "@/db/schemas";
-import { authenticateWithIntegrationSecret, createIntegration } from "@tests/support/integrations";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { models } from '@/db/schemas';
+import { authenticateWithIntegrationSecret, createIntegration } from '@tests/support/integrations';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
-const UNKNOWN_ID = "00000000-0000-4000-8000-000000000000";
+const ADA = { email: 'ada@example.com', password: "ada's password" };
+const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 
-describe("Editing an Integration (e2e)", () => {
+describe('Editing an Integration (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let adaCookie: string;
@@ -28,57 +28,57 @@ describe("Editing an Integration (e2e)", () => {
     await app.close();
   });
 
-  it("renames an Integration and restricts its Models, keeping its secret working", async () => {
-    const [model] = await db.insert(models).values({ name: "smart" }).returning();
+  it('renames an Integration and restricts its Models, keeping its secret working', async () => {
+    const [model] = await db.insert(models).values({ name: 'smart' }).returning();
     const created = await createIntegration(app, adaCookie);
 
     const edited = await request(app.getHttpServer())
       .patch(`/api/integrations/${created.id}`)
-      .set("Cookie", adaCookie)
-      .send({ name: "Acme Cloud", allowedModelIds: [model.id] })
+      .set('Cookie', adaCookie)
+      .send({ name: 'Acme Cloud', allowedModelIds: [model.id] })
       .expect(200);
 
     expect(edited.body).toMatchObject({
       id: created.id,
-      name: "Acme Cloud",
-      allowedModels: [{ id: model.id, name: "smart" }],
+      name: 'Acme Cloud',
+      allowedModels: [{ id: model.id, name: 'smart' }],
     });
     await expect(authenticateWithIntegrationSecret(app, created.secret)).resolves.toMatchObject({
-      user: { integrationName: "Acme Cloud", allowedModelIds: [model.id] },
+      user: { integrationName: 'Acme Cloud', allowedModelIds: [model.id] },
     });
   });
 
-  it("opens an Integration to every Model with an empty list", async () => {
-    const [model] = await db.insert(models).values({ name: "smart" }).returning();
+  it('opens an Integration to every Model with an empty list', async () => {
+    const [model] = await db.insert(models).values({ name: 'smart' }).returning();
     const created = await createIntegration(app, adaCookie, {
-      name: "Acme SaaS",
+      name: 'Acme SaaS',
       allowedModelIds: [model.id],
     });
 
     const edited = await request(app.getHttpServer())
       .patch(`/api/integrations/${created.id}`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .send({ allowedModelIds: [] })
       .expect(200);
 
-    expect(edited.body).toMatchObject({ name: "Acme SaaS", allowedModels: [] });
+    expect(edited.body).toMatchObject({ name: 'Acme SaaS', allowedModels: [] });
   });
 
-  it("rejects an allowed Model that does not exist", async () => {
+  it('rejects an allowed Model that does not exist', async () => {
     const created = await createIntegration(app, adaCookie);
 
     await request(app.getHttpServer())
       .patch(`/api/integrations/${created.id}`)
-      .set("Cookie", adaCookie)
+      .set('Cookie', adaCookie)
       .send({ allowedModelIds: [UNKNOWN_ID] })
       .expect(400);
   });
 
-  it("answers 404 for an Integration that does not exist", async () => {
+  it('answers 404 for an Integration that does not exist', async () => {
     await request(app.getHttpServer())
       .patch(`/api/integrations/${UNKNOWN_ID}`)
-      .set("Cookie", adaCookie)
-      .send({ name: "Acme Cloud" })
+      .set('Cookie', adaCookie)
+      .send({ name: 'Acme Cloud' })
       .expect(404);
   });
 });

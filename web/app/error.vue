@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { NuxtError } from "#app";
+import type { NuxtError } from '#app';
 import {
   Check,
   ChevronRight,
@@ -8,10 +8,10 @@ import {
   RotateCw,
   SearchX,
   TriangleAlert,
-} from "@lucide/vue";
-import { computed, onMounted, ref, useTemplateRef } from "vue";
-import { isNotFound, missingResourceHint, missingResourceOf } from "~/lib/errors";
-import { findNavigationItem } from "~/lib/navigation";
+} from '@lucide/vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { isNotFound, missingResourceHint, missingResourceOf } from '~/lib/errors';
+import { findNavigationItem } from '~/lib/navigation';
 
 const COPY_FEEDBACK_MS = 2000;
 
@@ -25,18 +25,18 @@ const notFound = computed(() => isNotFound(props.error));
 const resource = computed(() => missingResourceOf(props.error));
 const section = computed(() => findNavigationItem(route.path));
 const backLabel = computed(() =>
-  section.value && section.value.path !== "/" ? `Back to ${section.value.label}` : "Go to Overview",
+  section.value && section.value.path !== '/' ? `Back to ${section.value.label}` : 'Go to Overview',
 );
 
-const statusLabel = computed(() => (notFound.value ? "Not found" : "Error"));
+const statusLabel = computed(() => (notFound.value ? 'Not found' : 'Error'));
 const headline = computed(() => {
   if (resource.value) return `This ${resource.value} doesn't exist.`;
   if (notFound.value) return "This page doesn't exist.";
-  return "Something went wrong on this page.";
+  return 'Something went wrong on this page.';
 });
 const hint = computed(() => {
   if (resource.value) return missingResourceHint(resource.value);
-  if (notFound.value) return "The link may be out of date, or the address was mistyped.";
+  if (notFound.value) return 'The link may be out of date, or the address was mistyped.';
   return "The dashboard hit an error it couldn't recover from. Try again; if it keeps happening, copy the details into a bug report.";
 });
 const icon = computed(() => {
@@ -45,18 +45,18 @@ const icon = computed(() => {
 });
 const detailMessage = computed(() => {
   if (resource.value) return props.error.message;
-  if (notFound.value) return "No dashboard page matches this address.";
-  return props.error.message || "No message was given.";
+  if (notFound.value) return 'No dashboard page matches this address.';
+  return props.error.message || 'No message was given.';
 });
 const statusText = computed(() =>
   notFound.value
     ? `${props.error.statusCode} Not Found`
-    : `${props.error.statusCode} ${props.error.statusMessage || "Error"}`,
+    : `${props.error.statusCode} ${props.error.statusMessage || 'Error'}`,
 );
 
 useHead({ title: `${statusLabel.value} · RouterLM` });
 
-const copyState = ref<"idle" | "copied" | "failed">("idle");
+const copyState = ref<'idle' | 'copied' | 'failed'>('idle');
 let copyTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function copyDetails(): Promise<void> {
@@ -64,26 +64,26 @@ async function copyDetails(): Promise<void> {
     `Status: ${statusText.value}`,
     `Message: ${detailMessage.value}`,
     `Time: ${occurredAt}`,
-  ].join("\n");
+  ].join('\n');
   try {
     await navigator.clipboard.writeText(report);
-    copyState.value = "copied";
+    copyState.value = 'copied';
   } catch {
-    copyState.value = "failed";
+    copyState.value = 'failed';
   }
   clearTimeout(copyTimer);
-  copyTimer = setTimeout(() => (copyState.value = "idle"), COPY_FEEDBACK_MS);
+  copyTimer = setTimeout(() => (copyState.value = 'idle'), COPY_FEEDBACK_MS);
 }
 
 function goBack(): void {
-  void clearError({ redirect: section.value?.path ?? "/" });
+  void clearError({ redirect: section.value?.path ?? '/' });
 }
 
 function tryAgain(): void {
   reloadNuxtApp({ path: route.fullPath, force: true });
 }
 
-const headlineRef = useTemplateRef<HTMLHeadingElement>("headline");
+const headlineRef = useTemplateRef<HTMLHeadingElement>('headline');
 onMounted(() => headlineRef.value?.focus());
 </script>
 
@@ -134,11 +134,11 @@ onMounted(() => headlineRef.value?.focus());
         <button type="button" class="button error-details__copy" @click="copyDetails">
           <Check v-if="copyState === 'copied'" :size="14" /><Copy v-else :size="14" />
           <span aria-live="polite">{{
-            copyState === "copied"
-              ? "Copied"
-              : copyState === "failed"
+            copyState === 'copied'
+              ? 'Copied'
+              : copyState === 'failed'
                 ? "Couldn't copy"
-                : "Copy details"
+                : 'Copy details'
           }}</span>
         </button>
       </details>

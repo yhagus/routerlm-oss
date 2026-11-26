@@ -1,14 +1,14 @@
-import { mayUseModel } from "@/api-keys/models/api-key";
-import type { ModelKind } from "@/db/schemas";
+import { mayUseModel } from '@/api-keys/models/api-key';
+import type { ModelKind } from '@/db/schemas';
 import {
   isUpstreamModelUsable,
   type Snapshot,
   type SnapshotModel,
   type SnapshotUpstreamModel,
-} from "@/snapshot/models/snapshot";
-import { GatewayError } from "./gateway-error";
-import type { InferenceCaller, ProbeTarget } from "./inference";
-import type { AttemptPath, AttemptTarget } from "./route-selection";
+} from '@/snapshot/models/snapshot';
+import { GatewayError } from './gateway-error';
+import type { InferenceCaller, ProbeTarget } from './inference';
+import type { AttemptPath, AttemptTarget } from './route-selection';
 
 export type Destination = FallbackDestination | ProbeDestination;
 
@@ -19,12 +19,12 @@ interface ResolvedNames {
 }
 
 export interface FallbackDestination extends ResolvedNames {
-  kind: "fallback";
+  kind: 'fallback';
   paths: AttemptPath[];
 }
 
 export interface ProbeDestination extends ResolvedNames {
-  kind: "probe";
+  kind: 'probe';
   target: AttemptTarget;
   totalTimeoutMs: number;
 }
@@ -36,13 +36,13 @@ export function usableModel(
 ): SnapshotModel {
   const model = snapshot.modelsByName.get(name);
   if (!model?.isEnabled) {
-    throw new GatewayError("model_not_found", `The Model "${name}" does not exist`, "client");
+    throw new GatewayError('model_not_found', `The Model "${name}" does not exist`, 'client');
   }
-  if (caller.kind === "api-key" && !mayUseModel(caller.principal, model.id)) {
+  if (caller.kind === 'api-key' && !mayUseModel(caller.principal, model.id)) {
     throw new GatewayError(
-      "model_not_allowed",
+      'model_not_allowed',
       `This API Key may not use the Model "${name}"`,
-      "client",
+      'client',
     );
   }
   return model;
@@ -56,9 +56,9 @@ export function upstreamModelServedHere(
   const upstreamModel = snapshot.upstreamModelsById.get(upstreamModelRowId);
   if (upstreamModel === undefined || !isUpstreamModelUsable(upstreamModel)) {
     throw new GatewayError(
-      "model_not_found",
+      'model_not_found',
       `The Upstream Model "${upstreamModelRowId}" does not exist`,
-      "client",
+      'client',
     );
   }
   assertKindServedHere(
@@ -80,9 +80,9 @@ export function probeDestination(
   );
   if (!upstreamModel || !providerAccount) {
     throw new GatewayError(
-      "model_not_found",
+      'model_not_found',
       `The Upstream Model "${upstreamModelId}" has no Provider Account "${providerAccountId}"`,
-      "client",
+      'client',
     );
   }
   assertKindServedHere(
@@ -91,7 +91,7 @@ export function probeDestination(
     endpointKind,
   );
   return {
-    kind: "probe",
+    kind: 'probe',
     model: null,
     id: upstreamModel.id,
     name: upstreamModel.upstreamModelId,
@@ -107,9 +107,9 @@ export function assertKindServedHere(
 ): void {
   if (itsKind !== endpointKind) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `The ${named} has the Kind ${itsKind}, but this endpoint serves the Kind ${endpointKind}`,
-      "client",
+      'client',
     );
   }
 }

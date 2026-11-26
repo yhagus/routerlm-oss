@@ -1,22 +1,22 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { asc, eq, inArray } from "drizzle-orm";
-import type { Database, Transaction } from "@/db/schemas/relations";
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { asc, eq, inArray } from 'drizzle-orm';
+import type { Database, Transaction } from '@/db/schemas/relations';
 import {
   pricingWindows,
   providers,
   upstreamModelPricingWindows,
   upstreamModels,
-} from "@/db/schemas";
-import { UpdatePricingWindowCommand } from "@/pricing-windows/commands/impl/update-pricing-window.command";
+} from '@/db/schemas';
+import { UpdatePricingWindowCommand } from '@/pricing-windows/commands/impl/update-pricing-window.command';
 import {
   type PricingWindow,
   toPricingWindowWriteError,
-} from "@/pricing-windows/models/pricing-window";
-import { selectAttachmentsByUpstreamModelId } from "@/pricing-windows/models/upstream-model-pricing-windows";
-import { findOverlappingWindowPrices } from "@/pricing-windows/models/window-prices-overlap";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+} from '@/pricing-windows/models/pricing-window';
+import { selectAttachmentsByUpstreamModelId } from '@/pricing-windows/models/upstream-model-pricing-windows';
+import { findOverlappingWindowPrices } from '@/pricing-windows/models/window-prices-overlap';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 
 @CommandHandler(UpdatePricingWindowCommand)
 export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricingWindowCommand> {
@@ -44,7 +44,7 @@ export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricing
       throw toPricingWindowWriteError(error, changes.name);
     }
     if (!updated) {
-      throw new NotFoundException("Pricing Window not found");
+      throw new NotFoundException('Pricing Window not found');
     }
     await this.snapshot.changed();
     return updated;
@@ -81,7 +81,7 @@ export class UpdatePricingWindowHandler implements ICommandHandler<UpdatePricing
       (model) => `${model.upstreamModelId} (${model.providerName})`,
     );
     throw new BadRequestException(
-      `Window Prices would overlap on the Upstream Models ${modelNames.join(", ")}, so this Pricing Window's schedule can't change; change their Window Prices first`,
+      `Window Prices would overlap on the Upstream Models ${modelNames.join(', ')}, so this Pricing Window's schedule can't change; change their Window Prices first`,
     );
   }
 }

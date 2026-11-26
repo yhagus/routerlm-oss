@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { BundledLanguage, ThemedToken } from "shiki";
-import type { TokenizedCode } from "./utils";
-import { cn } from "@/lib/utils";
-import { computed, ref, watch } from "vue";
-import { createRawTokens, highlightCode, isBold, isItalic, isUnderline } from "./utils";
+import type { BundledLanguage, ThemedToken } from 'shiki';
+import type { TokenizedCode } from './utils';
+import { cn } from '@/lib/utils';
+import { computed, ref, watch } from 'vue';
+import { createRawTokens, highlightCode, isBold, isItalic, isUnderline } from './utils';
 
 const props = withDefaults(
   defineProps<{
@@ -58,16 +58,16 @@ const keyedLines = computed<KeyedLine[]>(() =>
 );
 
 const lineNumberClasses = cn(
-  "block",
-  "before:content-[counter(line)]",
-  "before:inline-block",
-  "before:[counter-increment:line]",
-  "before:w-8",
-  "before:mr-4",
-  "before:text-right",
-  "before:text-muted-foreground/50",
-  "before:font-mono",
-  "before:select-none",
+  'block',
+  'before:content-[counter(line)]',
+  'before:inline-block',
+  'before:[counter-increment:line]',
+  'before:w-8',
+  'before:mr-4',
+  'before:text-right',
+  'before:text-muted-foreground/50',
+  'before:font-mono',
+  'before:select-none',
 );
 </script>
 

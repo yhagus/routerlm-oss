@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { apiErrorMessage } from "~/lib/api";
-import { REASONING_EFFORTS, SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/parameterPolicy";
-import { PROVIDER_LOGOS } from "~/lib/providerLogos";
-import { TERMS_RISK_HINT } from "~/lib/upstream";
+import { apiErrorMessage } from '~/lib/api';
+import { REASONING_EFFORTS, SERVICE_TIER_LABELS, SERVICE_TIERS } from '~/lib/parameterPolicy';
+import { PROVIDER_LOGOS } from '~/lib/providerLogos';
+import { TERMS_RISK_HINT } from '~/lib/upstream';
 import {
   chatProtocolsOf,
   providerFieldsFromForm,
   providerFormFor,
   slugFromName,
-} from "~/lib/providerForm";
+} from '~/lib/providerForm';
 import {
   type AuthStyle,
   CREDENTIAL_KIND_LABELS,
@@ -19,30 +19,30 @@ import {
   mainBaseUrl,
   type Provider,
   QUOTA_READER_OPTIONS,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 const props = defineProps<{ provider?: Provider }>();
 const emit = defineEmits<{ saved: [] }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
 
 const authStyleOptions = [
-  { label: "Authorization: Bearer", value: "bearer" },
-  { label: "x-api-key header", value: "x-api-key" },
+  { label: 'Authorization: Bearer', value: 'bearer' },
+  { label: 'x-api-key header', value: 'x-api-key' },
 ] satisfies { label: string; value: AuthStyle }[];
 const reasoningOptions = [
-  { label: "Not needed", value: "" },
-  { label: "Every assistant turn", value: "all-assistant-turns" },
-  { label: "Turns with tool calls", value: "tool-call-turns" },
+  { label: 'Not needed', value: '' },
+  { label: 'Every assistant turn', value: 'all-assistant-turns' },
+  { label: 'Turns with tool calls', value: 'tool-call-turns' },
 ];
 const oauthLoginFlowOptions = [
-  { label: "None", value: "" },
+  { label: 'None', value: '' },
   ...OAUTH_LOGIN_FLOWS.map((flow) => ({ label: OAUTH_LOGIN_FLOW_LABELS[flow], value: flow })),
 ];
 const logoOptions = [
-  { label: "None (automatic)", value: "" },
+  { label: 'None (automatic)', value: '' },
   ...[...PROVIDER_LOGOS].map(([key, mark]) => ({ label: mark.label, value: key })),
 ];
 
@@ -50,12 +50,12 @@ const form = ref(providerFormFor(props.provider));
 const isSlugTyped = ref(false);
 const isSlugAuto = computed(() => !props.provider && !isSlugTyped.value);
 const isSaving = ref(false);
-const error = ref("");
+const error = ref('');
 
 const chatProtocols = computed(() => chatProtocolsOf(form.value));
-const hasOpenAiChat = computed(() => chatProtocols.value.includes("openai-chat"));
-const hasOpenAiResponses = computed(() => chatProtocols.value.includes("openai-responses"));
-const hasAnthropicMessages = computed(() => chatProtocols.value.includes("anthropic-messages"));
+const hasOpenAiChat = computed(() => chatProtocols.value.includes('openai-chat'));
+const hasOpenAiResponses = computed(() => chatProtocols.value.includes('openai-responses'));
+const hasAnthropicMessages = computed(() => chatProtocols.value.includes('anthropic-messages'));
 const isOpenAiProtocol = computed(() => hasOpenAiChat.value || hasOpenAiResponses.value);
 const formBaseUrl = computed(() => mainBaseUrl(form.value.endpoints));
 
@@ -63,11 +63,11 @@ watch(isOpen, (open) => {
   if (!open) return;
   form.value = providerFormFor(props.provider);
   isSlugTyped.value = false;
-  error.value = "";
+  error.value = '';
 });
 
 function inputValue(event: Event): string {
-  return event.target instanceof HTMLInputElement ? event.target.value : "";
+  return event.target instanceof HTMLInputElement ? event.target.value : '';
 }
 
 function handleNameInput(event: Event): void {
@@ -78,35 +78,35 @@ function handleNameInput(event: Event): void {
 
 function handleSlugInput(event: Event): void {
   form.value.slug = inputValue(event);
-  isSlugTyped.value = form.value.slug !== "";
+  isSlugTyped.value = form.value.slug !== '';
 }
 
 function handleInvalidField(event: Event): void {
   if (!(event.target instanceof HTMLElement)) return;
-  const section = event.target.closest("details");
+  const section = event.target.closest('details');
   if (section) section.open = true;
 }
 
 async function save(): Promise<void> {
   if (form.value.credentialKinds.length === 0) {
-    error.value = "Pick at least one credential its Provider Accounts may hold.";
+    error.value = 'Pick at least one credential its Provider Accounts may hold.';
     return;
   }
   const fields = providerFieldsFromForm(form.value);
   isSaving.value = true;
-  error.value = "";
+  error.value = '';
   try {
     if (props.provider) {
-      await $dashboardApi(`/providers/${props.provider.id}`, { method: "PATCH", body: fields });
+      await $dashboardApi(`/providers/${props.provider.id}`, { method: 'PATCH', body: fields });
     } else {
-      await $dashboardApi("/providers", {
-        method: "POST",
+      await $dashboardApi('/providers', {
+        method: 'POST',
         body: { slug: form.value.slug, ...fields },
       });
     }
-    showToast(`${props.provider ? "Saved" : "Added"} ${fields.name}`);
+    showToast(`${props.provider ? 'Saved' : 'Added'} ${fields.name}`);
     isOpen.value = false;
-    emit("saved");
+    emit('saved');
   } catch (caught) {
     error.value = apiErrorMessage(caught, "Couldn't save the Provider.");
   } finally {
@@ -136,7 +136,7 @@ async function save(): Promise<void> {
             <input :value="form.name" class="text-input" required @input="handleNameInput" /> </span
         ></label>
         <label class="field"
-          ><span class="field__label">Slug{{ isSlugAuto ? " (auto)" : "" }}</span
+          ><span class="field__label">Slug{{ isSlugAuto ? ' (auto)' : '' }}</span
           ><input
             :value="form.slug"
             class="text-input"
@@ -150,8 +150,8 @@ async function save(): Promise<void> {
       <p v-if="!provider" class="form__hint">
         {{
           isSlugAuto
-            ? "Slug is generated from the name. Type in it to set your own."
-            : "Slug is set by hand. Clear it to follow the name again."
+            ? 'Slug is generated from the name. Type in it to set your own.'
+            : 'Slug is set by hand. Clear it to follow the name again.'
         }}
       </p>
       <ProviderEndpointsField v-model="form.endpoints" />
@@ -455,7 +455,7 @@ async function save(): Promise<void> {
       <div class="dialog__actions">
         <button class="button" type="button" @click="isOpen = false">Cancel</button>
         <button class="button button--primary" type="submit" :disabled="isSaving">
-          {{ provider ? "Save" : "Add Provider" }}
+          {{ provider ? 'Save' : 'Add Provider' }}
         </button>
       </div>
     </form>

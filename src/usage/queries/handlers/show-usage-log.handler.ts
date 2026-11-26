@@ -1,12 +1,12 @@
-import { NotFoundException } from "@nestjs/common";
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { asc, eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { attempts, usageLogs } from "@/db/schemas";
-import type { UsageLogDetail } from "@/usage/models/usage";
-import { usageLogSummaryColumns } from "@/usage/models/usage-log-columns";
-import { ShowUsageLogQuery } from "@/usage/queries/impl/show-usage-log.query";
+import { NotFoundException } from '@nestjs/common';
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { asc, eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { attempts, usageLogs } from '@/db/schemas';
+import type { UsageLogDetail } from '@/usage/models/usage';
+import { usageLogSummaryColumns } from '@/usage/models/usage-log-columns';
+import { ShowUsageLogQuery } from '@/usage/queries/impl/show-usage-log.query';
 
 @QueryHandler(ShowUsageLogQuery)
 export class ShowUsageLogHandler implements IQueryHandler<ShowUsageLogQuery> {
@@ -36,7 +36,7 @@ export class ShowUsageLogHandler implements IQueryHandler<ShowUsageLogQuery> {
         .orderBy(asc(attempts.startedAt), asc(attempts.id)),
     ]);
     if (!usageLog) {
-      throw new NotFoundException("Usage Log not found");
+      throw new NotFoundException('Usage Log not found');
     }
     return { ...usageLog, attempts: usageLogAttempts };
   }

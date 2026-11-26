@@ -1,34 +1,34 @@
-import { getQueueToken } from "@nestjs/bullmq";
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { Queue } from "bullmq";
-import { eq, sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys, upstreamModels } from "@/db/schemas";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { SpendLimitFlags } from "@/spend-limits/providers/spend-limit-flags";
-import { createApiKey } from "@tests/support/api-keys";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream";
-import { insertOpenAiChatModel } from "@tests/support/inference";
-import { createIntegration } from "@tests/support/integrations";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
-import { writtenUsageLogs } from "@tests/support/usage-logs";
-import { untilUsageQueueIsDrained } from "@tests/support/usage-queue";
+import { getQueueToken } from '@nestjs/bullmq';
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { Queue } from 'bullmq';
+import { eq, sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys, upstreamModels } from '@/db/schemas';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
+import { createApiKey } from '@tests/support/api-keys';
+import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
+import { insertOpenAiChatModel } from '@tests/support/inference';
+import { createIntegration } from '@tests/support/integrations';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
+import { writtenUsageLogs } from '@tests/support/usage-logs';
+import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
 
-const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
+const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
 process.env.REDIS_URL = redisUrl.toString();
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
-const { WorkerModule } = await import("@/worker.module");
-const { USAGE_QUEUE } = await import("@/queue/models/queue-names");
+const { createTestApp, setUpFirstUser } = await import('@tests/support/test-app');
+const { WorkerModule } = await import('@/worker.module');
+const { USAGE_QUEUE } = await import('@/queue/models/queue-names');
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
+const ADA = { email: 'ada@example.com', password: "ada's password" };
 const PRICE_PER_MILLION_TOKENS = 1000;
 const REPORTED_USAGE = { prompt_tokens: 120, completion_tokens: 40 };
 const REQUEST_COST = 0.16;
 
-describe("Spend Limit of an API Key (e2e)", () => {
+describe('Spend Limit of an API Key (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let worker: TestingModule;
@@ -51,7 +51,7 @@ describe("Spend Limit of an API Key (e2e)", () => {
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
     await db.execute(sql`truncate table integrations, api_keys, usage_logs cascade`);
-    await insertOpenAiChatModel(app, db, { modelName: "smart", baseUrl: upstream.baseUrl });
+    await insertOpenAiChatModel(app, db, { modelName: 'smart', baseUrl: upstream.baseUrl });
     await db.update(upstreamModels).set({
       inputPrice: PRICE_PER_MILLION_TOKENS,
       outputPrice: PRICE_PER_MILLION_TOKENS,
@@ -59,7 +59,7 @@ describe("Spend Limit of an API Key (e2e)", () => {
     });
     await app.get(SnapshotService).changed();
     adaCookie = await setUpFirstUser(app, ADA);
-    acme = await createIntegration(app, adaCookie, { name: "Acme SaaS" });
+    acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
   });
 
   afterAll(async () => {
@@ -71,11 +71,11 @@ describe("Spend Limit of an API Key (e2e)", () => {
 
   function controlPlane() {
     const server = app.getHttpServer();
-    const withSecret = (test: request.Test) => test.set("Authorization", `Bearer ${acme.secret}`);
+    const withSecret = (test: request.Test) => test.set('Authorization', `Bearer ${acme.secret}`);
     return {
       issueKey: async (spendLimit: number | null): Promise<{ id: string; key: string }> => {
-        const created = await withSecret(request(server).post("/integration/v1/keys"))
-          .send({ customerId: "cus_42", spendLimit })
+        const created = await withSecret(request(server).post('/integration/v1/keys'))
+          .send({ customerId: 'cus_42', spendLimit })
           .expect(201);
         return { id: created.body.apiKey.id, key: created.body.key };
       },
@@ -94,16 +94,16 @@ describe("Spend Limit of an API Key (e2e)", () => {
 
   function chat(key: string, body: object = {}) {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${key}`)
-      .send({ model: "smart", messages: [{ role: "user", content: "Hello" }], ...body });
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${key}`)
+      .send({ model: 'smart', messages: [{ role: 'user', content: 'Hello' }], ...body });
   }
 
   function upstreamAnswers(): void {
     const answer: Record<string, unknown> = JSON.parse(
-      openAiChatFixture("upstream-response-tool-call.json"),
+      openAiChatFixture('upstream-response-tool-call.json'),
     );
-    upstream.reply({ kind: "json", status: 200, body: { ...answer, usage: REPORTED_USAGE } });
+    upstream.reply({ kind: 'json', status: 200, body: { ...answer, usage: REPORTED_USAGE } });
   }
 
   async function spendOneRequest(key: string): Promise<void> {
@@ -121,21 +121,21 @@ describe("Spend Limit of an API Key (e2e)", () => {
     const refused = await chat(key).expect(402);
     await untilUsageQueueIsDrained(usageQueue);
 
-    expect(refused.body.error).toMatchObject({ code: "spend_limit_reached" });
+    expect(refused.body.error).toMatchObject({ code: 'spend_limit_reached' });
     expect(await controlPlane().spentBy(id)).toBeCloseTo(2 * REQUEST_COST);
     expect(upstream.requests).toHaveLength(2);
     const logs = await writtenUsageLogs(db);
     expect(logs.filter((log) => log.httpStatus === 402)).toEqual([
       expect.objectContaining({
         apiKeyId: id,
-        errorCode: "spend_limit_reached",
-        errorOrigin: "client",
-        customerId: "cus_42",
+        errorCode: 'spend_limit_reached',
+        errorOrigin: 'client',
+        customerId: 'cus_42',
       }),
     ]);
   });
 
-  it("serves the key again as soon as the Integration raises its Spend Limit", async () => {
+  it('serves the key again as soon as the Integration raises its Spend Limit', async () => {
     const { id, key } = await controlPlane().issueKey(0.1);
     await spendOneRequest(key);
     await chat(key).expect(402);
@@ -146,25 +146,25 @@ describe("Spend Limit of an API Key (e2e)", () => {
     await chat(key).expect(200);
   });
 
-  it("lets a stream that starts under the Spend Limit finish past it", async () => {
+  it('lets a stream that starts under the Spend Limit finish past it', async () => {
     const { key } = await controlPlane().issueKey(0.1);
-    upstream.reply({ kind: "stream", events: openAiChatFixture("upstream-stream-tool-call.sse") });
+    upstream.reply({ kind: 'stream', events: openAiChatFixture('upstream-stream-tool-call.sse') });
 
     const streamed = await chat(key, { stream: true }).expect(200);
     await untilUsageQueueIsDrained(usageQueue);
 
-    expect(streamed.text.trim().endsWith("data: [DONE]")).toBe(true);
+    expect(streamed.text.trim().endsWith('data: [DONE]')).toBe(true);
     await chat(key).expect(402);
   });
 
-  it("refuses a key already over its Spend Limit even when no flag says so", async () => {
+  it('refuses a key already over its Spend Limit even when no flag says so', async () => {
     const { id, key } = await controlPlane().issueKey(1);
     await db.update(apiKeys).set({ spent: 5 }).where(eq(apiKeys.id, id));
 
     await chat(key).expect(402);
   });
 
-  it("serves a key under its Spend Limit even when a stale flag says it reached it", async () => {
+  it('serves a key under its Spend Limit even when a stale flag says it reached it', async () => {
     const { id, key } = await controlPlane().issueKey(1);
     await app.get(SpendLimitFlags).write(id, true);
 
@@ -186,12 +186,12 @@ describe("Spend Limit of an API Key (e2e)", () => {
     expect(await controlPlane().spentBy(id)).toBeCloseTo(REQUEST_COST);
   });
 
-  it("adds nothing for a request whose Cost is unknown", async () => {
+  it('adds nothing for a request whose Cost is unknown', async () => {
     const { id, key } = await controlPlane().issueKey(0.1);
     const answer: Record<string, unknown> = JSON.parse(
-      openAiChatFixture("upstream-response-tool-call.json"),
+      openAiChatFixture('upstream-response-tool-call.json'),
     );
-    upstream.reply({ kind: "json", status: 200, body: { ...answer, usage: undefined } });
+    upstream.reply({ kind: 'json', status: 200, body: { ...answer, usage: undefined } });
 
     await chat(key).expect(200);
     await untilUsageQueueIsDrained(usageQueue);
@@ -204,47 +204,47 @@ describe("Spend Limit of an API Key (e2e)", () => {
     const server = app.getHttpServer();
 
     const messages = await request(server)
-      .post("/v1/messages")
-      .set("x-api-key", key)
-      .send({ model: "smart", max_tokens: 16, messages: [{ role: "user", content: "Hello" }] })
+      .post('/v1/messages')
+      .set('x-api-key', key)
+      .send({ model: 'smart', max_tokens: 16, messages: [{ role: 'user', content: 'Hello' }] })
       .expect(402);
     const images = await request(server)
-      .post("/v1/images/generations")
-      .set("Authorization", `Bearer ${key}`)
-      .send({ model: "smart", prompt: "A lighthouse" })
+      .post('/v1/images/generations')
+      .set('Authorization', `Bearer ${key}`)
+      .send({ model: 'smart', prompt: 'A lighthouse' })
       .expect(402);
     await untilUsageQueueIsDrained(usageQueue);
 
     expect(messages.body).toEqual({
-      type: "error",
-      error: expect.objectContaining({ type: "billing_error", code: "spend_limit_reached" }),
+      type: 'error',
+      error: expect.objectContaining({ type: 'billing_error', code: 'spend_limit_reached' }),
     });
-    expect(images.body.error).toMatchObject({ code: "spend_limit_reached" });
+    expect(images.body.error).toMatchObject({ code: 'spend_limit_reached' });
     const logs = await writtenUsageLogs(db);
     expect(logs).toHaveLength(2);
     expect(logs).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          clientProtocol: "anthropic-messages",
-          errorCode: "spend_limit_reached",
-          errorOrigin: "client",
+          clientProtocol: 'anthropic-messages',
+          errorCode: 'spend_limit_reached',
+          errorOrigin: 'client',
         }),
         expect.objectContaining({
-          clientProtocol: "openai-images",
-          errorCode: "spend_limit_reached",
-          errorOrigin: "client",
+          clientProtocol: 'openai-images',
+          errorCode: 'spend_limit_reached',
+          errorOrigin: 'client',
         }),
       ]),
     );
   });
 
-  it("lets a User set and clear the Spend Limit of an operator key, and shows what it spent", async () => {
+  it('lets a User set and clear the Spend Limit of an operator key, and shows what it spent', async () => {
     const server = app.getHttpServer();
     const { id, key } = await createApiKey(app, adaCookie);
     const editSpendLimit = (spendLimit: number | null) =>
       request(server)
         .patch(`/api/api-keys/${id}`)
-        .set("Cookie", adaCookie)
+        .set('Cookie', adaCookie)
         .send({ spendLimit })
         .expect(200);
 
@@ -256,7 +256,7 @@ describe("Spend Limit of an API Key (e2e)", () => {
     await untilUsageQueueIsDrained(usageQueue);
 
     expect(limited.body).toMatchObject({ spendLimit: 0, spent: 0 });
-    const listed = await request(server).get("/api/api-keys").set("Cookie", adaCookie).expect(200);
+    const listed = await request(server).get('/api/api-keys').set('Cookie', adaCookie).expect(200);
     expect(listed.body).toEqual([expect.objectContaining({ id, spendLimit: null })]);
     expect(listed.body[0].spent).toBeCloseTo(REQUEST_COST);
   });

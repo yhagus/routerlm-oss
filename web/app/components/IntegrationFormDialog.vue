@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { apiErrorMessage } from "~/lib/api";
-import type { ModelChoice } from "~/lib/api-keys";
-import type { CreatedIntegration, IntegrationSummary } from "~/lib/integrations";
+import { apiErrorMessage } from '~/lib/api';
+import type { ModelChoice } from '~/lib/api-keys';
+import type { CreatedIntegration, IntegrationSummary } from '~/lib/integrations';
 
 const props = defineProps<{
   integration?: IntegrationSummary;
   modelChoices: ModelChoice[] | undefined;
   isLoadingModelChoices: boolean;
 }>();
-const isOpen = defineModel<boolean>("open", { required: true });
+const isOpen = defineModel<boolean>('open', { required: true });
 const emit = defineEmits<{
   created: [integration: CreatedIntegration];
   updated: [integration: IntegrationSummary];
@@ -16,10 +16,10 @@ const emit = defineEmits<{
 
 const { $dashboardApi } = useNuxtApp();
 
-const name = ref("");
+const name = ref('');
 const allowedModelIds = ref<string[]>([]);
 const isSaving = ref(false);
-const error = ref("");
+const error = ref('');
 
 const isEdit = computed(() => props.integration !== undefined);
 
@@ -27,9 +27,9 @@ watch(
   isOpen,
   (open) => {
     if (!open) return;
-    name.value = props.integration?.name ?? "";
+    name.value = props.integration?.name ?? '';
     allowedModelIds.value = props.integration?.allowedModels.map((model) => model.id) ?? [];
-    error.value = "";
+    error.value = '';
   },
   { immediate: true },
 );
@@ -42,16 +42,16 @@ const modelOptions = computed(() => {
   const offered = new Set(options.map((option) => option.value));
   const deleted = (props.integration?.allowedModels ?? [])
     .filter((model) => !offered.has(model.id))
-    .map((model) => ({ label: model.name ?? "Deleted Model", value: model.id }));
+    .map((model) => ({ label: model.name ?? 'Deleted Model', value: model.id }));
   return [...options, ...deleted];
 });
 
 const allowedSummary = computed(() => {
   if (allowedModelIds.value.length === 0) {
-    return "Its API Keys may use every Model, including ones added later.";
+    return 'Its API Keys may use every Model, including ones added later.';
   }
   const labels = new Map(modelOptions.value.map((option) => [option.value, option.label]));
-  const names = allowedModelIds.value.map((id) => labels.get(id) ?? "Deleted Model").join(", ");
+  const names = allowedModelIds.value.map((id) => labels.get(id) ?? 'Deleted Model').join(', ');
   return `Its API Keys may use only ${names}.`;
 });
 
@@ -72,20 +72,20 @@ const hasChanges = computed(() => Object.keys(changes.value).length > 0);
 
 async function submit(): Promise<void> {
   isSaving.value = true;
-  error.value = "";
+  error.value = '';
   try {
     if (props.integration) {
       const updated = await $dashboardApi<IntegrationSummary>(
         `/integrations/${props.integration.id}`,
-        { method: "PATCH", body: changes.value },
+        { method: 'PATCH', body: changes.value },
       );
-      emit("updated", updated);
+      emit('updated', updated);
     } else {
-      const created = await $dashboardApi<CreatedIntegration>("/integrations", {
-        method: "POST",
+      const created = await $dashboardApi<CreatedIntegration>('/integrations', {
+        method: 'POST',
         body: { name: name.value, allowedModelIds: allowedModelIds.value },
       });
-      emit("created", created);
+      emit('created', created);
     }
   } catch (caught) {
     error.value = apiErrorMessage(
@@ -141,7 +141,7 @@ async function submit(): Promise<void> {
           type="submit"
           :disabled="isSaving || isLoadingModelChoices || (isEdit && !hasChanges)"
         >
-          {{ integration ? "Save changes" : "Create Integration" }}
+          {{ integration ? 'Save changes' : 'Create Integration' }}
         </button>
       </div>
     </form>

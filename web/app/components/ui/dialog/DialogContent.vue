@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { DialogContentEmits, DialogContentProps } from "reka-ui";
-import type { HTMLAttributes } from "vue";
-import { X } from "@lucide/vue";
-import { reactiveOmit } from "@vueuse/core";
-import { cn } from "@/lib/utils";
-import { DialogClose, DialogContent, DialogPortal, useForwardPropsEmits } from "reka-ui";
-import DialogOverlay from "./DialogOverlay.vue";
+import type { DialogContentEmits, DialogContentProps } from 'reka-ui';
+import type { HTMLAttributes } from 'vue';
+import { X } from '@lucide/vue';
+import { reactiveOmit } from '@vueuse/core';
+import { cn } from '@/lib/utils';
+import { DialogClose, DialogContent, DialogPortal, useForwardPropsEmits } from 'reka-ui';
+import DialogOverlay from './DialogOverlay.vue';
 
 defineOptions({
   inheritAttrs: false,
@@ -13,7 +13,7 @@ defineOptions({
 
 const props = withDefaults(
   defineProps<
-    DialogContentProps & { class?: HTMLAttributes["class"]; showCloseButton?: boolean }
+    DialogContentProps & { class?: HTMLAttributes['class']; showCloseButton?: boolean }
   >(),
   {
     showCloseButton: true,
@@ -21,7 +21,7 @@ const props = withDefaults(
 );
 const emits = defineEmits<DialogContentEmits>();
 
-const delegatedProps = reactiveOmit(props, "class");
+const delegatedProps = reactiveOmit(props, 'class');
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits);
 </script>

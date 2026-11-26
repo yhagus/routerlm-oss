@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import type { PromptInputMessage } from "./types";
-import { InputGroup } from "@/components/ui/input-group";
-import { cn } from "@/lib/utils";
-import { getCurrentInstance, inject, onMounted, onUnmounted, ref } from "vue";
-import { usePromptInputProvider } from "./context";
-import { PROMPT_INPUT_KEY } from "./types";
+import type { HTMLAttributes } from 'vue';
+import type { PromptInputMessage } from './types';
+import { InputGroup } from '@/components/ui/input-group';
+import { cn } from '@/lib/utils';
+import { getCurrentInstance, inject, onMounted, onUnmounted, ref } from 'vue';
+import { usePromptInputProvider } from './context';
+import { PROMPT_INPUT_KEY } from './types';
 
 const props = defineProps<{
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
   accept?: string;
   multiple?: boolean;
   globalDrop?: boolean;
@@ -18,23 +18,23 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "submit", payload: PromptInputMessage): void;
-  (e: "error", payload: { code: string; message: string }): void;
+  (e: 'submit', payload: PromptInputMessage): void;
+  (e: 'error', payload: { code: string; message: string }): void;
 }>();
 
 const instance = getCurrentInstance();
 const formRef = ref<HTMLFormElement | null>(null);
 
-function getListener(name: "onSubmit" | "onError") {
+function getListener(name: 'onSubmit' | 'onError') {
   return instance?.vnode.props?.[name];
 }
 
 function callListener<T>(listener: unknown, payload: T) {
   if (Array.isArray(listener)) {
-    return Promise.all(listener.map((fn) => (typeof fn === "function" ? fn(payload) : undefined)));
+    return Promise.all(listener.map((fn) => (typeof fn === 'function' ? fn(payload) : undefined)));
   }
 
-  if (typeof listener === "function") {
+  if (typeof listener === 'function') {
     return listener(payload);
   }
 }
@@ -49,40 +49,40 @@ const localContext = inheritedContext
       maxFileSize: props.maxFileSize,
       accept: props.accept,
       onSubmit: (msg) => {
-        const listener = getListener("onSubmit");
+        const listener = getListener('onSubmit');
         if (listener) return callListener(listener, msg);
 
-        emit("submit", msg);
+        emit('submit', msg);
       },
       onError: (err) => {
-        const listener = getListener("onError");
+        const listener = getListener('onError');
         if (listener) {
           void Promise.resolve(callListener(listener, err)).catch((error) => {
-            console.error("PromptInput onError listener failed:", error);
+            console.error('PromptInput onError listener failed:', error);
           });
           return;
         }
 
-        emit("error", err);
+        emit('error', err);
       },
     });
 
 const context = inheritedContext || localContext;
 
 if (!context) {
-  throw new Error("PromptInput context is missing.");
+  throw new Error('PromptInput context is missing.');
 }
 
 const { fileInputRef, addFiles, submitForm } = context;
 
 function handleDragOver(e: DragEvent) {
-  if (e.dataTransfer?.types?.includes("Files")) {
+  if (e.dataTransfer?.types?.includes('Files')) {
     e.preventDefault();
   }
 }
 
 function handleDrop(e: DragEvent) {
-  if (e.dataTransfer?.types?.includes("Files")) {
+  if (e.dataTransfer?.types?.includes('Files')) {
     e.preventDefault();
   }
   if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
@@ -92,15 +92,15 @@ function handleDrop(e: DragEvent) {
 
 onMounted(() => {
   if (props.globalDrop) {
-    document.addEventListener("dragover", handleDragOver);
-    document.addEventListener("drop", handleDrop);
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('drop', handleDrop);
   }
 });
 
 onUnmounted(() => {
   if (props.globalDrop) {
-    document.removeEventListener("dragover", handleDragOver);
-    document.removeEventListener("drop", handleDrop);
+    document.removeEventListener('dragover', handleDragOver);
+    document.removeEventListener('drop', handleDrop);
   }
 });
 
@@ -109,7 +109,7 @@ function onFileChange(e: Event) {
   if (input.files) {
     addFiles(input.files);
   }
-  input.value = "";
+  input.value = '';
 }
 
 function onSubmit(e: Event) {

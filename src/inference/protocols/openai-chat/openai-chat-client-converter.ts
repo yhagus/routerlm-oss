@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { GatewayError } from "@/inference/models/gateway-error";
-import { serviceTierOfOpenAiClient } from "@/inference/models/service-tier";
+import { z } from 'zod';
+import { GatewayError } from '@/inference/models/gateway-error';
+import { serviceTierOfOpenAiClient } from '@/inference/models/service-tier';
 import {
   type AssistantContentPart,
   type InferenceMessage,
@@ -13,42 +13,42 @@ import {
   type TokenUsage,
   type ToolChoice,
   type UserContentPart,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "@/inference/protocols/client-protocol-converter";
-import { finishReasonOf, writeUsage } from "./openai-chat-usage";
+} from '@/inference/protocols/client-protocol-converter';
+import { finishReasonOf, writeUsage } from './openai-chat-usage';
 
-const textPartSchema = z.object({ type: z.literal("text"), text: z.string() });
+const textPartSchema = z.object({ type: z.literal('text'), text: z.string() });
 const imagePartSchema = z.object({
-  type: z.literal("image_url"),
+  type: z.literal('image_url'),
   image_url: z.object({ url: z.string().min(1) }),
 });
 const textContentSchema = z.union([z.string(), z.array(textPartSchema)]);
 
 const toolCallSchema = z.object({
   id: z.string().min(1),
-  type: z.literal("function").optional(),
+  type: z.literal('function').optional(),
   function: z.object({ name: z.string().min(1), arguments: z.string() }),
 });
 
-const messageSchema = z.discriminatedUnion("role", [
-  z.object({ role: z.literal("system"), content: textContentSchema }),
-  z.object({ role: z.literal("developer"), content: textContentSchema }),
+const messageSchema = z.discriminatedUnion('role', [
+  z.object({ role: z.literal('system'), content: textContentSchema }),
+  z.object({ role: z.literal('developer'), content: textContentSchema }),
   z.object({
-    role: z.literal("user"),
+    role: z.literal('user'),
     content: z.union([z.string(), z.array(z.union([textPartSchema, imagePartSchema]))]),
   }),
   z.object({
-    role: z.literal("assistant"),
+    role: z.literal('assistant'),
     content: textContentSchema.nullish(),
     reasoning_content: z.string().nullish(),
     tool_calls: z.array(toolCallSchema).nullish(),
   }),
   z.object({
-    role: z.literal("tool"),
+    role: z.literal('tool'),
     tool_call_id: z.string().min(1),
     content: textContentSchema,
   }),
@@ -61,7 +61,7 @@ const requestSchema = z.object({
   tools: z
     .array(
       z.object({
-        type: z.literal("function"),
+        type: z.literal('function'),
         function: z.object({
           name: z.string().min(1),
           description: z.string().optional(),
@@ -73,17 +73,17 @@ const requestSchema = z.object({
     .optional(),
   tool_choice: z
     .union([
-      z.enum(["auto", "none", "required"]),
-      z.object({ type: z.literal("function"), function: z.object({ name: z.string().min(1) }) }),
+      z.enum(['auto', 'none', 'required']),
+      z.object({ type: z.literal('function'), function: z.object({ name: z.string().min(1) }) }),
     ])
     .optional(),
   parallel_tool_calls: z.boolean().optional(),
   response_format: z
-    .discriminatedUnion("type", [
-      z.object({ type: z.literal("text") }),
-      z.object({ type: z.literal("json_object") }),
+    .discriminatedUnion('type', [
+      z.object({ type: z.literal('text') }),
+      z.object({ type: z.literal('json_object') }),
       z.object({
-        type: z.literal("json_schema"),
+        type: z.literal('json_schema'),
         json_schema: z.object({
           name: z.string().min(1),
           schema: z.record(z.string(), z.unknown()).optional(),
@@ -105,8 +105,8 @@ const requestSchema = z.object({
 });
 type ClientRequest = z.infer<typeof requestSchema>;
 
-const COMPLETION_ID_PREFIX = "chatcmpl-";
-const EMPTY_PARAMETERS_SCHEMA = { type: "object", properties: {} };
+const COMPLETION_ID_PREFIX = 'chatcmpl-';
+const EMPTY_PARAMETERS_SCHEMA = { type: 'object', properties: {} };
 const DATA_URL = /^data:([^;,]+);base64,(.*)$/s;
 
 function parseRequest(body: unknown): InferenceRequest {
@@ -114,9 +114,9 @@ function parseRequest(body: unknown): InferenceRequest {
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `Invalid request: ${z.prettifyError(parsed.error)}`,
-      "client",
+      'client',
     );
   }
   return toInferenceRequest(parsed.data);
@@ -139,7 +139,7 @@ const featureRefusedSchema = z.object({
     .optional(),
 });
 
-const SUPPORTED_CONTENT_PARTS = new Set(["text", "image_url"]);
+const SUPPORTED_CONTENT_PARTS = new Set(['text', 'image_url']);
 
 function refuseOutOfScopeFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
@@ -148,32 +148,32 @@ function refuseOutOfScopeFeatures(body: unknown): void {
   }
   const { n, audio, modalities, web_search_options, functions, tools, messages } = features.data;
   if (n !== undefined && n !== 1) {
-    throw unsupported("`n` other than 1 (several choices)");
+    throw unsupported('`n` other than 1 (several choices)');
   }
-  if (audio !== undefined || modalities?.some((modality) => modality !== "text")) {
-    throw unsupported("audio output (`audio`, `modalities`)");
+  if (audio !== undefined || modalities?.some((modality) => modality !== 'text')) {
+    throw unsupported('audio output (`audio`, `modalities`)');
   }
   if (web_search_options !== undefined) {
-    throw unsupported("web search (`web_search_options`)");
+    throw unsupported('web search (`web_search_options`)');
   }
   if (functions !== undefined) {
-    throw unsupported("legacy `functions`; use `tools`");
+    throw unsupported('legacy `functions`; use `tools`');
   }
-  const otherTool = tools?.find((tool) => tool.type !== "function");
+  const otherTool = tools?.find((tool) => tool.type !== 'function');
   if (otherTool) {
     throw unsupported(
       `tools of type \`${String(otherTool.type)}\`; only function tools are supported`,
     );
   }
   for (const message of messages ?? []) {
-    if (message.role === "function") {
-      throw unsupported("messages with role `function`; use `tool`");
+    if (message.role === 'function') {
+      throw unsupported('messages with role `function`; use `tool`');
     }
     if (!Array.isArray(message.content)) {
       continue;
     }
     for (const part of message.content) {
-      if (typeof part.type === "string" && !SUPPORTED_CONTENT_PARTS.has(part.type)) {
+      if (typeof part.type === 'string' && !SUPPORTED_CONTENT_PARTS.has(part.type)) {
         throw unsupported(`content parts of type \`${part.type}\``);
       }
     }
@@ -181,14 +181,14 @@ function refuseOutOfScopeFeatures(body: unknown): void {
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
+  return new GatewayError('invalid_request', `Not supported: ${feature}`, 'client');
 }
 
 function toInferenceRequest(request: ClientRequest): InferenceRequest {
   const system: TextPart[] = [];
   const messages: InferenceMessage[] = [];
   for (const message of request.messages) {
-    if (message.role === "system" || message.role === "developer") {
+    if (message.role === 'system' || message.role === 'developer') {
       system.push(...textParts(message.content));
     } else {
       messages.push(toInferenceMessage(message));
@@ -232,7 +232,7 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
     parsed.topP = request.top_p;
   }
   if (request.stop != null) {
-    parsed.stopSequences = typeof request.stop === "string" ? [request.stop] : request.stop;
+    parsed.stopSequences = typeof request.stop === 'string' ? [request.stop] : request.stop;
   }
   if (request.prompt_cache_key != null) {
     parsed.promptCacheKey = request.prompt_cache_key;
@@ -245,78 +245,78 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
 }
 
 function textParts(content: z.infer<typeof textContentSchema>): TextPart[] {
-  if (typeof content === "string") {
-    return [{ type: "text", text: content }];
+  if (typeof content === 'string') {
+    return [{ type: 'text', text: content }];
   }
-  return content.map((part) => ({ type: "text", text: part.text }));
+  return content.map((part) => ({ type: 'text', text: part.text }));
 }
 
 function toInferenceMessage(
-  message: Exclude<ClientMessage, { role: "system" | "developer" }>,
+  message: Exclude<ClientMessage, { role: 'system' | 'developer' }>,
 ): InferenceMessage {
   switch (message.role) {
-    case "user":
-      return { role: "user", content: toUserContent(message.content) };
-    case "tool":
+    case 'user':
+      return { role: 'user', content: toUserContent(message.content) };
+    case 'tool':
       return {
-        role: "tool",
+        role: 'tool',
         toolCallId: message.tool_call_id,
         content: textParts(message.content),
       };
-    case "assistant": {
+    case 'assistant': {
       const content: AssistantContentPart[] = [];
       if (message.reasoning_content) {
-        content.push({ type: "reasoning", text: message.reasoning_content });
+        content.push({ type: 'reasoning', text: message.reasoning_content });
       }
       if (message.content) {
         content.push(...textParts(message.content));
       }
       for (const call of message.tool_calls ?? []) {
         content.push({
-          type: "tool-call",
+          type: 'tool-call',
           id: call.id,
           name: call.function.name,
           arguments: call.function.arguments,
         });
       }
-      return { role: "assistant", content };
+      return { role: 'assistant', content };
     }
   }
 }
 
 function toUserContent(
-  content: Extract<ClientMessage, { role: "user" }>["content"],
+  content: Extract<ClientMessage, { role: 'user' }>['content'],
 ): UserContentPart[] {
-  if (typeof content === "string") {
-    return [{ type: "text", text: content }];
+  if (typeof content === 'string') {
+    return [{ type: 'text', text: content }];
   }
   return content.map((part): UserContentPart => {
-    if (part.type === "text") {
-      return { type: "text", text: part.text };
+    if (part.type === 'text') {
+      return { type: 'text', text: part.text };
     }
     const dataUrl = DATA_URL.exec(part.image_url.url);
     if (dataUrl) {
-      return { type: "image", source: { type: "base64", mediaType: dataUrl[1], data: dataUrl[2] } };
+      return { type: 'image', source: { type: 'base64', mediaType: dataUrl[1], data: dataUrl[2] } };
     }
-    return { type: "image", source: { type: "url", url: part.image_url.url } };
+    return { type: 'image', source: { type: 'url', url: part.image_url.url } };
   });
 }
 
-function toToolChoice(choice: NonNullable<ClientRequest["tool_choice"]>): ToolChoice {
-  return typeof choice === "string"
+function toToolChoice(choice: NonNullable<ClientRequest['tool_choice']>): ToolChoice {
+  return typeof choice === 'string'
     ? { type: choice }
-    : { type: "tool", name: choice.function.name };
+    : { type: 'tool', name: choice.function.name };
 }
 
-function toResponseFormat(format: NonNullable<ClientRequest["response_format"]>): ResponseFormat {
+function toResponseFormat(format: NonNullable<ClientRequest['response_format']>): ResponseFormat {
   switch (format.type) {
-    case "text":
-      return { type: "text" };
-    case "json_object":
-      return { type: "json-object" };
-    case "json_schema":
+    case 'text':
+      return { type: 'text' };
+    case 'json_object':
+      return { type: 'json-object' };
+    case 'json_schema':
       return {
-        type: "json-schema",
+        type: 'json-schema',
         name: format.json_schema.name,
         schema: format.json_schema.schema ?? {},
         ...(format.json_schema.strict != null && { strict: format.json_schema.strict }),
@@ -330,29 +330,29 @@ function writeResponse(
   context: ResponseContext,
 ): unknown {
   const text = response.content
-    .flatMap((part) => (part.type === "text" ? [part.text] : []))
-    .join("");
+    .flatMap((part) => (part.type === 'text' ? [part.text] : []))
+    .join('');
   const reasoning = response.content
-    .flatMap((part) => (part.type === "reasoning" ? [part.text] : []))
-    .join("");
-  const toolCalls = response.content.flatMap((part) => (part.type === "tool-call" ? [part] : []));
+    .flatMap((part) => (part.type === 'reasoning' ? [part.text] : []))
+    .join('');
+  const toolCalls = response.content.flatMap((part) => (part.type === 'tool-call' ? [part] : []));
 
   const message: Record<string, unknown> = {
-    role: "assistant",
-    content: text === "" ? null : text,
+    role: 'assistant',
+    content: text === '' ? null : text,
   };
-  if (reasoning !== "") {
+  if (reasoning !== '') {
     message.reasoning_content = reasoning;
   }
   if (toolCalls.length > 0) {
     message.tool_calls = toolCalls.map((call) => ({
       id: call.id,
-      type: "function",
+      type: 'function',
       function: { name: call.name, arguments: call.arguments },
     }));
   }
   return {
-    ...responseHeader(context, "chat.completion"),
+    ...responseHeader(context, 'chat.completion'),
     choices: [
       { index: 0, message, logprobs: null, finish_reason: finishReasonOf(response.stopReason) },
     ],
@@ -379,42 +379,42 @@ class OpenAiChatStreamWriter implements ClientStreamWriter {
   private usage: TokenUsage | undefined;
 
   constructor(request: InferenceRequest, context: ResponseContext) {
-    this.header = responseHeader(context, "chat.completion.chunk");
+    this.header = responseHeader(context, 'chat.completion.chunk');
     this.isUsageRequested = request.stream?.includeUsage ?? false;
   }
 
   start(): string {
-    return this.chunk({ role: "assistant", content: "" });
+    return this.chunk({ role: 'assistant', content: '' });
   }
 
   write(event: InferenceStreamEvent): string {
     switch (event.type) {
-      case "text-delta":
+      case 'text-delta':
         return this.chunk({ content: event.text });
-      case "reasoning-delta":
+      case 'reasoning-delta':
         return this.chunk({ reasoning_content: event.text });
-      case "tool-call-start":
+      case 'tool-call-start':
         return this.chunk({
           tool_calls: [
             {
               index: event.index,
               id: event.id,
-              type: "function",
-              function: { name: event.name, arguments: "" },
+              type: 'function',
+              function: { name: event.name, arguments: '' },
             },
           ],
         });
-      case "tool-call-delta":
+      case 'tool-call-delta':
         return this.chunk({
           tool_calls: [{ index: event.index, function: { arguments: event.argumentsDelta } }],
         });
-      case "finish":
+      case 'finish':
         return this.chunk({}, finishReasonOf(event.stopReason));
-      case "usage":
+      case 'usage':
         this.usage = event.usage;
-        return "";
-      case "reasoning-signature":
-        return "";
+        return '';
+      case 'reasoning-signature':
+        return '';
     }
   }
 
@@ -422,7 +422,7 @@ class OpenAiChatStreamWriter implements ClientStreamWriter {
     const usageChunk =
       this.isUsageRequested && this.usage
         ? serverSentEvent({ ...this.header, choices: [], usage: writeUsage(this.usage) })
-        : "";
+        : '';
     return `${usageChunk}data: [DONE]\n\n`;
   }
 
@@ -440,12 +440,12 @@ function serverSentEvent(data: unknown): string {
 
 function errorTypeOf(status: number): string {
   if (status >= 500) {
-    return "server_error";
+    return 'server_error';
   }
   if (status === 429) {
-    return "rate_limit_error";
+    return 'rate_limit_error';
   }
-  return "invalid_request_error";
+  return 'invalid_request_error';
 }
 
 function writeError(error: GatewayError): unknown {
@@ -464,7 +464,7 @@ function writeStreamError(error: GatewayError): string {
 }
 
 export const openAiChatClientConverter: ClientProtocolConverter = {
-  protocol: "openai-chat",
+  protocol: 'openai-chat',
   parseRequest,
   writeResponse,
   startStream,

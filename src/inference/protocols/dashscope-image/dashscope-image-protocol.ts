@@ -1,20 +1,20 @@
-import { z } from "zod";
+import { z } from 'zod';
 import type {
   GeneratedImages,
   ImageGenerationRequest,
   ImageSize,
-} from "@/inference/models/image-generation";
-import { providerSizeOf, sizeTierOf } from "@/inference/models/image-generation";
+} from '@/inference/models/image-generation';
+import { providerSizeOf, sizeTierOf } from '@/inference/models/image-generation';
 import type {
   MediaExchange,
   MediaOutcome,
   MediaUpstreamProtocol,
   MediaUpstreamTarget,
-} from "@/inference/models/media-kind";
-import { dashScopeFailureReasonOf } from "@/inference/protocols/dashscope/dashscope-errors";
-import { UpstreamProtocolError } from "@/inference/protocols/upstream-protocol-converter";
+} from '@/inference/models/media-kind';
+import { dashScopeFailureReasonOf } from '@/inference/protocols/dashscope/dashscope-errors';
+import { UpstreamProtocolError } from '@/inference/protocols/upstream-protocol-converter';
 
-const GENERATION_PATH = "/services/aigc/multimodal-generation/generation";
+const GENERATION_PATH = '/services/aigc/multimodal-generation/generation';
 
 const responseSchema = z.object({
   output: z.object({
@@ -38,7 +38,7 @@ function requestBodyOf(request: ImageGenerationRequest, target: MediaUpstreamTar
   const inputImages = request.inputImages.map((image) => ({ image }));
   return {
     model: target.upstreamModelId,
-    input: { messages: [{ role: "user", content: [...inputImages, { text: request.prompt }] }] },
+    input: { messages: [{ role: 'user', content: [...inputImages, { text: request.prompt }] }] },
     parameters: {
       ...(request.size && { size: providerSizeOf(request.size) }),
       n: request.n,
@@ -66,7 +66,7 @@ async function generate(
     message.content.flatMap(({ image }) => (image === undefined ? [] : [image])),
   );
   if (urls.length === 0) {
-    throw new UpstreamProtocolError("The upstream answered without an image");
+    throw new UpstreamProtocolError('The upstream answered without an image');
   }
   const images = await Promise.all(urls.map((url) => exchange.fetchMedia(url)));
   const outputSize = outputSizeOf(answer.data.usage) ?? request.size;
@@ -80,7 +80,7 @@ async function generate(
   };
 }
 
-function outputSizeOf(usage: z.infer<typeof responseSchema>["usage"]): ImageSize | null {
+function outputSizeOf(usage: z.infer<typeof responseSchema>['usage']): ImageSize | null {
   if (usage?.output_width === undefined || usage.output_height === undefined) {
     return null;
   }
@@ -91,7 +91,7 @@ export const dashScopeImageProtocol: MediaUpstreamProtocol<
   ImageGenerationRequest,
   GeneratedImages
 > = {
-  protocol: "dashscope-image",
+  protocol: 'dashscope-image',
   failureReasonOf: dashScopeFailureReasonOf,
   generate,
 };

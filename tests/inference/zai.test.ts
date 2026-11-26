@@ -1,38 +1,38 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import { CATALOG_DIRECTORY, loadCatalog } from "@/catalog/models/load-catalog";
-import { type CatalogProvider, chatEndpointOf } from "@/catalog/schemas/catalog.schema";
-import type { Database } from "@/db/schemas/relations";
-import { type FakeReply, FakeUpstream } from "@tests/support/fake-upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
+import { type CatalogProvider, chatEndpointOf } from '@/catalog/schemas/catalog.schema';
+import type { Database } from '@/db/schemas/relations';
+import { type FakeReply, FakeUpstream } from '@tests/support/fake-upstream';
 import {
   addProviderAccount,
   insertApiKey,
   insertOpenAiChatModel,
   setProviderQuirks,
   UPSTREAM_KEY,
-} from "@tests/support/inference";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/inference';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const BACKUP_KEY = "sk-backup-secret-9876543210";
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
+const BACKUP_KEY = 'sk-backup-secret-9876543210';
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
 const TEXT_REQUEST = {
-  model: "smart",
-  messages: [{ role: "user", content: "Hi" }],
+  model: 'smart',
+  messages: [{ role: 'user', content: 'Hi' }],
 };
 
 const COMPLETION: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
   body: {
-    id: "chatcmpl-1",
-    object: "chat.completion",
-    model: "glm-5.3",
+    id: 'chatcmpl-1',
+    object: 'chat.completion',
+    model: 'glm-5.3',
     choices: [
       {
         index: 0,
-        message: { role: "assistant", content: "Hello." },
-        finish_reason: "stop",
+        message: { role: 'assistant', content: 'Hello.' },
+        finish_reason: 'stop',
       },
     ],
     usage: { prompt_tokens: 12, completion_tokens: 8 },
@@ -40,20 +40,20 @@ const COMPLETION: FakeReply = {
 };
 
 const USAGE_LIMIT_REACHED: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 429,
-  body: { error: { code: "1308", message: "Usage limit reached for 5 hour." } },
+  body: { error: { code: '1308', message: 'Usage limit reached for 5 hour.' } },
 };
 
 const RATE_LIMITED: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 429,
   body: {
-    error: { code: "1302", message: "High concurrency usage of this API." },
+    error: { code: '1302', message: 'High concurrency usage of this API.' },
   },
 };
 
-describe("Inference from the Z.ai GLM Coding Plan (e2e)", () => {
+describe('Inference from the Z.ai GLM Coding Plan (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let upstream: FakeUpstream;
@@ -66,8 +66,8 @@ describe("Inference from the Z.ai GLM Coding Plan (e2e)", () => {
     ({ app, db } = await createTestApp());
     upstream = await FakeUpstream.start();
     const catalog = await loadCatalog(CATALOG_DIRECTORY);
-    const provider = catalog.find((entry) => entry.slug === "zai-coding-plan");
-    if (!provider) throw new Error("the Catalog has no Z.ai GLM Coding Plan Provider");
+    const provider = catalog.find((entry) => entry.slug === 'zai-coding-plan');
+    if (!provider) throw new Error('the Catalog has no Z.ai GLM Coding Plan Provider');
     codingPlan = provider;
   });
 
@@ -76,7 +76,7 @@ describe("Inference from the Z.ai GLM Coding Plan (e2e)", () => {
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
     const inserted = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: `${upstream.origin}${codingBasePath()}`,
     });
     primaryAccountId = inserted.providerAccountId;
@@ -95,21 +95,21 @@ describe("Inference from the Z.ai GLM Coding Plan (e2e)", () => {
 
   function codingBasePath(): string {
     const endpoint = chatEndpointOf(codingPlan.endpoints);
-    if (!endpoint) throw new Error("the Z.ai GLM Coding Plan has no chat endpoint");
+    if (!endpoint) throw new Error('the Z.ai GLM Coding Plan has no chat endpoint');
     return new URL(endpoint.baseUrl).pathname;
   }
 
   function chat() {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send(TEXT_REQUEST);
   }
 
   async function listedPrimaryAccount(): Promise<Record<string, unknown>> {
     const list = await request(app.getHttpServer())
-      .get("/api/provider-accounts")
-      .set("Cookie", cookie)
+      .get('/api/provider-accounts')
+      .set('Cookie', cookie)
       .expect(200);
     return list.body.find((account: { id: string }) => account.id === primaryAccountId);
   }
@@ -119,29 +119,29 @@ describe("Inference from the Z.ai GLM Coding Plan (e2e)", () => {
 
     await chat().expect(200);
 
-    expect(upstream.lastRequest.path).toBe("/api/coding/paas/v4/chat/completions");
+    expect(upstream.lastRequest.path).toBe('/api/coding/paas/v4/chat/completions');
     expect(upstream.lastRequest.headers.authorization).toBe(`Bearer ${UPSTREAM_KEY}`);
   });
 
-  it("marks the account Exhausted when Z.ai says its usage limit is reached", async () => {
+  it('marks the account Exhausted when Z.ai says its usage limit is reached', async () => {
     upstream.reply(USAGE_LIMIT_REACHED);
     upstream.reply(COMPLETION);
 
     await chat().expect(200);
 
     expect(await listedPrimaryAccount()).toMatchObject({
-      cooldownCause: "exhausted",
+      cooldownCause: 'exhausted',
     });
   });
 
-  it("puts the account in a Cooldown when Z.ai rate-limits it", async () => {
+  it('puts the account in a Cooldown when Z.ai rate-limits it', async () => {
     upstream.reply(RATE_LIMITED);
     upstream.reply(COMPLETION);
 
     await chat().expect(200);
 
     expect(await listedPrimaryAccount()).toMatchObject({
-      cooldownCause: "rate_limited",
+      cooldownCause: 'rate_limited',
     });
   });
 });

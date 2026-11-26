@@ -1,4 +1,4 @@
-import type { IsoWeekday } from "@/db/schemas";
+import type { IsoWeekday } from '@/db/schemas';
 
 export const MILLISECONDS_PER_MINUTE = 60 * 1000;
 export const MINUTES_PER_HOUR = 60;
@@ -35,7 +35,7 @@ function asUtcMilliseconds(wallClock: WallClock): number {
 }
 
 export function minuteOfDayOf(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
   return hours * MINUTES_PER_HOUR + minutes;
 }
 
@@ -54,15 +54,15 @@ const formattersByTimeZone = new Map<string, Intl.DateTimeFormat>();
 function formatterFor(timeZone: string): Intl.DateTimeFormat {
   let formatter = formattersByTimeZone.get(timeZone);
   if (!formatter) {
-    formatter = new Intl.DateTimeFormat("en-US", {
+    formatter = new Intl.DateTimeFormat('en-US', {
       timeZone,
-      weekday: "short",
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-      hourCycle: "h23",
+      weekday: 'short',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hourCycle: 'h23',
     });
     formattersByTimeZone.set(timeZone, formatter);
   }
@@ -76,12 +76,12 @@ function readWallClockAt(
   const wallClock: WallClock = { year: 0, month: 1, day: 1, hour: 0, minute: 0 };
   let weekday: IsoWeekday = 1;
   for (const part of formatterFor(timeZone).formatToParts(instant)) {
-    if (part.type === "weekday") weekday = ISO_WEEKDAYS_BY_SHORT_NAME[part.value];
-    if (part.type === "year") wallClock.year = Number(part.value);
-    if (part.type === "month") wallClock.month = Number(part.value);
-    if (part.type === "day") wallClock.day = Number(part.value);
-    if (part.type === "hour") wallClock.hour = Number(part.value);
-    if (part.type === "minute") wallClock.minute = Number(part.value);
+    if (part.type === 'weekday') weekday = ISO_WEEKDAYS_BY_SHORT_NAME[part.value];
+    if (part.type === 'year') wallClock.year = Number(part.value);
+    if (part.type === 'month') wallClock.month = Number(part.value);
+    if (part.type === 'day') wallClock.day = Number(part.value);
+    if (part.type === 'hour') wallClock.hour = Number(part.value);
+    if (part.type === 'minute') wallClock.minute = Number(part.value);
   }
   return { wallClock, weekday };
 }

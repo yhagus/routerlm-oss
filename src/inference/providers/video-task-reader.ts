@@ -1,16 +1,16 @@
-import { Injectable } from "@nestjs/common";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
-import { AttemptFailedError, gatewayErrorFor } from "@/inference/models/attempt-failure";
-import { GatewayError } from "@/inference/models/gateway-error";
-import type { InferenceCaller } from "@/inference/models/inference";
-import { endpointOf } from "@/inference/models/route-selection";
-import type { VideoTaskState } from "@/inference/models/video-generation";
-import { upstreamAuthHeaders } from "@/inference/protocols/converters";
-import { VIDEO_UPSTREAM_PROTOCOLS } from "@/inference/protocols/openai-videos/openai-videos-client-contract";
-import { AttemptRunner } from "./attempt-runner";
-import { MediaUpstreamClient } from "./media-upstream-client";
-import { DEFAULT_TIMEOUTS } from "./upstream-client";
-import { VideoHandles, type VideoJobHandle } from "./video-handles";
+import { Injectable } from '@nestjs/common';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { AttemptFailedError, gatewayErrorFor } from '@/inference/models/attempt-failure';
+import { GatewayError } from '@/inference/models/gateway-error';
+import type { InferenceCaller } from '@/inference/models/inference';
+import { endpointOf } from '@/inference/models/route-selection';
+import type { VideoTaskState } from '@/inference/models/video-generation';
+import { upstreamAuthHeaders } from '@/inference/protocols/converters';
+import { VIDEO_UPSTREAM_PROTOCOLS } from '@/inference/protocols/openai-videos/openai-videos-client-contract';
+import { AttemptRunner } from './attempt-runner';
+import { MediaUpstreamClient } from './media-upstream-client';
+import { DEFAULT_TIMEOUTS } from './upstream-client';
+import { VideoHandles, type VideoJobHandle } from './video-handles';
 
 export interface ReadVideoJob {
   handle: VideoJobHandle;
@@ -75,5 +75,5 @@ export class VideoTaskReader {
 }
 
 export function videoNotFound(): GatewayError {
-  return new GatewayError("video_not_found", "No such video", "client");
+  return new GatewayError('video_not_found', 'No such video', 'client');
 }

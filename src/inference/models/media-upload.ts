@@ -1,4 +1,4 @@
-import type { MulterModuleOptions } from "@nestjs/platform-node";
+import type { MulterModuleOptions } from '@nestjs/platform-node';
 
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
@@ -13,5 +13,5 @@ export interface MediaUpload {
 }
 
 export function dataUriOf({ mimetype, buffer }: MediaUpload): string {
-  return `data:${mimetype};base64,${buffer.toString("base64")}`;
+  return `data:${mimetype};base64,${buffer.toString('base64')}`;
 }

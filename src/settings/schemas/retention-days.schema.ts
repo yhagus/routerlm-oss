@@ -1,7 +1,7 @@
-import { z } from "zod";
-import { settingValueSchema } from "@/settings/models/setting-definitions";
+import { z } from 'zod';
+import { settingValueSchema } from '@/settings/models/setting-definitions';
 
-const retentionDaysSchema = settingValueSchema("errorCaptureRetentionDays");
+const retentionDaysSchema = settingValueSchema('errorCaptureRetentionDays');
 
 export const newRetentionSchema = z.object({ days: retentionDaysSchema });
 export type NewRetention = z.infer<typeof newRetentionSchema>;

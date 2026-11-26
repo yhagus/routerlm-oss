@@ -1,27 +1,27 @@
-import { Client, credentials, Metadata, type ServiceError } from "@grpc/grpc-js";
-import { loadSync, type ServiceDefinition } from "@grpc/proto-loader";
+import { Client, credentials, Metadata, type ServiceError } from '@grpc/grpc-js';
+import { loadSync, type ServiceDefinition } from '@grpc/proto-loader';
 import {
   CONTROL_PLANE_ERROR_CODES,
   CONTROL_PLANE_ERRORS,
   type ControlPlaneErrorCode,
-} from "@/control-plane/models/control-plane-error";
-import { CONTROL_PLANE_PROTO_PATH } from "@/control-plane/models/control-plane-grpc";
+} from '@/control-plane/models/control-plane-error';
+import { CONTROL_PLANE_PROTO_PATH } from '@/control-plane/models/control-plane-grpc';
 import {
   type TimestampMessage,
   timestampMessageOf,
   timestampOf,
-} from "@/control-plane/models/proto-grpc";
-import type { ControlPlaneClient, ControlPlaneOutcome } from "./control-plane-client";
+} from '@/control-plane/models/proto-grpc';
+import type { ControlPlaneClient, ControlPlaneOutcome } from './control-plane-client';
 
 const READY_TIMEOUT_MS = 20_000;
-const CONTROL_PLANE_SERVICE_NAME = "routerlm.integration.v1.ControlPlane";
+const CONTROL_PLANE_SERVICE_NAME = 'routerlm.integration.v1.ControlPlane';
 
 const CLIENT_LOADER_OPTIONS = { keepCase: false, longs: String, defaults: true, oneofs: false };
 
 function controlPlaneService(): ServiceDefinition {
   const definitions = loadSync(CONTROL_PLANE_PROTO_PATH, CLIENT_LOADER_OPTIONS);
   const service = definitions[CONTROL_PLANE_SERVICE_NAME];
-  if (!service || "format" in service) {
+  if (!service || 'format' in service) {
     throw new Error(`control_plane.proto declares no ${CONTROL_PLANE_SERVICE_NAME}`);
   }
   return service;
@@ -38,11 +38,11 @@ function errorCodeOf(error: ServiceError): ControlPlaneErrorCode {
 }
 
 const isTimestamp = (value: unknown): value is TimestampMessage =>
-  typeof value === "object" && value !== null && "seconds" in value && "nanos" in value;
+  typeof value === 'object' && value !== null && 'seconds' in value && 'nanos' in value;
 
 function isEmptyMap(value: unknown): boolean {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
     !Array.isArray(value) &&
     Object.keys(value).length === 0
@@ -53,7 +53,7 @@ function protoJsonReviver(_name: string, value: unknown): unknown {
   if (isTimestamp(value)) {
     return timestampOf(value).toISOString();
   }
-  if (value === null || value === "" || isEmptyMap(value)) {
+  if (value === null || value === '' || isEmptyMap(value)) {
     return undefined;
   }
   return value;
@@ -64,7 +64,7 @@ function keySettingsMessageOf(settings: object): object {
     .filter(([, field]) => field !== null)
     .map(([name, field]) => [
       name,
-      name === "expiresAt" && typeof field === "string"
+      name === 'expiresAt' && typeof field === 'string'
         ? timestampMessageOf(new Date(field))
         : field,
     ]);
@@ -92,7 +92,7 @@ export async function grpcControlPlaneClient(
   ): Promise<ControlPlaneOutcome<T>> => {
     const method = service[methodName];
     const metadata = new Metadata();
-    if (secret !== undefined) metadata.set("authorization", `Bearer ${secret}`);
+    if (secret !== undefined) metadata.set('authorization', `Bearer ${secret}`);
     return new Promise((resolve, reject) => {
       channel.makeUnaryRequest(
         method.path,
@@ -116,19 +116,19 @@ export async function grpcControlPlaneClient(
   };
 
   const client: ControlPlaneClient = {
-    createKey: (secret, newKey) => call("CreateKey", secret, keySettingsMessageOf(newKey)),
+    createKey: (secret, newKey) => call('CreateKey', secret, keySettingsMessageOf(newKey)),
     updateKey: (secret, id, changes) =>
-      call("UpdateKey", secret, {
+      call('UpdateKey', secret, {
         id,
         key: keySettingsMessageOf(changes),
         updateMask: { paths: Object.keys(changes).map(snakeCaseOf) },
       }),
-    rotateKey: (secret, id) => call("RotateKey", secret, { id }),
-    revokeKey: (secret, id) => call("RevokeKey", secret, { id }),
-    getKey: (secret, id) => call("GetKey", secret, { id }),
-    listKeys: (secret, query = {}) => call("ListKeys", secret, query),
-    listModels: (secret) => call("ListModels", secret, {}),
-    listUsageLogs: (secret, query = {}) => call("ListUsageLogs", secret, query),
+    rotateKey: (secret, id) => call('RotateKey', secret, { id }),
+    revokeKey: (secret, id) => call('RevokeKey', secret, { id }),
+    getKey: (secret, id) => call('GetKey', secret, { id }),
+    listKeys: (secret, query = {}) => call('ListKeys', secret, query),
+    listModels: (secret) => call('ListModels', secret, {}),
+    listUsageLogs: (secret, query = {}) => call('ListUsageLogs', secret, query),
   };
   return {
     client,

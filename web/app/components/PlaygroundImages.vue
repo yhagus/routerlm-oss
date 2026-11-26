@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ImagePlus, SlidersHorizontal, Square, Trash2, X } from "@lucide/vue";
+import { ImagePlus, SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
   DialogDescription,
@@ -7,13 +7,13 @@ import {
   DialogPortal,
   DialogRoot,
   DialogTitle,
-} from "reka-ui";
-import { computed, reactive, ref, watch } from "vue";
+} from 'reka-ui';
+import { computed, reactive, ref, watch } from 'vue';
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
+} from '@/components/ai-elements/conversation';
 import {
   PromptInput,
   PromptInputBody,
@@ -25,9 +25,9 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputProvider,
-} from "@/components/ai-elements/prompt-input";
-import { apiErrorMessage } from "~/lib/api";
-import { MAX_IMAGE_BYTES, playgroundErrorOfFailure } from "~/lib/playground";
+} from '@/components/ai-elements/prompt-input';
+import { apiErrorMessage } from '~/lib/api';
+import { MAX_IMAGE_BYTES, playgroundErrorOfFailure } from '~/lib/playground';
 import {
   AUTOMATIC_SIZE,
   clientSizeOf,
@@ -37,8 +37,8 @@ import {
   MAX_IMAGES_PER_REQUEST,
   MAX_SEED,
   type PlaygroundImageSettings,
-} from "~/lib/playgroundImages";
-import { formatCost } from "~/lib/usage";
+} from '~/lib/playgroundImages';
+import { formatCost } from '~/lib/usage';
 
 const { $dashboardApi } = useNuxtApp();
 const {
@@ -49,16 +49,16 @@ const {
   canTry,
   requestModel,
   requestPath,
-} = usePlaygroundTarget("image");
+} = usePlaygroundTarget('image');
 
 const size = ref(AUTOMATIC_SIZE);
-const count = ref("");
-const negativePrompt = ref("");
-const seed = ref("");
+const count = ref('');
+const negativePrompt = ref('');
+const seed = ref('');
 const isSettingsSheetOpen = ref(false);
 
 const targetSizes = computed(() => {
-  if (source.value === "upstream") return selectedUpstreamModel.value?.sizes ?? [];
+  if (source.value === 'upstream') return selectedUpstreamModel.value?.sizes ?? [];
   const routedIds = new Set(
     (modelDetail.value?.routes ?? []).map((route) => route.upstreamModel.id),
   );
@@ -71,7 +71,7 @@ const sizeOptions = computed(() =>
   targetSizes.value.length === 0
     ? []
     : [
-        { value: AUTOMATIC_SIZE, label: "Model default" },
+        { value: AUTOMATIC_SIZE, label: 'Model default' },
         ...targetSizes.value.map((upstreamSize) => ({
           value: clientSizeOf(upstreamSize),
           label: clientSizeOf(upstreamSize),
@@ -85,25 +85,25 @@ watch(sizeOptions, (options) => {
 });
 
 function wholeNumberField(text: string, min: number, max: number): number | undefined | null {
-  if (text.trim() === "") return undefined;
+  if (text.trim() === '') return undefined;
   const value = Number(text);
   return Number.isInteger(value) && value >= min && value <= max ? value : null;
 }
 
 function readSettings(): { settings: PlaygroundImageSettings } | { problem: string } {
   const target = requestModel();
-  if ("problem" in target) return target;
+  if ('problem' in target) return target;
   const parsedCount = wholeNumberField(count.value, 1, MAX_IMAGES_PER_REQUEST);
   if (parsedCount === null) {
     return { problem: `Images must be a whole number from 1 to ${MAX_IMAGES_PER_REQUEST}.` };
   }
   const parsedSeed = wholeNumberField(seed.value, 0, MAX_SEED);
-  if (parsedSeed === null) return { problem: "Seed must be a whole number from 0 up." };
+  if (parsedSeed === null) return { problem: 'Seed must be a whole number from 0 up.' };
   const typedSize = size.value.trim();
   return {
     settings: {
       model: target.model,
-      size: typedSize === "" || typedSize === AUTOMATIC_SIZE ? undefined : typedSize,
+      size: typedSize === '' || typedSize === AUTOMATIC_SIZE ? undefined : typedSize,
       count: parsedCount,
       negativePrompt: negativePrompt.value.trim() || undefined,
       seed: parsedSeed,
@@ -114,42 +114,42 @@ function readSettings(): { settings: PlaygroundImageSettings } | { problem: stri
 const sentParameters = computed(() => {
   const parameters: string[] = [];
   const typedSize = size.value.trim();
-  if (typedSize !== "" && typedSize !== AUTOMATIC_SIZE) parameters.push(typedSize);
-  if (count.value.trim() !== "") parameters.push(`${count.value} images`);
-  if (negativePrompt.value.trim() !== "") parameters.push("Negative prompt");
-  if (seed.value.trim() !== "") parameters.push(`Seed ${seed.value}`);
+  if (typedSize !== '' && typedSize !== AUTOMATIC_SIZE) parameters.push(typedSize);
+  if (count.value.trim() !== '') parameters.push(`${count.value} images`);
+  if (negativePrompt.value.trim() !== '') parameters.push('Negative prompt');
+  if (seed.value.trim() !== '') parameters.push(`Seed ${seed.value}`);
   return parameters;
 });
 
 const exchanges = ref<ImageExchange[]>([]);
 let nextExchangeId = 1;
-const composerError = ref("");
+const composerError = ref('');
 const runningRequest = ref<AbortController | null>(null);
 const isSending = computed(() => runningRequest.value !== null);
 
 const INPUT_ERRORS: Record<string, string> = {
-  accept: "Only images can be attached.",
-  max_file_size: "Images must be 5 MB or smaller.",
+  accept: 'Only images can be attached.',
+  max_file_size: 'Images must be 5 MB or smaller.',
 };
 
 const promptInput = usePromptInputProvider({
-  accept: "image/*",
+  accept: 'image/*',
   maxFileSize: MAX_IMAGE_BYTES,
   onSubmit: submit,
   onError: (error) => (composerError.value = INPUT_ERRORS[error.code] ?? error.message),
 });
 const canSend = computed(
-  () => !isSending.value && canTry.value && promptInput.textInput.value.trim() !== "",
+  () => !isSending.value && canTry.value && promptInput.textInput.value.trim() !== '',
 );
 const isActivated = useIsActivated();
 
 async function submit(message: PromptInputMessage): Promise<void> {
   if (isSending.value) return;
   const prompt = message.text.trim();
-  if (prompt === "") throw new Error("Describe the image to make.");
+  if (prompt === '') throw new Error('Describe the image to make.');
   const read = readSettings();
-  if ("problem" in read) throw new Error(read.problem);
-  composerError.value = "";
+  if ('problem' in read) throw new Error(read.problem);
+  composerError.value = '';
   void send(
     read.settings,
     prompt,
@@ -163,7 +163,7 @@ async function send(
   inputImageUrls: string[],
 ): Promise<void> {
   const { operation, endpoint, body } = imageRequestOf(settings, prompt, inputImageUrls);
-  const isDirect = source.value === "upstream";
+  const isDirect = source.value === 'upstream';
   const exchange = reactive<ImageExchange>({
     id: nextExchangeId++,
     prompt,
@@ -172,7 +172,7 @@ async function send(
     isDirect,
     routes:
       !isDirect && modelDetail.value?.name === settings.model ? modelDetail.value.routes : null,
-    state: { kind: "pending" },
+    state: { kind: 'pending' },
   });
   exchanges.value.push(exchange);
 
@@ -180,24 +180,24 @@ async function send(
   runningRequest.value = request;
   try {
     const payload = await $dashboardApi(requestPath(endpoint), {
-      method: "POST",
+      method: 'POST',
       body,
       signal: request.signal,
     });
     const answer = imageAnswerOf(payload);
     exchange.state = answer
-      ? { kind: "done", ...answer }
-      : { kind: "failed", error: { code: null, message: "The gateway's answer had no images." } };
+      ? { kind: 'done', ...answer }
+      : { kind: 'failed', error: { code: null, message: "The gateway's answer had no images." } };
   } catch (failure) {
     if (request.signal.aborted) {
-      exchange.state = { kind: "stopped" };
+      exchange.state = { kind: 'stopped' };
       return;
     }
     const error = (await playgroundErrorOfFailure(failure)) ?? {
       code: null,
-      message: apiErrorMessage(failure, "The request did not reach the gateway."),
+      message: apiErrorMessage(failure, 'The request did not reach the gateway.'),
     };
-    exchange.state = { kind: "failed", error };
+    exchange.state = { kind: 'failed', error };
   } finally {
     runningRequest.value = null;
   }
@@ -216,7 +216,7 @@ const totals = computed(() => {
   let images = 0;
   let cost: number | null = null;
   for (const exchange of exchanges.value) {
-    if (exchange.state.kind !== "done") continue;
+    if (exchange.state.kind !== 'done') continue;
     images += exchange.state.imageUrls.length;
     const exchangeCost = exchange.state.summary.cost;
     if (exchangeCost !== null) cost = (cost ?? 0) + exchangeCost;
@@ -241,7 +241,7 @@ const settingsHint = "Empty parameters aren't sent, so the model decides.";
           <span v-else class="bench-bar__muted">Size and count from the model</span>
         </p>
         <p v-if="totals.images > 0" class="bench-bar__totals tabular">
-          <span>{{ totals.images }} {{ totals.images === 1 ? "image" : "images" }}</span>
+          <span>{{ totals.images }} {{ totals.images === 1 ? 'image' : 'images' }}</span>
           <span>{{ formatCost(totals.cost) }}</span>
         </p>
         <div class="bench-bar__tools">

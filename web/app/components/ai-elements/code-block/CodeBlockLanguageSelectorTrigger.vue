@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { SelectTrigger } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from 'vue';
+import { SelectTrigger } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
-type CodeBlockLanguageSelectorTriggerProps = InstanceType<typeof SelectTrigger>["$props"];
+type CodeBlockLanguageSelectorTriggerProps = InstanceType<typeof SelectTrigger>['$props'];
 
 interface Props extends /* @vue-ignore */ CodeBlockLanguageSelectorTriggerProps {
-  class?: HTMLAttributes["class"];
+  class?: HTMLAttributes['class'];
 }
 
 const props = defineProps<Props>();

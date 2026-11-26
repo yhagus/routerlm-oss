@@ -1,13 +1,13 @@
-import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Database } from "@/db/schemas/relations";
-import { pricingWindows } from "@/db/schemas";
-import { CreatePricingWindowCommand } from "@/pricing-windows/commands/impl/create-pricing-window.command";
+import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import type { Database } from '@/db/schemas/relations';
+import { pricingWindows } from '@/db/schemas';
+import { CreatePricingWindowCommand } from '@/pricing-windows/commands/impl/create-pricing-window.command';
 import {
   type PricingWindow,
   toPricingWindowWriteError,
-} from "@/pricing-windows/models/pricing-window";
-import { SnapshotService } from "@/snapshot/providers/snapshot.service";
+} from '@/pricing-windows/models/pricing-window';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 
 @CommandHandler(CreatePricingWindowCommand)
 export class CreatePricingWindowHandler implements ICommandHandler<CreatePricingWindowCommand> {

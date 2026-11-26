@@ -1,22 +1,22 @@
-import { rm } from "node:fs/promises";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
-import { relations } from "@/db/schemas/relations";
-import { createEmptyDatabase, dropDatabase } from "@tests/support/isolated-database";
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from "@tests/support/migrations";
+import { rm } from 'node:fs/promises';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { Pool } from 'pg';
+import { relations } from '@/db/schemas/relations';
+import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
+import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
 
-const INTEGRATIONS_MIGRATION_SUFFIX = "_integrations";
+const INTEGRATIONS_MIGRATION_SUFFIX = '_integrations';
 
-describe("Integrations migration (e2e)", () => {
-  const serverUrl = process.env.DATABASE_URL ?? "";
+describe('Integrations migration (e2e)', () => {
+  const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
   let databaseUrl: string;
   let pool: Pool;
 
   beforeAll(async () => {
     migrationsBefore = await copyMigrationsBefore(INTEGRATIONS_MIGRATION_SUFFIX);
-    databaseUrl = await createEmptyDatabase(serverUrl, "integrations");
+    databaseUrl = await createEmptyDatabase(serverUrl, 'integrations');
     pool = new Pool({ connectionString: databaseUrl });
     await migrate(drizzle({ client: pool, relations }), { migrationsFolder: migrationsBefore });
   });
@@ -32,7 +32,7 @@ describe("Integrations migration (e2e)", () => {
     return rows[0].id;
   }
 
-  it("keeps existing API Keys and Usage Logs as operator ones, with nothing spent", async () => {
+  it('keeps existing API Keys and Usage Logs as operator ones, with nothing spent', async () => {
     const apiKeyId = await insertReturningId(
       `insert into api_keys (name, key_id, hash) values ('CI', 'ci', 'hash-ci')`,
     );
@@ -56,11 +56,11 @@ describe("Integrations migration (e2e)", () => {
     expect(keys.rows).toEqual([
       {
         id: apiKeyId,
-        name: "CI",
+        name: 'CI',
         integration_id: null,
         customer_id: null,
         spend_limit: null,
-        spent: "0.0000000000",
+        spent: '0.0000000000',
         request_rate: null,
       },
     ]);
@@ -70,7 +70,7 @@ describe("Integrations migration (e2e)", () => {
     expect(logs.rows).toEqual([
       {
         id: usageLogId,
-        api_key_name: "CI",
+        api_key_name: 'CI',
         integration_id: null,
         integration_name: null,
         customer_id: null,
@@ -80,7 +80,7 @@ describe("Integrations migration (e2e)", () => {
       `select api_key_name, integration_name, customer_id from attempts`,
     );
     expect(attempts.rows).toEqual([
-      { api_key_name: "CI", integration_name: null, customer_id: null },
+      { api_key_name: 'CI', integration_name: null, customer_id: null },
     ]);
   });
 });

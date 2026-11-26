@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { ArrowLeft, CircleAlert, CloudOff, Pencil, Plus, Power, Trash2 } from "@lucide/vue";
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from "reka-ui";
-import { apiErrorMessage } from "~/lib/api";
-import { TERMS_RISK_BLOCKED_HINT } from "~/lib/settings";
+import { ArrowLeft, CircleAlert, CloudOff, Pencil, Plus, Power, Trash2 } from '@lucide/vue';
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
+import { apiErrorMessage } from '~/lib/api';
+import { TERMS_RISK_BLOCKED_HINT } from '~/lib/settings';
 import {
   accountStateOf,
   baseUrlHost,
   providerStats,
   unroutableReason,
-} from "~/lib/providerOverview";
+} from '~/lib/providerOverview';
 import {
   type Provider,
   type ProviderAccount,
@@ -17,9 +17,9 @@ import {
   mainBaseUrl,
   MODEL_KIND_LABELS,
   PROTOCOL_LABELS,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
-const TABS = ["accounts", "models", "configuration"] as const;
+const TABS = ['accounts', 'models', 'configuration'] as const;
 type Tab = (typeof TABS)[number];
 
 const route = useRoute();
@@ -33,22 +33,22 @@ const {
   status: providersStatus,
   error: loadError,
   refresh: refreshProviders,
-} = useDashboardApi<Provider[]>("/providers");
+} = useDashboardApi<Provider[]>('/providers');
 const {
   data: accounts,
   status: accountsStatus,
   error: accountsError,
   refresh: refreshAccounts,
-} = useDashboardApi<ProviderAccount[]>("/provider-accounts");
+} = useDashboardApi<ProviderAccount[]>('/provider-accounts');
 const {
   data: models,
   status: modelsStatus,
   error: modelsError,
   refresh: refreshModels,
-} = useDashboardApi<UpstreamModel[]>("/upstream-models");
+} = useDashboardApi<UpstreamModel[]>('/upstream-models');
 
-const isLoadingAccounts = computed(() => accountsStatus.value === "pending" && !accounts.value);
-const isLoadingModels = computed(() => modelsStatus.value === "pending" && !models.value);
+const isLoadingAccounts = computed(() => accountsStatus.value === 'pending' && !accounts.value);
+const isLoadingModels = computed(() => modelsStatus.value === 'pending' && !models.value);
 
 const provider = computed(() => providers.value?.find((each) => each.id === providerId));
 const ownAccounts = computed(() =>
@@ -58,9 +58,9 @@ const ownModels = computed(() =>
   (models.value ?? []).filter((model) => model.providerId === providerId),
 );
 
-useMissingResource(() => Boolean(providers.value) && !provider.value, "Provider");
+useMissingResource(() => Boolean(providers.value) && !provider.value, 'Provider');
 
-useHead({ title: () => provider.value?.name ?? "Provider" });
+useHead({ title: () => provider.value?.name ?? 'Provider' });
 
 const loadedAt = ref(Date.now());
 
@@ -76,20 +76,20 @@ const stats = computed(() =>
 );
 const readyAccounts = computed(
   () =>
-    ownAccounts.value.filter((account) => accountStateOf(account, loadedAt.value) === "ready")
+    ownAccounts.value.filter((account) => accountStateOf(account, loadedAt.value) === 'ready')
       .length,
 );
 const enabledModels = computed(() => ownModels.value.filter((model) => model.isEnabled).length);
 
-const activeTab = useQueryParam<Tab>("tab", { default: "accounts", isValid: oneOf(TABS) });
+const activeTab = useQueryParam<Tab>('tab', { default: 'accounts', isValid: oneOf(TABS) });
 
 const isEditOpen = ref(false);
 const isDeleteOpen = ref(false);
 const isDeleting = ref(false);
-const deleteError = ref("");
+const deleteError = ref('');
 
 function openDelete(): void {
-  deleteError.value = "";
+  deleteError.value = '';
   isDeleteOpen.value = true;
 }
 
@@ -97,12 +97,12 @@ async function deleteProvider(): Promise<void> {
   if (!provider.value) return;
   const { name } = provider.value;
   isDeleting.value = true;
-  deleteError.value = "";
+  deleteError.value = '';
   try {
-    await $dashboardApi(`/providers/${providerId}`, { method: "DELETE" });
+    await $dashboardApi(`/providers/${providerId}`, { method: 'DELETE' });
     showToast(`Deleted ${name}`);
     isDeleteOpen.value = false;
-    await navigateTo("/providers");
+    await navigateTo('/providers');
   } catch (error) {
     deleteError.value = apiErrorMessage(error, "Couldn't delete the Provider.");
   } finally {
@@ -115,10 +115,10 @@ async function toggleProvider(): Promise<void> {
   const { isEnabled, name } = provider.value;
   try {
     await $dashboardApi(`/providers/${providerId}`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: { isEnabled: !isEnabled },
     });
-    showToast(`${isEnabled ? "Disabled" : "Enabled"} ${name}`);
+    showToast(`${isEnabled ? 'Disabled' : 'Enabled'} ${name}`);
     await refresh();
   } catch (error) {
     showToast(apiErrorMessage(error, `Couldn't update ${name}.`));
@@ -126,20 +126,20 @@ async function toggleProvider(): Promise<void> {
 }
 
 const REASONING_LABELS: Record<string, string> = {
-  "all-assistant-turns": "Every assistant turn",
-  "tool-call-turns": "Turns with tool calls",
+  'all-assistant-turns': 'Every assistant turn',
+  'tool-call-turns': 'Turns with tool calls',
 };
 
 function requestFields(target: Provider): string {
   const fields = [
-    target.quirks.acceptsCacheControl ? "cache_control markers" : null,
-    target.quirks.acceptsPromptCacheKey ? "prompt_cache_key" : null,
-    target.quirks.usesMaxCompletionTokens ? "max_completion_tokens" : null,
+    target.quirks.acceptsCacheControl ? 'cache_control markers' : null,
+    target.quirks.acceptsPromptCacheKey ? 'prompt_cache_key' : null,
+    target.quirks.usesMaxCompletionTokens ? 'max_completion_tokens' : null,
   ].filter((field) => field !== null);
-  return fields.length ? fields.join(", ") : "None";
+  return fields.length ? fields.join(', ') : 'None';
 }
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 </script>
 
 <template>
@@ -199,13 +199,13 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
           <span
             class="status-badge"
             :class="provider.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-            >{{ provider.isEnabled ? "Enabled" : "Disabled" }}</span
+            >{{ provider.isEnabled ? 'Enabled' : 'Disabled' }}</span
           >
           <button class="button" type="button" @click="isEditOpen = true">
             <Pencil :size="14" /> Edit
           </button>
           <button class="button" type="button" @click="toggleProvider">
-            <Power :size="14" /> {{ provider.isEnabled ? "Disable" : "Enable" }}
+            <Power :size="14" /> {{ provider.isEnabled ? 'Disable' : 'Enable' }}
           </button>
           <button
             class="icon-action icon-action--danger"
@@ -313,7 +313,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
                 <dt>Authentication</dt>
                 <dd>
                   {{
-                    provider.authStyle === "bearer" ? "Authorization: Bearer" : "x-api-key header"
+                    provider.authStyle === 'bearer' ? 'Authorization: Bearer' : 'x-api-key header'
                   }}
                 </dd>
               </div>
@@ -328,7 +328,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
                     {{
                       provider.quirks.reasoningContentInHistory
                         ? REASONING_LABELS[provider.quirks.reasoningContentInHistory]
-                        : "Not needed"
+                        : 'Not needed'
                     }}
                   </dd>
                 </div>
@@ -348,7 +348,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
               </div>
               <div>
                 <dt>Source</dt>
-                <dd>{{ provider.isFromCatalog ? "Catalog" : "Added by hand" }}</dd>
+                <dd>{{ provider.isFromCatalog ? 'Catalog' : 'Added by hand' }}</dd>
               </div>
               <div>
                 <dt>Updated</dt>

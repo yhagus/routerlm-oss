@@ -1,10 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import type { QuotaReaderName } from "@/db/schemas";
-import type { QuotaReader } from "@/quota-meters/models/quota-reader";
-import type { UsageResetPort } from "@/quota-meters/models/usage-reset";
-import { KimiCodeQuotaReader } from "./kimi-code-quota-reader";
-import { MiniMaxMPlanQuotaReader } from "./minimax-m-plan-quota-reader";
-import { OpenAiCodexQuotaReader } from "./openai-codex-quota-reader";
+import { Injectable } from '@nestjs/common';
+import type { QuotaReaderName } from '@/db/schemas';
+import type { QuotaReader } from '@/quota-meters/models/quota-reader';
+import type { UsageResetPort } from '@/quota-meters/models/usage-reset';
+import { KimiCodeQuotaReader } from './kimi-code-quota-reader';
+import { MiniMaxMPlanQuotaReader } from './minimax-m-plan-quota-reader';
+import { OpenAiCodexQuotaReader } from './openai-codex-quota-reader';
 
 @Injectable()
 export class QuotaReaders {
@@ -16,9 +16,9 @@ export class QuotaReaders {
     openAiCodex: OpenAiCodexQuotaReader,
   ) {
     this.readers = {
-      "minimax-m-plan": miniMaxMPlan,
-      "kimi-code": kimiCode,
-      "openai-codex": openAiCodex,
+      'minimax-m-plan': miniMaxMPlan,
+      'kimi-code': kimiCode,
+      'openai-codex': openAiCodex,
     };
   }
 

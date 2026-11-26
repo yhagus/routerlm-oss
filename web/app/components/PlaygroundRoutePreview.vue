@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { TriangleAlert } from "@lucide/vue";
-import { computed } from "vue";
+import { TriangleAlert } from '@lucide/vue';
+import { computed } from 'vue';
 import {
   POLICY_PARAMETERS,
   type ParameterPolicy,
   type ParameterValues,
   RULE_KINDS,
-} from "~/lib/parameterPolicy";
-import type { ModelDetail, RouteSummary } from "~/lib/routing";
-import { formatCount } from "~/lib/usage";
+} from '~/lib/parameterPolicy';
+import type { ModelDetail, RouteSummary } from '~/lib/routing';
+import { formatCount } from '~/lib/usage';
 
 const props = defineProps<{
   model: ModelDetail | null;
@@ -18,10 +18,10 @@ const props = defineProps<{
 }>();
 
 function blockerOf(route: RouteSummary): string | null {
-  if (!route.isEnabled) return "Route disabled";
-  if (!route.provider.isEnabled) return "Provider disabled";
-  if (!route.upstreamModel.isEnabled) return "Upstream Model disabled";
-  if (route.enabledProviderAccountCount === 0) return "No enabled Provider Account";
+  if (!route.isEnabled) return 'Route disabled';
+  if (!route.provider.isEnabled) return 'Provider disabled';
+  if (!route.upstreamModel.isEnabled) return 'Upstream Model disabled';
+  if (route.enabledProviderAccountCount === 0) return 'No enabled Provider Account';
   return null;
 }
 
@@ -31,10 +31,10 @@ const routes = computed(() =>
 const usableCount = computed(() => routes.value.filter(({ blocker }) => !blocker).length);
 function formatValue(name: keyof ParameterValues, values: ParameterValues): string {
   const value = values[name];
-  if (Array.isArray(value)) return value.map((stop) => JSON.stringify(stop)).join(", ");
-  if (typeof value === "boolean") return value ? "On" : "Off";
-  const isTokenCount = name === "maxOutputTokens" || name === "reasoningBudgetTokens";
-  if (isTokenCount && typeof value === "number") return formatCount(value);
+  if (Array.isArray(value)) return value.map((stop) => JSON.stringify(stop)).join(', ');
+  if (typeof value === 'boolean') return value ? 'On' : 'Off';
+  const isTokenCount = name === 'maxOutputTokens' || name === 'reasoningBudgetTokens';
+  if (isTokenCount && typeof value === 'number') return formatCount(value);
   return String(value);
 }
 
@@ -102,7 +102,7 @@ const hasPolicyPrompt = computed(() => Boolean(props.model?.parameterPolicy.syst
                 {{ route.provider.name }}
                 <template v-if="!blocker">
                   · {{ route.enabledProviderAccountCount }}
-                  {{ route.enabledProviderAccountCount === 1 ? "account" : "accounts" }}
+                  {{ route.enabledProviderAccountCount === 1 ? 'account' : 'accounts' }}
                 </template>
                 <template v-if="route.parameterPolicyOverride"> · own policy</template>
               </span>

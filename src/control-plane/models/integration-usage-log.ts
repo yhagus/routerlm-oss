@@ -1,34 +1,34 @@
-import type { usageLogs } from "@/db/schemas";
+import type { usageLogs } from '@/db/schemas';
 
 export type IntegrationUsageLog = Pick<
   typeof usageLogs.$inferSelect,
-  | "id"
-  | "createdAt"
-  | "apiKeyId"
-  | "apiKeyName"
-  | "customerId"
-  | "modelName"
-  | "kind"
-  | "clientProtocol"
-  | "isStreamed"
-  | "httpStatus"
-  | "errorCode"
-  | "errorOrigin"
-  | "inputTokens"
-  | "outputTokens"
-  | "cacheReadTokens"
-  | "cacheWriteTokens"
-  | "reasoningTokens"
-  | "imagesOut"
-  | "imagesIn"
-  | "outputSeconds"
-  | "audioSeconds"
-  | "characters"
-  | "cost"
-  | "timeToFirstTokenMs"
-  | "durationMs"
-  | "isCancelled"
-  | "isIncomplete"
+  | 'id'
+  | 'createdAt'
+  | 'apiKeyId'
+  | 'apiKeyName'
+  | 'customerId'
+  | 'modelName'
+  | 'kind'
+  | 'clientProtocol'
+  | 'isStreamed'
+  | 'httpStatus'
+  | 'errorCode'
+  | 'errorOrigin'
+  | 'inputTokens'
+  | 'outputTokens'
+  | 'cacheReadTokens'
+  | 'cacheWriteTokens'
+  | 'reasoningTokens'
+  | 'imagesOut'
+  | 'imagesIn'
+  | 'outputSeconds'
+  | 'audioSeconds'
+  | 'characters'
+  | 'cost'
+  | 'timeToFirstTokenMs'
+  | 'durationMs'
+  | 'isCancelled'
+  | 'isIncomplete'
 >;
 
 export interface IntegrationUsageLogPage {

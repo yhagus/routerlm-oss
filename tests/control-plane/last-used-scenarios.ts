@@ -1,13 +1,13 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import { sql } from "drizzle-orm";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import type { ControlPlaneClient } from "@tests/support/control-plane-client";
-import { createIntegration } from "@tests/support/integrations";
-import { createTestApp, deleteAllUsers, setUpFirstUser } from "@tests/support/test-app";
-import type { ControlPlaneTransport } from "./key-scenarios";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import { sql } from 'drizzle-orm';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import type { ControlPlaneClient } from '@tests/support/control-plane-client';
+import { createIntegration } from '@tests/support/integrations';
+import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import type { ControlPlaneTransport } from './key-scenarios';
 
-const ADA = { email: "ada@example.com", password: "ada's password" };
+const ADA = { email: 'ada@example.com', password: "ada's password" };
 
 export function describeLastUsedScenarios(transport: ControlPlaneTransport): void {
   describe(`Integration Secret last use over ${transport.name} (e2e)`, () => {
@@ -27,7 +27,7 @@ export function describeLastUsedScenarios(transport: ControlPlaneTransport): voi
       await db.execute(sql`truncate table integrations, api_keys cascade`);
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
-      acme = await createIntegration(app, adaCookie, { name: "Acme SaaS" });
+      acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
     });
 
     afterAll(async () => {
@@ -38,12 +38,12 @@ export function describeLastUsedScenarios(transport: ControlPlaneTransport): voi
     async function lastUsedAt(): Promise<string | null> {
       const detail = await request(app.getHttpServer())
         .get(`/api/integrations/${acme.id}`)
-        .set("Cookie", adaCookie)
+        .set('Cookie', adaCookie)
         .expect(200);
       return detail.body.lastUsedAt;
     }
 
-    it("records the first call, and not again for a call within the minute", async () => {
+    it('records the first call, and not again for a call within the minute', async () => {
       await client.listModels(acme.secret);
       const afterFirstCall = await lastUsedAt();
       await client.listModels(acme.secret);
@@ -56,7 +56,7 @@ export function describeLastUsedScenarios(transport: ControlPlaneTransport): voi
     it("records no use for a disabled Integration's refused secret", async () => {
       await request(app.getHttpServer())
         .post(`/api/integrations/${acme.id}/disable`)
-        .set("Cookie", adaCookie)
+        .set('Cookie', adaCookie)
         .expect(204);
 
       await expect(client.listModels(acme.secret)).resolves.toMatchObject({ ok: false });

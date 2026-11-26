@@ -11,7 +11,7 @@ export interface CatalogGapsResponse {
   gaps: CatalogGap[];
 }
 
-export const CATALOG_GAPS_PATH = "/catalog/gaps";
+export const CATALOG_GAPS_PATH = '/catalog/gaps';
 
 export const MAX_LISTED_GAPS = 5;
 

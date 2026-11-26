@@ -1,11 +1,11 @@
-import { asc, eq, inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { providerAccounts, quotaMeters } from "@/db/schemas";
-import type { UsageReset } from "./usage-reset";
+import { asc, eq, inArray } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { providerAccounts, quotaMeters } from '@/db/schemas';
+import type { UsageReset } from './usage-reset';
 
 export type QuotaMeterReading = Omit<
   typeof quotaMeters.$inferSelect,
-  "id" | "providerAccountId" | "observedAt"
+  'id' | 'providerAccountId' | 'observedAt'
 >;
 
 const readingColumns = {
@@ -29,11 +29,11 @@ const quotaMeterColumns = {
   ...readingColumns,
 };
 
-export type QuotaMeter = Omit<typeof quotaMeters.$inferSelect, "id" | "providerAccountId" | "raw">;
+export type QuotaMeter = Omit<typeof quotaMeters.$inferSelect, 'id' | 'providerAccountId' | 'raw'>;
 
 export type ProviderAccountQuota = Pick<
   typeof providerAccounts.$inferSelect,
-  "quotaCheckedAt" | "quotaError"
+  'quotaCheckedAt' | 'quotaError'
 > & { quotaMeters: QuotaMeter[]; usageResets: UsageReset[] | null };
 
 export async function selectQuotaMeters(

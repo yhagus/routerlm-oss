@@ -1,4 +1,4 @@
-import { usageLogs } from "@/db/schemas";
+import { usageLogs } from '@/db/schemas';
 
 export const usageLogSummaryColumns = {
   id: usageLogs.id,

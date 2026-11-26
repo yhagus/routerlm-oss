@@ -1,18 +1,18 @@
-import { type IQueryHandler, QueryHandler } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import { and, count, gte, lt, type SQL, sql } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { type ErrorOrigin, usageLogs } from "@/db/schemas";
-import { byErrorOrigin } from "@/usage/models/by-error-origin";
-import { failedWithOriginCondition, statusCondition } from "@/usage/models/usage-filters";
+import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { and, count, gte, lt, type SQL, sql } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { type ErrorOrigin, usageLogs } from '@/db/schemas';
+import { byErrorOrigin } from '@/usage/models/by-error-origin';
+import { failedWithOriginCondition, statusCondition } from '@/usage/models/usage-filters';
 import {
   OVERVIEW_BUCKETS,
   type Overview,
   type OverviewBucket,
   type OriginErrors,
   type OverviewStats,
-} from "@/overview/models/overview";
-import { ShowOverviewQuery } from "@/overview/queries/impl/show-overview.query";
+} from '@/overview/models/overview';
+import { ShowOverviewQuery } from '@/overview/queries/impl/show-overview.query';
 
 const MS_PER_SECOND = 1000;
 
@@ -68,7 +68,7 @@ function statsColumns() {
   const totalInputTokens = sql`coalesce(${usageLogs.inputTokens}, 0)
     + coalesce(${usageLogs.cacheReadTokens}, 0)
     + coalesce(${usageLogs.cacheWriteTokens}, 0)`;
-  const failedCount = sql<number>`count(*) filter (where ${statusCondition("failed")})`.mapWith(
+  const failedCount = sql<number>`count(*) filter (where ${statusCondition('failed')})`.mapWith(
     Number,
   );
   return {

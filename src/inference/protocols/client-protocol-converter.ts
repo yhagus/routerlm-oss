@@ -1,10 +1,10 @@
-import type { ClientProtocol } from "@/db/schemas";
-import type { GatewayError } from "@/inference/models/gateway-error";
+import type { ClientProtocol } from '@/db/schemas';
+import type { GatewayError } from '@/inference/models/gateway-error';
 import type {
   InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 
 export interface ResponseContext {
   requestId: string;

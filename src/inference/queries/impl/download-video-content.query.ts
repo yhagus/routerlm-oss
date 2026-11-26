@@ -1,5 +1,5 @@
-import { Query } from "@nestjs/cqrs";
-import type { InferenceCaller } from "@/inference/models/inference";
+import { Query } from '@nestjs/cqrs';
+import type { InferenceCaller } from '@/inference/models/inference';
 
 export class DownloadVideoContentQuery extends Query<Response> {
   constructor(

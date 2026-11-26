@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Route } from "@lucide/vue";
-import { computed } from "vue";
-import type { PlaygroundSource } from "~/composables/usePlaygroundTarget";
+import { Route } from '@lucide/vue';
+import { computed } from 'vue';
+import type { PlaygroundSource } from '~/composables/usePlaygroundTarget';
 
 const {
   source,
@@ -18,17 +18,17 @@ const {
 } = useInjectedPlaygroundTarget();
 
 const SOURCE_OPTIONS: { value: PlaygroundSource; label: string }[] = [
-  { value: "model", label: "Model" },
-  { value: "upstream", label: "Upstream Model" },
+  { value: 'model', label: 'Model' },
+  { value: 'upstream', label: 'Upstream Model' },
 ];
 
 const modelPlaceholder = computed(() => {
-  if (modelsError.value) return "Models unavailable";
-  return isLoadingModels.value ? "Loading Models…" : "No enabled Model";
+  if (modelsError.value) return 'Models unavailable';
+  return isLoadingModels.value ? 'Loading Models…' : 'No enabled Model';
 });
 const providerPlaceholder = computed(() => {
-  if (upstreamError.value) return "Providers unavailable";
-  return isLoadingUpstream.value ? "Loading Providers…" : "No Provider";
+  if (upstreamError.value) return 'Providers unavailable';
+  return isLoadingUpstream.value ? 'Loading Providers…' : 'No Provider';
 });
 </script>
 

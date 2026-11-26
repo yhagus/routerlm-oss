@@ -1,6 +1,6 @@
-import type { CustomerApiKey, CustomerApiKeyPage, IssuedCustomerApiKey } from "./customer-api-key";
-import type { IntegrationModel, IntegrationPricingWindow } from "./integration-model";
-import type { IntegrationUsageLog, IntegrationUsageLogPage } from "./integration-usage-log";
+import type { CustomerApiKey, CustomerApiKeyPage, IssuedCustomerApiKey } from './customer-api-key';
+import type { IntegrationModel, IntegrationPricingWindow } from './integration-model';
+import type { IntegrationUsageLog, IntegrationUsageLogPage } from './integration-usage-log';
 
 export interface ApiKeyJson {
   id: string;
@@ -136,9 +136,9 @@ export function usageLogJsonOf(usageLog: IntegrationUsageLog): UsageLogJson {
   return {
     id: usageLog.id,
     receivedAt: usageLog.createdAt.toISOString(),
-    apiKeyId: usageLog.apiKeyId ?? "",
+    apiKeyId: usageLog.apiKeyId ?? '',
     apiKeyName: usageLog.apiKeyName ?? undefined,
-    customerId: usageLog.customerId ?? "",
+    customerId: usageLog.customerId ?? '',
     modelName: usageLog.modelName ?? undefined,
     kind: usageLog.kind,
     clientProtocol: usageLog.clientProtocol,

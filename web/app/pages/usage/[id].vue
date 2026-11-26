@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ArrowLeft, CloudOff, Unplug } from "@lucide/vue";
-import { ERROR_ORIGIN_LABELS } from "~/lib/errorOrigins";
-import { isNotFound } from "~/lib/errors";
-import { SERVICE_TIER_LABELS } from "~/lib/parameterPolicy";
+import { ArrowLeft, CloudOff, Unplug } from '@lucide/vue';
+import { ERROR_ORIGIN_LABELS } from '~/lib/errorOrigins';
+import { isNotFound } from '~/lib/errors';
+import { SERVICE_TIER_LABELS } from '~/lib/parameterPolicy';
 import {
   formatCost,
   formatCount,
@@ -11,35 +11,35 @@ import {
   USAGE_STATUS_LABELS,
   type UsageLogDetail,
   usageStatusOf,
-} from "~/lib/usage";
+} from '~/lib/usage';
 
 const { data: usageLog, error: loadError } = useDashboardApi<UsageLogDetail>(
   `/usage/${String(useRoute().params.id)}`,
 );
-useMissingResource(() => isNotFound(loadError.value), "Usage Log");
+useMissingResource(() => isNotFound(loadError.value), 'Usage Log');
 
-useHead({ title: "Usage Log" });
+useHead({ title: 'Usage Log' });
 
 const backTo = computed(() => {
   const previous: unknown = window.history.state?.back;
-  return typeof previous === "string" && /^\/usage(\?|$)/.test(previous) ? previous : "/usage";
+  return typeof previous === 'string' && /^\/usage(\?|$)/.test(previous) ? previous : '/usage';
 });
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" });
+const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' });
 
 const description = computed(() =>
   usageLog.value
     ? `Requested ${timeFormat.format(new Date(usageLog.value.createdAt))}.`
-    : "One client request and the Attempts the gateway made for it.",
+    : 'One client request and the Attempts the gateway made for it.',
 );
 
 const status = computed(() => (usageLog.value ? usageStatusOf(usageLog.value) : null));
 
 const apiKeyLabel = computed(() => {
   const log = usageLog.value;
-  if (!log) return "—";
-  if (log.isPlayground) return "Playground";
-  return log.apiKeyName ?? (log.apiKeyId ? "Deleted API Key" : "—");
+  if (!log) return '—';
+  if (log.isPlayground) return 'Playground';
+  return log.apiKeyName ?? (log.apiKeyId ? 'Deleted API Key' : '—');
 });
 </script>
 
@@ -63,7 +63,7 @@ const apiKeyLabel = computed(() => {
         <section class="panel capture-summary">
           <header class="capture-summary__head">
             <div>
-              <h2>{{ usageLog.modelName ?? (usageLog.modelId ? "Deleted Model" : "No Model") }}</h2>
+              <h2>{{ usageLog.modelName ?? (usageLog.modelId ? 'Deleted Model' : 'No Model') }}</h2>
               <p>{{ apiKeyLabel }} · {{ usageLog.clientProtocol }}</p>
             </div>
             <p class="capture-outcome">
@@ -78,38 +78,38 @@ const apiKeyLabel = computed(() => {
             <template v-if="usageLog.integrationId">
               <div>
                 <dt>Integration</dt>
-                <dd>{{ usageLog.integrationName ?? "—" }}</dd>
+                <dd>{{ usageLog.integrationName ?? '—' }}</dd>
               </div>
               <div>
                 <dt>Customer</dt>
-                <dd>{{ usageLog.customerId ?? "—" }}</dd>
+                <dd>{{ usageLog.customerId ?? '—' }}</dd>
               </div>
             </template>
             <div>
               <dt>Upstream Protocol</dt>
-              <dd>{{ usageLog.upstreamProtocol ?? "—" }}</dd>
+              <dd>{{ usageLog.upstreamProtocol ?? '—' }}</dd>
             </div>
             <div>
               <dt>Error Origin</dt>
-              <dd>{{ usageLog.errorOrigin ? ERROR_ORIGIN_LABELS[usageLog.errorOrigin] : "—" }}</dd>
+              <dd>{{ usageLog.errorOrigin ? ERROR_ORIGIN_LABELS[usageLog.errorOrigin] : '—' }}</dd>
             </div>
             <div>
               <dt>User-Agent</dt>
-              <dd>{{ usageLog.userAgent ?? "—" }}</dd>
+              <dd>{{ usageLog.userAgent ?? '—' }}</dd>
             </div>
             <div>
               <dt>IP</dt>
-              <dd class="tabular">{{ usageLog.clientIp ?? "—" }}</dd>
+              <dd class="tabular">{{ usageLog.clientIp ?? '—' }}</dd>
             </div>
             <div>
               <dt>Tier</dt>
               <dd>
-                {{ usageLog.serviceTier ? SERVICE_TIER_LABELS[usageLog.serviceTier] : "Default" }}
+                {{ usageLog.serviceTier ? SERVICE_TIER_LABELS[usageLog.serviceTier] : 'Default' }}
               </dd>
             </div>
             <div>
               <dt>Streamed</dt>
-              <dd>{{ usageLog.isStreamed ? "Yes" : "No" }}</dd>
+              <dd>{{ usageLog.isStreamed ? 'Yes' : 'No' }}</dd>
             </div>
             <div>
               <dt>Usage Log id</dt>

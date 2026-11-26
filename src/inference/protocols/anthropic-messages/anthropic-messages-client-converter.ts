@@ -1,6 +1,6 @@
-import { z } from "zod";
-import type { GatewayErrorCode } from "@/db/schemas";
-import { GatewayError } from "@/inference/models/gateway-error";
+import { z } from 'zod';
+import type { GatewayErrorCode } from '@/db/schemas';
+import { GatewayError } from '@/inference/models/gateway-error';
 import {
   type AssistantContentPart,
   type CacheMarker,
@@ -15,73 +15,73 @@ import {
   type ToolChoice,
   UNREPORTED_USAGE,
   type UserContentPart,
-} from "@/inference/models/internal-format";
+} from '@/inference/models/internal-format';
 import {
   type ClientProtocolConverter,
   type ClientStreamWriter,
   type ResponseContext,
-} from "@/inference/protocols/client-protocol-converter";
+} from '@/inference/protocols/client-protocol-converter';
 
 const cacheControlSchema = z.object({
-  type: z.literal("ephemeral"),
-  ttl: z.enum(["5m", "1h"]).optional(),
+  type: z.literal('ephemeral'),
+  ttl: z.enum(['5m', '1h']).optional(),
 });
 type CacheControl = z.infer<typeof cacheControlSchema>;
 
 const textBlockSchema = z.object({
-  type: z.literal("text"),
+  type: z.literal('text'),
   text: z.string(),
   cache_control: cacheControlSchema.nullish(),
 });
 const imageBlockSchema = z.object({
-  type: z.literal("image"),
-  source: z.discriminatedUnion("type", [
-    z.object({ type: z.literal("base64"), media_type: z.string().min(1), data: z.string() }),
-    z.object({ type: z.literal("url"), url: z.string().min(1) }),
+  type: z.literal('image'),
+  source: z.discriminatedUnion('type', [
+    z.object({ type: z.literal('base64'), media_type: z.string().min(1), data: z.string() }),
+    z.object({ type: z.literal('url'), url: z.string().min(1) }),
   ]),
   cache_control: cacheControlSchema.nullish(),
 });
 const toolResultBlockSchema = z.object({
-  type: z.literal("tool_result"),
+  type: z.literal('tool_result'),
   tool_use_id: z.string().min(1),
   content: z.union([z.string(), z.array(z.union([textBlockSchema, imageBlockSchema]))]).optional(),
   cache_control: cacheControlSchema.nullish(),
 });
-const userBlockSchema = z.discriminatedUnion("type", [
+const userBlockSchema = z.discriminatedUnion('type', [
   textBlockSchema,
   imageBlockSchema,
   toolResultBlockSchema,
 ]);
 
-const assistantBlockSchema = z.discriminatedUnion("type", [
+const assistantBlockSchema = z.discriminatedUnion('type', [
   textBlockSchema,
-  z.object({ type: z.literal("thinking"), thinking: z.string(), signature: z.string() }),
-  z.object({ type: z.literal("redacted_thinking") }),
+  z.object({ type: z.literal('thinking'), thinking: z.string(), signature: z.string() }),
+  z.object({ type: z.literal('redacted_thinking') }),
   z.object({
-    type: z.literal("tool_use"),
+    type: z.literal('tool_use'),
     id: z.string().min(1),
     name: z.string().min(1),
     input: z.record(z.string(), z.unknown()),
   }),
 ]);
 
-const messageSchema = z.discriminatedUnion("role", [
-  z.object({ role: z.literal("user"), content: z.union([z.string(), z.array(userBlockSchema)]) }),
+const messageSchema = z.discriminatedUnion('role', [
+  z.object({ role: z.literal('user'), content: z.union([z.string(), z.array(userBlockSchema)]) }),
   z.object({
-    role: z.literal("assistant"),
+    role: z.literal('assistant'),
     content: z.union([z.string(), z.array(assistantBlockSchema)]),
   }),
 ]);
 type ClientMessage = z.infer<typeof messageSchema>;
 
-const CLIENT_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
+const CLIENT_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 type ClientEffort = (typeof CLIENT_EFFORTS)[number];
 const CLIENT_EFFORT_LEVELS: Record<ClientEffort, ReasoningEffort> = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  xhigh: "xhigh",
-  max: "xhigh",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  xhigh: 'xhigh',
+  max: 'xhigh',
 };
 
 const requestSchema = z.object({
@@ -92,7 +92,7 @@ const requestSchema = z.object({
   tools: z
     .array(
       z.object({
-        type: z.literal("custom").optional(),
+        type: z.literal('custom').optional(),
         name: z.string().min(1),
         description: z.string().optional(),
         input_schema: z.record(z.string(), z.unknown()),
@@ -102,29 +102,29 @@ const requestSchema = z.object({
     )
     .optional(),
   tool_choice: z
-    .discriminatedUnion("type", [
-      z.object({ type: z.literal("auto"), disable_parallel_tool_use: z.boolean().optional() }),
-      z.object({ type: z.literal("any"), disable_parallel_tool_use: z.boolean().optional() }),
+    .discriminatedUnion('type', [
+      z.object({ type: z.literal('auto'), disable_parallel_tool_use: z.boolean().optional() }),
+      z.object({ type: z.literal('any'), disable_parallel_tool_use: z.boolean().optional() }),
       z.object({
-        type: z.literal("tool"),
+        type: z.literal('tool'),
         name: z.string().min(1),
         disable_parallel_tool_use: z.boolean().optional(),
       }),
-      z.object({ type: z.literal("none") }),
+      z.object({ type: z.literal('none') }),
     ])
     .optional(),
   thinking: z
-    .discriminatedUnion("type", [
-      z.object({ type: z.literal("enabled"), budget_tokens: z.int().positive() }),
-      z.object({ type: z.literal("adaptive") }),
-      z.object({ type: z.literal("disabled") }),
+    .discriminatedUnion('type', [
+      z.object({ type: z.literal('enabled'), budget_tokens: z.int().positive() }),
+      z.object({ type: z.literal('adaptive') }),
+      z.object({ type: z.literal('disabled') }),
     ])
     .optional(),
   output_config: z
     .object({
       effort: z.enum(CLIENT_EFFORTS).optional(),
       format: z
-        .object({ type: z.literal("json_schema"), schema: z.record(z.string(), z.unknown()) })
+        .object({ type: z.literal('json_schema'), schema: z.record(z.string(), z.unknown()) })
         .nullish(),
     })
     .optional(),
@@ -136,18 +136,18 @@ const requestSchema = z.object({
 });
 type ClientRequest = z.infer<typeof requestSchema>;
 
-const MESSAGE_ID_PREFIX = "msg_";
-const RESPONSE_FORMAT_NAME = "response";
-const DEFAULT_ADAPTIVE_EFFORT: ReasoningEffort = "high";
+const MESSAGE_ID_PREFIX = 'msg_';
+const RESPONSE_FORMAT_NAME = 'response';
+const DEFAULT_ADAPTIVE_EFFORT: ReasoningEffort = 'high';
 
 function parseRequest(body: unknown): InferenceRequest {
   refuseOutOfScopeFeatures(body);
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     throw new GatewayError(
-      "invalid_request",
+      'invalid_request',
       `Invalid request: ${z.prettifyError(parsed.error)}`,
-      "client",
+      'client',
     );
   }
   return toInferenceRequest(parsed.data);
@@ -161,14 +161,14 @@ const featureRefusedSchema = z.object({
 });
 
 const SUPPORTED_BLOCKS = new Set([
-  "text",
-  "image",
-  "tool_result",
-  "thinking",
-  "redacted_thinking",
-  "tool_use",
+  'text',
+  'image',
+  'tool_result',
+  'thinking',
+  'redacted_thinking',
+  'tool_use',
 ]);
-const SUPPORTED_IMAGE_SOURCES = new Set(["base64", "url"]);
+const SUPPORTED_IMAGE_SOURCES = new Set(['base64', 'url']);
 
 function refuseOutOfScopeFeatures(body: unknown): void {
   const features = featureRefusedSchema.safeParse(body);
@@ -177,17 +177,17 @@ function refuseOutOfScopeFeatures(body: unknown): void {
   }
   const { mcp_servers, tools, messages } = features.data;
   if (mcp_servers !== undefined) {
-    throw unsupported("MCP servers (`mcp_servers`)");
+    throw unsupported('MCP servers (`mcp_servers`)');
   }
-  const serverTool = tools?.find((tool) => tool.type !== undefined && tool.type !== "custom");
+  const serverTool = tools?.find((tool) => tool.type !== undefined && tool.type !== 'custom');
   if (serverTool) {
     throw unsupported(
       `tools of type \`${String(serverTool.type)}\`; only custom tools are supported`,
     );
   }
   for (const message of messages ?? []) {
-    if (message.role === "system") {
-      throw unsupported("messages with role `system`; use the top-level `system`");
+    if (message.role === 'system') {
+      throw unsupported('messages with role `system`; use the top-level `system`');
     }
     refuseUnsupportedBlocks(message.content);
   }
@@ -199,7 +199,7 @@ function refuseUnsupportedBlocks(content: unknown): void {
     return;
   }
   for (const block of blocks.data) {
-    if (typeof block.type === "string" && !SUPPORTED_BLOCKS.has(block.type)) {
+    if (typeof block.type === 'string' && !SUPPORTED_BLOCKS.has(block.type)) {
       throw unsupported(`content blocks of type \`${block.type}\``);
     }
     const source = z.object({ source: z.object({ type: z.unknown() }) }).safeParse(block);
@@ -211,7 +211,7 @@ function refuseUnsupportedBlocks(content: unknown): void {
 }
 
 function unsupported(feature: string): GatewayError {
-  return new GatewayError("invalid_request", `Not supported: ${feature}`, "client");
+  return new GatewayError('invalid_request', `Not supported: ${feature}`, 'client');
 }
 
 function toInferenceRequest(request: ClientRequest): InferenceRequest {
@@ -235,13 +235,13 @@ function toInferenceRequest(request: ClientRequest): InferenceRequest {
   };
   if (request.tool_choice !== undefined) {
     parsed.toolChoice = toToolChoice(request.tool_choice);
-    if (request.tool_choice.type !== "none" && request.tool_choice.disable_parallel_tool_use) {
+    if (request.tool_choice.type !== 'none' && request.tool_choice.disable_parallel_tool_use) {
       parsed.parallelToolCalls = false;
     }
   }
   if (request.output_config?.format) {
     parsed.responseFormat = {
-      type: "json-schema",
+      type: 'json-schema',
       name: RESPONSE_FORMAT_NAME,
       schema: request.output_config.format.schema,
     };
@@ -267,15 +267,15 @@ function cacheMarkerOf(cacheControl: CacheControl): CacheMarker {
 }
 
 function textParts(content: string | z.infer<typeof textBlockSchema>[]): TextPart[] {
-  if (typeof content === "string") {
-    return [{ type: "text", text: content }];
+  if (typeof content === 'string') {
+    return [{ type: 'text', text: content }];
   }
   return content.map(toTextPart);
 }
 
 function toTextPart(block: z.infer<typeof textBlockSchema>): TextPart {
   return {
-    type: "text",
+    type: 'text',
     text: block.text,
     ...(block.cache_control && { cacheMarker: cacheMarkerOf(block.cache_control) }),
   };
@@ -284,55 +284,55 @@ function toTextPart(block: z.infer<typeof textBlockSchema>): TextPart {
 function toUserContentPart(
   block: z.infer<typeof textBlockSchema> | z.infer<typeof imageBlockSchema>,
 ): UserContentPart {
-  if (block.type === "text") {
+  if (block.type === 'text') {
     return toTextPart(block);
   }
   const source =
-    block.source.type === "url"
-      ? { type: "url" as const, url: block.source.url }
-      : { type: "base64" as const, mediaType: block.source.media_type, data: block.source.data };
+    block.source.type === 'url'
+      ? { type: 'url' as const, url: block.source.url }
+      : { type: 'base64' as const, mediaType: block.source.media_type, data: block.source.data };
   return {
-    type: "image",
+    type: 'image',
     source,
     ...(block.cache_control && { cacheMarker: cacheMarkerOf(block.cache_control) }),
   };
 }
 
 function toInferenceMessages(message: ClientMessage): InferenceMessage[] {
-  if (typeof message.content === "string") {
-    const content = [{ type: "text" as const, text: message.content }];
-    return [message.role === "user" ? { role: "user", content } : { role: "assistant", content }];
+  if (typeof message.content === 'string') {
+    const content = [{ type: 'text' as const, text: message.content }];
+    return [message.role === 'user' ? { role: 'user', content } : { role: 'assistant', content }];
   }
-  if (message.role === "assistant") {
-    return [{ role: "assistant", content: message.content.flatMap(toAssistantContentPart) }];
+  if (message.role === 'assistant') {
+    return [{ role: 'assistant', content: message.content.flatMap(toAssistantContentPart) }];
   }
   const messages: InferenceMessage[] = [];
   let userContent: UserContentPart[] = [];
   for (const block of message.content) {
-    if (block.type !== "tool_result") {
+    if (block.type !== 'tool_result') {
       userContent.push(toUserContentPart(block));
       continue;
     }
     if (userContent.length > 0) {
-      messages.push({ role: "user", content: userContent });
+      messages.push({ role: 'user', content: userContent });
       userContent = [];
     }
     messages.push({
-      role: "tool",
+      role: 'tool',
       toolCallId: block.tool_use_id,
       content: toolResultContent(block),
     });
   }
   if (userContent.length > 0) {
-    messages.push({ role: "user", content: userContent });
+    messages.push({ role: 'user', content: userContent });
   }
   return messages;
 }
 
 function toolResultContent(block: z.infer<typeof toolResultBlockSchema>): UserContentPart[] {
   const content =
-    typeof block.content === "string"
-      ? [{ type: "text" as const, text: block.content }]
+    typeof block.content === 'string'
+      ? [{ type: 'text' as const, text: block.content }]
       : (block.content ?? []).map(toUserContentPart);
   const last = content.at(-1);
   if (block.cache_control && last) {
@@ -345,22 +345,22 @@ function toAssistantContentPart(
   block: z.infer<typeof assistantBlockSchema>,
 ): AssistantContentPart[] {
   switch (block.type) {
-    case "text":
+    case 'text':
       return [toTextPart(block)];
-    case "thinking":
+    case 'thinking':
       return [
         {
-          type: "reasoning",
+          type: 'reasoning',
           text: block.thinking,
-          ...(block.signature !== "" && { signature: block.signature }),
+          ...(block.signature !== '' && { signature: block.signature }),
         },
       ];
-    case "redacted_thinking":
+    case 'redacted_thinking':
       return [];
-    case "tool_use":
+    case 'tool_use':
       return [
         {
-          type: "tool-call",
+          type: 'tool-call',
           id: block.id,
           name: block.name,
           arguments: JSON.stringify(block.input),
@@ -371,7 +371,7 @@ function toAssistantContentPart(
 
 function markLastBlock(messages: InferenceMessage[], marker: CacheMarker): void {
   const last = messages.at(-1);
-  if (last?.role === "assistant") {
+  if (last?.role === 'assistant') {
     return;
   }
   const lastPart = last?.content.at(-1);
@@ -380,27 +380,27 @@ function markLastBlock(messages: InferenceMessage[], marker: CacheMarker): void 
   }
 }
 
-function toToolChoice(choice: NonNullable<ClientRequest["tool_choice"]>): ToolChoice {
+function toToolChoice(choice: NonNullable<ClientRequest['tool_choice']>): ToolChoice {
   switch (choice.type) {
-    case "auto":
-      return { type: "auto" };
-    case "any":
-      return { type: "required" };
-    case "none":
-      return { type: "none" };
-    case "tool":
-      return { type: "tool", name: choice.name };
+    case 'auto':
+      return { type: 'auto' };
+    case 'any':
+      return { type: 'required' };
+    case 'none':
+      return { type: 'none' };
+    case 'tool':
+      return { type: 'tool', name: choice.name };
   }
 }
 
-function toReasoning(request: ClientRequest): InferenceRequest["reasoning"] {
+function toReasoning(request: ClientRequest): InferenceRequest['reasoning'] {
   const effort = request.output_config?.effort;
   switch (request.thinking?.type) {
-    case "enabled":
+    case 'enabled':
       return { budgetTokens: request.thinking.budget_tokens };
-    case "disabled":
-      return { effort: "none" };
-    case "adaptive":
+    case 'disabled':
+      return { effort: 'none' };
+    case 'adaptive':
       return {
         effort: effort === undefined ? DEFAULT_ADAPTIVE_EFFORT : CLIENT_EFFORT_LEVELS[effort],
       };
@@ -410,11 +410,11 @@ function toReasoning(request: ClientRequest): InferenceRequest["reasoning"] {
 }
 
 const STOP_REASONS = {
-  end: "end_turn",
-  "max-tokens": "max_tokens",
-  "tool-calls": "tool_use",
-  "stop-sequence": "stop_sequence",
-  "content-filter": "refusal",
+  end: 'end_turn',
+  'max-tokens': 'max_tokens',
+  'tool-calls': 'tool_use',
+  'stop-sequence': 'stop_sequence',
+  'content-filter': 'refusal',
 } as const satisfies Record<StopReason, string>;
 
 function writeResponse(
@@ -434,27 +434,27 @@ function writeResponse(
 function messageHeader(context: ResponseContext): Record<string, unknown> {
   return {
     id: `${MESSAGE_ID_PREFIX}${context.requestId}`,
-    type: "message",
-    role: "assistant",
+    type: 'message',
+    role: 'assistant',
     model: context.modelName,
   };
 }
 
 function writeContentBlock(part: AssistantContentPart): Record<string, unknown> {
   switch (part.type) {
-    case "text":
-      return { type: "text", text: part.text };
-    case "reasoning":
-      return { type: "thinking", thinking: part.text, signature: part.signature ?? "" };
-    case "tool-call":
-      return { type: "tool_use", id: part.id, name: part.name, input: toolInputOf(part.arguments) };
+    case 'text':
+      return { type: 'text', text: part.text };
+    case 'reasoning':
+      return { type: 'thinking', thinking: part.text, signature: part.signature ?? '' };
+    case 'tool-call':
+      return { type: 'tool_use', id: part.id, name: part.name, input: toolInputOf(part.arguments) };
   }
 }
 
 function toolInputOf(toolArguments: string): unknown {
   try {
     const input: unknown = JSON.parse(toolArguments);
-    return typeof input === "object" && input !== null && !Array.isArray(input) ? input : {};
+    return typeof input === 'object' && input !== null && !Array.isArray(input) ? input : {};
   } catch {
     return {};
   }
@@ -474,19 +474,19 @@ function startStream(_request: InferenceRequest, context: ResponseContext): Clie
 }
 
 function writeStreamError(error: GatewayError): string {
-  return namedEvent("error", writeError(error));
+  return namedEvent('error', writeError(error));
 }
 
 class AnthropicMessagesStreamWriter implements ClientStreamWriter {
   private readonly blocks = new ContentBlockWriter();
-  private stopReason: StopReason = "end";
+  private stopReason: StopReason = 'end';
   private usage = UNREPORTED_USAGE;
 
   constructor(private readonly context: ResponseContext) {}
 
   start(): string {
-    return namedEvent("message_start", {
-      type: "message_start",
+    return namedEvent('message_start', {
+      type: 'message_start',
       message: {
         ...messageHeader(this.context),
         content: [],
@@ -499,33 +499,33 @@ class AnthropicMessagesStreamWriter implements ClientStreamWriter {
 
   write(event: InferenceStreamEvent): string {
     switch (event.type) {
-      case "finish":
+      case 'finish':
         this.stopReason = event.stopReason;
-        return "";
-      case "usage":
+        return '';
+      case 'usage':
         this.usage = event.usage;
-        return "";
+        return '';
       default:
         return this.blocks.write(event);
     }
   }
 
   end(): string {
-    const messageDelta = namedEvent("message_delta", {
-      type: "message_delta",
+    const messageDelta = namedEvent('message_delta', {
+      type: 'message_delta',
       delta: { stop_reason: STOP_REASONS[this.stopReason], stop_sequence: null },
       usage: writeUsage(this.usage),
     });
-    const messageStop = namedEvent("message_stop", { type: "message_stop" });
+    const messageStop = namedEvent('message_stop', { type: 'message_stop' });
     return this.blocks.closeOpenBlock() + messageDelta + messageStop;
   }
 }
 
-type ContentEvent = Exclude<InferenceStreamEvent, { type: "finish" | "usage" }>;
+type ContentEvent = Exclude<InferenceStreamEvent, { type: 'finish' | 'usage' }>;
 type OpenBlock =
-  | { type: "text" }
-  | { type: "thinking"; isSigned: boolean }
-  | { type: "tool_use"; toolIndex: number };
+  | { type: 'text' }
+  | { type: 'thinking'; isSigned: boolean }
+  | { type: 'tool_use'; toolIndex: number };
 
 class ContentBlockWriter {
   private index = -1;
@@ -533,57 +533,57 @@ class ContentBlockWriter {
 
   write(event: ContentEvent): string {
     switch (event.type) {
-      case "text-delta": {
+      case 'text-delta': {
         const opening =
-          this.open?.type === "text"
-            ? ""
-            : this.start({ type: "text" }, { type: "text", text: "" });
-        return opening + this.delta({ type: "text_delta", text: event.text });
+          this.open?.type === 'text'
+            ? ''
+            : this.start({ type: 'text' }, { type: 'text', text: '' });
+        return opening + this.delta({ type: 'text_delta', text: event.text });
       }
-      case "reasoning-delta":
+      case 'reasoning-delta':
         return (
           this.startThinkingUnlessOpen() +
-          this.delta({ type: "thinking_delta", thinking: event.text })
+          this.delta({ type: 'thinking_delta', thinking: event.text })
         );
-      case "reasoning-signature": {
+      case 'reasoning-signature': {
         const written =
           this.startThinkingUnlessOpen() +
-          this.delta({ type: "signature_delta", signature: event.signature });
-        this.open = { type: "thinking", isSigned: true };
+          this.delta({ type: 'signature_delta', signature: event.signature });
+        this.open = { type: 'thinking', isSigned: true };
         return written;
       }
-      case "tool-call-start":
+      case 'tool-call-start':
         return this.start(
-          { type: "tool_use", toolIndex: event.index },
-          { type: "tool_use", id: event.id, name: event.name, input: {} },
+          { type: 'tool_use', toolIndex: event.index },
+          { type: 'tool_use', id: event.id, name: event.name, input: {} },
         );
-      case "tool-call-delta":
-        if (this.open?.type !== "tool_use" || this.open.toolIndex !== event.index) {
+      case 'tool-call-delta':
+        if (this.open?.type !== 'tool_use' || this.open.toolIndex !== event.index) {
           throw new GatewayError(
-            "upstream_error",
-            "The upstream interleaved tool call arguments",
-            "upstream",
+            'upstream_error',
+            'The upstream interleaved tool call arguments',
+            'upstream',
           );
         }
-        return this.delta({ type: "input_json_delta", partial_json: event.argumentsDelta });
+        return this.delta({ type: 'input_json_delta', partial_json: event.argumentsDelta });
     }
   }
 
   closeOpenBlock(): string {
     if (this.open === null) {
-      return "";
+      return '';
     }
     this.open = null;
-    return namedEvent("content_block_stop", { type: "content_block_stop", index: this.index });
+    return namedEvent('content_block_stop', { type: 'content_block_stop', index: this.index });
   }
 
   private startThinkingUnlessOpen(): string {
-    if (this.open?.type === "thinking" && !this.open.isSigned) {
-      return "";
+    if (this.open?.type === 'thinking' && !this.open.isSigned) {
+      return '';
     }
     return this.start(
-      { type: "thinking", isSigned: false },
-      { type: "thinking", thinking: "", signature: "" },
+      { type: 'thinking', isSigned: false },
+      { type: 'thinking', thinking: '', signature: '' },
     );
   }
 
@@ -593,8 +593,8 @@ class ContentBlockWriter {
     this.open = block;
     return (
       closing +
-      namedEvent("content_block_start", {
-        type: "content_block_start",
+      namedEvent('content_block_start', {
+        type: 'content_block_start',
         index: this.index,
         content_block: contentBlock,
       })
@@ -602,8 +602,8 @@ class ContentBlockWriter {
   }
 
   private delta(delta: Record<string, unknown>): string {
-    return namedEvent("content_block_delta", {
-      type: "content_block_delta",
+    return namedEvent('content_block_delta', {
+      type: 'content_block_delta',
       index: this.index,
       delta,
     });
@@ -615,30 +615,30 @@ function namedEvent(name: string, data: unknown): string {
 }
 
 const ERROR_TYPES = {
-  invalid_request: "invalid_request_error",
-  no_capable_route: "invalid_request_error",
-  invalid_api_key: "authentication_error",
-  spend_limit_reached: "billing_error",
-  model_not_allowed: "permission_error",
-  model_not_found: "not_found_error",
-  request_too_large: "request_too_large",
-  request_rate_exceeded: "rate_limit_error",
-  upstream_rate_limited: "rate_limit_error",
-  upstream_error: "api_error",
-  upstream_timeout: "api_error",
-  video_not_found: "not_found_error",
-  video_not_ready: "invalid_request_error",
+  invalid_request: 'invalid_request_error',
+  no_capable_route: 'invalid_request_error',
+  invalid_api_key: 'authentication_error',
+  spend_limit_reached: 'billing_error',
+  model_not_allowed: 'permission_error',
+  model_not_found: 'not_found_error',
+  request_too_large: 'request_too_large',
+  request_rate_exceeded: 'rate_limit_error',
+  upstream_rate_limited: 'rate_limit_error',
+  upstream_error: 'api_error',
+  upstream_timeout: 'api_error',
+  video_not_found: 'not_found_error',
+  video_not_ready: 'invalid_request_error',
 } as const satisfies Record<GatewayErrorCode, string>;
 
 function writeError(error: GatewayError): unknown {
   return {
-    type: "error",
+    type: 'error',
     error: { type: ERROR_TYPES[error.code], message: error.message, code: error.code },
   };
 }
 
 export const anthropicMessagesClientConverter: ClientProtocolConverter = {
-  protocol: "anthropic-messages",
+  protocol: 'anthropic-messages',
   parseRequest,
   writeResponse,
   startStream,

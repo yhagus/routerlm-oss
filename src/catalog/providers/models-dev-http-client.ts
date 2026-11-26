@@ -1,1 +1,1 @@
-export const MODELS_DEV_HTTP_CLIENT = "models-dev";
+export const MODELS_DEV_HTTP_CLIENT = 'models-dev';

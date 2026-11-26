@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { DocsLocale } from "~/lib/docsMessages";
+import { computed } from 'vue';
+import type { DocsLocale } from '~/lib/docsMessages';
 
 const route = useRoute();
 const { locale, t } = useDocsLocale();
 
 const LANGUAGES: { locale: DocsLocale; code: string; name: string }[] = [
-  { locale: "en", code: "EN", name: "English" },
-  { locale: "id", code: "ID", name: "Bahasa Indonesia" },
+  { locale: 'en', code: 'EN', name: 'English' },
+  { locale: 'id', code: 'ID', name: 'Bahasa Indonesia' },
 ];
 
 const options = computed(() =>

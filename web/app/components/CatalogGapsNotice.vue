@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Sparkles, X } from "@lucide/vue";
-import { computed } from "vue";
-import { describeCatalogGap, MAX_LISTED_GAPS } from "~/lib/catalogGaps";
+import { Sparkles, X } from '@lucide/vue';
+import { computed } from 'vue';
+import { describeCatalogGap, MAX_LISTED_GAPS } from '~/lib/catalogGaps';
 
 const { gaps, checkOncePerSession, dismiss } = useCatalogGaps();
 
@@ -9,7 +9,7 @@ const listedGaps = computed(() => gaps.value.slice(0, MAX_LISTED_GAPS));
 const hiddenCount = computed(() => gaps.value.length - listedGaps.value.length);
 const title = computed(() =>
   gaps.value.length === 1
-    ? "1 new model not in your Catalog"
+    ? '1 new model not in your Catalog'
     : `${gaps.value.length} new models not in your Catalog`,
 );
 

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 import {
   allowedModelIdsSchema,
   expiresAtSchema,
@@ -6,8 +6,8 @@ import {
   MAX_NAME_LENGTH,
   requestRateSchema,
   spendLimitSchema,
-} from "@/api-keys/schemas/api-key.schema";
-import { hasAnyField, nothingToChange } from "@/libs/schemas/partial-update.schema";
+} from '@/api-keys/schemas/api-key.schema';
+import { hasAnyField, nothingToChange } from '@/libs/schemas/partial-update.schema';
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;

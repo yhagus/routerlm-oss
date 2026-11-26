@@ -1,18 +1,18 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
 import {
   deleteAllPricingWindows,
   utcWallClockInDays,
   zoneAtNoonNow,
-} from "@tests/support/pricing-windows";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/pricing-windows';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
 
 const CHAT_MODEL = {
-  upstreamModelId: "acme-large",
+  upstreamModelId: 'acme-large',
   capabilities: [],
   contextSize: 100_000,
   maxOutputTokens: null,
@@ -22,9 +22,9 @@ const CHAT_MODEL = {
   cacheWritePrice: null,
 };
 
-const MISSING_ID = "00000000-0000-4000-8000-000000000000";
+const MISSING_ID = '00000000-0000-4000-8000-000000000000';
 
-describe("Window Prices on Upstream Models (e2e)", () => {
+describe('Window Prices on Upstream Models (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let cookie: string;
@@ -32,10 +32,10 @@ describe("Window Prices on Upstream Models (e2e)", () => {
   let chatModelId: string;
 
   const { timeZone, today } = zoneAtNoonNow();
-  const ACTIVE_NOW = [{ weekdays: [today], start: "11:00", end: "14:00" }];
+  const ACTIVE_NOW = [{ weekdays: [today], start: '11:00', end: '14:00' }];
   const ANOTHER_DAY = today === 1 ? 2 : 1;
-  const EARLY_ON_ANOTHER_DAY = [{ weekdays: [ANOTHER_DAY], start: "00:00", end: "06:00" }];
-  const LATE_ON_ANOTHER_DAY = [{ weekdays: [ANOTHER_DAY], start: "18:00", end: "24:00" }];
+  const EARLY_ON_ANOTHER_DAY = [{ weekdays: [ANOTHER_DAY], start: '00:00', end: '06:00' }];
+  const LATE_ON_ANOTHER_DAY = [{ weekdays: [ANOTHER_DAY], start: '18:00', end: '24:00' }];
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -46,16 +46,16 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     await deleteAllPricingWindows(db);
     cookie = await setUpFirstUser(app, OPERATOR);
     const provider = await request(app.getHttpServer())
-      .post("/api/providers")
-      .set("Cookie", cookie)
+      .post('/api/providers')
+      .set('Cookie', cookie)
       .send({
-        slug: "acme",
-        name: "Acme AI",
+        slug: 'acme',
+        name: 'Acme AI',
         endpoints: [
-          { kind: "chat", protocol: "openai-chat", baseUrl: "https://api.acme.example/v1" },
-          { kind: "image", protocol: "dashscope-image", baseUrl: "https://api.acme.example" },
+          { kind: 'chat', protocol: 'openai-chat', baseUrl: 'https://api.acme.example/v1' },
+          { kind: 'image', protocol: 'dashscope-image', baseUrl: 'https://api.acme.example' },
         ],
-        authStyle: "bearer",
+        authStyle: 'bearer',
       })
       .expect(201);
     providerId = provider.body.id;
@@ -68,8 +68,8 @@ describe("Window Prices on Upstream Models (e2e)", () => {
 
   async function createUpstreamModel(body: object): Promise<string> {
     const created = await request(app.getHttpServer())
-      .post("/api/upstream-models")
-      .set("Cookie", cookie)
+      .post('/api/upstream-models')
+      .set('Cookie', cookie)
       .send({ providerId, ...body })
       .expect(201);
     return created.body.id;
@@ -81,8 +81,8 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     fields: { timeZone?: string; isEnabled?: boolean } = {},
   ): Promise<string> {
     const created = await request(app.getHttpServer())
-      .post("/api/pricing-windows")
-      .set("Cookie", cookie)
+      .post('/api/pricing-windows')
+      .set('Cookie', cookie)
       .send({ name, timeZone, ranges, ...fields })
       .expect(201);
     return created.body.id;
@@ -91,36 +91,36 @@ describe("Window Prices on Upstream Models (e2e)", () => {
   function patchWindow(pricingWindowId: string, changes: object): request.Test {
     return request(app.getHttpServer())
       .patch(`/api/pricing-windows/${pricingWindowId}`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .send(changes);
   }
 
   function putWindowPrices(upstreamModelId: string, entries: object[]): request.Test {
     return request(app.getHttpServer())
       .put(`/api/upstream-models/${upstreamModelId}/pricing-windows`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .send(entries);
   }
 
   async function windowPricesOf(upstreamModelId: string): Promise<unknown> {
     const response = await request(app.getHttpServer())
       .get(`/api/upstream-models/${upstreamModelId}/pricing-windows`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(200);
     return response.body;
   }
 
   async function listPricingWindows(): Promise<unknown> {
     const response = await request(app.getHttpServer())
-      .get("/api/pricing-windows")
-      .set("Cookie", cookie)
+      .get('/api/pricing-windows')
+      .set('Cookie', cookie)
       .expect(200);
     return response.body;
   }
 
-  it("attaches Pricing Windows with their Window Prices, and lists them by window name", async () => {
-    const nightId = await createWindow("Night");
-    const weekendId = await createWindow("Weekend", LATE_ON_ANOTHER_DAY);
+  it('attaches Pricing Windows with their Window Prices, and lists them by window name', async () => {
+    const nightId = await createWindow('Night');
+    const weekendId = await createWindow('Weekend', LATE_ON_ANOTHER_DAY);
 
     await putWindowPrices(chatModelId, [
       { pricingWindowId: weekendId, outputPrice: 2 },
@@ -130,7 +130,7 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     expect(await windowPricesOf(chatModelId)).toEqual([
       expect.objectContaining({
         pricingWindowId: nightId,
-        name: "Night",
+        name: 'Night',
         inputPrice: 0.5,
         outputPrice: null,
         cacheReadPrice: 0.05,
@@ -138,7 +138,7 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       }),
       expect.objectContaining({
         pricingWindowId: weekendId,
-        name: "Weekend",
+        name: 'Weekend',
         timeZone,
         ranges: LATE_ON_ANOTHER_DAY,
         inputPrice: null,
@@ -149,9 +149,9 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     ]);
   });
 
-  it("replaces the whole list: changes prices and detaches", async () => {
-    const nightId = await createWindow("Night");
-    const weekendId = await createWindow("Weekend", LATE_ON_ANOTHER_DAY);
+  it('replaces the whole list: changes prices and detaches', async () => {
+    const nightId = await createWindow('Night');
+    const weekendId = await createWindow('Weekend', LATE_ON_ANOTHER_DAY);
     await putWindowPrices(chatModelId, [
       { pricingWindowId: nightId, inputPrice: 0.5 },
       { pricingWindowId: weekendId, inputPrice: 0.7 },
@@ -167,11 +167,11 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     expect(await windowPricesOf(chatModelId)).toEqual(replaced.body);
   });
 
-  it("counts the Upstream Models a Pricing Window is attached to", async () => {
-    const nightId = await createWindow("Night");
+  it('counts the Upstream Models a Pricing Window is attached to', async () => {
+    const nightId = await createWindow('Night');
     const otherModelId = await createUpstreamModel({
       ...CHAT_MODEL,
-      upstreamModelId: "acme-small",
+      upstreamModelId: 'acme-small',
     });
     await putWindowPrices(chatModelId, [{ pricingWindowId: nightId, inputPrice: 0.5 }]).expect(200);
     await putWindowPrices(otherModelId, [{ pricingWindowId: nightId, inputPrice: 0.2 }]).expect(
@@ -183,17 +183,17 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     ]);
   });
 
-  it("gives each Upstream Model in the list its Pricing Windows, and which is active now", async () => {
-    const offPeakId = await createWindow("Off-Peak", ACTIVE_NOW);
-    const weekendId = await createWindow("Weekend", LATE_ON_ANOTHER_DAY);
+  it('gives each Upstream Model in the list its Pricing Windows, and which is active now', async () => {
+    const offPeakId = await createWindow('Off-Peak', ACTIVE_NOW);
+    const weekendId = await createWindow('Weekend', LATE_ON_ANOTHER_DAY);
     await putWindowPrices(chatModelId, [
       { pricingWindowId: weekendId, inputPrice: 0.7 },
       { pricingWindowId: offPeakId, inputPrice: 0.5 },
     ]).expect(200);
 
     const list = await request(app.getHttpServer())
-      .get("/api/upstream-models")
-      .set("Cookie", cookie)
+      .get('/api/upstream-models')
+      .set('Cookie', cookie)
       .expect(200);
 
     expect(list.body).toEqual([
@@ -202,16 +202,16 @@ describe("Window Prices on Upstream Models (e2e)", () => {
         pricingWindows: [
           expect.objectContaining({
             pricingWindowId: offPeakId,
-            name: "Off-Peak",
+            name: 'Off-Peak',
             isEnabled: true,
-            status: "active",
+            status: 'active',
             inputPrice: 0.5,
           }),
           expect.objectContaining({
             pricingWindowId: weekendId,
-            name: "Weekend",
+            name: 'Weekend',
             isEnabled: true,
-            status: "inactive",
+            status: 'inactive',
             inputPrice: 0.7,
           }),
         ],
@@ -220,11 +220,11 @@ describe("Window Prices on Upstream Models (e2e)", () => {
   });
 
   it("refuses Pricing Windows on an Upstream Model that isn't of the chat Kind", async () => {
-    const nightId = await createWindow("Night");
+    const nightId = await createWindow('Night');
     const imageModelId = await createUpstreamModel({
       ...CHAT_MODEL,
-      upstreamModelId: "acme-paint",
-      kind: "image",
+      upstreamModelId: 'acme-paint',
+      kind: 'image',
       contextSize: null,
     });
 
@@ -233,7 +233,7 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     ]).expect(400);
 
     expect(refused.body.message).toBe(
-      "Only a chat Upstream Model has Pricing Windows; this one is of the Kind image",
+      'Only a chat Upstream Model has Pricing Windows; this one is of the Kind image',
     );
   });
 
@@ -242,16 +242,16 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       { pricingWindowId: MISSING_ID, inputPrice: 0.5 },
     ]).expect(404);
 
-    expect(refused.body.message).toBe("Pricing Window not found");
+    expect(refused.body.message).toBe('Pricing Window not found');
   });
 
-  describe("never overlapping", () => {
-    const WEEKDAY_OFF_PEAK = [{ weekdays: [1, 2, 3, 4, 5], start: "16:00", end: "08:00" }];
-    const WEEKENDS = [{ weekdays: [6, 7], start: "08:00", end: "24:00" }];
+  describe('never overlapping', () => {
+    const WEEKDAY_OFF_PEAK = [{ weekdays: [1, 2, 3, 4, 5], start: '16:00', end: '08:00' }];
+    const WEEKENDS = [{ weekdays: [6, 7], start: '08:00', end: '24:00' }];
 
-    it("accepts weekday off-peak hours and weekends, which never share a moment", async () => {
-      const offPeakId = await createWindow("Off-Peak", WEEKDAY_OFF_PEAK, { timeZone: "UTC" });
-      const weekendId = await createWindow("Weekend", WEEKENDS, { timeZone: "UTC" });
+    it('accepts weekday off-peak hours and weekends, which never share a moment', async () => {
+      const offPeakId = await createWindow('Off-Peak', WEEKDAY_OFF_PEAK, { timeZone: 'UTC' });
+      const weekendId = await createWindow('Weekend', WEEKENDS, { timeZone: 'UTC' });
 
       await putWindowPrices(chatModelId, [
         { pricingWindowId: offPeakId, inputPrice: 0.5 },
@@ -259,12 +259,12 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       ]).expect(200);
     });
 
-    it("refuses two windows whose hours overlap, naming both", async () => {
-      const offPeakId = await createWindow("Off-Peak", WEEKDAY_OFF_PEAK, { timeZone: "UTC" });
+    it('refuses two windows whose hours overlap, naming both', async () => {
+      const offPeakId = await createWindow('Off-Peak', WEEKDAY_OFF_PEAK, { timeZone: 'UTC' });
       const allSaturdayId = await createWindow(
-        "All Saturday",
-        [{ weekdays: [6], start: "00:00", end: "24:00" }],
-        { timeZone: "UTC" },
+        'All Saturday',
+        [{ weekdays: [6], start: '00:00', end: '24:00' }],
+        { timeZone: 'UTC' },
       );
 
       const refused = await putWindowPrices(chatModelId, [
@@ -277,8 +277,8 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       );
     });
 
-    it("refuses the same Pricing Window twice", async () => {
-      const nightId = await createWindow("Night");
+    it('refuses the same Pricing Window twice', async () => {
+      const nightId = await createWindow('Night');
 
       const refused = await putWindowPrices(chatModelId, [
         { pricingWindowId: nightId, inputPrice: 0.5 },
@@ -290,16 +290,16 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       );
     });
 
-    it("refuses windows in two time zones that only overlap while one of them is on summer time", async () => {
+    it('refuses windows in two time zones that only overlap while one of them is on summer time', async () => {
       const londonMorningId = await createWindow(
-        "London Morning",
-        [{ weekdays: [1], start: "09:00", end: "10:00" }],
-        { timeZone: "Europe/London" },
+        'London Morning',
+        [{ weekdays: [1], start: '09:00', end: '10:00' }],
+        { timeZone: 'Europe/London' },
       );
       const utcEarlyId = await createWindow(
-        "UTC Early",
-        [{ weekdays: [1], start: "08:00", end: "09:00" }],
-        { timeZone: "UTC" },
+        'UTC Early',
+        [{ weekdays: [1], start: '08:00', end: '09:00' }],
+        { timeZone: 'UTC' },
       );
 
       await putWindowPrices(chatModelId, [
@@ -308,9 +308,9 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       ]).expect(400);
     });
 
-    it("counts a disabled window", async () => {
-      const nightId = await createWindow("Night");
-      const disabledId = await createWindow("Disabled Night", EARLY_ON_ANOTHER_DAY, {
+    it('counts a disabled window', async () => {
+      const nightId = await createWindow('Night');
+      const disabledId = await createWindow('Disabled Night', EARLY_ON_ANOTHER_DAY, {
         isEnabled: false,
       });
 
@@ -321,15 +321,15 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     });
 
     it("refuses a window's new ranges that would overlap another window on an Upstream Model, naming it", async () => {
-      const offPeakId = await createWindow("Off-Peak", WEEKDAY_OFF_PEAK, { timeZone: "UTC" });
-      const weekendId = await createWindow("Weekend", WEEKENDS, { timeZone: "UTC" });
+      const offPeakId = await createWindow('Off-Peak', WEEKDAY_OFF_PEAK, { timeZone: 'UTC' });
+      const weekendId = await createWindow('Weekend', WEEKENDS, { timeZone: 'UTC' });
       await putWindowPrices(chatModelId, [
         { pricingWindowId: offPeakId, inputPrice: 0.5 },
         { pricingWindowId: weekendId, inputPrice: 0.7 },
       ]).expect(200);
 
       const refused = await patchWindow(weekendId, {
-        ranges: [{ weekdays: [5, 6, 7], start: "00:00", end: "24:00" }],
+        ranges: [{ weekdays: [5, 6, 7], start: '00:00', end: '24:00' }],
       }).expect(400);
 
       expect(refused.body.message).toBe(
@@ -339,32 +339,32 @@ describe("Window Prices on Upstream Models (e2e)", () => {
 
     it("refuses a window's new time zone that would overlap another window on an Upstream Model", async () => {
       const lateFridayId = await createWindow(
-        "Late Friday",
-        [{ weekdays: [5], start: "22:00", end: "24:00" }],
-        { timeZone: "UTC" },
+        'Late Friday',
+        [{ weekdays: [5], start: '22:00', end: '24:00' }],
+        { timeZone: 'UTC' },
       );
       const weekendId = await createWindow(
-        "Whole Weekend",
-        [{ weekdays: [6, 7], start: "00:00", end: "24:00" }],
-        { timeZone: "UTC" },
+        'Whole Weekend',
+        [{ weekdays: [6, 7], start: '00:00', end: '24:00' }],
+        { timeZone: 'UTC' },
       );
       await putWindowPrices(chatModelId, [
         { pricingWindowId: lateFridayId, inputPrice: 0.5 },
         { pricingWindowId: weekendId, inputPrice: 0.7 },
       ]).expect(200);
 
-      await patchWindow(lateFridayId, { timeZone: "America/New_York" }).expect(400);
+      await patchWindow(lateFridayId, { timeZone: 'America/New_York' }).expect(400);
     });
   });
 
-  describe("Validity Periods", () => {
-    const WHOLE_WEEK = [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: "00:00", end: "24:00" }];
+  describe('Validity Periods', () => {
+    const WHOLE_WEEK = [{ weekdays: [1, 2, 3, 4, 5, 6, 7], start: '00:00', end: '24:00' }];
 
-    function createWholeWeekWindow(name = "Whole Week"): Promise<string> {
-      return createWindow(name, WHOLE_WEEK, { timeZone: "UTC" });
+    function createWholeWeekWindow(name = 'Whole Week'): Promise<string> {
+      return createWindow(name, WHOLE_WEEK, { timeZone: 'UTC' });
     }
 
-    it("attaches one window for several periods, and lists them by start with their status", async () => {
+    it('attaches one window for several periods, and lists them by start with their status', async () => {
       const wholeWeekId = await createWholeWeekWindow();
       const lastWeek = utcWallClockInDays(-7);
       const yesterday = utcWallClockInDays(-1);
@@ -387,49 +387,49 @@ describe("Window Prices on Upstream Models (e2e)", () => {
           inputPrice: 0.7,
           validFrom: null,
           validUntil: lastWeek,
-          status: "expired",
+          status: 'expired',
         }),
         expect.objectContaining({
           inputPrice: 0.5,
           validFrom: yesterday,
           validUntil: tomorrow,
-          status: "active",
+          status: 'active',
         }),
         expect.objectContaining({
           inputPrice: 0.3,
           validFrom: nextWeek,
           validUntil: null,
-          status: "scheduled",
+          status: 'scheduled',
         }),
       ]);
     });
 
     it("lists Window Prices by the instant their period starts, whatever each window's time zone", async () => {
-      const aucklandId = await createWindow("Auckland Nights", EARLY_ON_ANOTHER_DAY, {
-        timeZone: "Pacific/Auckland",
+      const aucklandId = await createWindow('Auckland Nights', EARLY_ON_ANOTHER_DAY, {
+        timeZone: 'Pacific/Auckland',
       });
-      const utcId = await createWindow("UTC Evenings", LATE_ON_ANOTHER_DAY, { timeZone: "UTC" });
+      const utcId = await createWindow('UTC Evenings', LATE_ON_ANOTHER_DAY, { timeZone: 'UTC' });
 
       await putWindowPrices(chatModelId, [
-        { pricingWindowId: utcId, inputPrice: 0.7, validFrom: "2030-01-01T05:00" },
-        { pricingWindowId: aucklandId, inputPrice: 0.5, validFrom: "2030-01-01T10:00" },
+        { pricingWindowId: utcId, inputPrice: 0.7, validFrom: '2030-01-01T05:00' },
+        { pricingWindowId: aucklandId, inputPrice: 0.5, validFrom: '2030-01-01T10:00' },
       ]).expect(200);
 
       expect(await windowPricesOf(chatModelId)).toEqual([
-        expect.objectContaining({ name: "Auckland Nights", validFrom: "2030-01-01T10:00" }),
-        expect.objectContaining({ name: "UTC Evenings", validFrom: "2030-01-01T05:00" }),
+        expect.objectContaining({ name: 'Auckland Nights', validFrom: '2030-01-01T10:00' }),
+        expect.objectContaining({ name: 'UTC Evenings', validFrom: '2030-01-01T05:00' }),
       ]);
     });
 
     it("lists Window Prices inside their period as inactive while their window isn't active", async () => {
-      const lateId = await createWindow("Late", LATE_ON_ANOTHER_DAY);
+      const lateId = await createWindow('Late', LATE_ON_ANOTHER_DAY);
 
       await putWindowPrices(chatModelId, [
         { pricingWindowId: lateId, inputPrice: 0.5, validUntil: utcWallClockInDays(7) },
       ]).expect(200);
 
       const windowPrices = await windowPricesOf(chatModelId);
-      expect(windowPrices).toEqual([expect.objectContaining({ status: "inactive" })]);
+      expect(windowPrices).toEqual([expect.objectContaining({ status: 'inactive' })]);
       expect(windowPrices).toEqual([
         expect.not.objectContaining({ isActiveNow: expect.anything() }),
       ]);
@@ -442,25 +442,25 @@ describe("Window Prices on Upstream Models (e2e)", () => {
         {
           pricingWindowId: wholeWeekId,
           inputPrice: 0.5,
-          validFrom: "2027-01-01T00:00",
-          validUntil: "2027-01-01T00:00",
+          validFrom: '2027-01-01T00:00',
+          validUntil: '2027-01-01T00:00',
         },
       ]).expect(400);
 
       expect(refused.body.message).toEqual(["0: A Validity Period's start must be before its end"]);
     });
 
-    it("refuses one window twice for periods that overlap, naming both periods", async () => {
+    it('refuses one window twice for periods that overlap, naming both periods', async () => {
       const wholeWeekId = await createWholeWeekWindow();
 
       const refused = await putWindowPrices(chatModelId, [
         {
           pricingWindowId: wholeWeekId,
           inputPrice: 0.5,
-          validFrom: "2026-12-01T00:00",
-          validUntil: "2027-01-01T00:00",
+          validFrom: '2026-12-01T00:00',
+          validUntil: '2027-01-01T00:00',
         },
-        { pricingWindowId: wholeWeekId, inputPrice: 0.7, validFrom: "2026-12-31T23:59" },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.7, validFrom: '2026-12-31T23:59' },
       ]).expect(400);
 
       expect(refused.body.message).toBe(
@@ -468,17 +468,17 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       );
     });
 
-    it("refuses open-ended Window Prices whose hours overlap a dated sale", async () => {
+    it('refuses open-ended Window Prices whose hours overlap a dated sale', async () => {
       const offPeakId = await createWindow(
-        "Off-Peak",
-        [{ weekdays: [1, 2, 3, 4, 5], start: "16:00", end: "08:00" }],
-        { timeZone: "UTC" },
+        'Off-Peak',
+        [{ weekdays: [1, 2, 3, 4, 5], start: '16:00', end: '08:00' }],
+        { timeZone: 'UTC' },
       );
       const wholeWeekId = await createWholeWeekWindow();
 
       const refused = await putWindowPrices(chatModelId, [
         { pricingWindowId: offPeakId, inputPrice: 0.5 },
-        { pricingWindowId: wholeWeekId, inputPrice: 0.3, validUntil: "2027-01-01T00:00" },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.3, validUntil: '2027-01-01T00:00' },
       ]).expect(400);
 
       expect(refused.body.message).toBe(
@@ -486,25 +486,25 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       );
     });
 
-    it("accepts overlapping hours whose periods meet only at the exclusive end", async () => {
+    it('accepts overlapping hours whose periods meet only at the exclusive end', async () => {
       const offPeakId = await createWindow(
-        "Off-Peak",
-        [{ weekdays: [1, 2, 3, 4, 5], start: "16:00", end: "08:00" }],
-        { timeZone: "UTC" },
+        'Off-Peak',
+        [{ weekdays: [1, 2, 3, 4, 5], start: '16:00', end: '08:00' }],
+        { timeZone: 'UTC' },
       );
       const wholeWeekId = await createWholeWeekWindow();
 
       await putWindowPrices(chatModelId, [
-        { pricingWindowId: offPeakId, inputPrice: 0.5, validFrom: "2027-01-01T00:00" },
-        { pricingWindowId: wholeWeekId, inputPrice: 0.3, validUntil: "2027-01-01T00:00" },
+        { pricingWindowId: offPeakId, inputPrice: 0.5, validFrom: '2027-01-01T00:00' },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.3, validUntil: '2027-01-01T00:00' },
       ]).expect(200);
     });
 
     it("accepts a short sale beside off-peak hours it doesn't reach", async () => {
       const offPeakId = await createWindow(
-        "Off-Peak",
-        [{ weekdays: [1, 2, 3, 4, 5], start: "16:00", end: "08:00" }],
-        { timeZone: "UTC" },
+        'Off-Peak',
+        [{ weekdays: [1, 2, 3, 4, 5], start: '16:00', end: '08:00' }],
+        { timeZone: 'UTC' },
       );
       const wholeWeekId = await createWholeWeekWindow();
 
@@ -513,32 +513,32 @@ describe("Window Prices on Upstream Models (e2e)", () => {
         {
           pricingWindowId: wholeWeekId,
           inputPrice: 0.3,
-          validFrom: "2026-12-02T09:00",
-          validUntil: "2026-12-02T15:00",
+          validFrom: '2026-12-02T09:00',
+          validUntil: '2026-12-02T15:00',
         },
       ]).expect(200);
     });
 
     it("refuses a window's new time zone that moves its period into another's", async () => {
-      const decemberId = await createWholeWeekWindow("December");
-      const januaryId = await createWholeWeekWindow("January");
+      const decemberId = await createWholeWeekWindow('December');
+      const januaryId = await createWholeWeekWindow('January');
       await putWindowPrices(chatModelId, [
-        { pricingWindowId: decemberId, inputPrice: 0.5, validUntil: "2027-01-01T00:00" },
-        { pricingWindowId: januaryId, inputPrice: 0.7, validFrom: "2027-01-01T00:00" },
+        { pricingWindowId: decemberId, inputPrice: 0.5, validUntil: '2027-01-01T00:00' },
+        { pricingWindowId: januaryId, inputPrice: 0.7, validFrom: '2027-01-01T00:00' },
       ]).expect(200);
 
-      const refused = await patchWindow(decemberId, { timeZone: "America/New_York" }).expect(400);
+      const refused = await patchWindow(decemberId, { timeZone: 'America/New_York' }).expect(400);
 
       expect(refused.body.message).toBe(
         "Window Prices would overlap on the Upstream Models acme-large (Acme AI), so this Pricing Window's schedule can't change; change their Window Prices first",
       );
     });
 
-    it("counts an Upstream Model that attaches a window twice once, and names that window once", async () => {
+    it('counts an Upstream Model that attaches a window twice once, and names that window once', async () => {
       const wholeWeekId = await createWholeWeekWindow();
       await putWindowPrices(chatModelId, [
-        { pricingWindowId: wholeWeekId, inputPrice: 0.5, validUntil: "2027-01-01T00:00" },
-        { pricingWindowId: wholeWeekId, inputPrice: 0.7, validFrom: "2027-02-01T00:00" },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.5, validUntil: '2027-01-01T00:00' },
+        { pricingWindowId: wholeWeekId, inputPrice: 0.7, validFrom: '2027-02-01T00:00' },
       ]).expect(200);
 
       expect(await listPricingWindows()).toEqual([
@@ -546,8 +546,8 @@ describe("Window Prices on Upstream Models (e2e)", () => {
       ]);
       const refused = await request(app.getHttpServer())
         .patch(`/api/upstream-models/${chatModelId}`)
-        .set("Cookie", cookie)
-        .send({ kind: "image", contextSize: null })
+        .set('Cookie', cookie)
+        .send({ kind: 'image', contextSize: null })
         .expect(400);
       expect(refused.body.message).toBe(
         "The Pricing Windows Whole Week give this Upstream Model Window Prices, so its Kind can't change; detach them first",
@@ -555,27 +555,27 @@ describe("Window Prices on Upstream Models (e2e)", () => {
     });
   });
 
-  it("refuses a Pricing Window with no price of its own", async () => {
-    const nightId = await createWindow("Night");
+  it('refuses a Pricing Window with no price of its own', async () => {
+    const nightId = await createWindow('Night');
 
     const refused = await putWindowPrices(chatModelId, [
       { pricingWindowId: nightId, inputPrice: null },
     ]).expect(400);
 
-    expect(refused.body.message).toEqual(["0: Give the Pricing Window at least one price"]);
+    expect(refused.body.message).toEqual(['0: Give the Pricing Window at least one price']);
   });
 
   it("answers 404 for an Upstream Model that doesn't exist", async () => {
     await request(app.getHttpServer())
       .get(`/api/upstream-models/${MISSING_ID}/pricing-windows`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(404);
     await putWindowPrices(MISSING_ID, []).expect(404);
   });
 
-  it("refuses to change the Kind of an Upstream Model with Pricing Windows, naming them", async () => {
-    const nightId = await createWindow("Night");
-    const weekendId = await createWindow("Weekend", LATE_ON_ANOTHER_DAY);
+  it('refuses to change the Kind of an Upstream Model with Pricing Windows, naming them', async () => {
+    const nightId = await createWindow('Night');
+    const weekendId = await createWindow('Weekend', LATE_ON_ANOTHER_DAY);
     await putWindowPrices(chatModelId, [
       { pricingWindowId: nightId, inputPrice: 0.5 },
       { pricingWindowId: weekendId, inputPrice: 0.7 },
@@ -583,8 +583,8 @@ describe("Window Prices on Upstream Models (e2e)", () => {
 
     const refused = await request(app.getHttpServer())
       .patch(`/api/upstream-models/${chatModelId}`)
-      .set("Cookie", cookie)
-      .send({ kind: "image", contextSize: null })
+      .set('Cookie', cookie)
+      .send({ kind: 'image', contextSize: null })
       .expect(400);
 
     expect(refused.body.message).toBe(
@@ -593,8 +593,8 @@ describe("Window Prices on Upstream Models (e2e)", () => {
   });
 
   it("removes a deleted Pricing Window's Window Prices from every Upstream Model", async () => {
-    const nightId = await createWindow("Night");
-    const weekendId = await createWindow("Weekend", LATE_ON_ANOTHER_DAY);
+    const nightId = await createWindow('Night');
+    const weekendId = await createWindow('Weekend', LATE_ON_ANOTHER_DAY);
     await putWindowPrices(chatModelId, [
       { pricingWindowId: nightId, inputPrice: 0.5 },
       { pricingWindowId: weekendId, inputPrice: 0.7 },
@@ -602,7 +602,7 @@ describe("Window Prices on Upstream Models (e2e)", () => {
 
     await request(app.getHttpServer())
       .delete(`/api/pricing-windows/${nightId}`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(204);
 
     expect(await windowPricesOf(chatModelId)).toEqual([
@@ -611,12 +611,12 @@ describe("Window Prices on Upstream Models (e2e)", () => {
   });
 
   it("removes a deleted Upstream Model's Window Prices", async () => {
-    const nightId = await createWindow("Night");
+    const nightId = await createWindow('Night');
     await putWindowPrices(chatModelId, [{ pricingWindowId: nightId, inputPrice: 0.5 }]).expect(200);
 
     await request(app.getHttpServer())
       .delete(`/api/upstream-models/${chatModelId}`)
-      .set("Cookie", cookie)
+      .set('Cookie', cookie)
       .expect(204);
 
     expect(await listPricingWindows()).toEqual([

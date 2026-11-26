@@ -1,24 +1,24 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { providers } from "@/db/schemas";
-import { FakeUpstream } from "@tests/support/fake-upstream";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { providers } from '@/db/schemas';
+import { FakeUpstream } from '@tests/support/fake-upstream';
 import {
   GENERAL_REMAINS,
   INVALID_KEY_REPLY,
   REMAINS_PATH,
   remainsAtPercentReply,
   remainsReply,
-} from "@tests/support/minimax-m-plan-remains";
+} from '@tests/support/minimax-m-plan-remains';
 
-process.env.QUOTA_READER_TIMEOUT_MS = "300";
+process.env.QUOTA_READER_TIMEOUT_MS = '300';
 const fakeUpstream = await FakeUpstream.start();
-const { allowPrivateUpstreams } = await import("@tests/support/private-upstreams");
-const { createTestApp, setUpFirstUser } = await import("@tests/support/test-app");
-const { deleteAllUpstreamData } = await import("@tests/support/upstream");
+const { allowPrivateUpstreams } = await import('@tests/support/private-upstreams');
+const { createTestApp, setUpFirstUser } = await import('@tests/support/test-app');
+const { deleteAllUpstreamData } = await import('@tests/support/upstream');
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const M_PLAN_KEY = "sk-cp-0123456789abcdefWXYZ";
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const M_PLAN_KEY = 'sk-cp-0123456789abcdefWXYZ';
 
 describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
   let app: NestNodeApplication;
@@ -40,28 +40,28 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     await fakeUpstream.close();
   });
 
-  async function createAccount(quotaReader: "minimax-m-plan" | null): Promise<string> {
+  async function createAccount(quotaReader: 'minimax-m-plan' | null): Promise<string> {
     const [provider] = await db
       .insert(providers)
       .values({
-        slug: "plan",
-        name: "Plan",
+        slug: 'plan',
+        name: 'Plan',
         endpoints: [
           {
-            kind: "chat",
-            protocol: "anthropic-messages",
-            baseUrl: "https://api.plan.example/anthropic",
+            kind: 'chat',
+            protocol: 'anthropic-messages',
+            baseUrl: 'https://api.plan.example/anthropic',
           },
         ],
-        authStyle: "bearer",
+        authStyle: 'bearer',
         quirks: { quotaBaseUrl: fakeUpstream.baseUrl },
         quotaReader,
       })
       .returning({ id: providers.id });
     const created = await request(app.getHttpServer())
-      .post("/api/provider-accounts")
-      .set("Cookie", cookie)
-      .send({ providerId: provider.id, name: "Main", key: M_PLAN_KEY })
+      .post('/api/provider-accounts')
+      .set('Cookie', cookie)
+      .send({ providerId: provider.id, name: 'Main', key: M_PLAN_KEY })
       .expect(201);
     return created.body.id;
   }
@@ -69,52 +69,52 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
   function readNow(providerAccountId: string): request.Test {
     return request(app.getHttpServer())
       .post(`/api/provider-accounts/${providerAccountId}/quota-reading`)
-      .set("Cookie", cookie);
+      .set('Cookie', cookie);
   }
 
   async function listedAccount(providerAccountId: string): Promise<Record<string, unknown>> {
     const list = await request(app.getHttpServer())
-      .get("/api/provider-accounts")
-      .set("Cookie", cookie)
+      .get('/api/provider-accounts')
+      .set('Cookie', cookie)
       .expect(200);
     return list.body.find((account: { id: string }) => account.id === providerAccountId);
   }
 
-  it("stores the 5-hour and weekly meters from the M Plan remains endpoint", async () => {
-    const providerAccountId = await createAccount("minimax-m-plan");
+  it('stores the 5-hour and weekly meters from the M Plan remains endpoint', async () => {
+    const providerAccountId = await createAccount('minimax-m-plan');
     fakeUpstream.reply(remainsReply());
 
     const reading = await readNow(providerAccountId).expect(200);
 
     expect(fakeUpstream.lastRequest).toMatchObject({
-      method: "GET",
+      method: 'GET',
       path: REMAINS_PATH,
       headers: { authorization: `Bearer ${M_PLAN_KEY}` },
     });
     const expectedMeters = [
       {
-        key: "5h",
-        label: "5-hour window",
-        unit: "percent",
+        key: '5h',
+        label: '5-hour window',
+        unit: 'percent',
         used: null,
         limit: null,
         remainingPercent: 75,
         isUnlimited: false,
         windowSeconds: 18_000,
-        resetsAt: "2026-11-15T11:16:10.993Z",
+        resetsAt: '2026-11-15T11:16:10.993Z',
         scope: null,
         observedAt: expect.any(String),
       },
       {
-        key: "weekly",
-        label: "Weekly window",
-        unit: "percent",
+        key: 'weekly',
+        label: 'Weekly window',
+        unit: 'percent',
         used: null,
         limit: null,
         remainingPercent: 48,
         isUnlimited: false,
         windowSeconds: 604_800,
-        resetsAt: "2026-11-19T03:46:10.506Z",
+        resetsAt: '2026-11-19T03:46:10.506Z',
         scope: null,
         observedAt: expect.any(String),
       },
@@ -133,8 +133,8 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     });
   });
 
-  it("replaces the meters on the next reading instead of adding rows", async () => {
-    const providerAccountId = await createAccount("minimax-m-plan");
+  it('replaces the meters on the next reading instead of adding rows', async () => {
+    const providerAccountId = await createAccount('minimax-m-plan');
     fakeUpstream.reply(remainsReply());
     fakeUpstream.reply(remainsAtPercentReply(30));
 
@@ -142,19 +142,19 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     const second = await readNow(providerAccountId).expect(200);
 
     expect(second.body.quotaMeters).toEqual([
-      expect.objectContaining({ key: "5h", remainingPercent: 30 }),
-      expect.objectContaining({ key: "weekly", remainingPercent: 30 }),
+      expect.objectContaining({ key: '5h', remainingPercent: 30 }),
+      expect.objectContaining({ key: 'weekly', remainingPercent: 30 }),
     ]);
   });
 
-  it("gives a model group its own scoped meters, with counts and unlimited windows", async () => {
-    const providerAccountId = await createAccount("minimax-m-plan");
+  it('gives a model group its own scoped meters, with counts and unlimited windows', async () => {
+    const providerAccountId = await createAccount('minimax-m-plan');
     fakeUpstream.reply(
       remainsReply([
         GENERAL_REMAINS,
         {
           ...GENERAL_REMAINS,
-          model_name: "video",
+          model_name: 'video',
           current_interval_status: 3,
           current_weekly_total_count: 20,
           current_weekly_usage_count: 5,
@@ -166,19 +166,19 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     const reading = await readNow(providerAccountId).expect(200);
 
     expect(reading.body.quotaMeters).toEqual([
-      expect.objectContaining({ key: "5h", scope: null }),
+      expect.objectContaining({ key: '5h', scope: null }),
       expect.objectContaining({
-        key: "5h:video",
-        label: "5-hour window (video)",
-        scope: "video",
+        key: '5h:video',
+        label: '5-hour window (video)',
+        scope: 'video',
         isUnlimited: true,
       }),
-      expect.objectContaining({ key: "weekly", scope: null }),
+      expect.objectContaining({ key: 'weekly', scope: null }),
       expect.objectContaining({
-        key: "weekly:video",
-        label: "Weekly window (video)",
-        scope: "video",
-        unit: "count",
+        key: 'weekly:video',
+        label: 'Weekly window (video)',
+        scope: 'video',
+        unit: 'count',
         used: 5,
         limit: 20,
         remainingPercent: 75,
@@ -187,8 +187,8 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     ]);
   });
 
-  it("keeps the last meters and records the error when MiniMax refuses the key", async () => {
-    const providerAccountId = await createAccount("minimax-m-plan");
+  it('keeps the last meters and records the error when MiniMax refuses the key', async () => {
+    const providerAccountId = await createAccount('minimax-m-plan');
     fakeUpstream.reply(remainsReply());
     fakeUpstream.reply(INVALID_KEY_REPLY);
 
@@ -197,10 +197,10 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
 
     expect(failed.body).toEqual({
       quotaCheckedAt: expect.any(String),
-      quotaError: expect.stringContaining("1004"),
+      quotaError: expect.stringContaining('1004'),
       quotaMeters: [
-        expect.objectContaining({ key: "5h", remainingPercent: 75 }),
-        expect.objectContaining({ key: "weekly", remainingPercent: 48 }),
+        expect.objectContaining({ key: '5h', remainingPercent: 75 }),
+        expect.objectContaining({ key: 'weekly', remainingPercent: 48 }),
       ],
       usageResets: null,
     });
@@ -208,14 +208,14 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
       isEnabled: true,
       disabledReason: null,
       cooldownEndsAt: null,
-      quotaError: expect.stringContaining("1004"),
+      quotaError: expect.stringContaining('1004'),
     });
   });
 
-  it("keeps the last meters and records the error when the remains endpoint times out", async () => {
-    const providerAccountId = await createAccount("minimax-m-plan");
+  it('keeps the last meters and records the error when the remains endpoint times out', async () => {
+    const providerAccountId = await createAccount('minimax-m-plan');
     fakeUpstream.reply(remainsReply());
-    fakeUpstream.reply({ kind: "hang" });
+    fakeUpstream.reply({ kind: 'hang' });
 
     await readNow(providerAccountId).expect(200);
     const failed = await readNow(providerAccountId).expect(200);
@@ -225,8 +225,8 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     expect(await listedAccount(providerAccountId)).toMatchObject({ isEnabled: true });
   });
 
-  it("records an error without connecting when the quota endpoint is private and the Setting does not allow it", async () => {
-    const providerAccountId = await createAccount("minimax-m-plan");
+  it('records an error without connecting when the quota endpoint is private and the Setting does not allow it', async () => {
+    const providerAccountId = await createAccount('minimax-m-plan');
     await allowPrivateUpstreams(app, false);
     fakeUpstream.reply(remainsReply());
 
@@ -239,7 +239,7 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
     expect(fakeUpstream.requests).toHaveLength(0);
   });
 
-  it("refuses to read an account whose Provider has no quota reader", async () => {
+  it('refuses to read an account whose Provider has no quota reader', async () => {
     const providerAccountId = await createAccount(null);
 
     await readNow(providerAccountId).expect(400);

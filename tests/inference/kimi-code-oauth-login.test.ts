@@ -1,8 +1,8 @@
-import type { NestNodeApplication } from "@nestjs/platform-node";
-import request from "supertest";
-import type { Database } from "@/db/schemas/relations";
-import { type FakeReply, FakeUpstream, type ReceivedRequest } from "@tests/support/fake-upstream";
-import { insertApiKey, insertOpenAiChatModel, UPSTREAM_KEY } from "@tests/support/inference";
+import type { NestNodeApplication } from '@nestjs/platform-node';
+import request from 'supertest';
+import type { Database } from '@/db/schemas/relations';
+import { type FakeReply, FakeUpstream, type ReceivedRequest } from '@tests/support/fake-upstream';
+import { insertApiKey, insertOpenAiChatModel, UPSTREAM_KEY } from '@tests/support/inference';
 import {
   ACCESS_TOKEN,
   addOauthLoginAccount,
@@ -13,43 +13,43 @@ import {
   REFRESH_TOKEN,
   refreshedTokensReply,
   TOKEN_PATH,
-} from "@tests/support/kimi-oauth";
-import { createTestApp, setUpFirstUser } from "@tests/support/test-app";
-import { deleteAllUpstreamData } from "@tests/support/upstream";
+} from '@tests/support/kimi-oauth';
+import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
+import { deleteAllUpstreamData } from '@tests/support/upstream';
 
-const OPERATOR = { email: "ops@example.com", password: "ops password" };
-const TEXT_REQUEST = { model: "smart", messages: [{ role: "user", content: "Hi" }] };
-const CHAT_PATH = "/v1/chat/completions";
+const OPERATOR = { email: 'ops@example.com', password: 'ops password' };
+const TEXT_REQUEST = { model: 'smart', messages: [{ role: 'user', content: 'Hi' }] };
+const CHAT_PATH = '/v1/chat/completions';
 const GLOBAL_TOKEN_PATH = `/global${TOKEN_PATH}`;
 const HOUR_SECONDS = 3600;
 const SHORT_LIFETIME_SECONDS = 60;
-const RENEWED = { accessToken: "access-token-2", refreshToken: "refresh-token-2" };
+const RENEWED = { accessToken: 'access-token-2', refreshToken: 'refresh-token-2' };
 
 const COMPLETION: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 200,
   body: {
-    id: "chatcmpl-kimi-1",
-    object: "chat.completion",
-    model: "k3",
+    id: 'chatcmpl-kimi-1',
+    object: 'chat.completion',
+    model: 'k3',
     choices: [
-      { index: 0, message: { role: "assistant", content: "Hello." }, finish_reason: "stop" },
+      { index: 0, message: { role: 'assistant', content: 'Hello.' }, finish_reason: 'stop' },
     ],
     usage: { prompt_tokens: 12, completion_tokens: 8 },
   },
 };
 
 const UNAUTHORIZED: FakeReply = {
-  kind: "json",
+  kind: 'json',
   status: 401,
-  body: { error: { type: "invalid_authentication_error", message: "Token expired" } },
+  body: { error: { type: 'invalid_authentication_error', message: 'Token expired' } },
 };
 
-const UNAVAILABLE: FakeReply = { kind: "json", status: 503, body: { error: "unavailable" } };
+const UNAVAILABLE: FakeReply = { kind: 'json', status: 503, body: { error: 'unavailable' } };
 
-const INVALID_GRANT: FakeReply = { kind: "json", status: 400, body: { error: "invalid_grant" } };
+const INVALID_GRANT: FakeReply = { kind: 'json', status: 400, body: { error: 'invalid_grant' } };
 
-describe("Inference from a Provider Account holding an OAuth Login (e2e)", () => {
+describe('Inference from a Provider Account holding an OAuth Login (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let kimi: FakeUpstream;
@@ -67,7 +67,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
-      modelName: "smart",
+      modelName: 'smart',
       baseUrl: kimi.baseUrl,
     }));
     await offerOauthLogin(db, providerId, kimi.origin);
@@ -81,15 +81,15 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
 
   function chat() {
     return request(app.getHttpServer())
-      .post("/v1/chat/completions")
-      .set("Authorization", `Bearer ${apiKey}`)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${apiKey}`)
       .send(TEXT_REQUEST);
   }
 
   async function listedAccount(providerAccountId: string): Promise<Record<string, unknown>> {
     const list = await request(app.getHttpServer())
-      .get("/api/provider-accounts")
-      .set("Cookie", cookie)
+      .get('/api/provider-accounts')
+      .set('Cookie', cookie)
       .expect(200);
     return list.body.find((account: { id: string }) => account.id === providerAccountId);
   }
@@ -100,7 +100,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
 
   function attemptedCredentials(): string[] {
     return chatCalls().map((received) =>
-      String(received.headers.authorization).replace("Bearer ", ""),
+      String(received.headers.authorization).replace('Bearer ', ''),
     );
   }
 
@@ -114,22 +114,22 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
 
     const response = await chat().expect(200);
 
-    expect(response.body.choices[0].message.content).toBe("Hello.");
+    expect(response.body.choices[0].message.content).toBe('Hello.');
     expect(kimi.requests).toHaveLength(1);
     expect(kimi.lastRequest.path).toBe(CHAT_PATH);
     expect(kimi.lastRequest.headers).toMatchObject({
       authorization: `Bearer ${ACCESS_TOKEN}`,
-      "user-agent": `kimi-code-cli/${CLI_VERSION}`,
-      "x-msh-platform": "kimi_code_cli",
-      "x-msh-version": CLI_VERSION,
-      "x-msh-device-id": DEVICE_ID,
-      "x-msh-device-name": "routerlm",
-      "x-msh-device-model": expect.any(String),
-      "x-msh-os-version": expect.any(String),
+      'user-agent': `kimi-code-cli/${CLI_VERSION}`,
+      'x-msh-platform': 'kimi_code_cli',
+      'x-msh-version': CLI_VERSION,
+      'x-msh-device-id': DEVICE_ID,
+      'x-msh-device-name': 'routerlm',
+      'x-msh-device-model': expect.any(String),
+      'x-msh-os-version': expect.any(String),
     });
   });
 
-  it("refreshes a login with under 300 seconds left, and serves with the new access token", async () => {
+  it('refreshes a login with under 300 seconds left, and serves with the new access token', async () => {
     await addOauthLoginAccount(app, db, providerId, { lifetimeSeconds: SHORT_LIFETIME_SECONDS });
     kimi.replyTo(GLOBAL_TOKEN_PATH, refreshedTokensReply({ ...RENEWED, expiresIn: HOUR_SECONDS }));
     kimi.reply(COMPLETION);
@@ -137,20 +137,20 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     await chat().expect(200);
 
     const [refresh] = refreshes();
-    expect(refresh.method).toBe("POST");
+    expect(refresh.method).toBe('POST');
     expect(refresh.body).toEqual({
       client_id: CLIENT_ID,
-      grant_type: "refresh_token",
+      grant_type: 'refresh_token',
       refresh_token: REFRESH_TOKEN,
     });
     expect(refresh.headers).toMatchObject({
-      "user-agent": `kimi-code-cli/${CLI_VERSION}`,
-      "x-msh-device-id": DEVICE_ID,
+      'user-agent': `kimi-code-cli/${CLI_VERSION}`,
+      'x-msh-device-id': DEVICE_ID,
     });
     expect(attemptedCredentials()).toEqual([RENEWED.accessToken]);
   });
 
-  it("refreshes a login past half its lifetime, and leaves a younger one alone", async () => {
+  it('refreshes a login past half its lifetime, and leaves a younger one alone', async () => {
     await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: HOUR_SECONDS,
       ageSeconds: HOUR_SECONDS / 2 + 60,
@@ -159,8 +159,8 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: HOUR_SECONDS,
       ageSeconds: HOUR_SECONDS / 2 - 60,
-      accessToken: "younger-access-token",
-      deviceId: "device-id-of-the-younger-login",
+      accessToken: 'younger-access-token',
+      deviceId: 'device-id-of-the-younger-login',
       priority: -1,
     });
     kimi.replyTo(GLOBAL_TOKEN_PATH, refreshedTokensReply({ ...RENEWED, expiresIn: HOUR_SECONDS }));
@@ -170,13 +170,13 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     await chat().expect(200);
 
     expect(refreshes()).toHaveLength(1);
-    expect(attemptedCredentials()).toEqual([RENEWED.accessToken, "younger-access-token"]);
+    expect(attemptedCredentials()).toEqual([RENEWED.accessToken, 'younger-access-token']);
   });
 
-  it("refreshes at the auth host of the region the login was granted in", async () => {
+  it('refreshes at the auth host of the region the login was granted in', async () => {
     await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: SHORT_LIFETIME_SECONDS,
-      region: "china",
+      region: 'china',
     });
     kimi.replyTo(
       `/china${TOKEN_PATH}`,
@@ -190,7 +190,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     expect(chatCalls()).toHaveLength(1);
   });
 
-  it("stores the rotated tokens: the next request uses them, and the next refresh sends the new refresh token", async () => {
+  it('stores the rotated tokens: the next request uses them, and the next refresh sends the new refresh token', async () => {
     await addOauthLoginAccount(app, db, providerId, { lifetimeSeconds: SHORT_LIFETIME_SECONDS });
     kimi.replyTo(
       GLOBAL_TOKEN_PATH,
@@ -199,8 +199,8 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     kimi.replyTo(
       GLOBAL_TOKEN_PATH,
       refreshedTokensReply({
-        accessToken: "access-token-3",
-        refreshToken: "refresh-token-3",
+        accessToken: 'access-token-3',
+        refreshToken: 'refresh-token-3',
         expiresIn: HOUR_SECONDS,
       }),
     );
@@ -218,12 +218,12 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     ]);
     expect(attemptedCredentials()).toEqual([
       RENEWED.accessToken,
-      "access-token-3",
-      "access-token-3",
+      'access-token-3',
+      'access-token-3',
     ]);
   });
 
-  it("refreshes once for requests that arrive together, and serves them all", async () => {
+  it('refreshes once for requests that arrive together, and serves them all', async () => {
     await addOauthLoginAccount(app, db, providerId, { lifetimeSeconds: SHORT_LIFETIME_SECONDS });
     const slowRefreshMs = 300;
     kimi.replyTo(
@@ -242,12 +242,12 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     expect(attemptedCredentials()).toEqual(Array(4).fill(RENEWED.accessToken));
   });
 
-  it("retries a refresh the auth host fails to answer, without disabling the account", async () => {
+  it('retries a refresh the auth host fails to answer, without disabling the account', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: SHORT_LIFETIME_SECONDS,
     });
     kimi.replyTo(GLOBAL_TOKEN_PATH, UNAVAILABLE);
-    kimi.replyTo(GLOBAL_TOKEN_PATH, { kind: "reset" });
+    kimi.replyTo(GLOBAL_TOKEN_PATH, { kind: 'reset' });
     kimi.replyTo(GLOBAL_TOKEN_PATH, refreshedTokensReply({ ...RENEWED, expiresIn: HOUR_SECONDS }));
     kimi.reply(COMPLETION);
 
@@ -258,7 +258,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     expect(await listedAccount(accountId)).toMatchObject({ isEnabled: true, disabledReason: null });
   });
 
-  it("keeps serving with a login that still works while the auth host is down", async () => {
+  it('keeps serving with a login that still works while the auth host is down', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: HOUR_SECONDS,
       ageSeconds: HOUR_SECONDS / 2 + 60,
@@ -290,7 +290,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     expect(await listedAccount(accountId)).toMatchObject({ isEnabled: true, disabledReason: null });
   });
 
-  it("disables the account with a sign-in-again reason when the auth host refuses the refresh", async () => {
+  it('disables the account with a sign-in-again reason when the auth host refuses the refresh', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: SHORT_LIFETIME_SECONDS,
     });
@@ -301,10 +301,10 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
 
     expect(refreshes()).toHaveLength(1);
     expect(attemptedCredentials()).toEqual([UPSTREAM_KEY]);
-    expect(kimi.lastRequest.headers).not.toHaveProperty("x-msh-platform");
+    expect(kimi.lastRequest.headers).not.toHaveProperty('x-msh-platform');
     await vi.waitFor(async () =>
       expect(await listedAccount(accountId)).toMatchObject({
-        credentialKind: "oauth-login",
+        credentialKind: 'oauth-login',
         isEnabled: false,
         disabledReason: expect.stringMatching(/^Sign in again/),
       }),
@@ -312,12 +312,12 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
   });
 
   it.each([401, 403])(
-    "disables the account when the auth host answers a refresh with %i",
+    'disables the account when the auth host answers a refresh with %i',
     async (status) => {
       const accountId = await addOauthLoginAccount(app, db, providerId, {
         lifetimeSeconds: SHORT_LIFETIME_SECONDS,
       });
-      kimi.replyTo(GLOBAL_TOKEN_PATH, { kind: "json", status, body: {} });
+      kimi.replyTo(GLOBAL_TOKEN_PATH, { kind: 'json', status, body: {} });
       kimi.reply(COMPLETION);
 
       await chat().expect(200);
@@ -331,7 +331,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     },
   );
 
-  it("refreshes once and tries again when Kimi answers an Attempt with 401", async () => {
+  it('refreshes once and tries again when Kimi answers an Attempt with 401', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: HOUR_SECONDS,
     });
@@ -346,7 +346,7 @@ describe("Inference from a Provider Account holding an OAuth Login (e2e)", () =>
     expect(await listedAccount(accountId)).toMatchObject({ isEnabled: true, disabledReason: null });
   });
 
-  it("disables the account when Kimi answers 401 to the refreshed login too", async () => {
+  it('disables the account when Kimi answers 401 to the refreshed login too', async () => {
     const accountId = await addOauthLoginAccount(app, db, providerId, {
       lifetimeSeconds: HOUR_SECONDS,
     });

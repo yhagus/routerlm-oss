@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="Row extends RowData">
-import { CloudOff, RefreshCw, SearchX } from "@lucide/vue";
+import { CloudOff, RefreshCw, SearchX } from '@lucide/vue';
 import {
   FlexRender,
   functionalUpdate,
@@ -10,15 +10,15 @@ import {
   type RowData,
   type Updater,
   type ColumnVisibilityState,
-} from "@tanstack/vue-table";
-import type { HTMLAttributes } from "vue";
-import { type ActiveFilter, searchFilterTokens } from "~/lib/activeFilters";
+} from '@tanstack/vue-table';
+import type { HTMLAttributes } from 'vue';
+import { type ActiveFilter, searchFilterTokens } from '~/lib/activeFilters';
 import {
   DATA_TABLE_PAGE_SIZE,
   dataTableFeatures,
   type DataTableColumn,
   type HideableColumn,
-} from "~/lib/dataTable";
+} from '~/lib/dataTable';
 
 const props = withDefaults(
   defineProps<{
@@ -27,8 +27,8 @@ const props = withDefaults(
     columns: DataTableColumn<Row>[];
     rows: Row[];
     getRowId: (row: Row) => string;
-    rowClass?: (row: Row) => HTMLAttributes["class"];
-    columnClass?: (columnId: string) => HTMLAttributes["class"];
+    rowClass?: (row: Row) => HTMLAttributes['class'];
+    columnClass?: (columnId: string) => HTMLAttributes['class'];
     isLoading: boolean;
     error?: unknown;
     refresh: () => Promise<unknown>;
@@ -38,7 +38,7 @@ const props = withDefaults(
     getSubRows?: (row: Row) => Row[] | undefined;
     countLabel?: string;
   }>(),
-  { filters: () => [], searchPlaceholder: "Search" },
+  { filters: () => [], searchPlaceholder: 'Search' },
 );
 const emit = defineEmits<{ clearFilters: [] }>();
 defineSlots<
@@ -60,7 +60,7 @@ const SEARCH_COMMIT_DELAY_MS = 300;
 const committedSearch = useQuerySearch();
 const page = useQueryPage();
 const columnVisibility = useColumnVisibility(props.tableId);
-const expanded = defineModel<ExpandedStateList>("expanded", { default: () => ({}) });
+const expanded = defineModel<ExpandedStateList>('expanded', { default: () => ({}) });
 
 const searchText = shallowRef(committedSearch.value);
 let lastCommittedSearch = committedSearch.value;
@@ -96,7 +96,7 @@ const searchForTokens = computed({
 
 const isServerMode = computed(() => props.rowCount !== undefined);
 const searchQuery = computed(() => committedSearch.value.trim());
-const hasQuery = computed(() => searchQuery.value !== "" || props.filters.length > 0);
+const hasQuery = computed(() => searchQuery.value !== '' || props.filters.length > 0);
 const activeFilters = computed(() => [...searchFilterTokens(searchForTokens), ...props.filters]);
 
 const pagination = computed<PaginationState>(() => ({
@@ -146,7 +146,7 @@ const hideableColumns = computed<HideableColumn[]>(() =>
     .filter((column) => column.getCanHide())
     .map((column) => ({
       id: column.id,
-      label: typeof column.columnDef.header === "string" ? column.columnDef.header : column.id,
+      label: typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id,
       isVisible: column.getIsVisible(),
     })),
 );
@@ -160,7 +160,7 @@ function handleColumnsReset(): void {
 }
 
 watch(
-  () => props.filters.map((filter) => filter.key).join("\n"),
+  () => props.filters.map((filter) => filter.key).join('\n'),
   () => {
     page.value = 1;
   },
@@ -188,8 +188,8 @@ async function handleRefresh(): Promise<void> {
 }
 
 function handleClearAll(): void {
-  commitSearch("");
-  emit("clearFilters");
+  commitSearch('');
+  emit('clearFilters');
 }
 </script>
 

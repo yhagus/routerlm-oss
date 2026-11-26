@@ -1,17 +1,17 @@
-import { InjectQueue, Processor, WorkerHost } from "@nestjs/bullmq";
-import { Injectable, Logger, type OnApplicationBootstrap } from "@nestjs/common";
-import { QueryBus } from "@nestjs/cqrs";
-import { InjectDrizzle } from "@nestjs/drizzle";
-import type { Job, Queue } from "bullmq";
-import { lt } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { errorCaptures } from "@/db/schemas";
-import { ERROR_CAPTURES_QUEUE } from "@/queue/models/queue-names";
-import { ShowErrorCaptureRetentionQuery } from "@/settings/queries/impl/show-error-capture-retention.query";
-import { retentionCutoff } from "@/error-captures/models/retention-cutoff";
+import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
+import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import type { Job, Queue } from 'bullmq';
+import { lt } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { errorCaptures } from '@/db/schemas';
+import { ERROR_CAPTURES_QUEUE } from '@/queue/models/queue-names';
+import { ShowErrorCaptureRetentionQuery } from '@/settings/queries/impl/show-error-capture-retention.query';
+import { retentionCutoff } from '@/error-captures/models/retention-cutoff';
 
-export const ERROR_CAPTURE_RETENTION_SCHEDULER = "error-capture-retention";
-const DELETE_EXPIRED_CAPTURES_JOB = "delete-expired";
+export const ERROR_CAPTURE_RETENTION_SCHEDULER = 'error-capture-retention';
+const DELETE_EXPIRED_CAPTURES_JOB = 'delete-expired';
 const RUN_EVERY_MS = 60 * 60 * 1000;
 
 @Injectable()

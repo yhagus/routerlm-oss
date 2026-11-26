@@ -1,7 +1,7 @@
-import { BadRequestException } from "@nestjs/common";
-import { inArray } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { models } from "@/db/schemas";
+import { BadRequestException } from '@nestjs/common';
+import { inArray } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { models } from '@/db/schemas';
 
 export async function assertModelsExist(db: Database, modelIds: string[]): Promise<void> {
   if (modelIds.length === 0) {
@@ -9,7 +9,7 @@ export async function assertModelsExist(db: Database, modelIds: string[]): Promi
   }
   const found = await db.select({ id: models.id }).from(models).where(inArray(models.id, modelIds));
   if (found.length !== modelIds.length) {
-    throw new BadRequestException("Unknown Model in allowedModelIds");
+    throw new BadRequestException('Unknown Model in allowedModelIds');
   }
 }
 

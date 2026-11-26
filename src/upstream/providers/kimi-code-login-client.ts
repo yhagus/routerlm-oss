@@ -1,14 +1,14 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   HttpClient,
   HttpClientError,
   type HttpResponse,
   type HttpRetryOptions,
   InjectHttpClient,
-} from "@nestjs/http-client";
-import { z } from "zod";
-import { withoutTrailingSlash } from "@/libs/models/url";
-import { cliIdentityHeaders } from "@/upstream/models/cli-identity";
+} from '@nestjs/http-client';
+import { z } from 'zod';
+import { withoutTrailingSlash } from '@/libs/models/url';
+import { cliIdentityHeaders } from '@/upstream/models/cli-identity';
 import {
   type DeviceAuthorization,
   type OauthLoginEndpoint,
@@ -17,19 +17,19 @@ import {
   type PendingDeviceCode,
   type TokenPoll,
   type TokenRefresh,
-} from "@/upstream/models/oauth-device-grant";
-import type { OauthTokens } from "@/upstream/models/provider-account";
-import type { OauthFlowLoginClient } from "./oauth-flow-login-client";
-import { OAUTH_LOGIN_HTTP_CLIENT, REFRESH_RETRY } from "./oauth-login-http";
+} from '@/upstream/models/oauth-device-grant';
+import type { OauthTokens } from '@/upstream/models/provider-account';
+import type { OauthFlowLoginClient } from './oauth-flow-login-client';
+import { OAUTH_LOGIN_HTTP_CLIENT, REFRESH_RETRY } from './oauth-login-http';
 
-type KimiCodeEndpoint = Extract<OauthLoginEndpoint, { flow: "kimi-code" }>;
+type KimiCodeEndpoint = Extract<OauthLoginEndpoint, { flow: 'kimi-code' }>;
 
-const DEVICE_AUTHORIZATION_PATH = "/api/oauth/device_authorization";
-const TOKEN_PATH = "/api/oauth/token";
-const PROFILE_PATH = "me";
-const DEVICE_CODE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code";
-const REFRESH_GRANT_TYPE = "refresh_token";
-const INVALID_GRANT = "invalid_grant";
+const DEVICE_AUTHORIZATION_PATH = '/api/oauth/device_authorization';
+const TOKEN_PATH = '/api/oauth/token';
+const PROFILE_PATH = 'me';
+const DEVICE_CODE_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code';
+const REFRESH_GRANT_TYPE = 'refresh_token';
+const INVALID_GRANT = 'invalid_grant';
 const DEFAULT_POLL_INTERVAL_SECONDS = 5;
 const webLinkSchema = z.url({ protocol: /^https?$/ });
 
@@ -103,26 +103,26 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
       });
     } catch (error) {
       if (error instanceof HttpClientError) {
-        return { kind: "unanswered", reason: error.message };
+        return { kind: 'unanswered', reason: error.message };
       }
       throw error;
     }
     const granted = grantedTokensSchema.safeParse(answer.data);
     if (answer.ok && granted.success) {
-      return { kind: "granted", tokens: granted.data };
+      return { kind: 'granted', tokens: granted.data };
     }
     const refusal = tokenErrorSchema.safeParse(answer.data);
     switch (refusal.data?.error) {
-      case "authorization_pending":
-        return { kind: "pending" };
-      case "slow_down":
-        return { kind: "slow-down" };
-      case "access_denied":
-        return { kind: "denied" };
-      case "expired_token":
-        return { kind: "expired" };
+      case 'authorization_pending':
+        return { kind: 'pending' };
+      case 'slow_down':
+        return { kind: 'slow-down' };
+      case 'access_denied':
+        return { kind: 'denied' };
+      case 'expired_token':
+        return { kind: 'expired' };
       default:
-        return { kind: "unanswered", reason: `HTTP ${answer.status}` };
+        return { kind: 'unanswered', reason: `HTTP ${answer.status}` };
     }
   }
 
@@ -137,13 +137,13 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
       );
     } catch (error) {
       if (error instanceof HttpClientError) {
-        return { kind: "unanswered", reason: error.message };
+        return { kind: 'unanswered', reason: error.message };
       }
       throw error;
     }
     const granted = grantedTokensSchema.safeParse(answer.data);
     if (answer.ok && granted.success) {
-      return { kind: "refreshed", tokens: granted.data };
+      return { kind: 'refreshed', tokens: granted.data };
     }
     const tokenError = tokenErrorSchema.safeParse(answer.data).data?.error;
     const isRefused =
@@ -151,13 +151,13 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
       answer.status === HttpStatus.FORBIDDEN ||
       tokenError === INVALID_GRANT;
     const reason = tokenError ? `HTTP ${answer.status}, ${tokenError}` : `HTTP ${answer.status}`;
-    return { kind: isRefused ? "refused" : "unanswered", reason };
+    return { kind: isRefused ? 'refused' : 'unanswered', reason };
   }
 
   async readProfile(baseUrl: string, accessToken: string): Promise<OauthProfile | null> {
     try {
       const response = await this.http.get(`${withoutTrailingSlash(baseUrl)}/${PROFILE_PATH}`, {
-        headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" },
+        headers: { authorization: `Bearer ${accessToken}`, accept: 'application/json' },
       });
       const profile = profileSchema.safeParse(response.data);
       if (!profile.success) {
@@ -183,7 +183,7 @@ export class KimiCodeLoginClient implements OauthFlowLoginClient<KimiCodeEndpoin
     retry: HttpRetryOptions | false = false,
   ): Promise<HttpResponse> {
     return this.http.post(`${withoutTrailingSlash(authHost)}${path}`, {
-      headers: { ...cliIdentityHeaders(identity), accept: "application/json" },
+      headers: { ...cliIdentityHeaders(identity), accept: 'application/json' },
       body: new URLSearchParams({ client_id: clientId, ...fields }),
       throwOnHttpError: false,
       retry,

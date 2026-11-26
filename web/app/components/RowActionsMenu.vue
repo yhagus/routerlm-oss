@@ -1,13 +1,13 @@
 <script setup lang="ts" generic="Id extends string">
-import { Ellipsis } from "@lucide/vue";
-import type { Component } from "vue";
+import { Ellipsis } from '@lucide/vue';
+import type { Component } from 'vue';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
+} from '~/components/ui/dropdown-menu';
 
 export interface RowAction<Id extends string = string> {
   id: Id;
@@ -24,7 +24,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ select: [id: Id] }>();
 
-const ITEM_CLASS = "rounded-md py-2 text-xs text-(--ink-2) focus:bg-(--control-hover)";
+const ITEM_CLASS = 'rounded-md py-2 text-xs text-(--ink-2) focus:bg-(--control-hover)';
 
 const firstDestructiveId = computed(
   () => props.actions.find((action, index) => index > 0 && action.isDestructive)?.id,

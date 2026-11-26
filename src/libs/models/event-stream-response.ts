@@ -1,9 +1,9 @@
-import type { ServerResponse } from "node:http";
+import type { ServerResponse } from 'node:http';
 
 const EVENT_STREAM_HEADERS = {
-  "content-type": "text/event-stream; charset=utf-8",
-  "cache-control": "no-cache",
-  "x-accel-buffering": "no",
+  'content-type': 'text/event-stream; charset=utf-8',
+  'cache-control': 'no-cache',
+  'x-accel-buffering': 'no',
 };
 
 export function eventStreamResponse(chunks: AsyncIterable<Uint8Array>): Response {
@@ -26,7 +26,7 @@ export function eventStreamResponse(chunks: AsyncIterable<Uint8Array>): Response
 
 export function clientDisconnectSignal(response: ServerResponse): AbortSignal {
   const controller = new AbortController();
-  response.once("close", () => {
+  response.once('close', () => {
     if (!response.writableFinished) {
       controller.abort();
     }

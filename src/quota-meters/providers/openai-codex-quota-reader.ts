@@ -1,21 +1,21 @@
-import { Injectable } from "@nestjs/common";
-import { HttpClient, InjectHttpClient } from "@nestjs/http-client";
-import { z } from "zod";
-import { SECOND_MS } from "@/libs/models/duration";
-import type { ProviderAccountCredential } from "@/upstream/models/provider-account-credential";
-import type { QuotaMeterReading } from "@/quota-meters/models/quota-meter";
+import { Injectable } from '@nestjs/common';
+import { HttpClient, InjectHttpClient } from '@nestjs/http-client';
+import { z } from 'zod';
+import { SECOND_MS } from '@/libs/models/duration';
+import type { ProviderAccountCredential } from '@/upstream/models/provider-account-credential';
+import type { QuotaMeterReading } from '@/quota-meters/models/quota-meter';
 import {
   asQuotaReadError,
   type QuotaReader,
   type QuotaReaderProvider,
   type QuotaReading,
   QuotaReadError,
-} from "@/quota-meters/models/quota-reader";
-import { codexBackendRequestOf } from "./openai-codex-backend";
-import { OpenAiCodexUsageResets } from "./openai-codex-usage-resets";
-import { QUOTA_READER_HTTP_CLIENT } from "./quota-reader-http-client";
+} from '@/quota-meters/models/quota-reader';
+import { codexBackendRequestOf } from './openai-codex-backend';
+import { OpenAiCodexUsageResets } from './openai-codex-usage-resets';
+import { QUOTA_READER_HTTP_CLIENT } from './quota-reader-http-client';
 
-const USAGE_PATH = "/backend-api/wham/usage";
+const USAGE_PATH = '/backend-api/wham/usage';
 
 const FULL_PERCENT = 100;
 const SECONDS_PER_MINUTE = 60;
@@ -24,15 +24,15 @@ const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
 const SECONDS_PER_WEEK = 7 * SECONDS_PER_DAY;
 
 const NAMED_WINDOWS: ReadonlyMap<number, { key: string; label: string }> = new Map([
-  [5 * SECONDS_PER_HOUR, { key: "5h", label: "5-hour limit" }],
-  [SECONDS_PER_WEEK, { key: "weekly", label: "Weekly limit" }],
+  [5 * SECONDS_PER_HOUR, { key: '5h', label: '5-hour limit' }],
+  [SECONDS_PER_WEEK, { key: 'weekly', label: 'Weekly limit' }],
 ]);
 
 const DURATION_UNITS = [
-  { seconds: SECONDS_PER_DAY, suffix: "d", label: "day" },
-  { seconds: SECONDS_PER_HOUR, suffix: "h", label: "hour" },
-  { seconds: SECONDS_PER_MINUTE, suffix: "m", label: "minute" },
-  { seconds: 1, suffix: "s", label: "second" },
+  { seconds: SECONDS_PER_DAY, suffix: 'd', label: 'day' },
+  { seconds: SECONDS_PER_HOUR, suffix: 'h', label: 'hour' },
+  { seconds: SECONDS_PER_MINUTE, suffix: 'm', label: 'minute' },
+  { seconds: 1, suffix: 's', label: 'second' },
 ] as const;
 
 const windowSchema = z.looseObject({
@@ -73,7 +73,7 @@ export class OpenAiCodexQuotaReader implements QuotaReader {
     const body = await this.fetchUsage(credential, baseUrl);
     const parsed = usageResponseSchema.safeParse(body);
     if (!parsed.success) {
-      throw new QuotaReadError("OpenAI answered the quota reading in an unknown shape", {
+      throw new QuotaReadError('OpenAI answered the quota reading in an unknown shape', {
         cause: parsed.error,
       });
     }
@@ -101,7 +101,7 @@ export class OpenAiCodexQuotaReader implements QuotaReader {
       const response = await this.http.get(url, { headers });
       return response.data;
     } catch (error) {
-      throw asQuotaReadError(error, "OpenAI quota");
+      throw asQuotaReadError(error, 'OpenAI quota');
     }
   }
 }
@@ -121,7 +121,7 @@ function meterOf(window: UsageWindow, scope: string | null, raw: unknown): Quota
   return {
     key: scope === null ? key : `${key}:${scope}`,
     label: scope === null ? label : `${label} (${scope})`,
-    unit: "percent",
+    unit: 'percent',
     used: usedPercent,
     limit: FULL_PERCENT,
     remainingPercent: Math.max(0, FULL_PERCENT - usedPercent),

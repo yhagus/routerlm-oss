@@ -1,11 +1,11 @@
-import { randomUUID } from "node:crypto";
-import type { ClientProtocol, ErrorOrigin, GatewayErrorCode, UpstreamProtocol } from "@/db/schemas";
+import { randomUUID } from 'node:crypto';
+import type { ClientProtocol, ErrorOrigin, GatewayErrorCode, UpstreamProtocol } from '@/db/schemas';
 import {
   capturedBody,
   capturedHeaders,
   type RawHeaders,
-} from "@/error-captures/models/captured-content";
-import type { RequestSender } from "@/libs/models/client-connection";
+} from '@/error-captures/models/captured-content';
+import type { RequestSender } from '@/libs/models/client-connection';
 import type {
   AttemptRecord,
   CapturedMessage,
@@ -15,13 +15,13 @@ import type {
   ServingTarget,
   UsageCaller,
   UsageJob,
-} from "@/usage/models/usage-job";
-import type { AttemptFailedError, UpstreamFailureResponse } from "./attempt-failure";
-import type { GatewayError } from "./gateway-error";
-import type { TokenUsage } from "./internal-format";
-import type { AttemptTarget } from "./route-selection";
-import { pricesForRequest } from "./request-prices";
-import { type SentServiceTier, serviceTierOfWireValue } from "./service-tier";
+} from '@/usage/models/usage-job';
+import type { AttemptFailedError, UpstreamFailureResponse } from './attempt-failure';
+import type { GatewayError } from './gateway-error';
+import type { TokenUsage } from './internal-format';
+import type { AttemptTarget } from './route-selection';
+import { pricesForRequest } from './request-prices';
+import { type SentServiceTier, serviceTierOfWireValue } from './service-tier';
 
 const ANSWERED_UPSTREAM_STATUS = 200;
 const FIRST_ERROR_STATUS = 400;
@@ -113,7 +113,7 @@ export class UsageMeter {
       ...servingTargetOf(target),
       upstreamProtocol: null,
       upstreamStatus: null,
-      failureReason: "exhausted",
+      failureReason: 'exhausted',
       durationMs: 0,
       upstreamRequestId: null,
     });
@@ -179,7 +179,7 @@ export class UsageMeter {
   }
 
   attemptInterrupted(): void {
-    this.closeAttempt("stream_interrupted", ANSWERED_UPSTREAM_STATUS);
+    this.closeAttempt('stream_interrupted', ANSWERED_UPSTREAM_STATUS);
   }
 
   attemptSucceeded(): void {
@@ -192,7 +192,7 @@ export class UsageMeter {
   }
 
   failedInGateway(): void {
-    this.errorOrigin = "gateway";
+    this.errorOrigin = 'gateway';
   }
 
   finishWithError(error: GatewayError, envelope: unknown): UsageJob {
@@ -209,7 +209,7 @@ export class UsageMeter {
     if (this.openAttempt) {
       const hasAnswered = this.openAttempt.hasAnswered;
       this.closeAttempt(
-        isCancelled ? "cancelled" : null,
+        isCancelled ? 'cancelled' : null,
         hasAnswered ? ANSWERED_UPSTREAM_STATUS : null,
       );
     }
@@ -252,7 +252,7 @@ export class UsageMeter {
       requestCaptureId: randomUUID(),
       request: this.captured({
         headers: this.clientRequest.headers,
-        body: JSON.stringify(this.clientRequest.body) ?? "",
+        body: JSON.stringify(this.clientRequest.body) ?? '',
       }),
       failedAttempts: this.failedAttempts.map(({ captureId, attemptIndex, upstreamResponse }) => ({
         captureId,
@@ -270,7 +270,7 @@ export class UsageMeter {
   }
 
   private closeAttempt(
-    failureReason: AttemptRecord["failureReason"],
+    failureReason: AttemptRecord['failureReason'],
     upstreamStatus: number | null,
   ): void {
     if (!this.openAttempt) {

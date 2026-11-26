@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { ModelKind } from "~/lib/upstream";
-import type { MediaForm } from "~/lib/upstreamModelMedia";
+import type { ModelKind } from '~/lib/upstream';
+import type { MediaForm } from '~/lib/upstreamModelMedia';
 
 defineProps<{ kind: ModelKind }>();
 const form = defineModel<MediaForm>({ required: true });

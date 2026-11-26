@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { AudioLines, Captions, Clapperboard, Image, MessageSquare } from "@lucide/vue";
-import type { Component } from "vue";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { baseUrlHost } from "~/lib/providerOverview";
+import { AudioLines, Captions, Clapperboard, Image, MessageSquare } from '@lucide/vue';
+import type { Component } from 'vue';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { baseUrlHost } from '~/lib/providerOverview';
 import {
   type ModelKind,
   type ProviderEndpoint,
   MODEL_KIND_LABELS,
   MODEL_KINDS,
   PROTOCOL_LABELS,
-} from "~/lib/upstream";
+} from '~/lib/upstream';
 
 const props = defineProps<{ endpoints: readonly ProviderEndpoint[] }>();
 
@@ -31,7 +31,7 @@ const summary = computed(
       .map(
         (endpoint) => `${MODEL_KIND_LABELS[endpoint.kind]} (${PROTOCOL_LABELS[endpoint.protocol]})`,
       )
-      .join(", ")}`,
+      .join(', ')}`,
 );
 </script>
 

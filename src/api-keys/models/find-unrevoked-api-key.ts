@@ -1,7 +1,7 @@
-import { ConflictException, NotFoundException } from "@nestjs/common";
-import { eq } from "drizzle-orm";
-import type { Database } from "@/db/schemas/relations";
-import { apiKeys } from "@/db/schemas";
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
+import type { Database } from '@/db/schemas/relations';
+import { apiKeys } from '@/db/schemas';
 
 export async function findUnrevokedApiKey(
   db: Database,
@@ -17,7 +17,7 @@ export async function findUnrevokedApiKey(
     .from(apiKeys)
     .where(eq(apiKeys.id, id));
   if (!found) {
-    throw new NotFoundException("API Key not found");
+    throw new NotFoundException('API Key not found');
   }
   if (found.revokedAt !== null) {
     throw new ConflictException(revokedMessage);

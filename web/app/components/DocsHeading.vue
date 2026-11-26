@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Check, Link } from "@lucide/vue";
-import { pickHeading } from "~/composables/useActiveHeading";
+import { Check, Link } from '@lucide/vue';
+import { pickHeading } from '~/composables/useActiveHeading';
 
 const props = defineProps<{ level: 2 | 3; id?: string }>();
 
@@ -30,6 +30,6 @@ async function handleAnchorClick(id: string): Promise<void> {
     </a>
   </component>
   <span class="sr-only" role="status">{{
-    copyState === "copied" ? t("sectionLinkCopied") : ""
+    copyState === 'copied' ? t('sectionLinkCopied') : ''
   }}</span>
 </template>

@@ -1,10 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { type LockAcquireResult, type LockStore, LocksStorage } from "@nestjs/locks";
-import type { Redis } from "ioredis";
-import { RedisConnection } from "./redis-connection";
+import { Injectable } from '@nestjs/common';
+import { type LockAcquireResult, type LockStore, LocksStorage } from '@nestjs/locks';
+import type { Redis } from 'ioredis';
+import { RedisConnection } from './redis-connection';
 
-const LOCK_KEY_PREFIX = "routerlm:lock:";
-const FENCING_COUNTER_KEY = "routerlm:lock-fencing-token";
+const LOCK_KEY_PREFIX = 'routerlm:lock:';
+const FENCING_COUNTER_KEY = 'routerlm:lock-fencing-token';
 
 const ACQUIRE_SCRIPT = `
 if redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) then

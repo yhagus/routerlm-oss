@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { apiErrorMessage } from "~/lib/api";
+import { apiErrorMessage } from '~/lib/api';
 import {
   type CreatedIntegration,
   INTEGRATION_CONFIRM_COPY,
   type IntegrationConfirmKind,
   type IntegrationSummary,
-} from "~/lib/integrations";
+} from '~/lib/integrations';
 
 export interface IntegrationConfirmation {
   kind: IntegrationConfirmKind;
   integration: IntegrationSummary;
 }
 
-const confirmation = defineModel<IntegrationConfirmation | null>("confirmation", {
+const confirmation = defineModel<IntegrationConfirmation | null>('confirmation', {
   required: true,
 });
 const emit = defineEmits<{
@@ -23,7 +23,7 @@ const emit = defineEmits<{
 const { $dashboardApi } = useNuxtApp();
 
 const isConfirming = ref(false);
-const confirmError = ref("");
+const confirmError = ref('');
 const isOpen = computed({
   get: () => confirmation.value !== null,
   set: (open) => {
@@ -32,26 +32,26 @@ const isOpen = computed({
 });
 
 watch(confirmation, () => {
-  confirmError.value = "";
+  confirmError.value = '';
 });
 
 async function confirm(): Promise<void> {
   const current = confirmation.value;
   if (!current) return;
   isConfirming.value = true;
-  confirmError.value = "";
+  confirmError.value = '';
   try {
-    if (current.kind === "rotate") {
+    if (current.kind === 'rotate') {
       const rotated = await $dashboardApi<CreatedIntegration>(
         `/integrations/${current.integration.id}/rotate`,
-        { method: "POST" },
+        { method: 'POST' },
       );
       confirmation.value = null;
-      emit("rotated", rotated);
+      emit('rotated', rotated);
     } else {
-      await $dashboardApi(`/integrations/${current.integration.id}`, { method: "DELETE" });
+      await $dashboardApi(`/integrations/${current.integration.id}`, { method: 'DELETE' });
       confirmation.value = null;
-      emit("deleted", current.integration);
+      emit('deleted', current.integration);
     }
   } catch (error) {
     confirmError.value = apiErrorMessage(error, INTEGRATION_CONFIRM_COPY[current.kind].failed);

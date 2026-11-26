@@ -1,6 +1,6 @@
-import type { ModelKind, UpstreamModel } from "~/lib/upstream";
-import { rangeOf } from "~/lib/upstreamModelGroups";
-import { type DetailLine, unitPriceFormat, unitPriceLines } from "~/lib/upstreamModelMedia";
+import type { ModelKind, UpstreamModel } from '~/lib/upstream';
+import { rangeOf } from '~/lib/upstreamModelGroups';
+import { type DetailLine, unitPriceFormat, unitPriceLines } from '~/lib/upstreamModelMedia';
 
 export interface PriceSummary {
   value: string;
@@ -8,19 +8,19 @@ export interface PriceSummary {
   lines: DetailLine[];
 }
 
-const tokenPriceFormat = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
+const tokenPriceFormat = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
   minimumFractionDigits: 0,
   maximumFractionDigits: 4,
 });
 
 const PRICE_UNITS: Record<ModelKind, string> = {
-  chat: "in / out per 1M tokens",
-  image: "per image",
-  video: "per second",
-  speech: "per 1M characters",
-  transcription: "per audio second",
+  chat: 'in / out per 1M tokens',
+  image: 'per image',
+  video: 'per second',
+  speech: 'per 1M characters',
+  transcription: 'per audio second',
 };
 
 function compareNumbers(first: number, second: number): number {
@@ -37,25 +37,25 @@ function formatRange(values: (number | null)[], format: Intl.NumberFormat): stri
 
 function outputUnitPrices(model: UpstreamModel): (number | null)[] {
   switch (model.kind) {
-    case "image":
+    case 'image':
       return [model.pricePerImage, ...Object.values(model.pricePerImageBySize ?? {})];
-    case "video":
+    case 'video':
       return Object.values(model.pricePerSecondByResolution ?? {});
-    case "speech":
+    case 'speech':
       return [model.pricePerMillionCharacters];
-    case "transcription":
+    case 'transcription':
       return [model.pricePerAudioSecond];
-    case "chat":
+    case 'chat':
       return [];
   }
 }
 
 function tokenPriceLines(model: UpstreamModel): DetailLine[] {
   return [
-    { label: "Input", price: model.inputPrice },
-    { label: "Output", price: model.outputPrice },
-    { label: "Cache read", price: model.cacheReadPrice },
-    { label: "Cache write", price: model.cacheWritePrice },
+    { label: 'Input', price: model.inputPrice },
+    { label: 'Output', price: model.outputPrice },
+    { label: 'Cache read', price: model.cacheReadPrice },
+    { label: 'Cache write', price: model.cacheWritePrice },
   ].flatMap(({ label, price }) =>
     price === null
       ? []
@@ -68,7 +68,7 @@ export function priceSummary(
   kind: ModelKind,
 ): PriceSummary | null {
   const single = models.length === 1 ? models[0] : undefined;
-  if (kind === "chat") {
+  if (kind === 'chat') {
     const input = formatRange(
       models.map((model) => model.inputPrice),
       tokenPriceFormat,
@@ -79,7 +79,7 @@ export function priceSummary(
     );
     if (input === null && output === null) return null;
     return {
-      value: `${input ?? "—"} / ${output ?? "—"}`,
+      value: `${input ?? '—'} / ${output ?? '—'}`,
       unit: PRICE_UNITS.chat,
       lines: single ? tokenPriceLines(single) : [],
     };

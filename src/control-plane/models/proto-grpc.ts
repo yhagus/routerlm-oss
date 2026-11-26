@@ -1,6 +1,6 @@
-import type { CustomerApiKey, CustomerApiKeyPage, IssuedCustomerApiKey } from "./customer-api-key";
-import type { IntegrationModel, IntegrationPricingWindow } from "./integration-model";
-import type { IntegrationUsageLog, IntegrationUsageLogPage } from "./integration-usage-log";
+import type { CustomerApiKey, CustomerApiKeyPage, IssuedCustomerApiKey } from './customer-api-key';
+import type { IntegrationModel, IntegrationPricingWindow } from './integration-model';
+import type { IntegrationUsageLog, IntegrationUsageLogPage } from './integration-usage-log';
 import {
   type ApiKeyJson,
   apiKeyJsonOf,
@@ -10,7 +10,7 @@ import {
   pricingWindowJsonOf,
   type UsageLogJson,
   usageLogJsonOf,
-} from "./proto-json";
+} from './proto-json';
 
 const MILLISECONDS_PER_SECOND = 1000;
 const NANOSECONDS_PER_MILLISECOND = 1_000_000;
@@ -69,7 +69,7 @@ export interface ListUsageLogsRequest {
   pageSize?: number;
 }
 
-export interface ApiKeyMessage extends Omit<ApiKeyJson, "createdAt" | "expiresAt" | "revokedAt"> {
+export interface ApiKeyMessage extends Omit<ApiKeyJson, 'createdAt' | 'expiresAt' | 'revokedAt'> {
   createdAt: TimestampMessage;
   expiresAt?: TimestampMessage;
   revokedAt?: TimestampMessage;
@@ -85,16 +85,16 @@ export interface ListKeysResponseMessage {
   nextPageToken?: string;
 }
 
-export interface UsageLogMessage extends Omit<UsageLogJson, "receivedAt"> {
+export interface UsageLogMessage extends Omit<UsageLogJson, 'receivedAt'> {
   receivedAt: TimestampMessage;
 }
 
-export interface PricingWindowMessage extends Omit<PricingWindowJson, "validFrom" | "validUntil"> {
+export interface PricingWindowMessage extends Omit<PricingWindowJson, 'validFrom' | 'validUntil'> {
   validFrom?: TimestampMessage;
   validUntil?: TimestampMessage;
 }
 
-export interface ModelMessage extends Omit<ModelJson, "pricingWindows"> {
+export interface ModelMessage extends Omit<ModelJson, 'pricingWindows'> {
   pricingWindows: PricingWindowMessage[];
 }
 
@@ -127,7 +127,7 @@ export function keyChangesJsonOf(request: UpdateKeyRequest): object {
   };
   const changes = (request.updateMask?.paths ?? []).map((path) => {
     const field = lowerCamelCaseOf(path);
-    const unsetValue = field === "allowedModelIds" ? [] : null;
+    const unsetValue = field === 'allowedModelIds' ? [] : null;
     return [field, settings[field] ?? unsetValue];
   });
   return Object.fromEntries(changes);
