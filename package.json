@@ -29,6 +29,7 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:docker": "bun scripts/test-docker.ts",
+    "test:changed": "bun scripts/test-changed.ts",
     "perf:k6": "sh tests/k6/benchmark.sh",
     "perf:k6:run": "sh tests/k6/run.sh",
     "perf:k6:limit": "sh tests/k6/find-limit.sh",

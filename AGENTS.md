@@ -20,12 +20,12 @@ A release is a CHANGELOG section in a fixed format, a version bump and a tag. Se
 
 Before reporting work done, run the checks for each app you changed:
 
-- Backend (`src/`, `tests/`, `scripts/`): `bun run check` and `bun run test:docker`.
+- Backend (`src/`, `tests/`, `scripts/`): `bun run check` and `bun run test:changed`, which runs the feature tests for the files changed since `main`. Add folders it can't map with `bun run test:docker tests/<feature>`. The full suite runs in CI.
 - Web (`web/`): `cd web && bun run check`. It needs the root `bun install` first for the type-aware linter, and it also runs the web mirror check.
 
 ### Tests
 
-There are no unit tests. Every test is a feature test in `tests/<feature>/<scenario>.test.ts` that drives the app from outside (HTTP API, CLI command or app boot) against real Postgres and Redis, with the fake upstream in `tests/support/`. Never add `*.spec.ts` files under `src/`. See `docs/adr/0009-feature-tests-only.md`.
+There are no unit tests. Every test is a feature test in `tests/<feature>/<scenario>.test.ts` that drives the app from outside (HTTP API, CLI command or app boot) against real Postgres and Redis, with the fake upstream in `tests/support/`. Never add `*.spec.ts` files under `src/`. To tell a flaky failure from a real one, re-run the failing file alone. See `docs/adr/0009-feature-tests-only.md`.
 
 ## Implementation policy
 
