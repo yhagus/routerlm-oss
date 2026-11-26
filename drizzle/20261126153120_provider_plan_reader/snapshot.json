@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "15a734be-0b20-4d70-9636-3759917e4098",
+  "prevIds": [
+    "324b2258-c519-4dcc-a46f-a45ec6543229"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "providers",
+        "plan_reader"
+      ],
+      "writes": [
+        "s|col|public.providers.plan_reader",
+        "n|col|public.providers.plan_reader",
+        "e|col|public.providers.plan_reader"
+      ],
+      "reads": [
+        "n|tbl|public.providers",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "providers",
+        "name": "plan_reader",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

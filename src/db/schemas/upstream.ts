@@ -64,6 +64,8 @@ export type Capability = (typeof CAPABILITIES)[number];
 
 export const QUOTA_READERS = ['minimax-m-plan', 'kimi-code', 'openai-codex'] as const;
 export type QuotaReaderName = (typeof QUOTA_READERS)[number];
+export const PLAN_READERS = ['tokenharbor'] as const;
+export type PlanReaderName = (typeof PLAN_READERS)[number];
 
 export const CREDENTIAL_KINDS = ['api-key', 'oauth-login'] as const;
 export type CredentialKind = (typeof CREDENTIAL_KINDS)[number];
@@ -137,6 +139,7 @@ export const providers = pgTable(
       .notNull()
       .default({}),
     quotaReader: text('quota_reader', { enum: QUOTA_READERS }),
+    planReader: text('plan_reader', { enum: PLAN_READERS }),
     oauthLogin: jsonb('oauth_login').$type<ProviderOauthLogin>(),
     credentialKinds: text('credential_kinds', { enum: CREDENTIAL_KINDS })
       .array()

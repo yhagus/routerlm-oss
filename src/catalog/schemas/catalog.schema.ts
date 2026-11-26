@@ -11,6 +11,7 @@ import {
   type PricesByTier,
   PROTOCOL_KINDS,
   type ProviderEndpoint,
+  PLAN_READERS,
   QUOTA_READERS,
   type ServiceTierValues,
   type TierPrices,
@@ -298,6 +299,7 @@ export const catalogProviderSchema = z.strictObject({
   quirks: providerQuirksSchema,
   serviceTierValues: serviceTierValuesSchema.optional(),
   quotaReader: z.enum(QUOTA_READERS).optional(),
+  planReader: z.enum(PLAN_READERS).optional(),
   oauthLogin: providerOauthLoginSchema.optional(),
   credentialKinds: z.array(z.enum(CREDENTIAL_KINDS)).min(1).optional(),
   pricingWindows: z

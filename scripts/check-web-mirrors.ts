@@ -15,6 +15,7 @@ import {
   AUTH_STYLES,
   CAPABILITIES,
   MODEL_KINDS,
+  PLAN_READERS,
   PROTOCOL_KINDS,
   UPSTREAM_PROTOCOLS,
 } from '@/db/schemas/upstream';
@@ -41,6 +42,7 @@ const MIRRORS: Mirror[] = [
   { name: 'MODEL_KINDS', webFile: 'web/app/lib/upstream.ts', backend: MODEL_KINDS },
   { name: 'AUTH_STYLES', webFile: 'web/app/lib/upstream.ts', backend: AUTH_STYLES },
   { name: 'CAPABILITIES', webFile: 'web/app/lib/upstream.ts', backend: CAPABILITIES },
+  { name: 'PLAN_READERS', webFile: 'web/app/lib/upstream.ts', backend: PLAN_READERS },
   {
     name: 'PROTOCOL_KINDS',
     webFile: 'web/app/lib/upstream.ts',

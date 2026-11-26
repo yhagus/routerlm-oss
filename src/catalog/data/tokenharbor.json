@@ -23,6 +23,7 @@
   "authStyle": "bearer",
   "quirks": {},
   "credentialKinds": ["api-key"],
+  "planReader": "tokenharbor",
   "source": {
     "urls": [
       "https://tokenharbor.ai/docs",

@@ -159,6 +159,8 @@ export interface ProviderQuirks {
 
 export const QUOTA_READERS = ['minimax-m-plan', 'kimi-code', 'openai-codex'] as const;
 export type QuotaReader = (typeof QUOTA_READERS)[number];
+export const PLAN_READERS = ['tokenharbor'] as const;
+export type PlanReader = (typeof PLAN_READERS)[number];
 
 export const QUOTA_READER_OPTIONS = [
   { label: 'None', value: '' },
@@ -229,6 +231,7 @@ export interface Provider {
   isEnabled: boolean;
   isFromCatalog: boolean;
   quotaReader: QuotaReader | null;
+  planReader: PlanReader | null;
   createdAt: string;
   updatedAt: string;
 }
