@@ -137,6 +137,10 @@ _Avoid_: Format, dialect, API type
 A model name the gateway owns and exposes to clients, independent of any Provider.
 _Avoid_: Alias, virtual model, model mapping
 
+**Model Group**:
+A named set of Models with a slug, such as "fast". A Model belongs to one or more Model Groups, and clients see it once per Model Group as `<slug>/<model name>`; the bare model name still reaches the same Model. A Model Group only names Models: it never changes how they route. An API Key may be allowed a whole Model Group instead of its Models one by one.
+_Avoid_: Namespace, collection, folder, tag, stack
+
 **Route**:
 One entry in a Model's ordered list, pointing at one Upstream Model that can serve it.
 _Avoid_: Target, mapping, fallback entry

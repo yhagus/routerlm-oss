@@ -60,6 +60,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 
 - [0063 Allowed Models are an array on the API Key, not a join table](0063-allowed-models-are-an-array-on-the-api-key-not-a-join.md)
 - [0065 The Customer rollup is served from one index whose summed columns trail as key columns](0065-the-customer-rollup-is-served-from-one-index-whose-summed-columns-trail.md)
+- [0101 A Model is published once per Model Group, and its bare name still resolves](0101-a-model-is-published-once-per-model-group-and-its-bare-name-still-resolves.md)
 
 ## error-captures
 
@@ -100,6 +101,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0069 Provider quirk flags have fixed precedence and lookup rules](0069-provider-quirk-flags-have-fixed-precedence-and-lookup-rules.md)
 - [0095 An Upstream Model names the Provider Endpoints it supports](0095-an-upstream-model-names-the-provider-endpoints-it-supports.md)
 - [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
+- [0101 A Model is published once per Model Group, and its bare name still resolves](0101-a-model-is-published-once-per-model-group-and-its-bare-name-still-resolves.md)
 
 ## integrations
 
@@ -153,6 +155,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 
 - [0015 Model Kind separates image models from chat models](0015-model-kind-separates-image-models-from-chat-models.md)
 - [0022 Caps bound supplied values, and thinking budgets have their own Cap](0022-caps-bound-supplied-values-and-thinking-budgets-have-their-own-cap.md)
+- [0101 A Model is published once per Model Group, and its bare name still resolves](0101-a-model-is-published-once-per-model-group-and-its-bare-name-still-resolves.md)
 
 ## settings
 
