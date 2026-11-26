@@ -8,3 +8,10 @@ to be, plus the local runtimes (Ollama, vLLM, LM Studio). A file's name is
 its logo key, the value a Provider's `logo` holds; `~/lib/providerLogos.ts`
 picks up every file here, so adding a mark means dropping in its file. The
 picker shows the file's `<title>`, unless that module names it otherwise.
+
+Marks lobe-icons lacks come from the Provider's own site, cut down to the
+same shape (one `currentColor` fill, no styles or comments):
+`tokenharbor.svg` is tokenharbor.ai's `/logo.svg` with a viewBox cropped
+to the mark, `tokenrouter-io.svg` is www.tokenrouter.io's `/favicon.svg`,
+and `tokenrouter.svg` is redrawn from www.tokenrouter.com's only mark, a
+PNG (`/logo-without-title.png`), at its measured proportions.
