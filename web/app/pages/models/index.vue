@@ -1,11 +1,26 @@
 <script setup lang="ts">
 import { Boxes, Plus, Power } from '@lucide/vue';
+import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
 import { apiErrorMessage } from '~/lib/api';
 import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
+import {
+  type ModelGroup,
+  type ModelGroupRef,
+  modelNameProblem,
+  publishedModelName,
+} from '~/lib/modelGroups';
 import type { ModelDetail, ModelSummary } from '~/lib/routing';
+import { isStack, stackByKey, type StackedRow } from '~/lib/stacks';
 import { MODEL_KIND_LABELS, MODEL_KIND_OPTIONS, type ModelKind } from '~/lib/upstream';
 
 useHead({ title: 'Models' });
+
+interface Publication {
+  model: ModelSummary;
+  group: ModelGroupRef | null;
+}
+
+type ModelRow = StackedRow<Publication>;
 
 const { $dashboardApi } = useNuxtApp();
 const { showToast } = useToast();
@@ -16,9 +31,80 @@ const {
   refresh,
 } = useDashboardApi<ModelSummary[]>('/models');
 const isLoading = computed(() => modelsStatus.value === 'pending' && !models.value);
+const { data: groups } = useDashboardApi<ModelGroup[]>('/model-groups', { key: 'model-groups' });
 
-const columns: DataTableColumn<ModelSummary>[] = [
-  { id: 'model', header: 'Model', enableHiding: false, accessorFn: (model) => model.name },
+const groupSlugs = computed(() => (groups.value ?? []).map((group) => group.slug));
+const groupFilter = useQueryList('group', { isValid: anyText, order: groupSlugs });
+const groupFilterOptions = computed(() => [
+  ...(groups.value ?? []).map((group) => ({ label: group.name, value: group.slug })),
+  ...groupFilter.value
+    .filter((slug) => !groupSlugs.value.includes(slug))
+    .map((slug) => ({ label: `${slug} (not found)`, value: slug })),
+]);
+const activeFilters = computed<ActiveFilter[]>(() =>
+  listFilterTokens('Group', groupFilter, groupFilterOptions.value),
+);
+
+function publicationsOf(model: ModelSummary): Publication[] {
+  if (model.groups.length === 0) return [{ model, group: null }];
+  return model.groups.map((group) => ({ model, group }));
+}
+
+function isShownByGroupFilter(publication: Publication): boolean {
+  if (groupFilter.value.length === 0) return true;
+  return publication.group !== null && groupFilter.value.includes(publication.group.slug);
+}
+
+function comparePublications(first: Publication, second: Publication): number {
+  return (
+    first.model.name.localeCompare(second.model.name) ||
+    (first.group?.slug ?? '').localeCompare(second.group?.slug ?? '')
+  );
+}
+
+const tableRows = computed<ModelRow[]>(() =>
+  stackByKey(
+    (models.value ?? []).flatMap(publicationsOf).filter(isShownByGroupFilter),
+    (publication) => publication.model.id,
+    comparePublications,
+  ),
+);
+const stackedModelIds = computed(
+  () => new Set(tableRows.value.filter(isStack).map((stack) => stack.key)),
+);
+const expandedStacks = ref<Record<string, boolean>>({});
+
+function publishedName(publication: Publication): string {
+  return publication.group
+    ? publishedModelName(publication.group, publication.model.name)
+    : publication.model.name;
+}
+
+function rowIdOf(row: ModelRow): string {
+  if (isStack(row)) return `stack:${row.key}`;
+  return `${row.model.id}:${row.group?.id ?? 'ungrouped'}`;
+}
+
+function modelOf(row: ModelRow): ModelSummary {
+  return isStack(row) ? row.members[0].model : row.model;
+}
+
+function isStackMember(row: ModelRow): boolean {
+  return !isStack(row) && stackedModelIds.value.has(row.model.id);
+}
+
+function isLeadRow(row: ModelRow): boolean {
+  return !isStackMember(row);
+}
+
+const columns: DataTableColumn<ModelRow>[] = [
+  {
+    id: 'model',
+    header: 'Model',
+    enableHiding: false,
+    accessorFn: (row) =>
+      isStack(row) ? row.members.map(publishedName).join('\n') : publishedName(row),
+  },
   { id: 'kind', header: 'Kind' },
   { id: 'routes', header: 'Routes' },
   { id: 'status', header: 'Status' },
@@ -28,23 +114,40 @@ const columns: DataTableColumn<ModelSummary>[] = [
 const isCreateDialogOpen = ref(false);
 const newModelName = ref('');
 const newModelKind = ref<ModelKind>('chat');
+const newModelGroupIds = ref<string[]>([]);
 const isSaving = ref(false);
 const dialogError = ref('');
 
 function openCreateDialog(): void {
   newModelName.value = '';
   newModelKind.value = 'chat';
+  newModelGroupIds.value = [];
   dialogError.value = '';
   isCreateDialogOpen.value = true;
 }
 
+function createProblem(): string | null {
+  const nameProblem = modelNameProblem(newModelName.value);
+  if (nameProblem) return nameProblem;
+  return newModelGroupIds.value.length === 0 ? 'Pick at least one Group.' : null;
+}
+
 async function createModel(): Promise<void> {
+  const problem = createProblem();
+  if (problem) {
+    dialogError.value = problem;
+    return;
+  }
   isSaving.value = true;
   dialogError.value = '';
   try {
     const created = await $dashboardApi<Pick<ModelDetail, 'id' | 'name'>>('/models', {
       method: 'POST',
-      body: { name: newModelName.value, kind: newModelKind.value },
+      body: {
+        name: newModelName.value,
+        kind: newModelKind.value,
+        groupIds: newModelGroupIds.value,
+      },
     });
     showToast(`Created ${created.name}. Add its Routes next.`);
     await navigateTo(`/models/${created.id}`);
@@ -83,35 +186,98 @@ async function toggleModel(model: ModelSummary): Promise<void> {
     <DataTable
       table-id="models"
       label="Models"
-      search-placeholder="Search name"
+      search-placeholder="Search name or group"
       :columns="columns"
-      :rows="models ?? []"
-      :get-row-id="(model) => model.id"
+      v-model:expanded="expandedStacks"
+      :rows="tableRows"
+      :get-row-id="rowIdOf"
+      :get-sub-rows="(row) => (isStack(row) ? row.members : undefined)"
+      :row-class="
+        (row) => ({ 'model-table__row--open': isStack(row) && expandedStacks[rowIdOf(row)] })
+      "
       :is-loading="isLoading"
       :error="loadError"
       :refresh="refresh"
+      :filters="activeFilters"
+      @clear-filters="groupFilter = []"
     >
-      <template #cell-model="{ row: model }">
-        <NuxtLink class="table-entity" :to="`/models/${model.id}`">
-          <span class="key-icon"><Boxes :size="15" /></span><strong>{{ model.name }}</strong>
-        </NuxtLink>
+      <template #filters>
+        <div class="data-table-filter">
+          <span class="data-table-filter__label" aria-hidden="true">Group</span>
+          <AppMultiSelect
+            v-model="groupFilter"
+            :options="groupFilterOptions"
+            label="Filter by Group"
+            placeholder="All Groups"
+            noun="Groups"
+          />
+        </div>
       </template>
-      <template #cell-kind="{ row: model }">{{ MODEL_KIND_LABELS[model.kind] }}</template>
-      <template #cell-routes="{ row: model }">
-        <span class="tabular">{{ model.routeCount }}</span>
-        <span v-if="model.routeCount === 0" class="status-badge status-badge--warn">No Routes</span>
+      <template #cell-model="{ row, isExpanded, toggleExpanded }">
+        <div v-if="isStack(row)" class="table-entity model-table__entity">
+          <span class="key-icon"><Boxes :size="15" /></span>
+          <span class="model-table__name">
+            <NuxtLink class="model-table__open" :to="`/models/${row.key}`">{{
+              modelOf(row).name
+            }}</NuxtLink>
+            <button
+              class="cell-note model-table__open"
+              type="button"
+              :aria-expanded="isExpanded"
+              @click="toggleExpanded"
+            >
+              {{ isExpanded ? 'Hide' : 'Show' }} {{ row.members.length }} Groups
+            </button>
+          </span>
+        </div>
+        <div v-else-if="isStackMember(row)" class="table-entity model-table__entity">
+          <span class="model-table__title">
+            <code>{{ publishedName(row) }}</code>
+            <CopyIconButton :text="publishedName(row)" label="model name" />
+          </span>
+          <span class="cell-note">{{ row.group?.name }}</span>
+        </div>
+        <div v-else class="table-entity model-table__entity">
+          <span class="key-icon"><Boxes :size="15" /></span>
+          <span class="model-table__name">
+            <span class="model-table__title">
+              <NuxtLink class="model-table__open" :to="`/models/${row.model.id}`">{{
+                publishedName(row)
+              }}</NuxtLink>
+              <CopyIconButton :text="publishedName(row)" label="model name" />
+              <span
+                v-if="row.group === null"
+                class="status-badge status-badge--warn status-badge--small"
+                >No group</span
+              >
+            </span>
+            <span v-if="row.group" class="cell-note">{{ row.group.name }}</span>
+          </span>
+        </div>
       </template>
-      <template #cell-status="{ row: model }">
+      <template #cell-kind="{ row }">
+        <template v-if="isLeadRow(row)">{{ MODEL_KIND_LABELS[modelOf(row).kind] }}</template>
+      </template>
+      <template #cell-routes="{ row }">
+        <template v-if="isLeadRow(row)">
+          <span class="tabular">{{ modelOf(row).routeCount }}</span>
+          <span v-if="modelOf(row).routeCount === 0" class="status-badge status-badge--warn"
+            >No Routes</span
+          >
+        </template>
+      </template>
+      <template #cell-status="{ row }">
         <span
+          v-if="isLeadRow(row)"
           class="status-badge"
-          :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
-          >{{ model.isEnabled ? 'Enabled' : 'Disabled' }}</span
+          :class="modelOf(row).isEnabled ? 'status-badge--good' : 'status-badge--warn'"
+          >{{ modelOf(row).isEnabled ? 'Enabled' : 'Disabled' }}</span
         >
       </template>
-      <template #cell-actions="{ row: model }">
-        <div class="row-actions">
-          <button class="row-action" @click="toggleModel(model)">
-            <Power :size="14" /> {{ model.isEnabled ? 'Disable' : 'Enable' }}
+      <template #cell-actions="{ row }">
+        <div v-if="isLeadRow(row)" class="row-actions">
+          <button class="row-action" @click="toggleModel(modelOf(row))">
+            <Power :size="14" /> {{ modelOf(row).isEnabled ? 'Disable' : 'Enable' }}
           </button>
         </div>
       </template>
@@ -126,13 +292,17 @@ async function toggleModel(model: ModelSummary): Promise<void> {
     <AppDialog
       v-model:open="isCreateDialogOpen"
       title="Create Model"
-      description="Clients send this name as the model. It must be unique."
+      description='Clients send "<group slug>/<name>" as the model, once for each of its Groups.'
     >
       <form class="form" @submit.prevent="createModel">
         <label class="field"
           ><span class="field__label">Name</span
           ><input v-model="newModelName" class="text-input" autocomplete="off" required
         /></label>
+        <p v-if="modelNameProblem(newModelName)" class="form__error" role="alert">
+          {{ modelNameProblem(newModelName) }}
+        </p>
+        <ModelGroupPicker v-model="newModelGroupIds" />
         <div class="field">
           <span class="field__label">Kind</span>
           <AppSelect v-model="newModelKind" :options="MODEL_KIND_OPTIONS" label="Kind" />

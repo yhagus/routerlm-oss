@@ -4,6 +4,7 @@ import {
   Boxes,
   CalendarClock,
   Cpu,
+  FolderTree,
   KeyRound,
   LayoutDashboard,
   MessageSquareText,
@@ -37,7 +38,10 @@ export const navigationGroups: NavigationGroup[] = [
   },
   {
     label: 'Routing',
-    items: [{ label: 'Models', path: '/models', icon: Boxes }],
+    items: [
+      { label: 'Models', path: '/models', icon: Boxes },
+      { label: 'Groups', path: '/groups', icon: FolderTree },
+    ],
   },
   {
     label: 'Upstream',

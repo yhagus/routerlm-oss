@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isPublishedAs } from '~/lib/modelGroups';
 import { SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
@@ -174,7 +175,9 @@ async function send(settings: PlaygroundVideoSettings, prompt: string): Promise<
     parameters: videoParameterLabels(settings),
     isDirect,
     routes:
-      !isDirect && modelDetail.value?.name === settings.model ? modelDetail.value.routes : null,
+      !isDirect && modelDetail.value && isPublishedAs(modelDetail.value, settings.model)
+        ? modelDetail.value.routes
+        : null,
     submittedAt: Date.now(),
     state: { kind: 'submitting' },
   });

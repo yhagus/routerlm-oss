@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isPublishedAs } from '~/lib/modelGroups';
 import { Code, ImagePlus, SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
@@ -220,7 +221,7 @@ async function send(
   });
   if (source.value === 'upstream') {
     directAnswers.add(answer);
-  } else if (modelDetail.value?.name === settings.model) {
+  } else if (modelDetail.value && isPublishedAs(modelDetail.value, settings.model)) {
     routesByAnswer.set(answer, modelDetail.value.routes);
   }
   conversation.value.push(answer);

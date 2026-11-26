@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isPublishedAs } from '~/lib/modelGroups';
 import { FileMusic, SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
@@ -88,7 +89,9 @@ async function send(settings: PlaygroundTranscriptionSettings, file: File): Prom
     language: settings.language,
     isDirect,
     routes:
-      !isDirect && modelDetail.value?.name === settings.model ? modelDetail.value.routes : null,
+      !isDirect && modelDetail.value && isPublishedAs(modelDetail.value, settings.model)
+        ? modelDetail.value.routes
+        : null,
     state: { kind: 'pending' },
   });
   exchanges.value.push(exchange);

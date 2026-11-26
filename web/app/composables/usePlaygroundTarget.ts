@@ -1,4 +1,5 @@
 import { computed, type InjectionKey, inject, provide, ref, watch } from 'vue';
+import { publishedModelNames } from '~/lib/modelGroups';
 import type { ModelDetail, ModelSummary } from '~/lib/routing';
 import {
   MODEL_KIND_LABELS,
@@ -53,8 +54,19 @@ function createPlaygroundTarget(kind: ModelKind) {
   const enabledModels = computed(() =>
     (models.value ?? []).filter((model) => model.isEnabled && model.kind === kind),
   );
+  const modelIdByPublishedName = computed(
+    () =>
+      new Map(
+        enabledModels.value.flatMap((model) =>
+          publishedModelNames(model).map((publishedName) => [publishedName, model.id] as const),
+        ),
+      ),
+  );
   const modelOptions = computed(() =>
-    enabledModels.value.map((model) => ({ value: model.name, label: model.name })),
+    [...modelIdByPublishedName.value.keys()].map((publishedName) => ({
+      value: publishedName,
+      label: publishedName,
+    })),
   );
   const modelName = ref('');
   keepSelectionIn(modelName, () => modelOptions.value);
@@ -135,9 +147,7 @@ function createPlaygroundTarget(kind: ModelKind) {
 
   const modelDetail = ref<ModelDetail | null>(null);
   const modelDetailState = ref<'idle' | 'loading' | 'failed'>('idle');
-  const selectedModelId = computed(
-    () => enabledModels.value.find((model) => model.name === modelName.value)?.id ?? '',
-  );
+  const selectedModelId = computed(() => modelIdByPublishedName.value.get(modelName.value) ?? '');
   watch(
     selectedModelId,
     async (id) => {

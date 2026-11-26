@@ -1,3 +1,4 @@
+import { isStack, stackByKey } from '~/lib/stacks';
 import { CAPABILITIES, type Capability, type UpstreamModel } from '~/lib/upstream';
 
 export interface UpstreamModelStack {
@@ -15,21 +16,9 @@ export function stackBySharedId(
   models: UpstreamModel[],
   compare: (first: UpstreamModel, second: UpstreamModel) => number,
 ): UpstreamModelRow[] {
-  const modelsById = new Map<string, UpstreamModel[]>();
-  for (const model of models) {
-    const sameId = modelsById.get(model.upstreamModelId);
-    if (sameId) sameId.push(model);
-    else modelsById.set(model.upstreamModelId, [model]);
-  }
-  const rows: UpstreamModelRow[] = [];
-  for (const [upstreamModelId, sameId] of modelsById) {
-    const [first, ...rest] = sameId.toSorted(compare);
-    if (!first) continue;
-    rows.push(rest.length === 0 ? first : { upstreamModelId, members: [first, ...rest] });
-  }
-  const leadOf = (row: UpstreamModelRow): UpstreamModel =>
-    isUpstreamModelStack(row) ? row.members[0] : row;
-  return rows.toSorted((first, second) => compare(leadOf(first), leadOf(second)));
+  return stackByKey(models, (model) => model.upstreamModelId, compare).map((row) =>
+    isStack(row) ? { upstreamModelId: row.key, members: row.members } : row,
+  );
 }
 
 export function stackName(stack: UpstreamModelStack): string | null {

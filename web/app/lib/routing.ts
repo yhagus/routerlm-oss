@@ -1,3 +1,4 @@
+import type { ModelGroupRef } from '~/lib/modelGroups';
 import type { ParameterPolicy } from '~/lib/parameterPolicy';
 import type { Capability, ModelKind } from '~/lib/upstream';
 
@@ -8,6 +9,7 @@ export interface ModelSummary {
   isEnabled: boolean;
   routeCount: number;
   createdAt: string;
+  groups: ModelGroupRef[];
 }
 
 export interface RouteSummary {
@@ -34,5 +36,6 @@ export interface ModelDetail {
   hasAutomaticCacheBreakpoints: boolean;
   createdAt: string;
   updatedAt: string;
+  groups: ModelGroupRef[];
   routes: RouteSummary[];
 }

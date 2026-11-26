@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isPublishedAs } from '~/lib/modelGroups';
 import { ImagePlus, SlidersHorizontal, Square, Trash2, X } from '@lucide/vue';
 import {
   DialogContent,
@@ -171,7 +172,9 @@ async function send(
     operation,
     isDirect,
     routes:
-      !isDirect && modelDetail.value?.name === settings.model ? modelDetail.value.routes : null,
+      !isDirect && modelDetail.value && isPublishedAs(modelDetail.value, settings.model)
+        ? modelDetail.value.routes
+        : null,
     state: { kind: 'pending' },
   });
   exchanges.value.push(exchange);

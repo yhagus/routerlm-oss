@@ -12,6 +12,7 @@ import {
 } from '@lucide/vue';
 import { apiErrorMessage } from '~/lib/api';
 import { isNotFound } from '~/lib/errors';
+import { modelNameProblem, publishedModelNames } from '~/lib/modelGroups';
 import { TERMS_RISK_BLOCKED_HINT } from '~/lib/settings';
 import { isEmptyPolicy, type ParameterPolicy } from '~/lib/parameterPolicy';
 import type { ModelDetail, RouteSummary } from '~/lib/routing';
@@ -23,7 +24,7 @@ import {
 } from '~/lib/upstream';
 
 type ModelDialog =
-  | { kind: 'rename' }
+  | { kind: 'edit' }
   | { kind: 'delete' }
   | { kind: 'add-route' }
   | { kind: 'remove-route'; route: RouteSummary }
@@ -74,12 +75,16 @@ const isDialogOpen = computed({
 const isSaving = ref(false);
 const dialogError = ref('');
 const newName = ref('');
+const newGroupIds = ref<string[]>([]);
 const newRouteUpstreamModelId = ref('');
 
 function openDialog(next: ModelDialog): void {
   dialog.value = next;
   dialogError.value = '';
-  if (next.kind === 'rename') newName.value = model.value?.name ?? '';
+  if (next.kind === 'edit') {
+    newName.value = model.value?.name ?? '';
+    newGroupIds.value = (model.value?.groups ?? []).map((group) => group.id);
+  }
   if (next.kind === 'add-route') {
     newRouteUpstreamModelId.value = upstreamModelOptions.value[0]?.value ?? '';
   }
@@ -105,11 +110,45 @@ async function saveFromDialog(
   }
 }
 
-async function renameModel(): Promise<void> {
+const publishedNames = computed(() => (model.value ? publishedModelNames(model.value) : []));
+const hasNoGroup = computed(() => model.value?.groups.length === 0);
+
+function editProblem(): string | null {
+  const nameProblem = modelNameProblem(newName.value);
+  if (nameProblem) return nameProblem;
+  return newGroupIds.value.length === 0 ? 'Pick at least one Group.' : null;
+}
+
+function isSameGroups(current: ModelDetail, groupIds: string[]): boolean {
+  return (
+    current.groups.length === groupIds.length &&
+    current.groups.every((group) => groupIds.includes(group.id))
+  );
+}
+
+function changedModelFields(current: ModelDetail): { name?: string; groupIds?: string[] } {
+  return {
+    ...(newName.value === current.name ? {} : { name: newName.value }),
+    ...(isSameGroups(current, newGroupIds.value) ? {} : { groupIds: newGroupIds.value }),
+  };
+}
+
+async function editModel(): Promise<void> {
+  if (!model.value) return;
+  const problem = editProblem();
+  if (problem) {
+    dialogError.value = problem;
+    return;
+  }
+  const changes = changedModelFields(model.value);
+  if (Object.keys(changes).length === 0) {
+    dialog.value = null;
+    return;
+  }
   const isSaved = await saveFromDialog(
-    () => $dashboardApi(modelPath, { method: 'PATCH', body: { name: newName.value } }),
-    `Renamed to ${newName.value}`,
-    "Couldn't rename the Model.",
+    () => $dashboardApi(modelPath, { method: 'PATCH', body: changes }),
+    `Saved ${newName.value}`,
+    "Couldn't save the Model.",
   );
   if (isSaved) await refresh();
 }
@@ -256,11 +295,12 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
         <div>
           <h1>Model</h1>
           <p class="page-heading__sub">
-            Clients send this name as the model. The gateway tries its enabled Routes from the top.
+            Clients send "&lt;group slug&gt;/&lt;name&gt;" as the model. The gateway tries its
+            enabled Routes from the top.
           </p>
         </div>
         <div class="page-heading__controls">
-          <button class="button" type="button" disabled><Pencil :size="14" /> Rename</button>
+          <button class="button" type="button" disabled><Pencil :size="14" /> Edit</button>
           <button class="button" type="button" disabled><Trash2 :size="14" /> Delete</button>
         </div>
       </section>
@@ -272,7 +312,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
     <template v-else>
       <PageHeading
         :title="model.name"
-        description="Clients send this name as the model. The gateway tries its enabled Routes from the top."
+        description='Clients send "<group slug>/<name>" as the model. The gateway tries its enabled Routes from the top.'
       >
         <span
           class="status-badge"
@@ -284,8 +324,8 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
           :class="model.isEnabled ? 'status-badge--good' : 'status-badge--warn'"
           >{{ model.isEnabled ? 'Enabled' : 'Disabled' }}</span
         >
-        <button class="button" type="button" @click="openDialog({ kind: 'rename' })">
-          <Pencil :size="14" /> Rename
+        <button class="button" type="button" @click="openDialog({ kind: 'edit' })">
+          <Pencil :size="14" /> Edit
         </button>
         <button class="button" type="button" @click="toggleModel">
           <Power :size="14" /> {{ model.isEnabled ? 'Disable' : 'Enable' }}
@@ -294,6 +334,27 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
           <Trash2 :size="14" /> Delete
         </button>
       </PageHeading>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Published as</h2>
+            <p v-if="hasNoGroup">
+              This Model is in no Group, so clients send its bare name. Edit it to pick a Group.
+            </p>
+            <p v-else>The model names clients send, one for each Group.</p>
+          </div>
+        </div>
+        <ul class="published-names">
+          <li v-for="publishedName in publishedNames" :key="publishedName">
+            <code>{{ publishedName }}</code>
+            <CopyIconButton :text="publishedName" label="model name" />
+          </li>
+          <li v-if="hasNoGroup">
+            <span class="status-badge status-badge--warn status-badge--small">No group</span>
+          </li>
+        </ul>
+      </section>
 
       <section class="panel table-panel">
         <div class="panel-heading">
@@ -463,16 +524,24 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
     </template>
 
     <AppDialog
-      v-if="dialog?.kind === 'rename'"
+      v-if="dialog?.kind === 'edit'"
       v-model:open="isDialogOpen"
-      title="Rename Model"
-      description="Clients that still send the old name get an unknown-model error."
+      title="Edit Model"
+      description="Clients that still send an old name, or a Group it left, get an unknown-model error."
     >
-      <form class="form" @submit.prevent="renameModel">
+      <form class="form" @submit.prevent="editModel">
         <label class="field"
           ><span class="field__label">Name</span
           ><input v-model="newName" class="text-input" autocomplete="off" required
         /></label>
+        <p v-if="modelNameProblem(newName)" class="form__error" role="alert">
+          {{ modelNameProblem(newName) }}
+        </p>
+        <ModelGroupPicker v-model="newGroupIds" />
+        <p v-if="hasNoGroup" class="form__warning" role="note">
+          Pick at least one Group to save. Clients then send "&lt;group slug&gt;/{{ model?.name }}"
+          instead of the bare name.
+        </p>
         <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
         <div class="dialog__actions">
           <button class="button" type="button" @click="dialog = null">Cancel</button>

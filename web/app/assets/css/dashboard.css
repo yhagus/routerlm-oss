@@ -3107,6 +3107,53 @@ tbody tr:hover {
   font-size: 11px;
   line-height: 1.4;
 }
+.form__warning {
+  margin: 0;
+  color: var(--warning-ink);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.group-picker__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group-picker__row .app-select {
+  flex: 1;
+  min-width: 0;
+}
+.group-picker__create {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.group-picker__actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.group-picker__create .form__error {
+  grid-column: 1 / -1;
+}
+.published-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.published-names li {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
 .check-group {
   display: flex;
   flex-wrap: wrap;
