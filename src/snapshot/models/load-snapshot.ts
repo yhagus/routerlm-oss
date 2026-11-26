@@ -8,8 +8,6 @@ import {
 import { SettingsStore } from "@/settings/providers/settings-store.js";
 import {
   apiKeys,
-  type ModelKind,
-  type ProviderEndpoint,
   type CredentialKind,
   integrations,
   models,
@@ -23,7 +21,6 @@ import type {
   Snapshot,
   SnapshotApiKey,
   SnapshotCredential,
-  SnapshotEndpoint,
   SnapshotModel,
   SnapshotPricingWindow,
   SnapshotProvider,
@@ -92,7 +89,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         id: provider.id,
         slug: provider.slug,
         name: provider.name,
-        endpoints: endpointsByKind(provider.endpoints),
+        endpoints: provider.endpoints,
         authStyle: provider.authStyle,
         quirks: storedProviderQuirksSchema.safeParse(provider.quirks),
         serviceTierValues: provider.serviceTierValues,
@@ -130,6 +127,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         id: upstreamModel.id,
         upstreamModelId: upstreamModel.upstreamModelId,
         kind: upstreamModel.kind,
+        protocols: upstreamModel.protocols,
         capabilities: upstreamModel.capabilities,
         contextSize: upstreamModel.contextSize,
         maxOutputTokens: upstreamModel.maxOutputTokens,
@@ -242,16 +240,6 @@ function snapshotCredentialOf(account: {
     return null;
   }
   return { kind: "api-key", encryptedKey: account.encryptedKey };
-}
-
-function endpointsByKind(
-  endpoints: readonly ProviderEndpoint[],
-): Partial<Record<ModelKind, SnapshotEndpoint>> {
-  const byKind: Partial<Record<ModelKind, SnapshotEndpoint>> = {};
-  for (const { kind, protocol, baseUrl } of endpoints) {
-    byKind[kind] = { protocol, baseUrl };
-  }
-  return byKind;
 }
 
 function snapshotPricingWindowOf(row: AttachedPricingWindowRow): SnapshotPricingWindow {

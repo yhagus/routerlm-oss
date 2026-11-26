@@ -100,6 +100,10 @@ const attemptHop = computed(() =>
               <dd>{{ capture.clientProtocol }}</dd>
             </div>
             <div>
+              <dt>Upstream Protocol</dt>
+              <dd>{{ capture.upstreamProtocol ?? "—" }}</dd>
+            </div>
+            <div>
               <dt>User-Agent</dt>
               <dd>{{ capture.userAgent ?? "—" }}</dd>
             </div>

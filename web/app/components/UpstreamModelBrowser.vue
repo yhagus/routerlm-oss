@@ -25,6 +25,7 @@ import {
   CAPABILITY_LABELS,
   type Capability,
   capabilitiesFor,
+  endpointProtocolsOf,
   mainBaseUrl,
   MODEL_KIND_LABELS,
   MODEL_KIND_OPTIONS,
@@ -32,11 +33,13 @@ import {
   type ModelKind,
   numberField,
   optionalNumber,
+  PROTOCOL_LABELS,
   type Provider,
   type ProviderAccount,
   type TierPrices,
   type UpstreamModel,
   upstreamModelLabel,
+  type UpstreamProtocol,
 } from "~/lib/upstream";
 import { type ActiveFilter, listFilterTokens } from "~/lib/activeFilters";
 import { actionsColumn, type DataTableColumn } from "~/lib/dataTable";
@@ -516,6 +519,7 @@ interface UpstreamModelForm {
   upstreamModelId: string;
   name: string;
   kind: ModelKind;
+  protocols: UpstreamProtocol[];
   capabilities: Capability[];
   contextSize: NumberInput;
   maxOutputTokens: NumberInput;
@@ -573,6 +577,7 @@ function emptyForm(): UpstreamModelForm {
     upstreamModelId: "",
     name: "",
     kind: "chat",
+    protocols: [],
     capabilities: [],
     contextSize: "",
     maxOutputTokens: "",
@@ -593,6 +598,7 @@ function formFor(upstreamModel: UpstreamModel): UpstreamModelForm {
     upstreamModelId: upstreamModel.upstreamModelId,
     name: upstreamModel.name ?? "",
     kind: upstreamModel.kind,
+    protocols: [...upstreamModel.protocols],
     capabilities: [...upstreamModel.capabilities],
     contextSize: numberField(upstreamModel.contextSize),
     maxOutputTokens: numberField(upstreamModel.maxOutputTokens),
@@ -619,7 +625,17 @@ const formKindOptions = computed(() => {
   );
 });
 const isChatForm = computed(() => form.value.kind === "chat");
+const formEndpointProtocols = computed(() =>
+  endpointProtocolsOf(
+    providerById.value.get(form.value.providerId)?.endpoints ?? [],
+    form.value.kind,
+  ),
+);
 const formCapabilities = computed(() => capabilitiesFor(form.value.kind));
+
+function protocolList(protocols: readonly UpstreamProtocol[]): string {
+  return protocols.map((protocol) => PROTOCOL_LABELS[protocol]).join(", ");
+}
 
 function openDialog(next: UpstreamModelDialog): void {
   showDialog(next);
@@ -647,6 +663,9 @@ async function saveUpstreamModel(): Promise<void> {
     upstreamModelId: form.value.upstreamModelId,
     name: form.value.name.trim() || null,
     kind: form.value.kind,
+    protocols: form.value.protocols.filter((protocol) =>
+      formEndpointProtocols.value.includes(protocol),
+    ),
     capabilities: form.value.capabilities.filter((capability) =>
       formCapabilities.value.includes(capability),
     ),
@@ -1078,6 +1097,10 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
                 <template v-else>Not published</template>
               </dd>
             </div>
+            <div v-if="detailsModel.protocols.length > 0">
+              <dt>Provider Endpoints</dt>
+              <dd>{{ protocolList(detailsModel.protocols) }}</dd>
+            </div>
             <div>
               <dt>Released</dt>
               <dd class="tabular">
@@ -1204,6 +1227,12 @@ defineExpose({ openCreate: () => openDialog({ kind: "create" }) });
         </div>
       </div>
       <p class="form__hint">A Provider offers the Kinds it has an endpoint for.</p>
+      <UpstreamModelProtocolsField
+        v-if="formEndpointProtocols.length > 1"
+        v-model="form.protocols"
+        :endpoint-protocols="formEndpointProtocols"
+        :kind="form.kind"
+      />
       <fieldset v-if="formCapabilities.length > 0" class="check-group">
         <legend class="field__label">Capabilities</legend>
         <label v-for="capability in formCapabilities" :key="capability" class="check-field"

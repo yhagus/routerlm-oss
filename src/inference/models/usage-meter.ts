@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { ClientProtocol, ErrorOrigin, GatewayErrorCode } from "@/db/schemas/index.js";
+import type {
+  ClientProtocol,
+  ErrorOrigin,
+  GatewayErrorCode,
+  UpstreamProtocol,
+} from "@/db/schemas/index.js";
 import {
   capturedBody,
   capturedHeaders,
@@ -28,6 +33,7 @@ const FIRST_ERROR_STATUS = 400;
 
 interface OpenAttempt {
   target: AttemptTarget;
+  upstreamProtocol: UpstreamProtocol;
   sentServiceTier: SentServiceTier | null;
   startedAt: Date;
   startedMs: number;
@@ -86,9 +92,14 @@ export class UsageMeter {
     this.modelName = modelName;
   }
 
-  attemptStarted(target: AttemptTarget, sentServiceTier: SentServiceTier | null): void {
+  attemptStarted(
+    target: AttemptTarget,
+    upstreamProtocol: UpstreamProtocol,
+    sentServiceTier: SentServiceTier | null,
+  ): void {
     this.openAttempt = {
       target,
+      upstreamProtocol,
       sentServiceTier,
       startedAt: new Date(),
       startedMs: performance.now(),
@@ -105,6 +116,7 @@ export class UsageMeter {
     this.attempts.push({
       startedAt: new Date().toISOString(),
       ...servingTargetOf(target),
+      upstreamProtocol: null,
       upstreamStatus: null,
       failureReason: "exhausted",
       durationMs: 0,
@@ -118,10 +130,11 @@ export class UsageMeter {
     }
     this.openAttempt.hasAnswered = true;
     this.openAttempt.upstreamRequestId = upstreamRequestId;
-    const { target } = this.openAttempt;
+    const { target, upstreamProtocol } = this.openAttempt;
     const serviceTier = this.openAttempt.sentServiceTier?.tier ?? null;
     this.servedBy = {
       ...servingTargetOf(target),
+      upstreamProtocol,
       serviceTier,
       ...pricesForRequest(target.upstreamModel, serviceTier, this.receivedAt),
       unitPrices: target.upstreamModel.unitPrices,
@@ -268,10 +281,11 @@ export class UsageMeter {
     if (!this.openAttempt) {
       return;
     }
-    const { target, startedAt, startedMs, upstreamRequestId } = this.openAttempt;
+    const { target, upstreamProtocol, startedAt, startedMs, upstreamRequestId } = this.openAttempt;
     this.attempts.push({
       startedAt: startedAt.toISOString(),
       ...servingTargetOf(target),
+      upstreamProtocol,
       upstreamStatus,
       failureReason,
       durationMs: elapsedSince(startedMs),

@@ -9,12 +9,17 @@ import {
   apiKeys,
   attempts,
   errorCaptures,
+  providers,
   upstreamModels,
   usageLogs,
   users,
 } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
-import { FakeUpstream, openAiChatFixture } from "@tests/support/fake-upstream.js";
+import {
+  anthropicMessagesFixture,
+  FakeUpstream,
+  openAiChatFixture,
+} from "@tests/support/fake-upstream.js";
 import {
   addProviderAccount,
   insertApiKey,
@@ -321,6 +326,38 @@ describe("Usage Logs and Attempts (e2e)", () => {
         upstreamStatus: 200,
         failureReason: null,
       }),
+    ]);
+  });
+
+  it("records the upstream Protocol on the Usage Log and on a failed Attempt's Error Capture", async () => {
+    await addProviderAccount(app, db, providerId, { key: "sk-second-account", priority: 1 });
+    await db
+      .update(providers)
+      .set({
+        endpoints: [
+          { kind: "chat", protocol: "openai-chat", baseUrl: upstream.baseUrl },
+          { kind: "chat", protocol: "anthropic-messages", baseUrl: `${upstream.origin}/anthropic` },
+        ],
+      })
+      .where(eq(providers.id, providerId));
+    await db.update(upstreamModels).set({ protocols: ["anthropic-messages"] });
+    await app.get(SnapshotService).changed();
+    upstream.reply({ kind: "json", status: 500, body: { error: { message: "down" } } });
+    upstream.reply({
+      kind: "json",
+      status: 200,
+      body: JSON.parse(anthropicMessagesFixture("upstream-response-tool-call.json")),
+    });
+
+    await chat(CHAT_REQUEST).expect(200);
+
+    const { usageLog } = await writtenUsageLog();
+    expect(usageLog).toMatchObject({
+      clientProtocol: "openai-chat",
+      upstreamProtocol: "anthropic-messages",
+    });
+    expect(await db.select().from(errorCaptures)).toEqual([
+      expect.objectContaining({ upstreamProtocol: "anthropic-messages" }),
     ]);
   });
 

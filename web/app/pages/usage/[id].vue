@@ -86,6 +86,10 @@ const apiKeyLabel = computed(() => {
               </div>
             </template>
             <div>
+              <dt>Upstream Protocol</dt>
+              <dd>{{ usageLog.upstreamProtocol ?? "—" }}</dd>
+            </div>
+            <div>
               <dt>Error Origin</dt>
               <dd>{{ usageLog.errorOrigin ? ERROR_ORIGIN_LABELS[usageLog.errorOrigin] : "—" }}</dd>
             </div>

@@ -56,8 +56,10 @@ export function endpointFormFor(endpoint?: ProviderEndpoint): EndpointForm {
   };
 }
 
-export function chatProtocolOf(form: Pick<ProviderForm, "endpoints">): string {
-  return form.endpoints.find((endpoint) => endpoint.kind === "chat")?.protocol ?? "";
+export function chatProtocolsOf(form: Pick<ProviderForm, "endpoints">): string[] {
+  return form.endpoints
+    .filter((endpoint) => endpoint.kind === "chat")
+    .map((endpoint) => endpoint.protocol);
 }
 
 export interface ProviderForm {
@@ -227,11 +229,12 @@ function quirksFromForm(form: ProviderForm): ProviderQuirks {
 }
 
 function protocolQuirks(form: ProviderForm): ProviderQuirks {
-  const protocol = chatProtocolOf(form);
-  if (protocol === "anthropic-messages") return anthropicMessagesQuirks(form);
-  if (protocol === "openai-chat") return openaiChatQuirks(form);
-  if (protocol === "openai-responses") return openaiResponsesQuirks(form);
-  return {};
+  const protocols = chatProtocolsOf(form);
+  return {
+    ...(protocols.includes("anthropic-messages") ? anthropicMessagesQuirks(form) : {}),
+    ...(protocols.includes("openai-chat") ? openaiChatQuirks(form) : {}),
+    ...(protocols.includes("openai-responses") ? openaiResponsesQuirks(form) : {}),
+  };
 }
 
 function openaiResponsesQuirks(form: ProviderForm): ProviderQuirks {

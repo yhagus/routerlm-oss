@@ -8,6 +8,7 @@ import {
   serviceTierPricesSchema,
   serviceTiersSchema,
   serviceTierValuesSchema,
+  upstreamModelProtocolsSchema,
 } from "@/catalog/schemas/catalog.schema.js";
 import { QUOTA_READERS } from "@/db/schemas/index.js";
 
@@ -46,6 +47,7 @@ const upstreamModelFieldsSchema = catalogProviderSchema.shape.upstreamModels.ele
   .extend({
     name: z.string().min(1).nullable(),
     releaseDate: z.iso.date().nullable(),
+    protocols: upstreamModelProtocolsSchema,
     serviceTiers: serviceTiersSchema,
     tierPrices: serviceTierPricesSchema,
     isEnabled: z.boolean(),
@@ -55,6 +57,7 @@ export const newUpstreamModelSchema = upstreamModelFieldsSchema.extend({
   providerId: z.uuid(),
   name: z.string().min(1).nullable().optional(),
   releaseDate: z.iso.date().nullable().optional(),
+  protocols: upstreamModelProtocolsSchema.optional(),
   serviceTiers: serviceTiersSchema.optional(),
   tierPrices: serviceTierPricesSchema.optional(),
   isEnabled: z.boolean().optional(),

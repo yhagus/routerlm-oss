@@ -1,6 +1,6 @@
 # A Provider has one endpoint per Model Kind, each with its own Protocol and base URL
 
-Status: accepted, supersedes ADR 0016
+Status: superseded by ADR 0095 (it superseded ADR 0016)
 
 ADR 0016 let a Provider add one image Protocol at the same base URL as its chat Protocol. Alibaba Model Studio serves chat at `{host}/compatible-mode/v1` but images, video, speech and transcription only on its native API at `{host}/api/v1`, with the same key. We decided that a Provider has a list of endpoints, at most one per Model Kind, each naming a Protocol and a base URL, and that one Provider Account serves every endpoint of its Provider.
 

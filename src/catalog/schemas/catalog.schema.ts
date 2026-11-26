@@ -10,19 +10,22 @@ import {
   type OpenAiCodexOauthLogin,
   type PricesByTier,
   PROTOCOL_KINDS,
-  PROTOCOLS_WITH_SERVICE_TIERS,
   type ProviderEndpoint,
   QUOTA_READERS,
   type ServiceTierValues,
   type TierPrices,
   UPSTREAM_PROTOCOLS,
-  type UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import {
   REASONING_EFFORTS,
   SERVICE_TIERS,
   type ServiceTier,
 } from "@/inference/models/internal-format.js";
+import {
+  protocolsOf,
+  quirksUnderstoodBy,
+  sendsServiceTiers,
+} from "@/libs/models/provider-protocols.js";
 import { isIanaTimeZone, rangeSchema } from "@/pricing-windows/schemas/pricing-window.schema.js";
 
 const UNFORWARDABLE_CLIENT_HEADERS = [
@@ -79,35 +82,6 @@ export const storedProviderQuirksSchema = providerQuirksSchema.extend({
 });
 export type StoredProviderQuirks = z.infer<typeof storedProviderQuirksSchema>;
 export type CatalogProviderQuirks = z.infer<typeof providerQuirksSchema>;
-type QuirkKey = keyof CatalogProviderQuirks;
-
-const QUIRKS_OF_EVERY_PROTOCOL: readonly QuirkKey[] = ["exhaustedErrorCodes", "quotaBaseUrl"];
-
-const QUIRKS_OF_ONE_PROTOCOL = {
-  "openai-chat": [
-    "reasoningContentInHistory",
-    "acceptsCacheControl",
-    "reasoningAsThinking",
-    "forwardsClientPromptCacheKey",
-    "acceptsPromptCacheKey",
-    "usesMaxCompletionTokens",
-    "forwardedClientHeaders",
-    "fixedHeaders",
-  ],
-  "anthropic-messages": ["cacheMarkerLimit"],
-  "openai-responses": [
-    "forwardsClientPromptCacheKey",
-    "acceptsPromptCacheKey",
-    "alwaysStreams",
-    "includesEncryptedReasoning",
-    "systemAsDeveloperMessage",
-    "droppedParameters",
-  ],
-  "dashscope-image": [],
-  "dashscope-video": [],
-  "dashscope-speech": [],
-  "dashscope-transcription": [],
-} as const satisfies Record<UpstreamProtocol, readonly QuirkKey[]>;
 
 export function chatEndpointOf(
   endpoints: readonly ProviderEndpoint[],
@@ -125,23 +99,21 @@ export function kindsWithoutEndpoint(
   );
 }
 
-export function quirksForeignToProtocol(
-  protocol: UpstreamProtocol | undefined,
+export function quirksForeignToEndpoints(
+  endpoints: readonly ProviderEndpoint[],
   quirks: Record<string, unknown>,
 ): string[] {
-  const understood: readonly string[] = [
-    ...QUIRKS_OF_EVERY_PROTOCOL,
-    ...(protocol === undefined ? [] : QUIRKS_OF_ONE_PROTOCOL[protocol]),
-  ];
-  return Object.keys(quirks).filter((key) => !understood.includes(key));
+  const understood = quirksUnderstoodBy(protocolsOf(endpoints));
+  return Object.keys(quirks).filter(
+    (key) => !understood.some((understoodKey) => understoodKey === key),
+  );
 }
 
-export function serviceTierValuesForeignToProtocol(
-  protocol: UpstreamProtocol | undefined,
+export function serviceTierValuesForeignToEndpoints(
+  endpoints: readonly ProviderEndpoint[],
   serviceTierValues: ServiceTierValues,
 ): ServiceTier[] {
-  const sendsServiceTier = PROTOCOLS_WITH_SERVICE_TIERS.some((sending) => sending === protocol);
-  return sendsServiceTier
+  return protocolsOf(endpoints).some(sendsServiceTiers)
     ? []
     : SERVICE_TIERS.filter((tier) => serviceTierValues[tier] !== undefined);
 }
@@ -214,6 +186,12 @@ const tierPricesSchema = z
   })
   .partial() satisfies z.ZodType<TierPrices>;
 
+export const upstreamModelProtocolsSchema = z
+  .array(z.enum(UPSTREAM_PROTOCOLS))
+  .refine((protocols) => new Set(protocols).size === protocols.length, {
+    error: "List each Protocol once",
+  });
+
 export const serviceTiersSchema = z
   .array(z.enum(SERVICE_TIERS))
   .refine((tiers) => new Set(tiers).size === tiers.length, {
@@ -254,6 +232,7 @@ const upstreamModelSchema = z.strictObject({
   cacheReadPrice: priceSchema,
   cacheWritePrice: priceSchema,
   kind: z.enum(MODEL_KINDS).optional(),
+  protocols: upstreamModelProtocolsSchema.optional(),
   pricePerImage: unitPriceSchema.optional(),
   pricePerImageBySize: pricesByTierSchema.optional(),
   pricePerInputImage: unitPriceSchema.optional(),
@@ -295,8 +274,9 @@ export const providerEndpointsSchema = z
   .array(providerEndpointSchema)
   .min(1)
   .refine(
-    (endpoints) => new Set(endpoints.map((endpoint) => endpoint.kind)).size === endpoints.length,
-    { error: "A Provider has at most one endpoint per Kind" },
+    (endpoints) =>
+      new Set(endpoints.map((endpoint) => endpoint.protocol)).size === endpoints.length,
+    { error: "A Provider has at most one endpoint per Protocol" },
   );
 
 const catalogPricingWindowSchema = z.strictObject({

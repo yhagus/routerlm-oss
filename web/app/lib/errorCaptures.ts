@@ -21,6 +21,7 @@ export interface ErrorCaptureSummary extends RecordedIntegration {
   apiKeyName: string | null;
   isPlayground: boolean;
   clientProtocol: string;
+  upstreamProtocol: string | null;
   httpStatus: number;
   errorCode: string | null;
   userAgent: string | null;

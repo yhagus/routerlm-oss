@@ -55,8 +55,6 @@ describe("db:seed script (e2e)", () => {
         "openai-codex",
         "opencode-go",
         "tokenrouter-com",
-        "tokenrouter-com-anthropic",
-        "tokenrouter-com-responses",
         "tokenrouter-io",
         "xiaomi-mimo",
         "xiaomi-mimo-token-plan",
@@ -66,6 +64,24 @@ describe("db:seed script (e2e)", () => {
     },
     SEED_TIMEOUT_MS,
   );
+
+  it("seeds TokenRouter.com's models with the Protocols its file lists", async () => {
+    const [tokenRouter] = await db
+      .select({ id: providers.id })
+      .from(providers)
+      .where(eq(providers.slug, "tokenrouter-com"));
+    const [claude] = await db
+      .select({ protocols: upstreamModels.protocols })
+      .from(upstreamModels)
+      .where(
+        and(
+          eq(upstreamModels.providerId, tokenRouter?.id ?? ""),
+          eq(upstreamModels.upstreamModelId, "anthropic/claude-sonnet-5.5"),
+        ),
+      );
+
+    expect(claude?.protocols).toEqual(["anthropic-messages"]);
+  });
 
   it("seeds Kimi Code on api.kimi.com with the context sizes Kimi serves", async () => {
     const [kimiCode] = await db.select().from(providers).where(eq(providers.slug, "kimi-code"));

@@ -1,4 +1,5 @@
-import type { ServiceTierValues } from "@/db/schemas/index.js";
+import { sendsServiceTiers } from "@/libs/models/provider-protocols.js";
+import type { ServiceTierValues, UpstreamProtocol } from "@/db/schemas/index.js";
 import type { SnapshotUpstreamModel } from "@/snapshot/models/snapshot.js";
 import type { ServiceTier } from "./internal-format.js";
 
@@ -22,8 +23,13 @@ export interface SentServiceTier {
 export function serviceTierSentTo(
   tier: ServiceTier | undefined,
   upstreamModel: SnapshotUpstreamModel,
+  upstreamProtocol: UpstreamProtocol,
 ): SentServiceTier | null {
-  if (tier === undefined || !upstreamModel.serviceTiers.includes(tier)) {
+  if (
+    tier === undefined ||
+    !sendsServiceTiers(upstreamProtocol) ||
+    !upstreamModel.serviceTiers.includes(tier)
+  ) {
     return null;
   }
   const wireValue = upstreamModel.provider.serviceTierValues[tier];

@@ -1,0 +1,115 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "c190b4e4-0bb2-451e-9c71-735108234f7d",
+  "prevIds": [
+    "329ea9cc-2cb6-49e7-8028-1ea5d3e65617"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "upstream_models",
+        "protocols"
+      ],
+      "writes": [
+        "s|col|public.upstream_models.protocols",
+        "n|col|public.upstream_models.protocols",
+        "e|col|public.upstream_models.protocols"
+      ],
+      "reads": [
+        "n|tbl|public.upstream_models",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "error_captures",
+        "upstream_protocol"
+      ],
+      "writes": [
+        "s|col|public.error_captures.upstream_protocol",
+        "n|col|public.error_captures.upstream_protocol",
+        "e|col|public.error_captures.upstream_protocol"
+      ],
+      "reads": [
+        "n|tbl|public.error_captures",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "upstream_protocol"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.upstream_protocol",
+        "n|col|public.usage_logs.upstream_protocol",
+        "e|col|public.usage_logs.upstream_protocol"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "upstream_models",
+        "name": "protocols",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "error_captures",
+        "name": "upstream_protocol",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "upstream_protocol",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

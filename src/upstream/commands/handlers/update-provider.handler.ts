@@ -1,9 +1,10 @@
-import { ConflictException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { InjectDrizzle } from "@nestjs/drizzle";
 import { and, count, eq, inArray } from "drizzle-orm";
 import type { Database, Transaction } from "@/db/schemas/relations.js";
 import {
+  type ProviderEndpoint,
   providerAccounts,
   providers,
   quotaMeters,
@@ -12,6 +13,7 @@ import {
 } from "@/db/schemas/index.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import { serviceTiersWithoutWireValue } from "@/catalog/schemas/catalog.schema.js";
+import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols.js";
 import {
   assertQuirksFitEndpoints,
   assertServiceTierValuesFitEndpoints,
@@ -38,6 +40,9 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
       }
 
       const endpoints = changes.endpoints ?? stored.endpoints;
+      if (changes.endpoints !== undefined) {
+        await refuseWhileModelsListRemovedProtocols(tx, providerId, changes.endpoints);
+      }
       assertQuirksFitEndpoints(endpoints, changes.quirks ?? stored.quirks);
       const serviceTierValues = changes.serviceTierValues ?? stored.serviceTierValues;
       assertServiceTierValuesFitEndpoints(endpoints, serviceTierValues);
@@ -86,6 +91,28 @@ async function refuseWhileModelsListUnmappedTiers(
   const names = affected.map((model) => `"${model.upstreamModelId}"`).join(", ");
   throw new ConflictException(
     `The Upstream Models ${names} list Service Tiers this change would leave unmapped; remove the tiers from them first`,
+  );
+}
+
+async function refuseWhileModelsListRemovedProtocols(
+  tx: Transaction,
+  providerId: string,
+  endpoints: readonly ProviderEndpoint[],
+): Promise<void> {
+  const models = await tx
+    .select({
+      upstreamModelId: upstreamModels.upstreamModelId,
+      kind: upstreamModels.kind,
+      protocols: upstreamModels.protocols,
+    })
+    .from(upstreamModels)
+    .where(eq(upstreamModels.providerId, providerId));
+  const affected = models.filter((model) => protocolsWithoutEndpoint(model, endpoints).length > 0);
+  if (affected.length === 0) return;
+
+  const names = affected.map((model) => `"${model.upstreamModelId}"`).join(", ");
+  throw new BadRequestException(
+    `The Upstream Models ${names} list Protocols whose endpoints this change would remove; remove the Protocols from them first`,
   );
 }
 

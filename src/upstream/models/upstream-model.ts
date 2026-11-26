@@ -11,6 +11,11 @@ import {
   hasPostgresErrorCode,
   UNIQUE_VIOLATION,
 } from "@/libs/models/postgres-errors.js";
+import {
+  kindOf,
+  type ProtocolListing,
+  protocolsWithoutEndpoint,
+} from "@/libs/models/provider-protocols.js";
 import type { upstreamModels } from "@/db/schemas/index.js";
 import type { AttachedPricingWindow } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 
@@ -65,5 +70,17 @@ export function assertProviderServesKind(
 ): void {
   if (kindsWithoutEndpoint([{ kind }], endpoints).length > 0) {
     throw new BadRequestException(`The Provider has no endpoint for the Kind ${kind}`);
+  }
+}
+
+export function assertProtocolsFitProvider(
+  upstreamModel: ProtocolListing,
+  endpoints: readonly ProviderEndpoint[],
+): void {
+  const unserved = protocolsWithoutEndpoint(upstreamModel, endpoints);
+  if (unserved.length > 0) {
+    throw new BadRequestException(
+      `The Provider has no ${kindOf(upstreamModel)} endpoint for the Protocols ${unserved.join(", ")}`,
+    );
   }
 }

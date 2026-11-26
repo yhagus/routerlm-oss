@@ -68,8 +68,12 @@ A one-time grant on a Provider Account that its Subscription Provider honours by
 _Avoid_: Reset credit, banked reset, credits
 
 **Upstream Model**:
-A model as one Provider names and sells it.
+A model as one Provider names and sells it. It is served through the Provider Endpoints it supports, or through its Provider's first Provider Endpoint of its Model Kind when it names none.
 _Avoid_: Provider model, backend model
+
+**Provider Endpoint**:
+One Protocol at one address that a Provider serves, for one Model Kind. Every Provider Endpoint of a Provider is reached with the same Provider Account.
+_Avoid_: Endpoint, channel, route, base URL
 
 **Release Date**:
 The day a Provider made an Upstream Model available, written YYYY-MM-DD. For a Provider that resells models made by others, it is the day the model was first released by any Provider, since a reseller does not publish when it started serving a model.
@@ -112,7 +116,7 @@ The Providers and Upstream Models, with their Capabilities and prices, and the P
 _Avoid_: Master data, seed data
 
 **Protocol**:
-A wire format for inference requests and responses that a Provider or a client speaks. A Provider speaks at most one Protocol per Model Kind, each at its own address, all with the same Provider Account.
+A wire format for inference requests and responses that a Provider or a client speaks. A Provider speaks its Protocols through its Provider Endpoints, and may speak several for one Model Kind.
 _Avoid_: Format, dialect, API type
 
 ### Routing

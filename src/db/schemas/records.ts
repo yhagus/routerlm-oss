@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { SERVICE_TIERS } from "@/inference/models/internal-format.js";
 import { at, createdAt, id } from "./columns.js";
-import { MODEL_KINDS, type ModelKind } from "./upstream.js";
+import { MODEL_KINDS, type ModelKind, UPSTREAM_PROTOCOLS } from "./upstream.js";
 
 export const CLIENT_PROTOCOLS = [
   "openai-chat",
@@ -101,6 +101,7 @@ export const usageLogs = pgTable(
     providerSlug: text("provider_slug"),
     providerAccountId: uuid("provider_account_id"),
     providerAccountName: text("provider_account_name"),
+    upstreamProtocol: text("upstream_protocol", { enum: UPSTREAM_PROTOCOLS }),
     kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
     clientProtocol: text("client_protocol", { enum: CLIENT_PROTOCOLS }).notNull(),
     isStreamed: boolean("is_streamed").notNull(),
@@ -187,6 +188,7 @@ export const errorCaptures = pgTable(
       .notNull()
       .references(() => usageLogs.id, { onDelete: "cascade" }),
     attemptId: uuid("attempt_id").references(() => attempts.id, { onDelete: "cascade" }),
+    upstreamProtocol: text("upstream_protocol", { enum: UPSTREAM_PROTOCOLS }),
     requestHeaders: jsonb("request_headers").$type<Record<string, string>>().notNull(),
     requestBody: text("request_body").notNull(),
     responseHeaders: jsonb("response_headers").$type<Record<string, string>>(),

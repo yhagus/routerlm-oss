@@ -71,8 +71,6 @@ describe("The Google Gemini and OpenAI Catalog files", () => {
       openai: "openai",
       "opencode-go": "opencode-go",
       "tokenrouter-com": "tokenrouter",
-      "tokenrouter-com-anthropic": undefined,
-      "tokenrouter-com-responses": undefined,
       "tokenrouter-io": undefined,
       "xiaomi-mimo": "xiaomi",
       "xiaomi-mimo-token-plan": "xiaomi-token-plan-sgp",

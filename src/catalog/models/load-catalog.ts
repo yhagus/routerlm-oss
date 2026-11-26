@@ -2,17 +2,20 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { z } from "zod";
-import type { UpstreamProtocol } from "@/db/schemas/index.js";
 import {
   type CatalogProvider,
   catalogProviderSchema,
-  chatEndpointOf,
   kindsWithoutEndpoint,
-  quirksForeignToProtocol,
-  serviceTierValuesForeignToProtocol,
+  quirksForeignToEndpoints,
+  serviceTierValuesForeignToEndpoints,
   serviceTiersWithoutWireValue,
   tierPricesWithoutListedTier,
 } from "@/catalog/schemas/catalog.schema.js";
+import {
+  describeProtocols,
+  kindOf,
+  protocolsWithoutEndpoint,
+} from "@/libs/models/provider-protocols.js";
 
 export const CATALOG_DIRECTORY = fileURLToPath(new URL("../data", import.meta.url));
 
@@ -62,19 +65,28 @@ function parseProviderFile(fileName: string, contents: string): CatalogProvider 
     );
   }
 
-  const chatProtocol = chatEndpointOf(result.data.endpoints)?.protocol;
-  const foreignQuirks = quirksForeignToProtocol(chatProtocol, result.data.quirks);
+  const { endpoints } = result.data;
+  for (const model of result.data.upstreamModels) {
+    const unserved = protocolsWithoutEndpoint(model, endpoints);
+    if (unserved.length > 0) {
+      throw new Error(
+        `Catalog ${fileName}: Upstream Model "${model.upstreamModelId}" lists Protocols ${unserved.join(", ")} that the Provider has no ${kindOf(model)} endpoint for`,
+      );
+    }
+  }
+
+  const foreignQuirks = quirksForeignToEndpoints(endpoints, result.data.quirks);
   if (foreignQuirks.length > 0) {
     throw new Error(
-      `Catalog ${fileName}: quirks ${foreignQuirks.join(", ")} don't apply to ${describeChatProtocol(chatProtocol)}`,
+      `Catalog ${fileName}: quirks ${foreignQuirks.join(", ")} don't apply to ${describeProtocols(endpoints)}`,
     );
   }
 
   const serviceTierValues = result.data.serviceTierValues ?? {};
-  const foreignTiers = serviceTierValuesForeignToProtocol(chatProtocol, serviceTierValues);
+  const foreignTiers = serviceTierValuesForeignToEndpoints(endpoints, serviceTierValues);
   if (foreignTiers.length > 0) {
     throw new Error(
-      `Catalog ${fileName}: Service Tiers ${foreignTiers.join(", ")} don't apply to ${describeChatProtocol(chatProtocol)}`,
+      `Catalog ${fileName}: Service Tiers ${foreignTiers.join(", ")} don't apply to ${describeProtocols(endpoints)}`,
     );
   }
   for (const model of result.data.upstreamModels) {
@@ -143,8 +155,4 @@ function readUpstreamModelId(json: unknown, index: number): string | undefined {
   if (typeof model !== "object" || model === null || !("upstreamModelId" in model))
     return undefined;
   return typeof model.upstreamModelId === "string" ? model.upstreamModelId : undefined;
-}
-
-function describeChatProtocol(protocol: UpstreamProtocol | undefined): string {
-  return protocol ?? "a Provider without a chat endpoint";
 }

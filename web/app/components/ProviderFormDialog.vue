@@ -4,7 +4,7 @@ import { REASONING_EFFORTS, SERVICE_TIER_LABELS, SERVICE_TIERS } from "~/lib/par
 import { PROVIDER_LOGOS } from "~/lib/providerLogos";
 import { TERMS_RISK_HINT } from "~/lib/upstream";
 import {
-  chatProtocolOf,
+  chatProtocolsOf,
   providerFieldsFromForm,
   providerFormFor,
   slugFromName,
@@ -52,10 +52,11 @@ const isSlugAuto = computed(() => !props.provider && !isSlugTyped.value);
 const isSaving = ref(false);
 const error = ref("");
 
-const chatProtocol = computed(() => chatProtocolOf(form.value));
-const isOpenAiProtocol = computed(
-  () => chatProtocol.value === "openai-chat" || chatProtocol.value === "openai-responses",
-);
+const chatProtocols = computed(() => chatProtocolsOf(form.value));
+const hasOpenAiChat = computed(() => chatProtocols.value.includes("openai-chat"));
+const hasOpenAiResponses = computed(() => chatProtocols.value.includes("openai-responses"));
+const hasAnthropicMessages = computed(() => chatProtocols.value.includes("anthropic-messages"));
+const isOpenAiProtocol = computed(() => hasOpenAiChat.value || hasOpenAiResponses.value);
 const formBaseUrl = computed(() => mainBaseUrl(form.value.endpoints));
 
 watch(isOpen, (open) => {
@@ -119,7 +120,7 @@ async function save(): Promise<void> {
     v-model:open="isOpen"
     wide
     :title="provider ? `Edit ${provider.name}` : 'Add Provider'"
-    description="One endpoint per Kind the Provider serves. Its base URL is what the Protocol's path is appended to: /chat/completions for Chat Completions, /v1/messages for Messages, /responses for Responses."
+    description="One endpoint per Protocol the Provider serves, so a Kind may have several. Its base URL is what the Protocol's path is appended to: /chat/completions for Chat Completions, /v1/messages for Messages, /responses for Responses."
   >
     <form class="form" @submit.prevent="save" @invalid.capture="handleInvalidField">
       <div class="form__grid">
@@ -183,7 +184,7 @@ async function save(): Promise<void> {
         ><input v-model="form.termsRisk" type="checkbox" /> Terms risk</label
       >
       <p class="form__hint">{{ TERMS_RISK_HINT }}</p>
-      <div v-if="chatProtocol === 'openai-chat'" class="field">
+      <div v-if="hasOpenAiChat" class="field">
         <span class="field__label">Reasoning content in history</span>
         <AppSelect
           v-model="form.reasoningContentInHistory"
@@ -193,17 +194,17 @@ async function save(): Promise<void> {
       </div>
       <fieldset v-if="isOpenAiProtocol" class="check-group">
         <legend class="field__label">Request fields</legend>
-        <label v-if="chatProtocol === 'openai-chat'" class="check-field"
+        <label v-if="hasOpenAiChat" class="check-field"
           ><input v-model="form.acceptsCacheControl" type="checkbox" /> cache_control markers</label
         >
         <label class="check-field"
           ><input v-model="form.acceptsPromptCacheKey" type="checkbox" /> prompt_cache_key</label
         >
-        <label v-if="chatProtocol === 'openai-chat'" class="check-field"
+        <label v-if="hasOpenAiChat" class="check-field"
           ><input v-model="form.usesMaxCompletionTokens" type="checkbox" />
           max_completion_tokens</label
         >
-        <template v-if="chatProtocol === 'openai-responses'">
+        <template v-if="hasOpenAiResponses">
           <label class="check-field"
             ><input v-model="form.includesEncryptedReasoning" type="checkbox" /> include encrypted
             reasoning</label
@@ -217,17 +218,17 @@ async function save(): Promise<void> {
           >
         </template>
       </fieldset>
-      <fieldset v-if="chatProtocol === 'openai-responses'" class="check-group">
+      <fieldset v-if="hasOpenAiResponses" class="check-group">
         <legend class="field__label">Dropped parameters</legend>
         <label v-for="parameter in DROPPABLE_PARAMETERS" :key="parameter" class="check-field"
           ><input v-model="form.droppedParameters" type="checkbox" :value="parameter" />
           {{ parameter }}</label
         >
       </fieldset>
-      <p v-if="chatProtocol === 'openai-responses'" class="form__hint">
+      <p v-if="hasOpenAiResponses" class="form__hint">
         Left out of every request, for a Provider that refuses them.
       </p>
-      <label v-if="chatProtocol === 'anthropic-messages'" class="field"
+      <label v-if="hasAnthropicMessages" class="field"
         ><span class="field__label">Cache marker limit</span
         ><NumberInput
           v-model="form.cacheMarkerLimit"
@@ -236,14 +237,14 @@ async function save(): Promise<void> {
           :min="0"
           placeholder="4"
       /></label>
-      <p v-if="chatProtocol === 'anthropic-messages'" class="form__hint">
+      <p v-if="hasAnthropicMessages" class="form__hint">
         How many cache markers the gateway may add to a request. 0 adds none; blank means 4.
       </p>
 
       <details class="form-advanced">
         <summary class="form-advanced__summary">Advanced</summary>
         <div class="form-advanced__body">
-          <template v-if="chatProtocol === 'openai-chat'">
+          <template v-if="hasOpenAiChat">
             <fieldset class="check-group">
               <legend class="field__label">Reasoning as thinking</legend>
               <label class="check-field"
@@ -280,7 +281,7 @@ async function save(): Promise<void> {
               </p>
             </template>
           </template>
-          <template v-if="chatProtocol === 'openai-chat'">
+          <template v-if="hasOpenAiChat">
             <div class="field">
               <span class="field__label">Forwarded client headers</span>
               <TagListInput

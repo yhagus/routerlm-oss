@@ -64,6 +64,7 @@ export class UsageWriter {
           ...snapshot.customerNames,
           modelId: job.modelId,
           ...servingTargetColumnsOf(snapshot.servedBy),
+          upstreamProtocol: job.servedBy?.upstreamProtocol ?? null,
           kind: CLIENT_PROTOCOL_KINDS[job.clientProtocol],
           clientProtocol: job.clientProtocol,
           isStreamed: job.isStreamed,
@@ -151,12 +152,19 @@ function errorCaptureRowsOf(
     clientIp: job.clientIp ?? null,
   };
   if (capture.failedAttempts.length === 0) {
-    return [{ ...clientRequest, id: capture.requestCaptureId }];
+    return [
+      {
+        ...clientRequest,
+        id: capture.requestCaptureId,
+        upstreamProtocol: job.servedBy?.upstreamProtocol ?? null,
+      },
+    ];
   }
   return capture.failedAttempts.map(({ captureId, attemptIndex, upstreamResponse }) => ({
     ...clientRequest,
     id: captureId,
     attemptId: attemptIds[attemptIndex],
+    upstreamProtocol: job.attempts.at(attemptIndex)?.upstreamProtocol ?? null,
     responseHeaders: upstreamResponse?.headers ?? null,
     responseBody: upstreamResponse?.body ?? null,
   }));

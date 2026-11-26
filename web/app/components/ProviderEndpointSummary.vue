@@ -38,7 +38,7 @@ const summary = computed(
 <template>
   <TooltipProvider :delay-duration="100">
     <span class="endpoint-summary" role="img" :aria-label="summary">
-      <Tooltip v-for="endpoint in ordered" :key="endpoint.kind">
+      <Tooltip v-for="endpoint in ordered" :key="endpoint.protocol">
         <TooltipTrigger as-child>
           <span class="endpoint-summary__kind"
             ><component :is="KIND_ICONS[endpoint.kind]" :size="13" aria-hidden="true"

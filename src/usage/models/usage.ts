@@ -3,6 +3,7 @@ import type {
   ErrorOrigin,
   GatewayErrorCode,
   RecordedAttemptFailure,
+  UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier } from "@/inference/models/internal-format.js";
 
@@ -18,6 +19,7 @@ export interface UsageLogSummary {
   customerId: string | null;
   isPlayground: boolean;
   clientProtocol: ClientProtocol;
+  upstreamProtocol: UpstreamProtocol | null;
   isStreamed: boolean;
   httpStatus: number;
   errorCode: GatewayErrorCode | null;

@@ -5,36 +5,57 @@ import {
   ENDPOINT_KIND_OPTIONS,
   MODEL_KIND_LABELS,
   MODEL_KINDS,
+  PROTOCOL_LABELS,
   protocolOptionsFor,
+  UPSTREAM_PROTOCOLS,
 } from "~/lib/upstream";
 
 const endpoints = defineModel<EndpointForm[]>({ required: true });
 
-const unusedKinds = computed(() =>
-  ENDPOINT_KIND_OPTIONS.filter(
-    (option) => !endpoints.value.some((endpoint) => endpoint.kind === option.value),
-  ),
+const addableKinds = computed(() =>
+  ENDPOINT_KIND_OPTIONS.filter((option) => freeProtocolsFor(option.value).length > 0),
 );
+
+function freeProtocolsFor(kind: string, endpoint?: EndpointForm) {
+  return protocolOptionsFor(kind).filter(
+    (option) =>
+      !endpoints.value.some((row) => row.key !== endpoint?.key && row.protocol === option.value),
+  );
+}
+
+function kindOptionsFor(endpoint: EndpointForm) {
+  return ENDPOINT_KIND_OPTIONS.filter(
+    (option) =>
+      option.value === endpoint.kind || freeProtocolsFor(option.value, endpoint).length > 0,
+  );
+}
 
 function kindLabel(kind: string): string {
   const known = MODEL_KINDS.find((modelKind) => modelKind === kind);
   return known ? MODEL_KIND_LABELS[known] : "new";
 }
 
+function endpointLabel(endpoint: EndpointForm): string {
+  const protocol = UPSTREAM_PROTOCOLS.find((known) => known === endpoint.protocol);
+  return protocol
+    ? `${kindLabel(endpoint.kind)} ${PROTOCOL_LABELS[protocol]}`
+    : kindLabel(endpoint.kind);
+}
+
 function handleKindChange(endpoint: EndpointForm, kind: string): void {
   endpoint.kind = kind;
-  const protocols = protocolOptionsFor(kind);
+  const protocols = freeProtocolsFor(kind, endpoint);
   if (!protocols.some((option) => option.value === endpoint.protocol)) {
     endpoint.protocol = protocols[0]?.value ?? "";
   }
 }
 
 function handleAdd(): void {
-  const kind = unusedKinds.value[0]?.value ?? "";
+  const kind = addableKinds.value[0]?.value ?? "";
   endpoints.value.push({
     ...endpointFormFor(),
     kind,
-    protocol: protocolOptionsFor(kind)[0]?.value ?? "",
+    protocol: freeProtocolsFor(kind)[0]?.value ?? "",
   });
 }
 
@@ -55,7 +76,7 @@ function handleRemove(endpoint: EndpointForm): void {
       <AppSelect
         class="endpoint-list__kind"
         :model-value="endpoint.kind"
-        :options="ENDPOINT_KIND_OPTIONS"
+        :options="kindOptionsFor(endpoint)"
         label="Endpoint Kind"
         placeholder="Pick a Kind"
         @update:model-value="handleKindChange(endpoint, $event)"
@@ -63,24 +84,24 @@ function handleRemove(endpoint: EndpointForm): void {
       <AppSelect
         class="endpoint-list__protocol"
         v-model="endpoint.protocol"
-        :options="protocolOptionsFor(endpoint.kind)"
+        :options="freeProtocolsFor(endpoint.kind, endpoint)"
         :label="`${kindLabel(endpoint.kind)} Protocol`"
         placeholder="Pick a Protocol"
-        empty-text="No Protocol serves this Kind yet"
+        empty-text="Every Protocol of this Kind has an endpoint"
       />
       <input
         v-model="endpoint.baseUrl"
         class="text-input endpoint-list__url"
         type="url"
         required
-        :aria-label="`${kindLabel(endpoint.kind)} base URL`"
+        :aria-label="`${endpointLabel(endpoint)} base URL`"
         placeholder="https://"
         :title="endpoint.baseUrl"
       />
       <button
         class="icon-button endpoint-list__remove"
         type="button"
-        :aria-label="`Remove the ${kindLabel(endpoint.kind)} endpoint`"
+        :aria-label="`Remove the ${endpointLabel(endpoint)} endpoint`"
         :disabled="endpoints.length === 1"
         @click="handleRemove(endpoint)"
       >
@@ -88,7 +109,7 @@ function handleRemove(endpoint: EndpointForm): void {
       </button>
     </div>
     <button
-      v-if="unusedKinds.length > 0"
+      v-if="addableKinds.length > 0"
       class="button endpoint-list__add"
       type="button"
       @click="handleAdd"

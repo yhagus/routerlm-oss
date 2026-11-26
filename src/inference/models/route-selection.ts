@@ -1,4 +1,4 @@
-import type { Capability } from "@/db/schemas/index.js";
+import type { Capability, ClientProtocol, UpstreamProtocol } from "@/db/schemas/index.js";
 import {
   isUpstreamModelUsable,
   type SnapshotEndpoint,
@@ -11,6 +11,16 @@ import type { InferenceRequest } from "./internal-format.js";
 import { UPSTREAM_PROTOCOL_CONVERTERS } from "@/inference/protocols/converters.js";
 
 const CHARACTERS_PER_TOKEN = 4;
+
+export const UPSTREAM_PROTOCOL_SPOKEN_BY_CLIENT = {
+  "openai-chat": "openai-chat",
+  "anthropic-messages": "anthropic-messages",
+  "openai-responses": "openai-responses",
+  "openai-images": undefined,
+  "openai-videos": undefined,
+  "openai-speech": undefined,
+  "openai-transcription": undefined,
+} as const satisfies Record<ClientProtocol, UpstreamProtocol | undefined>;
 
 export function requiredCapabilities(request: InferenceRequest): Capability[] {
   const required: Capability[] = [];
@@ -37,8 +47,15 @@ export function capableRoutes(model: SnapshotModel, request: InferenceRequest): 
   return model.routes.filter((route) => route.isEnabled && canServe(route.upstreamModel, request));
 }
 
-export function endpointOf(upstreamModel: SnapshotUpstreamModel): SnapshotEndpoint | undefined {
-  return upstreamModel.provider.endpoints[upstreamModel.kind];
+export function endpointOf(
+  { kind, protocols, provider }: SnapshotUpstreamModel,
+  preferredProtocol?: UpstreamProtocol,
+): SnapshotEndpoint | undefined {
+  const chosen = protocols.find((protocol) => protocol === preferredProtocol) ?? protocols.at(0);
+  if (chosen === undefined) {
+    return provider.endpoints.find((endpoint) => endpoint.kind === kind);
+  }
+  return provider.endpoints.find((endpoint) => endpoint.protocol === chosen);
 }
 
 export function canServe(upstreamModel: SnapshotUpstreamModel, request: InferenceRequest): boolean {

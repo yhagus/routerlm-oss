@@ -7,6 +7,7 @@ import { providers, routes, upstreamModels } from "@/db/schemas/index.js";
 import { attachedPricingWindowNames } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
+  assertProtocolsFitProvider,
   assertProviderServesKind,
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
@@ -28,6 +29,7 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
         const [stored] = await tx
           .select({
             kind: upstreamModels.kind,
+            protocols: upstreamModels.protocols,
             serviceTiers: upstreamModels.serviceTiers,
             tierPrices: upstreamModels.tierPrices,
             serviceTierValues: providers.serviceTierValues,
@@ -60,6 +62,13 @@ export class UpdateUpstreamModelHandler implements ICommandHandler<UpdateUpstrea
             );
           }
         }
+        assertProtocolsFitProvider(
+          {
+            kind: changes.kind ?? stored.kind,
+            protocols: changes.protocols ?? stored.protocols,
+          },
+          stored.endpoints,
+        );
         assertServiceTiersFitProvider(
           {
             serviceTiers: changes.serviceTiers ?? stored.serviceTiers,

@@ -2,6 +2,7 @@ import type {
   ClientProtocol,
   GatewayErrorCode,
   RecordedAttemptFailure,
+  UpstreamProtocol,
 } from "@/db/schemas/index.js";
 
 export type FailedHop =
@@ -28,6 +29,7 @@ export interface ErrorCaptureSummary {
   customerId: string | null;
   isPlayground: boolean;
   clientProtocol: ClientProtocol;
+  upstreamProtocol: UpstreamProtocol | null;
   httpStatus: number;
   errorCode: GatewayErrorCode | null;
   userAgent: string | null;

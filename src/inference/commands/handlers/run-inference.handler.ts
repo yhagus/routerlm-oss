@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { IncomingHttpHeaders } from "node:http";
 import { CommandHandler, type ICommandHandler } from "@nestjs/cqrs";
 import { CLIENT_PROTOCOL_KINDS, type ModelKind } from "@/db/schemas/index.js";
+import { quirksSentThrough } from "@/libs/models/provider-protocols.js";
 import {
   type SnapshotModel,
   type SnapshotUpstreamModel,
@@ -45,6 +46,7 @@ import type {
   ClientStreamWriter,
   ResponseContext,
 } from "@/inference/protocols/client-protocol-converter.js";
+import type { UpstreamProtocolConverter } from "@/inference/protocols/upstream-protocol-converter.js";
 import {
   UPSTREAM_PROTOCOL_CONVERTERS,
   upstreamAuthHeaders,
@@ -53,9 +55,10 @@ import {
   type AttemptTarget,
   canServe,
   capableRoutes,
-  endpointOf,
   routePath,
+  UPSTREAM_PROTOCOL_SPOKEN_BY_CLIENT,
 } from "@/inference/models/route-selection.js";
+import { type CallableEndpoint, callableEndpointOf } from "@/inference/models/callable-endpoint.js";
 import { AttemptRunner } from "@/inference/providers/attempt-runner.js";
 import { CallerLimits } from "@/inference/providers/caller-limits.js";
 import {
@@ -82,6 +85,8 @@ interface AttemptOptions {
   clientHeaders: IncomingHttpHeaders;
   meter: UsageMeter;
 }
+
+type AttemptEndpoint = CallableEndpoint<UpstreamProtocolConverter>;
 
 type AttemptResult =
   | { kind: "response"; body: unknown }
@@ -154,12 +159,26 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     };
     const cacheKey = promptCacheKey(requestOwnerOf(caller), destination.id);
 
+    const preferredProtocol =
+      destination.kind === "probe"
+        ? undefined
+        : UPSTREAM_PROTOCOL_SPOKEN_BY_CLIENT[converter.protocol];
     return await this.attempts.answer(destination, meter, (target) => {
-      const request = upstreamRequestFor(clientRequest, destination.model, target);
+      const endpoint = callableEndpointOf(
+        target.upstreamModel,
+        UPSTREAM_PROTOCOL_CONVERTERS,
+        preferredProtocol,
+      );
+      const request = upstreamRequestFor(clientRequest, destination.model, target, endpoint);
       return {
-        sentServiceTier: serviceTierSentTo(request.serviceTier, target.upstreamModel),
+        upstreamProtocol: endpoint.protocol,
+        sentServiceTier: serviceTierSentTo(
+          request.serviceTier,
+          target.upstreamModel,
+          endpoint.protocol,
+        ),
         send: (credential) =>
-          this.attempt(converter, request, context, target, credential, {
+          this.attempt(converter, request, context, target, endpoint, credential, {
             cacheKey,
             clientSignal: connection.signal,
             clientHeaders: connection.requestHeaders,
@@ -241,10 +260,11 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     request: InferenceRequest,
     context: ResponseContext,
     target: AttemptTarget,
+    endpoint: AttemptEndpoint,
     credential: ProviderAccountCredential,
     { meter, ...callOptions }: AttemptOptions,
   ): Promise<AttemptResult> {
-    const call = this.upstreamCallFor(request, target, credential, callOptions);
+    const call = this.upstreamCallFor(request, target, endpoint, credential, callOptions);
     if (!request.stream) {
       const { response, upstreamRequestId } = await this.upstream.complete(call);
       meter.attemptAnswered(upstreamRequestId);
@@ -260,21 +280,19 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   private upstreamCallFor(
     request: InferenceRequest,
     { route, upstreamModel }: AttemptTarget,
+    endpoint: AttemptEndpoint,
     credential: ProviderAccountCredential,
     { destination, cacheKey, clientSignal, clientHeaders }: Omit<AttemptOptions, "meter">,
   ): UpstreamCall {
     const { provider } = upstreamModel;
-    const quirks = validQuirksOf(provider);
-    const sentServiceTier = serviceTierSentTo(request.serviceTier, upstreamModel);
-    const endpoint = endpointOf(upstreamModel);
-    const converter = endpoint && UPSTREAM_PROTOCOL_CONVERTERS[endpoint.protocol];
-    if (!endpoint || !converter) {
-      throw new Error(
-        `The Provider ${provider.slug} has no ${upstreamModel.kind} endpoint the gateway can call`,
-      );
-    }
+    const quirks = quirksSentThrough(endpoint.protocol, validQuirksOf(provider));
+    const sentServiceTier = serviceTierSentTo(
+      request.serviceTier,
+      upstreamModel,
+      endpoint.protocol,
+    );
     return {
-      converter,
+      converter: endpoint.adapter,
       request,
       target: {
         baseUrl: endpoint.baseUrl,
@@ -357,6 +375,7 @@ function upstreamRequestFor(
   clientRequest: InferenceRequest,
   model: SnapshotModel | null,
   { route, upstreamModel }: AttemptTarget,
+  endpoint: AttemptEndpoint,
 ): InferenceRequest {
   if (!model) {
     return clientRequest;
@@ -365,21 +384,18 @@ function upstreamRequestFor(
     clientRequest,
     effectiveParameterPolicy(model.parameterPolicy, route?.parameterPolicyOverride ?? null),
   );
-  return withCacheBreakpointsFor(model, upstreamModel, policed);
+  return withCacheBreakpointsFor(model, upstreamModel, endpoint, policed);
 }
 
 function withCacheBreakpointsFor(
   model: SnapshotModel,
   upstreamModel: SnapshotUpstreamModel,
+  endpoint: AttemptEndpoint,
   request: InferenceRequest,
 ): InferenceRequest {
-  const { provider } = upstreamModel;
-  if (
-    !model.hasAutomaticCacheBreakpoints ||
-    provider.endpoints.chat?.protocol !== "anthropic-messages"
-  ) {
+  if (!model.hasAutomaticCacheBreakpoints || endpoint.protocol !== "anthropic-messages") {
     return request;
   }
-  const { cacheMarkerLimit } = validQuirksOf(provider);
+  const { cacheMarkerLimit } = validQuirksOf(upstreamModel.provider);
   return withAutomaticCacheBreakpoints(request, cacheMarkerLimit ?? DEFAULT_CACHE_MARKER_LIMIT);
 }

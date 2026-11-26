@@ -5,19 +5,22 @@ import { type AnyColumn, and, eq, inArray, isNull, or, type SQL, sql } from "dri
 import type { Database, Transaction } from "@/db/schemas/relations.js";
 import {
   pricingWindows,
+  type ProviderEndpoint,
   providers,
   upstreamModelPricingWindows,
   upstreamModels,
+  type UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import {
   SeedCatalogCommand,
   type SeedResult,
 } from "@/catalog/commands/impl/seed-catalog.command.js";
-import type {
-  CatalogPricingWindow,
-  CatalogUpstreamModel,
-  CatalogWindowPrices,
+import {
+  type CatalogPricingWindow,
+  type CatalogUpstreamModel,
+  type CatalogWindowPrices,
 } from "@/catalog/schemas/catalog.schema.js";
+import { protocolsWithoutEndpoint } from "@/libs/models/provider-protocols.js";
 import { selectAttachedPricingWindows } from "@/pricing-windows/models/upstream-model-pricing-windows.js";
 import {
   doWindowPricesOverlap,
@@ -28,6 +31,14 @@ type NamedWindowPricesTiming = WindowPricesTiming & { name: string };
 
 function fillPrice(column: AnyColumn, catalogPrice: number | null): SQL {
   return sql`coalesce(${column}, ${catalogPrice}::numeric)`;
+}
+
+function protocolsServedBy(
+  storedEndpoints: readonly ProviderEndpoint[],
+  model: CatalogUpstreamModel,
+): UpstreamProtocol[] {
+  const unserved = protocolsWithoutEndpoint(model, storedEndpoints);
+  return (model.protocols ?? []).filter((protocol) => !unserved.includes(protocol));
 }
 
 function fillEmpty(
@@ -137,6 +148,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
               cacheReadPrice: model.cacheReadPrice,
               cacheWritePrice: model.cacheWritePrice,
               kind: model.kind ?? "chat",
+              protocols: protocolsServedBy(provider.endpoints, model),
               pricePerImage: model.pricePerImage ?? null,
               pricePerImageBySize: model.pricePerImageBySize ?? null,
               pricePerInputImage: model.pricePerInputImage ?? null,

@@ -38,6 +38,7 @@ export interface SnapshotProviderAccount {
 }
 
 export interface SnapshotEndpoint {
+  kind: ModelKind;
   protocol: UpstreamProtocol;
   baseUrl: string;
 }
@@ -46,7 +47,7 @@ export interface SnapshotProvider {
   id: string;
   slug: string;
   name: string;
-  endpoints: Partial<Record<ModelKind, SnapshotEndpoint>>;
+  endpoints: SnapshotEndpoint[];
   authStyle: AuthStyle;
   quirks: z.ZodSafeParseResult<StoredProviderQuirks>;
   serviceTierValues: ServiceTierValues;
@@ -71,6 +72,7 @@ export interface SnapshotUpstreamModel {
   id: string;
   upstreamModelId: string;
   kind: ModelKind;
+  protocols: UpstreamProtocol[];
   capabilities: Capability[];
   contextSize: number | null;
   maxOutputTokens: number | null;

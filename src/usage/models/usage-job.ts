@@ -4,6 +4,7 @@ import type {
   PricesByTier,
   GatewayErrorCode,
   RecordedAttemptFailure,
+  UpstreamProtocol,
 } from "@/db/schemas/index.js";
 import type { ServiceTier, TokenUsage } from "@/inference/models/internal-format.js";
 
@@ -70,6 +71,7 @@ export interface RequestNames {
 
 export interface ServedBy extends QueuedServingTarget {
   upstreamModelId: string;
+  upstreamProtocol?: UpstreamProtocol | null;
   serviceTier?: ServiceTier | null;
   prices: UpstreamModelPrices;
   pricingWindowName?: string | null;
@@ -78,6 +80,7 @@ export interface ServedBy extends QueuedServingTarget {
 
 export interface AttemptRecord extends QueuedServingTarget {
   startedAt: string;
+  upstreamProtocol?: UpstreamProtocol | null;
   upstreamStatus: number | null;
   failureReason: RecordedAttemptFailure | null;
   durationMs: number;

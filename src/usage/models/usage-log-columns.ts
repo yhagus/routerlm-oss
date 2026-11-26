@@ -12,6 +12,7 @@ export const usageLogSummaryColumns = {
   customerId: usageLogs.customerId,
   isPlayground: usageLogs.isPlayground,
   clientProtocol: usageLogs.clientProtocol,
+  upstreamProtocol: usageLogs.upstreamProtocol,
   isStreamed: usageLogs.isStreamed,
   httpStatus: usageLogs.httpStatus,
   errorCode: usageLogs.errorCode,

@@ -87,7 +87,7 @@ describe("Providers (e2e)", () => {
     );
   });
 
-  it("refuses a Provider with two endpoints of the same Kind", async () => {
+  it("refuses a Provider with two endpoints of the same Protocol", async () => {
     const response = await request(app.getHttpServer())
       .post("/api/providers")
       .set("Cookie", cookie)
@@ -95,12 +95,12 @@ describe("Providers (e2e)", () => {
         ...ACME,
         endpoints: [
           ACME.endpoints[0],
-          { kind: "chat", protocol: "openai-responses", baseUrl: "https://api.acme.example/v1" },
+          { kind: "chat", protocol: "openai-chat", baseUrl: "https://eu.acme.example/v1" },
         ],
       })
       .expect(400);
 
-    expect(JSON.stringify(response.body)).toContain("at most one endpoint per Kind");
+    expect(JSON.stringify(response.body)).toContain("at most one endpoint per Protocol");
   });
 
   it("edits a Provider's endpoints and disables it", async () => {

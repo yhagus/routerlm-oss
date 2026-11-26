@@ -68,10 +68,20 @@ export interface ProviderEndpoint {
   baseUrl: string;
 }
 
-export function chatEndpointOf(
-  provider: Pick<Provider, "endpoints">,
-): ProviderEndpoint | undefined {
-  return provider.endpoints.find((endpoint) => endpoint.kind === "chat");
+export function servesProtocol(
+  endpoints: readonly ProviderEndpoint[],
+  protocol: UpstreamProtocol,
+): boolean {
+  return endpoints.some((endpoint) => endpoint.protocol === protocol);
+}
+
+export function endpointProtocolsOf(
+  endpoints: readonly ProviderEndpoint[],
+  kind: ModelKind,
+): UpstreamProtocol[] {
+  return endpoints
+    .filter((endpoint) => endpoint.kind === kind)
+    .map((endpoint) => endpoint.protocol);
 }
 
 export function mainBaseUrl(endpoints: readonly { kind: string; baseUrl: string }[]): string {
@@ -231,6 +241,7 @@ export interface UpstreamModel {
   upstreamModelId: string;
   name: string | null;
   kind: ModelKind;
+  protocols: UpstreamProtocol[];
   capabilities: Capability[];
   contextSize: number | null;
   maxOutputTokens: number | null;

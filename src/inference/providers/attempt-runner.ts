@@ -1,6 +1,7 @@
 import { HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { CommandBus } from "@nestjs/cqrs";
 import { ReadProviderAccountQuotaCommand } from "@/quota-meters/commands/impl/read-provider-account-quota.command.js";
+import type { UpstreamProtocol } from "@/db/schemas/index.js";
 import type { SnapshotProviderAccount } from "@/snapshot/models/snapshot.js";
 import { MarkProviderAccountExhaustedCommand } from "@/upstream/commands/impl/mark-provider-account-exhausted.command.js";
 import { SIGN_IN_AGAIN_REASON } from "@/upstream/models/oauth-login.js";
@@ -40,6 +41,7 @@ const DISABLES_REFUSED_LOGIN: CredentialReadOptions = { disablesRefusedLogin: tr
 const LEAVES_REFUSED_LOGIN_ENABLED: CredentialReadOptions = { disablesRefusedLogin: false };
 
 export interface PreparedAttempt<Answer> {
+  upstreamProtocol: UpstreamProtocol;
   sentServiceTier: SentServiceTier | null;
   send(credential: ProviderAccountCredential): Promise<Answer>;
 }
@@ -198,7 +200,7 @@ export class AttemptRunner {
     credentialOptions: CredentialReadOptions,
   ): Promise<Answer> {
     const account = target.providerAccount;
-    meter.attemptStarted(target, attempt.sentServiceTier);
+    meter.attemptStarted(target, attempt.upstreamProtocol, attempt.sentServiceTier);
     const credential = await this.credentialOf(account, credentialOptions);
     meter.credentialUsed(credential.secret);
     try {
@@ -212,7 +214,7 @@ export class AttemptRunner {
           "refreshing it and trying once more",
       );
       meter.attemptFailed(error);
-      meter.attemptStarted(target, attempt.sentServiceTier);
+      meter.attemptStarted(target, attempt.upstreamProtocol, attempt.sentServiceTier);
       const renewed = await asAttemptFailure(() =>
         this.credentials.credentialAfterRejection(account.id, credential, credentialOptions),
       );

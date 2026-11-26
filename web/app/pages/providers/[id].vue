@@ -13,7 +13,7 @@ import {
   type Provider,
   type ProviderAccount,
   type UpstreamModel,
-  chatEndpointOf,
+  servesProtocol,
   mainBaseUrl,
   MODEL_KIND_LABELS,
   PROTOCOL_LABELS,
@@ -321,7 +321,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
                 <dt>Slug</dt>
                 <dd>{{ provider.slug }}</dd>
               </div>
-              <template v-if="chatEndpointOf(provider)?.protocol === 'openai-chat'">
+              <template v-if="servesProtocol(provider.endpoints, 'openai-chat')">
                 <div>
                   <dt>Reasoning in history</dt>
                   <dd>
@@ -337,7 +337,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", tim
                   <dd>{{ requestFields(provider) }}</dd>
                 </div>
               </template>
-              <div v-if="chatEndpointOf(provider)?.protocol === 'anthropic-messages'">
+              <div v-if="servesProtocol(provider.endpoints, 'anthropic-messages')">
                 <dt>Cache marker limit</dt>
                 <dd class="tabular">
                   {{ provider.quirks.cacheMarkerLimit ?? 4

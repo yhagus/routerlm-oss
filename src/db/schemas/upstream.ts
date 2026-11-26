@@ -273,6 +273,7 @@ export const upstreamModels = pgTable(
     upstreamModelId: text("upstream_model_id").notNull(),
     name: text("name"),
     kind: text("kind", { enum: MODEL_KINDS }).notNull().default("chat"),
+    protocols: text("protocols", { enum: UPSTREAM_PROTOCOLS }).array().notNull().default([]),
     capabilities: text("capabilities", { enum: CAPABILITIES }).array("[]").notNull().default([]),
     contextSize: integer("context_size"),
     maxOutputTokens: integer("max_output_tokens"),

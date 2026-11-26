@@ -405,6 +405,45 @@ describe("Seed Catalog command (e2e)", () => {
     expect(imageModels).toEqual([]);
   });
 
+  describe("with an Upstream Model that lists Protocols", () => {
+    const listedCatalog: CatalogProvider[] = [
+      {
+        ...catalog[0],
+        slug: "listed",
+        name: "Listed",
+        endpoints: [
+          { kind: "chat", protocol: "openai-chat", baseUrl: "https://api.listed.example/v1" },
+          { kind: "chat", protocol: "anthropic-messages", baseUrl: "https://api.listed.example" },
+        ],
+        upstreamModels: [
+          { ...catalog[0].upstreamModels[0], protocols: ["anthropic-messages", "openai-chat"] },
+        ],
+      },
+    ];
+
+    async function listedProtocols(): Promise<string[] | undefined> {
+      const provider = await db.query.providers.findFirst({
+        where: { slug: "listed" },
+        with: { upstreamModels: true },
+      });
+      return provider?.upstreamModels[0]?.protocols;
+    }
+
+    it("creates the Upstream Model with the Protocols in the Catalog's order", async () => {
+      await commandBus.execute(new SeedCatalogCommand(listedCatalog));
+
+      expect(await listedProtocols()).toEqual(["anthropic-messages", "openai-chat"]);
+    });
+
+    it("keeps an emptied list when run again", async () => {
+      await db.update(schema.upstreamModels).set({ protocols: [] });
+
+      await commandBus.execute(new SeedCatalogCommand(listedCatalog));
+
+      expect(await listedProtocols()).toEqual([]);
+    });
+  });
+
   it("keeps a logo the operator chose", async () => {
     await db
       .update(schema.providers)

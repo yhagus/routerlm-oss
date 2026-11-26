@@ -3025,6 +3025,47 @@ tbody tr:hover {
   justify-self: start;
   margin-top: 2px;
 }
+.protocol-order {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.protocol-order > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+}
+.protocol-order__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: protocol-order;
+}
+.protocol-order__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(3, 32px);
+  align-items: center;
+  gap: 4px;
+  counter-increment: protocol-order;
+}
+.protocol-order__name::before {
+  content: counter(protocol-order) ". ";
+  color: var(--faint);
+}
+.protocol-order__item .icon-button:disabled {
+  opacity: 0.4;
+}
+.protocol-order__add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 @media (max-width: 560px) {
   .endpoint-list__head {
     display: none;

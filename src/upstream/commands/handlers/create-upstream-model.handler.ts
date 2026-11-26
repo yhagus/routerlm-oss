@@ -4,8 +4,10 @@ import { InjectDrizzle } from "@nestjs/drizzle";
 import type { Database } from "@/db/schemas/relations.js";
 import { eq } from "drizzle-orm";
 import { providers, upstreamModels } from "@/db/schemas/index.js";
+import { kindOf } from "@/libs/models/provider-protocols.js";
 import { SnapshotService } from "@/snapshot/providers/snapshot.service.js";
 import {
+  assertProtocolsFitProvider,
   assertProviderServesKind,
   assertServiceTiersFitProvider,
   toUpstreamModelWriteError,
@@ -28,7 +30,8 @@ export class CreateUpstreamModelHandler implements ICommandHandler<CreateUpstrea
     if (!provider) {
       throw new NotFoundException("Provider not found");
     }
-    assertProviderServesKind(newUpstreamModel.kind ?? "chat", provider.endpoints);
+    assertProviderServesKind(kindOf(newUpstreamModel), provider.endpoints);
+    assertProtocolsFitProvider(newUpstreamModel, provider.endpoints);
     assertServiceTiersFitProvider(
       {
         serviceTiers: newUpstreamModel.serviceTiers ?? [],

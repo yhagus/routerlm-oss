@@ -22,6 +22,7 @@ import type {
   MediaClientContract,
   MediaReply,
   MediaRequest,
+  MediaUpstreamProtocol,
 } from "@/inference/models/media-kind.js";
 import { withMediaPlaceholders } from "@/inference/models/media-placeholders.js";
 import {
@@ -31,6 +32,7 @@ import {
 import { failedRequestUsage, requestOwnerOf } from "@/inference/models/request-usage.js";
 import { type AttemptTarget, endpointOf, routePath } from "@/inference/models/route-selection.js";
 import { UsageMeter } from "@/inference/models/usage-meter.js";
+import { type CallableEndpoint, callableEndpointOf } from "@/inference/models/callable-endpoint.js";
 import { upstreamAuthHeaders } from "@/inference/protocols/converters.js";
 import { AttemptRunner } from "@/inference/providers/attempt-runner.js";
 import { CallerLimits } from "@/inference/providers/caller-limits.js";
@@ -39,6 +41,8 @@ import { DEFAULT_TIMEOUTS, totalTimeoutMsOf } from "@/inference/providers/upstre
 import { RunMediaInferenceCommand } from "@/inference/commands/impl/run-media-inference.command.js";
 
 const HTTP_OK = 200;
+
+type MediaEndpoint = CallableEndpoint<MediaUpstreamProtocol<MediaRequest, unknown>>;
 
 @CommandHandler(RunMediaInferenceCommand)
 export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferenceCommand> {
@@ -80,14 +84,14 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     meter.requestParsed(false);
     const destination = this.resolve(command, request, meter);
     const createdAt = new Date();
-    const { result, servedBy } = await this.attempts.answer(
-      destination,
-      meter,
-      (attemptTarget) => ({
+    const { result, servedBy } = await this.attempts.answer(destination, meter, (attemptTarget) => {
+      const endpoint = callableEndpointOf(attemptTarget.upstreamModel, contract.upstreamProtocols);
+      return {
+        upstreamProtocol: endpoint.protocol,
         sentServiceTier: null,
         send: async (credential) => {
           const outcome = await this.upstream.generate({
-            ...this.upstreamCallFor(contract, destination, attemptTarget, credential),
+            ...this.upstreamCallFor(destination, attemptTarget, endpoint, credential),
             request: policedRequest(contract, request, destination, attemptTarget.route),
             clientSignal: connection.signal,
           });
@@ -102,8 +106,8 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
             },
           };
         },
-      }),
-    );
+      };
+    });
     const reply = contract.writeResponse(result, {
       modelName: destination.name,
       createdAt,
@@ -185,21 +189,14 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
   }
 
   private upstreamCallFor(
-    contract: MediaClientContract<MediaRequest, unknown>,
     destination: Destination,
     { route, upstreamModel }: AttemptTarget,
+    endpoint: MediaEndpoint,
     credential: ProviderAccountCredential,
   ) {
     const { provider } = upstreamModel;
-    const endpoint = endpointOf(upstreamModel);
-    const protocol = endpoint && contract.upstreamProtocols[endpoint.protocol];
-    if (!endpoint || !protocol) {
-      throw new Error(
-        `The Provider ${provider.slug} has no ${upstreamModel.kind} endpoint the gateway can call`,
-      );
-    }
     return {
-      protocol,
+      protocol: endpoint.adapter,
       target: {
         baseUrl: endpoint.baseUrl,
         upstreamModelId: upstreamModel.upstreamModelId,
