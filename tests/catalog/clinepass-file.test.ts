@@ -8,7 +8,7 @@ describe('The ClinePass Catalog file', () => {
     return provider;
   }
 
-  it("ships Cline's chat host asking for unwrapped answers, flagged as Terms Risk", async () => {
+  it("ships Cline's chat host asking for unwrapped answers, not flagged as Terms Risk", async () => {
     const provider = await shipped();
 
     expect(provider).toMatchObject({
@@ -18,7 +18,7 @@ describe('The ClinePass Catalog file', () => {
       ],
       authStyle: 'bearer',
       logo: 'cline',
-      termsRisk: true,
+      termsRisk: false,
       quirks: { fixedHeaders: { 'x-response-format': 'openai' } },
     });
     expect(provider.quirks.exhaustedErrorCodes).toBeUndefined();

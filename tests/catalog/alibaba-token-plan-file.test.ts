@@ -8,7 +8,7 @@ describe('The Alibaba Token Plan Catalog file', () => {
     return provider;
   }
 
-  it("ships the plan's Singapore chat host for API keys only, flagged as Terms Risk", async () => {
+  it("ships the plan's Singapore chat host for API keys only, not flagged as Terms Risk", async () => {
     const provider = await shipped();
 
     expect(provider).toMatchObject({
@@ -22,7 +22,7 @@ describe('The Alibaba Token Plan Catalog file', () => {
       ],
       authStyle: 'bearer',
       logo: 'alibabacloud',
-      termsRisk: true,
+      termsRisk: false,
       credentialKinds: ['api-key'],
       quirks: {},
     });

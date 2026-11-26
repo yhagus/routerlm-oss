@@ -8,7 +8,7 @@ describe('The Z.ai Catalog files', () => {
     return provider;
   }
 
-  it('ships the GLM Coding Plan on its coding host, flagged as Terms Risk', async () => {
+  it('ships the GLM Coding Plan on its coding host, not flagged as Terms Risk', async () => {
     const provider = await shipped('zai-coding-plan');
 
     expect(provider).toMatchObject({
@@ -22,7 +22,7 @@ describe('The Z.ai Catalog files', () => {
       ],
       authStyle: 'bearer',
       logo: 'zai',
-      termsRisk: true,
+      termsRisk: false,
     });
     expect(provider.quotaReader).toBeUndefined();
   });

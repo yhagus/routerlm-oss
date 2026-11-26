@@ -2,7 +2,7 @@
   "slug": "xiaomi-mimo-token-plan",
   "name": "Xiaomi MiMo Token Plan",
   "logo": "xiaomimimo",
-  "termsRisk": true,
+  "termsRisk": false,
   "endpoints": [
     {
       "kind": "chat",
@@ -22,7 +22,7 @@
     ],
     "retrievedOn": "2026-11-18"
   },
-  "notes": "Subscription with a monthly Credit quota and no per-token prices; each model carries the list prices of its Xiaomi MiMo pay-as-you-go equivalent, so Cost is what a request would cost there. Takes a Token Plan API key (tp-... for individual plans, ttp-... for team seats), which is not interchangeable with a pay-as-you-go key (sk-...). Three regional clusters serve the plan: Singapore (shipped), China (https://token-plan-cn.xiaomimimo.com/v1) and Europe (https://token-plan-ams.xiaomimimo.com/v1); an operator whose console shows another region edits the base URL. The docs' examples send the key in an api-key header; the gateway sends it as a bearer token, as for Xiaomi MiMo. Only the V2.6 chat models are shipped: the plan's ASR and TTS models have no Model Kind, mimo-v2.6-pro-ultraspeed is not on the plan, and the V2.5 chat models were retired on 2026-10-21. No usage endpoint or quota-exhausted error code is documented, so the Provider has no quota reader and an exhausted key goes into Cooldown. Individual plans appear to have 5-hour and weekly limits besides the monthly quota (the team page says team seats have none), but the docs give no numbers. Terms risk: the docs limit the quota to programming tools such as OpenCode and OpenClaw, prohibit API use in non-coding scenarios such as automated scripts and custom application backends, and say the platform may suspend the subscription and block the key for use outside that scope.",
+  "notes": "Subscription with a monthly Credit quota and no per-token prices; each model carries the list prices of its Xiaomi MiMo pay-as-you-go equivalent, so Cost is what a request would cost there. Takes a Token Plan API key (tp-... for individual plans, ttp-... for team seats), which is not interchangeable with a pay-as-you-go key (sk-...). Three regional clusters serve the plan: Singapore (shipped), China (https://token-plan-cn.xiaomimimo.com/v1) and Europe (https://token-plan-ams.xiaomimimo.com/v1); an operator whose console shows another region edits the base URL. The docs' examples send the key in an api-key header; the gateway sends it as a bearer token, as for Xiaomi MiMo. Only the V2.6 chat models are shipped: the plan's ASR and TTS models have no Model Kind, mimo-v2.6-pro-ultraspeed is not on the plan, and the V2.5 chat models were retired on 2026-10-21. No usage endpoint or quota-exhausted error code is documented, so the Provider has no quota reader and an exhausted key goes into Cooldown. Individual plans appear to have 5-hour and weekly limits besides the monthly quota (the team page says team seats have none), but the docs give no numbers. Not flagged for Terms Risk (ADR 0099): the docs publish the plan's base URLs for programming tools such as OpenCode and OpenClaw, though they prohibit API use in non-coding scenarios such as automated scripts and custom application backends, and say the platform may suspend the subscription and block the key for use outside that scope. The key must not be disclosed to others.",
   "upstreamModels": [
     {
       "upstreamModelId": "mimo-v2.6-pro",

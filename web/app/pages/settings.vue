@@ -299,9 +299,9 @@ async function confirmShortening(): Promise<void> {
           Allow terms-risk providers
         </label>
         <p class="model-choices__hint">
-          Providers marked Terms risk, such as Kimi Code and MiniMax M Plan, may breach their
-          provider's terms of use when used through a gateway. While this is off they cannot be
-          used; they are not disabled, and turning this on makes them usable again.
+          Providers marked Terms risk, such as Kimi Code and OpenAI Codex, sign in as the provider's
+          own app, which may breach its terms of use. While this is off they cannot be used; they
+          are not disabled, and turning this on makes them usable again.
         </p>
         <p v-if="termsRiskError" class="form__error" role="alert">{{ termsRiskError }}</p>
       </div>
@@ -366,7 +366,7 @@ async function confirmShortening(): Promise<void> {
     <AppDialog
       v-model:open="isAllowConfirmOpen"
       title="Allow terms-risk providers?"
-      description="Using these Providers through a gateway may breach their terms of use, which can put the accounts behind them at risk."
+      description="These Providers sign in as the provider's own app, which may breach its terms of use and can put the accounts behind them at risk."
     >
       <div class="dialog__actions">
         <button class="button" type="button" @click="isAllowConfirmOpen = false">Cancel</button>

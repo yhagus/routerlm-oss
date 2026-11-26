@@ -8,7 +8,7 @@ describe('The Meta AI Catalog file', () => {
     return provider;
   }
 
-  it('ships Meta AI on its Responses endpoint, flagged as Terms Risk', async () => {
+  it('ships Meta AI on its Responses endpoint, not flagged as Terms Risk', async () => {
     const provider = await shipped();
 
     expect(provider).toMatchObject({
@@ -17,7 +17,7 @@ describe('The Meta AI Catalog file', () => {
       ],
       authStyle: 'bearer',
       logo: 'meta',
-      termsRisk: true,
+      termsRisk: false,
     });
   });
 

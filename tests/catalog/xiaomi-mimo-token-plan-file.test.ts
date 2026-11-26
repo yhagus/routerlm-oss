@@ -8,7 +8,7 @@ describe('The Xiaomi MiMo Token Plan Catalog file', () => {
     return provider;
   }
 
-  it('ships the Token Plan on its Singapore cluster for API keys only, flagged as Terms Risk', async () => {
+  it('ships the Token Plan on its Singapore cluster for API keys only, not flagged as Terms Risk', async () => {
     const provider = await shipped();
 
     expect(provider).toMatchObject({
@@ -21,7 +21,7 @@ describe('The Xiaomi MiMo Token Plan Catalog file', () => {
       ],
       authStyle: 'bearer',
       logo: 'xiaomimimo',
-      termsRisk: true,
+      termsRisk: false,
       credentialKinds: ['api-key'],
     });
     expect(provider.quotaReader).toBeUndefined();

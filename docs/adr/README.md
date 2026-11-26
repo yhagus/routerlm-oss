@@ -44,6 +44,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0068 Catalog Gaps are computed against the database and only the five newest models are checked](0068-catalog-gaps-are-computed-against-the-database-and-only-the-five-newest.md)
 - [0069 Provider quirk flags have fixed precedence and lookup rules](0069-provider-quirk-flags-have-fixed-precedence-and-lookup-rules.md)
 - [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
+- [0099 Terms Risk flags only Providers the gateway uses by posing as their own client](0099-terms-risk-flags-only-providers-the-gateway-uses-by-posing-as-their-own.md)
 
 ## control-plane
 
@@ -152,6 +153,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 
 - [0017 Settings a User changes from the dashboard live in the database, not in env](0017-user-changeable-settings-live-in-the-database.md)
 - [0030 Private upstreams are allowed by a Setting, not an env variable](0030-private-upstreams-are-allowed-by-a-setting.md)
+- [0099 Terms Risk flags only Providers the gateway uses by posing as their own client](0099-terms-risk-flags-only-providers-the-gateway-uses-by-posing-as-their-own.md)
 
 ## snapshot
 

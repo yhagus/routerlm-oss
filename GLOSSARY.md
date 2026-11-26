@@ -41,7 +41,7 @@ A company or service whose inference API the gateway calls, such as DeepSeek or 
 _Avoid_: Upstream, vendor, channel
 
 **Terms Risk**:
-A flag on a Provider whose documented terms the gateway's use may breach, such as a plan limited to interactive use by one person. While the "allow terms-risk providers" Setting is off (the default), such a Provider is unusable: no inference, not listed to clients, though its own enabled flag is untouched.
+A flag on a Provider that the gateway can only use by presenting the identity of the Provider's own client, such as signing in as its official CLI. A Provider that publishes its inference URL and how to call it is taken to allow use through an external tool or service such as the gateway, whatever its terms say about which tools, scenarios or backends may use it; terms against sharing or reselling access do not count either. While the "allow terms-risk providers" Setting is off (the default), such a Provider is unusable: no inference, not listed to clients, though its own enabled flag is untouched.
 
 **Provider Account**:
 One credential the gateway holds at one Provider, either an API key or an OAuth Login, with its own Quota Meters when it is a Subscription Provider.
