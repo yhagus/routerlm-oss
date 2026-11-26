@@ -77,6 +77,7 @@ const providerAccountFieldsSchema = z.strictObject({
   priority: z.int().nonnegative(),
   isEnabled: z.boolean(),
   continueWhenExhausted: z.boolean(),
+  paysBeyondPlan: z.boolean(),
 });
 
 export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
@@ -89,6 +90,7 @@ export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
   priority: z.int().nonnegative().optional(),
   isEnabled: z.boolean().optional(),
   continueWhenExhausted: z.boolean().optional(),
+  paysBeyondPlan: z.boolean().optional(),
 });
 export type NewProviderAccount = z.infer<typeof newProviderAccountSchema>;
 
