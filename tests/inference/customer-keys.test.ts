@@ -9,6 +9,7 @@ import { attempts } from '@/db/schemas';
 import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
 import { insertOpenAiChatModel } from '@tests/support/inference';
 import { createIntegration } from '@tests/support/integrations';
+import { insertModelGroup } from '@tests/support/model-groups';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
 import { writtenUsageLog } from '@tests/support/usage-logs';
 import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
@@ -132,5 +133,20 @@ describe("Inference with a Customer's API Key (e2e)", () => {
 
     await chat(key, 'unsold').expect(403);
     await chat(key, 'smart').expect(200);
+  });
+
+  it('lets a key with no allowed Models use the Models in the Model Groups its Integration may sell', async () => {
+    await insertOpenAiChatModel(app, db, { modelName: 'unsold', baseUrl: upstream.baseUrl });
+    const fastGroupId = await insertModelGroup(app, db, 'fast', [smartModelId]);
+    await request(app.getHttpServer())
+      .patch(`/api/integrations/${acme.id}`)
+      .set('Cookie', adaCookie)
+      .send({ allowedModelGroupIds: [fastGroupId] })
+      .expect(200);
+    const key = await issueCustomerKey('cus_42');
+    upstreamAnswers();
+
+    await chat(key, 'unsold').expect(403);
+    await chat(key, 'fast/smart').expect(200);
   });
 });

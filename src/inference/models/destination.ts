@@ -40,7 +40,7 @@ export function usableModel(
   if (!model?.isEnabled) {
     throw new GatewayError('model_not_found', `The Model "${name}" does not exist`, 'client');
   }
-  if (caller.kind === 'api-key' && !mayUseModel(caller.principal, model.id)) {
+  if (caller.kind === 'api-key' && !mayUseModel(caller.principal, model)) {
     throw new GatewayError(
       'model_not_allowed',
       `This API Key may not use the Model "${name}"`,

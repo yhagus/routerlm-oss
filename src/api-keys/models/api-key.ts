@@ -1,9 +1,21 @@
+import {
+  allowsModel,
+  EVERY_MODEL,
+  type GroupedModel,
+  type ModelAllowance,
+} from '@/libs/models/allowed-models';
+
 export interface ModelChoice {
   id: string;
   name: string;
 }
 
 export interface AllowedModel {
+  id: string;
+  name: string | null;
+}
+
+export interface AllowedModelGroup {
   id: string;
   name: string | null;
 }
@@ -19,6 +31,7 @@ export interface ApiKeySummary {
   expiresAt: Date | null;
   revokedAt: Date | null;
   allowedModels: AllowedModel[];
+  allowedModelGroups: AllowedModelGroup[];
   isCopyable: boolean;
   lastRotatedAt: Date | null;
   integration: { id: string; name: string } | null;
@@ -43,24 +56,19 @@ export interface CreatedApiKey extends ApiKeySummary {
 export interface KeyCustomer {
   integrationId: string;
   integrationName: string;
-  integrationAllowedModelIds: string[];
+  integrationAllowance: ModelAllowance;
   customerId: string;
 }
 
-export interface ApiKeyPrincipal {
+export interface ApiKeyPrincipal extends ModelAllowance {
   apiKeyId: string;
   apiKeyName: string;
-  allowedModelIds: string[];
   customer: KeyCustomer | null;
   spendLimit: number | null;
   requestRate: number | null;
 }
 
-export function mayUseModel(principal: ApiKeyPrincipal, modelId: string): boolean {
-  const ceiling = principal.customer?.integrationAllowedModelIds ?? [];
-  return allowsModel(principal.allowedModelIds, modelId) && allowsModel(ceiling, modelId);
-}
-
-function allowsModel(allowedModelIds: string[], modelId: string): boolean {
-  return allowedModelIds.length === 0 || allowedModelIds.includes(modelId);
+export function mayUseModel(principal: ApiKeyPrincipal, model: GroupedModel): boolean {
+  const ceiling = principal.customer?.integrationAllowance ?? EVERY_MODEL;
+  return allowsModel(principal, model) && allowsModel(ceiling, model);
 }

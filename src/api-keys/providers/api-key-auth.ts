@@ -29,6 +29,7 @@ export class ApiKeyAuth extends ApiKeyProvider<ApiKeyPrincipal> {
         apiKeyId: found.id,
         apiKeyName: found.name,
         allowedModelIds: found.allowedModelIds,
+        allowedModelGroupIds: found.allowedModelGroupIds,
         customer: found.customer,
         spendLimit: found.spendLimit,
         requestRate: found.requestRate,

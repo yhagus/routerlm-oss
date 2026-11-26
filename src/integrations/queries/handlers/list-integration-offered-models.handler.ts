@@ -26,6 +26,7 @@ export class ListIntegrationOfferedModelsHandler implements IQueryHandler<ListIn
         integrationId: integrations.id,
         integrationName: integrations.name,
         allowedModelIds: integrations.allowedModelIds,
+        allowedModelGroupIds: integrations.allowedModelGroupIds,
       })
       .from(integrations)
       .where(eq(integrations.id, integrationId));

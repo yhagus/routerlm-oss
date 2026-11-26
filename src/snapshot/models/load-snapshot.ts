@@ -54,12 +54,14 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         hash: apiKeys.hash,
         expiresAt: apiKeys.expiresAt,
         allowedModelIds: apiKeys.allowedModelIds,
+        allowedModelGroupIds: apiKeys.allowedModelGroupIds,
         spendLimit: apiKeys.spendLimit,
         requestRate: apiKeys.requestRate,
         customerId: apiKeys.customerId,
         integrationId: integrations.id,
         integrationName: integrations.name,
         integrationAllowedModelIds: integrations.allowedModelIds,
+        integrationAllowedModelGroupIds: integrations.allowedModelGroupIds,
       })
       .from(apiKeys)
       .leftJoin(integrations, eq(apiKeys.integrationId, integrations.id))
@@ -200,6 +202,9 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       parameterPolicy: model.parameterPolicy,
       hasAutomaticCacheBreakpoints: model.hasAutomaticCacheBreakpoints,
       createdAt: model.createdAt,
+      groupIds: (membershipsByModelId.get(model.id) ?? []).map(
+        (membership) => membership.modelGroupId,
+      ),
       groupSlugs: (membershipsByModelId.get(model.id) ?? [])
         .flatMap((membership) => slugsByGroupId.get(membership.modelGroupId) ?? [])
         .sort(),
@@ -221,14 +226,23 @@ function snapshotApiKeyOf(row: {
   hash: string;
   expiresAt: Date | null;
   allowedModelIds: string[];
+  allowedModelGroupIds: string[];
   spendLimit: number | null;
   requestRate: number | null;
   customerId: string | null;
   integrationId: string | null;
   integrationName: string | null;
   integrationAllowedModelIds: string[] | null;
+  integrationAllowedModelGroupIds: string[] | null;
 }): SnapshotApiKey {
-  const { customerId, integrationId, integrationName, integrationAllowedModelIds, ...key } = row;
+  const {
+    customerId,
+    integrationId,
+    integrationName,
+    integrationAllowedModelIds,
+    integrationAllowedModelGroupIds,
+    ...key
+  } = row;
   const isIssuedByIntegration =
     integrationId !== null && integrationName !== null && customerId !== null;
   return {
@@ -237,7 +251,10 @@ function snapshotApiKeyOf(row: {
       ? {
           integrationId,
           integrationName,
-          integrationAllowedModelIds: integrationAllowedModelIds ?? [],
+          integrationAllowance: {
+            allowedModelIds: integrationAllowedModelIds ?? [],
+            allowedModelGroupIds: integrationAllowedModelGroupIds ?? [],
+          },
           customerId,
         }
       : null,

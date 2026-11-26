@@ -1,7 +1,7 @@
 import { desc, eq, max, type SQL, sql } from 'drizzle-orm';
 import type { Database } from '@/db/schemas/relations';
 import { apiKeyRotations, apiKeys, integrations, users } from '@/db/schemas';
-import { findModelNames } from '@/libs/models/allowed-models';
+import { findModelGroupNames, findModelNames } from '@/libs/models/allowed-models';
 import type { ApiKeySummary } from './api-key';
 
 export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<ApiKeySummary[]> {
@@ -24,6 +24,7 @@ export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<
       expiresAt: apiKeys.expiresAt,
       revokedAt: apiKeys.revokedAt,
       allowedModelIds: apiKeys.allowedModelIds,
+      allowedModelGroupIds: apiKeys.allowedModelGroupIds,
       isCopyable: sql<boolean>`${apiKeys.encryptedKey} is not null`,
       lastRotatedAt: lastRotations.lastRotatedAt,
       integrationId: integrations.id,
@@ -43,13 +44,29 @@ export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<
     db,
     rows.flatMap((row) => row.allowedModelIds),
   );
+  const modelGroupNames = await findModelGroupNames(
+    db,
+    rows.flatMap((row) => row.allowedModelGroupIds),
+  );
   return rows.map(
-    ({ creatorId, creatorEmail, allowedModelIds, integrationId, integrationName, ...row }) => ({
+    ({
+      creatorId,
+      creatorEmail,
+      allowedModelIds,
+      allowedModelGroupIds,
+      integrationId,
+      integrationName,
+      ...row
+    }) => ({
       ...row,
       createdBy: creatorId && creatorEmail ? { id: creatorId, email: creatorEmail } : null,
       integration:
         integrationId && integrationName ? { id: integrationId, name: integrationName } : null,
       allowedModels: allowedModelIds.map((id) => ({ id, name: modelNames.get(id) ?? null })),
+      allowedModelGroups: allowedModelGroupIds.map((id) => ({
+        id,
+        name: modelGroupNames.get(id) ?? null,
+      })),
     }),
   );
 }

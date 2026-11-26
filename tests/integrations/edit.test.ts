@@ -74,6 +74,16 @@ describe('Editing an Integration (e2e)', () => {
       .expect(400);
   });
 
+  it('rejects an allowed Model Group that does not exist', async () => {
+    const created = await createIntegration(app, adaCookie);
+
+    await request(app.getHttpServer())
+      .patch(`/api/integrations/${created.id}`)
+      .set('Cookie', adaCookie)
+      .send({ allowedModelGroupIds: [UNKNOWN_ID] })
+      .expect(400);
+  });
+
   it('answers 404 for an Integration that does not exist', async () => {
     await request(app.getHttpServer())
       .patch(`/api/integrations/${UNKNOWN_ID}`)

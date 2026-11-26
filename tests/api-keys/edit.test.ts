@@ -89,6 +89,16 @@ describe('Editing an API Key (e2e)', () => {
       .expect(400);
   });
 
+  it('rejects an allowed Model Group that does not exist', async () => {
+    const created = await createApiKey(app, adaCookie);
+
+    await request(app.getHttpServer())
+      .patch(`/api/api-keys/${created.id}`)
+      .set('Cookie', adaCookie)
+      .send({ allowedModelGroupIds: [UNKNOWN_ID] })
+      .expect(400);
+  });
+
   it('refuses to change a revoked key', async () => {
     const created = await createApiKey(app, adaCookie);
     await request(app.getHttpServer())

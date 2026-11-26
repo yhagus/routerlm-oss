@@ -17,7 +17,7 @@ export class ListClientModelsHandler implements IQueryHandler<ListClientModelsQu
 
   execute({ principal }: ListClientModelsQuery): Promise<ClientModelList> {
     const data = [...this.snapshot.current.modelsByName.values()]
-      .filter((model) => model.isEnabled && mayUseModel(principal, model.id))
+      .filter((model) => model.isEnabled && mayUseModel(principal, model))
       .flatMap(clientModelsOf)
       .sort((a, b) => a.id.localeCompare(b.id));
     return Promise.resolve({ object: 'list', data });

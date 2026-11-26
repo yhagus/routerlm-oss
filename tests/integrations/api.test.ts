@@ -4,6 +4,7 @@ import request from 'supertest';
 import type { Database } from '@/db/schemas/relations';
 import { models } from '@/db/schemas';
 import { authenticateWithIntegrationSecret, createIntegration } from '@tests/support/integrations';
+import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
@@ -19,7 +20,7 @@ describe('Integrations (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table integrations, api_keys, models cascade`);
+    await db.execute(sql`truncate table integrations, api_keys, models, model_groups cascade`);
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
   });
@@ -52,6 +53,7 @@ describe('Integrations (e2e)', () => {
         createdAt: expect.any(String),
         disabledAt: null,
         allowedModels: [{ id: model.id, name: 'smart' }],
+        allowedModelGroups: [],
         lastRotatedAt: null,
         lastUsedAt: null,
       },
@@ -89,6 +91,31 @@ describe('Integrations (e2e)', () => {
       .post('/api/integrations')
       .set('Cookie', adaCookie)
       .send({ name: 'Acme SaaS', allowedModelIds: [UNKNOWN_ID] })
+      .expect(400);
+  });
+
+  it('names the Model Groups a new Integration is allowed, and signs it in with them', async () => {
+    const fastGroupId = await insertModelGroup(app, db, 'fast');
+
+    const created = await request(app.getHttpServer())
+      .post('/api/integrations')
+      .set('Cookie', adaCookie)
+      .send({ name: 'Acme SaaS', allowedModelGroupIds: [fastGroupId] })
+      .expect(201);
+
+    expect(created.body.allowedModelGroups).toEqual([{ id: fastGroupId, name: 'fast group' }]);
+    await expect(
+      authenticateWithIntegrationSecret(app, created.body.secret),
+    ).resolves.toMatchObject({
+      user: { allowedModelIds: [], allowedModelGroupIds: [fastGroupId] },
+    });
+  });
+
+  it('rejects an allowed Model Group that does not exist', async () => {
+    await request(app.getHttpServer())
+      .post('/api/integrations')
+      .set('Cookie', adaCookie)
+      .send({ name: 'Acme SaaS', allowedModelGroupIds: [UNKNOWN_ID] })
       .expect(400);
   });
 });

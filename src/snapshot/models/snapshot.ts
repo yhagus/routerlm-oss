@@ -20,6 +20,7 @@ export interface SnapshotApiKey {
   hash: string;
   expiresAt: Date | null;
   allowedModelIds: string[];
+  allowedModelGroupIds: string[];
   customer: KeyCustomer | null;
   spendLimit: number | null;
   requestRate: number | null;
@@ -128,6 +129,7 @@ export interface SnapshotModel {
   parameterPolicy: ParameterPolicy;
   hasAutomaticCacheBreakpoints: boolean;
   createdAt: Date;
+  groupIds: string[];
   groupSlugs: string[];
   routes: SnapshotRoute[];
 }

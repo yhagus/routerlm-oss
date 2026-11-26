@@ -45,6 +45,7 @@ export const integrations = pgTable('integrations', {
   keyId: text('key_id').notNull().unique(),
   hash: text('hash').notNull(),
   allowedModelIds: uuid('allowed_model_ids').array('[]').notNull().default([]),
+  allowedModelGroupIds: uuid('allowed_model_group_ids').array('[]').notNull().default([]),
   createdById: uuid('created_by_id').references(() => users.id, { onDelete: 'set null' }),
   createdAt: createdAt(),
   disabledAt: at('disabled_at'),
@@ -84,6 +85,7 @@ export const apiKeys = pgTable(
     expiresAt: at('expires_at'),
     revokedAt: at('revoked_at'),
     allowedModelIds: uuid('allowed_model_ids').array('[]').notNull().default([]),
+    allowedModelGroupIds: uuid('allowed_model_group_ids').array('[]').notNull().default([]),
     integrationId: uuid('integration_id').references(() => integrations.id, {
       onDelete: 'set null',
     }),

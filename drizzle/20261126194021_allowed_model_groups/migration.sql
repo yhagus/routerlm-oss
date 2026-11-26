@@ -1,0 +1,2 @@
+ALTER TABLE "api_keys" ADD COLUMN "allowed_model_group_ids" uuid[] DEFAULT '{}'::uuid[] NOT NULL;--> statement-breakpoint
+ALTER TABLE "integrations" ADD COLUMN "allowed_model_group_ids" uuid[] DEFAULT '{}'::uuid[] NOT NULL;

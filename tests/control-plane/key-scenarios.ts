@@ -7,6 +7,7 @@ import { models } from '@/db/schemas';
 import { authenticateWithApiKey, createApiKey } from '@tests/support/api-keys';
 import type { ControlPlaneClient } from '@tests/support/control-plane-client';
 import { createIntegration } from '@tests/support/integrations';
+import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
@@ -39,7 +40,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
     });
 
     beforeEach(async () => {
-      await db.execute(sql`truncate table integrations, api_keys, models cascade`);
+      await db.execute(sql`truncate table integrations, api_keys, models, model_groups cascade`);
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
       acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
@@ -176,6 +177,29 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         ).resolves.toEqual({ ok: false, code: 'INVALID_ARGUMENT' });
         await expect(
           client.createKey(acme.secret, { customerId: 'cus_1', allowedModelIds: [sold.id] }),
+        ).resolves.toMatchObject({ ok: true });
+      });
+
+      it("counts the Models in the Integration's allowed Model Groups as within its Models", async () => {
+        const [grouped, listed, outside] = await db
+          .insert(models)
+          .values([{ name: 'grouped' }, { name: 'listed' }, { name: 'outside' }])
+          .returning();
+        const fastGroupId = await insertModelGroup(app, db, 'fast', [grouped.id]);
+        await request(app.getHttpServer())
+          .patch(`/api/integrations/${acme.id}`)
+          .set('Cookie', adaCookie)
+          .send({ allowedModelIds: [listed.id], allowedModelGroupIds: [fastGroupId] })
+          .expect(200);
+
+        await expect(
+          client.createKey(acme.secret, { customerId: 'cus_1', allowedModelIds: [outside.id] }),
+        ).resolves.toEqual({ ok: false, code: 'INVALID_ARGUMENT' });
+        await expect(
+          client.createKey(acme.secret, {
+            customerId: 'cus_1',
+            allowedModelIds: [grouped.id, listed.id],
+          }),
         ).resolves.toMatchObject({ ok: true });
       });
     });

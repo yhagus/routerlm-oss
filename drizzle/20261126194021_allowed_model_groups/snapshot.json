@@ -1,0 +1,81 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4688daa4-07fc-43da-84b1-d3332dbe05d1",
+  "prevIds": [
+    "b9f21930-fb73-4b4e-b896-37ff235cfdc9"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "api_keys",
+        "allowed_model_group_ids"
+      ],
+      "writes": [
+        "s|col|public.api_keys.allowed_model_group_ids",
+        "n|col|public.api_keys.allowed_model_group_ids",
+        "e|col|public.api_keys.allowed_model_group_ids"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "integrations",
+        "allowed_model_group_ids"
+      ],
+      "writes": [
+        "s|col|public.integrations.allowed_model_group_ids",
+        "n|col|public.integrations.allowed_model_group_ids",
+        "e|col|public.integrations.allowed_model_group_ids"
+      ],
+      "reads": [
+        "n|tbl|public.integrations",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "allowed_model_group_ids",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "integrations",
+        "name": "allowed_model_group_ids",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 1,
+        "default": "'{}'",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

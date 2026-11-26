@@ -1,4 +1,5 @@
-import type { AllowedModel, ApiKeyRotation } from '@/api-keys/models/api-key';
+import type { AllowedModel, AllowedModelGroup, ApiKeyRotation } from '@/api-keys/models/api-key';
+import type { ModelAllowance } from '@/libs/models/allowed-models';
 
 export interface IntegrationSummary {
   id: string;
@@ -8,6 +9,7 @@ export interface IntegrationSummary {
   createdAt: Date;
   disabledAt: Date | null;
   allowedModels: AllowedModel[];
+  allowedModelGroups: AllowedModelGroup[];
   lastRotatedAt: Date | null;
   lastUsedAt: Date | null;
 }
@@ -41,8 +43,7 @@ export interface CreatedIntegration extends IntegrationSummary {
   secret: string;
 }
 
-export interface IntegrationPrincipal {
+export interface IntegrationPrincipal extends ModelAllowance {
   integrationId: string;
   integrationName: string;
-  allowedModelIds: string[];
 }

@@ -7,7 +7,7 @@ import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
 import { ApiKeyAuth } from '@/api-keys/providers/api-key-auth';
 import { API_KEY_CIPHER_PURPOSE, type CreatedApiKey } from '@/api-keys/models/api-key';
-import { assertModelsExist } from '@/libs/models/allowed-models';
+import { assertModelGroupsExist, assertModelsExist } from '@/libs/models/allowed-models';
 import { selectApiKeySummaries } from '@/api-keys/models/api-key-summaries';
 import { CreateApiKeyCommand } from '@/api-keys/commands/impl/create-api-key.command';
 
@@ -22,6 +22,7 @@ export class CreateApiKeyHandler implements ICommandHandler<CreateApiKeyCommand>
 
   async execute({ newKey, createdById }: CreateApiKeyCommand): Promise<CreatedApiKey> {
     await assertModelsExist(this.db, newKey.allowedModelIds);
+    await assertModelGroupsExist(this.db, newKey.allowedModelGroupIds);
     const { key, id: keyId, hash } = this.apiKeyAuth.generate();
     const [created] = await this.db
       .insert(apiKeys)
@@ -33,6 +34,7 @@ export class CreateApiKeyHandler implements ICommandHandler<CreateApiKeyCommand>
         createdById,
         expiresAt: newKey.expiresAt,
         allowedModelIds: newKey.allowedModelIds,
+        allowedModelGroupIds: newKey.allowedModelGroupIds,
         spendLimit: newKey.spendLimit,
         requestRate: newKey.requestRate,
       })

@@ -1,7 +1,7 @@
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { eq } from 'drizzle-orm';
-import { assertModelsExist } from '@/libs/models/allowed-models';
+import { assertModelGroupsExist, assertModelsExist } from '@/libs/models/allowed-models';
 import type { Database } from '@/db/schemas/relations';
 import { integrations } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
@@ -20,6 +20,9 @@ export class UpdateIntegrationHandler implements ICommandHandler<UpdateIntegrati
   async execute({ id, changes }: UpdateIntegrationCommand): Promise<IntegrationSummary> {
     if (changes.allowedModelIds) {
       await assertModelsExist(this.db, changes.allowedModelIds);
+    }
+    if (changes.allowedModelGroupIds) {
+      await assertModelGroupsExist(this.db, changes.allowedModelGroupIds);
     }
     const updated = await this.db
       .update(integrations)

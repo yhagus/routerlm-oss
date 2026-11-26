@@ -1,5 +1,5 @@
 import { desc, eq, max, type SQL } from 'drizzle-orm';
-import { findModelNames } from '@/libs/models/allowed-models';
+import { findModelGroupNames, findModelNames } from '@/libs/models/allowed-models';
 import type { Database } from '@/db/schemas/relations';
 import { integrationRotations, integrations, users } from '@/db/schemas';
 import type { IntegrationSummary } from './integration';
@@ -26,6 +26,7 @@ export async function selectIntegrationSummaries(
       createdAt: integrations.createdAt,
       disabledAt: integrations.disabledAt,
       allowedModelIds: integrations.allowedModelIds,
+      allowedModelGroupIds: integrations.allowedModelGroupIds,
       lastRotatedAt: lastRotations.lastRotatedAt,
       lastUsedAt: integrations.lastUsedAt,
     })
@@ -38,9 +39,17 @@ export async function selectIntegrationSummaries(
     db,
     rows.flatMap((row) => row.allowedModelIds),
   );
-  return rows.map(({ creatorId, creatorEmail, allowedModelIds, ...row }) => ({
+  const modelGroupNames = await findModelGroupNames(
+    db,
+    rows.flatMap((row) => row.allowedModelGroupIds),
+  );
+  return rows.map(({ creatorId, creatorEmail, allowedModelIds, allowedModelGroupIds, ...row }) => ({
     ...row,
     createdBy: creatorId && creatorEmail ? { id: creatorId, email: creatorEmail } : null,
     allowedModels: allowedModelIds.map((id) => ({ id, name: modelNames.get(id) ?? null })),
+    allowedModelGroups: allowedModelGroupIds.map((id) => ({
+      id,
+      name: modelGroupNames.get(id) ?? null,
+    })),
   }));
 }

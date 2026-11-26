@@ -1,5 +1,6 @@
 import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { CAPABILITIES, type Capability } from '@/db/schemas';
+import { allowsModel } from '@/libs/models/allowed-models';
 import {
   isRouteUsable,
   type SnapshotModel,
@@ -23,10 +24,8 @@ export class ListIntegrationModelsHandler implements IQueryHandler<ListIntegrati
 
   execute({ integration }: ListIntegrationModelsQuery): Promise<IntegrationModel[]> {
     const now = new Date();
-    const isWithinCeiling = (model: SnapshotModel): boolean =>
-      integration.allowedModelIds.length === 0 || integration.allowedModelIds.includes(model.id);
     const listed = [...this.snapshot.current.modelsByName.values()]
-      .filter((model) => model.isEnabled && isWithinCeiling(model))
+      .filter((model) => model.isEnabled && allowsModel(integration, model))
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((model) => integrationModelOf(model, now));
     return Promise.resolve(listed);

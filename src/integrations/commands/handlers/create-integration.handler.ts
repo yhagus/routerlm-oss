@@ -1,7 +1,7 @@
 import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { eq } from 'drizzle-orm';
-import { assertModelsExist } from '@/libs/models/allowed-models';
+import { assertModelGroupsExist, assertModelsExist } from '@/libs/models/allowed-models';
 import type { Database } from '@/db/schemas/relations';
 import { integrations } from '@/db/schemas';
 import type { CreatedIntegration } from '@/integrations/models/integration';
@@ -21,6 +21,7 @@ export class CreateIntegrationHandler implements ICommandHandler<CreateIntegrati
     createdById,
   }: CreateIntegrationCommand): Promise<CreatedIntegration> {
     await assertModelsExist(this.db, newIntegration.allowedModelIds);
+    await assertModelGroupsExist(this.db, newIntegration.allowedModelGroupIds);
     const { key: secret, id: keyId, hash } = this.secretAuth.generate();
     const [created] = await this.db
       .insert(integrations)
@@ -29,6 +30,7 @@ export class CreateIntegrationHandler implements ICommandHandler<CreateIntegrati
         keyId,
         hash,
         allowedModelIds: newIntegration.allowedModelIds,
+        allowedModelGroupIds: newIntegration.allowedModelGroupIds,
         createdById,
       })
       .returning({ id: integrations.id });

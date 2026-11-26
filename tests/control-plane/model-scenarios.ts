@@ -11,6 +11,7 @@ import {
   insertOpenAiChatModel,
 } from '@tests/support/inference';
 import { createIntegration } from '@tests/support/integrations';
+import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 import type { ControlPlaneTransport } from './key-scenarios';
 
@@ -36,7 +37,7 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
 
     beforeEach(async () => {
       await db.execute(
-        sql`truncate table integrations, api_keys, models, providers, pricing_windows cascade`,
+        sql`truncate table integrations, api_keys, models, model_groups, providers, pricing_windows cascade`,
       );
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
@@ -264,6 +265,31 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
       const listed = await client.listModels(secret);
 
       expect(listed.ok && listed.body.models.map((model) => model.name)).toEqual(['acme-large']);
+    });
+
+    it("lists the Models in the Integration's allowed Model Groups alongside its allowed Models", async () => {
+      const grouped = await insertOpenAiChatModel(app, db, {
+        modelName: 'acme-fast',
+        baseUrl: UNUSED_BASE_URL,
+      });
+      const sold = await insertOpenAiChatModel(app, db, {
+        modelName: 'acme-large',
+        baseUrl: UNUSED_BASE_URL,
+      });
+      await insertOpenAiChatModel(app, db, { modelName: 'acme-secret', baseUrl: UNUSED_BASE_URL });
+      const fastGroupId = await insertModelGroup(app, db, 'fast', [grouped.modelId]);
+      const { secret } = await createIntegration(app, adaCookie, {
+        name: 'Acme SaaS',
+        allowedModelIds: [sold.modelId],
+        allowedModelGroupIds: [fastGroupId],
+      });
+
+      const listed = await client.listModels(secret);
+
+      expect(listed.ok && listed.body.models.map((model) => model.name)).toEqual([
+        'acme-fast',
+        'acme-large',
+      ]);
     });
   });
 }

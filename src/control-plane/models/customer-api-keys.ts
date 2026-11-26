@@ -1,6 +1,10 @@
 import { and, desc, eq, type SQL } from 'drizzle-orm';
 import { z } from 'zod';
-import { assertModelsExist } from '@/libs/models/allowed-models';
+import {
+  allowsEveryModel,
+  assertModelsExist,
+  findModelIdsInGroups,
+} from '@/libs/models/allowed-models';
 import type { Database } from '@/db/schemas/relations';
 import { apiKeys } from '@/db/schemas';
 import type { IntegrationPrincipal } from '@/integrations/models/integration';
@@ -70,8 +74,7 @@ export async function assertWithinCeiling(
   integration: IntegrationPrincipal,
   modelIds: string[],
 ): Promise<void> {
-  const ceiling = integration.allowedModelIds;
-  const outside = modelIds.filter((id) => ceiling.length > 0 && !ceiling.includes(id));
+  const outside = await modelIdsOutsideCeiling(db, integration, modelIds);
   if (outside.length > 0) {
     throw new ControlPlaneError(
       'INVALID_ARGUMENT',
@@ -79,4 +82,19 @@ export async function assertWithinCeiling(
     );
   }
   await assertModelsExist(db, modelIds);
+}
+
+async function modelIdsOutsideCeiling(
+  db: Database,
+  integration: IntegrationPrincipal,
+  modelIds: string[],
+): Promise<string[]> {
+  if (allowsEveryModel(integration)) {
+    return [];
+  }
+  const ceiling = new Set([
+    ...integration.allowedModelIds,
+    ...(await findModelIdsInGroups(db, integration.allowedModelGroupIds)),
+  ]);
+  return modelIds.filter((id) => !ceiling.has(id));
 }

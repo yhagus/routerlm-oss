@@ -4,6 +4,7 @@ import { hasAnyField, nothingToChange } from '@/libs/schemas/partial-update.sche
 export const MAX_NAME_LENGTH = 100;
 export const MAX_CUSTOMER_ID_LENGTH = 200;
 const MAX_ALLOWED_MODELS = 500;
+const MAX_ALLOWED_MODEL_GROUPS = 500;
 export const MAX_SPEND_LIMIT_USD = 99_999_999;
 const SPEND_LIMIT_DECIMALS = 10;
 export const MAX_REQUEST_RATE = 2_147_483_647;
@@ -25,6 +26,11 @@ export const allowedModelIdsSchema = z
   .max(MAX_ALLOWED_MODELS)
   .transform((ids) => [...new Set(ids)]);
 
+const allowedModelGroupIdsSchema = z
+  .array(z.uuid())
+  .max(MAX_ALLOWED_MODEL_GROUPS)
+  .transform((ids) => [...new Set(ids)]);
+
 export const spendLimitSchema = z
   .number()
   .min(0)
@@ -40,6 +46,7 @@ const apiKeyFieldsSchema = z.object({
   name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
   expiresAt: expiresAtSchema,
   allowedModelIds: allowedModelIdsSchema,
+  allowedModelGroupIds: allowedModelGroupIdsSchema,
   spendLimit: spendLimitSchema,
   requestRate: requestRateSchema,
 });
@@ -47,6 +54,7 @@ const apiKeyFieldsSchema = z.object({
 export const newApiKeySchema = apiKeyFieldsSchema.extend({
   expiresAt: expiresAtSchema.default(null),
   allowedModelIds: allowedModelIdsSchema.default([]),
+  allowedModelGroupIds: allowedModelGroupIdsSchema.default([]),
   spendLimit: spendLimitSchema.default(null),
   requestRate: requestRateSchema.default(null),
 });

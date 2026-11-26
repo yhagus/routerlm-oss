@@ -8,7 +8,7 @@ import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
 import type { ApiKeySummary } from '@/api-keys/models/api-key';
 import { selectApiKeySummaries } from '@/api-keys/models/api-key-summaries';
-import { assertModelsExist } from '@/libs/models/allowed-models';
+import { assertModelGroupsExist, assertModelsExist } from '@/libs/models/allowed-models';
 import { assertUserOwnsKey, findUnrevokedApiKey } from '@/api-keys/models/find-unrevoked-api-key';
 import { UpdateApiKeyCommand } from '@/api-keys/commands/impl/update-api-key.command';
 
@@ -26,6 +26,9 @@ export class UpdateApiKeyHandler implements ICommandHandler<UpdateApiKeyCommand>
     assertUserOwnsKey(await findUnrevokedApiKey(this.db, id, REVOKED_MESSAGE));
     if (changes.allowedModelIds) {
       await assertModelsExist(this.db, changes.allowedModelIds);
+    }
+    if (changes.allowedModelGroupIds) {
+      await assertModelGroupsExist(this.db, changes.allowedModelGroupIds);
     }
     const updated = await this.db
       .update(apiKeys)

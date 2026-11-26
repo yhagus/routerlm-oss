@@ -7,6 +7,7 @@ import { ApiKeyAuth } from '@/api-keys/providers/api-key-auth';
 import type { Database } from '@/db/schemas/relations';
 import { apiKeys, models } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
@@ -21,7 +22,7 @@ describe('API Keys (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table api_keys, models cascade`);
+    await db.execute(sql`truncate table api_keys, models, model_groups cascade`);
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
   });
@@ -52,6 +53,7 @@ describe('API Keys (e2e)', () => {
         expiresAt: '2999-01-01T00:00:00.000Z',
         revokedAt: null,
         allowedModels: [{ id: model.id, name: 'smart' }],
+        allowedModelGroups: [],
         isCopyable: true,
         lastRotatedAt: null,
         integration: null,
@@ -129,6 +131,29 @@ describe('API Keys (e2e)', () => {
       .post('/api/api-keys')
       .set('Cookie', adaCookie)
       .send({ name: 'CI', allowedModelIds: ['00000000-0000-4000-8000-000000000000'] })
+      .expect(400);
+  });
+
+  it('names the Model Groups a new key is allowed, and signs it in with them', async () => {
+    const fastGroupId = await insertModelGroup(app, db, 'fast');
+
+    const created = await request(app.getHttpServer())
+      .post('/api/api-keys')
+      .set('Cookie', adaCookie)
+      .send({ name: 'CI', allowedModelGroupIds: [fastGroupId] })
+      .expect(201);
+
+    expect(created.body.allowedModelGroups).toEqual([{ id: fastGroupId, name: 'fast group' }]);
+    await expect(authenticateWith(created.body.key)).resolves.toMatchObject({
+      user: { allowedModelIds: [], allowedModelGroupIds: [fastGroupId] },
+    });
+  });
+
+  it('rejects an allowed Model Group that does not exist', async () => {
+    await request(app.getHttpServer())
+      .post('/api/api-keys')
+      .set('Cookie', adaCookie)
+      .send({ name: 'CI', allowedModelGroupIds: ['00000000-0000-4000-8000-000000000000'] })
       .expect(400);
   });
 
