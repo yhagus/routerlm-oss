@@ -3,11 +3,10 @@ import { Blocks, CirclePause, CirclePlay, Eye, Pencil, Plus, RefreshCw, Trash2 }
 import type { IntegrationConfirmation } from '~/components/IntegrationConfirmDialog.vue';
 import type { RowAction } from '~/components/RowActionsMenu.vue';
 import { apiErrorMessage } from '~/lib/api';
-import type { ModelChoice } from '~/lib/api-keys';
+import { allowedAccessLabel, type ModelChoice } from '~/lib/api-keys';
 import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
 import { dateFormat } from '~/lib/dateFormats';
 import {
-  allowedModelsLabel,
   type CreatedIntegration,
   INTEGRATION_STATUS_LABELS,
   type IntegrationStatus,
@@ -52,7 +51,7 @@ const rows = computed<IntegrationRow[]>(() =>
 
 const columns: DataTableColumn<IntegrationRow>[] = [
   { id: 'name', header: 'Name', enableHiding: false, accessorFn: (row) => row.name },
-  { id: 'allowedModels', header: 'Allowed Models', accessorFn: allowedModelsLabel },
+  { id: 'allowedModels', header: 'Allowed Models', accessorFn: allowedAccessLabel },
   { id: 'created', header: 'Created' },
   { id: 'createdBy', header: 'Created by', accessorFn: (row) => row.createdBy?.email ?? '' },
   { id: 'lastRotated', header: 'Last rotated' },
@@ -170,8 +169,8 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
         </NuxtLink>
       </template>
       <template #cell-allowedModels="{ row: integration }">
-        <span class="models-summary" :title="allowedModelsLabel(integration)">{{
-          allowedModelsLabel(integration)
+        <span class="models-summary" :title="allowedAccessLabel(integration)">{{
+          allowedAccessLabel(integration)
         }}</span>
       </template>
       <template #cell-created="{ row: integration }">

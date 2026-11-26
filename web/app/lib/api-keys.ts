@@ -1,3 +1,4 @@
+import { type AllowedModelGroup, allowedGroupName } from '~/lib/modelGroups';
 import { formatCost, formatCount } from '~/lib/usage';
 
 /** The largest Spend Limit in USD (spend_limit is numeric(18, 10)), as the backend's `MAX_SPEND_LIMIT_USD` says. */
@@ -20,6 +21,7 @@ export interface ApiKeySummary {
   expiresAt: string | null;
   revokedAt: string | null;
   allowedModels: { id: string; name: string | null }[];
+  allowedModelGroups: AllowedModelGroup[];
   isCopyable: boolean;
   lastRotatedAt: string | null;
   integration: { id: string; name: string } | null;
@@ -27,6 +29,27 @@ export interface ApiKeySummary {
   spendLimit: number | null;
   spent: number;
   requestRate: number | null;
+}
+
+export interface AllowedAccess {
+  allowedModels: { id: string; name: string | null }[];
+  allowedModelGroups: AllowedModelGroup[];
+}
+
+export function allowedAccessLabel(access: AllowedAccess): string {
+  const models = access.allowedModels.map((model) => model.name ?? 'Deleted Model');
+  const groups = access.allowedModelGroups.map((group) => `${allowedGroupName(group)} (Group)`);
+  const names = [...models, ...groups];
+  return names.length === 0 ? 'All Models' : names.join(', ');
+}
+
+export function pickedLabels(
+  ids: string[],
+  options: { label: string; value: string }[],
+  fallback: string,
+): string[] {
+  const labels = new Map(options.map((option) => [option.value, option.label]));
+  return ids.map((id) => labels.get(id) ?? fallback);
 }
 
 export interface ApiKeyRotation {

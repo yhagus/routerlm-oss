@@ -35,3 +35,24 @@ export function isPublishedAs(
 ): boolean {
   return publishedModelNames(model).includes(sentName);
 }
+
+export interface AllowedModelGroup {
+  id: string;
+  name: string | null;
+}
+
+export function allowedGroupName(group: AllowedModelGroup): string {
+  return group.name ?? 'Deleted group';
+}
+
+export function allowedGroupOptions(
+  groups: ModelGroup[] | undefined,
+  allowed: AllowedModelGroup[],
+): { label: string; value: string }[] {
+  const options = (groups ?? []).map((group) => ({ label: group.name, value: group.id }));
+  const offered = new Set(options.map((option) => option.value));
+  const deleted = allowed
+    .filter((group) => !offered.has(group.id))
+    .map((group) => ({ label: allowedGroupName(group), value: group.id }));
+  return [...options, ...deleted];
+}

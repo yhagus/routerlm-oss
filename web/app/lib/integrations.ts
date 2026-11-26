@@ -1,4 +1,5 @@
 import type { ApiKeyRotation } from '~/lib/api-keys';
+import type { AllowedModelGroup } from '~/lib/modelGroups';
 import type { PricingWindowRange } from '~/lib/pricingWindows';
 import type { Capability, ModelKind } from '~/lib/upstream';
 import { type DetailLine, unitPriceFormat } from '~/lib/upstreamModelMedia';
@@ -11,6 +12,7 @@ export interface IntegrationSummary {
   createdAt: string;
   disabledAt: string | null;
   allowedModels: { id: string; name: string | null }[];
+  allowedModelGroups: AllowedModelGroup[];
   lastRotatedAt: string | null;
   lastUsedAt: string | null;
 }
@@ -82,11 +84,6 @@ export const INTEGRATION_STATUS_LABELS = {
 
 export function integrationStatus(integration: IntegrationSummary): IntegrationStatus {
   return integration.disabledAt ? 'disabled' : 'enabled';
-}
-
-export function allowedModelsLabel(integration: IntegrationSummary): string {
-  if (integration.allowedModels.length === 0) return 'All Models';
-  return integration.allowedModels.map((model) => model.name ?? 'Deleted Model').join(', ');
 }
 
 export const INTEGRATION_CONFIRM_COPY = {

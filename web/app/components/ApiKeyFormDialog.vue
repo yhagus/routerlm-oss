@@ -8,7 +8,9 @@ import {
   MAX_REQUEST_RATE,
   MAX_SPEND_LIMIT_USD,
   type ModelChoice,
+  pickedLabels,
 } from '~/lib/api-keys';
+import { allowedGroupOptions, type ModelGroup } from '~/lib/modelGroups';
 import { formatCost } from '~/lib/usage';
 
 const props = defineProps<{
@@ -20,10 +22,15 @@ const isOpen = defineModel<boolean>('open', { required: true });
 const emit = defineEmits<{ created: [apiKey: CreatedApiKey]; updated: [apiKey: ApiKeySummary] }>();
 
 const { $dashboardApi } = useNuxtApp();
+const { data: groups, status: groupsStatus } = useDashboardApi<ModelGroup[]>('/model-groups', {
+  key: 'model-groups',
+});
+const isLoadingGroups = computed(() => groupsStatus.value === 'pending' && !groups.value);
 
 const name = ref('');
 const expiryDate = ref('');
 const allowedModelIds = ref<string[]>([]);
+const allowedModelGroupIds = ref<string[]>([]);
 const spendLimit = ref('');
 const requestRate = ref('');
 const isSaving = ref(false);
@@ -39,6 +46,7 @@ watch(
     name.value = props.apiKey?.name ?? '';
     expiryDate.value = localDateOf(props.apiKey?.expiresAt ?? null);
     allowedModelIds.value = props.apiKey?.allowedModels.map((model) => model.id) ?? [];
+    allowedModelGroupIds.value = props.apiKey?.allowedModelGroups.map((group) => group.id) ?? [];
     spendLimit.value = limitText(props.apiKey?.spendLimit ?? null);
     requestRate.value = limitText(props.apiKey?.requestRate ?? null);
     error.value = '';
@@ -58,10 +66,16 @@ const modelOptions = computed(() => {
   return [...options, ...deleted];
 });
 
+const groupOptions = computed(() =>
+  allowedGroupOptions(groups.value, props.apiKey?.allowedModelGroups ?? []),
+);
+
 const allowedSummary = computed(() => {
-  if (allowedModelIds.value.length === 0) return 'Every Model, including ones added later.';
-  const labels = new Map(modelOptions.value.map((option) => [option.value, option.label]));
-  return `Only ${allowedModelIds.value.map((id) => labels.get(id) ?? 'Deleted Model').join(', ')}.`;
+  const models = pickedLabels(allowedModelIds.value, modelOptions.value, 'Deleted Model');
+  const groupNames = pickedLabels(allowedModelGroupIds.value, groupOptions.value, 'Deleted group');
+  const names = [...models, ...groupNames.map((group) => `every Model in ${group}`)];
+  if (names.length === 0) return 'Every Model, including ones added later.';
+  return `Only ${names.join(', ')}.`;
 });
 
 function limitText(limit: number | null): string {
@@ -87,6 +101,7 @@ const changes = computed(() => {
     name?: string;
     expiresAt?: string | null;
     allowedModelIds?: string[];
+    allowedModelGroupIds?: string[];
     spendLimit?: number | null;
     requestRate?: number | null;
   } = {};
@@ -96,6 +111,10 @@ const changes = computed(() => {
   }
   const originalIds = original.allowedModels.map((model) => model.id);
   if (!sameIds(allowedModelIds.value, originalIds)) fields.allowedModelIds = allowedModelIds.value;
+  const originalGroupIds = original.allowedModelGroups.map((group) => group.id);
+  if (!sameIds(allowedModelGroupIds.value, originalGroupIds)) {
+    fields.allowedModelGroupIds = allowedModelGroupIds.value;
+  }
   if (spendLimit.value !== limitText(original.spendLimit)) {
     fields.spendLimit = limitValue(spendLimit.value);
   }
@@ -123,6 +142,7 @@ async function submit(): Promise<void> {
           name: name.value,
           expiresAt: expiryDate.value ? endOfLocalDay(expiryDate.value) : null,
           allowedModelIds: allowedModelIds.value,
+          allowedModelGroupIds: allowedModelGroupIds.value,
           spendLimit: limitValue(spendLimit.value),
           requestRate: limitValue(requestRate.value),
         },
@@ -178,8 +198,25 @@ async function submit(): Promise<void> {
           match="all"
           empty-text="No Models yet"
         />
-        <span v-if="isLoadingModelChoices" class="field__note">Loading Models…</span>
-        <span v-else class="field__note">{{ allowedSummary }}</span>
+      </div>
+      <div class="field">
+        <span class="field__label">Allowed Groups</span>
+        <AppMultiSelect
+          v-model="allowedModelGroupIds"
+          :options="groupOptions"
+          label="Allowed Groups"
+          placeholder="No Groups"
+          noun="Groups"
+          match="all"
+          empty-text="No Groups yet"
+        />
+        <span v-if="isLoadingModelChoices || isLoadingGroups" class="field__note"
+          >Loading Models and Groups…</span
+        >
+        <span v-else class="field__note"
+          >A key allowed a Group can call every Model currently in it. Leave both Models and Groups
+          empty to allow every Model. {{ allowedSummary }}</span
+        >
       </div>
       <label class="field"
         ><span class="field__label">Spend Limit</span

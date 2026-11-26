@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { apiErrorMessage } from '~/lib/api';
-import type { ModelChoice } from '~/lib/api-keys';
+import { type ModelChoice, pickedLabels } from '~/lib/api-keys';
 import type { CreatedIntegration, IntegrationSummary } from '~/lib/integrations';
+import { allowedGroupOptions, type ModelGroup } from '~/lib/modelGroups';
 
 const props = defineProps<{
   integration?: IntegrationSummary;
@@ -15,9 +16,14 @@ const emit = defineEmits<{
 }>();
 
 const { $dashboardApi } = useNuxtApp();
+const { data: groups, status: groupsStatus } = useDashboardApi<ModelGroup[]>('/model-groups', {
+  key: 'model-groups',
+});
+const isLoadingGroups = computed(() => groupsStatus.value === 'pending' && !groups.value);
 
 const name = ref('');
 const allowedModelIds = ref<string[]>([]);
+const allowedModelGroupIds = ref<string[]>([]);
 const isSaving = ref(false);
 const error = ref('');
 
@@ -29,6 +35,8 @@ watch(
     if (!open) return;
     name.value = props.integration?.name ?? '';
     allowedModelIds.value = props.integration?.allowedModels.map((model) => model.id) ?? [];
+    allowedModelGroupIds.value =
+      props.integration?.allowedModelGroups.map((group) => group.id) ?? [];
     error.value = '';
   },
   { immediate: true },
@@ -46,13 +54,16 @@ const modelOptions = computed(() => {
   return [...options, ...deleted];
 });
 
+const groupOptions = computed(() =>
+  allowedGroupOptions(groups.value, props.integration?.allowedModelGroups ?? []),
+);
+
 const allowedSummary = computed(() => {
-  if (allowedModelIds.value.length === 0) {
-    return 'Its API Keys may use every Model, including ones added later.';
-  }
-  const labels = new Map(modelOptions.value.map((option) => [option.value, option.label]));
-  const names = allowedModelIds.value.map((id) => labels.get(id) ?? 'Deleted Model').join(', ');
-  return `Its API Keys may use only ${names}.`;
+  const models = pickedLabels(allowedModelIds.value, modelOptions.value, 'Deleted Model');
+  const groupNames = pickedLabels(allowedModelGroupIds.value, groupOptions.value, 'Deleted group');
+  const names = [...models, ...groupNames.map((group) => `every Model in ${group}`)];
+  if (names.length === 0) return 'Its API Keys may use every Model, including ones added later.';
+  return `Its API Keys may use only ${names.join(', ')}.`;
 });
 
 function sameIds(first: string[], second: string[]): boolean {
@@ -62,10 +73,14 @@ function sameIds(first: string[], second: string[]): boolean {
 const changes = computed(() => {
   const original = props.integration;
   if (!original) return {};
-  const fields: { name?: string; allowedModelIds?: string[] } = {};
+  const fields: { name?: string; allowedModelIds?: string[]; allowedModelGroupIds?: string[] } = {};
   if (name.value.trim() !== original.name) fields.name = name.value.trim();
   const originalIds = original.allowedModels.map((model) => model.id);
   if (!sameIds(allowedModelIds.value, originalIds)) fields.allowedModelIds = allowedModelIds.value;
+  const originalGroupIds = original.allowedModelGroups.map((group) => group.id);
+  if (!sameIds(allowedModelGroupIds.value, originalGroupIds)) {
+    fields.allowedModelGroupIds = allowedModelGroupIds.value;
+  }
   return fields;
 });
 const hasChanges = computed(() => Object.keys(changes.value).length > 0);
@@ -83,7 +98,11 @@ async function submit(): Promise<void> {
     } else {
       const created = await $dashboardApi<CreatedIntegration>('/integrations', {
         method: 'POST',
-        body: { name: name.value, allowedModelIds: allowedModelIds.value },
+        body: {
+          name: name.value,
+          allowedModelIds: allowedModelIds.value,
+          allowedModelGroupIds: allowedModelGroupIds.value,
+        },
       });
       emit('created', created);
     }
@@ -130,8 +149,25 @@ async function submit(): Promise<void> {
           match="all"
           empty-text="No Models yet"
         />
-        <span v-if="isLoadingModelChoices" class="field__note">Loading Models…</span>
-        <span v-else class="field__note">{{ allowedSummary }}</span>
+      </div>
+      <div class="field">
+        <span class="field__label">Allowed Groups</span>
+        <AppMultiSelect
+          v-model="allowedModelGroupIds"
+          :options="groupOptions"
+          label="Allowed Groups"
+          placeholder="No Groups"
+          noun="Groups"
+          match="all"
+          empty-text="No Groups yet"
+        />
+        <span v-if="isLoadingModelChoices || isLoadingGroups" class="field__note"
+          >Loading Models and Groups…</span
+        >
+        <span v-else class="field__note"
+          >Its API Keys may call every Model currently in an allowed Group. Leave both Models and
+          Groups empty to allow every Model. {{ allowedSummary }}</span
+        >
       </div>
       <p v-if="error" class="form__error" role="alert">{{ error }}</p>
       <div class="dialog__actions">

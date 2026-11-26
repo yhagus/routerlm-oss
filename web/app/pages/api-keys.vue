@@ -5,6 +5,7 @@ import type { RowAction } from '~/components/RowActionsMenu.vue';
 import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
 import { apiErrorMessage } from '~/lib/api';
 import {
+  allowedAccessLabel,
   API_KEY_CONFIRM_COPY,
   API_KEY_STATUS_LABELS,
   type ApiKeyStatus,
@@ -94,7 +95,7 @@ const columns: DataTableColumn<ApiKeyRow>[] = [
   { id: 'keyId', header: 'Key id', accessorFn: (row) => `rlm_${row.keyId}` },
   { id: 'integration', header: 'Integration', accessorFn: (row) => row.integration?.name ?? '' },
   { id: 'customer', header: 'Customer', accessorFn: (row) => row.customerId ?? '' },
-  { id: 'allowedModels', header: 'Allowed Models', accessorFn: allowedModelsLabel },
+  { id: 'allowedModels', header: 'Allowed Models', accessorFn: allowedAccessLabel },
   { id: 'spendLimit', header: 'Spend Limit' },
   { id: 'requestRate', header: 'Request Rate' },
   { id: 'created', header: 'Created' },
@@ -104,11 +105,6 @@ const columns: DataTableColumn<ApiKeyRow>[] = [
   { id: 'status', header: 'Status' },
   actionsColumn(),
 ];
-
-function allowedModelsLabel(apiKey: ApiKeySummary): string {
-  if (apiKey.allowedModels.length === 0) return 'All Models';
-  return apiKey.allowedModels.map((model) => model.name ?? 'Deleted Model').join(', ');
-}
 
 const historyOf = ref<ApiKeySummary | null>(null);
 const isHistoryOpen = computed({
@@ -307,8 +303,8 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
         <span class="tabular">{{ requestRateLabel(apiKey) }}</span>
       </template>
       <template #cell-allowedModels="{ row: apiKey }">
-        <span class="models-summary" :title="allowedModelsLabel(apiKey)">{{
-          allowedModelsLabel(apiKey)
+        <span class="models-summary" :title="allowedAccessLabel(apiKey)">{{
+          allowedAccessLabel(apiKey)
         }}</span>
       </template>
       <template #cell-created="{ row: apiKey }">

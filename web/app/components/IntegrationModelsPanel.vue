@@ -5,6 +5,7 @@ import {
   type IntegrationSummary,
   integrationModelPriceLines,
 } from '~/lib/integrations';
+import { allowedGroupName } from '~/lib/modelGroups';
 import { CAPABILITY_LABELS, MODEL_KIND_LABELS } from '~/lib/upstream';
 
 const props = defineProps<{ integration: IntegrationSummary }>();
@@ -15,11 +16,18 @@ const {
   status,
 } = useDashboardApi<{ models: IntegrationModel[] }>(
   () => `/integrations/${props.integration.id}/models`,
-  { watch: [() => props.integration.allowedModels] },
+  { watch: [() => props.integration.allowedModels, () => props.integration.allowedModelGroups] },
 );
 
 const isLoading = computed(() => status.value === 'pending' && !modelList.value);
-const sellsEveryModel = computed(() => props.integration.allowedModels.length === 0);
+const sellsEveryModel = computed(
+  () =>
+    props.integration.allowedModels.length === 0 &&
+    props.integration.allowedModelGroups.length === 0,
+);
+const allowedGroupNames = computed(() =>
+  props.integration.allowedModelGroups.map((group) => allowedGroupName(group)).join(', '),
+);
 
 const rows = computed(() =>
   (modelList.value?.models ?? []).map((model) => ({
@@ -33,7 +41,10 @@ const rows = computed(() =>
 <template>
   <section class="panel table-panel">
     <p v-if="sellsEveryModel && rows.length > 0" class="panel-note">
-      No allowed Models are set, so it may sell every Model, including ones added later.
+      No allowed Models or Groups are set, so it may sell every Model, including ones added later.
+    </p>
+    <p v-else-if="allowedGroupNames" class="panel-note">
+      It may sell every Model currently in {{ allowedGroupNames }}.
     </p>
     <EmptyState v-if="loadError" :icon="CloudOff" tone="error">
       <strong>Couldn't load the Models.</strong
@@ -45,7 +56,7 @@ const rows = computed(() =>
       ><span>{{
         sellsEveryModel
           ? 'The Catalog has no enabled Models yet.'
-          : 'Its allowed Models were deleted or disabled.'
+          : 'Its allowed Models and Groups were deleted, disabled or are empty.'
       }}</span>
     </EmptyState>
     <div v-else class="table-wrap">
