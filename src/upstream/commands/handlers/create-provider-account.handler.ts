@@ -1,11 +1,12 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, type ICommandHandler } from '@nestjs/cqrs';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { eq } from 'drizzle-orm';
 import { FOREIGN_KEY_VIOLATION, hasPostgresErrorCode } from '@/libs/models/postgres-errors';
 import type { Database } from '@/db/schemas/relations';
 import { providerAccounts, providers } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { ProviderAccountCreatedEvent } from '@/upstream/events/impl/provider-account-created.event';
 import { unusedConstellationName } from '@/upstream/models/constellation-name';
 import {
   type ProviderAccount,
@@ -21,6 +22,7 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
     @InjectDrizzle() private readonly db: Database,
     private readonly keyCipher: ProviderKeyCipher,
     private readonly snapshot: SnapshotService,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute({ newAccount }: CreateProviderAccountCommand): Promise<ProviderAccount> {
@@ -36,6 +38,7 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
         })
         .returning(providerAccountColumns);
       await this.snapshot.changed();
+      this.eventBus.publish(new ProviderAccountCreatedEvent(created.id, created.providerId));
       return created;
     } catch (error) {
       if (hasPostgresErrorCode(error, FOREIGN_KEY_VIOLATION)) {

@@ -25,6 +25,7 @@ import { InferenceModule } from '@/inference/inference.module';
 import { OverviewModule } from '@/overview/overview.module';
 import { PlaygroundModule } from '@/playground/playground.module';
 import { QueueModule } from '@/queue/queue.module';
+import { PlansModule } from '@/plans/plans.module';
 import { QuotaMetersModule } from '@/quota-meters/quota-meters.module';
 import { RoutingModule } from '@/routing/routing.module';
 import { SettingsModule } from '@/settings/settings.module';
@@ -57,6 +58,7 @@ const SHARED_IMPORTS: ModuleImport[] = [
   UsageModule,
   SettingsModule,
   QuotaMetersModule,
+  PlansModule,
   HealthModule,
 ];
 

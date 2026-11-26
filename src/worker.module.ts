@@ -13,6 +13,11 @@ import {
   ErrorCaptureRetentionProcessor,
 } from '@/error-captures/jobs/error-capture-retention';
 import { LibsModule } from '@/libs/libs.module';
+import {
+  PlanReadingSchedule,
+  PlanReadingScheduleProcessor,
+} from '@/plans/jobs/plan-reading-schedule';
+import { PlansModule } from '@/plans/plans.module';
 import { PingProcessor } from '@/queue/jobs/ping.processor';
 import { QUEUE_NAMES } from '@/queue/models/queue-names';
 import {
@@ -47,6 +52,7 @@ import { UsageProcessor } from '@/usage/jobs/usage.processor';
     BullModule.registerQueue(...QUEUE_NAMES.map((name) => ({ name }))),
     CqrsModule.forRoot(),
     LibsModule,
+    PlansModule,
     QuotaMetersModule,
     SettingsModule,
     SpendLimitsModule,
@@ -60,6 +66,8 @@ import { UsageProcessor } from '@/usage/jobs/usage.processor';
     ErrorCaptureRetentionProcessor,
     QuotaReadingSchedule,
     QuotaReadingScheduleProcessor,
+    PlanReadingSchedule,
+    PlanReadingScheduleProcessor,
     OauthSignInPollingProcessor,
   ],
 })
