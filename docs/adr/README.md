@@ -45,6 +45,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0069 Provider quirk flags have fixed precedence and lookup rules](0069-provider-quirk-flags-have-fixed-precedence-and-lookup-rules.md)
 - [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
 - [0099 Terms Risk flags only Providers the gateway uses by posing as their own client](0099-terms-risk-flags-only-providers-the-gateway-uses-by-posing-as-their-own.md)
+- [0100 Operators choose a Plan from the Plans the Catalog lists for each Provider](0100-operators-choose-a-plan-from-the-plans-the-catalog-lists-for-each.md)
 
 ## control-plane
 
@@ -117,6 +118,10 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 
 - [0066 The Overview bucket interval is inlined as a SQL literal](0066-the-overview-bucket-interval-is-inlined-as-a-sql-literal.md)
 - [0080 Overview daily buckets are UTC days and are labelled in UTC](0080-overview-daily-buckets-are-utc-days-and-are-labelled-in-utc.md)
+
+## plans
+
+- [0100 Operators choose a Plan from the Plans the Catalog lists for each Provider](0100-operators-choose-a-plan-from-the-plans-the-catalog-lists-for-each.md)
 
 ## playground
 
@@ -198,6 +203,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0061 OAuth sign-in secrets are stored encrypted, kept out of errors and never sent to another host](0061-oauth-sign-in-secrets-are-stored-encrypted-kept-out-of-errors-and.md)
 - [0095 An Upstream Model names the Provider Endpoints it supports](0095-an-upstream-model-names-the-provider-endpoints-it-supports.md)
 - [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
+- [0100 Operators choose a Plan from the Plans the Catalog lists for each Provider](0100-operators-choose-a-plan-from-the-plans-the-catalog-lists-for-each.md)
 
 ## usage
 
@@ -233,6 +239,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0091 List filters live in the URL query and are written in one patch per tick](0091-list-filters-live-in-the-url-query-and-are-written-in-one.md)
 - [0092 Client docs examples are written against a placeholder URL that tests run and the page swaps](0092-client-docs-examples-are-written-against-a-placeholder-url-that-tests-run.md)
 - [0093 Nuxt Content uses node:sqlite and renders code blocks without a highlight theme](0093-nuxt-content-uses-node-sqlite-and-renders-code-blocks-without-a-highlight.md)
+- [0100 Operators choose a Plan from the Plans the Catalog lists for each Provider](0100-operators-choose-a-plan-from-the-plans-the-catalog-lists-for-each.md)
 
 ## Superseded and deprecated
 

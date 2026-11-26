@@ -56,8 +56,12 @@ A Provider sold as a plan with usage limits rather than per-token prices, such a
 _Avoid_: Coding plan, token plan, membership
 
 **Plan**:
-The tier a Provider Account holds at its Provider, under the Provider's own name, such as a TokenHarbor Pass or a ChatGPT plan. The gateway reads it from the Provider and never sets it; a Provider Account with no Plan pays per token.
+The tier a Provider Account holds at its Provider, under the Provider's own name, such as a TokenHarbor Pass or a ChatGPT plan. It is the Plan Choice when an operator has made one, and otherwise what the gateway reads from the Provider, if it can. A Provider Account with no Plan pays per token.
 _Avoid_: Pass, tier, subscription, plan type
+
+**Plan Choice**:
+An operator's setting on a Provider Account: Auto, which takes the Plan the gateway reads from the Provider, or one of the Plans that Provider sells. Only a Provider that sells several Plans offers it, and only a Provider that also charges per token offers None.
+_Avoid_: Plan override, plan type, plan setting
 
 **Plan Coverage**:
 The Plans whose allowance pays for one Upstream Model, as its Provider reports it. A Provider Account with a Plan serves only the Upstream Models its Plan covers, unless an operator lets it pay per token beyond its Plan; an Upstream Model whose coverage is unknown is served by every Provider Account.
