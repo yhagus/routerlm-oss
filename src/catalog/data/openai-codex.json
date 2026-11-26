@@ -31,6 +31,16 @@
     "cliVersion": "0.169.0"
   },
   "credentialKinds": ["oauth-login"],
+  "plans": [
+    { "value": "free", "name": "Free" },
+    { "value": "go", "name": "Go" },
+    { "value": "plus", "name": "Plus" },
+    { "value": "prolite", "name": "Pro" },
+    { "value": "pro", "name": "Pro (More)" },
+    { "value": "promax", "name": "Pro (Max)" },
+    { "value": "team", "name": "Team" },
+    { "value": "business", "name": "Business" }
+  ],
   "source": {
     "urls": [
       "https://github.com/openai/codex",

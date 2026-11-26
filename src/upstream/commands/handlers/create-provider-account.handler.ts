@@ -8,6 +8,7 @@ import { providerAccounts, providers } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import { ProviderAccountCreatedEvent } from '@/upstream/events/impl/provider-account-created.event';
 import { unusedConstellationName } from '@/upstream/models/constellation-name';
+import { assertPlanChoiceOffered } from '@/upstream/models/plan-choice';
 import {
   type ProviderAccount,
   providerAccountColumns,
@@ -27,7 +28,7 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
 
   async execute({ newAccount }: CreateProviderAccountCommand): Promise<ProviderAccount> {
     const { key, name, ...fields } = newAccount;
-    await this.requireApiKeysAccepted(fields.providerId);
+    await this.requireProviderAccepts(fields.providerId, fields.planChoice);
     try {
       const [created] = await this.db
         .insert(providerAccounts)
@@ -48,15 +49,29 @@ export class CreateProviderAccountHandler implements ICommandHandler<CreateProvi
     }
   }
 
-  private async requireApiKeysAccepted(providerId: string): Promise<void> {
+  private async requireProviderAccepts(
+    providerId: string,
+    planChoice: string | undefined,
+  ): Promise<void> {
     const [provider] = await this.db
-      .select({ name: providers.name, credentialKinds: providers.credentialKinds })
+      .select({
+        name: providers.name,
+        credentialKinds: providers.credentialKinds,
+        plans: providers.plans,
+        allowsNoPlan: providers.allowsNoPlan,
+      })
       .from(providers)
       .where(eq(providers.id, providerId));
-    if (provider && !provider.credentialKinds.includes('api-key')) {
+    if (!provider) {
+      return;
+    }
+    if (!provider.credentialKinds.includes('api-key')) {
       throw new ConflictException(
         `${provider.name} accepts only OAuth Login; sign in instead of adding an API key`,
       );
+    }
+    if (planChoice !== undefined) {
+      assertPlanChoiceOffered(provider, planChoice);
     }
   }
 

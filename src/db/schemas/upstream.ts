@@ -92,6 +92,14 @@ export interface OpenAiCodexOauthLogin {
 
 export type ProviderOauthLogin = KimiCodeOauthLogin | OpenAiCodexOauthLogin;
 
+export interface ProviderPlan {
+  value: string;
+  name: string;
+}
+
+export const AUTO_PLAN_CHOICE = 'auto';
+export const NO_PLAN_CHOICE = 'none';
+
 export const QUOTA_METER_UNITS = ['percent', 'count', 'tokens', 'usd'] as const;
 export type QuotaMeterUnit = (typeof QUOTA_METER_UNITS)[number];
 
@@ -140,6 +148,8 @@ export const providers = pgTable(
       .default({}),
     quotaReader: text('quota_reader', { enum: QUOTA_READERS }),
     planReader: text('plan_reader', { enum: PLAN_READERS }),
+    plans: jsonb('plans').$type<ProviderPlan[]>().notNull().default([]),
+    allowsNoPlan: boolean('allows_no_plan').notNull().default(false),
     oauthLogin: jsonb('oauth_login').$type<ProviderOauthLogin>(),
     credentialKinds: text('credential_kinds', { enum: CREDENTIAL_KINDS })
       .array()
@@ -189,6 +199,7 @@ export const providerAccounts = pgTable(
     oauthEmail: text('oauth_email'),
     plan: text('plan'),
     planCheckedAt: at('plan_checked_at'),
+    planChoice: text('plan_choice').notNull().default(AUTO_PLAN_CHOICE),
     paysBeyondPlan: boolean('pays_beyond_plan').notNull().default(false),
     priority: integer('priority').notNull().default(0),
     isEnabled: boolean('is_enabled').notNull().default(true),

@@ -107,6 +107,14 @@ describe('Plan Coverage (e2e)', () => {
     await app.get(SnapshotService).changed();
   }
 
+  async function choosePlan(providerAccountId: string, planChoice: string): Promise<void> {
+    await db
+      .update(providerAccounts)
+      .set({ planChoice })
+      .where(eq(providerAccounts.id, providerAccountId));
+    await app.get(SnapshotService).changed();
+  }
+
   async function coverModelBy(planCoverage: string[] | null): Promise<void> {
     await db
       .update(upstreamModels)
@@ -127,6 +135,28 @@ describe('Plan Coverage (e2e)', () => {
 
   it('lets a Provider Account that pays beyond its Plan serve an uncovered Upstream Model', async () => {
     await holdPlan(primaryAccountId, AGENT_PASS, true);
+    await coverModelBy([OFFICE_PASS]);
+    upstream.reply(SUCCESS);
+
+    await chat().expect(200);
+
+    expect(attemptedKeys()).toEqual([UPSTREAM_KEY]);
+  });
+
+  it('routes by the Plan an operator chose over the Plan read from the Provider', async () => {
+    await holdPlan(primaryAccountId, OFFICE_PASS);
+    await choosePlan(primaryAccountId, AGENT_PASS);
+    await coverModelBy([OFFICE_PASS]);
+    upstream.reply(SUCCESS);
+
+    await chat().expect(200);
+
+    expect(attemptedKeys()).toEqual([BACKUP_KEY]);
+  });
+
+  it('serves any Upstream Model from a Provider Account whose operator chose no Plan', async () => {
+    await holdPlan(primaryAccountId, AGENT_PASS);
+    await choosePlan(primaryAccountId, 'none');
     await coverModelBy([OFFICE_PASS]);
     upstream.reply(SUCCESS);
 

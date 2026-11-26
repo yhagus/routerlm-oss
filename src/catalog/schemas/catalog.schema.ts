@@ -289,6 +289,17 @@ const catalogPricingWindowSchema = z.strictObject({
 });
 export type CatalogPricingWindow = z.infer<typeof catalogPricingWindowSchema>;
 
+const MIN_LISTED_PLANS = 2;
+
+export const providerPlansSchema = z
+  .array(z.strictObject({ value: z.string().trim().min(1), name: z.string().trim().min(1) }))
+  .refine((plans) => plans.length === 0 || plans.length >= MIN_LISTED_PLANS, {
+    error: `List no Plans, or at least ${MIN_LISTED_PLANS}`,
+  })
+  .refine((plans) => new Set(plans.map((plan) => plan.value)).size === plans.length, {
+    error: 'List each Plan value once',
+  });
+
 export const catalogProviderSchema = z.strictObject({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
@@ -301,6 +312,8 @@ export const catalogProviderSchema = z.strictObject({
   serviceTierValues: serviceTierValuesSchema.optional(),
   quotaReader: z.enum(QUOTA_READERS).optional(),
   planReader: z.enum(PLAN_READERS).optional(),
+  plans: providerPlansSchema.min(MIN_LISTED_PLANS).optional(),
+  allowsNoPlan: z.boolean().optional(),
   oauthLogin: providerOauthLoginSchema.optional(),
   credentialKinds: z.array(z.enum(CREDENTIAL_KINDS)).min(1).optional(),
   pricingWindows: z

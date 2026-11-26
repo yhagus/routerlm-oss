@@ -99,6 +99,8 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             serviceTierValues: entry.serviceTierValues ?? {},
             quotaReader: entry.quotaReader ?? null,
             planReader: entry.planReader ?? null,
+            plans: entry.plans ?? [],
+            allowsNoPlan: entry.allowsNoPlan ?? false,
             oauthLogin: entry.oauthLogin ?? null,
             credentialKinds: entry.credentialKinds,
             isFromCatalog: true,

@@ -15,6 +15,7 @@ export const providerAccountColumns = {
   oauthEmail: providerAccounts.oauthEmail,
   plan: providerAccounts.plan,
   planCheckedAt: providerAccounts.planCheckedAt,
+  planChoice: providerAccounts.planChoice,
   paysBeyondPlan: providerAccounts.paysBeyondPlan,
   priority: providerAccounts.priority,
   isEnabled: providerAccounts.isEnabled,

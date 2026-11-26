@@ -6,6 +6,7 @@ import {
   selectAttachedPricingWindows,
 } from '@/pricing-windows/models/upstream-model-pricing-windows';
 import { SettingsStore } from '@/settings/providers/settings-store';
+import { planOf } from '@/upstream/models/plan-choice';
 import {
   apiKeys,
   type CredentialKind,
@@ -106,7 +107,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
                 credential,
                 priority: account.priority,
                 isEnabled: account.isEnabled,
-                plan: account.plan,
+                plan: planOf(account),
                 paysBeyondPlan: account.paysBeyondPlan,
               },
             ];

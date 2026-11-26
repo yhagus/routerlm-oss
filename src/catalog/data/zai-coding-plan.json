@@ -15,6 +15,12 @@
     "exhaustedErrorCodes": ["1308", "1309", "1310", "1316", "1317", "1318", "1319", "1320", "1321"]
   },
   "modelsDevProviderId": "zai-coding-plan",
+  "plans": [
+    { "value": "Lite", "name": "Lite" },
+    { "value": "Pro", "name": "Pro" },
+    { "value": "Max", "name": "Max" },
+    { "value": "Team", "name": "Team" }
+  ],
   "source": {
     "urls": [
       "https://docs.z.ai/devpack/overview",

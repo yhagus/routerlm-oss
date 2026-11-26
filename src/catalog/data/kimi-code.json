@@ -38,6 +38,13 @@
     "clientId": "17e5f671-d194-4dfb-9706-5516cb48c098",
     "cliVersion": "2.6.2"
   },
+  "plans": [
+    { "value": "Plus", "name": "Plus" },
+    { "value": "Pro", "name": "Pro" },
+    { "value": "Andante", "name": "Andante" },
+    { "value": "Moderato", "name": "Moderato" },
+    { "value": "Allegretto", "name": "Allegretto" }
+  ],
   "source": {
     "urls": [
       "https://www.kimi.com/coding/docs/en/",

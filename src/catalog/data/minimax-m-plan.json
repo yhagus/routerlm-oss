@@ -17,6 +17,11 @@
     "quotaBaseUrl": "https://www.minimax.io/v1"
   },
   "quotaReader": "minimax-m-plan",
+  "plans": [
+    { "value": "Go", "name": "Go" },
+    { "value": "Explore", "name": "Explore" },
+    { "value": "Build", "name": "Build" }
+  ],
   "source": {
     "urls": [
       "https://platform.minimax.io/docs/m-plan/intro.md",

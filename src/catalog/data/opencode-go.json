@@ -14,6 +14,11 @@
     "forwardedClientHeaders": ["user-agent", "x-opencode-session"]
   },
   "modelsDevProviderId": "opencode-go",
+  "plans": [
+    { "value": "Go", "name": "Go" },
+    { "value": "Go Plus", "name": "Go Plus" },
+    { "value": "Go Teams", "name": "Go Teams" }
+  ],
   "source": {
     "urls": [
       "https://opencode.ai/docs/console/go",

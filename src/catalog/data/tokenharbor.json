@@ -26,6 +26,12 @@
   },
   "credentialKinds": ["api-key"],
   "planReader": "tokenharbor",
+  "plans": [
+    { "value": "Agent Pass", "name": "Agent Pass" },
+    { "value": "Office Pass", "name": "Office Pass" },
+    { "value": "Frontier Pass", "name": "Frontier Pass" }
+  ],
+  "allowsNoPlan": true,
   "source": {
     "urls": [
       "https://tokenharbor.ai/docs",

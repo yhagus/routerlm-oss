@@ -4,6 +4,7 @@ import {
   catalogProviderSchema,
   providerLogoSchema,
   providerOauthLoginSchema,
+  providerPlansSchema,
   providerQuirksSchema,
   serviceTierPricesSchema,
   serviceTiersSchema,
@@ -19,6 +20,8 @@ const providerFieldsSchema = catalogProviderSchema
     logo: providerLogoSchema.nullable(),
     termsRisk: z.boolean(),
     quotaReader: z.enum(QUOTA_READERS).nullable(),
+    plans: providerPlansSchema,
+    allowsNoPlan: z.boolean(),
     oauthLogin: providerOauthLoginSchema.nullable(),
     credentialKinds: catalogProviderSchema.shape.credentialKinds.unwrap(),
     isEnabled: z.boolean(),
@@ -30,6 +33,8 @@ export const newProviderSchema = providerFieldsSchema.extend({
   logo: providerLogoSchema.nullable().optional(),
   termsRisk: z.boolean().optional(),
   quotaReader: z.enum(QUOTA_READERS).nullable().optional(),
+  plans: providerPlansSchema.default([]),
+  allowsNoPlan: z.boolean().optional(),
   oauthLogin: providerOauthLoginSchema.nullable().optional(),
   credentialKinds: catalogProviderSchema.shape.credentialKinds,
   isEnabled: z.boolean().optional(),
@@ -78,6 +83,7 @@ const providerAccountFieldsSchema = z.strictObject({
   isEnabled: z.boolean(),
   continueWhenExhausted: z.boolean(),
   paysBeyondPlan: z.boolean(),
+  planChoice: z.string().trim().min(1),
 });
 
 export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
@@ -91,6 +97,7 @@ export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
   isEnabled: z.boolean().optional(),
   continueWhenExhausted: z.boolean().optional(),
   paysBeyondPlan: z.boolean().optional(),
+  planChoice: z.string().trim().min(1).optional(),
 });
 export type NewProviderAccount = z.infer<typeof newProviderAccountSchema>;
 

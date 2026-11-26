@@ -14,6 +14,15 @@
   "quirks": {},
   "modelsDevProviderId": "alibaba-token-plan",
   "credentialKinds": ["api-key"],
+  "plans": [
+    { "value": "Lite", "name": "Lite" },
+    { "value": "Essential", "name": "Essential" },
+    { "value": "Standard", "name": "Standard" },
+    { "value": "Pro", "name": "Pro" },
+    { "value": "Team Standard", "name": "Team Standard" },
+    { "value": "Team Advanced", "name": "Team Advanced" },
+    { "value": "Team Premium", "name": "Team Premium" }
+  ],
   "source": {
     "urls": [
       "https://www.alibabacloud.com/help/en/model-studio/token-plan-team-overview",
