@@ -1,0 +1,252 @@
+{
+  "slug": "tokenrouter-com-responses",
+  "name": "TokenRouter.com Responses",
+  "logo": "tokenrouter",
+  "termsRisk": true,
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-responses",
+      "baseUrl": "https://api.tokenrouter.com/v1"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {},
+  "credentialKinds": ["api-key"],
+  "source": {
+    "urls": [
+      "https://www.tokenrouter.com/docs/terms-of-use/",
+      "https://www.tokenrouter.com/docs/codex-chatgpt-setup/",
+      "https://www.tokenrouter.com/models/",
+      "https://api.tokenrouter.com/api/pricing"
+    ],
+    "retrievedOn": "2026-11-26"
+  },
+  "notes": "Prepaid-balance reseller run by Artemis Tokenrouter Inc.: the account is topped up in advance and each request is charged per token. Prices are the discounted prices TokenRouter.com charged on 2026-11-26 (USD per million tokens, default group); the discounts are promotional and change. Terms risk: the TokenRouter.com Terms of Use forbid in §9.1 \"reselling API access, or developing and operating a directly competing aggregation or routing service based on the Services\". The same terms (§4.2) give API keys a maximum validity of 30 days: after that the key answers 401, which disables the Provider Account, and the operator must paste a new key. No exhaustedErrorCodes: the status and code for an empty balance are undocumented, and a used-up balance stays a Cooldown, since topping up ends it at any time. TokenRouter.com serves each model on some of its wire formats only, so it ships as three Providers with one chat endpoint each (ADR 0026): TokenRouter.com (chat completions) holds every model that speaks chat completions, TokenRouter.com Responses the models that speak only the Responses API, and TokenRouter.com Anthropic the models that speak only Anthropic Messages. One API key works for all three. Not shipped: models served only on the native Gemini format, image, video, audio and embedding models, and the system-one decision models.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "openai/gpt-6.2-sol",
+      "name": "GPT-6.2 Sol",
+      "releaseDate": "2026-11-17",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-6.2-astra",
+      "name": "GPT-6.2 Astra",
+      "releaseDate": "2026-11-17",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 8,
+      "outputPrice": 40,
+      "cacheReadPrice": 0.4,
+      "cacheWritePrice": 10,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-6.2-astra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "releaseDate": "2026-09-04",
+      "capabilities": ["vision", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 10,
+      "outputPrice": 50,
+      "cacheReadPrice": 1,
+      "cacheWritePrice": 12.5,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-6-astra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.6-luna",
+      "name": "GPT-5.6 Luna",
+      "releaseDate": "2026-07-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.2,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.02,
+      "cacheWritePrice": 0.25,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.6-terra",
+      "name": "GPT-5.6 Terra",
+      "releaseDate": "2026-07-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2,
+      "outputPrice": 12,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": 2.5,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.6-sol",
+      "name": "GPT-5.6 Sol",
+      "releaseDate": "2026-07-09",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 30,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.5-pro",
+      "name": "GPT-5.5 Pro",
+      "releaseDate": "2026-04-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 30,
+      "outputPrice": 180,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing). TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.5",
+      "name": "GPT-5.5",
+      "releaseDate": "2026-04-23",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 30,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-5.5",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.3-codex",
+      "name": "GPT-5.3 Codex",
+      "releaseDate": "2026-02-05",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1.75,
+      "outputPrice": 14,
+      "cacheReadPrice": 0.175,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.4",
+      "name": "GPT-5.4",
+      "releaseDate": "2026-03-05",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1050000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 2.5,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.25,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.com/models/",
+          "https://api.tokenrouter.com/api/pricing",
+          "https://developers.openai.com/api/docs/models/gpt-5.4",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the openai Catalog file. TokenRouter.com charges a higher tier above 272,000 input tokens; these are the prices below it."
+    }
+  ]
+}

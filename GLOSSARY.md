@@ -72,7 +72,7 @@ A model as one Provider names and sells it.
 _Avoid_: Provider model, backend model
 
 **Release Date**:
-The day a Provider made an Upstream Model available, written YYYY-MM-DD.
+The day a Provider made an Upstream Model available, written YYYY-MM-DD. For a Provider that resells models made by others, it is the day the model was first released by any Provider, since a reseller does not publish when it started serving a model.
 _Avoid_: Launch date, published date, last updated
 
 **Catalog Gap**:

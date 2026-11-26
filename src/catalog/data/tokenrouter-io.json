@@ -1,0 +1,614 @@
+{
+  "slug": "tokenrouter-io",
+  "name": "TokenRouter.io",
+  "logo": "tokenrouter-io",
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.tokenrouter.io/v1"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {},
+  "credentialKinds": ["api-key"],
+  "source": {
+    "urls": [
+      "https://www.tokenrouter.io/models",
+      "https://www.tokenrouter.io/docs/chat-completions",
+      "https://www.tokenrouter.io/docs/models",
+      "https://www.tokenrouter.io/docs/errors",
+      "https://www.tokenrouter.io/docs/authentication",
+      "https://www.tokenrouter.io/pricing",
+      "https://www.tokenrouter.io/terms",
+      "https://www.tokenrouter.io/privacy"
+    ],
+    "retrievedOn": "2026-11-26"
+  },
+  "notes": "Bring-your-own-key gateway: the operator adds their own provider keys to the TokenRouter.io account, and each provider bills its tokens directly. A model works only if the account holds a key for that model's provider; otherwise TokenRouter.io answers 400 provider_key_missing. TokenRouter.io itself charges a flat monthly plan with a request cap (Free $0 with 1,000 requests a month and 2 providers, Starter $29 with 1M requests, Team $99 with 10M, Enterprise from $499) and no per-token markup, so each model carries the provider list price TokenRouter.io shows. Keys start with tr_ and go in Authorization: Bearer. No exhaustedErrorCodes: 429 budget_exceeded (a team, member or key hard cap) and 429 monthly_quota_exceeded (the plan's request cap) are left as a Cooldown, since the operator can raise the budget or the plan at any time; 429 rate_limit_exceeded carries Retry-After. No Terms Risk: the terms (last updated 2026-08-07) forbid in §5 to \"resell the Service without our prior written consent\", which routing one's own traffic through the gateway is not, and say nothing about proxies, key sharing or single-person use. Prompts and completions are not stored by default and never used for training. Not shipped: openai/text-embedding-3-small (no embedding Model Kind) and the virtual auto, auto:cost, auto:latency and auto:quality models.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "openai/gpt-5",
+      "name": "GPT-5",
+      "releaseDate": "2025-08-07",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1.25,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.125,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5-mini",
+      "name": "GPT-5 mini",
+      "releaseDate": "2025-08-07",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.25,
+      "outputPrice": 2,
+      "cacheReadPrice": 0.025,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5-nano",
+      "name": "GPT-5 nano",
+      "releaseDate": "2025-08-07",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.05,
+      "outputPrice": 0.4,
+      "cacheReadPrice": 0.005,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "openai/gpt-4.1",
+      "name": "GPT-4.1",
+      "releaseDate": "2025-04-14",
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 1047576,
+      "maxOutputTokens": 32768,
+      "inputPrice": 2,
+      "outputPrice": 8,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "openai/gpt-4.1-mini",
+      "name": "GPT-4.1 mini",
+      "releaseDate": "2025-04-14",
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 1047576,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.4,
+      "outputPrice": 1.6,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "openai/gpt-4o",
+      "name": "GPT-4o",
+      "releaseDate": "2024-05-13",
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": 16384,
+      "inputPrice": 2.5,
+      "outputPrice": 10,
+      "cacheReadPrice": 1.25,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "openai/o3",
+      "name": "OpenAI o3",
+      "releaseDate": "2025-04-16",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 200000,
+      "maxOutputTokens": 100000,
+      "inputPrice": 2,
+      "outputPrice": 8,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openai listing)."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-opus-4-1",
+      "name": "Claude Opus 4.1",
+      "releaseDate": "2025-08-05",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 200000,
+      "maxOutputTokens": 32000,
+      "inputPrice": 15,
+      "outputPrice": 75,
+      "cacheReadPrice": 1.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its openrouter listing)."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-sonnet-4-5",
+      "name": "Claude Sonnet 4.5",
+      "releaseDate": "2025-09-29",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 200000,
+      "maxOutputTokens": 64000,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its anthropic listing)."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-haiku-4-5",
+      "name": "Claude Haiku 4.5",
+      "releaseDate": "2025-10-15",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 200000,
+      "maxOutputTokens": 64000,
+      "inputPrice": 1,
+      "outputPrice": 5,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities are copied from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "google/gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "releaseDate": "2025-06-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 1.25,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.31,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its google listing)."
+    },
+    {
+      "upstreamModelId": "google/gemini-2.5-flash",
+      "name": "Gemini 2.5 Flash",
+      "releaseDate": "2025-06-17",
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.3,
+      "outputPrice": 2.5,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its google listing)."
+    },
+    {
+      "upstreamModelId": "google/gemini-2.5-flash-lite",
+      "name": "Gemini 2.5 Flash-Lite",
+      "releaseDate": "2025-07-22",
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.1,
+      "outputPrice": 0.4,
+      "cacheReadPrice": 0.025,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its google listing)."
+    },
+    {
+      "upstreamModelId": "xai/grok-4",
+      "name": "Grok 4",
+      "releaseDate": "2025-07-09",
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 256000,
+      "maxOutputTokens": 256000,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.75,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its llmgateway-providers listing)."
+    },
+    {
+      "upstreamModelId": "xai/grok-3-mini",
+      "name": "Grok 3 mini",
+      "releaseDate": "2025-04-11",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 131072,
+      "maxOutputTokens": 8192,
+      "inputPrice": 0.3,
+      "outputPrice": 0.5,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its poe listing)."
+    },
+    {
+      "upstreamModelId": "deepseek/deepseek-chat",
+      "name": "DeepSeek V3.1",
+      "releaseDate": "2025-08-21",
+      "capabilities": ["tools"],
+      "contextSize": 128000,
+      "maxOutputTokens": 8192,
+      "inputPrice": 0.27,
+      "outputPrice": 1.1,
+      "cacheReadPrice": 0.07,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its abacus listing)."
+    },
+    {
+      "upstreamModelId": "deepseek/deepseek-reasoner",
+      "name": "DeepSeek R1",
+      "releaseDate": "2025-01-20",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 128000,
+      "maxOutputTokens": 8192,
+      "inputPrice": 0.55,
+      "outputPrice": 2.19,
+      "cacheReadPrice": 0.14,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its vercel listing)."
+    },
+    {
+      "upstreamModelId": "mistral/mistral-large-latest",
+      "name": "Mistral Large",
+      "releaseDate": "2026-10-05",
+      "capabilities": ["tools", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": null,
+      "inputPrice": 2,
+      "outputPrice": 6,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its mistral listing). Context size is TokenRouter.io's figure; the source gives 1048576. Max output is left unknown: the source's 262144 exceeds TokenRouter.io's context size."
+    },
+    {
+      "upstreamModelId": "mistral/mistral-small-latest",
+      "name": "Mistral Small",
+      "releaseDate": "2026-03-16",
+      "capabilities": ["tools", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": null,
+      "inputPrice": 0.1,
+      "outputPrice": 0.3,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its mistral listing). Context size is TokenRouter.io's figure; the source gives 262144. Max output is left unknown: the source's 256000 exceeds TokenRouter.io's context size."
+    },
+    {
+      "upstreamModelId": "mistral/codestral-latest",
+      "name": "Codestral",
+      "releaseDate": "2024-05-29",
+      "capabilities": ["tools", "structured-output"],
+      "contextSize": 256000,
+      "maxOutputTokens": 4096,
+      "inputPrice": 0.3,
+      "outputPrice": 0.9,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its mistral listing)."
+    },
+    {
+      "upstreamModelId": "qwen/qwen-max",
+      "name": "Qwen Max",
+      "releaseDate": "2024-04-03",
+      "capabilities": ["tools", "structured-output"],
+      "contextSize": 131072,
+      "maxOutputTokens": 8192,
+      "inputPrice": 1.6,
+      "outputPrice": 6.4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities are copied from the alibaba-model-studio-intl Catalog file. Context size is TokenRouter.io's figure; the source gives 32768."
+    },
+    {
+      "upstreamModelId": "qwen/qwen-plus",
+      "name": "Qwen Plus",
+      "releaseDate": "2024-01-25",
+      "capabilities": ["reasoning", "structured-output"],
+      "contextSize": 131072,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.4,
+      "outputPrice": 1.2,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tokenrouter.io/models",
+          "https://www.alibabacloud.com/help/en/model-studio/qwen-plus",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities are copied from the alibaba-model-studio-intl Catalog file. Context size is TokenRouter.io's figure; the source gives 1000000."
+    },
+    {
+      "upstreamModelId": "qwen/qwen-turbo",
+      "name": "Qwen Turbo",
+      "releaseDate": "2024-11-01",
+      "capabilities": ["tools", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 4096,
+      "inputPrice": 0.05,
+      "outputPrice": 0.2,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its qiniu-ai listing)."
+    },
+    {
+      "upstreamModelId": "glm/glm-4.5",
+      "name": "GLM-4.5",
+      "releaseDate": "2025-07-28",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 131072,
+      "maxOutputTokens": 98304,
+      "inputPrice": 0.6,
+      "outputPrice": 2.2,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its zai listing)."
+    },
+    {
+      "upstreamModelId": "glm/glm-4.5-air",
+      "name": "GLM-4.5 Air",
+      "releaseDate": "2025-07-28",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 131072,
+      "maxOutputTokens": 98304,
+      "inputPrice": 0.2,
+      "outputPrice": 1.1,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its zai listing)."
+    },
+    {
+      "upstreamModelId": "kimi/kimi-k2-0711-preview",
+      "name": "Kimi K2",
+      "releaseDate": "2025-07-11",
+      "capabilities": ["tools"],
+      "contextSize": 131072,
+      "maxOutputTokens": 16384,
+      "inputPrice": 0.6,
+      "outputPrice": 2.5,
+      "cacheReadPrice": 0.15,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its helicone listing)."
+    },
+    {
+      "upstreamModelId": "minimax/MiniMax-M1",
+      "name": "MiniMax M1",
+      "releaseDate": "2025-06-16",
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.4,
+      "outputPrice": 2.1,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its 302ai listing)."
+    },
+    {
+      "upstreamModelId": "groq/llama-3.3-70b-versatile",
+      "name": "Llama 3.3 70B",
+      "releaseDate": "2024-12-06",
+      "capabilities": ["tools"],
+      "contextSize": 131072,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.59,
+      "outputPrice": 0.79,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, context size, max output and capabilities come from models.dev (its groq listing)."
+    },
+    {
+      "upstreamModelId": "groq/meta-llama/llama-4-maverick-17b-128e-instruct",
+      "name": "Llama 4 Maverick",
+      "releaseDate": "2025-04-05",
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 131072,
+      "maxOutputTokens": 16384,
+      "inputPrice": 0.2,
+      "outputPrice": 0.6,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its huggingface listing). Context size is TokenRouter.io's figure; the source gives 524288."
+    },
+    {
+      "upstreamModelId": "together/meta-llama/Llama-4-Scout-17B-16E-Instruct",
+      "name": "Llama 4 Scout",
+      "releaseDate": "2025-04-05",
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 16384,
+      "inputPrice": 0.18,
+      "outputPrice": 0.59,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its huggingface listing). Context size is TokenRouter.io's figure; the source gives 327680."
+    },
+    {
+      "upstreamModelId": "together/deepseek-ai/DeepSeek-V3",
+      "name": "DeepSeek V3",
+      "releaseDate": "2024-12-26",
+      "capabilities": ["tools", "structured-output"],
+      "contextSize": 131072,
+      "maxOutputTokens": 8192,
+      "inputPrice": 1.25,
+      "outputPrice": 1.25,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its huggingface listing). Context size is TokenRouter.io's figure; the source gives 163840."
+    },
+    {
+      "upstreamModelId": "together/Qwen/Qwen3-235B-A22B-fp8",
+      "name": "Qwen3 235B",
+      "releaseDate": "2025-04-28",
+      "capabilities": ["reasoning"],
+      "contextSize": 131072,
+      "maxOutputTokens": 20000,
+      "inputPrice": 0.2,
+      "outputPrice": 0.6,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its jiekou listing). Context size is TokenRouter.io's figure; the source gives 40960."
+    },
+    {
+      "upstreamModelId": "fireworks/accounts/fireworks/models/llama4-maverick-instruct-basic",
+      "name": "Llama 4 Maverick",
+      "releaseDate": "2025-04-05",
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 16384,
+      "inputPrice": 0.22,
+      "outputPrice": 0.88,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its huggingface listing). Context size is TokenRouter.io's figure; the source gives 524288."
+    },
+    {
+      "upstreamModelId": "fireworks/accounts/fireworks/models/deepseek-r1",
+      "name": "DeepSeek R1",
+      "releaseDate": "2025-01-20",
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 163840,
+      "maxOutputTokens": 32768,
+      "inputPrice": 3,
+      "outputPrice": 8,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": ["https://www.tokenrouter.io/models", "https://models.dev/"],
+        "retrievedOn": "2026-11-26"
+      },
+      "notes": "Release date, max output and capabilities come from models.dev (its huggingface listing). Context size is TokenRouter.io's figure; the source gives 64000."
+    }
+  ]
+}
