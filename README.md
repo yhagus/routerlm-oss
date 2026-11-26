@@ -128,6 +128,16 @@ The backend runs as two containers of the same image, so Customers' inference ne
 | `redis`     | BullMQ queues between the backend and the worker.                   |
 | `migrate` | One-shot: applies migrations and seeds the Catalog on every `up`.   |
 
+A request to `/v1` stays off the database on its hot path:
+
+```
+API Key ─► Spend Limit and Request Rate (Redis) ─► Model's Routes (in-memory snapshot)
+        ─► first healthy Provider Account ─► upstream ── fails? ─► Cooldown, next Route
+        ─► answer streamed to the client ─► Usage Log queued for the worker
+```
+
+Each role keeps a snapshot of API Keys, Models, Routes and Provider Accounts in memory, reloaded on change and every 30 seconds ([ADR 0020](docs/adr/0020-snapshot-reloads-on-an-interval-as-well-as-on-change.md), [ADR 0078](docs/adr/0078-api-keys-sign-in-from-the-snapshot-integration-secrets-from-postgresql.md)). Scale inference with `INFERENCE_PROCESSES` (processes on one port, [ADR 0025](docs/adr/0025-the-backend-runs-n-processes-on-one-port-with-node-cluster.md)) or with `docker compose up --scale inference=N`, which Caddy balances by least connections.
+
 [GLOSSARY.md](GLOSSARY.md) defines the domain terms (Model, Route, Provider Account, Cooldown, Exhausted…). [docs/adr/](docs/adr/) records the design decisions.
 
 ---
@@ -144,7 +154,7 @@ End-to-end scenario: the fake upstream waits 200 ms, then streams 200 tokens at 
 <summary><b>Test setup</b></summary>
 
 - **Host:** Docker Desktop on macOS, Apple M3 Pro, with 4 CPUs and 7.6 GB of RAM for the Docker VM.
-- **Gateway:** 1 container of 2 CPUs / 2 GB, running 2 processes (`BACKEND_PROCESSES=2`).
+- **Gateway:** 1 container of 2 CPUs / 2 GB, running 2 processes (`BACKEND_PROCESSES=2`), with k6 calling it directly. The benchmark stack has no edge proxy and no admin container, since it sends only inference traffic.
 - **Worker:** 1 CPU / 1 GB.
 - **PostgreSQL:** 1 CPU / 1 GB.
 - **Redis:** 0.5 CPU / 512 MB.
