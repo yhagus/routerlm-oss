@@ -11,6 +11,7 @@ export const RECORDED_ATTEMPT_FAILURES = [
   'bad_request',
   'stream_interrupted',
   'exhausted',
+  'not_in_plan',
   'cancelled',
 ] as const;
 export type RecordedAttemptFailure = (typeof RECORDED_ATTEMPT_FAILURES)[number];

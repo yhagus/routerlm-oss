@@ -138,6 +138,7 @@ describe('Probe of an Upstream Model (e2e)', () => {
           errorMessage: null,
           errorCaptureId: null,
           cost: 0.00016,
+          notInPlan: false,
         },
         {
           providerAccountId: backupAccountId,
@@ -150,6 +151,7 @@ describe('Probe of an Upstream Model (e2e)', () => {
           errorMessage: '{"error":"overloaded"}',
           errorCaptureId: expect.any(String),
           cost: null,
+          notInPlan: false,
         },
       ],
     });
@@ -193,6 +195,26 @@ describe('Probe of an Upstream Model (e2e)', () => {
     expect(response.body.results).toMatchObject([
       { providerAccountId: mainAccountId, ok: true, upstreamStatus: 200 },
       { providerAccountId: backupAccountId, ok: true, upstreamStatus: 200 },
+    ]);
+  });
+
+  it('probes a Provider Account outside the Plan Coverage and flags it as not in the Plan', async () => {
+    await changeInDatabase(async () => {
+      await db
+        .update(providerAccounts)
+        .set({ plan: 'agent' })
+        .where(eq(providerAccounts.id, mainAccountId));
+      await db.update(upstreamModels).set({ planCoverage: ['office'] });
+    });
+    upstream.reply(SUCCESS);
+    upstream.reply(SUCCESS);
+
+    const response = await probe().expect(200);
+
+    expect(upstream.requests).toHaveLength(2);
+    expect(response.body.results).toMatchObject([
+      { providerAccountId: mainAccountId, ok: true, notInPlan: true },
+      { providerAccountId: backupAccountId, ok: true, notInPlan: false },
     ]);
   });
 

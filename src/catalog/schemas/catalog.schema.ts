@@ -76,6 +76,7 @@ export const providerQuirksSchema = z.strictObject({
   forwardedClientHeaders: z.array(quirkHeaderNameSchema).optional(),
   fixedHeaders: z.record(quirkHeaderNameSchema, z.string().min(1)).optional(),
   exhaustedErrorCodes: z.array(z.union([z.int(), z.string().min(1)])).optional(),
+  notInPlanErrorCodes: z.array(z.union([z.int(), z.string().min(1)])).optional(),
   quotaBaseUrl: providerUrlSchema.optional(),
 });
 export const storedProviderQuirksSchema = providerQuirksSchema.extend({

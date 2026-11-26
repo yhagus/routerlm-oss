@@ -1,5 +1,10 @@
 import type { ErrorOrigin, RecordedAttemptFailure } from '@/db/schemas';
-import type { Snapshot, SnapshotProviderAccount } from '@/snapshot/models/snapshot';
+import { isOutsidePlanCoverage } from '@/inference/models/plan-coverage';
+import type {
+  Snapshot,
+  SnapshotProviderAccount,
+  SnapshotUpstreamModel,
+} from '@/snapshot/models/snapshot';
 import type { UsageJob } from '@/usage/models/usage-job';
 import { playgroundSummaryOf } from './playground-summary';
 
@@ -17,6 +22,7 @@ export interface ProbeResult {
   errorMessage: string | null;
   errorCaptureId: string | null;
   cost: number | null;
+  notInPlan: boolean;
 }
 
 export interface ProbeResults {
@@ -25,6 +31,7 @@ export interface ProbeResults {
 
 export function probeResultOf(
   job: UsageJob,
+  upstreamModel: SnapshotUpstreamModel,
   providerAccount: SnapshotProviderAccount,
   snapshot: Snapshot,
 ): ProbeResult {
@@ -43,5 +50,6 @@ export function probeResultOf(
     errorMessage: errorBody === null ? null : errorBody.slice(0, ERROR_MESSAGE_MAX_LENGTH),
     errorCaptureId: lastFailedAttempt?.captureId ?? job.errorCapture?.requestCaptureId ?? null,
     cost: isOk ? playgroundSummaryOf(job, snapshot).cost : null,
+    notInPlan: isOutsidePlanCoverage(providerAccount, upstreamModel),
   };
 }

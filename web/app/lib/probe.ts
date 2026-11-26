@@ -13,6 +13,7 @@ export interface ProbeResult {
   errorMessage: string | null;
   errorCaptureId: string | null;
   cost: number | null;
+  notInPlan: boolean;
 }
 
 export interface ProbeResults {

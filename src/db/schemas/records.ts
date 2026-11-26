@@ -62,6 +62,7 @@ export const ATTEMPT_FAILURE_REASONS = [
   'bad_request',
   'stream_interrupted',
   'exhausted',
+  'not_in_plan',
 ] as const;
 export type AttemptFailureReason = (typeof ATTEMPT_FAILURE_REASONS)[number];
 

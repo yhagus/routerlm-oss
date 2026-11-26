@@ -4,13 +4,13 @@ const NAMED_CODE_SEARCH_DEPTH = 4;
 
 const MS_PER_SECOND = 1000;
 
-export type ExhaustedErrorCode = number | string;
+export type ProviderErrorCode = number | string;
 
-export function isQuotaExhaustedError(
+export function carriesProviderErrorCode(
   responseBody: string,
-  exhaustedErrorCodes: readonly ExhaustedErrorCode[],
+  errorCodes: readonly ProviderErrorCode[],
 ): boolean {
-  if (exhaustedErrorCodes.length === 0) {
+  if (errorCodes.length === 0) {
     return false;
   }
   const body = parsedObject(responseBody);
@@ -19,7 +19,7 @@ export function isQuotaExhaustedError(
   }
   const numericCodes = numericErrorCodesOf(body);
   const namedCodes = namedErrorCodesOf(body, NAMED_CODE_SEARCH_DEPTH);
-  return exhaustedErrorCodes.some((code) =>
+  return errorCodes.some((code) =>
     typeof code === 'number' ? numericCodes.includes(code) : namedCodes.includes(code),
   );
 }

@@ -3,10 +3,7 @@ import { HttpClient, type HttpResponse } from '@nestjs/http-client';
 import type { AttemptFailureReason } from '@/db/schemas';
 import { GATEWAY_USER_AGENT } from '@/libs/models/gateway-version';
 import { AttemptFailedError, ClientCancelledError } from '@/inference/models/attempt-failure';
-import {
-  type ExhaustedErrorCode,
-  isQuotaExhaustedError,
-} from '@/inference/models/quota-exhausted-error';
+import { carriesProviderErrorCode } from '@/inference/models/quota-exhausted-error';
 import type {
   InferenceRequest,
   InferenceResponse,
@@ -258,7 +255,7 @@ export class UpstreamClient {
         return { response: gathered, upstreamRequestId };
       }
       const body = await response.data.text();
-      if (isQuotaExhaustedError(body, exhaustedErrorCodesOf(call.target))) {
+      if (carriesProviderErrorCode(body, call.target.quirks.exhaustedErrorCodes ?? [])) {
         throw new AttemptFailedError(
           'exhausted',
           response.status,
@@ -323,7 +320,7 @@ export class UpstreamClient {
       redirect: 'error',
     });
     if (!response.ok) {
-      throw await failedResponse(response, exhaustedErrorCodesOf(call.target));
+      throw await failedResponse(response, call.target);
     }
     return response;
   }
@@ -347,20 +344,16 @@ function parseJsonBody(text: string): unknown {
   }
 }
 
-function exhaustedErrorCodesOf(target: UpstreamTarget): ExhaustedErrorCode[] {
-  return target.quirks.exhaustedErrorCodes ?? [];
-}
-
 async function failedResponse(
   response: HttpResponse<Response>,
-  exhaustedErrorCodes: ExhaustedErrorCode[],
+  target: UpstreamTarget,
 ): Promise<AttemptFailedError> {
   const upstreamResponse = {
     headers: Object.fromEntries(response.headers.entries()),
     body: await response.data.text(),
   };
   return new AttemptFailedError(
-    failureReasonOf(response.status, upstreamResponse.body, exhaustedErrorCodes),
+    failureReasonOf(response.status, upstreamResponse.body, target),
     response.status,
     `The upstream answered ${response.status}`,
     upstreamResponse,
@@ -370,10 +363,13 @@ async function failedResponse(
 function failureReasonOf(
   status: number,
   body: string,
-  exhaustedErrorCodes: ExhaustedErrorCode[],
+  { quirks }: UpstreamTarget,
 ): AttemptFailureReason {
-  if (isQuotaExhaustedError(body, exhaustedErrorCodes)) {
+  if (carriesProviderErrorCode(body, quirks.exhaustedErrorCodes ?? [])) {
     return 'exhausted';
+  }
+  if (carriesProviderErrorCode(body, quirks.notInPlanErrorCodes ?? [])) {
+    return 'not_in_plan';
   }
   return failureReasonOfStatus(status);
 }

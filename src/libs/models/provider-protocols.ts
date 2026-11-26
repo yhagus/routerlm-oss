@@ -13,7 +13,11 @@ export interface ProtocolListing {
   protocols?: readonly UpstreamProtocol[];
 }
 
-const QUIRKS_OF_EVERY_PROTOCOL: readonly QuirkKey[] = ['exhaustedErrorCodes', 'quotaBaseUrl'];
+const QUIRKS_OF_EVERY_PROTOCOL: readonly QuirkKey[] = [
+  'exhaustedErrorCodes',
+  'notInPlanErrorCodes',
+  'quotaBaseUrl',
+];
 
 const QUIRKS_OF_ONE_PROTOCOL = {
   'openai-chat': [

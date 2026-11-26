@@ -9,6 +9,7 @@ import {
 } from '@/snapshot/models/snapshot';
 import type { InferenceRequest } from './internal-format';
 import { UPSTREAM_PROTOCOL_CONVERTERS } from '@/inference/protocols/converters';
+import { isOutsidePlanCoverage } from './plan-coverage';
 
 const CHARACTERS_PER_TOKEN = 4;
 
@@ -85,14 +86,21 @@ export function routePath(route: SnapshotRoute): AttemptPath {
   return { route, upstreamModel: route.upstreamModel };
 }
 
+export function servingProviderAccounts({ upstreamModel }: AttemptPath): SnapshotProviderAccount[] {
+  return upstreamModel.provider.providerAccounts.filter(
+    (providerAccount) =>
+      providerAccount.isEnabled && !isOutsidePlanCoverage(providerAccount, upstreamModel),
+  );
+}
+
 export function* attemptTargets(
   paths: AttemptPath[],
   isSkipped: (target: AttemptTarget) => boolean,
 ): Generator<AttemptTarget> {
   for (const path of paths) {
-    for (const providerAccount of path.upstreamModel.provider.providerAccounts) {
+    for (const providerAccount of servingProviderAccounts(path)) {
       const target = { ...path, providerAccount };
-      if (providerAccount.isEnabled && !isSkipped(target)) {
+      if (!isSkipped(target)) {
         yield target;
       }
     }

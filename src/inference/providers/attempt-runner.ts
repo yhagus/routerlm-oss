@@ -28,6 +28,7 @@ import {
   type AttemptPath,
   type AttemptTarget,
   attemptTargets,
+  servingProviderAccounts,
 } from '@/inference/models/route-selection';
 import type { Destination } from '@/inference/models/destination';
 import type { SentServiceTier } from '@/inference/models/service-tier';
@@ -74,8 +75,8 @@ export class AttemptRunner {
     meter: UsageMeter,
     prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
   ): Promise<Answer> {
-    const enabledAccountIds = enabledProviderAccountIdsOf(paths);
-    const cooldowns = await this.cooldowns.recentCooldowns(enabledAccountIds);
+    const servingAccountIds = servingProviderAccountIdsOf(paths);
+    const cooldowns = await this.cooldowns.recentCooldowns(servingAccountIds);
     const skippedAccountIds = new Set(cooldowns.keys());
     const recordedExhaustedAccountIds = new Set<string>();
     const failures: AttemptFailedError[] = [];
@@ -112,7 +113,9 @@ export class AttemptRunner {
         }
         meter.attemptFailed(error);
         failures.push(error);
-        skippedAccountIds.add(target.providerAccount.id);
+        if (error.reason !== 'not_in_plan') {
+          skippedAccountIds.add(target.providerAccount.id);
+        }
         await this.afterFailedAttempt(error, target);
         if (error.reason === 'bad_request') {
           throw gatewayErrorFor(error);
@@ -121,7 +124,7 @@ export class AttemptRunner {
     }
     throw exhaustionError(
       failures,
-      enabledAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
+      servingAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
     );
   }
 
@@ -158,6 +161,7 @@ export class AttemptRunner {
     const lastError = `${failure.reason}: ${failure.message}`;
     switch (failure.reason) {
       case 'bad_request':
+      case 'not_in_plan':
         return;
       case 'unauthorized':
         if (failure.upstreamStatus === HttpStatus.FORBIDDEN) {
@@ -292,10 +296,6 @@ async function asAttemptFailure(
   }
 }
 
-function enabledProviderAccountIdsOf(paths: AttemptPath[]): string[] {
-  return paths.flatMap(({ upstreamModel }) =>
-    upstreamModel.provider.providerAccounts
-      .filter((account) => account.isEnabled)
-      .map((account) => account.id),
-  );
+function servingProviderAccountIdsOf(paths: AttemptPath[]): string[] {
+  return paths.flatMap((path) => servingProviderAccounts(path).map((account) => account.id));
 }

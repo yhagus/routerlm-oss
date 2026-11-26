@@ -50,6 +50,7 @@ const FAILURE_MESSAGES = {
     'upstream_rate_limited',
     "The Provider Account's Quota Meter has run out (Exhausted); try again later",
   ],
+  not_in_plan: ['upstream_error', "The Provider Account's Plan does not cover this model"],
 } as const satisfies Record<AttemptFailureReason, readonly [GatewayError['code'], string]>;
 
 export function gatewayErrorFor(failure: AttemptFailedError): GatewayError {

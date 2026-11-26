@@ -154,6 +154,7 @@ export interface ProviderQuirks {
   forwardedClientHeaders?: string[];
   fixedHeaders?: Record<string, string>;
   exhaustedErrorCodes?: (string | number)[];
+  notInPlanErrorCodes?: (string | number)[];
   quotaBaseUrl?: string;
 }
 

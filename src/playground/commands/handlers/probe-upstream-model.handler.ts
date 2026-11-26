@@ -73,6 +73,6 @@ export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamM
         );
       }
     }
-    return probeResultOf(usage.job, providerAccount, this.snapshot.current);
+    return probeResultOf(usage.job, upstreamModel, providerAccount, this.snapshot.current);
   }
 }
