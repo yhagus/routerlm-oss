@@ -4,7 +4,7 @@ import { models, routes } from '@/db/schemas';
 import { truncateTables } from './truncate';
 
 export async function deleteAllUpstreamData(db: Database): Promise<void> {
-  await truncateTables(db, sql.raw('users, models, routes, providers, usage_logs'));
+  await truncateTables(db, sql.raw('users, models, model_groups, routes, providers, usage_logs'));
 }
 
 export async function insertRouteTo(

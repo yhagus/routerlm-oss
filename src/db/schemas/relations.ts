@@ -67,6 +67,13 @@ export const relations = defineRelations(schema, (r) => ({
   },
   models: {
     routes: r.many.routes(),
+    groups: r.many.modelGroups({
+      from: r.models.id.through(r.modelGroupMembers.modelId),
+      to: r.modelGroups.id.through(r.modelGroupMembers.modelGroupId),
+    }),
+  },
+  modelGroups: {
+    models: r.many.models(),
   },
   routes: {
     model: r.one.models({ from: r.routes.modelId, to: r.models.id, optional: false }),

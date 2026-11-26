@@ -7,6 +7,7 @@ import { providerAccounts } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
 import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
+import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
 
@@ -85,7 +86,7 @@ describe('Provider Account keys at rest (e2e)', () => {
     const model = await request(server)
       .post('/api/models')
       .set('Cookie', cookie)
-      .send({ name: 'smart' })
+      .send({ name: 'smart', groupIds: [await insertModelGroup(app, db, 'everyday')] })
       .expect(201);
     await request(server)
       .post(`/api/models/${model.body.id}/routes`)

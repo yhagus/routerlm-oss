@@ -2,6 +2,7 @@ import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
 import type { Database } from '@/db/schemas/relations';
 import { upstreamModels } from '@/db/schemas';
+import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
 
@@ -11,6 +12,7 @@ describe('Models (e2e)', () => {
   let app: NestNodeApplication;
   let db: Database;
   let cookie: string;
+  let groupId: string;
 
   beforeAll(async () => {
     ({ app, db } = await createTestApp());
@@ -19,6 +21,7 @@ describe('Models (e2e)', () => {
   beforeEach(async () => {
     await deleteAllUpstreamData(db);
     cookie = await setUpFirstUser(app, OPERATOR);
+    groupId = await insertModelGroup(app, db, 'everyday');
   });
 
   afterAll(async () => {
@@ -29,7 +32,7 @@ describe('Models (e2e)', () => {
     const created = await request(app.getHttpServer())
       .post('/api/models')
       .set('Cookie', cookie)
-      .send({ name, kind })
+      .send({ name, kind, groupIds: [groupId] })
       .expect(201);
     return created.body.id;
   }
@@ -251,7 +254,7 @@ describe('Models (e2e)', () => {
     const refused = await request(app.getHttpServer())
       .post('/api/models')
       .set('Cookie', cookie)
-      .send({ name: 'smart' })
+      .send({ name: 'smart', groupIds: [groupId] })
       .expect(409);
 
     expect(refused.body.message).toBe('A Model named "smart" already exists');

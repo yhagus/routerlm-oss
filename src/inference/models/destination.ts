@@ -12,6 +12,8 @@ import type { AttemptPath, AttemptTarget } from './route-selection';
 
 export type Destination = FallbackDestination | ProbeDestination;
 
+export const GROUP_SEPARATOR = '/';
+
 interface ResolvedNames {
   model: SnapshotModel | null;
   id: string;
@@ -34,7 +36,7 @@ export function usableModel(
   name: string,
   caller: InferenceCaller,
 ): SnapshotModel {
-  const model = snapshot.modelsByName.get(name);
+  const model = findModelByClientName(snapshot, name);
   if (!model?.isEnabled) {
     throw new GatewayError('model_not_found', `The Model "${name}" does not exist`, 'client');
   }
@@ -46,6 +48,20 @@ export function usableModel(
     );
   }
   return model;
+}
+
+function findModelByClientName(snapshot: Snapshot, name: string): SnapshotModel | undefined {
+  const exactMatch = snapshot.modelsByName.get(name);
+  if (exactMatch) {
+    return exactMatch;
+  }
+  const separatorIndex = name.indexOf(GROUP_SEPARATOR);
+  if (separatorIndex === -1) {
+    return undefined;
+  }
+  const groupSlug = name.slice(0, separatorIndex);
+  const model = snapshot.modelsByName.get(name.slice(separatorIndex + 1));
+  return model?.groupSlugs.includes(groupSlug) ? model : undefined;
 }
 
 export function upstreamModelServedHere(

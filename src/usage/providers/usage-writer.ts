@@ -58,6 +58,7 @@ export class UsageWriter {
           ...snapshot.customerNames,
           modelId: job.modelId,
           ...servingTargetColumnsOf(snapshot.servedBy),
+          requestedModelName: job.requestedModelName ?? null,
           upstreamProtocol: job.servedBy?.upstreamProtocol ?? null,
           kind: CLIENT_PROTOCOL_KINDS[job.clientProtocol],
           clientProtocol: job.clientProtocol,

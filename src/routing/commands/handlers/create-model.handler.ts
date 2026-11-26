@@ -4,6 +4,7 @@ import type { Database } from '@/db/schemas/relations';
 import { models } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import type { Model } from '@/routing/models/model';
+import { findModelGroups, replaceModelGroups } from '@/routing/models/model-group-memberships';
 import { toModelWriteError } from '@/routing/models/write-errors';
 import { CreateModelCommand } from '@/routing/commands/impl/create-model.command';
 
@@ -15,12 +16,18 @@ export class CreateModelHandler implements ICommandHandler<CreateModelCommand> {
   ) {}
 
   async execute({ newModel }: CreateModelCommand): Promise<Model> {
+    const { groupIds, ...fields } = newModel;
+    let created: typeof models.$inferSelect;
     try {
-      const [created] = await this.db.insert(models).values(newModel).returning();
-      await this.snapshot.changed();
-      return created;
+      created = await this.db.transaction(async (transaction) => {
+        const [model] = await transaction.insert(models).values(fields).returning();
+        await replaceModelGroups(transaction, model.id, groupIds);
+        return model;
+      });
     } catch (error) {
       throw toModelWriteError(error, newModel.name);
     }
+    await this.snapshot.changed();
+    return { ...created, groups: await findModelGroups(this.db, created.id) };
   }
 }

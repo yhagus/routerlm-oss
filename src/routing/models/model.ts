@@ -1,8 +1,13 @@
-import type { models, providers, routes, upstreamModels } from '@/db/schemas';
+import type { modelGroups, models, providers, routes, upstreamModels } from '@/db/schemas';
 
-export type Model = typeof models.$inferSelect;
+export type ModelGroupRef = Pick<typeof modelGroups.$inferSelect, 'id' | 'name' | 'slug'>;
 
-export type ModelSummary = Pick<Model, 'id' | 'name' | 'kind' | 'isEnabled' | 'createdAt'> & {
+export type Model = typeof models.$inferSelect & { groups: ModelGroupRef[] };
+
+export type ModelSummary = Pick<
+  Model,
+  'id' | 'name' | 'kind' | 'isEnabled' | 'createdAt' | 'groups'
+> & {
   routeCount: number;
 };
 

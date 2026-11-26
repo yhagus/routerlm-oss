@@ -110,6 +110,7 @@ export interface UsageJob {
   caller: UsageCaller;
   modelId: string | null;
   modelName?: string | null;
+  requestedModelName?: string | null;
   clientProtocol: ClientProtocol;
   isStreamed: boolean;
   httpStatus: number;

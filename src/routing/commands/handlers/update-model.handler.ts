@@ -6,6 +6,7 @@ import type { Database } from '@/db/schemas/relations';
 import { models } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import type { Model } from '@/routing/models/model';
+import { findModelGroups, replaceModelGroups } from '@/routing/models/model-group-memberships';
 import { toModelWriteError } from '@/routing/models/write-errors';
 import { UpdateModelCommand } from '@/routing/commands/impl/update-model.command';
 
@@ -17,13 +18,20 @@ export class UpdateModelHandler implements ICommandHandler<UpdateModelCommand> {
   ) {}
 
   async execute({ modelId, changes }: UpdateModelCommand): Promise<Model> {
-    let updated: Model | undefined;
+    const { groupIds, ...fields } = changes;
+    let updated: typeof models.$inferSelect | undefined;
     try {
-      [updated] = await this.db
-        .update(models)
-        .set(changes)
-        .where(eq(models.id, modelId))
-        .returning();
+      updated = await this.db.transaction(async (transaction) => {
+        const [model] = await transaction
+          .update(models)
+          .set({ ...fields, updatedAt: new Date() })
+          .where(eq(models.id, modelId))
+          .returning();
+        if (model && groupIds) {
+          await replaceModelGroups(transaction, model.id, groupIds);
+        }
+        return model;
+      });
     } catch (error) {
       throw toModelWriteError(error, changes.name);
     }
@@ -31,6 +39,6 @@ export class UpdateModelHandler implements ICommandHandler<UpdateModelCommand> {
       throw new NotFoundException('Model not found');
     }
     await this.snapshot.changed();
-    return updated;
+    return { ...updated, groups: await findModelGroups(this.db, modelId) };
   }
 }

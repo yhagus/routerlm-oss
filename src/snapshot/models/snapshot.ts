@@ -128,6 +128,7 @@ export interface SnapshotModel {
   parameterPolicy: ParameterPolicy;
   hasAutomaticCacheBreakpoints: boolean;
   createdAt: Date;
+  groupSlugs: string[];
   routes: SnapshotRoute[];
 }
 

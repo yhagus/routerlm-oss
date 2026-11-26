@@ -209,6 +209,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     caller: InferenceCaller,
     meter: UsageMeter,
   ): Destination {
+    meter.modelRequested(clientRequest.model);
     const model = usableModel(this.snapshot.current, clientRequest.model, caller);
     meter.modelResolved(model.id, model.name);
     assertKindServedHere(`Model "${model.name}"`, model.kind, kind);

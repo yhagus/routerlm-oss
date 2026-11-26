@@ -54,6 +54,7 @@ export class UsageMeter {
   private isStreamed = false;
   private modelId: string | null = null;
   private modelName: string | null = null;
+  private requestedModelName: string | null = null;
   private errorCode: GatewayErrorCode | null = null;
   private errorOrigin: ErrorOrigin | null = null;
   private readonly attempts: AttemptRecord[] = [];
@@ -80,6 +81,10 @@ export class UsageMeter {
 
   requestParsed(isStreamed: boolean): void {
     this.isStreamed = isStreamed;
+  }
+
+  modelRequested(requestedModelName: string): void {
+    this.requestedModelName = requestedModelName;
   }
 
   modelResolved(modelId: string, modelName: string): void {
@@ -219,6 +224,7 @@ export class UsageMeter {
       caller: this.caller,
       modelId: this.modelId,
       modelName: this.modelName,
+      requestedModelName: this.requestedModelName,
       clientProtocol: this.clientProtocol,
       isStreamed: this.isStreamed,
       httpStatus,

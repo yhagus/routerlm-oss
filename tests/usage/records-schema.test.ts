@@ -15,7 +15,12 @@ const SNAPSHOT_NAME_COLUMNS = [
   'pricing_window_name',
 ];
 
-const REQUEST_METADATA_COLUMNS = ['user_agent', 'client_ip', 'upstream_request_id'];
+const REQUEST_METADATA_COLUMNS = [
+  'user_agent',
+  'client_ip',
+  'upstream_request_id',
+  'requested_model_name',
+];
 
 function columnsThatCouldHoldContent(columns: Record<string, PgColumn>): string[] {
   return Object.values(columns)

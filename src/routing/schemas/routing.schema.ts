@@ -56,11 +56,19 @@ function rank(value: number | ReasoningEffort): number {
   return typeof value === 'number' ? value : REASONING_EFFORTS.indexOf(value);
 }
 
+const WITHOUT_SLASH = /^[^/]*$/;
+
+const modelGroupIdsSchema = z
+  .array(z.uuid())
+  .min(1, { error: 'Choose at least one Model Group' })
+  .transform((ids) => [...new Set(ids)]);
+
 const modelFieldsSchema = z.strictObject({
-  name: z.string().trim().min(1),
+  name: z.string().trim().min(1).regex(WITHOUT_SLASH, { error: 'A Model name cannot contain "/"' }),
   isEnabled: z.boolean(),
   parameterPolicy: parameterPolicySchema,
   hasAutomaticCacheBreakpoints: z.boolean(),
+  groupIds: modelGroupIdsSchema,
 });
 
 export const newModelSchema = modelFieldsSchema.extend({

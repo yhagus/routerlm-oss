@@ -1,0 +1,387 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "b9f21930-fb73-4b4e-b896-37ff235cfdc9",
+  "prevIds": [
+    "85723389-590f-47e7-9f4a-4c3cf746da3c"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "model_group_members"
+      ],
+      "writes": [
+        "s|tbl|public.model_group_members",
+        "n|tbl|public.model_group_members",
+        "e|tbl|public.model_group_members",
+        "n|rel|public.model_group_members",
+        "n|type|public.model_group_members",
+        "n|rel|public.model_group_members_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "model_groups"
+      ],
+      "writes": [
+        "s|tbl|public.model_groups",
+        "n|tbl|public.model_groups",
+        "e|tbl|public.model_groups",
+        "n|rel|public.model_groups",
+        "n|type|public.model_groups",
+        "n|rel|public.model_groups_pkey",
+        "n|rel|public.model_groups_slug_key"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "requested_model_name"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.requested_model_name",
+        "n|col|public.usage_logs.requested_model_name",
+        "e|col|public.usage_logs.requested_model_name"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "model_group_members",
+        "model_group_members_model_group_id_idx"
+      ],
+      "writes": [
+        "s|idx|public.model_group_members_model_group_id_idx",
+        "n|idx|public.model_group_members_model_group_id_idx",
+        "e|idx|public.model_group_members_model_group_id_idx",
+        "n|rel|public.model_group_members_model_group_id_idx"
+      ],
+      "reads": [
+        "n|tbl|public.model_group_members",
+        "n|sch|public",
+        "n|col|public.model_group_members.model_group_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "model_group_members"
+      ],
+      "writes": [
+        "s|fk|public.model_group_members.model_group_members_model_id_models_id_fkey",
+        "n|fk|public.model_group_members.model_group_members_model_id_models_id_fkey",
+        "e|fk|public.model_group_members.model_group_members_model_id_models_id_fkey",
+        "n|con|public.model_group_members.model_group_members_model_id_models_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.model_group_members",
+        "n|sch|public",
+        "n|tbl|public.models",
+        "n|sch|public",
+        "n|col|public.model_group_members.model_id",
+        "n|col|public.models.id",
+        "e|uniqueness|public.models.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "model_group_members"
+      ],
+      "writes": [
+        "s|fk|public.model_group_members.model_group_members_model_group_id_model_groups_id_fkey",
+        "n|fk|public.model_group_members.model_group_members_model_group_id_model_groups_id_fkey",
+        "e|fk|public.model_group_members.model_group_members_model_group_id_model_groups_id_fkey",
+        "n|con|public.model_group_members.model_group_members_model_group_id_model_groups_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.model_group_members",
+        "n|sch|public",
+        "n|tbl|public.model_groups",
+        "n|sch|public",
+        "n|col|public.model_group_members.model_group_id",
+        "n|col|public.model_groups.id",
+        "e|uniqueness|public.model_groups.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "model_group_members",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "model_groups",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_group_members",
+        "name": "model_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_group_members",
+        "name": "model_group_id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_groups",
+        "name": "id",
+        "type": "uuid",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_groups",
+        "name": "name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_groups",
+        "name": "slug",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_groups",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_groups",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "requested_model_name",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_group_members",
+        "name": "model_group_members_model_group_id_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "model_group_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_group_members",
+        "name": "model_group_members_model_id_models_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "model_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "models",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_group_members",
+        "name": "model_group_members_model_group_id_model_groups_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "model_group_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "model_groups",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_group_members",
+        "name": "model_group_members_pkey",
+        "columns": [
+          "model_id",
+          "model_group_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_groups",
+        "name": "model_groups_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "model_groups",
+        "name": "model_groups_slug_key",
+        "nameExplicit": false,
+        "columns": [
+          "slug"
+        ],
+        "nullsNotDistinct": false,
+        "entityType": "uniques"
+      }
+    }
+  ]
+}

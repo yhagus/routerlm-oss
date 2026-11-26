@@ -1,4 +1,13 @@
-import { boolean, index, integer, jsonb, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { createdAt, id, updatedAt } from './columns';
 import type { ReasoningEffort, ServiceTier } from '@/inference/models/internal-format';
 import { MODEL_KINDS, upstreamModels } from './upstream';
@@ -38,6 +47,30 @@ export const models = pgTable('models', {
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
+
+export const modelGroups = pgTable('model_groups', {
+  id: id(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const modelGroupMembers = pgTable(
+  'model_group_members',
+  {
+    modelId: uuid('model_id')
+      .notNull()
+      .references(() => models.id, { onDelete: 'cascade' }),
+    modelGroupId: uuid('model_group_id')
+      .notNull()
+      .references(() => modelGroups.id, { onDelete: 'cascade' }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.modelId, table.modelGroupId] }),
+    index('model_group_members_model_group_id_idx').on(table.modelGroupId),
+  ],
+);
 
 export const routes = pgTable(
   'routes',

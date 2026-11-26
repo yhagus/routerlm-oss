@@ -96,6 +96,7 @@ export const usageLogs = pgTable(
     isPlayground: boolean('is_playground').notNull().default(false),
     modelId: uuid('model_id'),
     modelName: text('model_name'),
+    requestedModelName: text('requested_model_name'),
     routeId: uuid('route_id'),
     upstreamModelId: uuid('upstream_model_id'),
     upstreamModelName: text('upstream_model_name'),

@@ -167,6 +167,7 @@ export function generateDemoTraffic(
       createdAt,
       ...attribution(source),
       ...requestNames,
+      requestedModelName: model.modelName,
       modelId: model.modelId,
       clientProtocol: caller.clientProtocol,
       isStreamed,

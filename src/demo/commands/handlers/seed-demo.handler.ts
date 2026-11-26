@@ -9,6 +9,8 @@ import {
   apiKeys,
   attempts,
   errorCaptures,
+  modelGroupMembers,
+  modelGroups,
   models,
   providerAccounts,
   providers,
@@ -25,6 +27,7 @@ import { ProviderKeyCipher } from '@/upstream/providers/provider-key-cipher';
 import { normalizeEmail } from '@/users/models/user';
 import {
   DEMO_CALLERS,
+  DEMO_MODEL_GROUPS,
   DEMO_MODELS,
   DEMO_PROVIDER_ACCOUNTS,
   DEMO_QUOTA_METERS,
@@ -50,6 +53,7 @@ const APP_TABLES: PgTable[] = [
   sessions,
   users,
   routes,
+  modelGroups,
   models,
   providerAccounts,
   upstreamModels,
@@ -78,6 +82,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
     const accountsBySlug = await this.createProviderAccounts(now);
     await this.createQuotaMeters(accountsBySlug, now);
     const trafficModels = await this.createModels(accountsBySlug);
+    await this.createModelGroups(trafficModels);
     const callers = await this.createCallers(userId);
 
     const traffic = generateDemoTraffic(now, trafficModels, callers);
@@ -205,6 +210,23 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
       });
     }
     return trafficModels;
+  }
+
+  private async createModelGroups(
+    trafficModels: ReadonlyMap<DemoModelName, TrafficModel>,
+  ): Promise<void> {
+    for (const demoGroup of DEMO_MODEL_GROUPS) {
+      const [group] = await this.db
+        .insert(modelGroups)
+        .values({ name: demoGroup.name, slug: demoGroup.slug })
+        .returning({ id: modelGroups.id });
+      await this.db.insert(modelGroupMembers).values(
+        demoGroup.modelNames.map((modelName) => ({
+          modelId: requireValue(trafficModels, modelName, 'Demo Model').modelId,
+          modelGroupId: group.id,
+        })),
+      );
+    }
   }
 
   private async createCallers(userId: string): Promise<TrafficCaller[]> {

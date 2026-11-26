@@ -28,6 +28,7 @@ import { QueueModule } from '@/queue/queue.module';
 import { PlansModule } from '@/plans/plans.module';
 import { QuotaMetersModule } from '@/quota-meters/quota-meters.module';
 import { RoutingModule } from '@/routing/routing.module';
+import { ModelGroupsModule } from '@/model-groups/model-groups.module';
 import { SettingsModule } from '@/settings/settings.module';
 import { PricingWindowsModule } from '@/pricing-windows/pricing-windows.module';
 import { TimeZoneModule } from '@/time-zone/time-zone.module';
@@ -55,6 +56,7 @@ const SHARED_IMPORTS: ModuleImport[] = [
   UpstreamModule,
   PricingWindowsModule,
   RoutingModule,
+  ModelGroupsModule,
   UsageModule,
   SettingsModule,
   QuotaMetersModule,

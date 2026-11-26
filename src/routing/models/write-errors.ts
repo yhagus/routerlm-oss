@@ -9,6 +9,9 @@ export function toModelWriteError(error: unknown, modelName: string | undefined)
   if (hasPostgresErrorCode(error, UNIQUE_VIOLATION)) {
     return new ConflictException(`A Model named "${modelName ?? ''}" already exists`);
   }
+  if (hasPostgresErrorCode(error, FOREIGN_KEY_VIOLATION)) {
+    return new NotFoundException('Model Group not found');
+  }
   return error;
 }
 

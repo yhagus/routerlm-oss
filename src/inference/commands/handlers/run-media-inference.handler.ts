@@ -138,6 +138,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     kind: ModelKind,
     meter: UsageMeter,
   ): Destination {
+    meter.modelRequested(request.model);
     const model = usableModel(this.snapshot.current, request.model, caller);
     meter.modelResolved(model.id, model.name);
     assertKindServedHere(`Model "${model.name}"`, model.kind, kind);

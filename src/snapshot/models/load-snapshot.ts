@@ -11,6 +11,8 @@ import {
   apiKeys,
   type CredentialKind,
   integrations,
+  modelGroupMembers,
+  modelGroups,
   models,
   pricingWindows,
   providerAccounts,
@@ -38,6 +40,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     upstreamModelRows,
     pricingWindowRows,
     modelRows,
+    modelGroupRows,
+    membershipRows,
     routeRows,
     allowsTermsRiskProviders,
     allowsPrivateUpstreams,
@@ -73,6 +77,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     db.select().from(upstreamModels),
     selectAttachedPricingWindows(db, eq(pricingWindows.isEnabled, true)),
     db.select().from(models),
+    db.select({ id: modelGroups.id, slug: modelGroups.slug }).from(modelGroups),
+    db.select().from(modelGroupMembers),
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
     new SettingsStore(db).read('allowTermsRiskProviders'),
     new SettingsStore(db).read('allowPrivateUpstreams'),
@@ -164,6 +170,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
   }
 
   const routesByModelId = groupBy(routeRows, (route) => route.modelId);
+  const slugsByGroupId = new Map(modelGroupRows.map((group) => [group.id, group.slug]));
+  const membershipsByModelId = groupBy(membershipRows, (membership) => membership.modelId);
   const modelsByName = new Map<string, SnapshotModel>();
   for (const model of modelRows) {
     const modelRoutes = (routesByModelId.get(model.id) ?? []).flatMap((route) => {
@@ -192,6 +200,9 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
       parameterPolicy: model.parameterPolicy,
       hasAutomaticCacheBreakpoints: model.hasAutomaticCacheBreakpoints,
       createdAt: model.createdAt,
+      groupSlugs: (membershipsByModelId.get(model.id) ?? [])
+        .flatMap((membership) => slugsByGroupId.get(membership.modelGroupId) ?? [])
+        .sort(),
       routes: modelRoutes,
     });
   }

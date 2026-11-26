@@ -53,6 +53,17 @@ export interface DemoModel {
   profile: TrafficProfile;
 }
 
+export interface DemoModelGroup {
+  name: string;
+  slug: string;
+  modelNames: DemoModelName[];
+}
+
+export const DEMO_MODEL_GROUPS: DemoModelGroup[] = [
+  { name: 'Everyday', slug: 'everyday', modelNames: ['smart', 'fast', 'vision'] },
+  { name: 'Engineering', slug: 'engineering', modelNames: ['smart', 'coder', 'reasoning'] },
+];
+
 export const DEMO_MODELS: DemoModel[] = [
   {
     name: 'smart',

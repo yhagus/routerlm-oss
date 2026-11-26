@@ -3,13 +3,18 @@ import { and, asc, eq } from 'drizzle-orm';
 import type { Database } from '@/db/schemas/relations';
 import { models, providerAccounts, providers, routes, upstreamModels } from '@/db/schemas';
 import type { ModelDetail, RouteSummary } from './model';
+import { findModelGroups } from './model-group-memberships';
 
 export async function findModelDetail(db: Database, modelId: string): Promise<ModelDetail> {
   const [model] = await db.select().from(models).where(eq(models.id, modelId));
   if (!model) {
     throw new NotFoundException('Model not found');
   }
-  return { ...model, routes: await listRouteSummaries(db, modelId) };
+  return {
+    ...model,
+    groups: await findModelGroups(db, modelId),
+    routes: await listRouteSummaries(db, modelId),
+  };
 }
 
 function listRouteSummaries(db: Database, modelId: string): Promise<RouteSummary[]> {
