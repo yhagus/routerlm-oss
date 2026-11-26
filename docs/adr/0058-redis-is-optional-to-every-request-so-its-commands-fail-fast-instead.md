@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [redis, queue, upstream]
+---
 # Redis is optional to every request, so its commands fail fast instead of waiting
 
 Redis holds Cooldown state, snapshot change notices, locks and the BullMQ queues, but a request must never hang or fail because Redis is unreachable.

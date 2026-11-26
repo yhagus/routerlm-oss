@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web, overview]
+---
 # Overview daily buckets are UTC days and are labelled in UTC
 
 The backend aligns every Overview bucket to UTC (`GET /api/overview`). The dashboard labels daily buckets in UTC (`utcDay` in `web/app/lib/overview.ts`), not in the browser's time zone.

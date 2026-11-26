@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [tests]
+---
 # Feature tests only, one folder per feature
 
 The repository had two kinds of test: unit specs beside the code (`src/**/*.spec.ts`), which called functions directly, and e2e tests in `test/`, which drove the running app. Unit specs pinned internal function signatures, so refactors broke them even when behaviour stayed the same, and the same behaviour was often tested twice. We decided (2026-11-15) to keep only feature tests.

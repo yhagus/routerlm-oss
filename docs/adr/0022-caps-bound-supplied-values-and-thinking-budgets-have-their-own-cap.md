@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [routing, inference]
+---
 # Caps bound supplied values, and thinking budgets have their own Cap
 
 A security audit asked two things of the Parameter Policy. Does a Cap apply when the client omits the parameter? And does the reasoning effort Cap bind Anthropic `thinking.budget_tokens`, which skipped it because a budget carries no effort? We decided:

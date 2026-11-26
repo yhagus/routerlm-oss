@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [control-plane, usage]
+---
 # Integrations pull Usage Logs after a (transaction id, sequence) cursor, only past finished transactions
 
 An Integration pulls its Usage Logs in pages after a cursor. `created_at` cannot be the cursor, because it is the request time while the worker commits rows later, so a late commit would land behind a cursor that had already moved on.

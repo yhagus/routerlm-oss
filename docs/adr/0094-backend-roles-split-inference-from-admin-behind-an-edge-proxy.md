@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [app, tooling]
+---
 # Backend roles split inference from admin behind an edge proxy
 
 One backend container served inference (`/v1`), the dashboard API (`/api`) and the control plane over HTTP (`/integration/v1`) on one port. A heavy Overview query or a Playground stream competed with Customers' inference for the same event loops and Postgres pool, and a burst of inference could slow the dashboard. We decided that the `routerlm-backend` image takes a `BACKEND_ROLE` setting, `all` (the default), `inference` or `admin`, and that every stack we ship, `deploy/compose.yaml` and the development `docker-compose.yml`, runs one `inference` and one `admin` container behind Caddy as the edge proxy. The goal is isolation, not throughput: dashboard traffic is small, and inference still scales through `BACKEND_PROCESSES` (ADR 0025) or replicas.

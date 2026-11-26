@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [backend, tests, tooling]
+---
 # No parent-relative imports
 
 ADR 0008 moved imports that leave a module to the `@/` alias but kept relative paths inside a module. With the CQRS layout (ADR 0007), most of those were still parent-relative (`../../models/x.js` from `commands/handlers/`), and they broke whenever a file moved between role folders, the same way cross-module paths had. We decided (2026-11-23) that no import in `src/`, `tests/` or `scripts/` climbs with `../`:

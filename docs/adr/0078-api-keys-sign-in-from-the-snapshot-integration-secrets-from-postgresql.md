@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [api-keys, integrations, snapshot]
+---
 # API Keys sign in from the snapshot, Integration Secrets from PostgreSQL
 
 Both `ApiKeyAuth` and `IntegrationSecretAuth` extend `ApiKeyProvider`, and a reader may expect them to look keys up the same way.

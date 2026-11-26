@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web, tests]
+---
 # Client docs examples are written against a placeholder URL that tests run and the page swaps
 
 The public client docs (`web/content/docs`, `web/content/docs-id`) contain request examples that must keep working.

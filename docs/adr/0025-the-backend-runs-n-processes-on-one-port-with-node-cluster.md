@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [app]
+---
 # The backend runs N processes on one port with node:cluster
 
 A backend process is one event loop, so the gateway used one CPU whatever the VM had. The k6 benchmark reached the second CPU only with two containers behind nginx, which a self-hoster running `deploy/compose.yaml` does not have. We decided that `src/main.ts` runs `BACKEND_PROCESSES` gateway processes (default 1) with `node:cluster`: the primary only forks and supervises, and each worker boots the whole app and listens on the same `PORT`. The queue worker (`src/worker.ts`) stays one process.

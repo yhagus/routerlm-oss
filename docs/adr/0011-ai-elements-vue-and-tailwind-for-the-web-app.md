@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # AI Elements Vue and Tailwind CSS for the web app
 
 The Playground needs the parts every LLM chat surface needs: a conversation that sticks to the bottom while an answer streams, Markdown with highlighted code, a collapsible reasoning block, a composer with image attachments and a stop button, and a token-usage card. ADR 0001 asks `web/` to prefer official `@nuxt/*` modules, and Nuxt UI ships chat components. We chose AI Elements Vue (the community Vue port of Vercel's AI Elements, built on shadcn-vue) instead, at the maintainer's request: it covers more of the LLM-specific parts (reasoning, usage, code blocks, prompt attachments), and its components are copied into the repo, so they can be changed where they don't fit.

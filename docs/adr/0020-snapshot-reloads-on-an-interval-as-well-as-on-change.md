@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [snapshot]
+---
 # The snapshot reloads on an interval as well as on change
 
 A dashboard write reloaded the writing instance and told the others over Redis pub/sub. A failed reload kept the previous snapshot, and a failed or lost publish was only logged, so a revoked API Key (or a disabled Provider or Route) could keep working on an instance until the next change. We decided that every instance also reloads from the database on a fixed interval (30 seconds, set by a deploy-time env variable), and that `changed()` retries a failed local reload with backoff until it succeeds. A revoke still returns 204 once the row is written. The worst-case delay is bounded by the interval instead of being unbounded.

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream, inference]
+---
 # The inference path reads Cooldown state from a one second local copy of Redis
 
 Every Attempt needs to know which Provider Accounts are in Cooldown, and reading Redis per request would put a round trip on the hot path.

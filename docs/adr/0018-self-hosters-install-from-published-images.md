@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [tooling]
+---
 # Self-hosters install from published images, not from a clone
 
 Installing meant cloning the repo and running the development compose stack: source mounted as volumes, `bun --watch` and `nuxt dev` in production, and upgrades by `git pull`. We decided that a tagged release publishes two images to GHCR (`routerlm-backend` for the API, the worker and the one-shot migrate, and `routerlm-web` for the built Nuxt app), multi-arch, tagged from the git tag (`2.1.0`, `2.1`, `2`, `latest`). Each GitHub Release attaches a `compose.yaml` (kept in the repo as `deploy/compose.yaml`) that pins its own version, so an install is a download of one compose file and an `.env` followed by a plain `docker compose up -d`, and an upgrade is a change of `ROUTERLM_VERSION` followed by `docker compose pull`. The development compose stack stays for contributors.

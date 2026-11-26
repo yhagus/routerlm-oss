@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [settings]
+---
 # Settings a User changes from the dashboard live in the database, not in env
 
 The Retention Period was an environment variable, so changing it meant editing the deployment and restarting the worker. We decided that a value a User should be able to change while the gateway runs is a Setting: a row in a `settings` table, read each time it is used, with its key, type, valid range and default declared in code. Env variables stay for what is fixed at deploy time (ports, database and Redis URLs). The old `ERROR_CAPTURE_RETENTION_DAYS` variable is removed, not kept as a fallback.

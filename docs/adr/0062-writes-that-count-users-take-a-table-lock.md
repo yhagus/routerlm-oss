@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [users]
+---
 # Writes that count Users take a table lock
 
 Creating the first User and deleting a User both depend on how many Users exist, and two concurrent requests can each see a state the other is about to change: two setups could both find an empty table, and two Users deleting each other at once could leave none.

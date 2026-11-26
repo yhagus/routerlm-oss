@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream]
+---
 # A sign-in poll is safe to run twice, and a login that cannot be stored ends the sign-in
 
 OAuth Login sign-in polling is one delayed queue job per poll (ADR 0012). A poll that fails is run again (three attempts, exponential backoff in `oauth-sign-in-polling.ts`), because no later poll is queued behind it and giving up would leave the sign-in pending until its code expires.

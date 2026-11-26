@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference]
+---
 # Stream inference from plain POST routes, and normalize `x-api-key` into a Bearer header
 
 The spec listed `@Sse` for streaming responses and `@nestjs/authentication`'s `ApiKeyProvider` for API Keys, and asked the first inference ticket to check both. Two gaps turned up, and the maintainer decided how to handle each (2026-11-15).

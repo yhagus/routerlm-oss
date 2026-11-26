@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # A missing record's error page shows fixed text, never the backend's message
 
 `missingResourceError` in `web/app/lib/errors.ts` raises the 404 for a detail page whose record does not exist. Its message is fixed text per resource (`MISSING_RESOURCE_HINTS`), not the backend's message.

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [api-keys, control-plane]
+---
 # Changing a revoked key is refused by a guard inside the transaction, not only by the earlier check
 
 The dashboard and the control plane both update and rotate API Keys, and rotate Integration Secrets. Each handler first checks that the key is not revoked, then writes. Between the check and the write another request can revoke the key, or rotate it.

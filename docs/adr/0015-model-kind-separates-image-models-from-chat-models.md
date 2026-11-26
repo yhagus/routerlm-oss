@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [routing, upstream]
+---
 # Model Kind separates image models from chat models
 
 Status: accepted, superseded in part by ADR 0026: there are now five Model Kinds, `chat`, `image`, `speech`, `transcription` and `video`, each with its own client endpoints, and a Provider serves each Kind through its own endpoint. The rule that a Model's Routes share one Kind and each client endpoint accepts only its Kind holds for all five.

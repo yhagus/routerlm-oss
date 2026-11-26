@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [auth, users]
+---
 # Sign-in answers the same whether or not the email exists
 
 The dashboard sign-in must not tell a caller which emails belong to a User.

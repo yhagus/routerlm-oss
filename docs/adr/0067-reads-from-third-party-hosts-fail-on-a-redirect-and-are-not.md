@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [catalog, quota-meters]
+---
 # Reads from third-party hosts fail on a redirect and are not retried
 
 The gateway reads models.dev for Catalog Gaps and each Provider's quota endpoint for Quota Meters. Both reads go through a dedicated HTTP client (`MODELS_DEV_HTTP_CLIENT` in `src/catalog/catalog-gaps.module.ts`, `QUOTA_READER_HTTP_CLIENT` in `src/quota-meters/quota-meters.module.ts`).

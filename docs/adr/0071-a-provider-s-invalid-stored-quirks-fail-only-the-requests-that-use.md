@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [snapshot]
+---
 # A Provider's invalid stored quirks fail only the requests that use it
 
 The snapshot keeps each Provider's stored quirks as a safe-parse result (`SnapshotProvider.quirks`, `validQuirksOf` in `src/snapshot/models/snapshot.ts`).

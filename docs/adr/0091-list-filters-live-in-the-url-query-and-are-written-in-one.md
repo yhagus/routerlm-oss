@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # List filters live in the URL query and are written in one patch per tick
 
 Filters, search and page on list pages are held in the URL (`web/app/composables/useQueryParam.ts`) so a refresh, a bookmark or a shared link restores them.

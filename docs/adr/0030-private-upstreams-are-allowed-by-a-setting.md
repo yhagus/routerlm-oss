@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [settings, libs]
+---
 # Private upstreams are allowed by a Setting, not an env variable
 
 Status: accepted, supersedes the env variable in ADR 0019

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [api-keys, db]
+---
 # Allowed Models are an array on the API Key, not a join table
 
 An API Key and an Integration may be restricted to a list of Models (`allowedModelIds` in `src/db/schemas/access.ts`); an empty list means every Model.

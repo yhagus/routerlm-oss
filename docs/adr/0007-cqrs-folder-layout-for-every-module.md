@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [backend]
+---
 # Every backend module uses CQRS with `@nestjs/cqrs` and a role-based folder layout
 
 Modules used to put every operation in one `<module>.service.ts`, which grew long and mixed reads with writes. We decided (2026-11-15) that modules dispatch through `CommandBus`, `QueryBus` and `EventBus` from `@nestjs/cqrs` (first-party, ADR 0001). Their folders follow the example that docs.nestjs.com links to (`kamilmysliwiec/nest-cqrs-example`). Every module in `src/` uses this layout, including infrastructure modules and the inference path:

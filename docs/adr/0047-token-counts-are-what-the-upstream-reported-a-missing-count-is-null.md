@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference, usage]
+---
 # Token counts are what the upstream reported; a missing count is null and flags the Usage Log
 
 A Usage Log needs token counts, but Providers report different subsets. We decided the gateway never estimates a count: `TokenUsage` fields are null when the upstream did not report them, which flags the Usage Log incomplete. `inputTokens` excludes cached input, so the input total is `inputTokens + cacheReadTokens + cacheWriteTokens`.

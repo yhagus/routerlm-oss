@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference]
+---
 # Upstream converters encode Provider wire quirks on purpose
 
 Several constants and branches in the upstream converters look arbitrary and are Provider requirements. We decided to keep them, and not to "normalise" them:

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [api-keys]
+---
 # API Keys are stored encrypted so they can be copied again
 
 An API Key used to be shown once, at creation, and only its SHA-256 hash was stored. Operators wanted to copy a key from the dashboard later, for example to configure a second client, without rotating it. We decided to also store each key encrypted, with the same AES-256-GCM cipher and `ENCRYPTION_KEY` that protect Provider Account keys, bound to its own purpose so neither ciphertext decrypts as the other. Requests still authenticate against the hash; the ciphertext is read only when a User asks to copy the key.

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [integrations]
+---
 # Deleting an Integration revokes its API Keys before the delete clears their link to it
 
 Deleting an Integration clears `integrationId` on the keys it issued (ADR 0033, ADR 0034). Once cleared, they cannot be told apart from operator keys.

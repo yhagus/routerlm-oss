@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream, libs]
+---
 # Provider URLs are https and public unless the deployment allows otherwise
 
 Status: accepted, but ADR 0030 replaces its env variable with a Setting

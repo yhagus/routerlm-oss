@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [playground]
+---
 # A Probe asks reasoning Upstream Models for the lowest effort every one of them accepts
 
 A Probe sends a fixed minimal request for the Upstream Model's Kind (GLOSSARY "Probe"). Reasoning models differ in what they accept: some refuse `none`, others `minimal` too (see the Catalog notes).

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [backend, tests, tooling]
+---
 # Imports carry no file extension or /index, and quotes are single
 
 The backend is written only in TypeScript, but every import named a `.js` file (`@/db/schemas/index.js`, `./x.js`) that does not exist in the source. That came from `module: nodenext` in `tsconfig.json`, which makes TypeScript require the extension Node's ESM loader needs at runtime. Nothing here runs the compiled output on Node: development, tests, the Docker images and `start:prod` all run on Bun, and Vitest resolves through Vite. Both resolve extensionless imports. We decided (2026-11-26) that imports in `src/`, `tests/` and `scripts/` carry no file extension (`@/db/schemas/index`, `./x`, `@nestjs/core/helpers/execution-context-host`).

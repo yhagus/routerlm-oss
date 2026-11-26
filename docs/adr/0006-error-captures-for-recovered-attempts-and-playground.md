@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [error-captures, inference]
+---
 # Capture recovered Attempts and Playground failures, and allow SDK names in /docs examples
 
 The code review of the gateway branch raised three questions the spec left open. The maintainer decided each (2026-11-15).

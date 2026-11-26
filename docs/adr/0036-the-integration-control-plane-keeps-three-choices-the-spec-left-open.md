@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [control-plane]
+---
 # The Integration control plane orders usage by commit, refuses changes to revoked keys, and prices Models from the first Route that can serve
 
 Three details of the control plane (ADR 0033) were left open by the spec, or settled differently from its wording, while it was built.

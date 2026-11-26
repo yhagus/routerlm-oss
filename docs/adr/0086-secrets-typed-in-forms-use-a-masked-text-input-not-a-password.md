@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # Secrets typed in forms use a masked text input, not a password input
 
 The dashboard asks for secrets in forms (for example a Provider's API key). A `type="password"` input makes browsers offer to save and fill logins, which is wrong for a Provider credential typed into a settings dialog.

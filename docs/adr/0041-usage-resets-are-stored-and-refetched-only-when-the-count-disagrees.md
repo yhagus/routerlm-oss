@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [quota-meters]
+---
 # Usage Resets are stored, and their list is fetched again only when the count disagrees
 
 An operator picks which Usage Reset to spend, since each one expires on its own date, so the gateway needs each Provider Account's list of resets. OpenAI Codex serves that list from its own endpoint, while the usage reading the gateway already makes every few minutes for Quota Meters (ADR 0010) carries only how many resets are available.

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [usage]
+---
 # Usage Logs are snapshots without foreign keys
 
 A Usage Log answers "what happened then", so editing or deleting configuration must not rewrite it. Before this, `usage_logs` and `attempts` referenced API Keys, Users, Models, Routes and Provider Accounts through foreign keys with `ON DELETE SET NULL`. Deleting a Provider Account blanked its history, and since a row showed live names through joins, renaming a Model changed what old rows said.

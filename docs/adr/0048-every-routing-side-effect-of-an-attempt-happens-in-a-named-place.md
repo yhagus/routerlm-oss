@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference, playground]
+---
 # Every routing side effect of an Attempt happens in a named place so a Probe can avoid them all
 
 A request's Attempts change routing state: counters, Cooldown, Exhausted, disabled accounts. A Probe must observe a Provider Account without changing it (GLOSSARY "Probe").

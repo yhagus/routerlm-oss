@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream]
+---
 # An OAuth Login signs in as the Provider's own CLI
 
 Kimi Code subscribers who sign in through Kimi's own login have no API key, so they could not add their subscription as a Provider Account. Kimi offers sign-in to one client only: its official Kimi Code CLI, through the OAuth device-code grant (RFC 8628). It has no way to register a third-party client. We decided that a Provider Account holds one of two credentials, an API key or an OAuth Login, and that the gateway obtains an OAuth Login by running the device-code grant with the official CLI's client id and presenting the CLI's identity (`User-Agent: kimi-code-cli/<version>` and the `X-Msh-*` headers, with a device id generated once per Provider Account) on calls to the auth host and on inference calls. The gateway then holds a refreshable credential: an access token, a rotating refresh token and their expiry, encrypted with the same cipher as API keys and never returned by the API.

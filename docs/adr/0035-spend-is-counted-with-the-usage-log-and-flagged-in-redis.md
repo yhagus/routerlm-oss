@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [spend-limits, usage]
+---
 # What an API Key has spent is counted with its Usage Log, and Redis only holds a flag
 
 A Spend Limit (ADR 0034) needs a running total of Cost per API Key, and the gateway processes need to check it on every request without slowing it down. Usage Logs are written by the queue worker, in one transaction that a retried job leaves alone (`UsageWriter.writeUsage`).

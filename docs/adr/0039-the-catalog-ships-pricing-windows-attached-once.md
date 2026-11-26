@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [catalog, pricing-windows]
+---
 # The Catalog ships Pricing Windows, attached once
 
 ADR 0038 left Catalog-shipped Pricing Windows for later because the seed never changes existing rows (ADR 0003). DeepSeek's off-peak hours and the Alibaba Token Plan night discount are published schedules, so an operator should not have to type them in. We decided (2026-11-23) that a Catalog file may define Pricing Windows (`pricingWindows`: name, time zone, ranges) and that each chat Upstream Model may list Window Prices for them (`windowPrices`, in order), naming a window of its own file.

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # The dashboard links a Provider-supplied URL only when it is an http(s) address
 
 The OAuth Login sign-in shows the Provider's verification page, a URL the Provider sends and the gateway relays.

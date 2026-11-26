@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream, inference]
+---
 # An Upstream Model names the Provider Endpoints it supports
 
 Status: accepted, supersedes ADR 0026

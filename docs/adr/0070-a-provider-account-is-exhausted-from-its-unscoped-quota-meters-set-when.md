@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [quota-meters]
+---
 # A Provider Account is Exhausted from its unscoped Quota Meters, set when a reading is made
 
 Routing never reads Quota Meters (ADR 0010). Whether a Provider Account is Exhausted is decided when a quota reading is applied (`applyExhausted` in `src/quota-meters/commands/handlers/read-provider-account-quota.handler.ts`, `exhaustedStateOf` in `src/quota-meters/models/exhausted.ts`) and written to the Provider Account, which routing then skips until the meter resets.

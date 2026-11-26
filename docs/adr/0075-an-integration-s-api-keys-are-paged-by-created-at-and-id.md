@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [control-plane]
+---
 # An Integration's API Keys are paged by created_at and id, compared in SQL
 
 The control plane lists an Integration's keys newest first, in pages with an opaque page token.

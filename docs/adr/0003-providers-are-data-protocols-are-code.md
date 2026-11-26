@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [catalog, upstream]
+---
 # Providers are data, Protocols are code
 
 Most Providers speak one of a few Protocols and differ only in base URL, authentication header, and small quirks. We decided that a Provider is a database row that names the Protocol it speaks, and the code holds one adapter per Protocol, not one per Provider. An operator can add another Provider that speaks a known Protocol from the dashboard, with no deploy.

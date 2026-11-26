@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream]
+---
 # OAuth sign-in secrets are stored encrypted, kept out of errors and never sent to another host
 
 A device code, and for OpenAI Codex the device auth id, lets whoever holds it collect the tokens; the tokens themselves are credentials.

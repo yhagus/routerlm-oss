@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [usage, inference]
+---
 # Error Origin is stored beside the client error code, not derived from it
 
 Status: accepted

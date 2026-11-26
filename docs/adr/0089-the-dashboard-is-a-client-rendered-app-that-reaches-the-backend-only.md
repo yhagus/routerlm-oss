@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # The dashboard is a client-rendered app that reaches the backend only through its own /api forwarder
 
 The web app is an authenticated operations console with no SEO surface, so `nuxt.config.ts` sets `ssr: false`. The browser talks only to this app: `web/server/api/[...path].ts` forwards every `/api/**` call to the backend's dashboard API at the same path with the browser's Cookie and Origin, and returns the backend's Set-Cookie unchanged, so the session cookie is first-party.

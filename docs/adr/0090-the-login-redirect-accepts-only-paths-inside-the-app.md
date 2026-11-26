@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # The login redirect accepts only paths inside the app
 
 `pages/login.vue` sends the User back to `?redirect=` after sign-in. A crafted link could otherwise send the User to another site.

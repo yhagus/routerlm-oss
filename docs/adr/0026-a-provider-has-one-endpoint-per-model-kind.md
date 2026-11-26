@@ -1,3 +1,8 @@
+---
+status: superseded
+superseded-by: 0095
+areas: [upstream, catalog]
+---
 # A Provider has one endpoint per Model Kind, each with its own Protocol and base URL
 
 Status: superseded by ADR 0095 (it superseded ADR 0016)

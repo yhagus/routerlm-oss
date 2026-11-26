@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [pricing-windows, catalog]
+---
 # Pricing Windows hold schedules, Upstream Models hold the prices
 
 Status: accepted, amended by ADR 0040: Window Prices may carry a Validity Period, and a model's Window Prices may no longer overlap, so the model's order and the "first active window wins" rule are gone.

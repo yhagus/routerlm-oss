@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [spend-limits, api-keys]
+---
 # The gateway keeps no Customer records, only Spend Limits and Request Rates on API Keys
 
 An Integration that resells inference needs its Customers stopped when they run out of money, and kept from flooding the Provider Accounts that every Customer shares. The obvious design is a Customer table with a prepaid balance that the gateway debits. We decided the gateway stores nothing about a Customer except the id its Integration gives it, written on each API Key (fixed once the key exists) and copied into the Usage Logs and Error Captures of that key's requests. Money, balances, plans and prices to Customers stay in the Integration.

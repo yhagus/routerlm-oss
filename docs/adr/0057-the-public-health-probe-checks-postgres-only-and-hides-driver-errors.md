@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [health]
+---
 # The public health probe checks Postgres only and hides driver errors
 
 `HealthController` is public, for container and load balancer probes.

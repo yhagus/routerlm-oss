@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # Provider logos are vendored files, so they may be rendered with v-html
 
 `ProviderLogo.vue` renders a Provider's mark as raw SVG with `v-html`. Each mark is a file in `web/app/assets/provider-logos`, named after the Provider's `logo` key (`web/app/lib/providerLogos.ts`), so adding a logo means dropping in a file.

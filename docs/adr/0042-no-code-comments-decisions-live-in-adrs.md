@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [backend, web, tests, tooling]
+---
 # No code comments: decisions live in ADRs, the code explains itself
 
 Comments drifted from the code they described, restated names and types, and let a workaround pass review because a paragraph explained it away; agents then copied the workaround as precedent. We decided that the code carries no comments. A name, a type or a test says what a comment said; a decision that is important and non-obvious goes into an ADR here; a known shortcut becomes a GitHub issue instead of a comment beside it.

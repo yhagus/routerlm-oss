@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [auth, libs]
+---
 # Login is throttled per IP, on a native Redis storage for `@nestjs/throttler`
 
 `POST /api/auth/login` had no limit, and each attempt costs one memory-hard scrypt hash. We decided:

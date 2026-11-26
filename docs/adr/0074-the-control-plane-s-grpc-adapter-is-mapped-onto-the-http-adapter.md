@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [control-plane]
+---
 # The control plane's gRPC adapter is mapped onto the HTTP adapter's bodies so one set of schemas checks both
 
 ADR 0033 serves the control plane over HTTP and gRPC from one contract, `control_plane.proto`. The two adapters must refuse and accept the same requests.

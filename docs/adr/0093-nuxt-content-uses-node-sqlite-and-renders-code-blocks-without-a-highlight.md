@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # Nuxt Content uses node:sqlite and renders code blocks without a highlight theme
 
 The docs use `@nuxt/content` (`web/nuxt.config.ts`).

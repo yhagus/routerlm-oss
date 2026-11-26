@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference]
+---
 # Fallback always tries the first healthy Provider Account, and the context check errs low
 
 Two choices in `src/inference/models/route-selection.ts` look like mistakes to a reader who does not know why.

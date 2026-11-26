@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # Edit forms send only the fields that changed
 
 The dashboard edits API Keys and Integrations through forms that could resend every field. An API Key can be expired, and its past expiry sent back unchanged would be read by the backend as a new, invalid expiry.

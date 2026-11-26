@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference]
+---
 # Reasoning crosses Protocols only with the signature its own Protocol issued
 
 Reasoning travels through the internal format (ADR 0002) as text with an optional `signature`. Anthropic Messages accepts thinking back in a later turn only with the signature it issued, and OpenAI Responses only with the encrypted content it issued; Chat Completions has nowhere to carry either.

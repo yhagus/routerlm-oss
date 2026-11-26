@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream, inference]
+---
 # A 403 starts a Cooldown, and repeated 403s disable the Provider Account
 
 Any upstream 401 or 403 disabled the shared Provider Account until an operator re-enabled it. A Provider that answers 403 for a reason tied to one request (content policy, model entitlement) would let one API Key holder take an account offline for every other client. We decided:

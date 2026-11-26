@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [catalog, inference]
+---
 # Provider quirk flags have fixed precedence and lookup rules
 
 Provider quirks (`providerQuirksSchema` in `src/catalog/schemas/catalog.schema.ts`) are per-Provider data read by the Protocol adapters (ADR 0003). Several flags carry rules that their names do not show.

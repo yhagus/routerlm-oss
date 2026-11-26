@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [catalog]
+---
 # Catalog Gaps are computed against the database and only the five newest models are checked
 
 A Catalog Gap is an Upstream Model that models.dev lists among a Provider's newest but the Catalog does not hold. `ListCatalogGapsHandler` in `src/catalog/queries/handlers/list-catalog-gaps.handler.ts` produces the report.

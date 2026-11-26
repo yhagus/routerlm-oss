@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # Spinners keep turning, slowly, under reduced motion
 
 `prefers-reduced-motion: reduce` normally removes animation in the dashboard. A loading spinner frozen mid-turn reads as a broken page, and a refresh in flight must still read as one.

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # Number fields group digits with a punctuation space and keep leading zeros while typing
 
 Number fields in the dashboard (`web/app/lib/numberInput.ts`) show digits in groups of three (1 048 576) with "." as the decimal point. The grouping mark is a punctuation space, not the no-break space: the dashboard font, Plus Jakarta Sans, draws the narrow no-break space about 1px wide, too thin to read as a gap.

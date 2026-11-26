@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [quota-meters]
+---
 # Quota readers are code, Quota Meters are generic rows
 
 Subscription Providers report remaining usage in shapes that have nothing in common: MiniMax M Plan returns percentages for a 5-hour and a weekly window per model group, others report counts, tokens or money, and some report nothing. A Provider's inference Protocol says nothing about how it reports quota. We decided that a Provider names a quota reader in its data, the code holds one reader per quota endpoint shape, and every reader returns the same generic Quota Meter rows (a key such as `5h` or `weekly`, a unit, used and limit when known, remaining percent, window length, reset time, an optional scope, and the raw payload). One row per Provider Account and meter key holds the latest reading; there is no history table.

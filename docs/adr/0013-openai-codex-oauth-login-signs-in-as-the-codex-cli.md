@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [upstream, catalog]
+---
 # An OpenAI Codex OAuth Login signs in as the Codex CLI
 
 ChatGPT subscribers use Codex through their plan, not through an OpenAI API key, and the plan is served from `chatgpt.com/backend-api/codex`, not `api.openai.com`. OpenAI registers no third-party clients for it. Following ADR 0012, we decided that OpenAI Codex is its own Subscription Provider that accepts only an OAuth Login, and that the gateway obtains that login by running the Codex CLI's device-code sign-in (`codex login --device-auth`) with the CLI's public client id, then presents the CLI's identity (`originator: codex_cli_rs`, its `User-Agent` and `version` headers) on inference and quota calls.

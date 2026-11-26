@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference]
+---
 # Upstream requests are byte-stable so Provider prompt caches keep hitting
 
 Providers cache a prompt by its prefix, and some route requests to a cache by a key, so a request that differs by one byte from the last one of the same conversation misses the cache and costs full price (see `docs/research/prompt-caching.md` for what each Provider does).

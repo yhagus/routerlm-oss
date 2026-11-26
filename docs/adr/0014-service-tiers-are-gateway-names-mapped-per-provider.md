@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference, upstream]
+---
 # Service Tiers are gateway names mapped per Provider, and dropped where unsupported
 
 OpenAI Codex has a fast mode (`service_tier: "priority"`) and a flex mode, the OpenAI API has the same field with the same values, and other Providers have nothing like it or something unrelated under the same name (Anthropic's `auto`/`standard_only`). We decided that a Service Tier is a gateway-owned name (`fast`, `flex`) that clients and Parameter Policies use, that each Provider's data maps those names to its wire values, and that each Upstream Model lists the tiers it accepts. A client's tier is honoured unless the Parameter Policy forces or forbids one. When the Route's Upstream Model does not accept the tier, it is dropped for that Attempt without an error, and Fallback does not skip the Route.

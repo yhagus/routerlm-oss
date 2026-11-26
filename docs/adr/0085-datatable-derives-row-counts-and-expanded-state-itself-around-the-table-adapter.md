@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [web]
+---
 # DataTable derives row counts and expanded state itself around the table adapter
 
 `web/app/components/DataTable.vue` wraps the table adapter and serves a client mode (no `rowCount`) and a server mode.

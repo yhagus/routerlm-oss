@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference, app]
+---
 # A video id is an encrypted handle to the upstream task, not a stored job
 
 Video generation is asynchronous: a client submits, polls `GET /v1/videos/{id}`, then downloads the content. The poll must reach the same Provider Account and upstream task. We decided that the id the gateway returns is the encrypted Provider Account, Upstream Model and upstream task id, so any process can answer a poll and the gateway keeps no job state (ADR 0002).

@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [backend, tooling]
+---
 # `@/` alias imports, built with `nest build` on TypeScript 6
 
 Imports that climbed out of a module (`../../../db/schemas/index.js`) were long and broke whenever a file moved. We decided (2026-11-15) that `@/*` maps to `src/*` through `paths` in `tsconfig.json`. An import that leaves its own module uses `@/` (`@/db/schemas/index.js`, `@/libs/...`). An import inside the same module stays relative (superseded by ADR 0037: no import climbs with `../`, inside a module either). Code that several modules share and that belongs to no module's domain lives in `src/libs/`, laid out like any other module (ADR 0007).

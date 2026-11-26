@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [usage, error-captures]
+---
 # Usage Logs and Error Captures record the client's User-Agent and IP
 
 Status: accepted

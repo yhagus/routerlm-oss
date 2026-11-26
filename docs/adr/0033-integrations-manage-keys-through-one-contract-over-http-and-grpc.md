@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [control-plane, integrations]
+---
 # Integrations manage API Keys through one contract served over HTTP and gRPC, while inference stays HTTP
 
 We want outside business applications, such as a SaaS that resells inference, to run on top of the gateway. Each one is an Integration that issues API Keys to its own Customers and reads their usage. gRPC was proposed for the whole link because it is faster than REST. For inference that gain is noise: a request waits hundreds of milliseconds to tens of seconds on the upstream, and JSON over HTTP costs microseconds to a few milliseconds. Customers also call through OpenAI and Anthropic SDKs, which only speak HTTP, so a gRPC-only gateway would need a translating hop in front of it, which is slower.

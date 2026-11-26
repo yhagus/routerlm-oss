@@ -1,3 +1,7 @@
+---
+status: accepted
+areas: [inference]
+---
 # Translate every request through one internal format and keep the gateway stateless
 
 Clients can call the gateway in three Protocols (OpenAI Chat Completions, Anthropic Messages, OpenAI Responses) and Providers speak two (OpenAI Chat Completions, Anthropic Messages), and Fallback may move one request between Providers that speak different Protocols. We decided that every request is converted into one internal format on the way in and converted again for the upstream, so each Protocol needs one converter per direction, not one per pair. The gateway keeps no conversation state: clients send the full conversation on every request.

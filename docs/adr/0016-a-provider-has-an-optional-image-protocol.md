@@ -1,3 +1,8 @@
+---
+status: superseded
+superseded-by: 0026
+areas: [upstream, catalog]
+---
 # A Provider has an optional image Protocol beside its chat Protocol
 
 Status: superseded by ADR 0026
