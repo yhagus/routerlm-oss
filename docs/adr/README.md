@@ -12,6 +12,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0072 Changing a revoked key is refused by a guard inside the transaction, not only by the earlier check](0072-changing-a-revoked-key-is-refused-by-a-guard-inside-the-transaction.md)
 - [0073 An API Key restricted to a Model stays restricted when that Model is deleted](0073-an-api-key-restricted-to-a-model-stays-restricted-when-that-model.md)
 - [0078 API Keys sign in from the snapshot, Integration Secrets from PostgreSQL](0078-api-keys-sign-in-from-the-snapshot-integration-secrets-from-postgresql.md)
+- [0102 API Keys may be granted Direct Upstream Access as `upstream/<provider>/<name>`](0102-api-keys-may-be-granted-direct-upstream-access-as-upstream-provider-name.md)
 
 ## app
 
@@ -55,6 +56,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0072 Changing a revoked key is refused by a guard inside the transaction, not only by the earlier check](0072-changing-a-revoked-key-is-refused-by-a-guard-inside-the-transaction.md)
 - [0074 The control plane's gRPC adapter is mapped onto the HTTP adapter's bodies so one set of schemas checks both](0074-the-control-plane-s-grpc-adapter-is-mapped-onto-the-http-adapter.md)
 - [0075 An Integration's API Keys are paged by created_at and id, compared in SQL](0075-an-integration-s-api-keys-are-paged-by-created-at-and-id.md)
+- [0102 API Keys may be granted Direct Upstream Access as `upstream/<provider>/<name>`](0102-api-keys-may-be-granted-direct-upstream-access-as-upstream-provider-name.md)
 
 ## db
 
@@ -102,6 +104,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0095 An Upstream Model names the Provider Endpoints it supports](0095-an-upstream-model-names-the-provider-endpoints-it-supports.md)
 - [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
 - [0101 A Model is published once per Model Group, and its bare name still resolves](0101-a-model-is-published-once-per-model-group-and-its-bare-name-still-resolves.md)
+- [0102 API Keys may be granted Direct Upstream Access as `upstream/<provider>/<name>`](0102-api-keys-may-be-granted-direct-upstream-access-as-upstream-provider-name.md)
 
 ## integrations
 
@@ -109,6 +112,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0065 The Customer rollup is served from one index whose summed columns trail as key columns](0065-the-customer-rollup-is-served-from-one-index-whose-summed-columns-trail.md)
 - [0076 Deleting an Integration revokes its API Keys before the delete clears their link to it](0076-deleting-an-integration-revokes-its-api-keys-before-the-delete-clears-their.md)
 - [0078 API Keys sign in from the snapshot, Integration Secrets from PostgreSQL](0078-api-keys-sign-in-from-the-snapshot-integration-secrets-from-postgresql.md)
+- [0102 API Keys may be granted Direct Upstream Access as `upstream/<provider>/<name>`](0102-api-keys-may-be-granted-direct-upstream-access-as-upstream-provider-name.md)
 
 ## libs
 
@@ -156,6 +160,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0015 Model Kind separates image models from chat models](0015-model-kind-separates-image-models-from-chat-models.md)
 - [0022 Caps bound supplied values, and thinking budgets have their own Cap](0022-caps-bound-supplied-values-and-thinking-budgets-have-their-own-cap.md)
 - [0101 A Model is published once per Model Group, and its bare name still resolves](0101-a-model-is-published-once-per-model-group-and-its-bare-name-still-resolves.md)
+- [0102 API Keys may be granted Direct Upstream Access as `upstream/<provider>/<name>`](0102-api-keys-may-be-granted-direct-upstream-access-as-upstream-provider-name.md)
 
 ## settings
 

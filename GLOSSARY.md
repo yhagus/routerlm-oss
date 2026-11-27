@@ -22,6 +22,10 @@ _Avoid_: Tenant, app, partner, client
 A buyer of one Integration, known to the gateway only by the id that Integration gives it and only as the owner named on API Keys and their records. The gateway keeps nothing else about a Customer: no profile, balance or plan. A Customer never logs in to the dashboard.
 _Avoid_: Tenant, end user, account
 
+**Direct Upstream Access**:
+An API Key's permission, off by default, to call any usable Upstream Model directly as `upstream/<provider slug>/<upstream model name>`, with no Model in between. It is granted on top of the key's allowed Models and Model Groups and never widens or narrows them. An Integration's Customer keys can have it only when the Integration itself does. Its requests are served like a Direct Upstream Model test, under the key's Spend Limit and Request Rate.
+_Avoid_: Raw access, passthrough, bypass, upstream mode
+
 **Integration Secret**:
 The credential an Integration presents to manage its API Keys and read its usage. It is shown once when issued and can be rotated or revoked. It never calls the inference endpoints.
 _Avoid_: Integration key, service token, client secret
@@ -138,7 +142,7 @@ A model name the gateway owns and exposes to clients, independent of any Provide
 _Avoid_: Alias, virtual model, model mapping
 
 **Model Group**:
-A named set of Models with a slug, such as "fast". A Model belongs to one or more Model Groups, and clients see it once per Model Group as `<slug>/<model name>`; the bare model name still reaches the same Model. A Model Group only names Models: it never changes how they route. An API Key may be allowed a whole Model Group instead of its Models one by one.
+A named set of Models with a slug, such as "fast". A Model belongs to one or more Model Groups, and clients see it once per Model Group as `<slug>/<model name>`; the bare model name still reaches the same Model. A Model Group only names Models: it never changes how they route. An API Key may be allowed a whole Model Group instead of its Models one by one. `upstream` can never be a Model Group's slug: it belongs to Direct Upstream Access.
 _Avoid_: Namespace, collection, folder, tag, stack
 
 **Route**:
