@@ -165,7 +165,13 @@ function handleAction(integration: IntegrationRow, id: IntegrationActionId): voi
     >
       <template #cell-name="{ row: integration }">
         <NuxtLink class="table-entity" :to="`/integrations/${integration.id}`">
-          <span class="key-icon"><Blocks :size="15" /></span><strong>{{ integration.name }}</strong>
+          <span class="key-icon"><Blocks :size="15" /></span><strong>{{ integration.name }}</strong
+          ><span
+            v-if="integration.directUpstreamAccess"
+            class="status-badge"
+            title="Its Customer keys may be granted Direct Upstream Access"
+            >Upstream</span
+          >
         </NuxtLink>
       </template>
       <template #cell-allowedModels="{ row: integration }">

@@ -286,7 +286,13 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
       </template>
       <template #cell-name="{ row: apiKey }">
         <div class="table-entity">
-          <span class="key-icon"><KeyRound :size="15" /></span><strong>{{ apiKey.name }}</strong>
+          <span class="key-icon"><KeyRound :size="15" /></span><strong>{{ apiKey.name }}</strong
+          ><span
+            v-if="apiKey.directUpstreamAccess"
+            class="status-badge"
+            title="Can call Upstream Models directly as upstream/<provider>/<model>"
+            >Upstream</span
+          >
         </div>
       </template>
       <template #cell-keyId="{ row: apiKey }">

@@ -31,6 +31,7 @@ const name = ref('');
 const expiryDate = ref('');
 const allowedModelIds = ref<string[]>([]);
 const allowedModelGroupIds = ref<string[]>([]);
+const directUpstreamAccess = ref(false);
 const spendLimit = ref('');
 const requestRate = ref('');
 const isSaving = ref(false);
@@ -47,6 +48,7 @@ watch(
     expiryDate.value = localDateOf(props.apiKey?.expiresAt ?? null);
     allowedModelIds.value = props.apiKey?.allowedModels.map((model) => model.id) ?? [];
     allowedModelGroupIds.value = props.apiKey?.allowedModelGroups.map((group) => group.id) ?? [];
+    directUpstreamAccess.value = props.apiKey?.directUpstreamAccess ?? false;
     spendLimit.value = limitText(props.apiKey?.spendLimit ?? null);
     requestRate.value = limitText(props.apiKey?.requestRate ?? null);
     error.value = '';
@@ -102,6 +104,7 @@ const changes = computed(() => {
     expiresAt?: string | null;
     allowedModelIds?: string[];
     allowedModelGroupIds?: string[];
+    directUpstreamAccess?: boolean;
     spendLimit?: number | null;
     requestRate?: number | null;
   } = {};
@@ -114,6 +117,9 @@ const changes = computed(() => {
   const originalGroupIds = original.allowedModelGroups.map((group) => group.id);
   if (!sameIds(allowedModelGroupIds.value, originalGroupIds)) {
     fields.allowedModelGroupIds = allowedModelGroupIds.value;
+  }
+  if (directUpstreamAccess.value !== original.directUpstreamAccess) {
+    fields.directUpstreamAccess = directUpstreamAccess.value;
   }
   if (spendLimit.value !== limitText(original.spendLimit)) {
     fields.spendLimit = limitValue(spendLimit.value);
@@ -143,6 +149,7 @@ async function submit(): Promise<void> {
           expiresAt: expiryDate.value ? endOfLocalDay(expiryDate.value) : null,
           allowedModelIds: allowedModelIds.value,
           allowedModelGroupIds: allowedModelGroupIds.value,
+          directUpstreamAccess: directUpstreamAccess.value,
           spendLimit: limitValue(spendLimit.value),
           requestRate: limitValue(requestRate.value),
         },
@@ -216,6 +223,15 @@ async function submit(): Promise<void> {
         <span v-else class="field__note"
           >A key allowed a Group can call every Model currently in it. Leave both Models and Groups
           empty to allow every Model. {{ allowedSummary }}</span
+        >
+      </div>
+      <div class="field">
+        <label class="check-field"
+          ><input v-model="directUpstreamAccess" type="checkbox" /> Direct Upstream Access</label
+        >
+        <span class="field__note"
+          >On top of its allowed Models, the key can also call every usable Upstream Model as
+          <code>upstream/&lt;provider&gt;/&lt;model&gt;</code>.</span
         >
       </div>
       <label class="field"

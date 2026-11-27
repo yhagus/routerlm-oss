@@ -13,6 +13,7 @@ export interface IntegrationSummary {
   disabledAt: string | null;
   allowedModels: { id: string; name: string | null }[];
   allowedModelGroups: AllowedModelGroup[];
+  directUpstreamAccess: boolean;
   lastRotatedAt: string | null;
   lastUsedAt: string | null;
 }

@@ -24,6 +24,7 @@ const isLoadingGroups = computed(() => groupsStatus.value === 'pending' && !grou
 const name = ref('');
 const allowedModelIds = ref<string[]>([]);
 const allowedModelGroupIds = ref<string[]>([]);
+const directUpstreamAccess = ref(false);
 const isSaving = ref(false);
 const error = ref('');
 
@@ -37,6 +38,7 @@ watch(
     allowedModelIds.value = props.integration?.allowedModels.map((model) => model.id) ?? [];
     allowedModelGroupIds.value =
       props.integration?.allowedModelGroups.map((group) => group.id) ?? [];
+    directUpstreamAccess.value = props.integration?.directUpstreamAccess ?? false;
     error.value = '';
   },
   { immediate: true },
@@ -73,13 +75,21 @@ function sameIds(first: string[], second: string[]): boolean {
 const changes = computed(() => {
   const original = props.integration;
   if (!original) return {};
-  const fields: { name?: string; allowedModelIds?: string[]; allowedModelGroupIds?: string[] } = {};
+  const fields: {
+    name?: string;
+    allowedModelIds?: string[];
+    allowedModelGroupIds?: string[];
+    directUpstreamAccess?: boolean;
+  } = {};
   if (name.value.trim() !== original.name) fields.name = name.value.trim();
   const originalIds = original.allowedModels.map((model) => model.id);
   if (!sameIds(allowedModelIds.value, originalIds)) fields.allowedModelIds = allowedModelIds.value;
   const originalGroupIds = original.allowedModelGroups.map((group) => group.id);
   if (!sameIds(allowedModelGroupIds.value, originalGroupIds)) {
     fields.allowedModelGroupIds = allowedModelGroupIds.value;
+  }
+  if (directUpstreamAccess.value !== original.directUpstreamAccess) {
+    fields.directUpstreamAccess = directUpstreamAccess.value;
   }
   return fields;
 });
@@ -102,6 +112,7 @@ async function submit(): Promise<void> {
           name: name.value,
           allowedModelIds: allowedModelIds.value,
           allowedModelGroupIds: allowedModelGroupIds.value,
+          directUpstreamAccess: directUpstreamAccess.value,
         },
       });
       emit('created', created);
@@ -167,6 +178,15 @@ async function submit(): Promise<void> {
         <span v-else class="field__note"
           >Its API Keys may call every Model currently in an allowed Group. Leave both Models and
           Groups empty to allow every Model. {{ allowedSummary }}</span
+        >
+      </div>
+      <div class="field">
+        <label class="check-field"
+          ><input v-model="directUpstreamAccess" type="checkbox" /> Direct Upstream Access</label
+        >
+        <span class="field__note"
+          >Its Customer keys may be granted it, so they can also call every usable Upstream Model as
+          <code>upstream/&lt;provider&gt;/&lt;model&gt;</code>.</span
         >
       </div>
       <p v-if="error" class="form__error" role="alert">{{ error }}</p>

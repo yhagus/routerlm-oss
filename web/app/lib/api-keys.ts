@@ -22,6 +22,7 @@ export interface ApiKeySummary {
   revokedAt: string | null;
   allowedModels: { id: string; name: string | null }[];
   allowedModelGroups: AllowedModelGroup[];
+  directUpstreamAccess: boolean;
   isCopyable: boolean;
   lastRotatedAt: string | null;
   integration: { id: string; name: string } | null;
