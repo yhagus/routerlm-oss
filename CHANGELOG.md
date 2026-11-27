@@ -1,3 +1,48 @@
+# v6.4.0 (2026-11-27)
+
+#### Notable changes
+
+**Upgrade**
+* Run the 3 new migrations; they apply on start: `20261126192916_model_groups`, `20261126194021_allowed_model_groups` and `20261127030054_direct_upstream_access` – [f3b6817](https://github.com/yhagus/routerlm-oss/commit/f3b6817ed155c7b79232edd50b28e7f7c0698611), [ea08bbb](https://github.com/yhagus/routerlm-oss/commit/ea08bbb8c33465711b394037f7d8fec83ee5ee50), [3bf4565](https://github.com/yhagus/routerlm-oss/commit/3bf456532970ca9b275cf09fd92decae9bf74519)
+* **Breaking:** `upstream` is now a reserved Model Group slug (it belongs to Direct Upstream Access, ADR 0102). `20261127030054_direct_upstream_access` fails, and so does the upgrade, if a Model Group with the slug `upstream` exists. Rename that Model Group before upgrading, then tell its clients the new names – [3bf4565](https://github.com/yhagus/routerlm-oss/commit/3bf456532970ca9b275cf09fd92decae9bf74519)
+* Existing Models belong to no Model Group until they are edited, and editing a Model now requires at least one Model Group (ADR 0101). A Model keeps answering to its bare name – [f3b6817](https://github.com/yhagus/routerlm-oss/commit/f3b6817ed155c7b79232edd50b28e7f7c0698611)
+* **Breaking:** Model names can no longer contain `/` when a Model is created or edited, because `/` now separates the Model Group from the name. Existing names are not rewritten – [f3b6817](https://github.com/yhagus/routerlm-oss/commit/f3b6817ed155c7b79232edd50b28e7f7c0698611)
+* New tables `model_groups` and `model_group_members`, and new columns `api_keys.allowed_model_group_ids` and `integrations.allowed_model_group_ids` (default empty), `api_keys.direct_upstream_access` and `integrations.direct_upstream_access` (default off, so no key gains access). Usage Logs gain `requested_model_name` – [f3b6817](https://github.com/yhagus/routerlm-oss/commit/f3b6817ed155c7b79232edd50b28e7f7c0698611), [ea08bbb](https://github.com/yhagus/routerlm-oss/commit/ea08bbb8c33465711b394037f7d8fec83ee5ee50), [3bf4565](https://github.com/yhagus/routerlm-oss/commit/3bf456532970ca9b275cf09fd92decae9bf74519)
+* Control-plane gRPC proto: new `direct_upstream_access` fields on the Customer API Key messages and on the Integration. The change is additive, so existing control-plane clients keep working – [3bf4565](https://github.com/yhagus/routerlm-oss/commit/3bf456532970ca9b275cf09fd92decae9bf74519)
+* New personal data kept: none
+
+**Model Groups**
+* A Model can belong to one or more Model Groups, each with a name and a slug. Clients see the Model once per group as `<slug>/<model name>` in `/v1/models`, and the bare name still reaches the same Model. A group only names Models and never changes routing – [f3b6817](https://github.com/yhagus/routerlm-oss/commit/f3b6817ed155c7b79232edd50b28e7f7c0698611)
+* The dashboard gets a Groups page to create, edit and delete Model Groups, the Models pages stack Models by group, and the Playground model pickers follow the groups – [3824f91](https://github.com/yhagus/routerlm-oss/commit/3824f91ccf77e07266e4c70955897321f716bae3)
+* An API Key or Integration can be allowed a whole Model Group instead of its Models one by one, in the API, the snapshot and the dashboard forms – [ea08bbb](https://github.com/yhagus/routerlm-oss/commit/ea08bbb8c33465711b394037f7d8fec83ee5ee50), [3a5fd92](https://github.com/yhagus/routerlm-oss/commit/3a5fd929ae80db06ac080f5b54fd939579d2566d)
+
+**Direct Upstream Access**
+* An API Key or Integration can be granted Direct Upstream Access, off by default, to call any usable Upstream Model as `upstream/<provider slug>/<upstream model name>` with no Model in between. It never widens or narrows the key's allowed Models and Model Groups, and its requests count against the key's Spend Limit and Request Rate – [3bf4565](https://github.com/yhagus/routerlm-oss/commit/3bf456532970ca9b275cf09fd92decae9bf74519)
+* Keys with it list those Upstream Models in `/v1/models`. A Customer key has it only when its Integration does – [3bf4565](https://github.com/yhagus/routerlm-oss/commit/3bf456532970ca9b275cf09fd92decae9bf74519)
+* The API Key and Integration dialogs get a checkbox for it – [c7ce195](https://github.com/yhagus/routerlm-oss/commit/c7ce1954a91665ded16ec88215475f8a17183434)
+
+#### Features
+* `api-keys`
+  * [3bf4565](https://github.com/yhagus/routerlm-oss/commit/3bf456532970ca9b275cf09fd92decae9bf74519) feat(api-keys): let api keys reach upstream models directly
+  * [ea08bbb](https://github.com/yhagus/routerlm-oss/commit/ea08bbb8c33465711b394037f7d8fec83ee5ee50) feat(api-keys): allow api keys and integrations whole model groups
+* `routing`
+  * [f3b6817](https://github.com/yhagus/routerlm-oss/commit/f3b6817ed155c7b79232edd50b28e7f7c0698611) feat(routing): add model groups and publish models as group/name
+* `web`
+  * [c7ce195](https://github.com/yhagus/routerlm-oss/commit/c7ce1954a91665ded16ec88215475f8a17183434) feat(web): toggle direct upstream access on api keys and integrations
+  * [3a5fd92](https://github.com/yhagus/routerlm-oss/commit/3a5fd929ae80db06ac080f5b54fd939579d2566d) feat(web): allow groups on api keys and integrations
+  * [3824f91](https://github.com/yhagus/routerlm-oss/commit/3824f91ccf77e07266e4c70955897321f716bae3) feat(web): add groups page and stack models by group
+
+#### Refactors
+* `web`
+  * [99ca281](https://github.com/yhagus/routerlm-oss/commit/99ca281318e0ed314d2e097ee7c6d59908a8986d) refactor(web): rename stacked upstream model rows from group to stack
+
+#### Docs
+* `routing`
+  * [20f5239](https://github.com/yhagus/routerlm-oss/commit/20f52391355d41f818f11f279261a9e17ea9caa2) docs(routing): add direct upstream access as upstream/provider/name
+  * [4724c8f](https://github.com/yhagus/routerlm-oss/commit/4724c8f92af43b8aa6453ae3a9b53b465c5c25d7) docs(routing): add model groups that publish models as group/name
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v6.3.0...v6.4.0
+
 # v6.3.0 (2026-11-27)
 
 #### Notable changes
