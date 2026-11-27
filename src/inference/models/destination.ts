@@ -1,6 +1,8 @@
-import { mayUseModel } from '@/api-keys/models/api-key';
+import { mayUseModel, mayUseUpstreamModels } from '@/api-keys/models/api-key';
 import type { ModelKind } from '@/db/schemas';
+import { DIRECT_UPSTREAM_SLUG } from '@/libs/models/direct-upstream';
 import {
+  isUpstreamModelReachableDirectly,
   isUpstreamModelUsable,
   type Snapshot,
   type SnapshotModel,
@@ -13,6 +15,12 @@ import type { AttemptPath, AttemptTarget } from './route-selection';
 export type Destination = FallbackDestination | ProbeDestination;
 
 export const GROUP_SEPARATOR = '/';
+
+export const DIRECT_UPSTREAM_PREFIX = `${DIRECT_UPSTREAM_SLUG}${GROUP_SEPARATOR}`;
+
+export type ClientModelTarget =
+  | { kind: 'model'; model: SnapshotModel }
+  | { kind: 'upstream-model'; upstreamModel: SnapshotUpstreamModel };
 
 interface ResolvedNames {
   model: SnapshotModel | null;
@@ -31,14 +39,56 @@ export interface ProbeDestination extends ResolvedNames {
   totalTimeoutMs: number;
 }
 
-export function usableModel(
+export function clientModelTargetOf(
   snapshot: Snapshot,
   name: string,
   caller: InferenceCaller,
-): SnapshotModel {
+): ClientModelTarget {
+  if (!snapshot.modelsByName.has(name) && name.startsWith(DIRECT_UPSTREAM_PREFIX)) {
+    return { kind: 'upstream-model', upstreamModel: directUpstreamModel(snapshot, name, caller) };
+  }
+  return { kind: 'model', model: usableModel(snapshot, name, caller) };
+}
+
+function directUpstreamModel(
+  snapshot: Snapshot,
+  name: string,
+  caller: InferenceCaller,
+): SnapshotUpstreamModel {
+  const upstreamModel = findUpstreamModelByDirectName(snapshot, name);
+  const isReachable =
+    caller.kind === 'api-key' &&
+    mayUseUpstreamModels(caller.principal) &&
+    upstreamModel !== undefined &&
+    isUpstreamModelReachableDirectly(upstreamModel);
+  if (!isReachable) {
+    throw modelNotFound(name);
+  }
+  return upstreamModel;
+}
+
+function findUpstreamModelByDirectName(
+  snapshot: Snapshot,
+  name: string,
+): SnapshotUpstreamModel | undefined {
+  const providerPath = name.slice(DIRECT_UPSTREAM_PREFIX.length);
+  const separatorIndex = providerPath.indexOf(GROUP_SEPARATOR);
+  if (separatorIndex === -1) {
+    return undefined;
+  }
+  const providerSlug = providerPath.slice(0, separatorIndex);
+  const upstreamModelName = providerPath.slice(separatorIndex + 1);
+  return snapshot.upstreamModelsByProviderSlug.get(providerSlug)?.get(upstreamModelName);
+}
+
+function modelNotFound(name: string): GatewayError {
+  return new GatewayError('model_not_found', `The Model "${name}" does not exist`, 'client');
+}
+
+function usableModel(snapshot: Snapshot, name: string, caller: InferenceCaller): SnapshotModel {
   const model = findModelByClientName(snapshot, name);
   if (!model?.isEnabled) {
-    throw new GatewayError('model_not_found', `The Model "${name}" does not exist`, 'client');
+    throw modelNotFound(name);
   }
   if (caller.kind === 'api-key' && !mayUseModel(caller.principal, model)) {
     throw new GatewayError(

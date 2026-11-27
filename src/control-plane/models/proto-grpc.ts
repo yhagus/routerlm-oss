@@ -40,6 +40,7 @@ export interface KeySettingsMessage {
   name?: string;
   expiresAt?: TimestampMessage;
   allowedModelIds?: string[];
+  directUpstreamAccess?: boolean;
   spendLimit?: number;
   requestRate?: number;
 }
@@ -120,6 +121,10 @@ export function newKeyJsonOf(request: CreateKeyRequest): object {
 const lowerCamelCaseOf = (fieldName: string): string =>
   fieldName.replaceAll(/_([a-z])/g, (_match, letter: string) => letter.toUpperCase());
 
+const UNSET_VALUES: Record<string, unknown> = { allowedModelIds: [], directUpstreamAccess: false };
+
+const unsetValueOf = (field: string): unknown => UNSET_VALUES[field] ?? null;
+
 export function keyChangesJsonOf(request: UpdateKeyRequest): object {
   const settings: Record<string, unknown> = {
     ...request.key,
@@ -127,8 +132,7 @@ export function keyChangesJsonOf(request: UpdateKeyRequest): object {
   };
   const changes = (request.updateMask?.paths ?? []).map((path) => {
     const field = lowerCamelCaseOf(path);
-    const unsetValue = field === 'allowedModelIds' ? [] : null;
-    return [field, settings[field] ?? unsetValue];
+    return [field, settings[field] ?? unsetValueOf(field)];
   });
   return Object.fromEntries(changes);
 }

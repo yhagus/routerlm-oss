@@ -20,6 +20,7 @@ const customerApiKeyColumns = {
   expiresAt: apiKeys.expiresAt,
   revokedAt: apiKeys.revokedAt,
   allowedModelIds: apiKeys.allowedModelIds,
+  directUpstreamAccess: apiKeys.directUpstreamAccess,
   spendLimit: apiKeys.spendLimit,
   spent: apiKeys.spent,
   requestRate: apiKeys.requestRate,
@@ -67,6 +68,18 @@ export async function findUnrevokedCustomerApiKey(
     throw new ControlPlaneError('FAILED_PRECONDITION', revokedMessage);
   }
   return found;
+}
+
+export function assertDirectUpstreamAccessWithinCeiling(
+  integration: IntegrationPrincipal,
+  directUpstreamAccess: boolean,
+): void {
+  if (directUpstreamAccess && !integration.hasDirectUpstreamAccess) {
+    throw new ControlPlaneError(
+      'INVALID_ARGUMENT',
+      "The Integration doesn't have Direct Upstream Access, so its keys can't either",
+    );
+  }
 }
 
 export async function assertWithinCeiling(

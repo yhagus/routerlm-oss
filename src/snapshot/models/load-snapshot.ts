@@ -55,6 +55,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         expiresAt: apiKeys.expiresAt,
         allowedModelIds: apiKeys.allowedModelIds,
         allowedModelGroupIds: apiKeys.allowedModelGroupIds,
+        hasDirectUpstreamAccess: apiKeys.directUpstreamAccess,
         spendLimit: apiKeys.spendLimit,
         requestRate: apiKeys.requestRate,
         customerId: apiKeys.customerId,
@@ -62,6 +63,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         integrationName: integrations.name,
         integrationAllowedModelIds: integrations.allowedModelIds,
         integrationAllowedModelGroupIds: integrations.allowedModelGroupIds,
+        integrationHasDirectUpstreamAccess: integrations.directUpstreamAccess,
       })
       .from(apiKeys)
       .leftJoin(integrations, eq(apiKeys.integrationId, integrations.id))
@@ -166,9 +168,18 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
         maxDurationSeconds: upstreamModel.maxDurationSeconds,
         planCoverage: upstreamModel.planCoverage,
         isEnabled: upstreamModel.isEnabled,
+        createdAt: upstreamModel.createdAt,
         provider,
       });
     }
+  }
+
+  const upstreamModelsByProviderSlug = new Map<string, Map<string, SnapshotUpstreamModel>>();
+  for (const upstreamModel of upstreamModelsById.values()) {
+    const { slug } = upstreamModel.provider;
+    const providerModels = upstreamModelsByProviderSlug.get(slug) ?? new Map();
+    providerModels.set(upstreamModel.upstreamModelId, upstreamModel);
+    upstreamModelsByProviderSlug.set(slug, providerModels);
   }
 
   const routesByModelId = groupBy(routeRows, (route) => route.modelId);
@@ -216,6 +227,7 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     apiKeysByKeyId,
     modelsByName,
     upstreamModelsById,
+    upstreamModelsByProviderSlug,
     allowsPrivateUpstreams: allowsPrivateUpstreams.value,
   };
 }
@@ -227,6 +239,7 @@ function snapshotApiKeyOf(row: {
   expiresAt: Date | null;
   allowedModelIds: string[];
   allowedModelGroupIds: string[];
+  hasDirectUpstreamAccess: boolean;
   spendLimit: number | null;
   requestRate: number | null;
   customerId: string | null;
@@ -234,6 +247,7 @@ function snapshotApiKeyOf(row: {
   integrationName: string | null;
   integrationAllowedModelIds: string[] | null;
   integrationAllowedModelGroupIds: string[] | null;
+  integrationHasDirectUpstreamAccess: boolean | null;
 }): SnapshotApiKey {
   const {
     customerId,
@@ -241,6 +255,7 @@ function snapshotApiKeyOf(row: {
     integrationName,
     integrationAllowedModelIds,
     integrationAllowedModelGroupIds,
+    integrationHasDirectUpstreamAccess,
     ...key
   } = row;
   const isIssuedByIntegration =
@@ -255,6 +270,7 @@ function snapshotApiKeyOf(row: {
             allowedModelIds: integrationAllowedModelIds ?? [],
             allowedModelGroupIds: integrationAllowedModelGroupIds ?? [],
           },
+          integrationHasDirectUpstreamAccess: integrationHasDirectUpstreamAccess ?? false,
           customerId,
         }
       : null,

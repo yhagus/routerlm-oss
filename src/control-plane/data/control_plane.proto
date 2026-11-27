@@ -68,6 +68,8 @@ message ApiKey {
   double spent = 10;
   // Requests per minute. Unset means no limit.
   optional int32 request_rate = 11;
+  // May call any usable Upstream Model as `upstream/<provider slug>/<upstream model name>`.
+  bool direct_upstream_access = 12;
 }
 
 // What a key is set up with: on create, and as the body of an update.
@@ -77,6 +79,7 @@ message KeySettings {
   repeated string allowed_model_ids = 3;
   optional double spend_limit = 4;
   optional int32 request_rate = 5;
+  bool direct_upstream_access = 6;
 }
 
 // A key just created or rotated, with the whole key. The only time it is returned.
@@ -99,13 +102,16 @@ message CreateKeyRequest {
   optional double spend_limit = 5;
   // Requests per minute, at least 1. Unset means no limit.
   optional int32 request_rate = 6;
+  // Only when the Integration has Direct Upstream Access itself.
+  bool direct_upstream_access = 7;
 }
 
 message UpdateKeyRequest {
   string id = 1;
   KeySettings key = 2;
   // Which fields of `key` to change; at least one. A listed field left unset is
-  // cleared (expiry, Spend Limit, Request Rate) or emptied (allowed Models).
+  // cleared (expiry, Spend Limit, Request Rate), emptied (allowed Models) or
+  // turned off (Direct Upstream Access).
   // The Customer id is not among them: it never changes.
   google.protobuf.FieldMask update_mask = 3;
 }

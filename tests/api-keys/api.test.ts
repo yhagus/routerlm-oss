@@ -54,6 +54,7 @@ describe('API Keys (e2e)', () => {
         revokedAt: null,
         allowedModels: [{ id: model.id, name: 'smart' }],
         allowedModelGroups: [],
+        directUpstreamAccess: false,
         isCopyable: true,
         lastRotatedAt: null,
         integration: null,

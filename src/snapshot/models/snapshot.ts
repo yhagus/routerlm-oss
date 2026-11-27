@@ -21,6 +21,7 @@ export interface SnapshotApiKey {
   expiresAt: Date | null;
   allowedModelIds: string[];
   allowedModelGroupIds: string[];
+  hasDirectUpstreamAccess: boolean;
   customer: KeyCustomer | null;
   spendLimit: number | null;
   requestRate: number | null;
@@ -94,6 +95,7 @@ export interface SnapshotUpstreamModel {
   maxDurationSeconds: number | null;
   planCoverage: string[] | null;
   isEnabled: boolean;
+  createdAt: Date;
   provider: SnapshotProvider;
 }
 
@@ -110,6 +112,13 @@ export interface SnapshotRoute {
 
 export function isUpstreamModelUsable(upstreamModel: SnapshotUpstreamModel): boolean {
   return upstreamModel.isEnabled && upstreamModel.provider.isUsable;
+}
+
+export function isUpstreamModelReachableDirectly(upstreamModel: SnapshotUpstreamModel): boolean {
+  return (
+    isUpstreamModelUsable(upstreamModel) &&
+    upstreamModel.provider.providerAccounts.some((account) => account.isEnabled)
+  );
 }
 
 export function standardPricesOf(upstreamModel: SnapshotUpstreamModel): UpstreamModelPrices {
@@ -138,6 +147,7 @@ export interface Snapshot {
   apiKeysByKeyId: ReadonlyMap<string, SnapshotApiKey>;
   modelsByName: ReadonlyMap<string, SnapshotModel>;
   upstreamModelsById: ReadonlyMap<string, SnapshotUpstreamModel>;
+  upstreamModelsByProviderSlug: ReadonlyMap<string, ReadonlyMap<string, SnapshotUpstreamModel>>;
   allowsPrivateUpstreams: boolean;
 }
 
@@ -145,5 +155,6 @@ export const EMPTY_SNAPSHOT: Snapshot = {
   apiKeysByKeyId: new Map(),
   modelsByName: new Map(),
   upstreamModelsById: new Map(),
+  upstreamModelsByProviderSlug: new Map(),
   allowsPrivateUpstreams: false,
 };

@@ -19,11 +19,13 @@ const integrationFieldsSchema = z.object({
   name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
   allowedModelIds: allowedModelIdsSchema,
   allowedModelGroupIds: allowedModelGroupIdsSchema,
+  directUpstreamAccess: z.boolean(),
 });
 
 export const newIntegrationSchema = integrationFieldsSchema.extend({
   allowedModelIds: allowedModelIdsSchema.default([]),
   allowedModelGroupIds: allowedModelGroupIdsSchema.default([]),
+  directUpstreamAccess: z.boolean().default(false),
 });
 export type NewIntegration = z.infer<typeof newIntegrationSchema>;
 

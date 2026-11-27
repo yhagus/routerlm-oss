@@ -11,10 +11,10 @@ import type { UsageJob } from '@/usage/models/usage-job';
 import { UsageProducer } from '@/usage/jobs/usage.producer';
 import {
   assertKindServedHere,
+  clientModelTargetOf,
   type Destination,
   probeDestination,
   upstreamModelServedHere,
-  usableModel,
 } from '@/inference/models/destination';
 import { GatewayError } from '@/inference/models/gateway-error';
 import type { InferenceCaller } from '@/inference/models/inference';
@@ -139,7 +139,11 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
     meter: UsageMeter,
   ): Destination {
     meter.modelRequested(request.model);
-    const model = usableModel(this.snapshot.current, request.model, caller);
+    const target = clientModelTargetOf(this.snapshot.current, request.model, caller);
+    if (target.kind === 'upstream-model') {
+      return this.resolveUpstreamModel(contract, request, target.upstreamModel.id, kind);
+    }
+    const { model } = target;
     meter.modelResolved(model.id, model.name);
     assertKindServedHere(`Model "${model.name}"`, model.kind, kind);
     const enabledRoutes = model.routes.filter((route) => route.isEnabled);

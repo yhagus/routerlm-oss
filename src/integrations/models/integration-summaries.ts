@@ -27,6 +27,7 @@ export async function selectIntegrationSummaries(
       disabledAt: integrations.disabledAt,
       allowedModelIds: integrations.allowedModelIds,
       allowedModelGroupIds: integrations.allowedModelGroupIds,
+      directUpstreamAccess: integrations.directUpstreamAccess,
       lastRotatedAt: lastRotations.lastRotatedAt,
       lastUsedAt: integrations.lastUsedAt,
     })

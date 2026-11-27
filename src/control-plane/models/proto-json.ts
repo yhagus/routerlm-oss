@@ -11,6 +11,7 @@ export interface ApiKeyJson {
   expiresAt?: string;
   revokedAt?: string;
   allowedModelIds: string[];
+  directUpstreamAccess: boolean;
   spendLimit?: number;
   spent: number;
   requestRate?: number;
@@ -115,6 +116,7 @@ export function apiKeyJsonOf(apiKey: CustomerApiKey): ApiKeyJson {
     expiresAt: apiKey.expiresAt?.toISOString(),
     revokedAt: apiKey.revokedAt?.toISOString(),
     allowedModelIds: apiKey.allowedModelIds,
+    directUpstreamAccess: apiKey.directUpstreamAccess,
     spendLimit: apiKey.spendLimit ?? undefined,
     spent: apiKey.spent,
     requestRate: apiKey.requestRate ?? undefined,

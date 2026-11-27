@@ -48,6 +48,21 @@ describe('Editing an Integration (e2e)', () => {
     });
   });
 
+  it('grants an Integration Direct Upstream Access, signing it in with it', async () => {
+    const created = await createIntegration(app, adaCookie);
+
+    const edited = await request(app.getHttpServer())
+      .patch(`/api/integrations/${created.id}`)
+      .set('Cookie', adaCookie)
+      .send({ directUpstreamAccess: true })
+      .expect(200);
+
+    expect(edited.body).toMatchObject({ directUpstreamAccess: true });
+    await expect(authenticateWithIntegrationSecret(app, created.secret)).resolves.toMatchObject({
+      user: { hasDirectUpstreamAccess: true },
+    });
+  });
+
   it('opens an Integration to every Model with an empty list', async () => {
     const [model] = await db.insert(models).values({ name: 'smart' }).returning();
     const created = await createIntegration(app, adaCookie, {

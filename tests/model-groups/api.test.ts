@@ -81,6 +81,23 @@ describe('Model Groups (e2e)', () => {
     expect(refused.body.message).toEqual([expect.stringContaining('slug')]);
   });
 
+  it('refuses the slug reserved for Direct Upstream Access, on create and on rename', async () => {
+    const groupId = await createModelGroup('Fast', 'fast');
+
+    const refusedCreate = await dashboard()
+      .post('/api/model-groups')
+      .set('Cookie', cookie)
+      .send({ name: 'Upstream', slug: 'upstream' })
+      .expect(400);
+    await dashboard()
+      .patch(`/api/model-groups/${groupId}`)
+      .set('Cookie', cookie)
+      .send({ slug: 'upstream' })
+      .expect(400);
+
+    expect(refusedCreate.body.message).toEqual([expect.stringContaining('reserved')]);
+  });
+
   it('refuses a second Model Group with the same slug, saying why', async () => {
     await createModelGroup('Fast', 'fast');
 

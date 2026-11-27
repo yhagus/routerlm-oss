@@ -54,6 +54,27 @@ describe('Editing an API Key (e2e)', () => {
     });
   });
 
+  it('grants and withdraws Direct Upstream Access, signing the key in with it', async () => {
+    const created = await createApiKey(app, adaCookie);
+
+    const granted = await request(app.getHttpServer())
+      .patch(`/api/api-keys/${created.id}`)
+      .set('Cookie', adaCookie)
+      .send({ directUpstreamAccess: true })
+      .expect(200);
+
+    expect(granted.body).toMatchObject({ directUpstreamAccess: true });
+    await expect(authenticateWithApiKey(app, created.key)).resolves.toMatchObject({
+      user: { hasDirectUpstreamAccess: true },
+    });
+    const withdrawn = await request(app.getHttpServer())
+      .patch(`/api/api-keys/${created.id}`)
+      .set('Cookie', adaCookie)
+      .send({ directUpstreamAccess: false })
+      .expect(200);
+    expect(withdrawn.body).toMatchObject({ directUpstreamAccess: false });
+  });
+
   it('clears the expiry when sent null', async () => {
     const created = await createApiKey(app, adaCookie, {
       name: 'CI',

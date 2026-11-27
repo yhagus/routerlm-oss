@@ -32,6 +32,7 @@ export interface ApiKeySummary {
   revokedAt: Date | null;
   allowedModels: AllowedModel[];
   allowedModelGroups: AllowedModelGroup[];
+  directUpstreamAccess: boolean;
   isCopyable: boolean;
   lastRotatedAt: Date | null;
   integration: { id: string; name: string } | null;
@@ -57,12 +58,14 @@ export interface KeyCustomer {
   integrationId: string;
   integrationName: string;
   integrationAllowance: ModelAllowance;
+  integrationHasDirectUpstreamAccess: boolean;
   customerId: string;
 }
 
 export interface ApiKeyPrincipal extends ModelAllowance {
   apiKeyId: string;
   apiKeyName: string;
+  hasDirectUpstreamAccess: boolean;
   customer: KeyCustomer | null;
   spendLimit: number | null;
   requestRate: number | null;
@@ -71,4 +74,9 @@ export interface ApiKeyPrincipal extends ModelAllowance {
 export function mayUseModel(principal: ApiKeyPrincipal, model: GroupedModel): boolean {
   const ceiling = principal.customer?.integrationAllowance ?? EVERY_MODEL;
   return allowsModel(principal, model) && allowsModel(ceiling, model);
+}
+
+export function mayUseUpstreamModels(principal: ApiKeyPrincipal): boolean {
+  const integrationAllows = principal.customer?.integrationHasDirectUpstreamAccess ?? true;
+  return principal.hasDirectUpstreamAccess && integrationAllows;
 }

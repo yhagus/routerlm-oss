@@ -51,6 +51,14 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
       await app.close();
     });
 
+    async function grantIntegrationDirectUpstreamAccess(): Promise<void> {
+      await request(app.getHttpServer())
+        .patch(`/api/integrations/${acme.id}`)
+        .set('Cookie', adaCookie)
+        .send({ directUpstreamAccess: true })
+        .expect(200);
+    }
+
     async function issueKey(customerId: string, settings: object = {}) {
       const created = await client.createKey(acme.secret, { customerId, ...settings });
       if (!created.ok) throw new Error(`createKey failed with ${created.code}`);
@@ -133,6 +141,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
           createdAt: expect.any(String),
           expiresAt: NEXT_YEAR,
           allowedModelIds: [model.id],
+          directUpstreamAccess: false,
           spendLimit: 25.5,
           spent: 0,
           requestRate: 60,
@@ -201,6 +210,30 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
             allowedModelIds: [grouped.id, listed.id],
           }),
         ).resolves.toMatchObject({ ok: true });
+      });
+    });
+
+    describe('Direct Upstream Access', () => {
+      it("refuses it to a key while the Integration doesn't have it", async () => {
+        await expect(
+          client.createKey(acme.secret, { customerId: 'cus_1', directUpstreamAccess: true }),
+        ).resolves.toEqual({ ok: false, code: 'INVALID_ARGUMENT' });
+        const issued = await issueKey('cus_1');
+        await expect(
+          client.updateKey(acme.secret, issued.apiKey.id, { directUpstreamAccess: true }),
+        ).resolves.toEqual({ ok: false, code: 'INVALID_ARGUMENT' });
+      });
+
+      it('grants it to a key once the Integration has it, and withdraws it again', async () => {
+        await grantIntegrationDirectUpstreamAccess();
+
+        const issued = await issueKey('cus_1', { directUpstreamAccess: true });
+        const withdrawn = await client.updateKey(acme.secret, issued.apiKey.id, {
+          directUpstreamAccess: false,
+        });
+
+        expect(issued.apiKey.directUpstreamAccess).toBe(true);
+        expect(withdrawn).toMatchObject({ ok: true, body: { directUpstreamAccess: false } });
       });
     });
 

@@ -47,6 +47,7 @@ const apiKeyFieldsSchema = z.object({
   expiresAt: expiresAtSchema,
   allowedModelIds: allowedModelIdsSchema,
   allowedModelGroupIds: allowedModelGroupIdsSchema,
+  directUpstreamAccess: z.boolean(),
   spendLimit: spendLimitSchema,
   requestRate: requestRateSchema,
 });
@@ -55,6 +56,7 @@ export const newApiKeySchema = apiKeyFieldsSchema.extend({
   expiresAt: expiresAtSchema.default(null),
   allowedModelIds: allowedModelIdsSchema.default([]),
   allowedModelGroupIds: allowedModelGroupIdsSchema.default([]),
+  directUpstreamAccess: z.boolean().default(false),
   spendLimit: spendLimitSchema.default(null),
   requestRate: requestRateSchema.default(null),
 });

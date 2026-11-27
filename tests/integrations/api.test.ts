@@ -54,6 +54,7 @@ describe('Integrations (e2e)', () => {
         disabledAt: null,
         allowedModels: [{ id: model.id, name: 'smart' }],
         allowedModelGroups: [],
+        directUpstreamAccess: false,
         lastRotatedAt: null,
         lastUsedAt: null,
       },

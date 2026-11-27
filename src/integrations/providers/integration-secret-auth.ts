@@ -82,6 +82,7 @@ export class IntegrationSecretAuth extends ApiKeyProvider<IntegrationPrincipal> 
         hash: integrations.hash,
         allowedModelIds: integrations.allowedModelIds,
         allowedModelGroupIds: integrations.allowedModelGroupIds,
+        hasDirectUpstreamAccess: integrations.directUpstreamAccess,
       })
       .from(integrations)
       .where(and(eq(integrations.keyId, keyId), isNull(integrations.disabledAt)));
@@ -95,6 +96,7 @@ export class IntegrationSecretAuth extends ApiKeyProvider<IntegrationPrincipal> 
         integrationName: found.name,
         allowedModelIds: found.allowedModelIds,
         allowedModelGroupIds: found.allowedModelGroupIds,
+        hasDirectUpstreamAccess: found.hasDirectUpstreamAccess,
       },
     };
   }

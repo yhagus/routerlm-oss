@@ -20,6 +20,7 @@ export const newCustomerApiKeySchema = z.object({
   name: nameSchema.optional(),
   expiresAt: expiresAtSchema.default(null),
   allowedModelIds: allowedModelIdsSchema.default([]),
+  directUpstreamAccess: z.boolean().default(false),
   spendLimit: spendLimitSchema.default(null),
   requestRate: requestRateSchema.default(null),
 });
@@ -30,6 +31,7 @@ export const customerApiKeyChangesSchema = z
     name: nameSchema,
     expiresAt: expiresAtSchema,
     allowedModelIds: allowedModelIdsSchema,
+    directUpstreamAccess: z.boolean(),
     spendLimit: spendLimitSchema,
     requestRate: requestRateSchema,
   })

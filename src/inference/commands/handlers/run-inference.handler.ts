@@ -24,10 +24,10 @@ import {
 } from '@/inference/models/automatic-cache-breakpoints';
 import {
   assertKindServedHere,
+  clientModelTargetOf,
   type Destination,
   probeDestination,
   upstreamModelServedHere,
-  usableModel,
 } from '@/inference/models/destination';
 import { GatewayError } from '@/inference/models/gateway-error';
 import type { InferenceRequest } from '@/inference/models/internal-format';
@@ -210,7 +210,11 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     meter: UsageMeter,
   ): Destination {
     meter.modelRequested(clientRequest.model);
-    const model = usableModel(this.snapshot.current, clientRequest.model, caller);
+    const target = clientModelTargetOf(this.snapshot.current, clientRequest.model, caller);
+    if (target.kind === 'upstream-model') {
+      return this.resolveUpstreamModel(target.upstreamModel.id, kind, clientRequest);
+    }
+    const { model } = target;
     meter.modelResolved(model.id, model.name);
     assertKindServedHere(`Model "${model.name}"`, model.kind, kind);
     const routes = capableRoutes(model, applyParameterPolicy(clientRequest, model.parameterPolicy));

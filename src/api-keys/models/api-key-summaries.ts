@@ -25,6 +25,7 @@ export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<
       revokedAt: apiKeys.revokedAt,
       allowedModelIds: apiKeys.allowedModelIds,
       allowedModelGroupIds: apiKeys.allowedModelGroupIds,
+      directUpstreamAccess: apiKeys.directUpstreamAccess,
       isCopyable: sql<boolean>`${apiKeys.encryptedKey} is not null`,
       lastRotatedAt: lastRotations.lastRotatedAt,
       integrationId: integrations.id,

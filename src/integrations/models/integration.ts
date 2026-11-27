@@ -10,6 +10,7 @@ export interface IntegrationSummary {
   disabledAt: Date | null;
   allowedModels: AllowedModel[];
   allowedModelGroups: AllowedModelGroup[];
+  directUpstreamAccess: boolean;
   lastRotatedAt: Date | null;
   lastUsedAt: Date | null;
 }
@@ -46,4 +47,5 @@ export interface CreatedIntegration extends IntegrationSummary {
 export interface IntegrationPrincipal extends ModelAllowance {
   integrationId: string;
   integrationName: string;
+  hasDirectUpstreamAccess: boolean;
 }

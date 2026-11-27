@@ -5,7 +5,11 @@ import type { Database } from '@/db/schemas/relations';
 import { apiKeys } from '@/db/schemas';
 import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import type { IssuedCustomerApiKey } from '@/control-plane/models/customer-api-key';
-import { assertWithinCeiling, findCustomerApiKey } from '@/control-plane/models/customer-api-keys';
+import {
+  assertDirectUpstreamAccessWithinCeiling,
+  assertWithinCeiling,
+  findCustomerApiKey,
+} from '@/control-plane/models/customer-api-keys';
 import { CreateCustomerApiKeyCommand } from '@/control-plane/commands/impl/create-customer-api-key.command';
 
 @CommandHandler(CreateCustomerApiKeyCommand)
@@ -21,6 +25,7 @@ export class CreateCustomerApiKeyHandler implements ICommandHandler<CreateCustom
     newKey,
   }: CreateCustomerApiKeyCommand): Promise<IssuedCustomerApiKey> {
     await assertWithinCeiling(this.db, integration, newKey.allowedModelIds);
+    assertDirectUpstreamAccessWithinCeiling(integration, newKey.directUpstreamAccess);
     const { key, id: keyId, hash } = this.apiKeyAuth.generate();
     const [created] = await this.db
       .insert(apiKeys)
@@ -32,6 +37,7 @@ export class CreateCustomerApiKeyHandler implements ICommandHandler<CreateCustom
         customerId: newKey.customerId,
         expiresAt: newKey.expiresAt,
         allowedModelIds: newKey.allowedModelIds,
+        directUpstreamAccess: newKey.directUpstreamAccess,
         spendLimit: newKey.spendLimit,
         requestRate: newKey.requestRate,
       })

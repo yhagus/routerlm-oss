@@ -8,6 +8,7 @@ import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
 import { ControlPlaneError } from '@/control-plane/models/control-plane-error';
 import type { CustomerApiKey } from '@/control-plane/models/customer-api-key';
 import {
+  assertDirectUpstreamAccessWithinCeiling,
   assertWithinCeiling,
   findCustomerApiKey,
   findUnrevokedCustomerApiKey,
@@ -33,6 +34,9 @@ export class UpdateCustomerApiKeyHandler implements ICommandHandler<UpdateCustom
     await findUnrevokedCustomerApiKey(this.db, integrationId, id, REVOKED_MESSAGE);
     if (changes.allowedModelIds) {
       await assertWithinCeiling(this.db, integration, changes.allowedModelIds);
+    }
+    if (changes.directUpstreamAccess !== undefined) {
+      assertDirectUpstreamAccessWithinCeiling(integration, changes.directUpstreamAccess);
     }
     const updated = await this.db
       .update(apiKeys)

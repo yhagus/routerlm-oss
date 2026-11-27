@@ -1,5 +1,6 @@
 import {
   type AnyPgColumn,
+  boolean,
   index,
   integer,
   jsonb,
@@ -46,6 +47,7 @@ export const integrations = pgTable('integrations', {
   hash: text('hash').notNull(),
   allowedModelIds: uuid('allowed_model_ids').array('[]').notNull().default([]),
   allowedModelGroupIds: uuid('allowed_model_group_ids').array('[]').notNull().default([]),
+  directUpstreamAccess: boolean('direct_upstream_access').notNull().default(false),
   createdById: uuid('created_by_id').references(() => users.id, { onDelete: 'set null' }),
   createdAt: createdAt(),
   disabledAt: at('disabled_at'),
@@ -86,6 +88,7 @@ export const apiKeys = pgTable(
     revokedAt: at('revoked_at'),
     allowedModelIds: uuid('allowed_model_ids').array('[]').notNull().default([]),
     allowedModelGroupIds: uuid('allowed_model_group_ids').array('[]').notNull().default([]),
+    directUpstreamAccess: boolean('direct_upstream_access').notNull().default(false),
     integrationId: uuid('integration_id').references(() => integrations.id, {
       onDelete: 'set null',
     }),

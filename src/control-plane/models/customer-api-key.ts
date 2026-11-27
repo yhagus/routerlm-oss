@@ -7,6 +7,7 @@ export interface CustomerApiKey {
   expiresAt: Date | null;
   revokedAt: Date | null;
   allowedModelIds: string[];
+  directUpstreamAccess: boolean;
   spendLimit: number | null;
   spent: number;
   requestRate: number | null;

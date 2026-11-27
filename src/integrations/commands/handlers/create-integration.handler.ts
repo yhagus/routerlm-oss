@@ -31,6 +31,7 @@ export class CreateIntegrationHandler implements ICommandHandler<CreateIntegrati
         hash,
         allowedModelIds: newIntegration.allowedModelIds,
         allowedModelGroupIds: newIntegration.allowedModelGroupIds,
+        directUpstreamAccess: newIntegration.directUpstreamAccess,
         createdById,
       })
       .returning({ id: integrations.id });

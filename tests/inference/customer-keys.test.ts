@@ -7,7 +7,7 @@ import request from 'supertest';
 import type { Database } from '@/db/schemas/relations';
 import { attempts } from '@/db/schemas';
 import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
-import { insertOpenAiChatModel } from '@tests/support/inference';
+import { insertOpenAiChatModel, UPSTREAM_MODEL_ID } from '@tests/support/inference';
 import { createIntegration } from '@tests/support/integrations';
 import { insertModelGroup } from '@tests/support/model-groups';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
@@ -148,5 +148,29 @@ describe("Inference with a Customer's API Key (e2e)", () => {
 
     await chat(key, 'unsold').expect(403);
     await chat(key, 'fast/smart').expect(200);
+  });
+
+  it("refuses Direct Upstream Access to a Customer's key once its Integration loses it", async () => {
+    const server = app.getHttpServer();
+    const setIntegrationDirectUpstreamAccess = (directUpstreamAccess: boolean) =>
+      request(server)
+        .patch(`/api/integrations/${acme.id}`)
+        .set('Cookie', adaCookie)
+        .send({ directUpstreamAccess })
+        .expect(200);
+    await setIntegrationDirectUpstreamAccess(true);
+    const created = await request(server)
+      .post('/integration/v1/keys')
+      .set('Authorization', `Bearer ${acme.secret}`)
+      .send({ customerId: 'cus_42', directUpstreamAccess: true })
+      .expect(201);
+    const directName = `upstream/acme-smart/${UPSTREAM_MODEL_ID}`;
+    upstreamAnswers();
+    await chat(created.body.key, directName).expect(200);
+
+    await setIntegrationDirectUpstreamAccess(false);
+    const response = await chat(created.body.key, directName).expect(404);
+
+    expect(response.body.error.code).toBe('model_not_found');
   });
 });

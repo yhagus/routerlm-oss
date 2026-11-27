@@ -35,6 +35,7 @@ export class CreateApiKeyHandler implements ICommandHandler<CreateApiKeyCommand>
         expiresAt: newKey.expiresAt,
         allowedModelIds: newKey.allowedModelIds,
         allowedModelGroupIds: newKey.allowedModelGroupIds,
+        directUpstreamAccess: newKey.directUpstreamAccess,
         spendLimit: newKey.spendLimit,
         requestRate: newKey.requestRate,
       })
