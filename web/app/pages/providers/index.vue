@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { ChevronRight, CircleAlert, Pencil, Plug, Plus, Power, Trash2 } from '@lucide/vue';
+import {
+  BadgeCheck,
+  ChevronRight,
+  CircleAlert,
+  Pencil,
+  Plug,
+  Plus,
+  Power,
+  Trash2,
+} from '@lucide/vue';
+import { apiErrorMessage } from '~/lib/api';
 import { computed, ref } from 'vue';
 import {
   baseUrlHost,
@@ -15,6 +25,7 @@ import {
   mainBaseUrl,
   PROTOCOL_OPTIONS,
   UPSTREAM_PROTOCOLS,
+  verifiedHint,
 } from '~/lib/upstream';
 import { TERMS_RISK_BLOCKED_HINT } from '~/lib/settings';
 import { type ActiveFilter, listFilterTokens } from '~/lib/activeFilters';
@@ -198,6 +209,20 @@ function deleteProvider(provider: Provider): Promise<void> {
 function toggleProvider(provider: Provider): Promise<void> {
   return toggleRow(provider, provider.name);
 }
+
+const { $dashboardApi } = useNuxtApp();
+const { showToast } = useToast();
+
+async function toggleVerified(provider: Provider): Promise<void> {
+  const { id, name, verified } = provider;
+  try {
+    await $dashboardApi(`/providers/${id}`, { method: 'PATCH', body: { verified: !verified } });
+    showToast(`Marked ${name} ${verified ? 'unverified' : 'verified'}`);
+    await refresh();
+  } catch (error) {
+    showToast(apiErrorMessage(error, `Couldn't update ${name}.`));
+  }
+}
 </script>
 
 <template>
@@ -312,6 +337,12 @@ function toggleProvider(provider: Provider): Promise<void> {
             <strong :title="provider.name"
               >{{ provider.name }}<ChevronRight :size="13" aria-hidden="true"
             /></strong>
+            <span
+              v-if="provider.verified"
+              class="status-badge status-badge--good provider-table__verified"
+              :title="verifiedHint(provider.verifiedAt)"
+              ><BadgeCheck :size="12" aria-hidden="true" />Verified</span
+            >
             <span v-if="isBlocked(provider)" class="cell-note" :title="TERMS_RISK_BLOCKED_HINT"
               >Blocked: terms risk</span
             >
@@ -391,6 +422,15 @@ function toggleProvider(provider: Provider): Promise<void> {
             @click="toggleProvider(provider)"
           >
             <Power :size="14" />
+          </button>
+          <button
+            class="icon-action"
+            type="button"
+            :aria-label="`Mark ${provider.name} ${provider.verified ? 'unverified' : 'verified'}`"
+            :title="provider.verified ? 'Mark unverified' : 'Mark verified'"
+            @click="toggleVerified(provider)"
+          >
+            <BadgeCheck :size="14" />
           </button>
           <button
             class="icon-action icon-action--danger"

@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { ArrowLeft, CircleAlert, CloudOff, Pencil, Plus, Power, Trash2 } from '@lucide/vue';
+import {
+  ArrowLeft,
+  BadgeCheck,
+  CircleAlert,
+  CloudOff,
+  Pencil,
+  Plus,
+  Power,
+  Trash2,
+} from '@lucide/vue';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui';
 import { apiErrorMessage } from '~/lib/api';
 import { TERMS_RISK_BLOCKED_HINT } from '~/lib/settings';
@@ -17,6 +26,7 @@ import {
   mainBaseUrl,
   MODEL_KIND_LABELS,
   PROTOCOL_LABELS,
+  verifiedHint,
 } from '~/lib/upstream';
 
 const TABS = ['accounts', 'models', 'configuration'] as const;
@@ -125,6 +135,21 @@ async function toggleProvider(): Promise<void> {
   }
 }
 
+async function toggleVerified(): Promise<void> {
+  if (!provider.value) return;
+  const { verified, name } = provider.value;
+  try {
+    await $dashboardApi(`/providers/${providerId}`, {
+      method: 'PATCH',
+      body: { verified: !verified },
+    });
+    showToast(`Marked ${name} ${verified ? 'unverified' : 'verified'}`);
+    await refresh();
+  } catch (error) {
+    showToast(apiErrorMessage(error, `Couldn't update ${name}.`));
+  }
+}
+
 const REASONING_LABELS: Record<string, string> = {
   'all-assistant-turns': 'Every assistant turn',
   'tool-call-turns': 'Turns with tool calls',
@@ -190,6 +215,12 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', tim
               baseUrlHost(mainBaseUrl(provider.endpoints))
             }}</span>
             <span class="provider-hero__slug">{{ provider.slug }}</span>
+            <span
+              v-if="provider.verified"
+              class="status-badge status-badge--good provider-hero__verified"
+              :title="verifiedHint(provider.verifiedAt)"
+              ><BadgeCheck :size="13" aria-hidden="true" />Verified</span
+            >
             <span v-if="isBlocked(provider)" :title="TERMS_RISK_BLOCKED_HINT"
               >Blocked: terms risk</span
             >
@@ -206,6 +237,14 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', tim
           </button>
           <button class="button" type="button" @click="toggleProvider">
             <Power :size="14" /> {{ provider.isEnabled ? 'Disable' : 'Enable' }}
+          </button>
+          <button
+            class="button"
+            type="button"
+            :aria-label="`Mark ${provider.name} ${provider.verified ? 'unverified' : 'verified'}`"
+            @click="toggleVerified"
+          >
+            <BadgeCheck :size="14" /> {{ provider.verified ? 'Mark unverified' : 'Mark verified' }}
           </button>
           <button
             class="icon-action icon-action--danger"

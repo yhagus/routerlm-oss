@@ -229,6 +229,8 @@ export interface Provider {
   endpoints: ProviderEndpoint[];
   logo: string | null;
   termsRisk: boolean;
+  verified: boolean;
+  verifiedAt: string | null;
   authStyle: AuthStyle;
   quirks: ProviderQuirks;
   oauthLogin: ProviderOauthLogin | null;
@@ -242,6 +244,11 @@ export interface Provider {
   allowsNoPlan: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export function verifiedHint(verifiedAt: string | null): string {
+  const ISO_DATE_LENGTH = 'YYYY-MM-DD'.length;
+  return verifiedAt ? `Verified on ${verifiedAt.slice(0, ISO_DATE_LENGTH)}` : 'Verified';
 }
 
 export type PricesByTier = Record<string, number>;

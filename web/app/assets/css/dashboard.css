@@ -4501,6 +4501,11 @@ svg.lucide {
   letter-spacing: -0.015em;
   text-overflow: ellipsis;
 }
+.provider-table__verified {
+  display: flex;
+  width: fit-content;
+  margin-top: 2px;
+}
 .provider-table__name .cell-note,
 .provider-table td > .cell-note {
   overflow: hidden;
@@ -5102,6 +5107,9 @@ svg.lucide {
 }
 .provider-hero__meta {
   align-items: center;
+}
+.provider-hero__meta > .provider-hero__verified {
+  font-size: inherit;
 }
 .provider-hero__meta > span {
   overflow: hidden;
