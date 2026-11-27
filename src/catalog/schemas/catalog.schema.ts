@@ -305,6 +305,7 @@ export const catalogProviderSchema = z.strictObject({
   name: z.string().min(1),
   logo: providerLogoSchema.optional(),
   termsRisk: z.boolean().optional(),
+  verified: z.boolean().optional(),
   endpoints: providerEndpointsSchema,
   authStyle: z.enum(AUTH_STYLES),
   modelsDevProviderId: z.string().optional(),

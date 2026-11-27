@@ -3,6 +3,7 @@
   "name": "ClinePass",
   "logo": "cline",
   "termsRisk": false,
+  "verified": true,
   "endpoints": [
     {
       "kind": "chat",

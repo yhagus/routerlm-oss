@@ -174,4 +174,21 @@ describe('db:seed script (e2e)', () => {
       });
     }
   });
+
+  it('seeds TokenHarbor Verified on the day its file was checked and DeepSeek Unverified', async () => {
+    const seeded = await db
+      .select({
+        slug: providers.slug,
+        verified: providers.verified,
+        verifiedAt: providers.verifiedAt,
+      })
+      .from(providers)
+      .where(inArray(providers.slug, ['deepseek', 'tokenharbor']))
+      .orderBy(providers.slug);
+
+    expect(seeded).toEqual([
+      { slug: 'deepseek', verified: false, verifiedAt: null },
+      { slug: 'tokenharbor', verified: true, verifiedAt: new Date('2026-11-26T00:00:00Z') },
+    ]);
+  });
 });

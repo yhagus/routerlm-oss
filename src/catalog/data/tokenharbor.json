@@ -3,6 +3,7 @@
   "name": "TokenHarbor",
   "logo": "tokenharbor",
   "termsRisk": false,
+  "verified": true,
   "endpoints": [
     {
       "kind": "chat",

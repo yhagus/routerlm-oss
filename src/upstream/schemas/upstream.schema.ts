@@ -43,6 +43,7 @@ export type NewProvider = z.infer<typeof newProviderSchema>;
 
 export const providerChangesSchema = providerFieldsSchema
   .omit({ slug: true })
+  .extend({ verified: z.boolean() })
   .partial()
   .refine(hasAnyField, nothingToChange);
 export type ProviderChanges = z.infer<typeof providerChangesSchema>;

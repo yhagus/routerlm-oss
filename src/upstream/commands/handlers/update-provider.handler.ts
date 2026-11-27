@@ -53,9 +53,10 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
         await refuseWhileOauthLoginAccountsExist(tx, providerId);
       }
 
+      const { verified, ...fieldChanges } = changes;
       const [provider] = await tx
         .update(providers)
-        .set(changes)
+        .set({ ...fieldChanges, ...verificationChange(verified) })
         .where(eq(providers.id, providerId))
         .returning();
 
@@ -69,6 +70,13 @@ export class UpdateProviderHandler implements ICommandHandler<UpdateProviderComm
     await this.snapshot.changed();
     return updated;
   }
+}
+
+type ProviderVerification = Partial<Pick<typeof providers.$inferInsert, 'verified' | 'verifiedAt'>>;
+
+function verificationChange(verified: boolean | undefined): ProviderVerification {
+  if (verified === undefined) return {};
+  return { verified, verifiedAt: verified ? new Date() : null };
 }
 
 async function refuseWhileModelsListUnmappedTiers(

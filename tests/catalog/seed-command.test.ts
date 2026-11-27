@@ -45,6 +45,7 @@ const catalog: CatalogProvider[] = [
     name: 'Example',
     logo: 'example',
     termsRisk: true,
+    verified: true,
     endpoints: [{ kind: 'chat', protocol: 'openai-chat', baseUrl: 'https://api.example.com/v1' }],
     authStyle: 'bearer',
     quirks: { acceptsCacheControl: true },
@@ -189,6 +190,8 @@ describe('Seed Catalog command (e2e)', () => {
       authStyle: 'bearer',
       quirks: { acceptsCacheControl: true },
       oauthLogin,
+      verified: true,
+      verifiedAt: new Date('2026-11-15T00:00:00Z'),
       isEnabled: true,
       isFromCatalog: true,
     });
@@ -246,6 +249,18 @@ describe('Seed Catalog command (e2e)', () => {
     expect(provider?.upstreamModels).toContainEqual(
       expect.objectContaining({ upstreamModelId: 'example-large', inputPrice: 2.5 }),
     );
+  });
+
+  it('keeps a Provider the operator unmarked Unverified when run again', async () => {
+    await db
+      .update(schema.providers)
+      .set({ verified: false, verifiedAt: null })
+      .where(eq(schema.providers.slug, 'example'));
+
+    await commandBus.execute(new SeedCatalogCommand(catalog));
+
+    const provider = await db.query.providers.findFirst({ where: { slug: 'example' } });
+    expect(provider).toMatchObject({ verified: false, verifiedAt: null });
   });
 
   it("fills a missing Release Date and keeps the operator's other edits", async () => {

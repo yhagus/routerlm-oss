@@ -86,6 +86,7 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
 
     await this.db.transaction(async (tx) => {
       for (const entry of catalog) {
+        const isVerified = entry.verified ?? false;
         const created = await tx
           .insert(providers)
           .values({
@@ -93,6 +94,8 @@ export class SeedCatalogHandler implements ICommandHandler<SeedCatalogCommand> {
             name: entry.name,
             logo: entry.logo ?? null,
             termsRisk: entry.termsRisk ?? false,
+            verified: isVerified,
+            verifiedAt: isVerified ? new Date(`${entry.source.retrievedOn}T00:00:00Z`) : null,
             endpoints: entry.endpoints,
             authStyle: entry.authStyle,
             quirks: entry.quirks,

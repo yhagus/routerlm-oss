@@ -139,6 +139,8 @@ export const providers = pgTable(
     name: text('name').notNull(),
     logo: text('logo'),
     termsRisk: boolean('terms_risk').notNull().default(false),
+    verified: boolean('verified').notNull().default(false),
+    verifiedAt: at('verified_at'),
     endpoints: jsonb('endpoints').$type<ProviderEndpoint[]>().notNull(),
     authStyle: text('auth_style', { enum: AUTH_STYLES }).notNull(),
     quirks: jsonb('quirks').$type<ProviderQuirks>().notNull().default({}),
