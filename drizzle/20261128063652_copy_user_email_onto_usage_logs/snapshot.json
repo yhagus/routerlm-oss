@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "54518b04-2070-4dd8-bf72-6dac9b1d2451",
+  "prevIds": [
+    "482bc712-bb6b-4626-93d0-2128e8964fdd"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "user_email"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.user_email",
+        "n|col|public.usage_logs.user_email",
+        "e|col|public.usage_logs.user_email"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "user_email",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

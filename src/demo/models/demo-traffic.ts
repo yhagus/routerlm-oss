@@ -48,7 +48,7 @@ export interface TrafficModel {
 
 export type TrafficSource =
   | { kind: 'api-key'; apiKeyId: string; apiKeyName: string }
-  | { kind: 'playground'; userId: string };
+  | { kind: 'playground'; userId: string; userEmail: string };
 
 export interface TrafficCaller {
   source: TrafficSource;
@@ -100,6 +100,9 @@ const SENT_OUTPUT_LIMIT_SHARE = 0.6;
 const SENT_OUTPUT_LIMITS = [4_096, 8_192, 16_384, 32_000];
 const SENT_REASONING_EFFORTS: readonly ReasoningEffort[] = ['low', 'medium', 'high'];
 const STREAMED_REASONING_SHARE = 0.5;
+const THINKING_BUDGET_PROVIDER_SLUG = 'anthropic';
+const THINKING_BUDGET_SHARE = 0.5;
+const SENT_THINKING_BUDGETS = [1_024, 2_048, 3_072];
 
 type Outcome = 'served' | 'recovered' | 'failed';
 type FallbackFailure = Extract<AttemptFailureReason, 'rate_limited' | 'server_error' | 'timeout'>;
@@ -230,7 +233,13 @@ export function generateDemoTraffic(
       requestBytes: requestBytesFor(contextTokensOf(tokens)),
       responseBytes: (tokens.outputTokens ?? 0) * BYTES_PER_TOKEN + RESPONSE_ENVELOPE_BYTES,
       timeToFirstTokenMs: isStreamed ? elapsedMs + firstTokenMs : null,
-      ...responseShapeOf(random, { isStreamed, toolCount, tokens, profile: model.profile }),
+      ...responseShapeOf(random, {
+        isStreamed,
+        toolCount,
+        tokens,
+        profile: model.profile,
+        providerSlug: serving.route.providerSlug,
+      }),
       durationMs: elapsedMs + servingMs,
     });
   }
@@ -354,10 +363,10 @@ function usageLogTargetOf({
 
 function attribution(
   source: TrafficSource,
-): Pick<NewUsageLog, 'apiKeyId' | 'userId' | 'isPlayground'> {
+): Pick<NewUsageLog, 'apiKeyId' | 'userId' | 'userEmail' | 'isPlayground'> {
   return source.kind === 'api-key'
-    ? { apiKeyId: source.apiKeyId, userId: null, isPlayground: false }
-    : { apiKeyId: null, userId: source.userId, isPlayground: true };
+    ? { apiKeyId: source.apiKeyId, userId: null, userEmail: null, isPlayground: false }
+    : { apiKeyId: null, userId: source.userId, userEmail: source.userEmail, isPlayground: true };
 }
 
 function tokenUsage(random: Random, profile: TrafficProfile): TokenUsage {
@@ -383,24 +392,49 @@ function tokenUsage(random: Random, profile: TrafficProfile): TokenUsage {
 
 function responseShapeOf(
   random: Random,
-  request: { isStreamed: boolean; toolCount: number; tokens: TokenUsage; profile: TrafficProfile },
+  request: {
+    isStreamed: boolean;
+    toolCount: number;
+    tokens: TokenUsage;
+    profile: TrafficProfile;
+    providerSlug: string;
+  },
 ): Pick<
   NewUsageLog,
-  'isReasoningStreamed' | 'finishReason' | 'maxOutputTokens' | 'reasoningEffort' | 'toolCallCount'
+  | 'isReasoningStreamed'
+  | 'finishReason'
+  | 'maxOutputTokens'
+  | 'reasoningEffort'
+  | 'thinkingBudgetTokens'
+  | 'toolCallCount'
 > {
-  const { isStreamed, toolCount, tokens, profile } = request;
+  const { isStreamed, toolCount, tokens, profile, providerSlug } = request;
   const toolCallCount =
     toolCount > 0 && random() < TOOL_CALL_SHARE ? between(random, 1, MAX_TOOL_CALL_COUNT) : 0;
-  const isReasoning = profile.reasoningShare > 0;
+  const takesThinkingBudget = providerSlug === THINKING_BUDGET_PROVIDER_SLUG;
+  const isOutputLimitSent = takesThinkingBudget || random() < SENT_OUTPUT_LIMIT_SHARE;
   return {
     isReasoningStreamed:
       isStreamed && (tokens.reasoningTokens ?? 0) > 0 && random() < STREAMED_REASONING_SHARE,
     finishReason: finishReasonFor(random, toolCallCount),
-    maxOutputTokens:
-      random() < SENT_OUTPUT_LIMIT_SHARE ? pickOne(random, SENT_OUTPUT_LIMITS) : null,
-    reasoningEffort: isReasoning ? pickOne(random, SENT_REASONING_EFFORTS) : null,
+    maxOutputTokens: isOutputLimitSent ? pickOne(random, SENT_OUTPUT_LIMITS) : null,
+    ...sentReasoningOf(random, profile.reasoningShare > 0, takesThinkingBudget),
     toolCallCount,
   };
+}
+
+function sentReasoningOf(
+  random: Random,
+  isReasoning: boolean,
+  takesThinkingBudget: boolean,
+): Pick<NewUsageLog, 'reasoningEffort' | 'thinkingBudgetTokens'> {
+  if (!isReasoning) {
+    return { reasoningEffort: null, thinkingBudgetTokens: null };
+  }
+  if (takesThinkingBudget && random() < THINKING_BUDGET_SHARE) {
+    return { reasoningEffort: null, thinkingBudgetTokens: pickOne(random, SENT_THINKING_BUDGETS) };
+  }
+  return { reasoningEffort: pickOne(random, SENT_REASONING_EFFORTS), thinkingBudgetTokens: null };
 }
 
 function finishReasonFor(random: Random, toolCallCount: number): FinishReason {

@@ -26,7 +26,6 @@ import type {
 import type { AttemptFailedError, UpstreamFailureResponse } from './attempt-failure';
 import type { GatewayError } from './gateway-error';
 import type {
-  InferenceRequest,
   InferenceResponse,
   InferenceStreamEvent,
   StopReason,
@@ -171,12 +170,8 @@ export class UsageMeter {
     };
   }
 
-  parametersSent({ maxOutputTokens, reasoning }: InferenceRequest): void {
-    this.sentParameters = {
-      maxOutputTokens: maxOutputTokens ?? null,
-      reasoningEffort: reasoning?.effort ?? null,
-      thinkingBudgetTokens: reasoning?.budgetTokens ?? null,
-    };
+  parametersSent(sentParameters: SentParameters): void {
+    this.sentParameters = sentParameters;
   }
 
   responseReceived(response: InferenceResponse): void {

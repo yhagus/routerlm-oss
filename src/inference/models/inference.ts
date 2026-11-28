@@ -7,7 +7,7 @@ export type InferenceResult =
 
 export type InferenceCaller =
   | { kind: 'api-key'; principal: ApiKeyPrincipal }
-  | { kind: 'playground'; userId: string };
+  | { kind: 'playground'; userId: string; userEmail: string };
 
 export type InferenceTarget =
   | { kind: 'named-model' }

@@ -96,6 +96,7 @@ export const usageLogs = pgTable(
       .notNull()
       .default(sql`pg_current_xact_id()`),
     userId: uuid('user_id'),
+    userEmail: text('user_email'),
     isPlayground: boolean('is_playground').notNull().default(false),
     modelId: uuid('model_id'),
     modelName: text('model_name'),

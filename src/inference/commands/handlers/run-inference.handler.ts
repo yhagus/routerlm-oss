@@ -264,20 +264,19 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     target: AttemptTarget,
     endpoint: AttemptEndpoint,
     credential: ProviderAccountCredential,
-    { meter, ...callOptions }: AttemptOptions,
+    options: AttemptOptions,
   ): Promise<AttemptResult> {
-    const call = this.upstreamCallFor(request, target, endpoint, credential, callOptions);
+    const { meter } = options;
+    const call = this.upstreamCallFor(request, target, endpoint, credential, options);
     if (!request.stream) {
       const { response, upstreamStatus, upstreamRequestId } = await this.upstream.complete(call);
       meter.attemptAnswered(upstreamStatus, upstreamRequestId);
-      meter.parametersSent(request);
       meter.responseReceived(response);
       meter.attemptSucceeded();
       return { kind: 'response', body: converter.writeResponse(response, request, context) };
     }
     const upstream = await this.upstream.openStream(call);
     meter.attemptAnswered(upstream.upstreamStatus, upstream.upstreamRequestId);
-    meter.parametersSent(request);
     return { kind: 'stream', upstream, writer: converter.startStream(request, context), target };
   }
 
@@ -286,7 +285,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     { route, upstreamModel }: AttemptTarget,
     endpoint: AttemptEndpoint,
     credential: ProviderAccountCredential,
-    { destination, cacheKey, clientSignal, clientHeaders }: Omit<AttemptOptions, 'meter'>,
+    { destination, cacheKey, clientSignal, clientHeaders, meter }: AttemptOptions,
   ): UpstreamCall {
     const { provider } = upstreamModel;
     const quirks = quirksSentThrough(endpoint.protocol, validQuirksOf(provider));
@@ -317,6 +316,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         totalMs: totalTimeoutMsOf(destination, route),
       },
       clientSignal,
+      onRequestWritten: (sentParameters) => meter.parametersSent(sentParameters),
     };
   }
 

@@ -24,7 +24,7 @@ export class SendPlaygroundSpeechHandler implements ICommandHandler<SendPlaygrou
       new RunMediaInferenceCommand(
         openAiSpeechClientContract,
         body,
-        { kind: 'playground', userId: user.id },
+        { kind: 'playground', userId: user.id, userEmail: user.email },
         connection,
         usage.record,
         target,

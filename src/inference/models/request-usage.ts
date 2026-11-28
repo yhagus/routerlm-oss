@@ -12,7 +12,7 @@ const encoder = new TextEncoder();
 
 export function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
   if (caller.kind !== 'api-key') {
-    return { kind: 'playground', userId: caller.userId };
+    return { kind: 'playground', userId: caller.userId, userEmail: caller.userEmail };
   }
   const { apiKeyId, apiKeyName, customer } = caller.principal;
   return {

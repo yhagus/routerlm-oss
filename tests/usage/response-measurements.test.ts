@@ -17,6 +17,7 @@ import {
   insertApiKey,
   insertOpenAiChatModel,
   insertOpenAiResponsesModel,
+  type InsertedModel,
   type ModelOptions,
 } from '@tests/support/inference';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
@@ -52,7 +53,18 @@ type InsertModel = (
   app: NestNodeApplication,
   db: Database,
   options: ModelOptions,
-) => Promise<unknown>;
+) => Promise<InsertedModel>;
+
+interface SentParametersCase {
+  protocol: string;
+  insertModel: InsertModel;
+  reply: FakeReply;
+  sentParameters: {
+    maxOutputTokens: number | null;
+    reasoningEffort: string | null;
+    thinkingBudgetTokens: number | null;
+  };
+}
 
 interface FinishReasonCase {
   protocol: string;
@@ -116,6 +128,47 @@ const FINISH_REASON_CASES: FinishReasonCase[] = [
     insertModel: insertOpenAiResponsesModel,
     reply: incompleteResponse('max_output_tokens'),
     finishReason: 'length',
+  },
+];
+
+const FORCED_EFFORT = 'high';
+const FORCED_BUDGET_TOKENS = 3000;
+const ANTHROPIC_DEFAULT_MAX_TOKENS = 8192;
+
+const SENT_PARAMETERS_CASES: SentParametersCase[] = [
+  {
+    protocol: 'openai-chat',
+    insertModel: insertOpenAiChatModel,
+    reply: chatCompletionFinishingWith('stop'),
+    sentParameters: {
+      maxOutputTokens: null,
+      reasoningEffort: FORCED_EFFORT,
+      thinkingBudgetTokens: null,
+    },
+  },
+  {
+    protocol: 'openai-responses',
+    insertModel: insertOpenAiResponsesModel,
+    reply: {
+      kind: 'json',
+      status: 200,
+      body: JSON.parse(openAiResponsesFixture('upstream-response-tool-call.json')),
+    },
+    sentParameters: {
+      maxOutputTokens: null,
+      reasoningEffort: FORCED_EFFORT,
+      thinkingBudgetTokens: null,
+    },
+  },
+  {
+    protocol: 'anthropic-messages',
+    insertModel: insertAnthropicMessagesModel,
+    reply: anthropicMessageStoppingWith('end_turn'),
+    sentParameters: {
+      maxOutputTokens: ANTHROPIC_DEFAULT_MAX_TOKENS,
+      reasoningEffort: null,
+      thinkingBudgetTokens: FORCED_BUDGET_TOKENS,
+    },
   },
 ];
 
@@ -244,20 +297,62 @@ describe('Usage Logs: finish reason, sent limits, tools and Time to First Token 
     expect((await writtenUsageLog(db)).finishReason).toBeNull();
   });
 
-  describe("under the Model's Caps", () => {
+  describe("under the Model's Parameter Policy", () => {
     let cookie: string;
 
     beforeEach(async () => {
       cookie = await setUpFirstUser(app, { email: 'ops@example.com', password: 'ops password' });
     });
 
-    function capModel(modelId: string, caps: object) {
+    function saveModelPolicy(modelId: string, parameterPolicy: object) {
       return request(app.getHttpServer())
         .patch(`/api/models/${modelId}`)
         .set('Cookie', cookie)
-        .send({ parameterPolicy: { caps } })
+        .send({ parameterPolicy })
         .expect(200);
     }
+
+    function capModel(modelId: string, caps: object) {
+      return saveModelPolicy(modelId, { caps });
+    }
+
+    function forceReasoning(modelId: string) {
+      return saveModelPolicy(modelId, {
+        forced: { reasoningEffort: FORCED_EFFORT, reasoningBudgetTokens: FORCED_BUDGET_TOKENS },
+      });
+    }
+
+    it.each(SENT_PARAMETERS_CASES)(
+      'records only the limits the $protocol Protocol puts on the wire',
+      async ({ insertModel, reply, sentParameters }) => {
+        const { modelId } = await insertModel(app, db, {
+          modelName: MODEL_NAME,
+          baseUrl: upstream.baseUrl,
+        });
+        await forceReasoning(modelId);
+        upstream.reply(reply);
+
+        await chat(CHAT_REQUEST).expect(200);
+
+        expect(await writtenUsageLog(db)).toMatchObject(sentParameters);
+      },
+    );
+
+    it('records the limits sent to an upstream that answered with an error', async () => {
+      const { modelId } = await insertAnthropicMessagesModel(app, db, {
+        modelName: MODEL_NAME,
+        baseUrl: upstream.baseUrl,
+      });
+      await forceReasoning(modelId);
+      upstream.reply({ kind: 'json', status: 500, body: { error: { message: 'overloaded' } } });
+
+      await chat(CHAT_REQUEST);
+
+      expect(await writtenUsageLog(db)).toMatchObject({
+        maxOutputTokens: ANTHROPIC_DEFAULT_MAX_TOKENS,
+        thinkingBudgetTokens: FORCED_BUDGET_TOKENS,
+      });
+    });
 
     it('records the output limit and reasoning effort sent upstream, not the ones the client asked for', async () => {
       const { modelId } = await insertChatModel();

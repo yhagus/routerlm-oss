@@ -200,7 +200,7 @@ function callerColumnsOf(caller: UsageCaller) {
         isPlayground: false,
       };
     case 'playground':
-      return { userId: caller.userId, isPlayground: true };
+      return { userId: caller.userId, userEmail: caller.userEmail, isPlayground: true };
     case 'unidentified':
       return { isPlayground: false };
   }

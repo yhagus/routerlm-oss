@@ -19,6 +19,7 @@ import {
 } from '@/inference/protocols/upstream-protocol-converter';
 import type { Destination } from '@/inference/models/destination';
 import type { SnapshotRoute } from '@/snapshot/models/snapshot';
+import type { SentParameters } from '@/usage/models/usage-job';
 import { upstreamRequestIdOf } from '@/inference/models/upstream-request-id';
 import { gatherStream } from '@/inference/protocols/gather-stream';
 import {
@@ -53,6 +54,7 @@ export interface UpstreamCall {
   forwardedHeaders: Record<string, string>;
   timeouts: AttemptTimeouts;
   clientSignal: AbortSignal;
+  onRequestWritten: (sentParameters: SentParameters) => void;
 }
 
 export interface CompletedAttempt {
@@ -247,6 +249,7 @@ export class UpstreamClient {
     deadlines.start('totalMs');
     try {
       const written = call.converter.writeRequest(call.request, call.target);
+      call.onRequestWritten(written.sentParameters);
       const response = await this.send(call, written, deadlines.signal);
       const headers = Object.fromEntries(response.headers.entries());
       const upstreamRequestId = upstreamRequestIdOf(headers);
@@ -283,6 +286,7 @@ export class UpstreamClient {
     try {
       deadlines.start('connectMs');
       const written = call.converter.writeRequest(call.request, call.target);
+      call.onRequestWritten(written.sentParameters);
       const response = await this.send(call, written, deadlines.signal);
       deadlines.stop('connectMs');
       const events = new UpstreamEventReader(

@@ -1,0 +1,1 @@
+ALTER TABLE "usage_logs" ADD COLUMN "user_email" text;

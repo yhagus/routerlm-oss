@@ -64,6 +64,11 @@ const INSERT_BATCH_SIZE = 500;
 
 type AccountsBySlug = ReadonlyMap<string, TrafficProviderAccount[]>;
 
+interface DemoUser {
+  id: string;
+  email: string;
+}
+
 @CommandHandler(SeedDemoCommand)
 export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
   constructor(
@@ -77,13 +82,13 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
   async execute({ catalog, now }: SeedDemoCommand): Promise<SeedDemoResult> {
     await this.db.execute(sql`truncate table ${sql.join(APP_TABLES, sql`, `)} cascade`);
     await this.commandBus.execute(new SeedCatalogCommand(catalog));
-    const userId = await this.createUser();
+    const user = await this.createUser();
 
     const accountsBySlug = await this.createProviderAccounts(now);
     await this.createQuotaMeters(accountsBySlug, now);
     const trafficModels = await this.createModels(accountsBySlug);
     await this.createModelGroups(trafficModels);
-    const callers = await this.createCallers(userId);
+    const callers = await this.createCallers(user);
 
     const traffic = generateDemoTraffic(now, trafficModels, callers);
     for (const batch of batchesOf(traffic.usageLogs)) {
@@ -101,15 +106,15 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
     };
   }
 
-  private async createUser(): Promise<string> {
+  private async createUser(): Promise<DemoUser> {
     const [created] = await this.db
       .insert(users)
       .values({
         email: normalizeEmail(DEMO_USER.email),
         passwordHash: await this.passwordHasher.hash(DEMO_USER.password),
       })
-      .returning({ id: users.id });
-    return created.id;
+      .returning({ id: users.id, email: users.email });
+    return created;
   }
 
   private async createProviderAccounts(now: Date): Promise<AccountsBySlug> {
@@ -229,11 +234,14 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
     }
   }
 
-  private async createCallers(userId: string): Promise<TrafficCaller[]> {
+  private async createCallers(user: DemoUser): Promise<TrafficCaller[]> {
     const callers: TrafficCaller[] = [];
     for (const caller of DEMO_CALLERS) {
       if (caller.apiKeyName === null) {
-        callers.push({ source: { kind: 'playground', userId }, caller });
+        callers.push({
+          source: { kind: 'playground', userId: user.id, userEmail: user.email },
+          caller,
+        });
         continue;
       }
       const { key, id: keyId, hash } = this.apiKeyGenerator.generate();
@@ -244,7 +252,7 @@ export class SeedDemoHandler implements ICommandHandler<SeedDemoCommand> {
           keyId,
           hash,
           encryptedKey: this.keyCipher.encrypt(key, API_KEY_CIPHER_PURPOSE),
-          createdById: userId,
+          createdById: user.id,
         })
         .returning({ id: apiKeys.id });
       callers.push({
