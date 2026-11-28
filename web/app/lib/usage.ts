@@ -12,6 +12,12 @@ export interface UsageLogSummary extends RecordedIntegration {
   apiKeyId: string | null;
   apiKeyName: string | null;
   isPlayground: boolean;
+  userId: string | null;
+  userEmail: string | null;
+  upstreamModelName: string | null;
+  providerSlug: string | null;
+  providerName: string | null;
+  providerAccountName: string | null;
   clientProtocol: string;
   upstreamProtocol: string | null;
   isStreamed: boolean;

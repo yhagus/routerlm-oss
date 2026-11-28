@@ -1,8 +1,9 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
+import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import request from 'supertest';
 import type { Database } from '@/db/schemas/relations';
-import { apiKeys, models, usageLogs, users } from '@/db/schemas';
+import { apiKeys, attempts, models, usageLogs, users } from '@/db/schemas';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
@@ -119,6 +120,94 @@ describe('Usage API: listing and filtering Usage Logs (e2e)', () => {
       userAgent: 'OpenAI/Python 1.54.0',
       clientIp: '203.0.113.7',
     });
+  });
+
+  it('shows the copied names of what served a request: its last Attempt', async () => {
+    const [{ id: usageLogId }] = await db
+      .insert(usageLogs)
+      .values({
+        ...SERVED_REQUEST,
+        createdAt: new Date('2026-11-01T10:00:00Z'),
+        ...smart,
+        attemptCount: 2,
+        upstreamModelId: randomUUID(),
+        upstreamModelName: 'gpt-5-mini',
+        providerSlug: 'main-cloud',
+        providerAccountId: randomUUID(),
+        providerAccountName: 'Main account',
+      })
+      .returning({ id: usageLogs.id });
+    await db.insert(attempts).values([
+      {
+        usageLogId,
+        startedAt: new Date('2026-11-01T10:00:00Z'),
+        providerName: 'Backup Cloud',
+        upstreamStatus: 503,
+        failureReason: 'server_error',
+        durationMs: 100,
+      },
+      {
+        usageLogId,
+        startedAt: new Date('2026-11-01T10:00:01Z'),
+        providerName: 'Main Cloud',
+        upstreamStatus: 200,
+        durationMs: 800,
+      },
+    ]);
+
+    const response = await getUsage('').expect(200);
+
+    expect(response.body.items[0]).toMatchObject({
+      upstreamModelName: 'gpt-5-mini',
+      providerSlug: 'main-cloud',
+      providerName: 'Main Cloud',
+      providerAccountName: 'Main account',
+    });
+  });
+
+  it('names no Provider for a request no Attempt served', async () => {
+    const [{ id: usageLogId }] = await db
+      .insert(usageLogs)
+      .values({ ...SERVED_REQUEST, createdAt: new Date('2026-11-01T10:00:00Z'), httpStatus: 502 })
+      .returning({ id: usageLogs.id });
+    await db.insert(attempts).values({
+      usageLogId,
+      startedAt: new Date('2026-11-01T10:00:00Z'),
+      providerName: 'Backup Cloud',
+      upstreamStatus: 503,
+      failureReason: 'server_error',
+      durationMs: 100,
+    });
+
+    const response = await getUsage('').expect(200);
+
+    expect(response.body.items[0]).toMatchObject({ providerName: null, providerAccountName: null });
+  });
+
+  it("shows the email of a Playground request's User, and none once the User is gone", async () => {
+    const [{ id: adaId }] = await db.select({ id: users.id }).from(users);
+    const goneUserId = randomUUID();
+    await db.insert(usageLogs).values([
+      {
+        ...SERVED_REQUEST,
+        createdAt: new Date('2026-11-01T11:00:00Z'),
+        userId: adaId,
+        isPlayground: true,
+      },
+      {
+        ...SERVED_REQUEST,
+        createdAt: new Date('2026-11-01T10:00:00Z'),
+        userId: goneUserId,
+        isPlayground: true,
+      },
+    ]);
+
+    const response = await getUsage('').expect(200);
+
+    expect(response.body.items).toEqual([
+      expect.objectContaining({ userId: adaId, userEmail: ADA.email }),
+      expect.objectContaining({ userId: goneUserId, userEmail: null }),
+    ]);
   });
 
   it('filters by time range, Model, API Key and status', async () => {

@@ -19,6 +19,12 @@ export interface UsageLogSummary {
   integrationName: string | null;
   customerId: string | null;
   isPlayground: boolean;
+  userId: string | null;
+  userEmail: string | null;
+  upstreamModelName: string | null;
+  providerSlug: string | null;
+  providerName: string | null;
+  providerAccountName: string | null;
   clientProtocol: ClientProtocol;
   upstreamProtocol: UpstreamProtocol | null;
   isStreamed: boolean;
