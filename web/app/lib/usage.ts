@@ -1,6 +1,8 @@
 import type { ErrorOrigin } from '~/lib/errorOrigins';
 import type { RecordedIntegration } from '~/lib/integrations';
-import type { ServiceTier } from '~/lib/parameterPolicy';
+import type { ReasoningEffort, ServiceTier } from '~/lib/parameterPolicy';
+
+export type FinishReason = 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'other';
 
 export interface UsageLogSummary extends RecordedIntegration {
   id: string;
@@ -33,6 +35,14 @@ export interface UsageLogSummary extends RecordedIntegration {
   attemptCount: number;
   isCancelled: boolean;
   isIncomplete: boolean;
+  isReasoningStreamed: boolean;
+  finishReason: FinishReason | null;
+  maxOutputTokens: number | null;
+  reasoningEffort: ReasoningEffort | null;
+  thinkingBudgetTokens: number | null;
+  toolCount: number;
+  toolCallCount: number;
+  imageCount: number | null;
 }
 
 export interface UsageLogAttempt {
@@ -77,6 +87,18 @@ export interface UsageSummary {
   durationMsP95: number | null;
   timeToFirstTokenMsP50: number | null;
   timeToFirstTokenMsP95: number | null;
+  outputSpeedP50: number | null;
+  outputSpeedP5: number | null;
+  outputSpeedByUpstream: UpstreamOutputSpeed[];
+}
+
+export interface UpstreamOutputSpeed {
+  upstreamModelId: string;
+  upstreamModelName: string | null;
+  providerAccountId: string;
+  providerAccountName: string | null;
+  outputSpeedP50: number;
+  outputSpeedP5: number;
 }
 
 export const USAGE_STATUSES = ['succeeded', 'failed', 'cancelled'] as const;

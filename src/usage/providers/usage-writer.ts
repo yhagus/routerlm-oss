@@ -47,6 +47,7 @@ export class UsageWriter {
   async writeUsage(job: UsageJob): Promise<void> {
     const snapshot = snapshotOf(job);
     const measurements = measurementsOf(job);
+    const kind = CLIENT_PROTOCOL_KINDS[job.clientProtocol];
     const hasSpentAgainstLimit = await this.db.transaction(async (transaction) => {
       const written = await transaction
         .insert(usageLogs)
@@ -60,7 +61,7 @@ export class UsageWriter {
           ...servingTargetColumnsOf(snapshot.servedBy),
           requestedModelName: job.requestedModelName ?? null,
           upstreamProtocol: job.servedBy?.upstreamProtocol ?? null,
-          kind: CLIENT_PROTOCOL_KINDS[job.clientProtocol],
+          kind,
           clientProtocol: job.clientProtocol,
           isStreamed: job.isStreamed,
           httpStatus: job.httpStatus,
@@ -72,9 +73,11 @@ export class UsageWriter {
           pricingWindowName: job.servedBy?.pricingWindowName ?? null,
           ...measurements,
           ...unitColumnsOf(job.units ?? null),
+          imageCount: kind === 'image' ? (job.units?.imagesOut ?? null) : null,
           requestBytes: job.requestBytes,
           responseBytes: job.responseBytes,
           timeToFirstTokenMs: job.timeToFirstTokenMs,
+          ...responseColumnsOf(job),
           durationMs: job.durationMs,
           attemptCount: job.attempts.length,
           isCancelled: job.isCancelled,
@@ -181,6 +184,18 @@ function unitColumnsOf(units: MediaUnits | null) {
     audioSeconds: units?.audioSeconds ?? null,
     characters: units?.characters ?? null,
     unitTier: units?.tier ?? null,
+  };
+}
+
+function responseColumnsOf(job: UsageJob) {
+  return {
+    isReasoningStreamed: job.isReasoningStreamed ?? false,
+    finishReason: job.finishReason ?? null,
+    maxOutputTokens: job.sentParameters?.maxOutputTokens ?? null,
+    reasoningEffort: job.sentParameters?.reasoningEffort ?? null,
+    thinkingBudgetTokens: job.sentParameters?.thinkingBudgetTokens ?? null,
+    toolCount: job.toolCount ?? 0,
+    toolCallCount: job.toolCallCount ?? 0,
   };
 }
 

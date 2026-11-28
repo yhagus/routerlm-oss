@@ -1,11 +1,12 @@
 import type {
   ClientProtocol,
   ErrorOrigin,
+  FinishReason,
   GatewayErrorCode,
   RecordedAttemptFailure,
   UpstreamProtocol,
 } from '@/db/schemas';
-import type { ServiceTier } from '@/inference/models/internal-format';
+import type { ReasoningEffort, ServiceTier } from '@/inference/models/internal-format';
 
 export interface UsageLogSummary {
   id: string;
@@ -37,6 +38,14 @@ export interface UsageLogSummary {
   responseBytes: number;
   cost: number | null;
   timeToFirstTokenMs: number | null;
+  isReasoningStreamed: boolean;
+  finishReason: FinishReason | null;
+  maxOutputTokens: number | null;
+  reasoningEffort: ReasoningEffort | null;
+  thinkingBudgetTokens: number | null;
+  toolCount: number;
+  toolCallCount: number;
+  imageCount: number | null;
   durationMs: number;
   attemptCount: number;
   isCancelled: boolean;
@@ -85,4 +94,16 @@ export interface UsageSummary {
   durationMsP95: number | null;
   timeToFirstTokenMsP50: number | null;
   timeToFirstTokenMsP95: number | null;
+  outputSpeedP50: number | null;
+  outputSpeedP5: number | null;
+  outputSpeedByUpstream: UpstreamOutputSpeed[];
+}
+
+export interface UpstreamOutputSpeed {
+  upstreamModelId: string;
+  upstreamModelName: string | null;
+  providerAccountId: string;
+  providerAccountName: string | null;
+  outputSpeedP50: number;
+  outputSpeedP5: number;
 }

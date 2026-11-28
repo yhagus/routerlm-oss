@@ -23,18 +23,21 @@ type MessagesUsage = z.infer<typeof usageSchema>;
 
 const stopReasonSchema = z.string().nullish();
 
-const STOP_REASONS: Record<string, StopReason> = {
-  end_turn: 'end',
-  max_tokens: 'max-tokens',
-  model_context_window_exceeded: 'max-tokens',
-  stop_sequence: 'stop-sequence',
-  tool_use: 'tool-calls',
-  refusal: 'content-filter',
-  pause_turn: 'end',
-};
+const STOP_REASONS = new Map<string, StopReason>([
+  ['end_turn', 'end'],
+  ['max_tokens', 'max-tokens'],
+  ['model_context_window_exceeded', 'max-tokens'],
+  ['stop_sequence', 'stop-sequence'],
+  ['tool_use', 'tool-calls'],
+  ['refusal', 'content-filter'],
+  ['pause_turn', 'end'],
+]);
 
 function stopReasonOf(stopReason: string | null | undefined): StopReason {
-  return (stopReason && STOP_REASONS[stopReason]) || 'end';
+  if (!stopReason) {
+    return 'end';
+  }
+  return STOP_REASONS.get(stopReason) ?? 'other';
 }
 
 function tokenUsageOf(usage: MessagesUsage): TokenUsage {

@@ -13,7 +13,7 @@ export type FakeReply =
       onReceived?: () => void | Promise<void>;
     }
   | { kind: 'stream'; events: string; holdOpen?: boolean; headers?: Record<string, string> }
-  | { kind: 'stream-in-pieces'; pieces: Array<string | Uint8Array> }
+  | { kind: 'stream-in-pieces'; pieces: Array<string | Uint8Array>; pauseMs?: number }
   | { kind: 'stream-then-reset'; events: string }
   | { kind: 'hang' }
   | { kind: 'headers-only' }
@@ -262,7 +262,7 @@ export class FakeUpstream {
         return;
       case 'stream-in-pieces':
         response.writeHead(200, { 'content-type': 'text/event-stream' });
-        await writeInPieces(response, reply.pieces);
+        await writeInPieces(response, reply.pieces, reply.pauseMs ?? PAUSE_BETWEEN_PIECES_MS);
         response.end();
         return;
       case 'stream-then-reset':
@@ -305,10 +305,11 @@ function parsedBody(text: string, contentType: string | undefined): unknown {
 async function writeInPieces(
   response: ServerResponse,
   pieces: Array<string | Uint8Array>,
+  pauseMs: number,
 ): Promise<void> {
   for (const piece of pieces) {
     response.write(piece);
-    await new Promise((resolve) => setTimeout(resolve, PAUSE_BETWEEN_PIECES_MS));
+    await new Promise((resolve) => setTimeout(resolve, pauseMs));
   }
 }
 

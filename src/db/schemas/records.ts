@@ -11,7 +11,7 @@ import {
   text,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { SERVICE_TIERS } from '@/inference/models/internal-format';
+import { REASONING_EFFORTS, SERVICE_TIERS } from '@/inference/models/internal-format';
 import { at, createdAt, id } from './columns';
 import { MODEL_KINDS, type ModelKind, UPSTREAM_PROTOCOLS } from './upstream';
 
@@ -72,6 +72,9 @@ export type RecordedAttemptFailure = (typeof RECORDED_ATTEMPT_FAILURES)[number];
 export const ERROR_ORIGINS = ['client', 'upstream', 'gateway'] as const;
 export type ErrorOrigin = (typeof ERROR_ORIGINS)[number];
 
+export const FINISH_REASONS = ['stop', 'length', 'tool_calls', 'content_filter', 'other'] as const;
+export type FinishReason = (typeof FINISH_REASONS)[number];
+
 const transactionId = customType<{ data: string; driverData: string }>({
   dataType: () => 'xid8',
 });
@@ -129,6 +132,14 @@ export const usageLogs = pgTable(
     pricingWindowName: text('pricing_window_name'),
     cost: numeric('cost', { precision: 18, scale: 10, mode: 'number' }),
     timeToFirstTokenMs: integer('time_to_first_token_ms'),
+    isReasoningStreamed: boolean('is_reasoning_streamed').notNull().default(false),
+    finishReason: text('finish_reason', { enum: FINISH_REASONS }),
+    maxOutputTokens: integer('max_output_tokens'),
+    reasoningEffort: text('reasoning_effort', { enum: REASONING_EFFORTS }),
+    thinkingBudgetTokens: integer('thinking_budget_tokens'),
+    toolCount: integer('tool_count').notNull().default(0),
+    toolCallCount: integer('tool_call_count').notNull().default(0),
+    imageCount: integer('image_count'),
     durationMs: integer('duration_ms').notNull(),
     attemptCount: integer('attempt_count').notNull(),
     isCancelled: boolean('is_cancelled').notNull().default(false),
