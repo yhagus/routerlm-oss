@@ -1,6 +1,6 @@
 import type { usageLogs } from '@/db/schemas';
 
-export type IntegrationUsageLog = Pick<
+export type IntegrationUsageLogRow = Pick<
   typeof usageLogs.$inferSelect,
   | 'id'
   | 'createdAt'
@@ -30,6 +30,21 @@ export type IntegrationUsageLog = Pick<
   | 'isCancelled'
   | 'isIncomplete'
 >;
+
+export type IntegrationUsageLog = Omit<IntegrationUsageLogRow, 'apiKeyId' | 'customerId'> & {
+  apiKeyId: string;
+  customerId: string;
+};
+
+export function integrationUsageLogOf(row: IntegrationUsageLogRow): IntegrationUsageLog {
+  const { apiKeyId, customerId } = row;
+  if (apiKeyId === null || customerId === null) {
+    throw new Error(
+      `Usage Log ${row.id} belongs to an Integration but names no API Key or Customer`,
+    );
+  }
+  return { ...row, apiKeyId, customerId };
+}
 
 export interface IntegrationUsageLogPage {
   usageLogs: IntegrationUsageLog[];
