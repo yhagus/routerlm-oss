@@ -138,9 +138,9 @@ export function usageLogJsonOf(usageLog: IntegrationUsageLog): UsageLogJson {
   return {
     id: usageLog.id,
     receivedAt: usageLog.createdAt.toISOString(),
-    apiKeyId: usageLog.apiKeyId ?? '',
+    apiKeyId: usageLog.apiKeyId,
     apiKeyName: usageLog.apiKeyName ?? undefined,
-    customerId: usageLog.customerId ?? '',
+    customerId: usageLog.customerId,
     modelName: usageLog.modelName ?? undefined,
     kind: usageLog.kind,
     clientProtocol: usageLog.clientProtocol,

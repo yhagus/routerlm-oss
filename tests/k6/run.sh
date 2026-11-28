@@ -35,6 +35,9 @@ case "$TOPOLOGY" in
     exit 1
     ;;
 esac
+# The body limit and token estimate the k6 script tests, from the gateway source.
+gateway_limits="$(bun ./gateway-limits.ts)" || exit 1
+eval "$gateway_limits"
 # `backend` builds the image all gateway services share.
 docker compose --profile single build backend seed || exit 1
 # shellcheck disable=SC2086
