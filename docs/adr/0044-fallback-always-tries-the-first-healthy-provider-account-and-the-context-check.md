@@ -14,3 +14,4 @@ The context-size check uses a rough, deliberately low token estimate (`CHARACTER
 
 - Load is not spread across Provider Accounts; an operator who wants that sets priorities by hand.
 - A request near the context limit may cost one failed Attempt before Fallback moves on.
+- Amended by ADR 0103: a Provider Account at its Concurrency Limit is passed over like one in Cooldown.

@@ -18,6 +18,16 @@ export interface TermsRiskProvidersSetting {
   isDefault: boolean;
 }
 
+export interface ConcurrencyWaitSetting {
+  seconds: number;
+  defaultSeconds: number;
+  isDefault: boolean;
+  min: number;
+  max: number;
+}
+
+export const CONCURRENCY_WAIT_PATH = '/settings/concurrency-wait';
+
 export const TERMS_RISK_PROVIDERS_PATH = '/settings/terms-risk-providers';
 
 export interface PrivateUpstreamsSetting {
@@ -33,4 +43,8 @@ export const TERMS_RISK_BLOCKED_HINT =
 
 export function formatDays(days: number): string {
   return days === 1 ? '1 day' : `${days} days`;
+}
+
+export function formatSeconds(seconds: number): string {
+  return seconds === 1 ? '1 second' : `${seconds} seconds`;
 }

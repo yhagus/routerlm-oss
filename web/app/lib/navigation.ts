@@ -5,6 +5,7 @@ import {
   CalendarClock,
   Cpu,
   FolderTree,
+  Hourglass,
   KeyRound,
   LayoutDashboard,
   MessageSquareText,
@@ -32,6 +33,7 @@ export const navigationGroups: NavigationGroup[] = [
     items: [
       { label: 'Overview', path: '/', icon: LayoutDashboard },
       { label: 'Usage', path: '/usage', icon: BarChart3 },
+      { label: 'Waiting Requests', path: '/waiting-requests', icon: Hourglass },
       { label: 'Error Captures', path: '/error-captures', icon: TriangleAlert },
       { label: 'Playground', path: '/playground', icon: MessageSquareText },
     ],

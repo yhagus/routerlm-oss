@@ -63,6 +63,7 @@ describe('API Keys (e2e)', () => {
         spendLimit: null,
         spent: 0,
         requestRate: null,
+        concurrencyLimit: null,
       },
     ]);
   });
@@ -174,5 +175,43 @@ describe('API Keys (e2e)', () => {
       .set('Cookie', adaCookie)
       .expect(200);
     expect(list.body).toEqual([expect.objectContaining({ spendLimit: 0.1234567891 })]);
+  });
+
+  it('sets, changes and clears a Concurrency Limit, and signs the key in with it', async () => {
+    const server = app.getHttpServer();
+    const created = await request(server)
+      .post('/api/api-keys')
+      .set('Cookie', adaCookie)
+      .send({ name: 'CI', concurrencyLimit: 3 })
+      .expect(201);
+
+    expect(created.body).toMatchObject({ concurrencyLimit: 3 });
+    await expect(authenticateWith(created.body.key)).resolves.toMatchObject({
+      user: { concurrencyLimit: 3 },
+    });
+    const changed = await request(server)
+      .patch(`/api/api-keys/${created.body.id}`)
+      .set('Cookie', adaCookie)
+      .send({ concurrencyLimit: 5 })
+      .expect(200);
+    expect(changed.body).toMatchObject({ concurrencyLimit: 5 });
+    const cleared = await request(server)
+      .patch(`/api/api-keys/${created.body.id}`)
+      .set('Cookie', adaCookie)
+      .send({ concurrencyLimit: null })
+      .expect(200);
+    expect(cleared.body).toMatchObject({ concurrencyLimit: null });
+  });
+
+  it('refuses a Concurrency Limit below 1 or not a whole number', async () => {
+    const create = (concurrencyLimit: number) =>
+      request(app.getHttpServer())
+        .post('/api/api-keys')
+        .set('Cookie', adaCookie)
+        .send({ name: 'CI', concurrencyLimit });
+
+    await create(0).expect(400);
+    await create(-1).expect(400);
+    await create(1.5).expect(400);
   });
 });

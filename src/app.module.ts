@@ -34,6 +34,7 @@ import { PricingWindowsModule } from '@/pricing-windows/pricing-windows.module';
 import { TimeZoneModule } from '@/time-zone/time-zone.module';
 import { UpstreamModule } from '@/upstream/upstream.module';
 import { UsageModule } from '@/usage/usage.module';
+import { WaitingRequestsModule } from '@/waiting-requests/waiting-requests.module';
 
 type ModuleImport = NonNullable<ModuleMetadata['imports']>[number];
 
@@ -71,6 +72,7 @@ const DASHBOARD_ONLY_IMPORTS: ModuleImport[] = [
   TimeZoneModule,
   PlaygroundModule,
   CatalogGapsModule,
+  WaitingRequestsModule,
 ];
 
 const ROLE_IMPORTS: Record<BackendRole, ModuleImport[]> = {

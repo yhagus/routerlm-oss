@@ -21,6 +21,7 @@ function booleanSetting(defaultValue: boolean): SettingDefinition<boolean> {
 
 export const SETTING_DEFINITIONS = {
   errorCaptureRetentionDays: integerSetting({ default: 7, min: 1, max: 365 }),
+  concurrencyWaitSeconds: integerSetting({ default: 60, min: 1, max: 600 }),
   allowTermsRiskProviders: booleanSetting(false),
   allowPrivateUpstreams: booleanSetting(false),
 } as const satisfies Record<string, SettingDefinition<number> | SettingDefinition<boolean>>;

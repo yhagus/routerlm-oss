@@ -23,6 +23,7 @@ import type {
   UsageCaller,
   UsageJob,
 } from '@/usage/models/usage-job';
+import type { WaitingCaller, WaitingRequester } from '@/inference/schemas/waiting-request.schema';
 import type { AttemptFailedError, UpstreamFailureResponse } from './attempt-failure';
 import type { GatewayError } from './gateway-error';
 import type {
@@ -89,6 +90,7 @@ export class UsageMeter {
   private toolCount = 0;
   private toolCallCount = 0;
   private responseBytes = 0;
+  private slotWaitMs = 0;
   private clientRequest: ClientRequest | null = null;
   private readonly failedAttempts: FailedAttempt[] = [];
   private readonly credentialSecrets: string[] = [];
@@ -267,6 +269,20 @@ export class UsageMeter {
     return this.finish(error.status, false);
   }
 
+  waitingRequester(): WaitingRequester {
+    return {
+      caller: waitingCallerOf(this.caller),
+      requestedModelName: this.requestedModelName,
+      isStreamed: this.isStreamed,
+      clientIp: this.sender.clientIp,
+      userAgent: this.sender.userAgent,
+    };
+  }
+
+  slotWaited(durationMs: number): void {
+    this.slotWaitMs += durationMs;
+  }
+
   responseWritten(byteLength: number): void {
     this.responseBytes += byteLength;
   }
@@ -302,6 +318,7 @@ export class UsageMeter {
       toolCount: this.toolCount,
       toolCallCount: this.toolCallCount,
       durationMs: elapsedSince(this.receivedMs),
+      slotWaitMs: Math.round(this.slotWaitMs),
       isCancelled,
       attempts: this.attempts,
       errorCapture: this.errorCaptureOf(httpStatus, isCancelled),
@@ -374,4 +391,21 @@ function servingTargetOf({ route, upstreamModel, providerAccount }: AttemptTarge
 
 function elapsedSince(startMs: number): number {
   return Math.round(performance.now() - startMs);
+}
+
+function waitingCallerOf(caller: UsageCaller): WaitingCaller {
+  switch (caller.kind) {
+    case 'api-key':
+      return {
+        kind: 'api-key',
+        apiKeyId: caller.apiKeyId,
+        customer: caller.customer
+          ? { integrationId: caller.customer.integrationId, customerId: caller.customer.customerId }
+          : null,
+      };
+    case 'playground':
+      return { kind: 'playground', userId: caller.userId };
+    case 'unidentified':
+      return { kind: 'unidentified' };
+  }
 }

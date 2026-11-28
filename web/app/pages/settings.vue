@@ -262,6 +262,8 @@ async function confirmShortening(): Promise<void> {
       </form>
     </section>
 
+    <ConcurrencyWaitSetting />
+
     <section class="panel settings-panel" aria-labelledby="terms-risk-heading">
       <div class="panel-heading">
         <div>

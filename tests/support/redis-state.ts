@@ -1,5 +1,6 @@
 import type { INestApplicationContext } from '@nestjs/common';
 import { THROTTLE_KEY_PREFIX } from '@/libs/providers/redis-throttler-storage';
+import { CONCURRENCY_KEY_PREFIX } from '@/inference/models/concurrency-keys';
 import { RedisConnection } from '@/redis/providers/redis-connection';
 import { COOLDOWN_KEY_PREFIX, COOLDOWN_VALUE_SEPARATOR } from '@/upstream/providers/cooldown-store';
 
@@ -29,4 +30,10 @@ export async function endCooldownElsewhere(
   providerAccountId: string,
 ): Promise<void> {
   await app.get(RedisConnection).client.del(COOLDOWN_KEY_PREFIX + providerAccountId);
+}
+
+export async function forgetConcurrencySlots(app: INestApplicationContext): Promise<void> {
+  const { client } = app.get(RedisConnection);
+  const keys = await client.keys(`${CONCURRENCY_KEY_PREFIX}*`);
+  if (keys.length > 0) await client.del(...keys);
 }

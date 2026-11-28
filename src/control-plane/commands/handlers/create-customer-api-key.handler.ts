@@ -40,6 +40,7 @@ export class CreateCustomerApiKeyHandler implements ICommandHandler<CreateCustom
         directUpstreamAccess: newKey.directUpstreamAccess,
         spendLimit: newKey.spendLimit,
         requestRate: newKey.requestRate,
+        concurrencyLimit: newKey.concurrencyLimit,
       })
       .returning({ id: apiKeys.id });
     await this.snapshot.changed();

@@ -129,6 +129,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
           allowedModelIds: [model.id],
           spendLimit: 25.5,
           requestRate: 60,
+          concurrencyLimit: 4,
         });
         if (!created.ok) throw new Error(`createKey failed with ${created.code}`);
         const fetched = await client.getKey(acme.secret, created.body.apiKey.id);
@@ -146,6 +147,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
           spendLimit: 25.5,
           spent: 0,
           requestRate: 60,
+          concurrencyLimit: 4,
         });
         expect(fetched).toEqual({ ok: true, body: created.body.apiKey });
         await eventually(() =>
@@ -161,6 +163,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         expect(issued.apiKey).toMatchObject({ name: 'cus_7', allowedModelIds: [], spent: 0 });
         expect(issued.apiKey).not.toHaveProperty('spendLimit');
         expect(issued.apiKey).not.toHaveProperty('requestRate');
+        expect(issued.apiKey).not.toHaveProperty('concurrencyLimit');
         expect(issued.apiKey).not.toHaveProperty('expiresAt');
       });
 
@@ -244,6 +247,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
         const issued = await issueKey('cus_1', {
           spendLimit: 10,
           requestRate: 5,
+          concurrencyLimit: 2,
           expiresAt: NEXT_YEAR,
         });
 
@@ -252,6 +256,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
           allowedModelIds: [model.id],
           spendLimit: 20,
           requestRate: null,
+          concurrencyLimit: 6,
           expiresAt: null,
         });
 
@@ -263,6 +268,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
             allowedModelIds: [model.id],
             spendLimit: 20,
             requestRate: undefined,
+            concurrencyLimit: 6,
             expiresAt: undefined,
           },
         });

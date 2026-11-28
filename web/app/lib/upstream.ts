@@ -339,6 +339,7 @@ export interface ProviderAccount {
   planCheckedAt: string | null;
   paysBeyondPlan: boolean;
   priority: number;
+  concurrencyLimit: number | null;
   isEnabled: boolean;
   disabledReason: string | null;
   cooldownEndsAt: string | null;

@@ -29,6 +29,7 @@ export interface ApiKeySummary {
   spendLimit: number | null;
   spent: number;
   requestRate: number | null;
+  concurrencyLimit: number | null;
 }
 
 export interface AllowedAccess {

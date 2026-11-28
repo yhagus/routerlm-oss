@@ -53,6 +53,7 @@ export interface UsageLogSummary {
   toolCallCount: number;
   imageCount: number | null;
   durationMs: number;
+  slotWaitMs: number;
   attemptCount: number;
   isCancelled: boolean;
   isIncomplete: boolean;

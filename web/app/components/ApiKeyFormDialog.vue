@@ -10,6 +10,7 @@ import {
   MAX_SPEND_LIMIT_USD,
   type ModelChoice,
 } from '~/lib/api-keys';
+import { MAX_CONCURRENCY_LIMIT } from '~/lib/concurrencyLimit';
 import { allowedGroupOptions, type ModelGroup } from '~/lib/modelGroups';
 import { modelOptionOf } from '~/lib/routing';
 import type { Provider, UpstreamModel } from '~/lib/upstream';
@@ -54,6 +55,7 @@ const allowedModelGroupIds = ref<string[]>([]);
 const directUpstreamAccess = ref(false);
 const spendLimit = ref('');
 const requestRate = ref('');
+const concurrencyLimit = ref('');
 const isSaving = ref(false);
 const error = ref('');
 
@@ -71,6 +73,7 @@ watch(
     directUpstreamAccess.value = props.apiKey?.directUpstreamAccess ?? false;
     spendLimit.value = limitText(props.apiKey?.spendLimit ?? null);
     requestRate.value = limitText(props.apiKey?.requestRate ?? null);
+    concurrencyLimit.value = limitText(props.apiKey?.concurrencyLimit ?? null);
     error.value = '';
   },
   { immediate: true },
@@ -115,6 +118,7 @@ const changes = computed(() => {
     directUpstreamAccess?: boolean;
     spendLimit?: number | null;
     requestRate?: number | null;
+    concurrencyLimit?: number | null;
   } = {};
   if (name.value.trim() !== original.name) fields.name = name.value.trim();
   if (expiryDate.value !== localDateOf(original.expiresAt)) {
@@ -134,6 +138,9 @@ const changes = computed(() => {
   }
   if (requestRate.value !== limitText(original.requestRate)) {
     fields.requestRate = limitValue(requestRate.value);
+  }
+  if (concurrencyLimit.value !== limitText(original.concurrencyLimit)) {
+    fields.concurrencyLimit = limitValue(concurrencyLimit.value);
   }
   return fields;
 });
@@ -160,6 +167,7 @@ async function submit(): Promise<void> {
           directUpstreamAccess: directUpstreamAccess.value,
           spendLimit: limitValue(spendLimit.value),
           requestRate: limitValue(requestRate.value),
+          concurrencyLimit: limitValue(concurrencyLimit.value),
         },
       });
       emit('created', created);
@@ -253,6 +261,20 @@ async function submit(): Promise<void> {
             :max="MAX_REQUEST_RATE"
             suffix="/ min"
             unit-label="requests per minute"
+            placeholder="No limit"
+        /></label>
+      </div>
+      <div class="form__grid">
+        <label class="field"
+          ><span class="field__label">Concurrency Limit</span
+          ><NumberInput
+            v-model="concurrencyLimit"
+            class="text-input"
+            whole
+            :min="1"
+            :max="MAX_CONCURRENCY_LIMIT"
+            suffix="at once"
+            unit-label="requests at once"
             placeholder="No limit"
         /></label>
       </div>

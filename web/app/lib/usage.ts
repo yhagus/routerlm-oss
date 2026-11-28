@@ -49,6 +49,7 @@ export interface UsageLogSummary extends RecordedIntegration {
   pricingWindowName: string | null;
   timeToFirstTokenMs: number | null;
   durationMs: number;
+  slotWaitMs: number;
   attemptCount: number;
   isCancelled: boolean;
   isIncomplete: boolean;

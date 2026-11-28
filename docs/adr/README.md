@@ -13,6 +13,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0073 An API Key restricted to a Model stays restricted when that Model is deleted](0073-an-api-key-restricted-to-a-model-stays-restricted-when-that-model.md)
 - [0078 API Keys sign in from the snapshot, Integration Secrets from PostgreSQL](0078-api-keys-sign-in-from-the-snapshot-integration-secrets-from-postgresql.md)
 - [0102 API Keys may be granted Direct Upstream Access as `upstream/<provider>/<name>`](0102-api-keys-may-be-granted-direct-upstream-access-as-upstream-provider-name.md)
+- [0103 A request past a Concurrency Limit waits for a slot instead of being refused](0103-a-request-past-a-concurrency-limit-waits-for-a-slot-instead-of-being-refused.md)
 
 ## app
 
@@ -105,6 +106,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
 - [0101 A Model is published once per Model Group, and its bare name still resolves](0101-a-model-is-published-once-per-model-group-and-its-bare-name-still-resolves.md)
 - [0102 API Keys may be granted Direct Upstream Access as `upstream/<provider>/<name>`](0102-api-keys-may-be-granted-direct-upstream-access-as-upstream-provider-name.md)
+- [0103 A request past a Concurrency Limit waits for a slot instead of being refused](0103-a-request-past-a-concurrency-limit-waits-for-a-slot-instead-of-being-refused.md)
 
 ## integrations
 
@@ -212,6 +214,7 @@ Each accepted ADR is listed under every area it governs. `backend` holds the rul
 - [0095 An Upstream Model names the Provider Endpoints it supports](0095-an-upstream-model-names-the-provider-endpoints-it-supports.md)
 - [0097 Plan Coverage is read live from the Provider, not shipped in the Catalog](0097-plan-coverage-is-read-live-from-the-provider-not-shipped-in-the-catalog.md)
 - [0100 Operators choose a Plan from the Plans the Catalog lists for each Provider](0100-operators-choose-a-plan-from-the-plans-the-catalog-lists-for-each.md)
+- [0103 A request past a Concurrency Limit waits for a slot instead of being refused](0103-a-request-past-a-concurrency-limit-waits-for-a-slot-instead-of-being-refused.md)
 
 ## usage
 

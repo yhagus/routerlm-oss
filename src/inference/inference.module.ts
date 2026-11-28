@@ -7,6 +7,7 @@ import {
 import { APP_FILTER } from '@nestjs/core';
 import { HttpClientModule } from '@nestjs/http-client';
 import { OutboundFetch } from '@/libs/providers/outbound-fetch';
+import { RedisModule } from '@/redis/redis.module';
 import { SnapshotModule } from '@/snapshot/snapshot.module';
 import { SpendLimitsModule } from '@/spend-limits/spend-limits.module';
 import { UpstreamModule } from '@/upstream/upstream.module';
@@ -18,6 +19,7 @@ import { INFERENCE_API_PREFIX, InferenceController } from './inference.controlle
 import { QueryHandlers } from './queries/handlers';
 import { AttemptRunner } from './providers/attempt-runner';
 import { CallerLimits } from './providers/caller-limits';
+import { ConcurrencySlots } from './providers/concurrency-slots';
 import { MediaFetcher } from './providers/media-fetcher';
 import { MediaUpstreamClient } from './providers/media-upstream-client';
 import { UpstreamClient } from './providers/upstream-client';
@@ -30,6 +32,7 @@ import { VideoTaskReader } from './providers/video-task-reader';
       inject: [OutboundFetch],
       useFactory: (outbound: OutboundFetch) => ({ retry: false, fetch: outbound.fetch }),
     }),
+    RedisModule,
     SnapshotModule,
     SpendLimitsModule,
     UpstreamModule,
@@ -41,6 +44,7 @@ import { VideoTaskReader } from './providers/video-task-reader';
     UpstreamClient,
     AttemptRunner,
     CallerLimits,
+    ConcurrencySlots,
     MediaFetcher,
     MediaUpstreamClient,
     VideoHandles,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   allowedModelIdsSchema,
+  concurrencyLimitSchema,
   expiresAtSchema,
   MAX_CUSTOMER_ID_LENGTH,
   MAX_NAME_LENGTH,
@@ -23,6 +24,7 @@ export const newCustomerApiKeySchema = z.object({
   directUpstreamAccess: z.boolean().default(false),
   spendLimit: spendLimitSchema.default(null),
   requestRate: requestRateSchema.default(null),
+  concurrencyLimit: concurrencyLimitSchema.default(null),
 });
 export type NewCustomerApiKey = z.infer<typeof newCustomerApiKeySchema>;
 
@@ -34,6 +36,7 @@ export const customerApiKeyChangesSchema = z
     directUpstreamAccess: z.boolean(),
     spendLimit: spendLimitSchema,
     requestRate: requestRateSchema,
+    concurrencyLimit: concurrencyLimitSchema,
   })
   .partial()
   .refine(hasAnyField, nothingToChange);

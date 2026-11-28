@@ -1,0 +1,115 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "1b89eb9d-6a98-4c3f-a4ab-e7c4a012eef8",
+  "prevIds": [
+    "08bbc6bf-ef2d-4b3f-a508-8acc0f82847a"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "api_keys",
+        "concurrency_limit"
+      ],
+      "writes": [
+        "s|col|public.api_keys.concurrency_limit",
+        "n|col|public.api_keys.concurrency_limit",
+        "e|col|public.api_keys.concurrency_limit"
+      ],
+      "reads": [
+        "n|tbl|public.api_keys",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "provider_accounts",
+        "concurrency_limit"
+      ],
+      "writes": [
+        "s|col|public.provider_accounts.concurrency_limit",
+        "n|col|public.provider_accounts.concurrency_limit",
+        "e|col|public.provider_accounts.concurrency_limit"
+      ],
+      "reads": [
+        "n|tbl|public.provider_accounts",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "usage_logs",
+        "slot_wait_ms"
+      ],
+      "writes": [
+        "s|col|public.usage_logs.slot_wait_ms",
+        "n|col|public.usage_logs.slot_wait_ms",
+        "e|col|public.usage_logs.slot_wait_ms"
+      ],
+      "reads": [
+        "n|tbl|public.usage_logs",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "api_keys",
+        "name": "concurrency_limit",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "provider_accounts",
+        "name": "concurrency_limit",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "usage_logs",
+        "name": "slot_wait_ms",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

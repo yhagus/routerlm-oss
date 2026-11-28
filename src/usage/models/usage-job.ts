@@ -133,6 +133,7 @@ export interface UsageJob {
   toolCount: number;
   toolCallCount: number;
   durationMs: number;
+  slotWaitMs: number;
   isCancelled: boolean;
   attempts: AttemptRecord[];
   errorCapture: ErrorCaptureRecord | null;

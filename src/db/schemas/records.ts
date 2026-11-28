@@ -50,6 +50,7 @@ export const GATEWAY_ERROR_CODES = [
   'video_not_ready',
   'spend_limit_reached',
   'request_rate_exceeded',
+  'concurrency_wait_exceeded',
 ] as const;
 export type GatewayErrorCode = (typeof GATEWAY_ERROR_CODES)[number];
 
@@ -142,6 +143,7 @@ export const usageLogs = pgTable(
     toolCallCount: integer('tool_call_count').notNull().default(0),
     imageCount: integer('image_count'),
     durationMs: integer('duration_ms').notNull(),
+    slotWaitMs: integer('slot_wait_ms').notNull().default(0),
     attemptCount: integer('attempt_count').notNull(),
     isCancelled: boolean('is_cancelled').notNull().default(false),
     isIncomplete: boolean('is_incomplete').notNull().default(false),

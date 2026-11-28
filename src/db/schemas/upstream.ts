@@ -203,6 +203,7 @@ export const providerAccounts = pgTable(
     planCheckedAt: at('plan_checked_at'),
     planChoice: text('plan_choice').notNull().default(AUTO_PLAN_CHOICE),
     paysBeyondPlan: boolean('pays_beyond_plan').notNull().default(false),
+    concurrencyLimit: integer('concurrency_limit'),
     priority: integer('priority').notNull().default(0),
     isEnabled: boolean('is_enabled').notNull().default(true),
     disabledReason: text('disabled_reason'),

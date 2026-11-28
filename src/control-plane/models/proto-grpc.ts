@@ -43,6 +43,7 @@ export interface KeySettingsMessage {
   directUpstreamAccess?: boolean;
   spendLimit?: number;
   requestRate?: number;
+  concurrencyLimit?: number;
 }
 
 export interface CreateKeyRequest extends KeySettingsMessage {

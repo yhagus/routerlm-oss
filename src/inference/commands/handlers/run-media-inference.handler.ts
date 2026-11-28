@@ -26,6 +26,11 @@ import type {
 } from '@/inference/models/media-kind';
 import { withMediaPlaceholders } from '@/inference/models/media-placeholders';
 import { effectiveParameterPolicy, isWatermarkedUnder } from '@/inference/models/parameter-policy';
+import {
+  SlotWait,
+  SlotWaitAbandonedError,
+  UNCOUNTED_SLOT,
+} from '@/inference/models/concurrency-slot';
 import { failedRequestUsage, requestOwnerOf } from '@/inference/models/request-usage';
 import { type AttemptTarget, endpointOf, routePath } from '@/inference/models/route-selection';
 import { UsageMeter } from '@/inference/models/usage-meter';
@@ -64,47 +69,69 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
       this.usage.enqueue(job);
       onUsage(job);
     };
+    const wait = new SlotWait(connection.signal, meter);
+    let apiKeySlot = UNCOUNTED_SLOT;
     try {
-      const reply = await this.serve(command, meter);
+      await this.callerLimits.assertWithinLimits(command.caller);
+      const request = command.contract.parseRequest(body);
+      meter.requestParsed(false);
+      const destination = this.resolve(command, request, meter);
+      apiKeySlot = await this.callerLimits.waitForSlot(command.caller, wait);
+      const reply = await this.serve(command, request, destination, meter, wait);
       record(meter.finish(HTTP_OK, false));
       return reply;
     } catch (error) {
-      record(failedRequestUsage(meter, (failure) => contract.writeError(failure), error));
+      if (!(error instanceof SlotWaitAbandonedError)) {
+        record(failedRequestUsage(meter, (failure) => contract.writeError(failure), error));
+      }
       throw error;
+    } finally {
+      apiKeySlot.release();
     }
   }
 
-  private async serve(command: RunMediaInferenceCommand, meter: UsageMeter): Promise<MediaReply> {
-    const { contract, body, caller, connection } = command;
-    await this.callerLimits.assertWithinLimits(caller);
-    const request = contract.parseRequest(body);
-    meter.requestParsed(false);
-    const destination = this.resolve(command, request, meter);
+  private async serve(
+    command: RunMediaInferenceCommand,
+    request: MediaRequest,
+    destination: Destination,
+    meter: UsageMeter,
+    wait: SlotWait,
+  ): Promise<MediaReply> {
+    const { contract, caller, connection } = command;
     const createdAt = new Date();
-    const { result, servedBy } = await this.attempts.answer(destination, meter, (attemptTarget) => {
-      const endpoint = callableEndpointOf(attemptTarget.upstreamModel, contract.upstreamProtocols);
-      return {
-        upstreamProtocol: endpoint.protocol,
-        sentServiceTier: null,
-        send: async (credential) => {
-          const outcome = await this.upstream.generate({
-            ...this.upstreamCallFor(destination, attemptTarget, endpoint, credential),
-            request: policedRequest(contract, request, destination, attemptTarget.route),
-            clientSignal: connection.signal,
-          });
-          meter.attemptAnswered(outcome.upstreamStatus, outcome.upstreamRequestId);
-          meter.unitsCounted(outcome.units);
-          meter.attemptSucceeded();
-          return {
-            result: outcome.result,
-            servedBy: {
-              providerAccountId: attemptTarget.providerAccount.id,
-              upstreamModelRowId: attemptTarget.upstreamModel.id,
-            },
-          };
-        },
-      };
-    });
+    const { result, servedBy } = await this.attempts.answer(
+      destination,
+      meter,
+      wait,
+      (attemptTarget) => {
+        const endpoint = callableEndpointOf(
+          attemptTarget.upstreamModel,
+          contract.upstreamProtocols,
+        );
+        return {
+          upstreamProtocol: endpoint.protocol,
+          sentServiceTier: null,
+          send: async (credential, providerAccountSlot) => {
+            const outcome = await this.upstream.generate({
+              ...this.upstreamCallFor(destination, attemptTarget, endpoint, credential),
+              request: policedRequest(contract, request, destination, attemptTarget.route),
+              clientSignal: connection.signal,
+            });
+            providerAccountSlot.release();
+            meter.attemptAnswered(outcome.upstreamStatus, outcome.upstreamRequestId);
+            meter.unitsCounted(outcome.units);
+            meter.attemptSucceeded();
+            return {
+              result: outcome.result,
+              servedBy: {
+                providerAccountId: attemptTarget.providerAccount.id,
+                upstreamModelRowId: attemptTarget.upstreamModel.id,
+              },
+            };
+          },
+        };
+      },
+    );
     const reply = contract.writeResponse(result, {
       modelName: destination.name,
       createdAt,

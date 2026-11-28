@@ -17,6 +17,7 @@ import {
   requestRateLabel,
   spendLimitLabel,
 } from '~/lib/api-keys';
+import { concurrencyLimitLabel } from '~/lib/concurrencyLimit';
 import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
 import { dateFormat } from '~/lib/dateFormats';
 
@@ -98,6 +99,7 @@ const columns: DataTableColumn<ApiKeyRow>[] = [
   { id: 'allowedModels', header: 'Allowed Models', accessorFn: allowedAccessLabel },
   { id: 'spendLimit', header: 'Spend Limit' },
   { id: 'requestRate', header: 'Request Rate' },
+  { id: 'concurrencyLimit', header: 'Concurrency Limit' },
   { id: 'created', header: 'Created' },
   { id: 'createdBy', header: 'Created by', accessorFn: (row) => row.createdBy?.email ?? '' },
   { id: 'expires', header: 'Expires' },
@@ -307,6 +309,9 @@ function handleAction(apiKey: ApiKeyRow, id: ApiKeyActionId): void {
       </template>
       <template #cell-requestRate="{ row: apiKey }">
         <span class="tabular">{{ requestRateLabel(apiKey) }}</span>
+      </template>
+      <template #cell-concurrencyLimit="{ row: apiKey }">
+        <span class="tabular">{{ concurrencyLimitLabel(apiKey.concurrencyLimit) }}</span>
       </template>
       <template #cell-allowedModels="{ row: apiKey }">
         <span class="models-summary" :title="allowedAccessLabel(apiKey)">{{

@@ -226,6 +226,10 @@ const responseFacts = computed<Fact[]>(() => {
               <dt>Duration</dt>
               <dd class="tabular">{{ formatDuration(usageLog.durationMs) }}</dd>
             </div>
+            <div v-if="usageLog.slotWaitMs > 0">
+              <dt>Slot wait</dt>
+              <dd class="tabular">{{ formatDuration(usageLog.slotWaitMs) }}</dd>
+            </div>
           </dl>
           <dl v-if="responseFacts.length > 0" class="capture-facts">
             <div v-for="fact in responseFacts" :key="fact.label">

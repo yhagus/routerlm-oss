@@ -53,6 +53,7 @@ export const usageLogSummaryColumns = {
   toolCallCount: usageLogs.toolCallCount,
   imageCount: usageLogs.imageCount,
   durationMs: usageLogs.durationMs,
+  slotWaitMs: usageLogs.slotWaitMs,
   attemptCount: usageLogs.attemptCount,
   isCancelled: usageLogs.isCancelled,
   isIncomplete: usageLogs.isIncomplete,

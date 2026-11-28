@@ -25,6 +25,7 @@ export interface SnapshotApiKey {
   customer: KeyCustomer | null;
   spendLimit: number | null;
   requestRate: number | null;
+  concurrencyLimit: number | null;
 }
 
 export type SnapshotCredential =
@@ -39,6 +40,7 @@ export interface SnapshotProviderAccount {
   isEnabled: boolean;
   plan: string | null;
   paysBeyondPlan: boolean;
+  concurrencyLimit: number | null;
 }
 
 export interface SnapshotEndpoint {

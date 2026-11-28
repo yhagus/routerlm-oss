@@ -43,6 +43,7 @@ function unwritableUsageJob(): UsageJob {
     toolCount: 0,
     toolCallCount: 0,
     durationMs: 1,
+    slotWaitMs: 0,
     isCancelled: false,
     attempts: [],
     errorCapture: {

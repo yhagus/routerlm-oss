@@ -38,6 +38,14 @@ _Avoid_: Balance, credit, budget, quota
 The most requests per minute an API Key may send, set by the Integration that owns it, or by a User for a key that belongs to no Integration. Requests past it are refused until the minute frees up. Unrelated to a Provider Account's Quota Meters.
 _Avoid_: Rate limit, RPM, throttle
 
+**Concurrency Limit**:
+The most requests an API Key, or Attempts a Provider Account, may have in flight at once across the whole gateway. An API Key's is set like its Request Rate; a Provider Account's is set by a User; unset means unlimited. A request past it is never refused at once: it waits for a slot, first come first served, and is refused only when it has waited longer than the gateway allows. A Provider Account at its limit is passed over like one in Cooldown, so a request waits for a Provider Account only when every one that could serve it is at its limit, and then takes the first slot that frees on any of them. A request is in flight from when it is admitted until its response has been fully sent or its client has gone, a realtime session for as long as it is open; an Attempt only until its upstream response ends.
+_Avoid_: Max concurrency, in-flight limit, parallelism, queue
+
+**Waiting Request**:
+A request that has been admitted but is waiting for a slot under a Concurrency Limit, either its API Key's or that of the Provider Accounts that could serve it. It stops being one the moment it takes a slot, is refused for waiting too long, or its client goes; what became of it is then found in its Usage Log or Error Capture.
+_Avoid_: Queued request, pending request, postponed request, backlog
+
 ### Upstream
 
 **Provider**:

@@ -15,6 +15,7 @@ export interface ApiKeyJson {
   spendLimit?: number;
   spent: number;
   requestRate?: number;
+  concurrencyLimit?: number;
 }
 
 export interface IssuedKeyJson {
@@ -120,6 +121,7 @@ export function apiKeyJsonOf(apiKey: CustomerApiKey): ApiKeyJson {
     spendLimit: apiKey.spendLimit ?? undefined,
     spent: apiKey.spent,
     requestRate: apiKey.requestRate ?? undefined,
+    concurrencyLimit: apiKey.concurrencyLimit ?? undefined,
   };
 }
 

@@ -624,6 +624,7 @@ const ERROR_TYPES = {
   model_not_found: 'not_found_error',
   request_too_large: 'request_too_large',
   request_rate_exceeded: 'rate_limit_error',
+  concurrency_wait_exceeded: 'rate_limit_error',
   upstream_rate_limited: 'rate_limit_error',
   upstream_error: 'api_error',
   upstream_timeout: 'api_error',

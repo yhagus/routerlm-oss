@@ -11,6 +11,7 @@ export interface CustomerApiKey {
   spendLimit: number | null;
   spent: number;
   requestRate: number | null;
+  concurrencyLimit: number | null;
 }
 
 export interface IssuedCustomerApiKey {

@@ -63,6 +63,7 @@ export async function loadSnapshot(
         hasDirectUpstreamAccess: apiKeys.directUpstreamAccess,
         spendLimit: apiKeys.spendLimit,
         requestRate: apiKeys.requestRate,
+        concurrencyLimit: apiKeys.concurrencyLimit,
         customerId: apiKeys.customerId,
         integrationId: integrations.id,
         integrationName: integrations.name,
@@ -122,6 +123,7 @@ export async function loadSnapshot(
                 isEnabled: account.isEnabled,
                 plan: planOf(account),
                 paysBeyondPlan: account.paysBeyondPlan,
+                concurrencyLimit: account.concurrencyLimit,
               },
             ];
           },
@@ -245,6 +247,7 @@ function snapshotApiKeyOf(row: {
   hasDirectUpstreamAccess: boolean;
   spendLimit: number | null;
   requestRate: number | null;
+  concurrencyLimit: number | null;
   customerId: string | null;
   integrationId: string | null;
   integrationName: string | null;

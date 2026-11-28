@@ -1,9 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectThrottlerStorage, minutes, type ThrottlerStorage } from '@nestjs/throttler';
 import type { ApiKeyPrincipal } from '@/api-keys/models/api-key';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
+import {
+  apiKeySlotHolder,
+  type HeldSlot,
+  type SlotWait,
+  UNCOUNTED_SLOT,
+} from '@/inference/models/concurrency-slot';
 import { GatewayError } from '@/inference/models/gateway-error';
 import type { InferenceCaller } from '@/inference/models/inference';
+import { ConcurrencySlots } from './concurrency-slots';
 
 const REQUEST_RATE_THROTTLER = 'request-rate';
 const REQUEST_RATE_WINDOW = minutes(1);
@@ -14,7 +22,18 @@ export class CallerLimits {
   constructor(
     private readonly spendLimitFlags: SpendLimitFlags,
     @InjectThrottlerStorage() private readonly throttlerStorage: ThrottlerStorage,
+    private readonly slots: ConcurrencySlots,
+    private readonly snapshot: SnapshotService,
   ) {}
+
+  async waitForSlot(caller: InferenceCaller, wait: SlotWait): Promise<HeldSlot> {
+    if (caller.kind !== 'api-key' || caller.principal.concurrencyLimit === null) {
+      return UNCOUNTED_SLOT;
+    }
+    const holder = apiKeySlotHolder(caller.principal, () => this.snapshot.current);
+    const { slot } = await this.slots.takeFirstFree([holder], wait);
+    return slot;
+  }
 
   async assertWithinLimits(caller: InferenceCaller): Promise<void> {
     if (caller.kind !== 'api-key') {

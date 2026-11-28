@@ -34,6 +34,7 @@ export async function selectApiKeySummaries(db: Database, where?: SQL): Promise<
       spendLimit: apiKeys.spendLimit,
       spent: apiKeys.spent,
       requestRate: apiKeys.requestRate,
+      concurrencyLimit: apiKeys.concurrencyLimit,
     })
     .from(apiKeys)
     .leftJoin(users, eq(apiKeys.createdById, users.id))

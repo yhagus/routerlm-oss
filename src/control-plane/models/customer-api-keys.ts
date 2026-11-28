@@ -24,6 +24,7 @@ const customerApiKeyColumns = {
   spendLimit: apiKeys.spendLimit,
   spent: apiKeys.spent,
   requestRate: apiKeys.requestRate,
+  concurrencyLimit: apiKeys.concurrencyLimit,
 };
 
 const NEWEST_KEYS_FIRST = [desc(apiKeys.createdAt), desc(apiKeys.id)];

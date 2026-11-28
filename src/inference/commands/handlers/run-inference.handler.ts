@@ -29,6 +29,12 @@ import {
   probeDestination,
   upstreamModelServedHere,
 } from '@/inference/models/destination';
+import {
+  type HeldSlot,
+  SlotWait,
+  SlotWaitAbandonedError,
+  UNCOUNTED_SLOT,
+} from '@/inference/models/concurrency-slot';
 import { GatewayError } from '@/inference/models/gateway-error';
 import type { InferenceRequest } from '@/inference/models/internal-format';
 import {
@@ -80,13 +86,20 @@ interface AttemptOptions {
   clientSignal: AbortSignal;
   clientHeaders: IncomingHttpHeaders;
   meter: UsageMeter;
+  providerAccountSlot: HeldSlot;
 }
 
 type AttemptEndpoint = CallableEndpoint<UpstreamProtocolConverter>;
 
 type AttemptResult =
   | { kind: 'response'; body: unknown }
-  | { kind: 'stream'; upstream: UpstreamStream; writer: ClientStreamWriter; target: AttemptTarget };
+  | {
+      kind: 'stream';
+      upstream: UpstreamStream;
+      writer: ClientStreamWriter;
+      target: AttemptTarget;
+      providerAccountSlot: HeldSlot;
+    };
 
 const HTTP_OK = 200;
 
@@ -119,36 +132,55 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       this.usage.enqueue(job);
       onUsage(job);
     };
+    const wait = new SlotWait(connection.signal, meter);
+    let apiKeySlot = UNCOUNTED_SLOT;
     try {
-      const result = await this.serve(converter, body, caller, target, connection, meter);
+      await this.callerLimits.assertWithinLimits(caller);
+      const clientRequest = converter.parseRequest(body);
+      meter.requestParsed(clientRequest.stream !== null);
+      meter.toolsDefined(clientRequest.tools.length);
+      const destination = this.resolve(target, clientRequest, converter, caller, meter);
+      apiKeySlot = await this.callerLimits.waitForSlot(caller, wait);
+      const result = await this.serve(
+        converter,
+        clientRequest,
+        destination,
+        caller,
+        connection,
+        meter,
+        wait,
+      );
       if (result.kind === 'stream') {
         return {
           kind: 'stream',
-          chunks: this.relayStream(result, converter, meter, connection.signal, record),
+          chunks: this.relayStream(result, converter, meter, connection.signal, (job) => {
+            record(job);
+            apiKeySlot.release();
+          }),
         };
       }
       const json = encodedFor(meter, JSON.stringify(result.body));
       record(meter.finish(HTTP_OK, false));
+      apiKeySlot.release();
       return { kind: 'response', json };
     } catch (error) {
-      record(failedRequestUsage(meter, (failure) => converter.writeError(failure), error));
+      apiKeySlot.release();
+      if (!(error instanceof SlotWaitAbandonedError)) {
+        record(failedRequestUsage(meter, (failure) => converter.writeError(failure), error));
+      }
       throw error;
     }
   }
 
   private async serve(
     converter: ClientProtocolConverter,
-    body: unknown,
+    clientRequest: InferenceRequest,
+    destination: Destination,
     caller: InferenceCaller,
-    inferenceTarget: RunInferenceTarget,
     connection: ClientConnection,
     meter: UsageMeter,
+    wait: SlotWait,
   ): Promise<AttemptResult> {
-    await this.callerLimits.assertWithinLimits(caller);
-    const clientRequest = converter.parseRequest(body);
-    meter.requestParsed(clientRequest.stream !== null);
-    meter.toolsDefined(clientRequest.tools.length);
-    const destination = this.resolve(inferenceTarget, clientRequest, converter, caller, meter);
     const context: ResponseContext = {
       requestId: randomUUID().replaceAll('-', ''),
       modelName: destination.name,
@@ -160,7 +192,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       destination.kind === 'probe'
         ? undefined
         : UPSTREAM_PROTOCOL_SPOKEN_BY_CLIENT[converter.protocol];
-    return await this.attempts.answer(destination, meter, (target) => {
+    return await this.attempts.answer(destination, meter, wait, (target) => {
       const endpoint = callableEndpointOf(
         target.upstreamModel,
         UPSTREAM_PROTOCOL_CONVERTERS,
@@ -174,8 +206,9 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
           target.upstreamModel,
           endpoint.protocol,
         ),
-        send: (credential) =>
+        send: (credential, providerAccountSlot) =>
           this.attempt(converter, request, context, target, endpoint, credential, {
+            providerAccountSlot,
             cacheKey,
             clientSignal: connection.signal,
             clientHeaders: connection.requestHeaders,
@@ -266,10 +299,11 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     credential: ProviderAccountCredential,
     options: AttemptOptions,
   ): Promise<AttemptResult> {
-    const { meter } = options;
+    const { meter, providerAccountSlot } = options;
     const call = this.upstreamCallFor(request, target, endpoint, credential, options);
     if (!request.stream) {
       const { response, upstreamStatus, upstreamRequestId } = await this.upstream.complete(call);
+      providerAccountSlot.release();
       meter.attemptAnswered(upstreamStatus, upstreamRequestId);
       meter.responseReceived(response);
       meter.attemptSucceeded();
@@ -277,7 +311,13 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     }
     const upstream = await this.upstream.openStream(call);
     meter.attemptAnswered(upstream.upstreamStatus, upstream.upstreamRequestId);
-    return { kind: 'stream', upstream, writer: converter.startStream(request, context), target };
+    return {
+      kind: 'stream',
+      upstream,
+      writer: converter.startStream(request, context),
+      target,
+      providerAccountSlot,
+    };
   }
 
   private upstreamCallFor(
@@ -321,7 +361,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   }
 
   private async *relayStream(
-    { upstream, writer, target }: Extract<AttemptResult, { kind: 'stream' }>,
+    { upstream, writer, target, providerAccountSlot }: Extract<AttemptResult, { kind: 'stream' }>,
     converter: ClientProtocolConverter,
     meter: UsageMeter,
     clientSignal: AbortSignal,
@@ -368,6 +408,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
       }
     } finally {
       upstream.close();
+      providerAccountSlot.release();
       record(meter.finish(HTTP_OK, clientSignal.aborted));
     }
   }

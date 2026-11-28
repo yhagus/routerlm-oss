@@ -14,7 +14,11 @@ import {
   QUOTA_READERS,
   UPSTREAM_PROTOCOLS,
 } from '@/db/schemas/upstream';
-import { MAX_REQUEST_RATE, MAX_SPEND_LIMIT_USD } from '@/api-keys/schemas/api-key.schema';
+import {
+  MAX_CONCURRENCY_LIMIT,
+  MAX_REQUEST_RATE,
+  MAX_SPEND_LIMIT_USD,
+} from '@/api-keys/schemas/api-key.schema';
 import { ERROR_ORIGINS, RECORDED_ATTEMPT_FAILURES } from '@/db/schemas/records';
 import {
   CAPTURE_OUTCOMES,
@@ -35,42 +39,106 @@ interface Mirror {
 }
 
 const MIRRORS: Mirror[] = [
-  { name: 'UPSTREAM_PROTOCOLS', webFile: 'web/app/lib/upstream.ts', backend: UPSTREAM_PROTOCOLS },
-  { name: 'MODEL_KINDS', webFile: 'web/app/lib/upstream.ts', backend: MODEL_KINDS },
-  { name: 'AUTH_STYLES', webFile: 'web/app/lib/upstream.ts', backend: AUTH_STYLES },
-  { name: 'CAPABILITIES', webFile: 'web/app/lib/upstream.ts', backend: CAPABILITIES },
-  { name: 'PLAN_READERS', webFile: 'web/app/lib/upstream.ts', backend: PLAN_READERS },
-  { name: 'QUOTA_READERS', webFile: 'web/app/lib/upstream.ts', backend: QUOTA_READERS },
-  { name: 'CREDENTIAL_KINDS', webFile: 'web/app/lib/upstream.ts', backend: CREDENTIAL_KINDS },
-  { name: 'OAUTH_REGIONS', webFile: 'web/app/lib/upstream.ts', backend: OAUTH_REGIONS },
-  { name: 'OAUTH_LOGIN_FLOWS', webFile: 'web/app/lib/upstream.ts', backend: OAUTH_LOGIN_FLOWS },
-  { name: 'AUTO_PLAN_CHOICE', webFile: 'web/app/lib/upstream.ts', backend: [AUTO_PLAN_CHOICE] },
-  { name: 'NO_PLAN_CHOICE', webFile: 'web/app/lib/upstream.ts', backend: [NO_PLAN_CHOICE] },
+  {
+    name: 'UPSTREAM_PROTOCOLS',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: UPSTREAM_PROTOCOLS,
+  },
+  {
+    name: 'MODEL_KINDS',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: MODEL_KINDS,
+  },
+  {
+    name: 'AUTH_STYLES',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: AUTH_STYLES,
+  },
+  {
+    name: 'CAPABILITIES',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: CAPABILITIES,
+  },
+  {
+    name: 'PLAN_READERS',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: PLAN_READERS,
+  },
+  {
+    name: 'QUOTA_READERS',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: QUOTA_READERS,
+  },
+  {
+    name: 'CREDENTIAL_KINDS',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: CREDENTIAL_KINDS,
+  },
+  {
+    name: 'OAUTH_REGIONS',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: OAUTH_REGIONS,
+  },
+  {
+    name: 'OAUTH_LOGIN_FLOWS',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: OAUTH_LOGIN_FLOWS,
+  },
+  {
+    name: 'AUTO_PLAN_CHOICE',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: [AUTO_PLAN_CHOICE],
+  },
+  {
+    name: 'NO_PLAN_CHOICE',
+    webFile: 'web/app/lib/upstream.ts',
+    backend: [NO_PLAN_CHOICE],
+  },
   {
     name: 'PROTOCOL_KINDS',
     webFile: 'web/app/lib/upstream.ts',
     backend: Object.entries(PROTOCOL_KINDS).map(([protocol, kind]) => `${protocol}=${kind}`),
   },
-  { name: 'ERROR_ORIGINS', webFile: 'web/app/lib/errorOrigins.ts', backend: ERROR_ORIGINS },
+  {
+    name: 'ERROR_ORIGINS',
+    webFile: 'web/app/lib/errorOrigins.ts',
+    backend: ERROR_ORIGINS,
+  },
   {
     name: 'RECORDED_ATTEMPT_FAILURES',
     webFile: 'web/app/lib/attemptFailures.ts',
     backend: RECORDED_ATTEMPT_FAILURES,
   },
-  { name: 'FAILED_HOPS', webFile: 'web/app/lib/errorCaptures.ts', backend: FAILED_HOPS },
-  { name: 'CAPTURE_OUTCOMES', webFile: 'web/app/lib/errorCaptures.ts', backend: CAPTURE_OUTCOMES },
+  {
+    name: 'FAILED_HOPS',
+    webFile: 'web/app/lib/errorCaptures.ts',
+    backend: FAILED_HOPS,
+  },
+  {
+    name: 'CAPTURE_OUTCOMES',
+    webFile: 'web/app/lib/errorCaptures.ts',
+    backend: CAPTURE_OUTCOMES,
+  },
   {
     name: 'WINDOW_PRICES_STATUSES',
     webFile: 'web/app/lib/pricingWindows.ts',
     backend: WINDOW_PRICES_STATUSES,
   },
-  { name: 'AUDIO_FORMATS', webFile: 'web/app/lib/playgroundSpeech.ts', backend: AUDIO_FORMATS },
+  {
+    name: 'AUDIO_FORMATS',
+    webFile: 'web/app/lib/playgroundSpeech.ts',
+    backend: AUDIO_FORMATS,
+  },
   {
     name: 'VIDEO_RESOLUTIONS',
     webFile: 'web/app/lib/playgroundVideo.ts',
     backend: VIDEO_RESOLUTIONS,
   },
-  { name: 'VIDEO_RATIOS', webFile: 'web/app/lib/playgroundVideo.ts', backend: VIDEO_RATIOS },
+  {
+    name: 'VIDEO_RATIOS',
+    webFile: 'web/app/lib/playgroundVideo.ts',
+    backend: VIDEO_RATIOS,
+  },
   {
     name: 'MAX_AUDIO_BYTES',
     backendName: 'MAX_UPLOAD_BYTES',
@@ -82,8 +150,16 @@ const MIRRORS: Mirror[] = [
     webFile: 'web/app/lib/parameterPolicy.ts',
     backend: REASONING_EFFORTS,
   },
-  { name: 'SERVICE_TIERS', webFile: 'web/app/lib/parameterPolicy.ts', backend: SERVICE_TIERS },
-  { name: 'USAGE_STATUSES', webFile: 'web/app/lib/usage.ts', backend: USAGE_STATUSES },
+  {
+    name: 'SERVICE_TIERS',
+    webFile: 'web/app/lib/parameterPolicy.ts',
+    backend: SERVICE_TIERS,
+  },
+  {
+    name: 'USAGE_STATUSES',
+    webFile: 'web/app/lib/usage.ts',
+    backend: USAGE_STATUSES,
+  },
   {
     name: 'MAX_SPEND_LIMIT_USD',
     webFile: 'web/app/lib/api-keys.ts',
@@ -93,6 +169,11 @@ const MIRRORS: Mirror[] = [
     name: 'MAX_REQUEST_RATE',
     webFile: 'web/app/lib/api-keys.ts',
     backend: [String(MAX_REQUEST_RATE)],
+  },
+  {
+    name: 'MAX_CONCURRENCY_LIMIT',
+    webFile: 'web/app/lib/concurrencyLimit.ts',
+    backend: [String(MAX_CONCURRENCY_LIMIT)],
   },
 ];
 
@@ -129,7 +210,11 @@ interface TypeMirror {
 
 const TYPE_MIRRORS: TypeMirror[] = [
   ...['UsageLogSummary', 'UsageLogAttempt', 'UsageLogDetail', 'UsageLogPage', 'UsageSummary'].map(
-    (name) => ({ name, webFile: 'web/app/lib/usage.ts', backendFile: 'src/usage/models/usage.ts' }),
+    (name) => ({
+      name,
+      webFile: 'web/app/lib/usage.ts',
+      backendFile: 'src/usage/models/usage.ts',
+    }),
   ),
   {
     name: 'IntegrationModel',
@@ -221,7 +306,10 @@ interface ExportedConstant {
 }
 
 function typeScriptFilesIn(directory: string, options: { recursive: boolean }): string[] {
-  return readdirSync(directory, { recursive: options.recursive, encoding: 'utf8' })
+  return readdirSync(directory, {
+    recursive: options.recursive,
+    encoding: 'utf8',
+  })
     .filter((file) => file.endsWith('.ts'))
     .map((file) => `${directory}/${file}`);
 }

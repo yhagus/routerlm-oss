@@ -9,12 +9,15 @@ export const GATEWAY_ERROR_STATUS = {
   model_not_found: 404,
   request_too_large: 413,
   request_rate_exceeded: 429,
+  concurrency_wait_exceeded: 429,
   upstream_rate_limited: 429,
   upstream_error: 502,
   upstream_timeout: 504,
   video_not_found: 404,
   video_not_ready: 409,
 } as const satisfies Record<GatewayErrorCode, number>;
+
+export const CONCURRENCY_WAIT_RETRY_AFTER_SECONDS = 1;
 
 export class GatewayError extends Error {
   readonly status: number;

@@ -1,4 +1,4 @@
-import type { IncomingMessage } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   type ArgumentsHost,
   Catch,
@@ -11,7 +11,10 @@ import type { ClientProtocol } from '@/db/schemas';
 import { UsageProducer } from '@/usage/jobs/usage.producer';
 import { ClientCancelledError } from '@/inference/models/attempt-failure';
 import { requestBytesOf, requestSenderOf } from '@/libs/models/client-connection';
-import { GatewayError } from '@/inference/models/gateway-error';
+import {
+  CONCURRENCY_WAIT_RETRY_AFTER_SECONDS,
+  GatewayError,
+} from '@/inference/models/gateway-error';
 import { CLIENT_PROTOCOL_CONVERTERS } from '@/inference/protocols/converters';
 import { openAiChatClientConverter } from '@/inference/protocols/openai-chat/openai-chat-client-converter';
 import { UsageMeter } from '@/inference/models/usage-meter';
@@ -54,7 +57,11 @@ export class InferenceExceptionFilter implements ExceptionFilter {
       );
       this.usage.enqueue(meter.finishWithError(error, envelope));
     }
-    httpAdapter.reply(http.getResponse(), envelope, error.status);
+    const response = http.getResponse<ServerResponse>();
+    if (error.code === 'concurrency_wait_exceeded') {
+      response.setHeader('Retry-After', String(CONCURRENCY_WAIT_RETRY_AFTER_SECONDS));
+    }
+    httpAdapter.reply(response, envelope, error.status);
   }
 }
 

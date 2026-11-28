@@ -131,6 +131,42 @@ describe('Provider Accounts (e2e)', () => {
     expect(updated.body).toMatchObject({ continueWhenExhausted: true });
   });
 
+  it('sets, changes and clears a Concurrency Limit', async () => {
+    const server = app.getHttpServer();
+    const created = await request(server)
+      .post('/api/provider-accounts')
+      .set('Cookie', cookie)
+      .send({ providerId, key: PROVIDER_ACCOUNT_KEY, concurrencyLimit: 2 })
+      .expect(201);
+
+    expect(created.body).toMatchObject({ concurrencyLimit: 2 });
+    const changed = await request(server)
+      .patch(`/api/provider-accounts/${created.body.id}`)
+      .set('Cookie', cookie)
+      .send({ concurrencyLimit: 8 })
+      .expect(200);
+    const list = await request(server).get('/api/provider-accounts').set('Cookie', cookie);
+
+    expect(changed.body).toMatchObject({ concurrencyLimit: 8 });
+    expect(list.body).toEqual([expect.objectContaining({ concurrencyLimit: 8 })]);
+    const cleared = await request(server)
+      .patch(`/api/provider-accounts/${created.body.id}`)
+      .set('Cookie', cookie)
+      .send({ concurrencyLimit: null })
+      .expect(200);
+    expect(cleared.body).toMatchObject({ concurrencyLimit: null });
+  });
+
+  it('refuses a Concurrency Limit below 1', async () => {
+    const id = await createAccount();
+
+    await request(app.getHttpServer())
+      .patch(`/api/provider-accounts/${id}`)
+      .set('Cookie', cookie)
+      .send({ concurrencyLimit: 0 })
+      .expect(400);
+  });
+
   it('names a Provider Account after two constellations when no name is given', async () => {
     const server = app.getHttpServer();
     const createWithName = (name?: string) =>

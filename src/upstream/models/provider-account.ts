@@ -17,6 +17,7 @@ export const providerAccountColumns = {
   planCheckedAt: providerAccounts.planCheckedAt,
   planChoice: providerAccounts.planChoice,
   paysBeyondPlan: providerAccounts.paysBeyondPlan,
+  concurrencyLimit: providerAccounts.concurrencyLimit,
   priority: providerAccounts.priority,
   isEnabled: providerAccounts.isEnabled,
   disabledReason: providerAccounts.disabledReason,

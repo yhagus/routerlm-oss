@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { concurrencyLimitSchema } from '@/api-keys/schemas/api-key.schema';
 import { hasAnyField, nothingToChange } from '@/libs/schemas/partial-update.schema';
 import {
   catalogProviderSchema,
@@ -14,7 +15,13 @@ import {
 import { QUOTA_READERS } from '@/db/schemas';
 
 const providerFieldsSchema = catalogProviderSchema
-  .pick({ slug: true, name: true, endpoints: true, authStyle: true, quirks: true })
+  .pick({
+    slug: true,
+    name: true,
+    endpoints: true,
+    authStyle: true,
+    quirks: true,
+  })
   .extend({
     serviceTierValues: serviceTierValuesSchema,
     logo: providerLogoSchema.nullable(),
@@ -85,6 +92,7 @@ const providerAccountFieldsSchema = z.strictObject({
   continueWhenExhausted: z.boolean(),
   paysBeyondPlan: z.boolean(),
   planChoice: z.string().trim().min(1),
+  concurrencyLimit: concurrencyLimitSchema,
 });
 
 export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
@@ -99,6 +107,7 @@ export const newProviderAccountSchema = providerAccountFieldsSchema.extend({
   continueWhenExhausted: z.boolean().optional(),
   paysBeyondPlan: z.boolean().optional(),
   planChoice: z.string().trim().min(1).optional(),
+  concurrencyLimit: concurrencyLimitSchema.optional(),
 });
 export type NewProviderAccount = z.infer<typeof newProviderAccountSchema>;
 

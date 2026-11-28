@@ -2,6 +2,8 @@
 import { LogOut, Menu, Monitor, Moon, ShieldCheck, Sun, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import { findNavigationItem, navigationGroups } from '~/lib/navigation';
+import { formatCount } from '~/lib/usage';
+import type { WaitingRequestCount } from '~/lib/waitingRequests';
 
 const route = useRoute();
 const theme = useTheme();
@@ -27,6 +29,17 @@ const themeIcon = computed(() => {
   if (theme.preference.value === 'light') return Sun;
   return Monitor;
 });
+const WAITING_COUNT_INTERVAL_MS = 10_000;
+const { data: waitingCount, refresh: refreshWaitingCount } =
+  useDashboardApi<WaitingRequestCount>('/waiting-requests/count');
+usePollWhileVisible(() => refreshWaitingCount({ dedupe: 'defer' }), WAITING_COUNT_INTERVAL_MS);
+
+function navigationBadgeOf(path: string): string | undefined {
+  if (path !== '/waiting-requests') return undefined;
+  const count = waitingCount.value?.count ?? 0;
+  return count > 0 ? formatCount(count) : undefined;
+}
+
 const userInitial = computed(() => currentUser.value?.email.charAt(0).toUpperCase() ?? '');
 
 async function signOut(): Promise<void> {
@@ -65,8 +78,9 @@ async function signOut(): Promise<void> {
             active-class=""
             exact-active-class=""
           >
-            <component :is="item.icon" :size="17" :stroke-width="1.8" /><span>{{
-              item.label
+            <component :is="item.icon" :size="17" :stroke-width="1.8" /><span>{{ item.label }}</span
+            ><span v-if="navigationBadgeOf(item.path)" class="nav-item__badge tabular">{{
+              navigationBadgeOf(item.path)
             }}</span>
           </NuxtLink>
         </template>

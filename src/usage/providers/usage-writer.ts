@@ -71,6 +71,7 @@ export class UsageWriter {
           timeToFirstTokenMs: job.timeToFirstTokenMs,
           ...responseColumnsOf(job),
           durationMs: job.durationMs,
+          slotWaitMs: job.slotWaitMs,
           attemptCount: job.attempts.length,
           isCancelled: job.isCancelled,
         })

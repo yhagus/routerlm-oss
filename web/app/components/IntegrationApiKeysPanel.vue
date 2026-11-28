@@ -11,6 +11,7 @@ import {
   requestRateLabel,
   spendLimitLabel,
 } from '~/lib/api-keys';
+import { concurrencyLimitLabel } from '~/lib/concurrencyLimit';
 import { actionsColumn, type DataTableColumn } from '~/lib/dataTable';
 import { dateFormat } from '~/lib/dateFormats';
 
@@ -44,6 +45,7 @@ const columns: DataTableColumn<ApiKeyRow>[] = [
   { id: 'keyId', header: 'Key id', accessorFn: (row) => `rlm_${row.keyId}` },
   { id: 'spendLimit', header: 'Spend Limit' },
   { id: 'requestRate', header: 'Request Rate' },
+  { id: 'concurrencyLimit', header: 'Concurrency Limit' },
   { id: 'expires', header: 'Expires' },
   { id: 'status', header: 'Status', accessorFn: (row) => API_KEY_STATUS_LABELS[row.status] },
   { id: 'created', header: 'Created' },
@@ -126,6 +128,9 @@ async function revoke(): Promise<void> {
     </template>
     <template #cell-requestRate="{ row: apiKey }">
       <span class="tabular">{{ requestRateLabel(apiKey) }}</span>
+    </template>
+    <template #cell-concurrencyLimit="{ row: apiKey }">
+      <span class="tabular">{{ concurrencyLimitLabel(apiKey.concurrencyLimit) }}</span>
     </template>
     <template #cell-expires="{ row: apiKey }">
       <span class="tabular">{{ formatDate(apiKey.expiresAt, 'Never') }}</span>

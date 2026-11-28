@@ -4,6 +4,7 @@ import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/re
 import type { UpstreamProtocol } from '@/db/schemas';
 import { BackgroundWork } from '@/libs/providers/background-work';
 import type { SnapshotProviderAccount } from '@/snapshot/models/snapshot';
+import { SnapshotService } from '@/snapshot/providers/snapshot.service';
 import { MarkProviderAccountExhaustedCommand } from '@/upstream/commands/impl/mark-provider-account-exhausted.command';
 import { SIGN_IN_AGAIN_REASON } from '@/upstream/models/oauth-login';
 import {
@@ -24,6 +25,12 @@ import {
   exhaustionError,
   gatewayErrorFor,
 } from '@/inference/models/attempt-failure';
+import {
+  type HeldSlot,
+  providerAccountSlotHolder,
+  type SlotHolder,
+  type SlotWait,
+} from '@/inference/models/concurrency-slot';
 import { exhaustedUntilOf } from '@/inference/models/quota-exhausted-error';
 import {
   type AttemptPath,
@@ -34,6 +41,7 @@ import {
 import type { Destination } from '@/inference/models/destination';
 import type { SentServiceTier } from '@/inference/models/service-tier';
 import type { UsageMeter } from '@/inference/models/usage-meter';
+import { ConcurrencySlots } from './concurrency-slots';
 
 export const MAX_ATTEMPTS_PER_REQUEST = 5;
 
@@ -45,7 +53,12 @@ const LEAVES_REFUSED_LOGIN_ENABLED: CredentialReadOptions = { disablesRefusedLog
 export interface PreparedAttempt<Answer> {
   upstreamProtocol: UpstreamProtocol;
   sentServiceTier: SentServiceTier | null;
-  send(credential: ProviderAccountCredential): Promise<Answer>;
+  send(credential: ProviderAccountCredential, slot: HeldSlot): Promise<Answer>;
+}
+
+interface FallbackProgress {
+  failures: AttemptFailedError[];
+  skippedAccountIds: Set<string>;
 }
 
 @Injectable()
@@ -59,32 +72,38 @@ export class AttemptRunner {
     private readonly providerAccountHealth: ProviderAccountHealth,
     private readonly commandBus: CommandBus,
     private readonly backgroundWork: BackgroundWork,
+    private readonly slots: ConcurrencySlots,
+    private readonly snapshot: SnapshotService,
   ) {}
 
   answer<Answer>(
     destination: Destination,
     meter: UsageMeter,
+    wait: SlotWait,
     prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
   ): Promise<Answer> {
     if (destination.kind === 'probe') {
-      return this.probeAnswer(destination.target, meter, prepare);
+      return this.probeAnswer(destination.target, meter, wait, prepare);
     }
-    return this.firstAnswer(destination.paths, meter, prepare);
+    return this.firstAnswer(destination.paths, meter, wait, prepare);
   }
 
   async firstAnswer<Answer>(
     paths: AttemptPath[],
     meter: UsageMeter,
+    wait: SlotWait,
     prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
   ): Promise<Answer> {
     const servingAccountIds = servingProviderAccountIdsOf(paths);
     const cooldowns = await this.cooldowns.recentCooldowns(servingAccountIds);
-    const skippedAccountIds = new Set(cooldowns.keys());
+    const progress: FallbackProgress = {
+      failures: [],
+      skippedAccountIds: new Set(cooldowns.keys()),
+    };
     const recordedExhaustedAccountIds = new Set<string>();
-    const failures: AttemptFailedError[] = [];
     const targets = attemptTargets(paths, (target) => {
       const accountId = target.providerAccount.id;
-      if (!skippedAccountIds.has(accountId)) {
+      if (!progress.skippedAccountIds.has(accountId)) {
         return false;
       }
       if (
@@ -96,49 +115,97 @@ export class AttemptRunner {
       }
       return true;
     });
+    const fullTargets: AttemptTarget[] = [];
+    const fullAccountIds = new Set<string>();
     for (const target of targets) {
-      if (failures.length === MAX_ATTEMPTS_PER_REQUEST) {
+      if (progress.failures.length === MAX_ATTEMPTS_PER_REQUEST) {
         break;
       }
-      try {
-        const answer = await this.attemptWithCredential(
-          target,
-          prepare(target),
-          meter,
-          DISABLES_REFUSED_LOGIN,
-        );
-        void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
-        return answer;
-      } catch (error) {
-        if (!(error instanceof AttemptFailedError)) {
-          throw error;
-        }
-        meter.attemptFailed(error);
-        failures.push(error);
-        if (error.reason !== 'not_in_plan') {
-          skippedAccountIds.add(target.providerAccount.id);
-        }
-        await this.afterFailedAttempt(error, target);
-        if (error.reason === 'bad_request') {
-          throw gatewayErrorFor(error);
-        }
+      const slot = fullAccountIds.has(target.providerAccount.id)
+        ? null
+        : await this.slots.takeIfFree(this.slotHolderOf(target), wait);
+      if (!slot) {
+        fullAccountIds.add(target.providerAccount.id);
+        fullTargets.push(target);
+        continue;
+      }
+      const answered = await this.fallbackAttempt(target, slot, prepare, meter, progress);
+      if (answered) {
+        return answered.answer;
+      }
+    }
+    while (progress.failures.length < MAX_ATTEMPTS_PER_REQUEST) {
+      const waitingTargets = fullTargets.filter(
+        (target) => !progress.skippedAccountIds.has(target.providerAccount.id),
+      );
+      if (waitingTargets.length === 0) {
+        break;
+      }
+      const holders = distinctSlotHolders(
+        waitingTargets.map((target) => this.slotHolderOf(target)),
+      );
+      const { holder, slot } = await this.slots.takeFirstFree(holders, wait);
+      const targetIndex = fullTargets.findIndex(
+        (target) => target.providerAccount.id === holder.id,
+      );
+      const [target] = fullTargets.splice(targetIndex, 1);
+      const answered = await this.fallbackAttempt(target, slot, prepare, meter, progress);
+      if (answered) {
+        return answered.answer;
       }
     }
     throw exhaustionError(
-      failures,
+      progress.failures,
       servingAccountIds.map((id) => cooldowns.get(id)?.cause ?? null),
     );
+  }
+
+  private async fallbackAttempt<Answer>(
+    target: AttemptTarget,
+    slot: HeldSlot,
+    prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
+    meter: UsageMeter,
+    { failures, skippedAccountIds }: FallbackProgress,
+  ): Promise<{ answer: Answer } | null> {
+    try {
+      const answer = await this.attemptWithCredential(
+        target,
+        prepare,
+        slot,
+        meter,
+        DISABLES_REFUSED_LOGIN,
+      );
+      void this.cooldowns.resetRefusalsAfterSuccess(target.providerAccount.id);
+      return { answer };
+    } catch (error) {
+      if (!(error instanceof AttemptFailedError)) {
+        throw error;
+      }
+      meter.attemptFailed(error);
+      failures.push(error);
+      if (error.reason !== 'not_in_plan') {
+        skippedAccountIds.add(target.providerAccount.id);
+      }
+      await this.afterFailedAttempt(error, target);
+      if (error.reason === 'bad_request') {
+        throw gatewayErrorFor(error);
+      }
+      return null;
+    }
   }
 
   private async probeAnswer<Answer>(
     target: AttemptTarget,
     meter: UsageMeter,
+    wait: SlotWait,
     prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
   ): Promise<Answer> {
+    const { slot } = await this.slots.takeFirstFree([this.slotHolderOf(target)], wait);
     try {
       return await this.attemptWithCredential(
         target,
-        prepare(target),
+        prepare,
+        slot,
         meter,
         LEAVES_REFUSED_LOGIN_ENABLED,
       );
@@ -149,6 +216,10 @@ export class AttemptRunner {
       meter.attemptFailed(error);
       throw gatewayErrorFor(error);
     }
+  }
+
+  private slotHolderOf(target: AttemptTarget): SlotHolder {
+    return providerAccountSlotHolder(target, () => this.snapshot.current);
   }
 
   async afterFailedAttempt(
@@ -207,7 +278,23 @@ export class AttemptRunner {
 
   private async attemptWithCredential<Answer>(
     target: AttemptTarget,
+    prepare: (target: AttemptTarget) => PreparedAttempt<Answer>,
+    slot: HeldSlot,
+    meter: UsageMeter,
+    credentialOptions: CredentialReadOptions,
+  ): Promise<Answer> {
+    try {
+      return await this.attemptHoldingSlot(target, prepare(target), slot, meter, credentialOptions);
+    } catch (error) {
+      slot.release();
+      throw error;
+    }
+  }
+
+  private async attemptHoldingSlot<Answer>(
+    target: AttemptTarget,
     attempt: PreparedAttempt<Answer>,
+    slot: HeldSlot,
     meter: UsageMeter,
     credentialOptions: CredentialReadOptions,
   ): Promise<Answer> {
@@ -216,7 +303,7 @@ export class AttemptRunner {
     const credential = await this.credentialOf(account, credentialOptions);
     meter.credentialUsed(credential.secret);
     try {
-      return await attempt.send(credential);
+      return await attempt.send(credential, slot);
     } catch (error) {
       if (!isRejectedOauthLogin(error, account)) {
         throw error;
@@ -231,7 +318,7 @@ export class AttemptRunner {
         this.credentials.credentialAfterRejection(account.id, credential, credentialOptions),
       );
       meter.credentialUsed(renewed.secret);
-      return await attempt.send(renewed);
+      return await attempt.send(renewed, slot);
     }
   }
 
@@ -304,6 +391,11 @@ async function asAttemptFailure(
     }
     throw error;
   }
+}
+
+function distinctSlotHolders(holders: SlotHolder[]): SlotHolder[] {
+  const byId = new Map(holders.map((holder) => [holder.id, holder]));
+  return [...byId.values()];
 }
 
 function servingProviderAccountIdsOf(paths: AttemptPath[]): string[] {

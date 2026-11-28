@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { KeyRound, LogIn, Pencil, Plus, Power, Trash2 } from '@lucide/vue';
+import { concurrencyLimitLabel, MAX_CONCURRENCY_LIMIT } from '~/lib/concurrencyLimit';
 import { resetCountdown, usageResetCount } from '~/lib/quotaMeters';
 import {
   acceptsApiKey,
@@ -128,6 +129,7 @@ interface ProviderAccountForm {
   name: string;
   key: string;
   priority: number | string;
+  concurrencyLimit: number | string;
   continueWhenExhausted: boolean;
   paysBeyondPlan: boolean;
   planChoice: string;
@@ -137,6 +139,7 @@ const EMPTY_FORM: ProviderAccountForm = {
   name: '',
   key: '',
   priority: 0,
+  concurrencyLimit: '',
   continueWhenExhausted: false,
   paysBeyondPlan: false,
   planChoice: AUTO_PLAN_CHOICE,
@@ -148,8 +151,17 @@ function openDialog(next: ProviderAccountDialog): void {
   showDialog(next);
   if (next.kind === 'create') form.value = { ...EMPTY_FORM };
   if (next.kind === 'edit') {
-    const { name, priority, continueWhenExhausted, paysBeyondPlan, planChoice } = next.account;
-    form.value = { name, key: '', priority, continueWhenExhausted, paysBeyondPlan, planChoice };
+    const { name, priority, concurrencyLimit, continueWhenExhausted, paysBeyondPlan, planChoice } =
+      next.account;
+    form.value = {
+      name,
+      key: '',
+      priority,
+      concurrencyLimit: concurrencyLimit ?? '',
+      continueWhenExhausted,
+      paysBeyondPlan,
+      planChoice,
+    };
   }
 }
 
@@ -205,6 +217,7 @@ async function saveAccount(): Promise<void> {
             providerId: props.provider.id,
             key: form.value.key,
             priority: fields.priority,
+            concurrencyLimit: optionalNumber(form.value.concurrencyLimit),
             ...quotaFields,
             ...planFields,
             ...planChoiceFields,
@@ -222,11 +235,14 @@ async function saveAccount(): Promise<void> {
   const key = form.value.key === '' ? {} : { key: form.value.key };
   const changedPlanChoice =
     form.value.planChoice === current.account.planChoice ? {} : planChoiceFields;
+  const concurrencyLimit = optionalNumber(form.value.concurrencyLimit);
+  const changedConcurrencyLimit =
+    concurrencyLimit === current.account.concurrencyLimit ? {} : { concurrencyLimit };
   await submitDialog(
     async () => {
       await $dashboardApi(`/provider-accounts/${current.account.id}`, {
         method: 'PATCH',
-        body: { ...fields, ...key, ...changedPlanChoice },
+        body: { ...fields, ...key, ...changedPlanChoice, ...changedConcurrencyLimit },
       });
       form.value.key = '';
     },
@@ -302,7 +318,12 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
               {{ credential.label }}
               <span v-if="credential.note" class="cell-note tabular">{{ credential.note }}</span>
             </td>
-            <td class="tabular">{{ account.priority }}</td>
+            <td class="tabular">
+              {{ account.priority }}
+              <span v-if="account.concurrencyLimit !== null" class="cell-note"
+                >Up to {{ concurrencyLimitLabel(account.concurrencyLimit) }}</span
+              >
+            </td>
             <td>
               <span class="status-badge" :class="STATUS_BADGES[status.kind].badgeClass">{{
                 STATUS_BADGES[status.kind].label
@@ -441,6 +462,18 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
       <label class="field"
         ><span class="field__label">Priority (lower runs first)</span
         ><NumberInput v-model="form.priority" class="text-input" whole :min="0"
+      /></label>
+      <label class="field"
+        ><span class="field__label">Concurrency Limit</span
+        ><NumberInput
+          v-model="form.concurrencyLimit"
+          class="text-input"
+          whole
+          :min="1"
+          :max="MAX_CONCURRENCY_LIMIT"
+          suffix="at once"
+          unit-label="Attempts at once"
+          placeholder="No limit"
       /></label>
       <label v-if="hasQuota" class="check-field"
         ><input v-model="form.continueWhenExhausted" type="checkbox" /> Continue on Credits when

@@ -96,6 +96,7 @@ export const apiKeys = pgTable(
     spendLimit: numeric('spend_limit', { precision: 18, scale: 10, mode: 'number' }),
     spent: numeric('spent', { precision: 18, scale: 10, mode: 'number' }).notNull().default(0),
     requestRate: integer('request_rate'),
+    concurrencyLimit: integer('concurrency_limit'),
   },
   (table) => [
     index('api_keys_integration_id_customer_id_idx').on(table.integrationId, table.customerId),

@@ -41,6 +41,7 @@ export interface ApiKeySummary {
   spendLimit: number | null;
   spent: number;
   requestRate: number | null;
+  concurrencyLimit: number | null;
 }
 
 export interface ApiKeyRotation {
@@ -70,6 +71,7 @@ export interface ApiKeyPrincipal extends ModelAllowance {
   customer: KeyCustomer | null;
   spendLimit: number | null;
   requestRate: number | null;
+  concurrencyLimit: number | null;
 }
 
 export function mayUseModel(principal: ApiKeyPrincipal, model: GroupedModel): boolean {
