@@ -54,6 +54,8 @@ describe('db:seed script (e2e)', () => {
         'openai',
         'openai-codex',
         'opencode-go',
+        'tencent-tokenhub-intl',
+        'tencent-tokenhub-token-plan',
         'tokenharbor',
         'tokenrouter-com',
         'tokenrouter-io',

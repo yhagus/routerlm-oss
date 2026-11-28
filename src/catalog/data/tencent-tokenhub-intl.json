@@ -1,0 +1,445 @@
+{
+  "slug": "tencent-tokenhub-intl",
+  "name": "Tencent TokenHub API (International)",
+  "logo": "tencent",
+  "termsRisk": false,
+  "verified": false,
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://tokenhub-intl.tencentmaas.com/v1"
+    },
+    {
+      "kind": "chat",
+      "protocol": "anthropic-messages",
+      "baseUrl": "https://tokenhub-intl.tencentmaas.com"
+    },
+    {
+      "kind": "chat",
+      "protocol": "openai-responses",
+      "baseUrl": "https://tokenhub-intl.tencentmaas.com/v1"
+    }
+  ],
+  "authStyle": "bearer",
+  "modelsDevProviderId": "tencent-tokenhub",
+  "quirks": {
+    "exhaustedErrorCodes": ["401007", "401008"]
+  },
+  "credentialKinds": ["api-key"],
+  "source": {
+    "urls": [
+      "https://cloud.tencent.com/document/product/1823/130079",
+      "https://cloud.tencent.com/document/product/1823/130078",
+      "https://cloud.tencent.com/document/product/1823/130051",
+      "https://cloud.tencent.com/document/product/1823/131595",
+      "https://www.tencentcloud.com/document/product/1300/78937",
+      "https://www.tencentcloud.com/act/pro/tokenhub"
+    ],
+    "retrievedOn": "2026-11-28"
+  },
+  "notes": "Tencent Cloud TokenHub, International (Global) region, served from Singapore: pay-as-you-go with per-token prices in USD per million tokens (the Singapore tab of the price page). The promo page spells the host tokenhub-intl.tencentcloudmaas.com; it answers like tokenhub-intl.tencentmaas.com, which is shipped. Keys are bound to their region: a Mainland China key answers 401002 here. The Mainland China region and the Coding Plan (a separate host, api.lkeap.cloud.tencent.com) are not shipped; the Token Plan is the separate tencent-tokenhub-token-plan Provider. Three chat endpoints: chat completions and Responses under /v1, and Anthropic Messages. Every model lists chat completions first and Anthropic Messages second; models TokenHub serves natively on Responses list it third (not GLM-5.2, which TokenHub only converts server-side, nor Step 5 Preview). The docs ask for x-api-key on /v1/messages, but a probe with a fake key showed every endpoint parses Authorization: Bearer (401002 \"key does not exist\" rather than 401001 for a missing key), so the Provider uses bearer auth throughout. Reasoning comes back as reasoning_content on chat completions and as thinking blocks on Anthropic Messages, and a stream can end in an SSE error frame mid-way (1823/130079). Errors 429001-429006 carry Retry-After and stay a Cooldown. 401007 (no free trial quota left) and 401008 (free trial quota used up), both HTTP 402 with post-paid billing off, are exhaustedErrorCodes: the code is a string in the OpenAI-shaped error body, while Anthropic Messages errors carry no code, so there they stay a plain failure. The free trial (1M tokens per model for 90 days, offered until 2026-12-31) is not modelled. Hy4 (until 2026-12-31 23:59:59) and Hy4 Flash (until 2026-11-30 12:00, both Beijing time) are settled at 50% of their list prices; the Catalog ships no Validity Periods (ADR 0040), so the sale is not shipped and those models carry list prices. DeepSeek V4.1 Flash has weekday peak rates in the TokenHub DeepSeek Peak window; its standard prices are the off-peak ones. The price page gives DeepSeek V4 Pro and DeepSeek V3.2 no peak rate. Price page conflicts: the Singapore block of 1823/130055 shows other prices for GLM-5.3 and Kimi K3; the shipped prices follow 1300/78937. Release dates are the day each model was first released by any Provider, copied from the original Provider's Catalog file or from models.dev. Not flagged for Terms Risk: TokenHub publishes its inference URLs and how to call them. Not shipped: hy4-preview (retires 2026-12-07), glm-5v-turbo, minimax-m2.7 (retired), the hy-mt translation models, the hunyuan-role and hy-role models, Kimi K2.7 and K2.8, dated snapshots and aliases such as deepseek-v4-pro-202606, deepseek-v4-pro-0813, deepseek/deepseek-v4-pro and deepseek/deepseek-flash, and embedding, image, video and speech models, which have no Protocol here. Unverified until a live check: the exact model IDs GET /v1/models returns, which model and Protocol combinations TokenHub refuses, whether streams report usage, and which usage field carries cached tokens (prompt_tokens_details.cached_tokens on chat completions and cache_read_input_tokens on Anthropic Messages are assumed).",
+  "pricingWindows": [
+    {
+      "name": "TokenHub DeepSeek Peak",
+      "timeZone": "Asia/Shanghai",
+      "ranges": [
+        {
+          "weekdays": [1, 2, 3, 4, 5],
+          "start": "09:00",
+          "end": "12:00"
+        },
+        {
+          "weekdays": [1, 2, 3, 4, 5],
+          "start": "14:00",
+          "end": "18:00"
+        }
+      ],
+      "notes": "TokenHub's DeepSeek peak hours, 09:00-12:00 and 14:00-18:00 Beijing time on weekdays, as the TokenHub price page (1300/78937) states them; every other hour, weekends included, is off-peak, and a request is billed by when TokenHub receives it. The standard prices of the models that attach it are the off-peak rates."
+    }
+  ],
+  "upstreamModels": [
+    {
+      "upstreamModelId": "hy4-flash",
+      "name": "Hy4 Flash",
+      "releaseDate": "2026-11-16",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.07,
+      "outputPrice": 0.281,
+      "cacheReadPrice": 0.003,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow models.dev (Tencent TokenHub) where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. Prices are list prices: until 2026-11-30 12:00 Asia/Shanghai TokenHub settles Hy4 Flash at 50% of them, a limited-time sale the Catalog cannot ship (ADR 0040: no Validity Periods in Catalog files), so Cost overstates requests made during the sale."
+    },
+    {
+      "upstreamModelId": "hy4",
+      "name": "Hy4",
+      "releaseDate": "2026-11-04",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.834,
+      "outputPrice": 2.501,
+      "cacheReadPrice": 0.042,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow models.dev (Tencent TokenHub) where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. Prices are list prices: until 2026-12-31 23:59:59 Asia/Shanghai TokenHub settles Hy4 at 50% of them, a limited-time sale the Catalog cannot ship (ADR 0040: no Validity Periods in Catalog files), so Cost overstates requests made during the sale."
+    },
+    {
+      "upstreamModelId": "hy3",
+      "name": "Hy3",
+      "releaseDate": "2026-07-06",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 256000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 0.132,
+      "outputPrice": 0.528,
+      "cacheReadPrice": 0.033,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow models.dev (Tencent TokenHub) where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "releaseDate": "2026-09-10",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.15,
+      "outputPrice": 0.6,
+      "cacheReadPrice": 0.003,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow models.dev (Tencent TokenHub) where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. The standard prices are the off-peak rates; the weekday peak rates (0.3/1.2/0.006) are its Window Prices for the DeepSeek peak window.",
+      "windowPrices": [
+        {
+          "pricingWindow": "TokenHub DeepSeek Peak",
+          "inputPrice": 0.3,
+          "outputPrice": 1.2,
+          "cacheReadPrice": 0.006
+        }
+      ]
+    },
+    {
+      "upstreamModelId": "deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
+      "releaseDate": "2026-04-24",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 1.74,
+      "outputPrice": 3.48,
+      "cacheReadPrice": 0.145,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow models.dev (Tencent TokenHub) where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. The price page lists this row with no peak rate. The separate \"DeepSeek-V4-Pro 0813 GA\" row (deepseek-v4-pro-0813, 0.66/1.98/0.022 off-peak and 1.32/3.96/0.044 peak) is a dated snapshot and is not shipped; these are the plain deepseek-v4-pro prices."
+    },
+    {
+      "upstreamModelId": "deepseek-v3.2",
+      "name": "DeepSeek V3.2",
+      "releaseDate": "2025-12-01",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": 64000,
+      "inputPrice": 0.57,
+      "outputPrice": 1.71,
+      "cacheReadPrice": 0.114,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the tokenharbor Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. The price page gives no context size and no peak rate for this model; context size, maximum output and capabilities are those of the tokenharbor Catalog file."
+    },
+    {
+      "upstreamModelId": "glm-5.3",
+      "name": "GLM-5.3",
+      "releaseDate": "2026-08-14",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the zai Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. The Singapore block of https://cloud.tencent.com/document/product/1823/130055 shows different GLM-5.3 prices; these follow 1300/78937."
+    },
+    {
+      "upstreamModelId": "glm-5.3-flash",
+      "name": "GLM-5.3-Flash",
+      "releaseDate": "2026-08-26",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.5,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the zai Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "glm-5.2",
+      "name": "GLM-5.2",
+      "releaseDate": "2026-06-13",
+      "protocols": ["openai-chat", "anthropic-messages"],
+      "capabilities": ["tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the zai Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. Not listed on Responses: TokenHub serves GLM-5.2 there only through a server-side conversion, not natively."
+    },
+    {
+      "upstreamModelId": "kimi-k3",
+      "name": "Kimi K3",
+      "releaseDate": "2026-07-16",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 1048576,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the moonshot Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. The Singapore block of https://cloud.tencent.com/document/product/1823/130055 shows different Kimi K3 prices; these follow 1300/78937."
+    },
+    {
+      "upstreamModelId": "kimi-k3.1-pro",
+      "name": "Kimi K3.1 Pro",
+      "releaseDate": "2026-10-23",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 1048576,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the moonshot Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "kimi-k3.1-pro-highspeed",
+      "name": "Kimi K3.1 Pro Highspeed",
+      "releaseDate": "2026-10-23",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 1048576,
+      "inputPrice": 4,
+      "outputPrice": 20,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the moonshot Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "kimi-k2.6",
+      "name": "Kimi K2.6",
+      "releaseDate": "2026-04-20",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.858,
+      "outputPrice": 3.566,
+      "cacheReadPrice": 0.145,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the moonshot Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "minimax-m3",
+      "name": "MiniMax-M3",
+      "releaseDate": "2026-06-01",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 524288,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the minimax-api Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. Above 512K input tokens TokenHub charges 0.6 input, 2.4 output and 0.12 cache read; only the base prices are shipped, so Cost understates very long prompts. TokenHub lists no maximum output, so it is the minimax-api Catalog file's."
+    },
+    {
+      "upstreamModelId": "minimax-m3.1-flash",
+      "name": "MiniMax-M3.1-Flash",
+      "releaseDate": "2026-10-19",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 512000,
+      "inputPrice": 0.15,
+      "outputPrice": 0.6,
+      "cacheReadPrice": 0.015,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the minimax-api Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "mimo-v2.6-pro",
+      "name": "MiMo-V2.6-Pro",
+      "releaseDate": "2026-09-22",
+      "protocols": ["openai-chat", "anthropic-messages", "openai-responses"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.435,
+      "outputPrice": 0.87,
+      "cacheReadPrice": 0.0036,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow the xiaomi-mimo Catalog file where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "step-5-preview",
+      "name": "Step 5 Preview",
+      "releaseDate": "2026-09-16",
+      "protocols": ["openai-chat", "anthropic-messages"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 1,
+      "outputPrice": 2.7,
+      "cacheReadPrice": 0.05,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://www.tencentcloud.com/document/product/1300/78937",
+          "https://cloud.tencent.com/document/product/1823/130051",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Release date, context size, maximum output and capabilities follow models.dev (StepFun) where TokenHub's model list (1823/130051) does not settle them. Prices are TokenHub International (Singapore) pay-as-you-go list prices in USD per million tokens; TokenHub publishes no cache write price. Not listed on Responses: TokenHub does not serve it there natively."
+    }
+  ]
+}
