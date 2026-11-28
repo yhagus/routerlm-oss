@@ -4,6 +4,17 @@ import type { ReasoningEffort, ServiceTier } from '~/lib/parameterPolicy';
 
 export type FinishReason = 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'other';
 
+export const FINISH_REASON_LABELS = {
+  stop: 'Finished',
+  length: 'Hit the output limit',
+  tool_calls: 'Called a tool',
+  content_filter: 'Filtered by the Provider',
+  other: 'Other',
+} as const satisfies Record<FinishReason, string>;
+
+export const OUTPUT_SPEED_HINT =
+  'Output tokens per second while a streamed response is being generated, after its Time to First Token. Reasoning tokens count only when they were streamed; hidden reasoning happens before the first output and is left out. Only successful, complete, uncancelled streamed requests with enough output to measure have one.';
+
 export interface UsageLogSummary extends RecordedIntegration {
   id: string;
   createdAt: string;
@@ -171,4 +182,16 @@ export function formatCount(count: number | null): string {
 export function formatDuration(ms: number | null): string {
   if (ms === null) return '—';
   return ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(2)} s`;
+}
+
+const SLOW_OUTPUT_SPEED = 10;
+
+export function formatOutputSpeed(tokensPerSecond: number | null): string {
+  if (tokensPerSecond === null) return '—';
+  const digits = tokensPerSecond < SLOW_OUTPUT_SPEED ? 1 : 0;
+  return `${tokensPerSecond.toFixed(digits)} tok/s`;
+}
+
+export function playgroundUserLabel(log: UsageLogSummary): string {
+  return log.userEmail ?? 'deleted user';
 }
