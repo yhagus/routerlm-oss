@@ -57,6 +57,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
       }
     });
     this.subscriber.on('ready', () => runInBackground(this.reload()));
+    runInBackground(firstConnectionAttemptOf(this.subscriber));
     this.subscriber.subscribe(SNAPSHOT_CHANGED_CHANNEL).catch((error: unknown) => {
       this.logger.warn(`Not subscribed to snapshot changes: ${String(error)}`);
     });
@@ -112,4 +113,16 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     this.lastReload = reloaded;
     return reloaded;
   }
+}
+
+function firstConnectionAttemptOf(connection: Redis): Promise<void> {
+  return new Promise((resolve) => {
+    const settle = (): void => {
+      connection.off('ready', settle);
+      connection.off('error', settle);
+      resolve();
+    };
+    connection.on('ready', settle);
+    connection.on('error', settle);
+  });
 }
