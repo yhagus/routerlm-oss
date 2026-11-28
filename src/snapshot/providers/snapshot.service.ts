@@ -6,6 +6,7 @@ import {
   type OnApplicationShutdown,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { QueryBus } from '@nestjs/cqrs';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import type { Redis } from 'ioredis';
@@ -14,8 +15,9 @@ import type { Database } from '@/db/schemas/relations';
 import { runInBackground } from '@/libs/models/background-work';
 import { publishPrivateUpstreamsAllowed } from '@/libs/models/private-upstreams-policy';
 import { RedisConnection } from '@/redis/providers/redis-connection';
-import { SettingsStore } from '@/settings/providers/settings-store';
-import { loadSnapshot } from '@/snapshot/models/load-snapshot';
+import { ShowPrivateUpstreamsQuery } from '@/settings/queries/impl/show-private-upstreams.query';
+import { ShowTermsRiskProvidersQuery } from '@/settings/queries/impl/show-terms-risk-providers.query';
+import { loadSnapshot, type SnapshotSettings } from '@/snapshot/models/load-snapshot';
 import { EMPTY_SNAPSHOT, type Snapshot } from '@/snapshot/models/snapshot';
 
 export const SNAPSHOT_CHANGED_CHANNEL = 'routerlm:snapshot-changed';
@@ -39,7 +41,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     redis: RedisConnection,
     private readonly config: ConfigService<Env, true>,
     private readonly schedulerRegistry: SchedulerRegistry,
-    private readonly settings: SettingsStore,
+    private readonly queryBus: QueryBus,
   ) {
     this.publisher = redis.client;
     this.subscriber = redis.createSubscriber();
@@ -102,7 +104,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
   private reload(): Promise<boolean> {
     const reloaded = this.lastReload.then(async () => {
       try {
-        this.snapshot = await loadSnapshot(this.db, this.settings);
+        this.snapshot = await loadSnapshot(this.db, await this.readSettings());
         publishPrivateUpstreamsAllowed(this.snapshot.allowsPrivateUpstreams);
         return true;
       } catch (error) {
@@ -112,6 +114,17 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     });
     this.lastReload = reloaded;
     return reloaded;
+  }
+
+  private async readSettings(): Promise<SnapshotSettings> {
+    const [termsRiskProviders, privateUpstreams] = await Promise.all([
+      this.queryBus.execute(new ShowTermsRiskProvidersQuery()),
+      this.queryBus.execute(new ShowPrivateUpstreamsQuery()),
+    ]);
+    return {
+      allowsTermsRiskProviders: termsRiskProviders.allowed,
+      allowsPrivateUpstreams: privateUpstreams.allowed,
+    };
   }
 }
 
