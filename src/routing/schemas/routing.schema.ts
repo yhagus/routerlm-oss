@@ -12,6 +12,7 @@ const capSchemas = {
   topP: z.number().min(0).max(1),
   maxOutputTokens: z.int().positive(),
   reasoningEffort: z.enum(REASONING_EFFORTS),
+  reasoningBudgetTokens: z.int().positive(),
 };
 const parameterValuesSchema = z.strictObject({
   ...capSchemas,
@@ -26,10 +27,7 @@ export const parameterPolicySchema = z
   .strictObject({
     defaults: parameterValuesSchema.partial().optional(),
     forced: parameterValuesSchema.partial().optional(),
-    caps: z
-      .strictObject({ ...capSchemas, reasoningBudgetTokens: z.int().positive() })
-      .partial()
-      .optional(),
+    caps: z.strictObject(capSchemas).partial().optional(),
     systemPrompt: z.string().optional(),
   })
   .superRefine((policy, context) => {

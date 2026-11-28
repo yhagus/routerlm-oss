@@ -307,6 +307,25 @@ describe('Models (e2e)', () => {
     ]);
   });
 
+  it('refuses a Parameter Policy whose default thinking budget is above its cap, saying which', async () => {
+    const modelId = await createModel('smart');
+
+    const refused = await request(app.getHttpServer())
+      .patch(`/api/models/${modelId}`)
+      .set('Cookie', cookie)
+      .send({
+        parameterPolicy: {
+          defaults: { reasoningBudgetTokens: 8000 },
+          caps: { reasoningBudgetTokens: 2048 },
+        },
+      })
+      .expect(400);
+
+    expect(refused.body.message).toEqual([
+      expect.stringContaining('The default reasoningBudgetTokens (8000) is above its cap (2048)'),
+    ]);
+  });
+
   it('refuses a Parameter Policy naming a parameter it does not know', async () => {
     const modelId = await createModel('smart');
 

@@ -6,6 +6,7 @@ export const POLICY_PARAMETERS = [
   'topP',
   'maxOutputTokens',
   'reasoningEffort',
+  'reasoningBudgetTokens',
   'stopSequences',
   'serviceTier',
   'voice',
@@ -13,7 +14,7 @@ export const POLICY_PARAMETERS = [
 ] as const satisfies readonly (keyof ParameterValues)[];
 
 type PolicyParameter = (typeof POLICY_PARAMETERS)[number];
-type CappedParameter = Exclude<keyof ParameterCaps, 'reasoningBudgetTokens'>;
+type CappedParameter = keyof ParameterCaps;
 type NumericParameter = 'temperature' | 'topP' | 'maxOutputTokens';
 
 export function applyParameterPolicy(
@@ -51,11 +52,6 @@ export function effectiveParameterPolicy(
     const source = setsParameter(routeOverride, parameter) ? routeOverride : modelPolicy;
     copyRules(source, effective, parameter);
   }
-  const reasoningBudgetCap =
-    routeOverride.caps?.reasoningBudgetTokens ?? modelPolicy.caps?.reasoningBudgetTokens;
-  if (reasoningBudgetCap !== undefined) {
-    effective.caps = { ...effective.caps, reasoningBudgetTokens: reasoningBudgetCap };
-  }
   const systemPrompt = routeOverride.systemPrompt ?? modelPolicy.systemPrompt;
   if (systemPrompt !== undefined) {
     effective.systemPrompt = systemPrompt;
@@ -80,12 +76,7 @@ function reasoningUnderPolicy(
   clientReasoning: InferenceRequest['reasoning'],
   { defaults, forced, caps }: ParameterPolicy,
 ): InferenceRequest['reasoning'] {
-  if (forced?.reasoningEffort) {
-    return { effort: lowerEffort(forced.reasoningEffort, caps?.reasoningEffort) };
-  }
-  const reasoning =
-    clientReasoning ??
-    (defaults?.reasoningEffort ? { effort: defaults.reasoningEffort } : undefined);
+  const reasoning = reasoningOf(forced) ?? clientReasoning ?? reasoningOf(defaults);
   if (!reasoning) {
     return reasoning;
   }
@@ -98,6 +89,19 @@ function reasoningUnderPolicy(
     policed.budgetTokens = Math.min(policed.budgetTokens, budgetCap);
   }
   return policed;
+}
+
+function reasoningOf(values: ParameterValues | undefined): InferenceRequest['reasoning'] {
+  const reasoning: NonNullable<InferenceRequest['reasoning']> = {};
+  if (values?.reasoningEffort !== undefined) {
+    reasoning.effort = values.reasoningEffort;
+  }
+  if (values?.reasoningBudgetTokens !== undefined) {
+    reasoning.budgetTokens = values.reasoningBudgetTokens;
+  }
+  return reasoning.effort === undefined && reasoning.budgetTokens === undefined
+    ? undefined
+    : reasoning;
 }
 
 function lowerEffort(effort: ReasoningEffort, cap: ReasoningEffort | undefined): ReasoningEffort {

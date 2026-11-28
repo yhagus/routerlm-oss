@@ -350,6 +350,48 @@ describe('Parameter Policy (e2e)', () => {
       expect(upstream.lastRequest.body).not.toHaveProperty('thinking');
     });
 
+    it('fills a thinking budget the client omitted with the default', async () => {
+      await saveModelPolicy(messagesModelId, { defaults: { reasoningBudgetTokens: 2048 } });
+
+      await createMessage({});
+
+      expect(upstream.lastRequest.body).toMatchObject({
+        thinking: { type: 'enabled', budget_tokens: 2048 },
+      });
+    });
+
+    it("keeps the client's reasoning effort over a default thinking budget", async () => {
+      await saveModelPolicy(messagesModelId, { defaults: { reasoningBudgetTokens: 2048 } });
+
+      await createMessage({ output_config: { effort: 'high' } });
+
+      expect(upstream.lastRequest.body).toMatchObject({ output_config: { effort: 'high' } });
+      expect(upstream.lastRequest.body).not.toHaveProperty('thinking.budget_tokens');
+    });
+
+    it("replaces the client's thinking budget with a forced one", async () => {
+      await saveModelPolicy(messagesModelId, { forced: { reasoningBudgetTokens: 1024 } });
+
+      await createMessage({ thinking: { type: 'enabled', budget_tokens: 8000 } });
+
+      expect(upstream.lastRequest.body).toMatchObject({
+        thinking: { type: 'enabled', budget_tokens: 1024 },
+      });
+    });
+
+    it("lowers the client's thinking budget to the cap beside a default", async () => {
+      await saveModelPolicy(messagesModelId, {
+        defaults: { reasoningBudgetTokens: 1024 },
+        caps: { reasoningBudgetTokens: 2048 },
+      });
+
+      await createMessage({ thinking: { type: 'enabled', budget_tokens: 8000 } });
+
+      expect(upstream.lastRequest.body).toMatchObject({
+        thinking: { type: 'enabled', budget_tokens: 2048 },
+      });
+    });
+
     it("places the system prompt verbatim before the client's system content", async () => {
       await saveModelPolicy(chatModel.modelId, {
         systemPrompt: "You are Acme's assistant. {{user}} is not a variable.",
