@@ -149,4 +149,18 @@ describe('db:seed:demo script (e2e)', () => {
     expect(withToolCalls).toBeGreaterThan(0);
     expect(withStreamedReasoning).toBeGreaterThan(0);
   });
+
+  it('records a thinking budget on some demo requests, never alongside a reasoning effort', async () => {
+    const [{ withThinkingBudget }] = await db
+      .select({ withThinkingBudget: count() })
+      .from(usageLogs)
+      .where(isNotNull(usageLogs.thinkingBudgetTokens));
+    const [{ withBothReasoningLimits }] = await db
+      .select({ withBothReasoningLimits: count() })
+      .from(usageLogs)
+      .where(and(isNotNull(usageLogs.thinkingBudgetTokens), isNotNull(usageLogs.reasoningEffort)));
+
+    expect(withThinkingBudget).toBeGreaterThan(0);
+    expect(withBothReasoningLimits).toBe(0);
+  });
 });
