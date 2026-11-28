@@ -1,3 +1,109 @@
+# v6.5.0 (2026-11-28)
+
+#### Notable changes
+
+**Upgrade**
+* Run the 5 new migrations; they apply on start: `20261127181248_mark_providers_verified`, `20261128043631_record_response_measurements`, `20261128063652_copy_user_email_onto_usage_logs`, `20261128070329_mark_catalog_providers_verified` and `20261128071822_model_display_name` – [b6ab76e](https://github.com/yhagus/routerlm-oss/commit/b6ab76eeece0af4969ac7f81c63e61bc70b6d077), [03627de](https://github.com/yhagus/routerlm-oss/commit/03627de894a72507229706bf2e58d11b8aeff7f1), [d4486f0](https://github.com/yhagus/routerlm-oss/commit/d4486f0e29d49a6f86a37b6b82bc575be1756848), [18e2722](https://github.com/yhagus/routerlm-oss/commit/18e272270cc67bcf60761eb2f528259db5291618), [6e0304a](https://github.com/yhagus/routerlm-oss/commit/6e0304a617f64c80e6b222f7abf3c9bfb2b1f0bb)
+* `mark_catalog_providers_verified` marks existing Catalog Providers Verified once, on the day their Catalog file was checked. It only touches Providers that came from the Catalog and are still Unverified, so a Provider already Verified keeps its date and a Provider an operator created stays as it is. The two new Tencent TokenHub Providers are left out because their files opt out. The seeder never changes existing Providers, so an operator can unmark any of them afterwards and the choice sticks – [18e2722](https://github.com/yhagus/routerlm-oss/commit/18e272270cc67bcf60761eb2f528259db5291618)
+* `mark_providers_verified` adds `providers.verified` (default off) and `providers.verified_at`, and marks the `tokenharbor` and `clinepass` Catalog Providers Verified – [b6ab76e](https://github.com/yhagus/routerlm-oss/commit/b6ab76eeece0af4969ac7f81c63e61bc70b6d077)
+* `model_display_name` adds a nullable `models.display_name` column. Existing Models keep it empty and nothing changes for them until an operator sets one – [6e0304a](https://github.com/yhagus/routerlm-oss/commit/6e0304a617f64c80e6b222f7abf3c9bfb2b1f0bb)
+* `record_response_measurements` adds columns to `usage_logs`: `finish_reason`, `max_output_tokens`, `reasoning_effort`, `thinking_budget_tokens`, `image_count`, `is_reasoning_streamed` (default false), `tool_count` and `tool_call_count` (default 0). `copy_user_email_onto_usage_logs` adds `usage_logs.user_email`. Existing Usage Logs keep these empty or at their defaults – [03627de](https://github.com/yhagus/routerlm-oss/commit/03627de894a72507229706bf2e58d11b8aeff7f1), [d4486f0](https://github.com/yhagus/routerlm-oss/commit/d4486f0e29d49a6f86a37b6b82bc575be1756848)
+* New personal data kept: a Usage Log now stores a copy of the signing-in user's email (`usage_logs.user_email`) for Playground requests, so the usage pages no longer join the users table and the email stays after the user is deleted – [d4486f0](https://github.com/yhagus/routerlm-oss/commit/d4486f0e29d49a6f86a37b6b82bc575be1756848)
+* Usage jobs queued by v6.4.0 or earlier and still waiting when the new version starts may lack fields the writer now requires and could land in the failed jobs. Let the usage queue drain before upgrading (inferred from the diff, not confirmed by a test of a real upgrade) – [571b0ea](https://github.com/yhagus/routerlm-oss/commit/571b0eae174b687d97365909042184ee7394f786)
+* The control-plane API now fails loudly instead of returning an empty string when an Integration's API Key or Usage Log names no Customer. Keys and logs issued through an Integration always carry one, so nothing should change for healthy data – [cb6ee38](https://github.com/yhagus/routerlm-oss/commit/cb6ee38af6bbd43a475bbf11593b1c91c56b71bc)
+
+**Providers and Catalog**
+* A Provider has a Verified flag with the day it was confirmed, which an operator can set or unset in the API and the dashboard. It records a check and never changes routing. The Catalog ships Providers Verified unless their file opts out, and an operator's choice always wins over the Catalog – [b6ab76e](https://github.com/yhagus/routerlm-oss/commit/b6ab76eeece0af4969ac7f81c63e61bc70b6d077), [18e2722](https://github.com/yhagus/routerlm-oss/commit/18e272270cc67bcf60761eb2f528259db5291618), [772c703](https://github.com/yhagus/routerlm-oss/commit/772c7038643c6f0c90f0ccec965fa5d5bc225318)
+* The Catalog adds two Tencent TokenHub Providers (international and token plan), shipped Unverified – [612113b](https://github.com/yhagus/routerlm-oss/commit/612113b0340e470a9c2e4775fc872bbe2ec12a5a)
+* The dashboard marks verified Providers by name and the API Key form is reworked – [4e70fa7](https://github.com/yhagus/routerlm-oss/commit/4e70fa7a8e989d529b42324e09cef1e0960f8fd3)
+
+**Models and routing**
+* A Model can have an optional display name, shown in the dashboard lists, pickers and usage pages and returned by the Models API. Clients still call the Model by its name – [6e0304a](https://github.com/yhagus/routerlm-oss/commit/6e0304a617f64c80e6b222f7abf3c9bfb2b1f0bb)
+* A parameter policy can set a default thinking budget beside its cap, and the dashboard form has a field for it – [0197f0f](https://github.com/yhagus/routerlm-oss/commit/0197f0f921908cf6f565b57dc43032532dcacf9a), [097aca9](https://github.com/yhagus/routerlm-oss/commit/097aca9bf60a7c9140880a18a066c11e55b384ed)
+
+**Usage**
+* Usage Logs record the finish reason, the limits and parameters actually sent upstream (max output tokens, reasoning effort, thinking budget, tool and image counts), whether reasoning was streamed, and output speed. Each protocol records what it really sends, and the summary adds output speed – [03627de](https://github.com/yhagus/routerlm-oss/commit/03627de894a72507229706bf2e58d11b8aeff7f1), [ad2a5d7](https://github.com/yhagus/routerlm-oss/commit/ad2a5d7407ba5295a0f1e2eb1d6cddd670064651)
+* Usage Log rows returned by the API carry the served-by names (Provider, Provider Account and Model), and the usage pages show them with output speed and the response measurements – [9dd7a1f](https://github.com/yhagus/routerlm-oss/commit/9dd7a1fc26f5ed30c4a34221ba0af293bf4f9980), [108d868](https://github.com/yhagus/routerlm-oss/commit/108d8687a84ac1c5eaf2314c9e5f74ca9174a13a)
+* Each attempt now records the HTTP status the upstream actually answered with – [278f63f](https://github.com/yhagus/routerlm-oss/commit/278f63fdcb10fd32a3a16919a5744d1807ad0a3f)
+* Demo data seeds thinking budgets on requests served over Anthropic – [33199b7](https://github.com/yhagus/routerlm-oss/commit/33199b7c6d18ef84bb4353fccb3ab5d245671f12)
+
+**Other improvements**
+* Streaming responses are parsed through a single schema path, for OpenAI-style and Anthropic events alike, which cuts per-event work – [31ba65a](https://github.com/yhagus/routerlm-oss/commit/31ba65a06f6e424510bb786d0469ab38e02bc8e9), [7bf9ff5](https://github.com/yhagus/routerlm-oss/commit/7bf9ff5cec48dba66f48d2385367c171fc2e30a8)
+* Background work (usage writes and similar) is tracked in one provider and the gateway waits for it on shutdown, up to a bounded time – [080b123](https://github.com/yhagus/routerlm-oss/commit/080b123bdc917ace5801f955a969433773b7e64b)
+* The dashboard's loading screen fades out without renaming Nuxt's element – [e3a6bad](https://github.com/yhagus/routerlm-oss/commit/e3a6bad9a76718e91a2ac5b76a681b0abf592e25)
+
+#### Features
+* `catalog`
+  * [18e2722](https://github.com/yhagus/routerlm-oss/commit/18e272270cc67bcf60761eb2f528259db5291618) feat(catalog): ship catalog providers verified unless their file opts out
+  * [612113b](https://github.com/yhagus/routerlm-oss/commit/612113b0340e470a9c2e4775fc872bbe2ec12a5a) feat(catalog): add tencent tokenhub providers
+* `providers`
+  * [b6ab76e](https://github.com/yhagus/routerlm-oss/commit/b6ab76eeece0af4969ac7f81c63e61bc70b6d077) feat(providers): add a verified flag operators can set
+* `routing`
+  * [6e0304a](https://github.com/yhagus/routerlm-oss/commit/6e0304a617f64c80e6b222f7abf3c9bfb2b1f0bb) feat(routing): add an optional display name to models
+  * [0197f0f](https://github.com/yhagus/routerlm-oss/commit/0197f0f921908cf6f565b57dc43032532dcacf9a) feat(routing): let parameter policies default the thinking budget (#57)
+* `usage`
+  * [9dd7a1f](https://github.com/yhagus/routerlm-oss/commit/9dd7a1fc26f5ed30c4a34221ba0af293bf4f9980) feat(usage): return served-by names on usage log rows (#61)
+  * [03627de](https://github.com/yhagus/routerlm-oss/commit/03627de894a72507229706bf2e58d11b8aeff7f1) feat(usage): record finish reason, sent limits and output speed (#60)
+* `web`
+  * [108d868](https://github.com/yhagus/routerlm-oss/commit/108d8687a84ac1c5eaf2314c9e5f74ca9174a13a) feat(web): show served-by names, output speed and response measurements on usage (#61)
+  * [097aca9](https://github.com/yhagus/routerlm-oss/commit/097aca9bf60a7c9140880a18a066c11e55b384ed) feat(web): set a default thinking budget beside its cap (#57)
+  * [772c703](https://github.com/yhagus/routerlm-oss/commit/772c7038643c6f0c90f0ccec965fa5d5bc225318) feat(web): show and toggle the verified flag on providers
+
+#### Bug fixes
+* `demo`
+  * [33199b7](https://github.com/yhagus/routerlm-oss/commit/33199b7c6d18ef84bb4353fccb3ab5d245671f12) fix(demo): seed thinking budgets on anthropic-served demo requests (#60)
+* `usage`
+  * [d4486f0](https://github.com/yhagus/routerlm-oss/commit/d4486f0e29d49a6f86a37b6b82bc575be1756848) fix(usage): copy the user's email onto usage logs instead of joining users (#61)
+  * [ad2a5d7](https://github.com/yhagus/routerlm-oss/commit/ad2a5d7407ba5295a0f1e2eb1d6cddd670064651) fix(usage): record the parameters each protocol actually sends (#60)
+  * [278f63f](https://github.com/yhagus/routerlm-oss/commit/278f63fdcb10fd32a3a16919a5744d1807ad0a3f) fix(usage): record the upstream status an attempt answered with (#101)
+* `web`
+  * [e3a6bad](https://github.com/yhagus/routerlm-oss/commit/e3a6bad9a76718e91a2ac5b76a681b0abf592e25) fix(web): fade the spa loader without renaming nuxt's element (#110)
+
+#### Performance
+* `inference`
+  * [7bf9ff5](https://github.com/yhagus/routerlm-oss/commit/7bf9ff5cec48dba66f48d2385367c171fc2e30a8) perf(inference): parse anthropic stream events through one schema path (#100)
+  * [31ba65a](https://github.com/yhagus/routerlm-oss/commit/31ba65a06f6e424510bb786d0469ab38e02bc8e9) perf(inference): parse stream events through one schema path (#100)
+
+#### Refactors
+* `control-plane`
+  * [cb6ee38](https://github.com/yhagus/routerlm-oss/commit/cb6ee38af6bbd43a475bbf11593b1c91c56b71bc) refactor(control-plane): require customer ids on integration keys (#106)
+* `libs`
+  * [080b123](https://github.com/yhagus/routerlm-oss/commit/080b123bdc917ace5801f955a969433773b7e64b) refactor(libs): track background work in a provider with a bounded shutdown wait (#107)
+* `settings`
+  * [a14fd90](https://github.com/yhagus/routerlm-oss/commit/a14fd90b554e8ac76af3c47e71f1e02e2a89c3cf) refactor(settings): declare each setting's schema in its definition (#103)
+* `snapshot`
+  * [4488d88](https://github.com/yhagus/routerlm-oss/commit/4488d883a612c30f3ce7d445cffde1b7e0472ce4) refactor(snapshot): read settings through queries (#105)
+  * [929ab2e](https://github.com/yhagus/routerlm-oss/commit/929ab2eba0b6a06da15a5f278a1854da8073bdfb) refactor(snapshot): inject the settings store without a module cycle (#105)
+* `usage`
+  * [571b0ea](https://github.com/yhagus/routerlm-oss/commit/571b0eae174b687d97365909042184ee7394f786) refactor(usage): require fields old usage jobs lacked (#104)
+* `web`
+  * [c140096](https://github.com/yhagus/routerlm-oss/commit/c140096edf384601c3b22b2bfc9b7e164be92394) refactor(web): drop the mirror marker comments (#111)
+
+#### Docs
+* `glossary`
+  * [e8f4451](https://github.com/yhagus/routerlm-oss/commit/e8f44511f12d803acd5ba96bbd89f9447a93d365) docs(glossary): note the other finish reason
+
+#### Tests
+* `general`
+  * [e4b358e](https://github.com/yhagus/routerlm-oss/commit/e4b358e17fc1779b40e23803a6ccca4843e1a1f3) test: wait for scheduled and polling jobs before truncating (#107)
+  * [eabd7bc](https://github.com/yhagus/routerlm-oss/commit/eabd7bc9700afd36369e665b54a370d9cec80e80) test: wait for the snapshot subscriber's first connection (#107)
+  * [ad2a122](https://github.com/yhagus/routerlm-oss/commit/ad2a1224269bdefafc6f262abb15047dbf9e1c02) test: wait for all background work before truncating (#107)
+  * [63a25a7](https://github.com/yhagus/routerlm-oss/commit/63a25a711e0e94c338961dd0d0c42cf0b1969b6e) test: await quota readings instead of retrying truncates (#107)
+* `k6`
+  * [43f4508](https://github.com/yhagus/routerlm-oss/commit/43f450812e3aa9bad3ba12e4c026085bff7635f5) test(k6): read benchmark limits from compose and the gateway (#108)
+
+#### Build and CI
+* `general`
+  * [7026489](https://github.com/yhagus/routerlm-oss/commit/702648943bf63cfc0ccf162b25aeacf41e52248b) build: declare web mirrors in code instead of comments (#111)
+
+#### Chores
+* `general`
+  * [c7addff](https://github.com/yhagus/routerlm-oss/commit/c7addff1d54d9381c0eb5bda08e39be5a8de43e0) chore: stop ignoring the deleted legacy directory (#22)
+* `web`
+  * [4e70fa7](https://github.com/yhagus/routerlm-oss/commit/4e70fa7a8e989d529b42324e09cef1e0960f8fd3) style(web): mark verified providers by name and rework the api key form
+
+**Full Changelog**: https://github.com/yhagus/routerlm-oss/compare/v6.4.0...v6.5.0
+
 # v6.4.0 (2026-11-27)
 
 #### Notable changes
