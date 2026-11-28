@@ -6,7 +6,6 @@ import {
 } from '~/lib/playground';
 import type { RouteSummary } from '~/lib/routing';
 
-/** The gateway refuses larger uploads (413), as the backend's `MAX_UPLOAD_BYTES` says. */
 export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
 export function audioFileProblemOf(file: File): string | null {

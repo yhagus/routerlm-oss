@@ -7,11 +7,9 @@ import {
 } from '~/lib/playground';
 import type { RouteSummary } from '~/lib/routing';
 
-/** The resolutions the gateway's video endpoint takes, as the backend's `VIDEO_RESOLUTIONS` says. */
 export const VIDEO_RESOLUTIONS = ['480P', '720P', '1080P'] as const;
 export type VideoResolution = (typeof VIDEO_RESOLUTIONS)[number];
 
-/** The aspect ratios it takes, as the backend's `VIDEO_RATIOS` says. */
 export const VIDEO_RATIOS = ['16:9', '9:16', '1:1', '4:3', '3:4'] as const;
 export type VideoRatio = (typeof VIDEO_RATIOS)[number];
 

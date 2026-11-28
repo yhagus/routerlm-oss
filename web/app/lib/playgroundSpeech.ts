@@ -6,7 +6,6 @@ import {
 } from '~/lib/playground';
 import type { RouteSummary } from '~/lib/routing';
 
-/** The formats the gateway's speech endpoint takes, as the backend's `AUDIO_FORMATS` says. */
 export const AUDIO_FORMATS = ['mp3', 'wav', 'pcm', 'opus'] as const;
 export type AudioFormat = (typeof AUDIO_FORMATS)[number];
 

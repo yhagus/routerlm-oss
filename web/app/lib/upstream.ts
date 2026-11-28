@@ -43,7 +43,6 @@ export const MODEL_KIND_OPTIONS = MODEL_KINDS.map((kind) => ({
   value: kind,
 }));
 
-/** The Model Kind each Protocol serves, as the backend's `PROTOCOL_KINDS` says. */
 export const PROTOCOL_KINDS = {
   'openai-chat': 'chat',
   'anthropic-messages': 'chat',

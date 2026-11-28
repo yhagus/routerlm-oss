@@ -20,11 +20,6 @@ export function hasOpenBound(period: ValidityPeriod): boolean {
   return period.validFrom === null || period.validUntil === null;
 }
 
-/**
- * "from 2026-12-01 00:00 until 2027-01-01 00:00", "from …", "until …" or "always".
- * Mirrors the backend's `describeValidityPeriod`, which words the API's refusals,
- * except that a period with no bounds reads "always" here and "" there.
- */
 export function formatValidityPeriod(period: ValidityPeriod): string {
   const parts: string[] = [];
   if (period.validFrom !== null) parts.push(`from ${period.validFrom.replace('T', ' ')}`);
