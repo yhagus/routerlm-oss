@@ -295,7 +295,7 @@ export function upstreamModelLabel(model: Pick<UpstreamModel, 'name' | 'upstream
 export function planCoverageNote(model: Pick<UpstreamModel, 'planCoverage'>): string | null {
   if (model.planCoverage === null) return null;
   if (model.planCoverage.length === 0) return 'No plan covers this model';
-  return `In plans: ${model.planCoverage.join(', ')}`;
+  return model.planCoverage.join(', ');
 }
 
 export type QuotaMeterUnit = 'percent' | 'count' | 'tokens' | 'usd';

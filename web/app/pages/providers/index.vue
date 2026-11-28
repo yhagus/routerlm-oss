@@ -335,14 +335,16 @@ async function toggleVerified(provider: Provider): Promise<void> {
           />
           <span class="provider-table__name">
             <strong :title="provider.name"
-              >{{ provider.name }}<ChevronRight :size="13" aria-hidden="true"
+              ><span class="provider-table__name-text">{{ provider.name }}</span
+              ><span
+                v-if="provider.verified"
+                class="verified-mark"
+                role="img"
+                aria-label="Verified"
+                :title="verifiedHint(provider.verifiedAt)"
+                ><BadgeCheck :size="13" aria-hidden="true" /></span
+              ><ChevronRight class="provider-table__chevron" :size="13" aria-hidden="true"
             /></strong>
-            <span
-              v-if="provider.verified"
-              class="status-badge status-badge--good provider-table__verified"
-              :title="verifiedHint(provider.verifiedAt)"
-              ><BadgeCheck :size="12" aria-hidden="true" />Verified</span
-            >
             <span v-if="isBlocked(provider)" class="cell-note" :title="TERMS_RISK_BLOCKED_HINT"
               >Blocked: terms risk</span
             >

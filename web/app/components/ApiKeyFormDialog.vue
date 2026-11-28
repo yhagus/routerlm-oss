@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { apiErrorMessage } from '~/lib/api';
 import {
   type ApiKeySummary,
@@ -8,10 +9,10 @@ import {
   MAX_REQUEST_RATE,
   MAX_SPEND_LIMIT_USD,
   type ModelChoice,
-  pickedLabels,
 } from '~/lib/api-keys';
 import { allowedGroupOptions, type ModelGroup } from '~/lib/modelGroups';
-import { formatCost } from '~/lib/usage';
+import { modelOptionOf } from '~/lib/routing';
+import type { Provider, UpstreamModel } from '~/lib/upstream';
 
 const props = defineProps<{
   apiKey?: ApiKeySummary;
@@ -19,13 +20,32 @@ const props = defineProps<{
   isLoadingModelChoices: boolean;
 }>();
 const isOpen = defineModel<boolean>('open', { required: true });
-const emit = defineEmits<{ created: [apiKey: CreatedApiKey]; updated: [apiKey: ApiKeySummary] }>();
+const emit = defineEmits<{
+  created: [apiKey: CreatedApiKey];
+  updated: [apiKey: ApiKeySummary];
+}>();
 
 const { $dashboardApi } = useNuxtApp();
-const { data: groups, status: groupsStatus } = useDashboardApi<ModelGroup[]>('/model-groups', {
+const { data: groups } = useDashboardApi<ModelGroup[]>('/model-groups', {
   key: 'model-groups',
 });
-const isLoadingGroups = computed(() => groupsStatus.value === 'pending' && !groups.value);
+
+const { data: providers } = useDashboardApi<Provider[]>('/providers');
+const { data: upstreamModels } = useDashboardApi<UpstreamModel[]>('/upstream-models');
+
+const upstreamExample = computed(() => {
+  const slugs = new Map(
+    (providers.value ?? [])
+      .filter((provider) => provider.isEnabled)
+      .map((provider) => [provider.id, provider.slug]),
+  );
+  const usable = (upstreamModels.value ?? []).filter(
+    (model) => model.isEnabled && slugs.has(model.providerId),
+  );
+  const example = usable.find((model) => model.kind === 'chat') ?? usable[0];
+  if (!example) return 'upstream/<provider>/<model>';
+  return `upstream/${slugs.get(example.providerId)}/${example.upstreamModelId}`;
+});
 
 const name = ref('');
 const expiryDate = ref('');
@@ -57,28 +77,20 @@ watch(
 );
 
 const modelOptions = computed(() => {
-  const options = (props.modelChoices ?? []).map((model) => ({
-    label: model.name,
-    value: model.id,
-  }));
+  const options = (props.modelChoices ?? []).map(modelOptionOf);
   const offered = new Set(options.map((option) => option.value));
   const deleted = (props.apiKey?.allowedModels ?? [])
     .filter((model) => !offered.has(model.id))
-    .map((model) => ({ label: model.name ?? 'Deleted Model', value: model.id }));
+    .map((model) => ({
+      label: model.name ?? 'Deleted Model',
+      value: model.id,
+    }));
   return [...options, ...deleted];
 });
 
 const groupOptions = computed(() =>
   allowedGroupOptions(groups.value, props.apiKey?.allowedModelGroups ?? []),
 );
-
-const allowedSummary = computed(() => {
-  const models = pickedLabels(allowedModelIds.value, modelOptions.value, 'Deleted Model');
-  const groupNames = pickedLabels(allowedModelGroupIds.value, groupOptions.value, 'Deleted group');
-  const names = [...models, ...groupNames.map((group) => `every Model in ${group}`)];
-  if (names.length === 0) return 'Every Model, including ones added later.';
-  return `Only ${names.join(', ')}.`;
-});
 
 function limitText(limit: number | null): string {
   return limit === null ? '' : String(limit);
@@ -87,10 +99,6 @@ function limitText(limit: number | null): string {
 function limitValue(text: string): number | null {
   return text === '' ? null : Number(text);
 }
-
-const spentNote = computed(() =>
-  props.apiKey ? `${formatCost(props.apiKey.spent)} spent so far.` : '',
-);
 
 function sameIds(first: string[], second: string[]): boolean {
   return first.length === second.length && first.every((id) => second.includes(id));
@@ -170,6 +178,7 @@ async function submit(): Promise<void> {
 <template>
   <AppDialog
     v-model:open="isOpen"
+    wide
     :title="apiKey ? `Edit ${apiKey.name}` : 'Create API Key'"
     :description="
       apiKey
@@ -178,91 +187,89 @@ async function submit(): Promise<void> {
     "
   >
     <form class="form form--full-width-selects" @submit.prevent="submit">
-      <label class="field"
-        ><span class="field__label">Name</span
-        ><input
-          v-model="name"
-          class="text-input"
-          type="text"
-          maxlength="100"
-          placeholder="e.g. Support bot"
-          required
-      /></label>
-      <div class="field">
-        <span class="field__label">Expires on</span>
-        <AppDateInput v-model="expiryDate" label="Expires on" :min="today" />
-        <span class="field__note">Leave empty for a key that never expires.</span>
+      <div class="form__grid">
+        <label class="field"
+          ><span class="field__label">Name</span
+          ><input
+            v-model="name"
+            class="text-input"
+            type="text"
+            maxlength="100"
+            placeholder="e.g. Support bot"
+            required
+        /></label>
+        <div class="field">
+          <span class="field__label">Expires on</span>
+          <AppDateInput v-model="expiryDate" label="Expires on" :min="today" />
+        </div>
+      </div>
+      <div class="form__grid">
+        <div class="field">
+          <span class="field__label">Allowed Models</span>
+          <AppMultiSelect
+            v-model="allowedModelIds"
+            class="api-key-form__models"
+            :options="modelOptions"
+            label="Allowed Models"
+            placeholder="All Models"
+            noun="Models"
+            match="all"
+            empty-text="No Models yet"
+          />
+        </div>
+        <div class="field">
+          <span class="field__label">Allowed Groups</span>
+          <AppMultiSelect
+            v-model="allowedModelGroupIds"
+            :options="groupOptions"
+            label="Allowed Groups"
+            placeholder="No Groups"
+            noun="Groups"
+            match="all"
+            empty-text="No Groups yet"
+          />
+        </div>
+      </div>
+      <div class="form__grid">
+        <label class="field"
+          ><span class="field__label">Spend Limit</span
+          ><NumberInput
+            v-model="spendLimit"
+            class="text-input"
+            :min="0"
+            :max="MAX_SPEND_LIMIT_USD"
+            prefix="$"
+            unit-label="US dollars"
+            placeholder="No limit"
+        /></label>
+        <label class="field"
+          ><span class="field__label">Request Rate</span
+          ><NumberInput
+            v-model="requestRate"
+            class="text-input"
+            whole
+            :min="1"
+            :max="MAX_REQUEST_RATE"
+            suffix="/ min"
+            unit-label="requests per minute"
+            placeholder="No limit"
+        /></label>
       </div>
       <div class="field">
-        <span class="field__label">Allowed Models</span>
-        <AppMultiSelect
-          v-model="allowedModelIds"
-          class="api-key-form__models"
-          :options="modelOptions"
-          label="Allowed Models"
-          placeholder="All Models"
-          noun="Models"
-          match="all"
-          empty-text="No Models yet"
-        />
+        <TooltipProvider :delay-duration="100">
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <label class="check-field justify-self-start"
+                ><input v-model="directUpstreamAccess" type="checkbox" /> Direct Upstream
+                Access</label
+              >
+            </TooltipTrigger>
+            <TooltipContent side="top" align="start">
+              Call as <code>{{ upstreamExample }}</code>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      <div class="field">
-        <span class="field__label">Allowed Groups</span>
-        <AppMultiSelect
-          v-model="allowedModelGroupIds"
-          :options="groupOptions"
-          label="Allowed Groups"
-          placeholder="No Groups"
-          noun="Groups"
-          match="all"
-          empty-text="No Groups yet"
-        />
-        <span v-if="isLoadingModelChoices || isLoadingGroups" class="field__note"
-          >Loading Models and Groups…</span
-        >
-        <span v-else class="field__note"
-          >A key allowed a Group can call every Model currently in it. Leave both Models and Groups
-          empty to allow every Model. {{ allowedSummary }}</span
-        >
-      </div>
-      <div class="field">
-        <label class="check-field"
-          ><input v-model="directUpstreamAccess" type="checkbox" /> Direct Upstream Access</label
-        >
-        <span class="field__note"
-          >On top of its allowed Models, the key can also call every usable Upstream Model as
-          <code>upstream/&lt;provider&gt;/&lt;model&gt;</code>.</span
-        >
-      </div>
-      <label class="field"
-        ><span class="field__label">Spend Limit</span
-        ><NumberInput
-          v-model="spendLimit"
-          class="text-input"
-          :min="0"
-          :max="MAX_SPEND_LIMIT_USD"
-          prefix="$"
-          unit-label="US dollars"
-          placeholder="No limit"
-        /><span class="field__note"
-          >The most Cost the key may run up. Leave empty for no limit. {{ spentNote }}</span
-        ></label
-      >
-      <label class="field"
-        ><span class="field__label">Request Rate</span
-        ><NumberInput
-          v-model="requestRate"
-          class="text-input"
-          whole
-          :min="1"
-          :max="MAX_REQUEST_RATE"
-          suffix="/ min"
-          unit-label="requests per minute"
-          placeholder="No limit"
-        /><span class="field__note"
-          >The most requests per minute. Leave empty for no limit.</span
-        ></label
-      >
       <p v-if="error" class="form__error" role="alert">{{ error }}</p>
       <div class="dialog__actions">
         <button class="button" type="button" @click="isOpen = false">Cancel</button>

@@ -206,7 +206,17 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', tim
           :base-url="mainBaseUrl(provider.endpoints)"
         />
         <div class="provider-hero__title">
-          <h1>{{ provider.name }}</h1>
+          <div class="provider-hero__name">
+            <h1>{{ provider.name }}</h1>
+            <span
+              v-if="provider.verified"
+              class="verified-mark"
+              role="img"
+              aria-label="Verified"
+              :title="verifiedHint(provider.verifiedAt)"
+              ><BadgeCheck :size="18" aria-hidden="true"
+            /></span>
+          </div>
           <p class="provider-hero__meta">
             <span class="provider-hero__endpoints"
               ><ProviderEndpointSummary :endpoints="provider.endpoints"
@@ -215,12 +225,6 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', tim
               baseUrlHost(mainBaseUrl(provider.endpoints))
             }}</span>
             <span class="provider-hero__slug">{{ provider.slug }}</span>
-            <span
-              v-if="provider.verified"
-              class="status-badge status-badge--good provider-hero__verified"
-              :title="verifiedHint(provider.verifiedAt)"
-              ><BadgeCheck :size="13" aria-hidden="true" />Verified</span
-            >
             <span v-if="isBlocked(provider)" :title="TERMS_RISK_BLOCKED_HINT"
               >Blocked: terms risk</span
             >

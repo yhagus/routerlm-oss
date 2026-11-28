@@ -876,13 +876,17 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
             </button>
             <CopyIconButton :text="row.upstreamModelId" label="model id" />
           </span>
-          <NuxtLink
-            v-if="!provider"
-            class="cell-note"
-            :to="`/providers/${row.providerId}?tab=models`"
-            >{{ providerName(row) }}</NuxtLink
-          >
-          <span v-if="planCoverageNote(row)" class="cell-note">{{ planCoverageNote(row) }}</span>
+          <span v-if="!provider || planCoverageNote(row)" class="cell-note model-table__meta">
+            <NuxtLink v-if="!provider" :to="`/providers/${row.providerId}?tab=models`">{{
+              providerName(row)
+            }}</NuxtLink>
+            <span
+              v-if="!provider && planCoverageNote(row)"
+              class="model-table__meta-divider"
+              aria-hidden="true"
+            />
+            <span v-if="planCoverageNote(row)">{{ planCoverageNote(row) }}</span>
+          </span>
         </span>
       </div>
     </template>
