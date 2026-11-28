@@ -145,6 +145,14 @@ _Avoid_: Format, dialect, API type
 A model name the gateway owns and exposes to clients, independent of any Provider.
 _Avoid_: Alias, virtual model, model mapping
 
+**Model Name**:
+The name that identifies a Model: unique, and what clients send to reach it. Unlike an Upstream Model, whose name is only a label, a Model's name is its identity.
+_Avoid_: Model ID, slug, key
+
+**Display Name**:
+An optional human label for a Model, such as "DeepSeek V4.1 Flash", shown to admins in place of the Model Name. Several Models may share one, it is never sent to clients, and renaming it relabels the Model's whole history. It is independent of any Upstream Model's name.
+_Avoid_: Label, title, friendly name
+
 **Model Group**:
 A named set of Models with a slug, such as "fast". A Model belongs to one or more Model Groups, and clients see it once per Model Group as `<slug>/<model name>`; the bare model name still reaches the same Model. A Model Group only names Models: it never changes how they route. An API Key may be allowed a whole Model Group instead of its Models one by one. `upstream` can never be a Model Group's slug: it belongs to Direct Upstream Access.
 _Avoid_: Namespace, collection, folder, tag, stack

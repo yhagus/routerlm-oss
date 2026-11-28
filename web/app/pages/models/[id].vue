@@ -15,7 +15,13 @@ import { isNotFound } from '~/lib/errors';
 import { modelNameProblem, publishedModelNames } from '~/lib/modelGroups';
 import { TERMS_RISK_BLOCKED_HINT } from '~/lib/settings';
 import { isEmptyPolicy, type ParameterPolicy } from '~/lib/parameterPolicy';
-import type { ModelDetail, RouteSummary } from '~/lib/routing';
+import {
+  displayNameProblem,
+  displayNameValue,
+  type ModelDetail,
+  modelLabelOf,
+  type RouteSummary,
+} from '~/lib/routing';
 import {
   MODEL_KIND_LABELS,
   type Provider,
@@ -51,7 +57,7 @@ const isLoadingRouteOptions = computed(
 );
 const routes = computed(() => model.value?.routes ?? []);
 
-useHead({ title: () => model.value?.name ?? 'Model' });
+useHead({ title: () => (model.value ? modelLabelOf(model.value).label : 'Model') });
 
 const providerNameById = computed(
   () => new Map((providers.value ?? []).map((provider) => [provider.id, provider.name])),
@@ -75,6 +81,7 @@ const isDialogOpen = computed({
 const isSaving = ref(false);
 const dialogError = ref('');
 const newName = ref('');
+const newDisplayName = ref('');
 const newGroupIds = ref<string[]>([]);
 const newRouteUpstreamModelId = ref('');
 
@@ -83,6 +90,7 @@ function openDialog(next: ModelDialog): void {
   dialogError.value = '';
   if (next.kind === 'edit') {
     newName.value = model.value?.name ?? '';
+    newDisplayName.value = model.value?.displayName ?? '';
     newGroupIds.value = (model.value?.groups ?? []).map((group) => group.id);
   }
   if (next.kind === 'add-route') {
@@ -116,6 +124,8 @@ const hasNoGroup = computed(() => model.value?.groups.length === 0);
 function editProblem(): string | null {
   const nameProblem = modelNameProblem(newName.value);
   if (nameProblem) return nameProblem;
+  const displayProblem = displayNameProblem(newDisplayName.value);
+  if (displayProblem) return displayProblem;
   return newGroupIds.value.length === 0 ? 'Pick at least one Group.' : null;
 }
 
@@ -126,9 +136,15 @@ function isSameGroups(current: ModelDetail, groupIds: string[]): boolean {
   );
 }
 
-function changedModelFields(current: ModelDetail): { name?: string; groupIds?: string[] } {
+function changedModelFields(current: ModelDetail): {
+  name?: string;
+  displayName?: string | null;
+  groupIds?: string[];
+} {
+  const displayName = displayNameValue(newDisplayName.value);
   return {
     ...(newName.value === current.name ? {} : { name: newName.value }),
+    ...(displayName === current.displayName ? {} : { displayName }),
     ...(isSameGroups(current, newGroupIds.value) ? {} : { groupIds: newGroupIds.value }),
   };
 }
@@ -311,9 +327,12 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
 
     <template v-else>
       <PageHeading
-        :title="model.name"
+        :title="modelLabelOf(model).label"
         description='Clients send "<group slug>/<name>" as the model. The gateway tries its enabled Routes from the top.'
       >
+        <template v-if="model.displayName" #title-note>
+          <code class="page-heading__note">{{ model.name }}</code>
+        </template>
         <span
           class="status-badge"
           :title="`Routes go only to ${MODEL_KIND_LABELS[model.kind]} Upstream Models`"
@@ -537,6 +556,18 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
         <p v-if="modelNameProblem(newName)" class="form__error" role="alert">
           {{ modelNameProblem(newName) }}
         </p>
+        <label class="field"
+          ><span class="field__label">Display name (optional)</span
+          ><input
+            v-model="newDisplayName"
+            class="text-input"
+            autocomplete="off"
+            placeholder="e.g. DeepSeek V4.1 Flash"
+        /></label>
+        <p v-if="displayNameProblem(newDisplayName)" class="form__error" role="alert">
+          {{ displayNameProblem(newDisplayName) }}
+        </p>
+        <p v-else class="form__hint">Shown only in the dashboard. Leave blank to show the name.</p>
         <ModelGroupPicker v-model="newGroupIds" />
         <p v-if="hasNoGroup" class="form__warning" role="note">
           Pick at least one Group to save. Clients then send "&lt;group slug&gt;/{{ model?.name }}"

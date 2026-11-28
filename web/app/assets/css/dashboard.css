@@ -506,6 +506,12 @@ select:focus-visible {
   letter-spacing: -0.04em;
   line-height: 1;
 }
+.page-heading__note {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
 .page-heading__sub {
   margin: 0;
   color: var(--muted);
@@ -674,6 +680,22 @@ select:focus-visible {
 .app-select-item__label {
   overflow: hidden;
   min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-select-item__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 5px 0;
+}
+.app-select-item__content > .app-select-item__text {
+  flex: 0 1 auto;
+}
+.app-select-item__note {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -8,6 +8,7 @@ export const MAX_REQUEST_RATE = 2_147_483_647;
 export interface ModelChoice {
   id: string;
   name: string;
+  displayName: string | null;
 }
 
 export interface ApiKeySummary {

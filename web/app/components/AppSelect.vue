@@ -12,7 +12,7 @@ import {
   PopoverTrigger,
 } from 'reka-ui';
 
-type SelectOption = { label: string; value: Value };
+type SelectOption = { label: string; value: Value; note?: string };
 
 const MENU_OFFSET = 5;
 const VIEWPORT_MARGIN = 12;
@@ -45,7 +45,9 @@ const listId = useId();
 const visibleOptions = computed(() => {
   const needle = query.value.trim().toLowerCase();
   if (!props.searchable || needle === '') return props.options;
-  return props.options.filter((option) => option.label.toLowerCase().includes(needle));
+  return props.options.filter((option) =>
+    [option.label, option.note ?? ''].some((text) => text.toLowerCase().includes(needle)),
+  );
 });
 const selectedLabel = computed(
   () =>
@@ -132,7 +134,11 @@ function handleTriggerArrowKey(event: KeyboardEvent): void {
               >
                 <span class="app-select-item__content">
                   <slot name="option-leading" :option="option" />
-                  <span class="app-select-item__label">{{ option.label }}</span>
+                  <span v-if="option.note" class="app-select-item__text">
+                    <span class="app-select-item__label">{{ option.label }}</span>
+                    <code class="app-select-item__note">{{ option.note }}</code>
+                  </span>
+                  <span v-else class="app-select-item__label">{{ option.label }}</span>
                 </span>
                 <ListboxItemIndicator as-child>
                   <Check class="app-select-item__indicator" :size="14" />

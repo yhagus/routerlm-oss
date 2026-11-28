@@ -26,6 +26,7 @@ import { dateTimeFormat } from '~/lib/dateFormats';
 import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from '~/lib/errorOrigins';
 import { SERVICE_TIER_LABELS, SERVICE_TIERS } from '~/lib/parameterPolicy';
 import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from '~/lib/queryFilters';
+import { type ModelLabel, modelOptionOf, recordedModelLabelOf } from '~/lib/routing';
 
 useHead({ title: 'Usage' });
 
@@ -79,13 +80,20 @@ watch(timeRange, () => {
 
 const { data: modelChoices } = useDashboardApi<ModelChoice[]>('/api-keys/model-choices');
 const { data: apiKeys } = useDashboardApi<ApiKeySummary[]>('/api-keys');
+const modelChoiceById = computed(
+  () => new Map((modelChoices.value ?? []).map((model) => [model.id, model])),
+);
+
+function modelCellOf(log: UsageLogSummary): ModelLabel {
+  return recordedModelLabelOf(log, modelChoiceById.value, '—');
+}
 
 const timeRangeOptions = Object.entries(TIME_RANGES).map(([value, { label }]) => ({
   value,
   label,
 }));
 const modelOptions = computed(() => {
-  const known = (modelChoices.value ?? []).map((model) => ({ value: model.id, label: model.name }));
+  const known = (modelChoices.value ?? []).map(modelOptionOf);
   return [...known, ...missingOptions(modelFilter.value, known)];
 });
 const apiKeyOptions = computed(() => {
@@ -277,7 +285,8 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
         <span class="tabular">{{ dateTimeFormat.format(new Date(log.createdAt)) }}</span>
       </template>
       <template #cell-model="{ row: log }">
-        {{ log.modelName ?? (log.modelId ? 'Deleted Model' : '—') }}
+        {{ modelCellOf(log).label }}
+        <code v-if="modelCellOf(log).note" class="cell-note">{{ modelCellOf(log).note }}</code>
       </template>
       <template #cell-apiKey="{ row: log }">
         <template v-if="log.isPlayground">

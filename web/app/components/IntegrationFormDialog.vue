@@ -3,6 +3,7 @@ import { apiErrorMessage } from '~/lib/api';
 import { type ModelChoice, pickedLabels } from '~/lib/api-keys';
 import type { CreatedIntegration, IntegrationSummary } from '~/lib/integrations';
 import { allowedGroupOptions, type ModelGroup } from '~/lib/modelGroups';
+import { modelOptionOf } from '~/lib/routing';
 
 const props = defineProps<{
   integration?: IntegrationSummary;
@@ -45,10 +46,7 @@ watch(
 );
 
 const modelOptions = computed(() => {
-  const options = (props.modelChoices ?? []).map((model) => ({
-    label: model.name,
-    value: model.id,
-  }));
+  const options = (props.modelChoices ?? []).map(modelOptionOf);
   const offered = new Set(options.map((option) => option.value));
   const deleted = (props.integration?.allowedModels ?? [])
     .filter((model) => !offered.has(model.id))

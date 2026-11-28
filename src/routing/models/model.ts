@@ -6,7 +6,7 @@ export type Model = typeof models.$inferSelect & { groups: ModelGroupRef[] };
 
 export type ModelSummary = Pick<
   Model,
-  'id' | 'name' | 'kind' | 'isEnabled' | 'createdAt' | 'groups'
+  'id' | 'name' | 'displayName' | 'kind' | 'isEnabled' | 'createdAt' | 'groups'
 > & {
   routeCount: number;
 };

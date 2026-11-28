@@ -56,6 +56,15 @@ function rank(value: number | ReasoningEffort): number {
 
 const WITHOUT_SLASH = /^[^/]*$/;
 
+const DISPLAY_NAME_MAX_LENGTH = 100;
+
+const displayNameSchema = z
+  .string()
+  .trim()
+  .max(DISPLAY_NAME_MAX_LENGTH)
+  .nullable()
+  .transform((displayName) => displayName || null);
+
 const modelGroupIdsSchema = z
   .array(z.uuid())
   .min(1, { error: 'Choose at least one Model Group' })
@@ -63,6 +72,7 @@ const modelGroupIdsSchema = z
 
 const modelFieldsSchema = z.strictObject({
   name: z.string().trim().min(1).regex(WITHOUT_SLASH, { error: 'A Model name cannot contain "/"' }),
+  displayName: displayNameSchema,
   isEnabled: z.boolean(),
   parameterPolicy: parameterPolicySchema,
   hasAutomaticCacheBreakpoints: z.boolean(),
@@ -70,6 +80,7 @@ const modelFieldsSchema = z.strictObject({
 });
 
 export const newModelSchema = modelFieldsSchema.extend({
+  displayName: displayNameSchema.optional(),
   kind: z.enum(MODEL_KINDS).optional(),
   isEnabled: z.boolean().optional(),
   parameterPolicy: parameterPolicySchema.optional(),

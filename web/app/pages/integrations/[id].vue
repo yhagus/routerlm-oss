@@ -215,7 +215,10 @@ async function handleDeleted(deleted: IntegrationSummary): Promise<void> {
           <IntegrationUsagePanel :integration-id="integrationId" />
         </TabsContent>
         <TabsContent value="models" class="tabs__panel">
-          <IntegrationModelsPanel :integration="integration" />
+          <IntegrationModelsPanel
+            :integration="integration"
+            :model-choices="modelChoices ?? undefined"
+          />
         </TabsContent>
         <TabsContent value="secret-history" class="tabs__panel">
           <IntegrationSecretHistory :integration="integration" />

@@ -24,11 +24,12 @@ describe('GET /v1/models (e2e)', () => {
     await app.close();
   });
 
-  it('lists only the enabled Models the key may use, with their Capabilities and nothing about Routes', async () => {
+  it('lists only the enabled Models the key may use, with their Capabilities and nothing about Routes or Display Names', async () => {
     const smart = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: 'http://upstream.invalid/v1',
     });
+    await db.update(models).set({ displayName: 'Smart Model' }).where(eq(models.id, smart.modelId));
     const retired = await insertOpenAiChatModel(app, db, {
       modelName: 'retired',
       baseUrl: 'http://upstream.invalid/v1',

@@ -8,6 +8,7 @@ import {
 export interface ModelChoice {
   id: string;
   name: string;
+  displayName: string | null;
 }
 
 export interface AllowedModel {

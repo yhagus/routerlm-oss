@@ -39,6 +39,7 @@ export type ParameterPolicy = {
 export const models = pgTable('models', {
   id: id(),
   name: text('name').notNull().unique(),
+  displayName: text('display_name'),
   kind: text('kind', { enum: MODEL_KINDS }).notNull().default('chat'),
   isEnabled: boolean('is_enabled').notNull().default(true),
   parameterPolicy: jsonb('parameter_policy').$type<ParameterPolicy>().notNull().default({}),

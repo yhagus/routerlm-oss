@@ -17,6 +17,7 @@ export class ListModelsHandler implements IQueryHandler<ListModelsQuery> {
         .select({
           id: models.id,
           name: models.name,
+          displayName: models.displayName,
           kind: models.kind,
           isEnabled: models.isEnabled,
           createdAt: models.createdAt,

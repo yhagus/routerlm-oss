@@ -9,7 +9,15 @@ import {
   modelNameProblem,
   publishedModelName,
 } from '~/lib/modelGroups';
-import type { ModelDetail, ModelSummary } from '~/lib/routing';
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  displayNameProblem,
+  displayNameValue,
+  type ModelDetail,
+  modelLabelOf,
+  modelSearchText,
+  type ModelSummary,
+} from '~/lib/routing';
 import { isStack, stackByKey, type StackedRow } from '~/lib/stacks';
 import { MODEL_KIND_LABELS, MODEL_KIND_OPTIONS, type ModelKind } from '~/lib/upstream';
 
@@ -57,7 +65,7 @@ function isShownByGroupFilter(publication: Publication): boolean {
 
 function comparePublications(first: Publication, second: Publication): number {
   return (
-    first.model.name.localeCompare(second.model.name) ||
+    modelLabelOf(first.model).label.localeCompare(modelLabelOf(second.model).label) ||
     (first.group?.slug ?? '').localeCompare(second.group?.slug ?? '')
   );
 }
@@ -103,7 +111,9 @@ const columns: DataTableColumn<ModelRow>[] = [
     header: 'Model',
     enableHiding: false,
     accessorFn: (row) =>
-      isStack(row) ? row.members.map(publishedName).join('\n') : publishedName(row),
+      isStack(row)
+        ? modelSearchText(modelOf(row), row.members.map(publishedName).join('\n'))
+        : modelSearchText(row.model, publishedName(row)),
   },
   { id: 'kind', header: 'Kind' },
   { id: 'routes', header: 'Routes' },
@@ -113,6 +123,7 @@ const columns: DataTableColumn<ModelRow>[] = [
 
 const isCreateDialogOpen = ref(false);
 const newModelName = ref('');
+const newModelDisplayName = ref('');
 const newModelKind = ref<ModelKind>('chat');
 const newModelGroupIds = ref<string[]>([]);
 const isSaving = ref(false);
@@ -120,6 +131,7 @@ const dialogError = ref('');
 
 function openCreateDialog(): void {
   newModelName.value = '';
+  newModelDisplayName.value = '';
   newModelKind.value = 'chat';
   newModelGroupIds.value = [];
   dialogError.value = '';
@@ -129,6 +141,8 @@ function openCreateDialog(): void {
 function createProblem(): string | null {
   const nameProblem = modelNameProblem(newModelName.value);
   if (nameProblem) return nameProblem;
+  const displayProblem = displayNameProblem(newModelDisplayName.value);
+  if (displayProblem) return displayProblem;
   return newModelGroupIds.value.length === 0 ? 'Pick at least one Group.' : null;
 }
 
@@ -145,6 +159,7 @@ async function createModel(): Promise<void> {
       method: 'POST',
       body: {
         name: newModelName.value,
+        displayName: displayNameValue(newModelDisplayName.value),
         kind: newModelKind.value,
         groupIds: newModelGroupIds.value,
       },
@@ -218,8 +233,9 @@ async function toggleModel(model: ModelSummary): Promise<void> {
           <span class="key-icon"><Boxes :size="15" /></span>
           <span class="model-table__name">
             <NuxtLink class="model-table__open" :to="`/models/${row.key}`">{{
-              modelOf(row).name
+              modelLabelOf(modelOf(row)).label
             }}</NuxtLink>
+            <code v-if="modelOf(row).displayName" class="cell-note">{{ modelOf(row).name }}</code>
             <button
               class="cell-note model-table__open"
               type="button"
@@ -242,7 +258,7 @@ async function toggleModel(model: ModelSummary): Promise<void> {
           <span class="model-table__name">
             <span class="model-table__title">
               <NuxtLink class="model-table__open" :to="`/models/${row.model.id}`">{{
-                publishedName(row)
+                modelLabelOf(row.model, publishedName(row)).label
               }}</NuxtLink>
               <CopyIconButton :text="publishedName(row)" label="model name" />
               <span
@@ -251,6 +267,7 @@ async function toggleModel(model: ModelSummary): Promise<void> {
                 >No group</span
               >
             </span>
+            <code v-if="row.model.displayName" class="cell-note">{{ publishedName(row) }}</code>
             <span v-if="row.group" class="cell-note">{{ row.group.name }}</span>
           </span>
         </div>
@@ -301,6 +318,21 @@ async function toggleModel(model: ModelSummary): Promise<void> {
         /></label>
         <p v-if="modelNameProblem(newModelName)" class="form__error" role="alert">
           {{ modelNameProblem(newModelName) }}
+        </p>
+        <label class="field"
+          ><span class="field__label">Display name (optional)</span
+          ><input
+            v-model="newModelDisplayName"
+            class="text-input"
+            autocomplete="off"
+            placeholder="e.g. DeepSeek V4.1 Flash"
+        /></label>
+        <p v-if="displayNameProblem(newModelDisplayName)" class="form__error" role="alert">
+          {{ displayNameProblem(newModelDisplayName) }}
+        </p>
+        <p v-else class="form__hint">
+          Shown only in the dashboard. Clients still send the name above. Up to
+          {{ DISPLAY_NAME_MAX_LENGTH }} characters.
         </p>
         <ModelGroupPicker v-model="newModelGroupIds" />
         <div class="field">

@@ -12,7 +12,7 @@ export class ListModelChoicesHandler implements IQueryHandler<ListModelChoicesQu
 
   execute(): Promise<ModelChoice[]> {
     return this.db
-      .select({ id: models.id, name: models.name })
+      .select({ id: models.id, name: models.name, displayName: models.displayName })
       .from(models)
       .orderBy(asc(models.name));
   }

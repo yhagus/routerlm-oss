@@ -206,6 +206,79 @@ describe('Models (e2e)', () => {
     ]);
   });
 
+  it('creates a Model with a trimmed Display Name, and lists and shows it', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/api/models')
+      .set('Cookie', cookie)
+      .send({ name: 'smart', displayName: '  DeepSeek V4.1 Flash  ', groupIds: [groupId] })
+      .expect(201);
+
+    const list = await request(app.getHttpServer())
+      .get('/api/models')
+      .set('Cookie', cookie)
+      .expect(200);
+    const detail = await request(app.getHttpServer())
+      .get(`/api/models/${created.body.id}`)
+      .set('Cookie', cookie)
+      .expect(200);
+
+    expect(list.body).toEqual([
+      expect.objectContaining({ name: 'smart', displayName: 'DeepSeek V4.1 Flash' }),
+    ]);
+    expect(detail.body.displayName).toBe('DeepSeek V4.1 Flash');
+  });
+
+  it('creates a Model without a Display Name', async () => {
+    const modelId = await createModel('smart');
+
+    const model = await request(app.getHttpServer())
+      .get(`/api/models/${modelId}`)
+      .set('Cookie', cookie)
+      .expect(200);
+
+    expect(model.body.displayName).toBeNull();
+  });
+
+  it('changes the Display Name of a Model', async () => {
+    const modelId = await createModel('smart');
+
+    const updated = await request(app.getHttpServer())
+      .patch(`/api/models/${modelId}`)
+      .set('Cookie', cookie)
+      .send({ displayName: 'Smart Model' })
+      .expect(200);
+
+    expect(updated.body.displayName).toBe('Smart Model');
+  });
+
+  it.each([
+    ['an empty string', '   '],
+    ['null', null],
+  ])('clears the Display Name of a Model given %s', async (_description, displayName) => {
+    const modelId = await createModel('smart');
+    await request(app.getHttpServer())
+      .patch(`/api/models/${modelId}`)
+      .set('Cookie', cookie)
+      .send({ displayName: 'Smart Model' })
+      .expect(200);
+
+    const cleared = await request(app.getHttpServer())
+      .patch(`/api/models/${modelId}`)
+      .set('Cookie', cookie)
+      .send({ displayName })
+      .expect(200);
+
+    expect(cleared.body.displayName).toBeNull();
+  });
+
+  it('refuses a Display Name longer than 100 characters', async () => {
+    await request(app.getHttpServer())
+      .post('/api/models')
+      .set('Cookie', cookie)
+      .send({ name: 'smart', displayName: 'x'.repeat(101), groupIds: [groupId] })
+      .expect(400);
+  });
+
   it('creates a Model of the Kind it is given', async () => {
     const modelId = await createModel('painter', 'image');
 

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ArrowLeft, CloudOff, Unplug } from '@lucide/vue';
+import type { ModelChoice } from '~/lib/api-keys';
 import { ERROR_ORIGIN_LABELS } from '~/lib/errorOrigins';
 import { isNotFound } from '~/lib/errors';
 import { SERVICE_TIER_LABELS } from '~/lib/parameterPolicy';
+import { recordedModelLabelOf } from '~/lib/routing';
 import {
   FINISH_REASON_LABELS,
   formatCost,
@@ -19,6 +21,12 @@ const { data: usageLog, error: loadError } = useDashboardApi<UsageLogDetail>(
   `/usage/${String(useRoute().params.id)}`,
 );
 useMissingResource(() => isNotFound(loadError.value), 'Usage Log');
+const { data: modelChoices } = useDashboardApi<ModelChoice[]>('/api-keys/model-choices');
+const modelHeading = computed(() => {
+  if (!usageLog.value) return null;
+  const modelChoiceById = new Map((modelChoices.value ?? []).map((model) => [model.id, model]));
+  return recordedModelLabelOf(usageLog.value, modelChoiceById, 'No Model');
+});
 
 useHead({ title: 'Usage Log' });
 
@@ -102,7 +110,8 @@ const responseFacts = computed<Fact[]>(() => {
         <section class="panel capture-summary">
           <header class="capture-summary__head">
             <div>
-              <h2>{{ usageLog.modelName ?? (usageLog.modelId ? 'Deleted Model' : 'No Model') }}</h2>
+              <h2>{{ modelHeading?.label }}</h2>
+              <code v-if="modelHeading?.note" class="cell-note">{{ modelHeading.note }}</code>
               <p>{{ apiKeyLabel }} · {{ usageLog.clientProtocol }}</p>
             </div>
             <p class="capture-outcome">

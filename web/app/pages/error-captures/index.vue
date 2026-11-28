@@ -19,6 +19,7 @@ import {
 } from '~/lib/errorCaptures';
 import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from '~/lib/errorOrigins';
 import { isApiKeyChoice, isUuid, listParam, missingOptions, PLAYGROUND } from '~/lib/queryFilters';
+import { modelOptionOf } from '~/lib/routing';
 import type { ProviderAccount } from '~/lib/upstream';
 import { isTimeRange, TIME_RANGES, type TimeRange, timeRangeStart } from '~/lib/usage';
 
@@ -112,7 +113,7 @@ const outcomeOptions = CAPTURE_OUTCOMES.map((value) => ({
   label: CAPTURE_OUTCOME_LABELS[value],
 }));
 const modelOptions = computed(() => {
-  const known = (modelChoices.value ?? []).map((model) => ({ value: model.id, label: model.name }));
+  const known = (modelChoices.value ?? []).map(modelOptionOf);
   return [...known, ...missingOptions(modelFilter.value, known)];
 });
 const apiKeyOptions = computed(() => {

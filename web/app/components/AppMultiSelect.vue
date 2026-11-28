@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from 'reka-ui';
 
-type SelectOption = { label: string; value: Value };
+type SelectOption = { label: string; value: Value; note?: string };
 
 const MAX_NAMED_PICKS = 2;
 const MENU_OFFSET = 5;
@@ -118,7 +118,11 @@ function handleTriggerArrowKey(event: KeyboardEvent): void {
                 >
                   <Check v-if="isPicked(option)" :size="11" :stroke-width="3" aria-hidden="true" />
                 </span>
-                <span class="app-select-item__label">{{ option.label }}</span>
+                <span v-if="option.note" class="app-select-item__text">
+                  <span class="app-select-item__label">{{ option.label }}</span>
+                  <code class="app-select-item__note">{{ option.note }}</code>
+                </span>
+                <span v-else class="app-select-item__label">{{ option.label }}</span>
               </ListboxItem>
               <p v-if="options.length === 0" class="app-select-empty">
                 {{ emptyText ?? `No ${noun} yet` }}
