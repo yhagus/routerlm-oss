@@ -54,8 +54,11 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (request.reasoning?.effort) {
     body.reasoning = { effort: request.reasoning.effort };
   }
-  if (request.maxOutputTokens !== undefined && !dropped.has('max_output_tokens')) {
-    body.max_output_tokens = request.maxOutputTokens;
+  const sentMaxOutputTokens = dropped.has('max_output_tokens')
+    ? undefined
+    : request.maxOutputTokens;
+  if (sentMaxOutputTokens !== undefined) {
+    body.max_output_tokens = sentMaxOutputTokens;
   }
   if (request.temperature !== undefined && !dropped.has('temperature')) {
     body.temperature = request.temperature;
@@ -83,6 +86,11 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     url: `${target.baseUrl.replace(/\/+$/, '')}${RESPONSES_PATH}`,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    sentParameters: {
+      maxOutputTokens: sentMaxOutputTokens ?? null,
+      reasoningEffort: request.reasoning?.effort ?? null,
+      thinkingBudgetTokens: null,
+    },
     ...(isAnsweredAsStream && { isAnsweredAsStream }),
   };
 }

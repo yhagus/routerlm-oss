@@ -5,6 +5,7 @@ import type {
   InferenceResponse,
   InferenceStreamEvent,
 } from '@/inference/models/internal-format';
+import type { SentParameters } from '@/usage/models/usage-job';
 import { type ServerSentEvent, ServerSentEventDecoder } from './server-sent-events';
 
 export class UpstreamProtocolError extends Error {
@@ -27,6 +28,7 @@ export interface UpstreamHttpRequest {
   url: string;
   headers: Record<string, string>;
   body: string;
+  sentParameters: SentParameters;
   isAnsweredAsStream?: boolean;
 }
 
