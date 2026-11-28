@@ -54,10 +54,13 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (request.responseFormat) {
     body.response_format = writeResponseFormat(request.responseFormat);
   }
+  const sentEffort = quirks.reasoningAsThinking
+    ? effortSentAsThinking(request.reasoning?.effort, target, quirks.reasoningAsThinking)
+    : request.reasoning?.effort;
   if (quirks.reasoningAsThinking) {
-    body.thinking = writeThinking(request.reasoning?.effort, target, quirks.reasoningAsThinking);
-  } else if (request.reasoning?.effort) {
-    body.reasoning_effort = request.reasoning.effort;
+    body.thinking = writeThinking(sentEffort, quirks.reasoningAsThinking);
+  } else if (sentEffort) {
+    body.reasoning_effort = sentEffort;
   }
   if (request.maxOutputTokens !== undefined) {
     body[quirks.usesMaxCompletionTokens ? 'max_completion_tokens' : 'max_tokens'] =
@@ -88,18 +91,27 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     url: `${target.baseUrl.replace(/\/+$/, '')}${CHAT_COMPLETIONS_PATH}`,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    sentParameters: {
+      maxOutputTokens: request.maxOutputTokens ?? null,
+      reasoningEffort: sentEffort ?? null,
+      thinkingBudgetTokens: null,
+    },
   };
+}
+
+function effortSentAsThinking(
+  effort: ReasoningEffort | undefined,
+  target: UpstreamTarget,
+  { upstreamModelsWithoutEffort = [] }: ReasoningAsThinking,
+): ReasoningEffort | undefined {
+  return upstreamModelsWithoutEffort.includes(target.upstreamModelId) ? undefined : effort;
 }
 
 function writeThinking(
   effort: ReasoningEffort | undefined,
-  target: UpstreamTarget,
-  { efforts, upstreamModelsWithoutEffort = [] }: ReasoningAsThinking,
+  { efforts }: ReasoningAsThinking,
 ): Record<string, unknown> {
-  if (effort === undefined || upstreamModelsWithoutEffort.includes(target.upstreamModelId)) {
-    return { type: 'enabled' };
-  }
-  return { type: 'enabled', effort: efforts[effort] };
+  return effort === undefined ? { type: 'enabled' } : { type: 'enabled', effort: efforts[effort] };
 }
 
 function writeMessage(

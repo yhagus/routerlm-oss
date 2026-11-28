@@ -36,10 +36,8 @@ type ContentBlock = Record<string, unknown>;
 type MessageParam = { role: 'user' | 'assistant'; content: ContentBlock[] };
 
 function writeRequest(request: InferenceRequest, target: UpstreamTarget): UpstreamHttpRequest {
-  const body: Record<string, unknown> = {
-    model: target.upstreamModelId,
-    max_tokens: request.maxOutputTokens ?? target.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
-  };
+  const maxTokens = request.maxOutputTokens ?? target.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS;
+  const body: Record<string, unknown> = { model: target.upstreamModelId, max_tokens: maxTokens };
   const system = writeTextBlocks(request.system);
   if (system.length > 0) {
     body.system = system;
@@ -56,7 +54,8 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
   if (thinking) {
     body.thinking = thinking;
   }
-  const outputConfig = writeOutputConfig(request);
+  const effort = effortSentOf(request.reasoning);
+  const outputConfig = writeOutputConfig(effort, request.responseFormat);
   if (outputConfig) {
     body.output_config = outputConfig;
   }
@@ -76,6 +75,11 @@ function writeRequest(request: InferenceRequest, target: UpstreamTarget): Upstre
     url: `${target.baseUrl.replace(/\/+$/, '')}${MESSAGES_PATH}`,
     headers: { 'content-type': 'application/json', 'anthropic-version': ANTHROPIC_VERSION },
     body: JSON.stringify(body),
+    sentParameters: {
+      maxOutputTokens: maxTokens,
+      reasoningEffort: effort ?? null,
+      thinkingBudgetTokens: request.reasoning?.budgetTokens ?? null,
+    },
   };
 }
 
@@ -215,13 +219,23 @@ function writeThinking(reasoning: InferenceRequest['reasoning']): ContentBlock |
   return { type: 'adaptive', display: 'summarized' };
 }
 
-function writeOutputConfig(request: InferenceRequest): ContentBlock | undefined {
-  const outputConfig: ContentBlock = {};
-  const effort = request.reasoning?.effort;
-  if (request.reasoning?.budgetTokens === undefined && effort !== undefined && effort !== 'none') {
-    outputConfig.effort = EFFORT_LEVELS[effort];
+function effortSentOf(reasoning: InferenceRequest['reasoning']): ReasoningEffort | undefined {
+  const effort = reasoning?.effort;
+  if (reasoning?.budgetTokens !== undefined || effort === undefined || effort === 'none') {
+    return undefined;
   }
-  const format = writeOutputFormat(request.responseFormat);
+  return EFFORT_LEVELS[effort];
+}
+
+function writeOutputConfig(
+  effort: ReasoningEffort | undefined,
+  responseFormat: ResponseFormat | undefined,
+): ContentBlock | undefined {
+  const outputConfig: ContentBlock = {};
+  if (effort !== undefined) {
+    outputConfig.effort = effort;
+  }
+  const format = writeOutputFormat(responseFormat);
   if (format) {
     outputConfig.format = format;
   }
