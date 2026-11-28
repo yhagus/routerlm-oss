@@ -113,7 +113,7 @@ out-of-memory kill.
 | `huge-context`        | ~900K-token prompt (3.6 MB) to a 1M-context Model             | 200              |
 | `huge-context-stream` | the same, streamed                                            | 200, full stream |
 | `over-context`        | ~1.2M-token prompt to a 128K-context Model                    | 4xx, fast        |
-| `oversize-body`       | a 21 MB body, over the 20 MB limit                            | 413              |
+| `oversize-body`       | 1 MB over the gateway body limit (20 MB)                      | 413              |
 | `long-conversation`   | 4001 messages                                                 | 200              |
 | `long-stream`         | the upstream streams 2000 tokens at 5 ms each                 | 200, full stream |
 | `slow-upstream`       | the upstream waits 10 s, with many requests held open at once | 200              |

@@ -236,6 +236,9 @@ services:
       UPSTREAM_LATENCY_MS: ${UPSTREAM_LATENCY_MS:-200}
       TOKENS_PER_SECOND: ${TOKENS_PER_SECOND:-100}
       OUTPUT_TOKENS: ${OUTPUT_TOKENS:-200}
+      # run.sh reads these from the gateway source (gateway-limits.ts).
+      REQUEST_BODY_LIMIT_BYTES: ${REQUEST_BODY_LIMIT_BYTES:-}
+      CHARACTERS_PER_TOKEN: ${CHARACTERS_PER_TOKEN:-}
     volumes:
       - ./scripts:/scripts:ro
       - ./results:/results

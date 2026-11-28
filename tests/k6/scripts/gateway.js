@@ -16,7 +16,16 @@ const HEADERS = {
 };
 const USER_MESSAGE = [{ role: 'user', content: 'Say hello.' }];
 
-const CHARACTERS_PER_TOKEN = 4;
+const requiredNumber = (name) => {
+  const value = Number(__ENV[name]);
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error(`${name} must be a positive number: run k6 through run.sh`);
+  }
+  return value;
+};
+const CHARACTERS_PER_TOKEN = requiredNumber('CHARACTERS_PER_TOKEN');
+const REQUEST_BODY_LIMIT_BYTES = requiredNumber('REQUEST_BODY_LIMIT_BYTES');
+const ONE_MIB = 1024 * 1024;
 const textOfTokens = (tokens) => 'word '.repeat((tokens * CHARACTERS_PER_TOKEN) / 5);
 
 const chatBody = (model, extra = {}) => ({ model, messages: USER_MESSAGE, ...extra });
@@ -135,7 +144,7 @@ const SCENARIOS = {
     path: '/v1/chat/completions',
     body: () => ({
       model: 'perf-large',
-      messages: [{ role: 'user', content: 'x'.repeat(21 * 1024 * 1024) }],
+      messages: [{ role: 'user', content: 'x'.repeat(REQUEST_BODY_LIMIT_BYTES + ONE_MIB) }],
     }),
     expect: { min: 413, max: 413 },
     pauseS: 1,

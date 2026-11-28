@@ -11,7 +11,7 @@ import type { InferenceRequest } from './internal-format';
 import { UPSTREAM_PROTOCOL_CONVERTERS } from '@/inference/protocols/converters';
 import { isOutsidePlanCoverage } from './plan-coverage';
 
-const CHARACTERS_PER_TOKEN = 4;
+export const CHARACTERS_PER_TOKEN = 4;
 
 export const UPSTREAM_PROTOCOL_SPOKEN_BY_CLIENT = {
   'openai-chat': 'openai-chat',
