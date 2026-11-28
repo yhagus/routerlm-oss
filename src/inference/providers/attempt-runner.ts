@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { type BeforeApplicationShutdown, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/read-provider-account-quota.command';
 import type { UpstreamProtocol } from '@/db/schemas';
@@ -48,8 +48,9 @@ export interface PreparedAttempt<Answer> {
 }
 
 @Injectable()
-export class AttemptRunner {
+export class AttemptRunner implements BeforeApplicationShutdown {
   private readonly logger = new Logger(AttemptRunner.name);
+  private readonly quotaReadings = new Set<Promise<void>>();
 
   constructor(
     private readonly cipher: ProviderKeyCipher,
@@ -192,7 +193,7 @@ export class AttemptRunner {
             exhaustedUntilOf(failure.upstreamResponse?.body ?? ''),
           ),
         );
-        void this.readQuota(providerAccount.id);
+        this.startQuotaReading(providerAccount.id);
         return;
     }
   }
@@ -256,6 +257,21 @@ export class AttemptRunner {
     }
     void this.providerAccountHealth.recordFailure(providerAccountId, lastError);
     await this.cooldowns.startCooldown(providerAccountId, failure.reason, failure.retryAfter);
+  }
+
+  async beforeApplicationShutdown(): Promise<void> {
+    await this.settleQuotaReadings();
+  }
+
+  async settleQuotaReadings(): Promise<void> {
+    await Promise.all(this.quotaReadings);
+  }
+
+  private startQuotaReading(providerAccountId: string): void {
+    const reading = this.readQuota(providerAccountId).finally(() => {
+      this.quotaReadings.delete(reading);
+    });
+    this.quotaReadings.add(reading);
   }
 
   private async readQuota(providerAccountId: string): Promise<void> {
