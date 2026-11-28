@@ -21,9 +21,12 @@ export interface MediaConnection {
   failureReasonOf(status: number, body: string): AttemptFailureReason;
 }
 
-export interface AnsweredMediaAttempt<Result> extends MediaOutcome<Result> {
+interface UpstreamReply {
+  upstreamStatus: number;
   upstreamRequestId: string | null;
 }
+
+export interface AnsweredMediaAttempt<Result> extends MediaOutcome<Result>, UpstreamReply {}
 
 export interface MediaUpstreamCall<Request, Result> extends Omit<
   MediaConnection,
@@ -52,48 +55,51 @@ export class MediaUpstreamClient {
   ): Promise<AnsweredMediaAttempt<Result>> {
     const failureReasonOf = (status: number, body: string): AttemptFailureReason =>
       call.protocol.failureReasonOf(status, body);
-    const { answer, upstreamRequestId } = await this.exchangeCapturingRequestId(
+    const { answer, firstReply } = await this.exchangeCapturingFirstReply(
       { ...call, failureReasonOf },
       (exchange) => call.protocol.generate(call.request, call.target, exchange),
     );
-    return { ...answer, upstreamRequestId };
+    if (!firstReply) {
+      throw new UpstreamProtocolError('The media protocol answered without calling the upstream');
+    }
+    return { ...answer, ...firstReply };
   }
 
   async exchange<Answer>(
     connection: MediaConnection,
     use: (exchange: MediaExchange) => Promise<Answer>,
   ): Promise<Answer> {
-    const { answer } = await this.exchangeCapturingRequestId(connection, use);
+    const { answer } = await this.exchangeCapturingFirstReply(connection, use);
     return answer;
   }
 
-  private async exchangeCapturingRequestId<Answer>(
+  private async exchangeCapturingFirstReply<Answer>(
     connection: MediaConnection,
     use: (exchange: MediaExchange) => Promise<Answer>,
-  ): Promise<{ answer: Answer; upstreamRequestId: string | null }> {
+  ): Promise<{ answer: Answer; firstReply: UpstreamReply | null }> {
     const deadlines = new AttemptDeadlines(connection.timeouts, connection.clientSignal);
     deadlines.start('totalMs');
-    let upstreamRequestId: string | null = null;
-    const sendCapturingRequestId = async (
+    let firstReply: UpstreamReply | null = null;
+    const sendCapturingFirstReply = async (
       url: string,
       request: MediaHttpRequest,
     ): Promise<unknown> => {
-      const answered = await this.send(connection, url, deadlines.signal, request);
-      upstreamRequestId ??= answered.upstreamRequestId;
-      return answered.body;
+      const { body, ...reply } = await this.send(connection, url, deadlines.signal, request);
+      firstReply ??= reply;
+      return body;
     };
     try {
       const answer = await use({
         postJson: (url, body, headers = {}) =>
-          sendCapturingRequestId(url, {
+          sendCapturingFirstReply(url, {
             method: 'POST',
             body: JSON.stringify(body),
             headers: { 'content-type': 'application/json', ...headers },
           }),
-        getJson: (url) => sendCapturingRequestId(url, { method: 'GET', headers: {} }),
+        getJson: (url) => sendCapturingFirstReply(url, { method: 'GET', headers: {} }),
         fetchMedia: (url) => this.fetcher.fetch(url, deadlines.signal),
       });
-      return { answer, upstreamRequestId };
+      return { answer, firstReply };
     } catch (error) {
       throw deadlines.failureOf(error, false);
     } finally {
@@ -106,7 +112,7 @@ export class MediaUpstreamClient {
     url: string,
     signal: AbortSignal,
     request: MediaHttpRequest,
-  ): Promise<{ body: unknown; upstreamRequestId: string | null }> {
+  ): Promise<UpstreamReply & { body: unknown }> {
     const response = await this.http.request<Response>(url, {
       method: request.method,
       body: request.body,
@@ -132,7 +138,11 @@ export class MediaUpstreamClient {
       );
     }
     try {
-      return { body: JSON.parse(text), upstreamRequestId: upstreamRequestIdOf(headers) };
+      return {
+        body: JSON.parse(text),
+        upstreamStatus: response.status,
+        upstreamRequestId: upstreamRequestIdOf(headers),
+      };
     } catch (error) {
       throw new UpstreamProtocolError('The upstream answered with a body that is not JSON', {
         cause: error,

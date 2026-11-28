@@ -8,6 +8,7 @@ import {
   formatDuration,
   hasErrorCaptures,
   isTimeRange,
+  playgroundUserLabel,
   TIME_RANGES,
   type TimeRange,
   timeRangeStart,
@@ -156,6 +157,8 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: 'time', header: 'Time', enableHiding: false },
   { id: 'model', header: 'Model' },
   { id: 'apiKey', header: 'API Key' },
+  { id: 'upstreamModel', header: 'Upstream Model' },
+  { id: 'provider', header: 'Provider' },
   { id: 'integration', header: 'Integration' },
   { id: 'customer', header: 'Customer' },
   { id: 'status', header: 'Status' },
@@ -165,7 +168,7 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
   { id: 'cacheReadTokens', header: 'Cache read' },
   { id: 'cacheWriteTokens', header: 'Cache write' },
   { id: 'cost', header: 'Cost' },
-  { id: 'timeToFirstToken', header: 'First token' },
+  { id: 'timeToFirstToken', header: 'Time to First Token' },
   { id: 'duration', header: 'Duration' },
   { id: 'attempts', header: 'Attempts' },
   actionsColumn(),
@@ -180,6 +183,16 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
     />
 
     <UsageSummaryBand :summary="summary" :is-loading="summaryStatus === 'pending'" />
+
+    <section v-if="summary?.outputSpeedByUpstream.length" class="panel table-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Output Speed by Upstream Model</h2>
+          <p>Median and p5 Output Speed for each Upstream Model on each Provider Account.</p>
+        </div>
+      </div>
+      <UsageOutputSpeedTable :speeds="summary.outputSpeedByUpstream" />
+    </section>
 
     <DataTable
       table-id="usage"
@@ -267,11 +280,16 @@ const columns: DataTableColumn<UsageLogSummary>[] = [
         {{ log.modelName ?? (log.modelId ? 'Deleted Model' : '—') }}
       </template>
       <template #cell-apiKey="{ row: log }">
-        {{
-          log.isPlayground
-            ? 'Playground'
-            : (log.apiKeyName ?? (log.apiKeyId ? 'Deleted API Key' : '—'))
-        }}
+        <template v-if="log.isPlayground">
+          Playground
+          <span class="cell-note">{{ playgroundUserLabel(log) }}</span>
+        </template>
+        <template v-else>{{ log.apiKeyName ?? (log.apiKeyId ? 'Deleted API Key' : '—') }}</template>
+      </template>
+      <template #cell-upstreamModel="{ row: log }">{{ log.upstreamModelName ?? '—' }}</template>
+      <template #cell-provider="{ row: log }">
+        {{ log.providerName ?? log.providerSlug ?? '—' }}
+        <span v-if="log.providerAccountName" class="cell-note">{{ log.providerAccountName }}</span>
       </template>
       <template #cell-integration="{ row: log }">{{ log.integrationName ?? '—' }}</template>
       <template #cell-customer="{ row: log }">{{ log.customerId ?? '—' }}</template>

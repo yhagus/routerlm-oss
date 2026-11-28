@@ -19,13 +19,13 @@ export function requestOwnerOf(caller: InferenceCaller): PromptCacheKeyOwner {
     kind: 'api-key',
     apiKeyId,
     apiKeyName,
-    ...(customer && {
-      customer: {
-        integrationId: customer.integrationId,
-        integrationName: customer.integrationName,
-        customerId: customer.customerId,
-      },
-    }),
+    customer: customer
+      ? {
+          integrationId: customer.integrationId,
+          integrationName: customer.integrationName,
+          customerId: customer.customerId,
+        }
+      : null,
   };
 }
 

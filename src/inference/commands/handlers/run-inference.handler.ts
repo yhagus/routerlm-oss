@@ -268,15 +268,15 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
   ): Promise<AttemptResult> {
     const call = this.upstreamCallFor(request, target, endpoint, credential, callOptions);
     if (!request.stream) {
-      const { response, upstreamRequestId } = await this.upstream.complete(call);
-      meter.attemptAnswered(upstreamRequestId);
+      const { response, upstreamStatus, upstreamRequestId } = await this.upstream.complete(call);
+      meter.attemptAnswered(upstreamStatus, upstreamRequestId);
       meter.parametersSent(request);
       meter.responseReceived(response);
       meter.attemptSucceeded();
       return { kind: 'response', body: converter.writeResponse(response, request, context) };
     }
     const upstream = await this.upstream.openStream(call);
-    meter.attemptAnswered(upstream.upstreamRequestId);
+    meter.attemptAnswered(upstream.upstreamStatus, upstream.upstreamRequestId);
     meter.parametersSent(request);
     return { kind: 'stream', upstream, writer: converter.startStream(request, context), target };
   }

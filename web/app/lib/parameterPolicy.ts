@@ -41,11 +41,7 @@ export const POLICY_PARAMETERS: { name: PolicyParameter; label: string; hint: st
   { name: 'topP', label: 'Top P', hint: '0 to 1' },
   { name: 'maxOutputTokens', label: 'Max output tokens', hint: 'Whole number' },
   { name: 'reasoningEffort', label: 'Reasoning effort', hint: 'None to xhigh' },
-  {
-    name: 'reasoningBudgetTokens',
-    label: 'Thinking budget',
-    hint: 'Whole number of tokens, Cap only',
-  },
+  { name: 'reasoningBudgetTokens', label: 'Thinking budget', hint: 'Whole number of tokens' },
   { name: 'stopSequences', label: 'Stop sequences', hint: 'One per line' },
   { name: 'serviceTier', label: 'Service tier', hint: 'Dropped where unsupported' },
   { name: 'voice', label: 'Voice', hint: 'Speech, Forced only' },
@@ -67,13 +63,8 @@ export function isCappable(parameter: PolicyParameter): parameter is keyof Param
   );
 }
 
-export function isCapOnly(parameter: PolicyParameter): boolean {
-  return parameter === 'reasoningBudgetTokens';
-}
-
 export function isRuleOffered(parameter: PolicyParameter, kind: RuleKind): boolean {
   if (kind === 'caps') return isCappable(parameter);
-  if (isCapOnly(parameter)) return false;
   return !(kind === 'defaults' && parameter === 'voice');
 }
 
@@ -138,7 +129,16 @@ export function capsWithoutDefault(form: PolicyForm): string[] {
     ({ name }) =>
       isCappable(name) &&
       form.rules.caps[name].trim() !== '' &&
-      (isCapOnly(name) || form.rules.defaults[name].trim() === ''),
+      form.rules.defaults[name].trim() === '',
+  ).map(({ label }) => label);
+}
+
+export function budgetsWithoutEffort(form: PolicyForm): string[] {
+  return RULE_KINDS.filter(
+    ({ kind }) =>
+      kind !== 'caps' &&
+      form.rules[kind].reasoningBudgetTokens.trim() !== '' &&
+      form.rules[kind].reasoningEffort === '',
   ).map(({ label }) => label);
 }
 

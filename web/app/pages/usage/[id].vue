@@ -4,9 +4,11 @@ import { ERROR_ORIGIN_LABELS } from '~/lib/errorOrigins';
 import { isNotFound } from '~/lib/errors';
 import { SERVICE_TIER_LABELS } from '~/lib/parameterPolicy';
 import {
+  FINISH_REASON_LABELS,
   formatCost,
   formatCount,
   formatDuration,
+  playgroundUserLabel,
   USAGE_STATUS_BADGES,
   USAGE_STATUS_LABELS,
   type UsageLogDetail,
@@ -40,6 +42,43 @@ const apiKeyLabel = computed(() => {
   if (!log) return '—';
   if (log.isPlayground) return 'Playground';
   return log.apiKeyName ?? (log.apiKeyId ? 'Deleted API Key' : '—');
+});
+
+interface Fact {
+  label: string;
+  value: string;
+}
+
+const responseFacts = computed<Fact[]>(() => {
+  const log = usageLog.value;
+  if (!log) return [];
+  const facts: Fact[] = [];
+  if (log.finishReason) {
+    facts.push({ label: 'Finish Reason', value: FINISH_REASON_LABELS[log.finishReason] });
+  }
+  if (log.maxOutputTokens !== null) {
+    facts.push({ label: 'Max output tokens', value: formatCount(log.maxOutputTokens) });
+  }
+  if (log.reasoningEffort) {
+    facts.push({ label: 'Reasoning effort', value: log.reasoningEffort });
+  }
+  if (log.thinkingBudgetTokens !== null) {
+    facts.push({
+      label: 'Thinking budget',
+      value: `${formatCount(log.thinkingBudgetTokens)} tokens`,
+    });
+  }
+  if (log.isStreamed && log.reasoningTokens) {
+    facts.push({ label: 'Reasoning streamed', value: log.isReasoningStreamed ? 'Yes' : 'No' });
+  }
+  if (log.toolCount > 0) {
+    facts.push({ label: 'Tools', value: formatCount(log.toolCount) });
+    facts.push({ label: 'Tool calls', value: formatCount(log.toolCallCount) });
+  }
+  if (log.imageCount !== null) {
+    facts.push({ label: 'Images', value: formatCount(log.imageCount) });
+  }
+  return facts;
 });
 </script>
 
@@ -75,6 +114,22 @@ const apiKeyLabel = computed(() => {
             </p>
           </header>
           <dl class="capture-facts">
+            <div v-if="usageLog.isPlayground">
+              <dt>User</dt>
+              <dd>{{ playgroundUserLabel(usageLog) }}</dd>
+            </div>
+            <div>
+              <dt>Upstream Model</dt>
+              <dd>{{ usageLog.upstreamModelName ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Provider</dt>
+              <dd>{{ usageLog.providerName ?? usageLog.providerSlug ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt>Provider Account</dt>
+              <dd>{{ usageLog.providerAccountName ?? '—' }}</dd>
+            </div>
             <template v-if="usageLog.integrationId">
               <div>
                 <dt>Integration</dt>
@@ -155,12 +210,18 @@ const apiKeyLabel = computed(() => {
               </dd>
             </div>
             <div>
-              <dt>First token</dt>
+              <dt>Time to First Token</dt>
               <dd class="tabular">{{ formatDuration(usageLog.timeToFirstTokenMs) }}</dd>
             </div>
             <div>
               <dt>Duration</dt>
               <dd class="tabular">{{ formatDuration(usageLog.durationMs) }}</dd>
+            </div>
+          </dl>
+          <dl v-if="responseFacts.length > 0" class="capture-facts">
+            <div v-for="fact in responseFacts" :key="fact.label">
+              <dt>{{ fact.label }}</dt>
+              <dd class="tabular">{{ fact.value }}</dd>
             </div>
           </dl>
           <p v-if="usageLog.isIncomplete" class="cell-note">

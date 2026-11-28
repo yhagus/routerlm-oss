@@ -57,6 +57,7 @@ export interface UpstreamCall {
 
 export interface CompletedAttempt {
   response: InferenceResponse;
+  upstreamStatus: number;
   upstreamRequestId: string | null;
 }
 
@@ -209,6 +210,7 @@ export class UpstreamStream {
     private firstBatch: InferenceStreamEvent[] | null,
     private readonly events: UpstreamEventReader,
     private readonly deadlines: AttemptDeadlines,
+    readonly upstreamStatus: number,
     readonly upstreamRequestId: string | null,
   ) {}
 
@@ -252,7 +254,7 @@ export class UpstreamClient {
         const gathered = await gatherStream(
           parseUpstreamStream(() => call.converter.startStream(), streamBodyOf(response)),
         );
-        return { response: gathered, upstreamRequestId };
+        return { response: gathered, upstreamStatus: response.status, upstreamRequestId };
       }
       const body = await response.data.text();
       if (carriesProviderErrorCode(body, call.target.quirks.exhaustedErrorCodes ?? [])) {
@@ -263,7 +265,11 @@ export class UpstreamClient {
           { headers, body },
         );
       }
-      return { response: call.converter.parseResponse(parseJsonBody(body)), upstreamRequestId };
+      return {
+        response: call.converter.parseResponse(parseJsonBody(body)),
+        upstreamStatus: response.status,
+        upstreamRequestId,
+      };
     } catch (error) {
       throw deadlines.failureOf(error, false);
     } finally {
@@ -290,6 +296,7 @@ export class UpstreamClient {
         firstBatch,
         events,
         deadlines,
+        response.status,
         upstreamRequestIdOf(Object.fromEntries(response.headers.entries())),
       );
     } catch (error) {

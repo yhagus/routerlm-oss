@@ -163,6 +163,36 @@ describe('Usage Logs and Attempts (e2e)', () => {
     ]);
   });
 
+  it('records the status the upstream answered with', async () => {
+    upstream.reply({
+      kind: 'json',
+      status: 201,
+      body: JSON.parse(openAiChatFixture('upstream-response-tool-call.json')),
+    });
+
+    await chat(CHAT_REQUEST).expect(200);
+
+    const written = await writtenUsageLog();
+    expect(written.attempts).toEqual([
+      expect.objectContaining({ upstreamStatus: 201, failureReason: null }),
+    ]);
+  });
+
+  it('records the status the upstream opened a stream with', async () => {
+    upstream.reply({
+      kind: 'stream',
+      status: 202,
+      events: openAiChatFixture('upstream-stream-tool-call.sse'),
+    });
+
+    await chat({ ...CHAT_REQUEST, stream: true }).expect(200);
+
+    const written = await writtenUsageLog();
+    expect(written.attempts).toEqual([
+      expect.objectContaining({ upstreamStatus: 202, failureReason: null }),
+    ]);
+  });
+
   function upstreamAnswersWithUsage(usage: object): void {
     const answer: Record<string, unknown> = JSON.parse(
       openAiChatFixture('upstream-response-tool-call.json'),

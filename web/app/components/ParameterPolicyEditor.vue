@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  budgetsWithoutEffort,
   capsWithoutDefault,
   formFromPolicy,
   isRuleOffered,
@@ -32,6 +33,7 @@ watch(
 );
 
 const uncoveredCaps = computed(() => capsWithoutDefault(form.value));
+const effortlessBudgets = computed(() => budgetsWithoutEffort(form.value));
 
 const effortOptions = [
   { label: 'Not set', value: '' },
@@ -132,6 +134,10 @@ function submit(): void {
     <p v-if="uncoveredCaps.length > 0" class="form__hint" role="status">
       A Cap only lowers a value that is sent. With no default beside it, an omitted parameter stays
       omitted: {{ uncoveredCaps.join(', ') }}.
+    </p>
+    <p v-if="effortlessBudgets.length > 0" class="form__hint" role="status">
+      openai-chat and openai-responses Routes ignore a thinking budget. Set a reasoning effort
+      beside it for reasoning there: {{ effortlessBudgets.join(', ') }}.
     </p>
     <label class="field policy-form__prompt"
       ><span class="field__label">System prompt</span
