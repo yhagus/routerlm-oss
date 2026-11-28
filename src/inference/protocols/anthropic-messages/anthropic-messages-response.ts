@@ -6,7 +6,6 @@ import type {
   StopReason,
   TokenUsage,
 } from '@/inference/models/internal-format';
-import { isJsonObject } from '@/inference/protocols/json-object';
 import type { ServerSentEvent } from '@/inference/protocols/server-sent-events';
 import {
   UpstreamProtocolError,
@@ -108,6 +107,21 @@ export function parseMessagesResponse(body: unknown): InferenceResponse {
   };
 }
 
+const readDeltaSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text_delta'), text: z.string() }),
+  z.object({ type: z.literal('thinking_delta'), thinking: z.string() }),
+  z.object({ type: z.literal('signature_delta'), signature: z.string() }),
+  z.object({ type: z.literal('input_json_delta'), partial_json: z.string() }),
+]);
+
+const ignoredDeltaSchema = z
+  .object({ type: z.string() })
+  .loose()
+  .transform(() => ({ type: 'ignored' as const }));
+
+const deltaSchema = z.union([readDeltaSchema, ignoredDeltaSchema]);
+type Delta = z.infer<typeof deltaSchema>;
+
 const streamEventSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('message_start'), message: z.object({ usage: usageSchema }) }),
   z.object({
@@ -118,7 +132,7 @@ const streamEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('content_block_delta'),
     index: z.number(),
-    delta: z.object({ type: z.string() }).loose(),
+    delta: deltaSchema,
   }),
   z.object({ type: z.literal('content_block_stop') }),
   z.object({
@@ -140,13 +154,6 @@ const toolUseStartSchema = z.object({
   id: z.string(),
   name: z.string(),
 });
-
-const deltaSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('text_delta'), text: z.string() }),
-  z.object({ type: z.literal('thinking_delta'), thinking: z.string() }),
-  z.object({ type: z.literal('signature_delta'), signature: z.string() }),
-  z.object({ type: z.literal('input_json_delta'), partial_json: z.string() }),
-]);
 
 class StreamState {
   usage: MessagesUsage = {};
@@ -178,18 +185,16 @@ class MessagesStreamParser implements UpstreamStreamParser {
   private readonly state = new StreamState();
 
   parse({ data }: ServerSentEvent): InferenceStreamEvent[] {
-    const json = parseJson(data);
-    const tokenEvents = eventsOfTokenDelta(json);
-    if (tokenEvents) {
-      return tokenEvents;
-    }
-    const event = parseStreamEvent(json);
+    const event = parseStreamEvent(parseJson(data));
     if (!event) {
       return [];
     }
     if (event.type === 'message_stop') {
       this.isDone = true;
       return [{ type: 'usage', usage: tokenUsageOf(this.state.usage) }];
+    }
+    if (event.type === 'content_block_delta') {
+      return eventsOfDelta(event.index, event.delta, this.state);
     }
     return [...eventsOf(event, this.state)];
   }
@@ -203,8 +208,6 @@ export function startMessagesStream(): UpstreamStreamParser {
   return new MessagesStreamParser();
 }
 
-const typedEventSchema = z.object({ type: z.string() });
-
 function parseJson(data: string): unknown {
   try {
     return JSON.parse(data);
@@ -213,29 +216,9 @@ function parseJson(data: string): unknown {
   }
 }
 
-function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
-  if (!isJsonObject(json) || json.type !== 'content_block_delta') {
-    return undefined;
-  }
-  if (typeof json.index !== 'number' || !Number.isFinite(json.index)) {
-    return undefined;
-  }
-  const delta = json.delta;
-  if (!isJsonObject(delta)) {
-    return undefined;
-  }
-  if (delta.type === 'text_delta' && typeof delta.text === 'string') {
-    return [{ type: 'text-delta', text: delta.text }];
-  }
-  if (delta.type === 'thinking_delta' && typeof delta.thinking === 'string') {
-    return [{ type: 'reasoning-delta', text: delta.thinking }];
-  }
-  return undefined;
-}
-
 function parseStreamEvent(json: unknown): StreamEvent | null {
-  const typed = typedEventSchema.safeParse(json);
-  if (typed.success && !KNOWN_STREAM_EVENT_TYPES.has(typed.data.type)) {
+  const type = eventTypeOf(json);
+  if (typeof type === 'string' && !KNOWN_STREAM_EVENT_TYPES.has(type)) {
     return null;
   }
   const event = streamEventSchema.safeParse(json);
@@ -245,7 +228,14 @@ function parseStreamEvent(json: unknown): StreamEvent | null {
   return event.data;
 }
 
-function* eventsOf(event: StreamEvent, state: StreamState): Iterable<InferenceStreamEvent> {
+function eventTypeOf(json: unknown): unknown {
+  return typeof json === 'object' && json !== null && 'type' in json ? json.type : undefined;
+}
+
+function* eventsOf(
+  event: Exclude<StreamEvent, { type: 'content_block_delta' }>,
+  state: StreamState,
+): Iterable<InferenceStreamEvent> {
   switch (event.type) {
     case 'message_start':
       state.updateUsage(event.message.usage);
@@ -258,9 +248,6 @@ function* eventsOf(event: StreamEvent, state: StreamState): Iterable<InferenceSt
       }
       return;
     }
-    case 'content_block_delta':
-      yield* eventsOfDelta(event.index, event.delta, state);
-      return;
     case 'message_delta':
       state.updateUsage(event.usage ?? {});
       if (event.delta.stop_reason) {
@@ -278,31 +265,26 @@ function* eventsOf(event: StreamEvent, state: StreamState): Iterable<InferenceSt
   }
 }
 
-function* eventsOfDelta(
+function eventsOfDelta(
   blockIndex: number,
-  rawDelta: unknown,
+  delta: Delta,
   state: StreamState,
-): Iterable<InferenceStreamEvent> {
-  const delta = deltaSchema.safeParse(rawDelta);
-  if (!delta.success) {
-    return;
-  }
-  switch (delta.data.type) {
+): InferenceStreamEvent[] {
+  switch (delta.type) {
     case 'text_delta':
-      yield { type: 'text-delta', text: delta.data.text };
-      return;
+      return [{ type: 'text-delta', text: delta.text }];
     case 'thinking_delta':
-      yield { type: 'reasoning-delta', text: delta.data.thinking };
-      return;
+      return [{ type: 'reasoning-delta', text: delta.thinking }];
     case 'signature_delta':
-      yield { type: 'reasoning-signature', signature: delta.data.signature };
-      return;
+      return [{ type: 'reasoning-signature', signature: delta.signature }];
     case 'input_json_delta': {
       const index = state.toolCallIndexOf(blockIndex);
-      if (index !== undefined && delta.data.partial_json !== '') {
-        yield { type: 'tool-call-delta', index, argumentsDelta: delta.data.partial_json };
+      if (index === undefined || delta.partial_json === '') {
+        return [];
       }
-      return;
+      return [{ type: 'tool-call-delta', index, argumentsDelta: delta.partial_json }];
     }
+    case 'ignored':
+      return [];
   }
 }

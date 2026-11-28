@@ -363,6 +363,20 @@ describe('An anthropic-messages upstream (e2e)', () => {
     return `${events.slice(0, firstText + 1).join('\n\n')}\n\n`;
   }
 
+  it('skips a delta type it does not read and finishes the stream', async () => {
+    const fixture = anthropicMessagesFixture('upstream-stream-tool-call.sse');
+    const head = streamUpToFirstText();
+    const unreadDelta =
+      'event: content_block_delta\ndata: {"type":"content_block_delta","index":1,"delta":{"type":"citations_delta","citation":{"type":"char_location"}}}\n\n';
+    upstream.reply({ kind: 'stream', events: head + unreadDelta + fixture.slice(head.length) });
+
+    const response = await createMessage({ ...HELLO_REQUEST, stream: true }).expect(200);
+
+    expect(response.text).toContain('"text":"Checking."');
+    expect(response.text).not.toContain('citation');
+    expect(response.text.trim().split('\n\n').at(-1)).toContain('message_stop');
+  });
+
   it.each([
     [
       'reports an error',
