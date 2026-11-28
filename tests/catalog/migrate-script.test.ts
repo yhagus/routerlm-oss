@@ -8,7 +8,7 @@ import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-datab
 
 const runFile = promisify(execFile);
 const MIGRATE_TIMEOUT_MS = 60_000;
-const SHIPPED_PROVIDER_COUNT = 26;
+const SHIPPED_PROVIDER_COUNT = 27;
 
 describe('production migrate entrypoint (e2e)', () => {
   const serverUrl = process.env.DATABASE_URL ?? '';

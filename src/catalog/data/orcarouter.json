@@ -1,0 +1,801 @@
+{
+  "slug": "orcarouter",
+  "name": "OrcaRouter",
+  "logo": "orcarouter",
+  "termsRisk": false,
+  "verified": false,
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api.orcarouter.ai/v1"
+    },
+    {
+      "kind": "chat",
+      "protocol": "anthropic-messages",
+      "baseUrl": "https://api.orcarouter.ai"
+    },
+    {
+      "kind": "chat",
+      "protocol": "openai-responses",
+      "baseUrl": "https://api.orcarouter.ai/v1"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {},
+  "modelsDevProviderId": "orcarouter",
+  "credentialKinds": ["api-key"],
+  "source": {
+    "urls": [
+      "https://docs.orcarouter.ai/introduction",
+      "https://docs.orcarouter.ai/llms.txt",
+      "https://docs.orcarouter.ai/getting-started/models.md",
+      "https://docs.orcarouter.ai/getting-started/get-api-key.md",
+      "https://docs.orcarouter.ai/native-formats/openai-compat.md",
+      "https://docs.orcarouter.ai/compatibility/anthropic-sdk.md",
+      "https://docs.orcarouter.ai/operations/billing-and-usage.md",
+      "https://docs.orcarouter.ai/operations/errors.md",
+      "https://docs.orcarouter.ai/operations/rate-limits.md",
+      "https://docs.orcarouter.ai/privacy/prompt-cache.md",
+      "https://www.orcarouter.ai/terms.html"
+    ],
+    "retrievedOn": "2026-11-28"
+  },
+  "notes": "Router run by CONTINUUM AI PTE. LTD. (Singapore) that resells other companies' models behind one prepaid wallet and one sk-orca- key, with provider-prefixed model ids (openai/, anthropic/, google/ and so on). It is modelled as pay-as-you-go: OrcaRouter charges each upstream Provider's published per-token price with no markup and publishes no per-model price of its own, so each model's Cost is the original Provider's per-1M-token list price, taken from that Provider's Catalog file or its own pricing page; where the original Provider no longer lists the model, it falls back to models.dev's orcarouter entry, then to the original Provider's models.dev entry, as each model's notes say. The Hacker, Team and Enterprise plans are workspace governance tiers, not token allowances, so they are not modelled as Plans. Not Terms Risk: OrcaRouter publishes its inference URL for direct API use. Three chat endpoints, all with bearer auth: chat completions and Responses under /v1, and Anthropic Messages. OrcaRouter serves every chat model on chat completions and on Responses, translating for models whose upstream does not speak Responses; Claude models list Anthropic Messages first and GPT models list Responses first (ADR 0095), and the other models use chat completions only, since Responses reaches them only by translation and the docs offer Anthropic Messages for Claude models. No key was available for the live check on 2026-11-28: an unauthenticated request to each of the three endpoints answered HTTP 401 \"Invalid API key\" in OrcaRouter's error envelope, while an unknown path answered 404, so the routes are confirmed but no model was called, and the Provider ships Unverified. No exhaustedErrorCodes: 402 insufficient_user_quota (an empty wallet) stays a Cooldown, since topping up ends it at any time, as for the other prepaid resellers. 429 carries Retry-After; 403 has several causes (a key spend limit, a member budget, a key quota, a model outside the key's allow list), and 503 model_not_found means the model is not available to the account. Cached tokens are reported in usage.prompt_tokens_details.cached_tokens and billed at the upstream's discounted rate; cache prices are the upstream's, and left empty where the upstream publishes none. The docs publish no complete model list (they point to GET /v1/models, which lists only what an account can use), so the shipped models are exactly the paid chat models the docs name. Named but not shipped, because neither the original Provider (its Catalog file or pricing page) nor models.dev (its orcarouter or original Provider entry) lists a per-1M-token price: openai/o1, openai/o1-pro, openai/o3-mini, openai/o4-mini, openai/gpt-4o-search-preview, google/gemini-3-pro-preview, grok/grok-4-fast-reasoning, grok/grok-4-1-fast-reasoning and grok/grok-3-mini. openai/gpt-5-search-api is not shipped either: OpenAI lists a per-1M-token price for it, but its searches are also billed per call (10 USD per 1,000 calls), which a per-token Cost cannot carry. Also not shipped: the -{effort} suffix aliases (such as anthropic/claude-opus-4.6-high and openai/o3-mini-high), which are a base model with a reasoning effort; anthropic/claude-sonnet-4-5, which appears only in a metrics example; the orcarouter/ routers (auto, fusion, free), which pick a model per request at no fixed price; the -free models; Cyber models, which need the Security Research tier; and images, text-to-speech, video and the Gemini /v1beta protocol, which have no Protocol here.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "google/gemini-4-argon",
+      "name": "Gemini 4 Argon",
+      "releaseDate": "2026-10-13",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 32768,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/native-formats/gemini.md",
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the google-gemini Catalog file. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "releaseDate": "2026-09-10",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.006,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/native-formats/gemini.md",
+          "https://docs.orcarouter.ai/compatibility/google-genai-sdk.md",
+          "https://api-docs.deepseek.com/quick_start/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the deepseek Catalog file, whose deepseek-flash is DeepSeek V4.1 Flash; the price is the peak price, since OrcaRouter does not say it passes on DeepSeek's off-peak discount. The upstream publishes no cache write price, so it is left empty. The release date is the model's first release, as the tokenharbor Catalog file has it."
+    },
+    {
+      "upstreamModelId": "google/gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "releaseDate": "2026-09-02",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.75,
+      "outputPrice": 3.75,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/advanced/reasoning.md",
+          "https://ai.google.dev/gemini-api/docs/models",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the google-gemini Catalog file. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-opus-4.8",
+      "name": "Claude Opus 4.8",
+      "releaseDate": "2026-05-28",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/integrations/overview.md",
+          "https://docs.orcarouter.ai/operations/zero-data-retention.md",
+          "https://platform.claude.com/docs/en/about-claude/models/overview",
+          "https://platform.claude.com/docs/en/about-claude/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "deepseek/deepseek-v4-flash",
+      "name": "DeepSeek V4 Flash",
+      "releaseDate": "2026-04-24",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
+      "inputPrice": 0.22,
+      "outputPrice": 0.66,
+      "cacheReadPrice": 0.007,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/routing/free-models.md",
+          "https://api-docs.deepseek.com/quick_start/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "DeepSeek has retired this model and its pricing page no longer lists it, so the price comes from models.dev's orcarouter entry, which publishes no cache write price; context, max output and capabilities come from models.dev's deepseek entry. The release date is the model's first release, as the tokenharbor Catalog file has it; models.dev's deepseek entry dates the current deepseek-v4-flash alias 2026-10-17. DeepSeek's off-peak discount is not modelled, since OrcaRouter does not say it passes it on."
+    },
+    {
+      "upstreamModelId": "kimi/kimi-k2.6",
+      "name": "Kimi K2.6",
+      "releaseDate": "2026-04-20",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning", "structured-output", "vision"],
+      "contextSize": 262144,
+      "maxOutputTokens": 262144,
+      "inputPrice": 0.95,
+      "outputPrice": 4,
+      "cacheReadPrice": 0.16,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/compatibility/openai-sdk.md",
+          "https://platform.kimi.ai/docs/models.md",
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the moonshot Catalog file. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-opus-4.7",
+      "name": "Claude Opus 4.7",
+      "releaseDate": "2026-04-14",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": ["https://docs.orcarouter.ai/getting-started/models.md", "https://models.dev/"],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "z-ai/glm-5.1",
+      "name": "GLM-5.1",
+      "releaseDate": "2026-04-07",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 200000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": 0.26,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the zai Catalog file. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "qwen/qwen3.6-plus",
+      "name": "Qwen3.6 Plus",
+      "releaseDate": "2026-04-02",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.5,
+      "outputPrice": 3,
+      "cacheReadPrice": 0.05,
+      "cacheWritePrice": 0.625,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/compatibility/openai-sdk.md",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the alibaba-model-studio-intl Catalog file. Over 256K context: input 2, output 6, cache read 0.2, cache write 2.5, so Cost understates very long prompts."
+    },
+    {
+      "upstreamModelId": "minimax/minimax-m2.7",
+      "name": "MiniMax-M2.7",
+      "releaseDate": "2026-03-18",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.06,
+      "cacheWritePrice": 0.375,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/compatibility/openai-sdk.md",
+          "https://platform.minimax.io/docs/guides/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "MiniMax's pricing page no longer lists the model, so price comes from models.dev's orcarouter entry; context, max output and capabilities come from models.dev's minimax entry."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-sonnet-4.6",
+      "name": "Claude Sonnet 4.6",
+      "releaseDate": "2026-02-17",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 3,
+      "outputPrice": 15,
+      "cacheReadPrice": 0.3,
+      "cacheWritePrice": 3.75,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/advanced/reasoning.md",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "minimax/minimax-m2.5-highspeed",
+      "name": "MiniMax-M2.5-highspeed",
+      "releaseDate": "2026-02-13",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.6,
+      "outputPrice": 2.4,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": 0.375,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://platform.minimax.io/docs/guides/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "MiniMax's pricing page no longer lists the model, so price comes from models.dev's orcarouter entry; context, max output and capabilities come from models.dev's minimax entry."
+    },
+    {
+      "upstreamModelId": "z-ai/glm-5",
+      "name": "GLM-5",
+      "releaseDate": "2026-02-12",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1,
+      "outputPrice": 3.2,
+      "cacheReadPrice": 0.2,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the zai Catalog file. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-opus-4.6",
+      "name": "Claude Opus 4.6",
+      "releaseDate": "2026-02-04",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 5,
+      "outputPrice": 25,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": 6.25,
+      "source": {
+        "urls": ["https://docs.orcarouter.ai/advanced/reasoning.md", "https://models.dev/"],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "kimi/kimi-k2.5",
+      "name": "Kimi K2.5",
+      "releaseDate": "2026-01-27",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 262144,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.6,
+      "outputPrice": 3,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://platform.kimi.ai/docs/pricing/chat",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Neither the moonshot Catalog file nor Kimi's pricing page (whose price table renders client-side) lists the model, so price, context, max output and capabilities come from models.dev's orcarouter entry. It publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "z-ai/glm-4.7",
+      "name": "GLM-4.7",
+      "releaseDate": "2025-12-22",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.6,
+      "outputPrice": 2.2,
+      "cacheReadPrice": 0.11,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the zai Catalog file. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "deepseek/deepseek-chat",
+      "name": "DeepSeek Chat",
+      "releaseDate": "2025-12-01",
+      "protocols": [],
+      "capabilities": ["tools"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.22,
+      "outputPrice": 0.66,
+      "cacheReadPrice": 0.007,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/compatibility/openai-sdk.md",
+          "https://docs.orcarouter.ai/getting-started/quickstart.md",
+          "https://api-docs.deepseek.com/quick_start/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "DeepSeek's pricing page no longer lists this alias, so price, context, max output and capabilities come from models.dev's orcarouter entry, which publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "deepseek/deepseek-reasoner",
+      "name": "DeepSeek Reasoner",
+      "releaseDate": "2025-12-01",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 384000,
+      "inputPrice": 0.242,
+      "outputPrice": 0.726,
+      "cacheReadPrice": 0.0077,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/advanced/reasoning.md",
+          "https://api-docs.deepseek.com/quick_start/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "DeepSeek's pricing page no longer lists this alias, so price, context, max output and capabilities come from models.dev's orcarouter entry, which publishes no cache write price."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5.1",
+      "name": "GPT-5.1",
+      "releaseDate": "2025-11-13",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1.25,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.125,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/advanced/reasoning.md",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from OpenAI's pricing page; context, max output and capabilities come from models.dev's openai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "anthropic/claude-haiku-4.5",
+      "name": "Claude Haiku 4.5",
+      "releaseDate": "2025-10-15",
+      "protocols": ["anthropic-messages", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 200000,
+      "maxOutputTokens": 64000,
+      "inputPrice": 1,
+      "outputPrice": 5,
+      "cacheReadPrice": 0.1,
+      "cacheWritePrice": 1.25,
+      "source": {
+        "urls": ["https://docs.orcarouter.ai/routing/model-fallbacks.md", "https://models.dev/"],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the anthropic Catalog file."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5-pro",
+      "name": "GPT-5 Pro",
+      "releaseDate": "2025-10-06",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 272000,
+      "inputPrice": 15,
+      "outputPrice": 120,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/advanced/reasoning.md",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from OpenAI's pricing page; context, max output and capabilities come from models.dev's openai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "z-ai/glm-4.6",
+      "name": "GLM-4.6",
+      "releaseDate": "2025-09-30",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 204800,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.6,
+      "outputPrice": 2.2,
+      "cacheReadPrice": 0.11,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price, context, max output and capabilities come from the zai Catalog file. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "qwen/qwen3-max",
+      "name": "Qwen3 Max",
+      "releaseDate": "2025-09-23",
+      "protocols": [],
+      "capabilities": ["tools"],
+      "contextSize": 262144,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.359,
+      "outputPrice": 1.434,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Alibaba's international pricing page and the alibaba-model-studio-intl Catalog file no longer list the model, so price, context, max output and capabilities come from models.dev's orcarouter entry, which publishes no cache price. The price is the lowest input-length tier; over 32K context input 0.574 and output 2.294, over 128K input 1.004 and output 4.014, so Cost understates long prompts."
+    },
+    {
+      "upstreamModelId": "qwen/qwen3-vl-235b-a22b-thinking",
+      "name": "Qwen3 VL 235B A22B Thinking",
+      "releaseDate": "2025-09-23",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 131072,
+      "maxOutputTokens": 40960,
+      "inputPrice": 0.4,
+      "outputPrice": 4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Alibaba's international pricing page and the alibaba-model-studio-intl Catalog file no longer list the model, so price, context, max output and capabilities come from models.dev's orcarouter entry, which publishes no cache price."
+    },
+    {
+      "upstreamModelId": "openai/gpt-5",
+      "name": "GPT-5",
+      "releaseDate": "2025-08-07",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 400000,
+      "maxOutputTokens": 128000,
+      "inputPrice": 1.25,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.125,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/advanced/web-search.md",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from OpenAI's pricing page; context, max output and capabilities come from models.dev's openai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "z-ai/glm-4.5",
+      "name": "GLM-4.5",
+      "releaseDate": "2025-07-28",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 131072,
+      "maxOutputTokens": 98304,
+      "inputPrice": 0.6,
+      "outputPrice": 2.2,
+      "cacheReadPrice": 0.11,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from Z.ai's pricing page; context, max output and capabilities come from models.dev's zai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "z-ai/glm-4.5-air",
+      "name": "GLM-4.5-Air",
+      "releaseDate": "2025-07-28",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 131072,
+      "maxOutputTokens": 98304,
+      "inputPrice": 0.2,
+      "outputPrice": 1.1,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.z.ai/guides/overview/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from Z.ai's pricing page; context, max output and capabilities come from models.dev's zai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "google/gemini-2.5-flash-lite",
+      "name": "Gemini 2.5 Flash-Lite",
+      "releaseDate": "2025-07-22",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.1,
+      "outputPrice": 0.4,
+      "cacheReadPrice": 0.01,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from Google's pricing page; context, max output and capabilities come from models.dev's google entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "google/gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "releaseDate": "2025-06-17",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 1.25,
+      "outputPrice": 10,
+      "cacheReadPrice": 0.125,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/advanced/reasoning.md",
+          "https://docs.orcarouter.ai/compatibility/openai-sdk.md",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from Google's pricing page; context, max output and capabilities come from models.dev's google entry. The upstream publishes no cache write price, so it is left empty. Over 200K context: input 2.5, output 15, cache read 0.25, so Cost understates very long prompts."
+    },
+    {
+      "upstreamModelId": "google/gemini-2.5-flash",
+      "name": "Gemini 2.5 Flash",
+      "releaseDate": "2025-06-17",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 65536,
+      "inputPrice": 0.3,
+      "outputPrice": 2.5,
+      "cacheReadPrice": 0.03,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/advanced/audio-input.md",
+          "https://ai.google.dev/gemini-api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from Google's pricing page; context, max output and capabilities come from models.dev's google entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "openai/o3",
+      "name": "o3",
+      "releaseDate": "2025-04-16",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 200000,
+      "maxOutputTokens": 100000,
+      "inputPrice": 2,
+      "outputPrice": 8,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/advanced/reasoning.md",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from OpenAI's pricing page; context, max output and capabilities come from models.dev's openai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "openai/gpt-4.1",
+      "name": "GPT-4.1",
+      "releaseDate": "2025-04-14",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 1047576,
+      "maxOutputTokens": 32768,
+      "inputPrice": 2,
+      "outputPrice": 8,
+      "cacheReadPrice": 0.5,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/advanced/vision.md",
+          "https://docs.orcarouter.ai/operations/billing-and-usage.md",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from OpenAI's pricing page; context, max output and capabilities come from models.dev's openai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "openai/gpt-4o-mini",
+      "name": "GPT-4o mini",
+      "releaseDate": "2024-07-18",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": 16384,
+      "inputPrice": 0.15,
+      "outputPrice": 0.6,
+      "cacheReadPrice": 0.075,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/advanced/streaming.md",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from OpenAI's pricing page; context, max output and capabilities come from models.dev's openai entry. The upstream publishes no cache write price, so it is left empty."
+    },
+    {
+      "upstreamModelId": "openai/gpt-4o",
+      "name": "GPT-4o",
+      "releaseDate": "2024-05-13",
+      "protocols": ["openai-responses", "openai-chat"],
+      "capabilities": ["vision", "tools", "structured-output"],
+      "contextSize": 128000,
+      "maxOutputTokens": 16384,
+      "inputPrice": 2.5,
+      "outputPrice": 10,
+      "cacheReadPrice": 1.25,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://docs.orcarouter.ai/getting-started/models.md",
+          "https://docs.orcarouter.ai/compatibility/frameworks.md",
+          "https://developers.openai.com/api/docs/pricing",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "Price comes from OpenAI's pricing page; context, max output and capabilities come from models.dev's openai entry. The upstream publishes no cache write price, so it is left empty."
+    }
+  ]
+}

@@ -72,6 +72,7 @@ describe('The Google Gemini and OpenAI Catalog files', () => {
       'openai-codex': undefined,
       openai: 'openai',
       'opencode-go': 'opencode-go',
+      orcarouter: 'orcarouter',
       'tencent-tokenhub-intl': 'tencent-tokenhub',
       'tencent-tokenhub-token-plan': 'tencent-token-plan-intl',
       tokenharbor: undefined,
