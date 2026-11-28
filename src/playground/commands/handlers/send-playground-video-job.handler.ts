@@ -24,7 +24,7 @@ export class SendPlaygroundVideoJobHandler implements ICommandHandler<SendPlaygr
     const result = await this.commandBus.execute(
       new SubmitVideoJobCommand(
         body,
-        { kind: 'playground', userId: user.id },
+        { kind: 'playground', userId: user.id, userEmail: user.email },
         connection,
         usage.record,
         target,

@@ -1,6 +1,6 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import { randomUUID } from 'node:crypto';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import request from 'supertest';
 import type { Database } from '@/db/schemas/relations';
 import { apiKeys, attempts, models, usageLogs, users } from '@/db/schemas';
@@ -185,20 +185,30 @@ describe('Usage API: listing and filtering Usage Logs (e2e)', () => {
     expect(response.body.items[0]).toMatchObject({ providerName: null, providerAccountName: null });
   });
 
-  it("shows the email of a Playground request's User, and none once the User is gone", async () => {
+  it('shows the email a Playground request copied, even after its User changes or is gone', async () => {
     const [{ id: adaId }] = await db.select({ id: users.id }).from(users);
+    await db.update(users).set({ email: 'ada.renamed@example.com' }).where(eq(users.id, adaId));
     const goneUserId = randomUUID();
+    const olderGoneUserId = randomUUID();
     await db.insert(usageLogs).values([
       {
         ...SERVED_REQUEST,
-        createdAt: new Date('2026-11-01T11:00:00Z'),
+        createdAt: new Date('2026-11-01T12:00:00Z'),
         userId: adaId,
+        userEmail: ADA.email,
+        isPlayground: true,
+      },
+      {
+        ...SERVED_REQUEST,
+        createdAt: new Date('2026-11-01T11:00:00Z'),
+        userId: goneUserId,
+        userEmail: 'grace@example.com',
         isPlayground: true,
       },
       {
         ...SERVED_REQUEST,
         createdAt: new Date('2026-11-01T10:00:00Z'),
-        userId: goneUserId,
+        userId: olderGoneUserId,
         isPlayground: true,
       },
     ]);
@@ -207,7 +217,8 @@ describe('Usage API: listing and filtering Usage Logs (e2e)', () => {
 
     expect(response.body.items).toEqual([
       expect.objectContaining({ userId: adaId, userEmail: ADA.email }),
-      expect.objectContaining({ userId: goneUserId, userEmail: null }),
+      expect.objectContaining({ userId: goneUserId, userEmail: 'grace@example.com' }),
+      expect.objectContaining({ userId: olderGoneUserId, userEmail: null }),
     ]);
   });
 

@@ -33,7 +33,7 @@ export type UsageCaller =
       apiKeyName: string;
       customer: UsageCustomer | null;
     }
-  | { kind: 'playground'; userId: string }
+  | { kind: 'playground'; userId: string; userEmail: string }
   | { kind: 'unidentified' };
 
 export interface UsageCustomer {

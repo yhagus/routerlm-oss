@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { attempts, usageLogs, users } from '@/db/schemas';
+import { attempts, usageLogs } from '@/db/schemas';
 
 const servedProviderName = sql<string | null>`(
   select ${attempts.providerName} from ${attempts}
@@ -20,7 +20,7 @@ export const usageLogSummaryColumns = {
   customerId: usageLogs.customerId,
   isPlayground: usageLogs.isPlayground,
   userId: usageLogs.userId,
-  userEmail: users.email,
+  userEmail: usageLogs.userEmail,
   upstreamModelName: usageLogs.upstreamModelName,
   providerSlug: usageLogs.providerSlug,
   providerName: servedProviderName,

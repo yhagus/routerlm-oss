@@ -248,7 +248,7 @@ export class PlaygroundController {
     return this.queryBus.execute(
       new RetrieveVideoJobQuery(
         videoId,
-        { kind: 'playground', userId: user.id },
+        { kind: 'playground', userId: user.id, userEmail: user.email },
         clientConnectionOf(request, response).signal,
       ),
     );
@@ -264,7 +264,7 @@ export class PlaygroundController {
     return this.queryBus.execute(
       new DownloadVideoContentQuery(
         videoId,
-        { kind: 'playground', userId: user.id },
+        { kind: 'playground', userId: user.id, userEmail: user.email },
         clientConnectionOf(request, response).signal,
       ),
     );

@@ -650,7 +650,7 @@ describe('Usage Logs and Attempts (e2e)', () => {
       expect(usageLog).toMatchObject({ upstreamModelId, upstreamModelName: UPSTREAM_MODEL_ID });
     });
 
-    it("keeps only the User's id for a Playground request", async () => {
+    it("copies the User's email onto a Playground request", async () => {
       upstream.reply({
         kind: 'stream',
         events: openAiChatFixture('upstream-stream-tool-call.sse'),
@@ -669,10 +669,9 @@ describe('Usage Logs and Attempts (e2e)', () => {
         isPlayground: true,
         apiKeyId: null,
         apiKeyName: null,
+        userEmail: OPS_EMAIL,
         modelName: 'smart',
       });
-      expect(JSON.stringify(usageLog)).not.toContain(OPS_EMAIL);
-      expect(Object.keys(usageLog).filter((key) => /email|userName/i.test(key))).toEqual([]);
     });
 
     it('deletes its Attempts and Error Captures with it', async () => {

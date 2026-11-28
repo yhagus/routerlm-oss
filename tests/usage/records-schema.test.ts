@@ -9,6 +9,7 @@ const SNAPSHOT_NAME_COLUMNS = [
   'provider_name',
   'provider_account_name',
   'api_key_name',
+  'user_email',
   'integration_name',
   'customer_id',
   'unit_tier',
