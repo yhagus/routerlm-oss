@@ -12,6 +12,7 @@ import {
   usageLogs,
 } from '@/db/schemas';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 const CAPTURED_AT = new Date('2026-11-10T10:00:00Z');
@@ -64,7 +65,7 @@ describe('Error Captures API: filtering the list (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table usage_logs, api_keys, models, providers cascade`);
+    await truncateTables(db, sql.raw('usage_logs, api_keys, models, providers'));
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
     [{ id: smartId }, { id: fastId }] = await db

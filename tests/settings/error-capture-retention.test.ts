@@ -4,6 +4,7 @@ import request from 'supertest';
 import { errorCaptures, usageLogs } from '@/db/schemas';
 import type { Database } from '@/db/schemas/relations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -19,7 +20,7 @@ describe('Error Capture Retention Period setting (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table settings, usage_logs cascade`);
+    await truncateTables(db, sql.raw('settings, usage_logs'));
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
   });

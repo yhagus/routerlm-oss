@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import request from 'supertest';
 import type { Database } from '@/db/schemas/relations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 const BLOCKED_BY_DEFAULT = { allowed: false, defaultAllowed: false, isDefault: true };
@@ -17,7 +18,7 @@ describe('Terms Risk Providers setting (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table settings`);
+    await truncateTables(db, sql.raw('settings'));
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
   });

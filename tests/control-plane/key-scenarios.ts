@@ -9,6 +9,7 @@ import type { ControlPlaneClient } from '@tests/support/control-plane-client';
 import { createIntegration } from '@tests/support/integrations';
 import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
@@ -40,7 +41,7 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
     });
 
     beforeEach(async () => {
-      await db.execute(sql`truncate table integrations, api_keys, models, model_groups cascade`);
+      await truncateTables(db, sql.raw('integrations, api_keys, models, model_groups'));
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
       acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });

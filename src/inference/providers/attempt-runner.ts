@@ -1,7 +1,8 @@
-import { type BeforeApplicationShutdown, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/read-provider-account-quota.command';
 import type { UpstreamProtocol } from '@/db/schemas';
+import { runInBackground } from '@/libs/models/background-work';
 import type { SnapshotProviderAccount } from '@/snapshot/models/snapshot';
 import { MarkProviderAccountExhaustedCommand } from '@/upstream/commands/impl/mark-provider-account-exhausted.command';
 import { SIGN_IN_AGAIN_REASON } from '@/upstream/models/oauth-login';
@@ -48,9 +49,8 @@ export interface PreparedAttempt<Answer> {
 }
 
 @Injectable()
-export class AttemptRunner implements BeforeApplicationShutdown {
+export class AttemptRunner {
   private readonly logger = new Logger(AttemptRunner.name);
-  private readonly quotaReadings = new Set<Promise<void>>();
 
   constructor(
     private readonly cipher: ProviderKeyCipher,
@@ -169,12 +169,14 @@ export class AttemptRunner implements BeforeApplicationShutdown {
           await this.afterForbiddenAttempt(failure, providerAccount.id, lastError);
           return;
         }
-        void this.providerAccountHealth.disable(
-          providerAccount.id,
-          providerAccount.credential.kind === 'oauth-login'
-            ? SIGN_IN_AGAIN_REASON
-            : `The upstream refused this key (HTTP ${failure.upstreamStatus ?? 'unknown'})`,
-          lastError,
+        runInBackground(
+          this.providerAccountHealth.disable(
+            providerAccount.id,
+            providerAccount.credential.kind === 'oauth-login'
+              ? SIGN_IN_AGAIN_REASON
+              : `The upstream refused this key (HTTP ${failure.upstreamStatus ?? 'unknown'})`,
+            lastError,
+          ),
         );
         return;
       case 'rate_limited':
@@ -182,18 +184,18 @@ export class AttemptRunner implements BeforeApplicationShutdown {
       case 'timeout':
       case 'connection_error':
       case 'stream_interrupted':
-        void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
+        runInBackground(this.providerAccountHealth.recordFailure(providerAccount.id, lastError));
         await this.cooldowns.startCooldown(providerAccount.id, failure.reason, failure.retryAfter);
         return;
       case 'exhausted':
-        void this.providerAccountHealth.recordFailure(providerAccount.id, lastError);
+        runInBackground(this.providerAccountHealth.recordFailure(providerAccount.id, lastError));
         await this.commandBus.execute(
           new MarkProviderAccountExhaustedCommand(
             providerAccount.id,
             exhaustedUntilOf(failure.upstreamResponse?.body ?? ''),
           ),
         );
-        this.startQuotaReading(providerAccount.id);
+        runInBackground(this.readQuota(providerAccount.id));
         return;
     }
   }
@@ -248,30 +250,17 @@ export class AttemptRunner implements BeforeApplicationShutdown {
     const refusalCount = await this.cooldowns.countRefusal(providerAccountId);
     if (refusalCount >= DISABLING_REFUSAL_COUNT) {
       await this.cooldowns.resetRefusals(providerAccountId);
-      void this.providerAccountHealth.disable(
-        providerAccountId,
-        `The upstream refused this account's requests ${DISABLING_REFUSAL_COUNT} times in a row (repeated refusals, HTTP 403)`,
-        lastError,
+      runInBackground(
+        this.providerAccountHealth.disable(
+          providerAccountId,
+          `The upstream refused this account's requests ${DISABLING_REFUSAL_COUNT} times in a row (repeated refusals, HTTP 403)`,
+          lastError,
+        ),
       );
       return;
     }
-    void this.providerAccountHealth.recordFailure(providerAccountId, lastError);
+    runInBackground(this.providerAccountHealth.recordFailure(providerAccountId, lastError));
     await this.cooldowns.startCooldown(providerAccountId, failure.reason, failure.retryAfter);
-  }
-
-  async beforeApplicationShutdown(): Promise<void> {
-    await this.settleQuotaReadings();
-  }
-
-  async settleQuotaReadings(): Promise<void> {
-    await Promise.all(this.quotaReadings);
-  }
-
-  private startQuotaReading(providerAccountId: string): void {
-    const reading = this.readQuota(providerAccountId).finally(() => {
-      this.quotaReadings.delete(reading);
-    });
-    this.quotaReadings.add(reading);
   }
 
   private async readQuota(providerAccountId: string): Promise<void> {

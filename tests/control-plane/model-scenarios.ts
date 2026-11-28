@@ -13,6 +13,7 @@ import {
 import { createIntegration } from '@tests/support/integrations';
 import { insertModelGroup } from '@tests/support/model-groups';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 import type { ControlPlaneTransport } from './key-scenarios';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
@@ -36,8 +37,9 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
     });
 
     beforeEach(async () => {
-      await db.execute(
-        sql`truncate table integrations, api_keys, models, model_groups, providers, pricing_windows cascade`,
+      await truncateTables(
+        db,
+        sql.raw('integrations, api_keys, models, model_groups, providers, pricing_windows'),
       );
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);

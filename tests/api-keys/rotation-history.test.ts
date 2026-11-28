@@ -4,6 +4,7 @@ import request from 'supertest';
 import type { Database } from '@/db/schemas/relations';
 import { createApiKey } from '@tests/support/api-keys';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
@@ -18,7 +19,7 @@ describe("An API Key's rotation history (e2e)", () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table api_keys, models cascade`);
+    await truncateTables(db, sql.raw('api_keys, models'));
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
   });

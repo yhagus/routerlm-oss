@@ -12,6 +12,7 @@ import { createApiKey } from '@tests/support/api-keys';
 import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
 import { insertOpenAiChatModel } from '@tests/support/inference';
 import { createIntegration } from '@tests/support/integrations';
+import { truncateTables } from '@tests/support/truncate';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
 import { writtenUsageLogs } from '@tests/support/usage-logs';
 import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
@@ -50,7 +51,7 @@ describe('Spend Limit of an API Key (e2e)', () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
-    await db.execute(sql`truncate table integrations, api_keys, usage_logs cascade`);
+    await truncateTables(db, sql.raw('integrations, api_keys, usage_logs'));
     await insertOpenAiChatModel(app, db, { modelName: 'smart', baseUrl: upstream.baseUrl });
     await db.update(upstreamModels).set({
       inputPrice: PRICE_PER_MILLION_TOKENS,

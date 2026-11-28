@@ -11,6 +11,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import type { Redis } from 'ioredis';
 import type { Env } from '@/config/schemas/env.schema';
 import type { Database } from '@/db/schemas/relations';
+import { runInBackground } from '@/libs/models/background-work';
 import { publishPrivateUpstreamsAllowed } from '@/libs/models/private-upstreams-policy';
 import { RedisConnection } from '@/redis/providers/redis-connection';
 import { SettingsStore } from '@/settings/providers/settings-store';
@@ -52,17 +53,17 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     await this.reload();
     this.subscriber.on('message', (_channel: string, publisherId: string) => {
       if (publisherId !== this.instanceId) {
-        void this.reload();
+        runInBackground(this.reload());
       }
     });
-    this.subscriber.on('ready', () => void this.reload());
+    this.subscriber.on('ready', () => runInBackground(this.reload()));
     this.subscriber.subscribe(SNAPSHOT_CHANGED_CHANNEL).catch((error: unknown) => {
       this.logger.warn(`Not subscribed to snapshot changes: ${String(error)}`);
     });
     this.schedulerRegistry.addInterval(
       RELOAD_INTERVAL_NAME,
       setInterval(
-        () => void this.reload(),
+        () => runInBackground(this.reload()),
         this.config.get('SNAPSHOT_RELOAD_INTERVAL_MS', { infer: true }),
       ),
     );
@@ -87,11 +88,13 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
   private retryReloadWithBackoff(delayMs: number): void {
     clearTimeout(this.retryTimer);
     this.retryTimer = setTimeout(() => {
-      void this.reload().then((isReloaded) => {
-        if (!isReloaded) {
-          this.retryReloadWithBackoff(Math.min(delayMs * 2, MAX_RETRY_DELAY_MS));
-        }
-      });
+      runInBackground(
+        this.reload().then((isReloaded) => {
+          if (!isReloaded) {
+            this.retryReloadWithBackoff(Math.min(delayMs * 2, MAX_RETRY_DELAY_MS));
+          }
+        }),
+      );
     }, delayMs);
   }
 
