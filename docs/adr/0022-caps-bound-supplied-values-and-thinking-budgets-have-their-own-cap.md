@@ -19,3 +19,13 @@ A security audit asked two things of the Parameter Policy. Does a Cap apply when
 - An operator who relies on an effort Cap for spend on an anthropic-messages Route must also set the budget Cap; the dashboard shows both.
 - The Parameter Policy schema, its merge rules for Route overrides, and the dashboard form gain one field.
 - The warning for a Cap without a default is a dashboard hint, not a validation error.
+
+## Amendment: the thinking budget takes a default and a forced value
+
+So that the budget Cap can have a default beside it, `defaults.reasoningBudgetTokens` and `forced.reasoningBudgetTokens` join the Parameter Policy, and a default or forced budget above its Cap is refused like any other. Effort and budget form one reasoning setting:
+
+- A forced effort or budget replaces the client's whole reasoning setting, as a forced effort already did.
+- Otherwise the client's reasoning setting, effort or budget, is kept whole. Defaults fill it only when the client sent neither, so a default budget never joins a client's effort.
+- The Caps then lower what is left.
+
+A Protocol without a budget, such as openai-chat or openai-responses, ignores the budget it receives. An operator who wants reasoning there sets a default effort beside the default budget; an anthropic-messages Route that gets both sends the budget.
