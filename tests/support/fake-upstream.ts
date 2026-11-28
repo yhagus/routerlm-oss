@@ -12,7 +12,13 @@ export type FakeReply =
       delayMs?: number;
       onReceived?: () => void | Promise<void>;
     }
-  | { kind: 'stream'; events: string; holdOpen?: boolean; headers?: Record<string, string> }
+  | {
+      kind: 'stream';
+      events: string;
+      status?: number;
+      holdOpen?: boolean;
+      headers?: Record<string, string>;
+    }
   | { kind: 'stream-in-pieces'; pieces: Array<string | Uint8Array>; pauseMs?: number }
   | { kind: 'stream-then-reset'; events: string }
   | { kind: 'hang' }
@@ -250,7 +256,7 @@ export class FakeUpstream {
         });
         return;
       case 'stream':
-        response.writeHead(200, {
+        response.writeHead(reply.status ?? 200, {
           'content-type': 'text/event-stream',
           [UPSTREAM_ONLY_HEADER]: 'upstream-123',
           ...reply.headers,

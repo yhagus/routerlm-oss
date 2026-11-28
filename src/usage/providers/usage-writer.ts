@@ -8,24 +8,15 @@ import { SpendLimitFlags } from '@/spend-limits/providers/spend-limit-flags';
 import type {
   ErrorCaptureRecord,
   MediaUnits,
-  QueuedServingTarget,
   RequestNames,
   ServingTarget,
   UsageCaller,
-  UsageCustomer,
   UsageJob,
 } from '@/usage/models/usage-job';
 import { unitCostOf, usageMeasurementsOf } from '@/usage/models/usage-measurements';
 
 type NewErrorCapture = typeof errorCaptures.$inferInsert;
 type StoredServingTarget = { [Field in keyof ServingTarget]: ServingTarget[Field] | null };
-
-interface JobSnapshot {
-  requestNames: RequestNames;
-  customerNames: { integrationName: string | null; customerId: string | null };
-  servedBy: StoredServingTarget;
-  attemptTargets: StoredServingTarget[];
-}
 
 const NOT_SERVED: StoredServingTarget = {
   routeId: null,
@@ -45,7 +36,8 @@ export class UsageWriter {
   ) {}
 
   async writeUsage(job: UsageJob): Promise<void> {
-    const snapshot = snapshotOf(job);
+    const requestNames = requestNamesOf(job);
+    const customerNames = customerNamesOf(job.caller);
     const measurements = measurementsOf(job);
     const kind = CLIENT_PROTOCOL_KINDS[job.clientProtocol];
     const hasSpentAgainstLimit = await this.db.transaction(async (transaction) => {
@@ -55,24 +47,24 @@ export class UsageWriter {
           id: job.usageLogId,
           createdAt: new Date(job.receivedAt),
           ...callerColumnsOf(job.caller),
-          ...snapshot.requestNames,
-          ...snapshot.customerNames,
+          ...requestNames,
+          ...customerNames,
           modelId: job.modelId,
-          ...servingTargetColumnsOf(snapshot.servedBy),
-          requestedModelName: job.requestedModelName ?? null,
+          ...servingTargetColumnsOf(job.servedBy ?? NOT_SERVED),
+          requestedModelName: job.requestedModelName,
           upstreamProtocol: job.servedBy?.upstreamProtocol ?? null,
           kind,
           clientProtocol: job.clientProtocol,
           isStreamed: job.isStreamed,
           httpStatus: job.httpStatus,
           errorCode: job.errorCode,
-          errorOrigin: job.errorOrigin ?? null,
-          userAgent: job.userAgent ?? null,
-          clientIp: job.clientIp ?? null,
+          errorOrigin: job.errorOrigin,
+          userAgent: job.userAgent,
+          clientIp: job.clientIp,
           serviceTier: job.servedBy?.serviceTier ?? null,
           pricingWindowName: job.servedBy?.pricingWindowName ?? null,
           ...measurements,
-          ...unitColumnsOf(job.units ?? null),
+          ...unitColumnsOf(job.units),
           imageCount: kind === 'image' ? (job.units?.imagesOut ?? null) : null,
           requestBytes: job.requestBytes,
           responseBytes: job.responseBytes,
@@ -94,14 +86,14 @@ export class UsageWriter {
             id: attemptIds[index],
             usageLogId: job.usageLogId,
             startedAt: new Date(attempt.startedAt),
-            ...snapshot.requestNames,
-            ...snapshot.customerNames,
-            ...servingTargetColumnsOf(snapshot.attemptTargets[index]),
-            providerName: snapshot.attemptTargets[index].providerName,
+            ...requestNames,
+            ...customerNames,
+            ...servingTargetColumnsOf(attempt),
+            providerName: attempt.providerName,
             upstreamStatus: attempt.upstreamStatus,
             failureReason: attempt.failureReason,
             durationMs: attempt.durationMs,
-            upstreamRequestId: attempt.upstreamRequestId ?? null,
+            upstreamRequestId: attempt.upstreamRequestId,
           })),
         );
       }
@@ -146,8 +138,8 @@ function errorCaptureRowsOf(
     usageLogId: job.usageLogId,
     requestHeaders: request.headers,
     requestBody: request.body,
-    userAgent: job.userAgent ?? null,
-    clientIp: job.clientIp ?? null,
+    userAgent: job.userAgent,
+    clientIp: job.clientIp,
   };
   if (capture.failedAttempts.length === 0) {
     return [
@@ -189,13 +181,13 @@ function unitColumnsOf(units: MediaUnits | null) {
 
 function responseColumnsOf(job: UsageJob) {
   return {
-    isReasoningStreamed: job.isReasoningStreamed ?? false,
-    finishReason: job.finishReason ?? null,
+    isReasoningStreamed: job.isReasoningStreamed,
+    finishReason: job.finishReason,
     maxOutputTokens: job.sentParameters?.maxOutputTokens ?? null,
     reasoningEffort: job.sentParameters?.reasoningEffort ?? null,
     thinkingBudgetTokens: job.sentParameters?.thinkingBudgetTokens ?? null,
-    toolCount: job.toolCount ?? 0,
-    toolCallCount: job.toolCallCount ?? 0,
+    toolCount: job.toolCount,
+    toolCallCount: job.toolCallCount,
   };
 }
 
@@ -214,27 +206,18 @@ function callerColumnsOf(caller: UsageCaller) {
   }
 }
 
-function snapshotOf(job: UsageJob): JobSnapshot {
-  const storedTargetOf = (target: QueuedServingTarget): StoredServingTarget => ({
-    routeId: target.routeId,
-    upstreamModelId: target.upstreamModelId ?? null,
-    upstreamModelName: target.upstreamModelName ?? null,
-    providerSlug: target.providerSlug ?? null,
-    providerName: target.providerName ?? null,
-    providerAccountId: target.providerAccountId,
-    providerAccountName: target.providerAccountName ?? null,
-  });
+function requestNamesOf(job: UsageJob): RequestNames {
   return {
-    requestNames: {
-      modelName: job.modelName ?? null,
-      apiKeyName: job.caller.kind === 'api-key' ? (job.caller.apiKeyName ?? null) : null,
-    },
-    customerNames: {
-      integrationName: customerOf(job.caller)?.integrationName ?? null,
-      customerId: customerOf(job.caller)?.customerId ?? null,
-    },
-    servedBy: job.servedBy ? storedTargetOf(job.servedBy) : NOT_SERVED,
-    attemptTargets: job.attempts.map(storedTargetOf),
+    modelName: job.modelName,
+    apiKeyName: job.caller.kind === 'api-key' ? job.caller.apiKeyName : null,
+  };
+}
+
+function customerNamesOf(caller: UsageCaller) {
+  const customer = caller.kind === 'api-key' ? caller.customer : null;
+  return {
+    integrationName: customer?.integrationName ?? null,
+    customerId: customer?.customerId ?? null,
   };
 }
 
@@ -247,8 +230,4 @@ function servingTargetColumnsOf(target: StoredServingTarget) {
     providerAccountId: target.providerAccountId,
     providerAccountName: target.providerAccountName,
   };
-}
-
-function customerOf(caller: UsageCaller): UsageCustomer | undefined {
-  return caller.kind === 'api-key' ? caller.customer : undefined;
 }

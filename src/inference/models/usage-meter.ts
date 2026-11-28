@@ -36,7 +36,6 @@ import type { AttemptTarget } from './route-selection';
 import { pricesForRequest } from './request-prices';
 import { type SentServiceTier, serviceTierOfWireValue } from './service-tier';
 
-const ANSWERED_UPSTREAM_STATUS = 200;
 const FIRST_ERROR_STATUS = 400;
 
 const FINISH_REASONS = {
@@ -54,7 +53,7 @@ interface OpenAttempt {
   sentServiceTier: SentServiceTier | null;
   startedAt: Date;
   startedMs: number;
-  hasAnswered: boolean;
+  answeredStatus: number | null;
   upstreamRequestId: string | null;
 }
 
@@ -134,7 +133,7 @@ export class UsageMeter {
       sentServiceTier,
       startedAt: new Date(),
       startedMs: performance.now(),
-      hasAnswered: false,
+      answeredStatus: null,
       upstreamRequestId: null,
     };
   }
@@ -155,11 +154,11 @@ export class UsageMeter {
     });
   }
 
-  attemptAnswered(upstreamRequestId: string | null): void {
+  attemptAnswered(upstreamStatus: number, upstreamRequestId: string | null): void {
     if (!this.openAttempt) {
       return;
     }
-    this.openAttempt.hasAnswered = true;
+    this.openAttempt.answeredStatus = upstreamStatus;
     this.openAttempt.upstreamRequestId = upstreamRequestId;
     const { target, upstreamProtocol } = this.openAttempt;
     const serviceTier = this.openAttempt.sentServiceTier?.tier ?? null;
@@ -247,19 +246,15 @@ export class UsageMeter {
     });
     this.openAttempt.upstreamRequestId =
       failure.upstreamRequestId ?? this.openAttempt.upstreamRequestId;
-    const hasAnswered = this.openAttempt.hasAnswered;
-    this.closeAttempt(
-      failure.reason,
-      failure.upstreamStatus ?? (hasAnswered ? ANSWERED_UPSTREAM_STATUS : null),
-    );
+    this.closeAttempt(failure.reason, failure.upstreamStatus);
   }
 
   attemptInterrupted(): void {
-    this.closeAttempt('stream_interrupted', ANSWERED_UPSTREAM_STATUS);
+    this.closeAttempt('stream_interrupted');
   }
 
   attemptSucceeded(): void {
-    this.closeAttempt(null, ANSWERED_UPSTREAM_STATUS);
+    this.closeAttempt(null);
   }
 
   failedWith(error: GatewayError): void {
@@ -283,11 +278,7 @@ export class UsageMeter {
 
   finish(httpStatus: number, isCancelled: boolean): UsageJob {
     if (this.openAttempt) {
-      const hasAnswered = this.openAttempt.hasAnswered;
-      this.closeAttempt(
-        isCancelled ? 'cancelled' : null,
-        hasAnswered ? ANSWERED_UPSTREAM_STATUS : null,
-      );
+      this.closeAttempt(isCancelled ? 'cancelled' : null);
     }
     const hasSucceeded = !isCancelled && this.errorCode === null && httpStatus < FIRST_ERROR_STATUS;
     return {
@@ -354,17 +345,18 @@ export class UsageMeter {
 
   private closeAttempt(
     failureReason: AttemptRecord['failureReason'],
-    upstreamStatus: number | null,
+    failureStatus: number | null = null,
   ): void {
     if (!this.openAttempt) {
       return;
     }
-    const { target, upstreamProtocol, startedAt, startedMs, upstreamRequestId } = this.openAttempt;
+    const { target, upstreamProtocol, startedAt, startedMs, answeredStatus, upstreamRequestId } =
+      this.openAttempt;
     this.attempts.push({
       startedAt: startedAt.toISOString(),
       ...servingTargetOf(target),
       upstreamProtocol,
-      upstreamStatus,
+      upstreamStatus: failureStatus ?? answeredStatus,
       failureReason,
       durationMs: elapsedSince(startedMs),
       upstreamRequestId,
