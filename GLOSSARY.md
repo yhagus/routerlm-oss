@@ -48,7 +48,7 @@ _Avoid_: Upstream, vendor, channel
 A flag on a Provider that the gateway can only use by presenting the identity of the Provider's own client, such as signing in as its official CLI. A Provider that publishes its inference URL and how to call it is taken to allow use through an external tool or service such as the gateway, whatever its terms say about which tools, scenarios or backends may use it; terms against sharing or reselling access do not count either. While the "allow terms-risk providers" Setting is off (the default), such a Provider is unusable: no inference, not listed to clients, though its own enabled flag is untouched.
 
 **Verified**:
-A flag on a Provider that someone confirmed, with a real Provider Account, that its Provider Endpoints and Upstream Models work as described, with the day it was confirmed. It records a check, not a guarantee, and never changes routing. A Catalog Provider ships with the Catalog's value, a Provider an operator adds starts Unverified, and an operator can mark or unmark any Provider; the operator's choice always wins over the Catalog.
+A flag on a Provider that someone confirmed, with a real Provider Account, that its Provider Endpoints and Upstream Models work as described, with the day it was confirmed. It records a check, not a guarantee, and never changes routing. A Catalog Provider ships Verified, dated on its Catalog file, unless that file marks it Unverified; a Provider an operator adds starts Unverified, and an operator can mark or unmark any Provider; the operator's choice always wins over the Catalog.
 _Avoid_: Tested, live-checked, certified
 
 **Provider Account**:

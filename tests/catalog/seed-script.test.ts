@@ -177,7 +177,7 @@ describe('db:seed script (e2e)', () => {
     }
   });
 
-  it('seeds TokenHarbor Verified on the day its file was checked and DeepSeek Unverified', async () => {
+  it('seeds a Provider Verified on the day its file was checked unless its file opts out', async () => {
     const seeded = await db
       .select({
         slug: providers.slug,
@@ -185,12 +185,12 @@ describe('db:seed script (e2e)', () => {
         verifiedAt: providers.verifiedAt,
       })
       .from(providers)
-      .where(inArray(providers.slug, ['deepseek', 'tokenharbor']))
+      .where(inArray(providers.slug, ['deepseek', 'tencent-tokenhub-intl']))
       .orderBy(providers.slug);
 
     expect(seeded).toEqual([
-      { slug: 'deepseek', verified: false, verifiedAt: null },
-      { slug: 'tokenharbor', verified: true, verifiedAt: new Date('2026-11-26T00:00:00Z') },
+      { slug: 'deepseek', verified: true, verifiedAt: new Date('2026-11-15T00:00:00Z') },
+      { slug: 'tencent-tokenhub-intl', verified: false, verifiedAt: null },
     ]);
   });
 });

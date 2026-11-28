@@ -4,9 +4,10 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import { relations } from '@/db/schemas/relations';
 import { createEmptyDatabase, dropDatabase } from '@tests/support/isolated-database';
-import { copyMigrationsBefore, MIGRATIONS_FOLDER } from '@tests/support/migrations';
+import { copyMigrationsBefore } from '@tests/support/migrations';
 
 const VERIFIED_MIGRATION_SUFFIX = '_mark_providers_verified';
+const LATER_CATALOG_VERIFIED_MIGRATION_SUFFIX = '_mark_catalog_providers_verified';
 
 interface VerifiedRow {
   slug: string;
@@ -17,11 +18,13 @@ interface VerifiedRow {
 describe('Mark Providers Verified migration (e2e)', () => {
   const serverUrl = process.env.DATABASE_URL ?? '';
   let migrationsBefore: string;
+  let migrationsThroughVerified: string;
   let databaseUrl: string;
   let pool: Pool;
 
   beforeAll(async () => {
     migrationsBefore = await copyMigrationsBefore(VERIFIED_MIGRATION_SUFFIX);
+    migrationsThroughVerified = await copyMigrationsBefore(LATER_CATALOG_VERIFIED_MIGRATION_SUFFIX);
   });
 
   beforeEach(async () => {
@@ -37,6 +40,7 @@ describe('Mark Providers Verified migration (e2e)', () => {
 
   afterAll(async () => {
     await rm(migrationsBefore, { recursive: true, force: true });
+    await rm(migrationsThroughVerified, { recursive: true, force: true });
   });
 
   async function insertProvider(slug: string, isFromCatalog: boolean): Promise<void> {
@@ -47,8 +51,10 @@ describe('Mark Providers Verified migration (e2e)', () => {
     );
   }
 
-  async function migrateToLatest(): Promise<void> {
-    await migrate(drizzle({ client: pool, relations }), { migrationsFolder: MIGRATIONS_FOLDER });
+  async function migrateThroughVerified(): Promise<void> {
+    await migrate(drizzle({ client: pool, relations }), {
+      migrationsFolder: migrationsThroughVerified,
+    });
   }
 
   async function verifiedRows(): Promise<VerifiedRow[]> {
@@ -63,7 +69,7 @@ describe('Mark Providers Verified migration (e2e)', () => {
     await insertProvider('deepseek', true);
     await insertProvider('tokenharbor', true);
 
-    await migrateToLatest();
+    await migrateThroughVerified();
 
     expect(await verifiedRows()).toEqual([
       { slug: 'clinepass', verified: true, verified_at: new Date('2026-11-22T00:00:00Z') },
@@ -75,7 +81,7 @@ describe('Mark Providers Verified migration (e2e)', () => {
   it('leaves a Provider an operator created under one of the slugs Unverified', async () => {
     await insertProvider('tokenharbor', false);
 
-    await migrateToLatest();
+    await migrateThroughVerified();
 
     expect(await verifiedRows()).toEqual([
       { slug: 'tokenharbor', verified: false, verified_at: null },
