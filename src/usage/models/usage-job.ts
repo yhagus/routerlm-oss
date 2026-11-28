@@ -30,8 +30,8 @@ export type UsageCaller =
   | {
       kind: 'api-key';
       apiKeyId: string;
-      apiKeyName?: string;
-      customer?: UsageCustomer;
+      apiKeyName: string;
+      customer: UsageCustomer | null;
     }
   | { kind: 'playground'; userId: string }
   | { kind: 'unidentified' };
@@ -53,7 +53,7 @@ export interface UpstreamModelUnitPrices {
   pricePerImage: number | null;
   pricePerImageBySize: PricesByTier | null;
   pricePerInputImage: number | null;
-  pricePerSecondByResolution?: PricesByTier | null;
+  pricePerSecondByResolution: PricesByTier | null;
   pricePerMillionCharacters: number | null;
   pricePerAudioSecond: number | null;
 }
@@ -68,30 +68,26 @@ export interface ServingTarget {
   providerAccountName: string;
 }
 
-export type QueuedServingTarget = Pick<ServingTarget, 'routeId' | 'providerAccountId'> &
-  Partial<Omit<ServingTarget, 'routeId' | 'providerAccountId'>>;
-
 export interface RequestNames {
   modelName: string | null;
   apiKeyName: string | null;
 }
 
-export interface ServedBy extends QueuedServingTarget {
-  upstreamModelId: string;
-  upstreamProtocol?: UpstreamProtocol | null;
-  serviceTier?: ServiceTier | null;
+export interface ServedBy extends ServingTarget {
+  upstreamProtocol: UpstreamProtocol;
+  serviceTier: ServiceTier | null;
   prices: UpstreamModelPrices;
-  pricingWindowName?: string | null;
-  unitPrices?: UpstreamModelUnitPrices;
+  pricingWindowName: string | null;
+  unitPrices: UpstreamModelUnitPrices;
 }
 
-export interface AttemptRecord extends QueuedServingTarget {
+export interface AttemptRecord extends ServingTarget {
   startedAt: string;
-  upstreamProtocol?: UpstreamProtocol | null;
+  upstreamProtocol: UpstreamProtocol | null;
   upstreamStatus: number | null;
   failureReason: RecordedAttemptFailure | null;
   durationMs: number;
-  upstreamRequestId?: string | null;
+  upstreamRequestId: string | null;
 }
 
 export interface CapturedMessage {
@@ -100,13 +96,13 @@ export interface CapturedMessage {
 }
 
 export interface FailedAttemptCapture {
-  captureId?: string;
+  captureId: string;
   attemptIndex: number;
   upstreamResponse: CapturedMessage | null;
 }
 
 export interface ErrorCaptureRecord {
-  requestCaptureId?: string;
+  requestCaptureId: string;
   request: CapturedMessage;
   failedAttempts: FailedAttemptCapture[];
 }
@@ -116,26 +112,26 @@ export interface UsageJob {
   receivedAt: string;
   caller: UsageCaller;
   modelId: string | null;
-  modelName?: string | null;
-  requestedModelName?: string | null;
+  modelName: string | null;
+  requestedModelName: string | null;
   clientProtocol: ClientProtocol;
   isStreamed: boolean;
   httpStatus: number;
   errorCode: GatewayErrorCode | null;
-  errorOrigin?: ErrorOrigin | null;
-  userAgent?: string | null;
-  clientIp?: string | null;
+  errorOrigin: ErrorOrigin | null;
+  userAgent: string | null;
+  clientIp: string | null;
   servedBy: ServedBy | null;
   usage: TokenUsage | null;
-  units?: MediaUnits | null;
+  units: MediaUnits | null;
   requestBytes: number;
   responseBytes: number;
   timeToFirstTokenMs: number | null;
-  isReasoningStreamed?: boolean;
-  finishReason?: FinishReason | null;
-  sentParameters?: SentParameters | null;
-  toolCount?: number;
-  toolCallCount?: number;
+  isReasoningStreamed: boolean;
+  finishReason: FinishReason | null;
+  sentParameters: SentParameters | null;
+  toolCount: number;
+  toolCallCount: number;
   durationMs: number;
   isCancelled: boolean;
   attempts: AttemptRecord[];
