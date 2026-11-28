@@ -22,13 +22,7 @@ import {
   type UpstreamStreamParser,
   type UpstreamTarget,
 } from '@/inference/protocols/upstream-protocol-converter';
-import {
-  type OpenAiUsage,
-  openAiFinishReasonSchema,
-  stopReasonOf,
-  tokenUsageOf,
-  usageSchema,
-} from './openai-chat-usage';
+import { type OpenAiUsage, stopReasonOf, tokenUsageOf, usageSchema } from './openai-chat-usage';
 
 type ReasoningAsThinking = NonNullable<CatalogProviderQuirks['reasoningAsThinking']>;
 
@@ -271,7 +265,7 @@ const completionSchema = z.object({
           reasoning_content: z.string().nullish(),
           tool_calls: z.array(toolCallSchema).nullish(),
         }),
-        finish_reason: openAiFinishReasonSchema,
+        finish_reason: z.string(),
         usage: usageSchema.nullish(),
       }),
     )
@@ -329,7 +323,7 @@ const chunkSchema = z.object({
             .nullish(),
         })
         .nullish(),
-      finish_reason: openAiFinishReasonSchema.nullish(),
+      finish_reason: z.string().nullish(),
       usage: usageSchema.nullish(),
     }),
   ),

@@ -54,25 +54,18 @@ export function writeUsage(usage: TokenUsage): Record<string, unknown> {
   return written;
 }
 
-export const openAiFinishReasonSchema = z.enum([
-  'stop',
-  'length',
-  'tool_calls',
-  'content_filter',
-  'function_call',
-]);
-type OpenAiFinishReason = z.infer<typeof openAiFinishReasonSchema>;
+type OpenAiFinishReason = 'stop' | 'length' | 'tool_calls' | 'content_filter' | 'function_call';
 
-const STOP_REASONS = {
-  stop: 'end',
-  length: 'max-tokens',
-  tool_calls: 'tool-calls',
-  content_filter: 'content-filter',
-  function_call: 'tool-calls',
-} as const satisfies Record<OpenAiFinishReason, StopReason>;
+const STOP_REASONS = new Map<string, StopReason>([
+  ['stop', 'end'],
+  ['length', 'max-tokens'],
+  ['tool_calls', 'tool-calls'],
+  ['content_filter', 'content-filter'],
+  ['function_call', 'tool-calls'],
+] satisfies [OpenAiFinishReason, StopReason][]);
 
-export function stopReasonOf(finishReason: OpenAiFinishReason): StopReason {
-  return STOP_REASONS[finishReason];
+export function stopReasonOf(finishReason: string): StopReason {
+  return STOP_REASONS.get(finishReason) ?? 'other';
 }
 
 const FINISH_REASONS = {
@@ -81,6 +74,7 @@ const FINISH_REASONS = {
   'max-tokens': 'length',
   'tool-calls': 'tool_calls',
   'content-filter': 'content_filter',
+  other: 'stop',
 } as const satisfies Record<StopReason, OpenAiFinishReason>;
 
 export function finishReasonOf(stopReason: StopReason): OpenAiFinishReason {

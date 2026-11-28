@@ -17,6 +17,7 @@ export type ParameterValues = {
   topP?: number;
   maxOutputTokens?: number;
   reasoningEffort?: ReasoningEffort;
+  reasoningBudgetTokens?: number;
   stopSequences?: string[];
   serviceTier?: ServiceTier;
   voice?: string;
@@ -26,9 +27,7 @@ export type ParameterValues = {
 export type ParameterCaps = Omit<
   ParameterValues,
   'stopSequences' | 'serviceTier' | 'voice' | 'watermark'
-> & {
-  reasoningBudgetTokens?: number;
-};
+>;
 
 export type ParameterPolicy = {
   defaults?: ParameterValues;

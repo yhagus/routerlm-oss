@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { NestNodeApplication } from '@nestjs/platform-node';
-import { and, count, eq, isNotNull, isNull, or } from 'drizzle-orm';
+import { and, count, eq, gt, isNotNull, isNull, or } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
@@ -129,5 +129,24 @@ describe('db:seed:demo script (e2e)', () => {
       .where(or(isNull(usageLogs.userAgent), isNull(usageLogs.clientIp)));
 
     expect(withoutSender).toBe(0);
+  });
+
+  it('records how each served demo request finished, its tools and its streamed reasoning', async () => {
+    const [{ servedWithoutFinishReason }] = await db
+      .select({ servedWithoutFinishReason: count() })
+      .from(usageLogs)
+      .where(and(eq(usageLogs.httpStatus, 200), isNull(usageLogs.finishReason)));
+    const [{ withToolCalls }] = await db
+      .select({ withToolCalls: count() })
+      .from(usageLogs)
+      .where(and(gt(usageLogs.toolCallCount, 0), eq(usageLogs.finishReason, 'tool_calls')));
+    const [{ withStreamedReasoning }] = await db
+      .select({ withStreamedReasoning: count() })
+      .from(usageLogs)
+      .where(eq(usageLogs.isReasoningStreamed, true));
+
+    expect(servedWithoutFinishReason).toBe(0);
+    expect(withToolCalls).toBeGreaterThan(0);
+    expect(withStreamedReasoning).toBeGreaterThan(0);
   });
 });

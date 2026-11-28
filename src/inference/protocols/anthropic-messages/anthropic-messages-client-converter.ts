@@ -415,6 +415,7 @@ const STOP_REASONS = {
   'tool-calls': 'tool_use',
   'stop-sequence': 'stop_sequence',
   'content-filter': 'refusal',
+  other: 'end_turn',
 } as const satisfies Record<StopReason, string>;
 
 function writeResponse(

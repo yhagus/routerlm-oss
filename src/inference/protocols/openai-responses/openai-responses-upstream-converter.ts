@@ -293,15 +293,15 @@ function reasoningTextOf(item: Extract<OutputItem, { type: 'reasoning' }>): stri
   return texts.map((text) => text.text).join(PART_SEPARATOR);
 }
 
-const INCOMPLETE_STOP_REASONS: Record<string, StopReason> = {
-  max_output_tokens: 'max-tokens',
-  content_filter: 'content-filter',
-};
+const INCOMPLETE_STOP_REASONS = new Map<string, StopReason>([
+  ['max_output_tokens', 'max-tokens'],
+  ['content_filter', 'content-filter'],
+]);
 
 function stopReasonOf(response: UpstreamResponse, hasToolCalls: boolean): StopReason {
   const incompleteReason = response.incomplete_details?.reason;
   if (response.status === 'incomplete' && incompleteReason) {
-    return INCOMPLETE_STOP_REASONS[incompleteReason] ?? 'end';
+    return INCOMPLETE_STOP_REASONS.get(incompleteReason) ?? 'other';
   }
   return hasToolCalls ? 'tool-calls' : 'end';
 }

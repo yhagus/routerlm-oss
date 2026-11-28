@@ -3,10 +3,11 @@ import type {
   AttemptFailureReason,
   attempts,
   errorCaptures,
+  FinishReason,
   GatewayErrorCode,
   usageLogs,
 } from '@/db/schemas';
-import type { TokenUsage } from '@/inference/models/internal-format';
+import type { ReasoningEffort, TokenUsage } from '@/inference/models/internal-format';
 import { REDACTED } from '@/error-captures/models/captured-content';
 import { SECOND_MS } from '@/libs/models/duration';
 import { usageMeasurementsOf } from '@/usage/models/usage-measurements';
@@ -90,6 +91,15 @@ const BYTES_PER_TOKEN = 4;
 const REQUEST_ENVELOPE_BYTES = 400;
 const RESPONSE_ENVELOPE_BYTES = 300;
 const ERROR_RESPONSE_BYTES = 180;
+const TOOL_REQUEST_SHARE = 0.45;
+const MAX_TOOL_COUNT = 12;
+const TOOL_CALL_SHARE = 0.55;
+const MAX_TOOL_CALL_COUNT = 3;
+const OUTPUT_LIMIT_HIT_SHARE = 0.03;
+const SENT_OUTPUT_LIMIT_SHARE = 0.6;
+const SENT_OUTPUT_LIMITS = [4_096, 8_192, 16_384, 32_000];
+const SENT_REASONING_EFFORTS: readonly ReasoningEffort[] = ['low', 'medium', 'high'];
+const STREAMED_REASONING_SHARE = 0.5;
 
 type Outcome = 'served' | 'recovered' | 'failed';
 type FallbackFailure = Extract<AttemptFailureReason, 'rate_limited' | 'server_error' | 'timeout'>;
@@ -144,6 +154,7 @@ export function generateDemoTraffic(
       apiKeyName: source.kind === 'api-key' ? source.apiKeyName : null,
     };
     const isStreamed = random() < caller.streamedShare;
+    const toolCount = random() < TOOL_REQUEST_SHARE ? between(random, 1, MAX_TOOL_COUNT) : 0;
     const usageLogId = randomUUID();
 
     const failedAttemptCount = failedAttemptCountFor(random, outcome, candidates.length);
@@ -171,6 +182,7 @@ export function generateDemoTraffic(
       modelId: model.modelId,
       clientProtocol: caller.clientProtocol,
       isStreamed,
+      toolCount,
       attemptCount: failedAttempts.length,
       userAgent: caller.userAgent,
       clientIp: caller.clientIp,
@@ -218,6 +230,7 @@ export function generateDemoTraffic(
       requestBytes: requestBytesFor(contextTokensOf(tokens)),
       responseBytes: (tokens.outputTokens ?? 0) * BYTES_PER_TOKEN + RESPONSE_ENVELOPE_BYTES,
       timeToFirstTokenMs: isStreamed ? elapsedMs + firstTokenMs : null,
+      ...responseShapeOf(random, { isStreamed, toolCount, tokens, profile: model.profile }),
       durationMs: elapsedMs + servingMs,
     });
   }
@@ -366,6 +379,39 @@ function tokenUsage(random: Random, profile: TrafficProfile): TokenUsage {
     cacheWriteTokens,
     reasoningTokens: Math.round(outputTokens * profile.reasoningShare),
   };
+}
+
+function responseShapeOf(
+  random: Random,
+  request: { isStreamed: boolean; toolCount: number; tokens: TokenUsage; profile: TrafficProfile },
+): Pick<
+  NewUsageLog,
+  'isReasoningStreamed' | 'finishReason' | 'maxOutputTokens' | 'reasoningEffort' | 'toolCallCount'
+> {
+  const { isStreamed, toolCount, tokens, profile } = request;
+  const toolCallCount =
+    toolCount > 0 && random() < TOOL_CALL_SHARE ? between(random, 1, MAX_TOOL_CALL_COUNT) : 0;
+  const isReasoning = profile.reasoningShare > 0;
+  return {
+    isReasoningStreamed:
+      isStreamed && (tokens.reasoningTokens ?? 0) > 0 && random() < STREAMED_REASONING_SHARE,
+    finishReason: finishReasonFor(random, toolCallCount),
+    maxOutputTokens:
+      random() < SENT_OUTPUT_LIMIT_SHARE ? pickOne(random, SENT_OUTPUT_LIMITS) : null,
+    reasoningEffort: isReasoning ? pickOne(random, SENT_REASONING_EFFORTS) : null,
+    toolCallCount,
+  };
+}
+
+function finishReasonFor(random: Random, toolCallCount: number): FinishReason {
+  if (toolCallCount > 0) {
+    return 'tool_calls';
+  }
+  return random() < OUTPUT_LIMIT_HIT_SHARE ? 'length' : 'stop';
+}
+
+function pickOne<T>(random: Random, values: readonly T[]): T {
+  return values[between(random, 0, values.length - 1)];
 }
 
 function contextTokensOf(tokens: TokenUsage): number {

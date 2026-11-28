@@ -113,6 +113,39 @@ describe('Usage API: one Usage Log with its Attempts (e2e)', () => {
     });
   });
 
+  it('shows the limits the request sent, its tools and why its response finished', async () => {
+    const [{ id }] = await db
+      .insert(usageLogs)
+      .values({
+        ...FALLEN_BACK_REQUEST,
+        isStreamed: true,
+        httpStatus: 200,
+        errorCode: null,
+        errorOrigin: null,
+        isReasoningStreamed: true,
+        finishReason: 'tool_calls',
+        maxOutputTokens: 1024,
+        reasoningEffort: 'low',
+        thinkingBudgetTokens: 2000,
+        toolCount: 3,
+        toolCallCount: 2,
+      })
+      .returning({ id: usageLogs.id });
+
+    const response = await getUsage(`/${id}`).expect(200);
+
+    expect(response.body).toMatchObject({
+      isReasoningStreamed: true,
+      finishReason: 'tool_calls',
+      maxOutputTokens: 1024,
+      reasoningEffort: 'low',
+      thinkingBudgetTokens: 2000,
+      toolCount: 3,
+      toolCallCount: 2,
+      imageCount: null,
+    });
+  });
+
   it('answers 404 for a Usage Log that does not exist', async () => {
     await getUsage(`/${randomUUID()}`).expect(404);
   });

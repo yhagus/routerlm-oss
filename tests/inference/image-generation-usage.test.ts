@@ -67,6 +67,7 @@ describe('Usage Logs of image generation (e2e)', () => {
       kind: 'image',
       clientProtocol: 'openai-images',
       imagesOut: 2,
+      imageCount: 2,
       unitTier: '1K',
       cost: 0.08,
       inputTokens: null,

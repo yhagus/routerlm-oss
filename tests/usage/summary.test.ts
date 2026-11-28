@@ -105,6 +105,9 @@ describe('Usage API: summary totals (e2e)', () => {
       durationMsP95: 480,
       timeToFirstTokenMsP50: 100,
       timeToFirstTokenMsP95: 145,
+      outputSpeedP50: null,
+      outputSpeedP5: null,
+      outputSpeedByUpstream: [],
     });
   });
 
@@ -126,6 +129,9 @@ describe('Usage API: summary totals (e2e)', () => {
       durationMsP95: null,
       timeToFirstTokenMsP50: null,
       timeToFirstTokenMsP95: null,
+      outputSpeedP50: null,
+      outputSpeedP5: null,
+      outputSpeedByUpstream: [],
     });
   });
 
