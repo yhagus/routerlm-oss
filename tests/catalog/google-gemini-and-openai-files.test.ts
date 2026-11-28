@@ -62,6 +62,7 @@ describe('The Google Gemini and OpenAI Catalog files', () => {
       clinepass: 'cline-pass',
       commandcode: undefined,
       deepseek: 'deepseek',
+      'experiential-labs': undefined,
       'google-gemini': 'google',
       'kimi-code': undefined,
       'meta-ai': undefined,

@@ -46,6 +46,7 @@ describe('db:seed script (e2e)', () => {
         'clinepass',
         'commandcode',
         'deepseek',
+        'experiential-labs',
         'google-gemini',
         'kimi-code',
         'meta-ai',
