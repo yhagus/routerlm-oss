@@ -12,7 +12,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import type { Redis } from 'ioredis';
 import type { Env } from '@/config/schemas/env.schema';
 import type { Database } from '@/db/schemas/relations';
-import { runInBackground } from '@/libs/models/background-work';
+import { BackgroundWork } from '@/libs/providers/background-work';
 import { publishPrivateUpstreamsAllowed } from '@/libs/models/private-upstreams-policy';
 import { RedisConnection } from '@/redis/providers/redis-connection';
 import { ShowPrivateUpstreamsQuery } from '@/settings/queries/impl/show-private-upstreams.query';
@@ -42,6 +42,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     private readonly config: ConfigService<Env, true>,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly queryBus: QueryBus,
+    private readonly backgroundWork: BackgroundWork,
   ) {
     this.publisher = redis.client;
     this.subscriber = redis.createSubscriber();
@@ -55,18 +56,18 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     await this.reload();
     this.subscriber.on('message', (_channel: string, publisherId: string) => {
       if (publisherId !== this.instanceId) {
-        runInBackground(this.reload());
+        this.backgroundWork.run(this.reload());
       }
     });
-    this.subscriber.on('ready', () => runInBackground(this.reload()));
-    runInBackground(firstConnectionAttemptOf(this.subscriber));
+    this.subscriber.on('ready', () => this.backgroundWork.run(this.reload()));
+    this.backgroundWork.run(firstConnectionAttemptOf(this.subscriber));
     this.subscriber.subscribe(SNAPSHOT_CHANGED_CHANNEL).catch((error: unknown) => {
       this.logger.warn(`Not subscribed to snapshot changes: ${String(error)}`);
     });
     this.schedulerRegistry.addInterval(
       RELOAD_INTERVAL_NAME,
       setInterval(
-        () => runInBackground(this.reload()),
+        () => this.backgroundWork.run(this.reload()),
         this.config.get('SNAPSHOT_RELOAD_INTERVAL_MS', { infer: true }),
       ),
     );
@@ -91,7 +92,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
   private retryReloadWithBackoff(delayMs: number): void {
     clearTimeout(this.retryTimer);
     this.retryTimer = setTimeout(() => {
-      runInBackground(
+      this.backgroundWork.run(
         this.reload().then((isReloaded) => {
           if (!isReloaded) {
             this.retryReloadWithBackoff(Math.min(delayMs * 2, MAX_RETRY_DELAY_MS));

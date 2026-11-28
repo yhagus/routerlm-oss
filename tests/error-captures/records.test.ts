@@ -53,7 +53,7 @@ describe('Error Captures written for failed requests (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,

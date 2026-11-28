@@ -1,6 +1,5 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import { RedisConnection } from '@/redis/providers/redis-connection';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 import { forgetThrottleCounts } from '@tests/support/redis-state';
@@ -9,14 +8,13 @@ const FIRST_USER = { email: 'ada@example.com', password: 'correct horse battery'
 
 describe('Authentication: login (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await deleteAllUsers(db);
+    await deleteAllUsers(app);
     await setUpFirstUser(app, FIRST_USER);
   });
 

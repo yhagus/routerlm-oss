@@ -40,7 +40,7 @@ describe('Token usage an openai-chat upstream reports (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     await insertOpenAiChatModel(app, db, { modelName: 'smart', baseUrl: upstream.baseUrl });
     ({ key: apiKey } = await insertApiKey(app, db));
   });

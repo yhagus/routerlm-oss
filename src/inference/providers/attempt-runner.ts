@@ -2,7 +2,7 @@ import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/read-provider-account-quota.command';
 import type { UpstreamProtocol } from '@/db/schemas';
-import { runInBackground } from '@/libs/models/background-work';
+import { BackgroundWork } from '@/libs/providers/background-work';
 import type { SnapshotProviderAccount } from '@/snapshot/models/snapshot';
 import { MarkProviderAccountExhaustedCommand } from '@/upstream/commands/impl/mark-provider-account-exhausted.command';
 import { SIGN_IN_AGAIN_REASON } from '@/upstream/models/oauth-login';
@@ -58,6 +58,7 @@ export class AttemptRunner {
     private readonly cooldowns: CooldownStore,
     private readonly providerAccountHealth: ProviderAccountHealth,
     private readonly commandBus: CommandBus,
+    private readonly backgroundWork: BackgroundWork,
   ) {}
 
   answer<Answer>(
@@ -169,7 +170,7 @@ export class AttemptRunner {
           await this.afterForbiddenAttempt(failure, providerAccount.id, lastError);
           return;
         }
-        runInBackground(
+        this.backgroundWork.run(
           this.providerAccountHealth.disable(
             providerAccount.id,
             providerAccount.credential.kind === 'oauth-login'
@@ -184,18 +185,22 @@ export class AttemptRunner {
       case 'timeout':
       case 'connection_error':
       case 'stream_interrupted':
-        runInBackground(this.providerAccountHealth.recordFailure(providerAccount.id, lastError));
+        this.backgroundWork.run(
+          this.providerAccountHealth.recordFailure(providerAccount.id, lastError),
+        );
         await this.cooldowns.startCooldown(providerAccount.id, failure.reason, failure.retryAfter);
         return;
       case 'exhausted':
-        runInBackground(this.providerAccountHealth.recordFailure(providerAccount.id, lastError));
+        this.backgroundWork.run(
+          this.providerAccountHealth.recordFailure(providerAccount.id, lastError),
+        );
         await this.commandBus.execute(
           new MarkProviderAccountExhaustedCommand(
             providerAccount.id,
             exhaustedUntilOf(failure.upstreamResponse?.body ?? ''),
           ),
         );
-        runInBackground(this.readQuota(providerAccount.id));
+        this.backgroundWork.run(this.readQuota(providerAccount.id));
         return;
     }
   }
@@ -250,7 +255,7 @@ export class AttemptRunner {
     const refusalCount = await this.cooldowns.countRefusal(providerAccountId);
     if (refusalCount >= DISABLING_REFUSAL_COUNT) {
       await this.cooldowns.resetRefusals(providerAccountId);
-      runInBackground(
+      this.backgroundWork.run(
         this.providerAccountHealth.disable(
           providerAccountId,
           `The upstream refused this account's requests ${DISABLING_REFUSAL_COUNT} times in a row (repeated refusals, HTTP 403)`,
@@ -259,7 +264,7 @@ export class AttemptRunner {
       );
       return;
     }
-    runInBackground(this.providerAccountHealth.recordFailure(providerAccountId, lastError));
+    this.backgroundWork.run(this.providerAccountHealth.recordFailure(providerAccountId, lastError));
     await this.cooldowns.startCooldown(providerAccountId, failure.reason, failure.retryAfter);
   }
 

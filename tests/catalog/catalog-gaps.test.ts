@@ -38,7 +38,7 @@ describe('Catalog Gaps API (e2e)', () => {
   beforeEach(async () => {
     modelsDev.reset();
     ({ app, db } = await createTestApp());
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const [provider] = await db
       .insert(providers)

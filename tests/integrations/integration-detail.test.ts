@@ -39,8 +39,8 @@ describe("An Integration's detail page (e2e)", () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('integrations, api_keys, usage_logs, models, providers'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('integrations, api_keys, usage_logs, models, providers'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

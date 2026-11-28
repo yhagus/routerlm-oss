@@ -1,4 +1,5 @@
 import { PasswordHasher } from '@nestjs/authentication';
+import type { INestApplicationContext } from '@nestjs/common';
 import { getDrizzleToken } from '@nestjs/drizzle';
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import { Test } from '@nestjs/testing';
@@ -38,8 +39,8 @@ export async function createTestApp(
   return { app, db: app.get<Database>(getDrizzleToken()) };
 }
 
-export async function deleteAllUsers(db: Database): Promise<void> {
-  await truncateTables(db, sql.raw('users'));
+export async function deleteAllUsers(app: INestApplicationContext): Promise<void> {
+  await truncateTables(app, sql.raw('users'));
 }
 
 export function sessionCookieOf(response: Response): string {

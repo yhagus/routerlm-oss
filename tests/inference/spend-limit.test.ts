@@ -50,8 +50,8 @@ describe('Spend Limit of an API Key (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
-    await truncateTables(db, sql.raw('integrations, api_keys, usage_logs'));
+    await deleteAllUpstreamData(app, worker);
+    await truncateTables(app, sql.raw('integrations, api_keys, usage_logs'), worker);
     await insertOpenAiChatModel(app, db, { modelName: 'smart', baseUrl: upstream.baseUrl });
     await db.update(upstreamModels).set({
       inputPrice: PRICE_PER_MILLION_TOKENS,

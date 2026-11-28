@@ -42,7 +42,7 @@ describe('Usage API: Output Speed (e2e)', () => {
 
   beforeEach(async () => {
     await db.execute(sql`truncate table usage_logs cascade`);
-    await deleteAllUsers(db);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

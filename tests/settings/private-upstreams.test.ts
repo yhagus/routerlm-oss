@@ -30,7 +30,7 @@ describe('Allow private upstreams setting (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     await db.delete(settings).where(eq(settings.key, 'allowPrivateUpstreams'));
     await app.get(SnapshotService).changed();
     adaCookie = await setUpFirstUser(app, ADA);

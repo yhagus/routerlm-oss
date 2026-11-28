@@ -60,8 +60,8 @@ describe('Overview API (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('usage_logs'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('usage_logs'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

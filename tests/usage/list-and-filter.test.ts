@@ -46,8 +46,8 @@ describe('Usage API: listing and filtering Usage Logs (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('usage_logs, api_keys, models'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('usage_logs, api_keys, models'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     [{ id: smartId }, { id: fastId }] = await db
       .insert(models)

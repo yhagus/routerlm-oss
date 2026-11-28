@@ -38,10 +38,10 @@ export function describeModelScenarios(transport: ControlPlaneTransport): void {
 
     beforeEach(async () => {
       await truncateTables(
-        db,
+        app,
         sql.raw('integrations, api_keys, models, model_groups, providers, pricing_windows'),
       );
-      await deleteAllUsers(db);
+      await deleteAllUsers(app);
       adaCookie = await setUpFirstUser(app, ADA);
     });
 

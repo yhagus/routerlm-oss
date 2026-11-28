@@ -66,10 +66,14 @@ async function startRecordingApp(): Promise<RecordingApp> {
   return { app, db, apiKey: '', providerId: '', cookie: '' };
 }
 
-async function resetRecordingApp(gateway: RecordingApp, upstream: FakeUpstream): Promise<void> {
+async function resetRecordingApp(
+  gateway: RecordingApp,
+  worker: TestingModule,
+  upstream: FakeUpstream,
+): Promise<void> {
   const usageQueue = gateway.app.get<Queue>(getQueueToken(USAGE_QUEUE));
   await untilUsageQueueIsDrained(usageQueue);
-  await deleteAllUpstreamData(gateway.db);
+  await deleteAllUpstreamData(gateway.app, worker);
   ({ providerId: gateway.providerId } = await insertOpenAiChatModel(gateway.app, gateway.db, {
     modelName: 'smart',
     baseUrl: upstream.baseUrl,
@@ -148,7 +152,7 @@ describe('Error Origin, client and Provider request id of recorded requests (e2e
 
   beforeEach(async () => {
     upstream.reset();
-    await resetRecordingApp(gateway, upstream);
+    await resetRecordingApp(gateway, worker, upstream);
   });
 
   afterAll(async () => {
@@ -391,7 +395,7 @@ describe('Client IP behind a trusted proxy (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await resetRecordingApp(gateway, upstream);
+    await resetRecordingApp(gateway, worker, upstream);
   });
 
   afterAll(async () => {

@@ -40,7 +40,7 @@ describe('Usage Logs of Video Jobs (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     await insertDashScopeVideoModel(app, db, {
       modelName: 'director',
       baseUrl: `${upstream.origin}/api/v1`,

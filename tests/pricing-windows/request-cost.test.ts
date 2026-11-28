@@ -57,8 +57,8 @@ describe('Cost of a request in a Pricing Window (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
-    await deleteAllPricingWindows(db);
+    await deleteAllUpstreamData(app, worker);
+    await deleteAllPricingWindows(app);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,

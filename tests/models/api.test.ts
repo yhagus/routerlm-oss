@@ -19,7 +19,7 @@ describe('Models (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     groupId = await insertModelGroup(app, db, 'everyday');
   });

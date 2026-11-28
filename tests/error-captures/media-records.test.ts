@@ -42,7 +42,7 @@ describe('Error Captures of failed media requests (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     await insertDashScopeImageModel(app, db, {
       modelName: 'painter',
       baseUrl: `${upstream.origin}/api/v1`,

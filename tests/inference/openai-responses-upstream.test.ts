@@ -104,7 +104,7 @@ describe('An openai-responses upstream (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ providerId } = await insertOpenAiResponsesModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,

@@ -1,6 +1,5 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import {
   createTestApp,
   deleteAllUsers,
@@ -13,15 +12,14 @@ const GRACE = { email: 'grace@example.com', password: "grace's password" };
 
 describe('Users (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
   let adaCookie: string;
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await deleteAllUsers(db);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

@@ -65,7 +65,7 @@ describe('Prompt caching (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ key, id: apiKeyId } = await insertApiKey(app, db));
   });

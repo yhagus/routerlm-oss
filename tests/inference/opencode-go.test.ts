@@ -44,7 +44,7 @@ describe('Inference from OpenCode Go (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     const { providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,

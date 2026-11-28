@@ -45,7 +45,7 @@ describe('Scheduled Quota Meter readings (e2e)', () => {
 
   beforeEach(async () => {
     fakeUpstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(worker);
   });
 
   afterAll(async () => {

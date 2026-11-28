@@ -139,7 +139,7 @@ describe('Usage Logs: finish reason, sent limits, tools and Time to First Token 
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     ({ key: apiKey } = await insertApiKey(app, db));
   });
 

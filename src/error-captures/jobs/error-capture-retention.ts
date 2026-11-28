@@ -6,7 +6,7 @@ import type { Job, Queue } from 'bullmq';
 import { lt } from 'drizzle-orm';
 import type { Database } from '@/db/schemas/relations';
 import { errorCaptures } from '@/db/schemas';
-import { trackBackgroundWork } from '@/libs/models/background-work';
+import { BackgroundWork } from '@/libs/providers/background-work';
 import { ERROR_CAPTURES_QUEUE } from '@/queue/models/queue-names';
 import { ShowErrorCaptureRetentionQuery } from '@/settings/queries/impl/show-error-capture-retention.query';
 import { retentionCutoff } from '@/error-captures/models/retention-cutoff';
@@ -50,11 +50,14 @@ export class ErrorCaptureRetention implements OnApplicationBootstrap {
 
 @Processor(ERROR_CAPTURES_QUEUE)
 export class ErrorCaptureRetentionProcessor extends WorkerHost {
-  constructor(private readonly retention: ErrorCaptureRetention) {
+  constructor(
+    private readonly retention: ErrorCaptureRetention,
+    private readonly backgroundWork: BackgroundWork,
+  ) {
     super();
   }
 
   async process(_job: Job): Promise<void> {
-    await trackBackgroundWork(this.retention.deleteExpiredCaptures(new Date()));
+    await this.backgroundWork.track(this.retention.deleteExpiredCaptures(new Date()));
   }
 }

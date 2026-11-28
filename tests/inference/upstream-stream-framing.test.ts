@@ -60,7 +60,7 @@ describe("Reading an upstream's server-sent events (e2e)", () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     await insertOpenAiChatModel(app, db, { modelName: CHAT_MODEL, baseUrl: upstream.baseUrl });
     await insertAnthropicMessagesModel(app, db, {
       modelName: MESSAGES_MODEL,

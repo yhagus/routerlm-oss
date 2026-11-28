@@ -65,8 +65,8 @@ describe('Error Captures API: filtering the list (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('usage_logs, api_keys, models, providers'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('usage_logs, api_keys, models, providers'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     [{ id: smartId }, { id: fastId }] = await db
       .insert(models)

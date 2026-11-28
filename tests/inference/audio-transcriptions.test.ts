@@ -33,7 +33,7 @@ describe('Transcription on /v1/audio/transcriptions (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ providerId } = await insertDashScopeTranscriptionModel(app, db, {
       modelName: 'scribe',
       baseUrl: `${upstream.origin}/api/v1`,

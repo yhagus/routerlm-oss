@@ -73,7 +73,7 @@ describe('Signing in to a Provider for an OAuth Login (e2e)', () => {
 
   beforeEach(async () => {
     authHost.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     cookie = await setUpFirstUser(app, OPERATOR);
     testNumber += 1;
     globalAuthHost = `${authHost.origin}/global-${testNumber}`;

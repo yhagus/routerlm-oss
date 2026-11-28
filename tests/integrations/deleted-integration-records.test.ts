@@ -19,8 +19,8 @@ describe("A deleted Integration's records (e2e)", () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('integrations, usage_logs'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('integrations, usage_logs'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

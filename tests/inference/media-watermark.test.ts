@@ -24,7 +24,7 @@ describe('Watermark on DashScope media requests (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
   });
 
   afterAll(async () => {

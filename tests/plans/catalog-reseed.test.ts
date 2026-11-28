@@ -53,7 +53,7 @@ describe('Re-seeding the Catalog over read Plan Coverage (e2e)', () => {
   }
 
   it('keeps the coverage and when it was read', async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     const cookie = await setUpFirstUser(app, OPERATOR);
     await seed();
     const [provider] = await db

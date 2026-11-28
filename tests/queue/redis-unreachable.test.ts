@@ -35,7 +35,7 @@ describe('Queue with Redis unreachable (e2e)', () => {
   it('answers an inference request whose usage job cannot be enqueued, and logs it', async () => {
     const loggedErrors = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
     const upstream = await FakeUpstream.start();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     await insertOpenAiChatModel(app, db, { modelName: 'smart', baseUrl: upstream.baseUrl });
     const { key } = await insertApiKey(app, db);
     upstream.reply({

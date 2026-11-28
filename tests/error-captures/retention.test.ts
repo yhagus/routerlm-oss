@@ -40,7 +40,7 @@ describe('Error Capture retention (e2e)', () => {
   });
 
   async function insertCapturesAged(...ageDays: number[]) {
-    await truncateTables(db, sql.raw('usage_logs'));
+    await truncateTables(worker, sql.raw('usage_logs'));
     const [{ id: usageLogId }] = await db
       .insert(usageLogs)
       .values({

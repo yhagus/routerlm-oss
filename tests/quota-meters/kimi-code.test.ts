@@ -82,7 +82,7 @@ describe('Quota Meters of a Kimi Code Provider Account (e2e)', () => {
 
   beforeEach(async () => {
     kimi.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const inserted = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',

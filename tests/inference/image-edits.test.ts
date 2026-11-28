@@ -33,7 +33,7 @@ describe('Image edits on /v1/images/edits (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ modelId } = await insertDashScopeImageModel(app, db, {
       modelName: 'painter',
       baseUrl: `${upstream.origin}/api/v1`,

@@ -2,7 +2,6 @@ import { AuthenticationError } from '@nestjs/authentication';
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import { sql } from 'drizzle-orm';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import { authenticateWithIntegrationSecret, createIntegration } from '@tests/support/integrations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 import { truncateTables } from '@tests/support/truncate';
@@ -12,16 +11,15 @@ const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
 
 describe('Disabling and enabling an Integration (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
   let adaCookie: string;
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('integrations, api_keys, models'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('integrations, api_keys, models'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

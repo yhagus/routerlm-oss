@@ -46,7 +46,7 @@ describe('Records of a Probe (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     adaCookie = await setUpFirstUser(app, ADA);
     let providerId: string;
     ({ providerId, providerAccountId: mainAccountId } = await insertOpenAiChatModel(app, db, {

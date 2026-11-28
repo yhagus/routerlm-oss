@@ -29,7 +29,7 @@ describe('Provider Account keys at rest (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const provider = await request(app.getHttpServer())
       .post('/api/providers')

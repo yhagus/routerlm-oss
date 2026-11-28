@@ -31,7 +31,7 @@ describe("Reading a Provider Account's Quota Meters now (e2e)", () => {
 
   beforeEach(async () => {
     fakeUpstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
   });
 
