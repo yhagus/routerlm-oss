@@ -3,9 +3,10 @@ import { InjectDrizzle } from '@nestjs/drizzle';
 import { and, asc, eq, type SQL, sql } from 'drizzle-orm';
 import type { Database } from '@/db/schemas/relations';
 import { usageLogs } from '@/db/schemas';
-import type {
-  IntegrationUsageLog,
-  IntegrationUsageLogPage,
+import {
+  integrationUsageLogOf,
+  type IntegrationUsageLogPage,
+  type IntegrationUsageLogRow,
 } from '@/control-plane/models/integration-usage-log';
 import {
   cursorOf,
@@ -42,7 +43,7 @@ const INTEGRATION_USAGE_LOG_COLUMNS = {
   durationMs: usageLogs.durationMs,
   isCancelled: usageLogs.isCancelled,
   isIncomplete: usageLogs.isIncomplete,
-} satisfies Record<keyof IntegrationUsageLog, unknown>;
+} satisfies Record<keyof IntegrationUsageLogRow, unknown>;
 
 @QueryHandler(ListIntegrationUsageLogsQuery)
 export class ListIntegrationUsageLogsHandler implements IQueryHandler<ListIntegrationUsageLogsQuery> {
@@ -70,7 +71,7 @@ export class ListIntegrationUsageLogsHandler implements IQueryHandler<ListIntegr
 
     const lastRow = rows.at(-1);
     return {
-      usageLogs: rows.map((row) => row.usageLog),
+      usageLogs: rows.map((row) => integrationUsageLogOf(row.usageLog)),
       nextCursor: lastRow === undefined ? (page.after ?? null) : cursorOf(lastRow.position),
     };
   }

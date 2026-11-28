@@ -39,7 +39,17 @@ export async function selectCustomerApiKeys(
     .where(and(eq(apiKeys.integrationId, integrationId), where))
     .orderBy(...NEWEST_KEYS_FIRST);
   const rows = limit === undefined ? await query : await query.limit(limit);
-  return rows.map((row) => ({ ...row, customerId: row.customerId ?? '' }));
+  return rows.map(customerApiKeyOf);
+}
+
+type CustomerApiKeyRow = Omit<CustomerApiKey, 'customerId'> & { customerId: string | null };
+
+function customerApiKeyOf(row: CustomerApiKeyRow): CustomerApiKey {
+  const { customerId } = row;
+  if (customerId === null) {
+    throw new Error(`API Key ${row.id} was issued by an Integration but names no Customer`);
+  }
+  return { ...row, customerId };
 }
 
 export async function findCustomerApiKey(
