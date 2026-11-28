@@ -92,7 +92,7 @@ export class RunMediaInferenceHandler implements ICommandHandler<RunMediaInferen
             request: policedRequest(contract, request, destination, attemptTarget.route),
             clientSignal: connection.signal,
           });
-          meter.attemptAnswered(outcome.upstreamRequestId);
+          meter.attemptAnswered(outcome.upstreamStatus, outcome.upstreamRequestId);
           meter.unitsCounted(outcome.units);
           meter.attemptSucceeded();
           return {
