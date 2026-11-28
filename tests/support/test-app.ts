@@ -10,6 +10,7 @@ import type { BackendRole } from '@/config/schemas/env.schema';
 import { configureApp, createNodeAdapter } from '@/configure-app';
 import type { Database } from '@/db/schemas/relations';
 import { allowPrivateUpstreams } from './private-upstreams';
+import { trackQuotaReadingsOf } from './quota-readings';
 import { truncateTables } from './truncate';
 
 const CHEAP_PASSWORD_HASHER = new PasswordHasher({ logN: 10 });
@@ -34,6 +35,7 @@ export async function createTestApp(
   const app = moduleFixture.createNestApplication<NestNodeApplication>(createNodeAdapter());
   configureApp(app);
   await app.init();
+  trackQuotaReadingsOf(app);
   if (allowsPrivateUpstreams) await allowPrivateUpstreams(app, true);
   return { app, db: app.get<Database>(getDrizzleToken()) };
 }
