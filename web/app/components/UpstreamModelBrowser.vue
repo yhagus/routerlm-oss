@@ -1193,6 +1193,7 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
 
   <AppDialog
     v-if="dialog?.kind === 'create' || dialog?.kind === 'edit'"
+    hide-description
     v-model:open="isDialogOpen"
     wide
     :title="
@@ -1232,12 +1233,10 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
           <AppSelect v-model="form.kind" :options="formKindOptions" label="Kind" />
         </div>
       </div>
-      <p class="form__hint">A Provider offers the Kinds it has an endpoint for.</p>
       <UpstreamModelProtocolsField
         v-if="formEndpointProtocols.length > 1"
         v-model="form.protocols"
         :endpoint-protocols="formEndpointProtocols"
-        :kind="form.kind"
       />
       <fieldset v-if="formCapabilities.length > 0" class="check-group">
         <legend class="field__label">Capabilities</legend>
@@ -1320,10 +1319,6 @@ defineExpose({ openCreate: () => openDialog({ kind: 'create' }) });
           {{ SERVICE_TIER_LABELS[tier] }}</label
         >
       </fieldset>
-      <p v-if="isChatForm" class="form__hint">
-        A requested tier the model doesn't accept is dropped. A tier price left empty is the
-        standard price.
-      </p>
       <div v-for="tier in isChatForm ? form.serviceTiers : []" :key="tier" class="form__grid">
         <label v-for="{ key, label } in TIER_PRICE_FIELDS" :key="key" class="field"
           ><span class="field__label"

@@ -74,7 +74,6 @@ function submit(): void {
           <tr v-for="parameter in POLICY_PARAMETERS" :key="parameter.name">
             <td>
               {{ parameter.label }}
-              <span class="cell-note">{{ parameter.hint }}</span>
             </td>
             <td v-for="{ kind, label } in RULE_KINDS" :key="kind">
               <span v-if="!isRuleOffered(parameter.name, kind)" class="cell-note">—</span>
@@ -147,11 +146,7 @@ function submit(): void {
         rows="4"
         placeholder="Optional. Sent as written, before the client's own system content."
       />
-      <span class="form__hint"
-        >Plain text with no variables, so every request starts with the same bytes and upstream
-        prompt caches keep working.</span
-      ></label
-    >
+    </label>
     <p v-if="problem || error" class="form__error policy-form__error" role="alert">
       {{ problem || error }}
     </p>

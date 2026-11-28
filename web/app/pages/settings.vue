@@ -241,18 +241,6 @@ async function confirmShortening(): Promise<void> {
             required
           />
         </label>
-        <p class="model-choices__hint">
-          Allowed: {{ retention.min }} to {{ retention.max }} days. The default is
-          {{ formatDays(retention.defaultDays) }};
-          {{ retention.isDefault ? 'this is the default.' : 'a custom value is set.' }}
-        </p>
-        <p class="model-choices__hint">
-          Error Captures older than this are deleted by the hourly clean-up. Lengthening it never
-          brings back captures that were already deleted.
-        </p>
-        <p v-if="isLengthening" class="model-choices__hint">
-          Lengthening keeps captures longer from now on only.
-        </p>
         <p v-if="saveError" class="form__error" role="alert">{{ saveError }}</p>
         <div class="settings-panel__actions">
           <button
@@ -298,11 +286,6 @@ async function confirmShortening(): Promise<void> {
           />
           Allow terms-risk providers
         </label>
-        <p class="model-choices__hint">
-          Providers marked Terms risk, such as Kimi Code and OpenAI Codex, sign in as the provider's
-          own app, which may breach its terms of use. While this is off they cannot be used; they
-          are not disabled, and turning this on makes them usable again.
-        </p>
         <p v-if="termsRiskError" class="form__error" role="alert">{{ termsRiskError }}</p>
       </div>
     </section>
@@ -333,12 +316,6 @@ async function confirmShortening(): Promise<void> {
           />
           Allow private upstreams
         </label>
-        <p class="model-choices__hint">
-          Turn this on to use an upstream on your own network, such as Ollama or vLLM. While it is
-          off, a Provider URL must be https and must not point at localhost or a loopback, private
-          or link-local address. The gateway checks this when a URL is saved and again when it
-          connects.
-        </p>
         <p v-if="privateUpstreamsError" class="form__error" role="alert">
           {{ privateUpstreamsError }}
         </p>

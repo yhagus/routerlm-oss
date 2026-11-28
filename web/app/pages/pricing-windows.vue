@@ -205,6 +205,7 @@ function deleteDescription(pricingWindow: PricingWindow): string {
 
     <AppDialog
       v-if="dialog?.kind === 'create' || dialog?.kind === 'edit'"
+      hide-description
       v-model:open="isDialogOpen"
       wide
       :title="dialog.kind === 'create' ? 'Add Pricing Window' : `Edit ${dialog.pricingWindow.name}`"

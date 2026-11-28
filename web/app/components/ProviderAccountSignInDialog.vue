@@ -66,12 +66,6 @@ const regionAuthHosts = computed(() => {
   return oauthLogin?.flow === 'kimi-code' ? oauthLogin.authHosts : null;
 });
 
-const regionHint = computed(() => {
-  const hosts = regionAuthHosts.value;
-  if (!hosts) return '';
-  return `Global accounts sign in at ${hosts.global}, Chinese accounts at ${hosts.china}.`;
-});
-
 const canRetryStart = computed(
   () =>
     state.value.step === 'start' &&
@@ -188,7 +182,6 @@ function selectAll(event: FocusEvent): void {
         </button>
       </div>
       <AppSpinner v-if="isStarting" label="Starting the sign-in…" />
-      <p v-else-if="regionHint" class="form__hint">{{ regionHint }}</p>
     </template>
     <AppSpinner v-else-if="state.step === 'start' && isStarting" label="Starting the sign-in…" />
     <template v-else-if="state.step === 'pending'">

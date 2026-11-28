@@ -230,10 +230,7 @@ const settingsHint = "The voice is the Provider's own name for it, sent unchange
 
     <section class="panel bench__settings" aria-label="Settings">
       <header class="panel-heading">
-        <div>
-          <h2>Settings</h2>
-          <p>{{ settingsHint }}</p>
-        </div>
+        <h2>Settings</h2>
       </header>
       <div class="panel-body">
         <PlaygroundSpeechSettings v-model:voice="voice" v-model:format="format" />
@@ -247,7 +244,7 @@ const settingsHint = "The voice is the Provider's own name for it, sent unchange
           <header class="sheet__header">
             <div>
               <DialogTitle class="dialog__title">Settings</DialogTitle>
-              <DialogDescription class="dialog__description">{{ settingsHint }}</DialogDescription>
+              <DialogDescription class="sr-only">{{ settingsHint }}</DialogDescription>
             </div>
             <button
               class="icon-button"

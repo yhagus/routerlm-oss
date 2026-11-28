@@ -1,15 +1,9 @@
 <script setup lang="ts">
 import { ChevronDown, ChevronUp, Plus, X } from '@lucide/vue';
-import {
-  MODEL_KIND_LABELS,
-  type ModelKind,
-  PROTOCOL_LABELS,
-  type UpstreamProtocol,
-} from '~/lib/upstream';
+import { PROTOCOL_LABELS, type UpstreamProtocol } from '~/lib/upstream';
 
 const props = defineProps<{
   endpointProtocols: readonly UpstreamProtocol[];
-  kind: ModelKind;
 }>();
 
 const protocols = defineModel<UpstreamProtocol[]>({ required: true });
@@ -17,15 +11,6 @@ const protocols = defineModel<UpstreamProtocol[]>({ required: true });
 const unlisted = computed(() =>
   props.endpointProtocols.filter((protocol) => !protocols.value.includes(protocol)),
 );
-
-const hint = computed(() => {
-  const kind = MODEL_KIND_LABELS[props.kind].toLowerCase();
-  const firstEndpoint = props.endpointProtocols[0];
-  if (protocols.value.length === 0 && firstEndpoint) {
-    return `Uses the Provider's first ${kind} endpoint (${PROTOCOL_LABELS[firstEndpoint]}).`;
-  }
-  return "A request goes out on the client's Protocol when it is listed, otherwise on the first one.";
-});
 
 function handleAdd(protocol: UpstreamProtocol): void {
   protocols.value = [...protocols.value, protocol];
@@ -90,5 +75,4 @@ function handleMove(from: number, to: number): void {
       </button>
     </div>
   </fieldset>
-  <p class="form__hint">{{ hint }}</p>
 </template>

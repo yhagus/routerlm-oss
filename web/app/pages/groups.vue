@@ -2,7 +2,7 @@
 import { FolderTree, Plus, Trash2 } from '@lucide/vue';
 import { apiErrorMessage } from '~/lib/api';
 import type { DataTableColumn } from '~/lib/dataTable';
-import { GROUP_SLUG_HINT, GROUP_SLUG_PATTERN, type ModelGroup } from '~/lib/modelGroups';
+import { GROUP_SLUG_PATTERN, type ModelGroup } from '~/lib/modelGroups';
 
 useHead({ title: 'Groups' });
 
@@ -154,6 +154,7 @@ async function deleteGroup(group: ModelGroup): Promise<void> {
 
     <AppDialog
       v-if="dialog"
+      hide-description
       v-model:open="isDialogOpen"
       :title="editedGroup ? `Edit ${editedGroup.name}` : 'New group'"
       description='Clients send each of its Models as "<slug>/<model name>".'
@@ -172,7 +173,6 @@ async function deleteGroup(group: ModelGroup): Promise<void> {
             :pattern="GROUP_SLUG_PATTERN"
             required
         /></label>
-        <p class="form__hint">{{ GROUP_SLUG_HINT }}</p>
         <p v-if="editedGroup && isSlugChanged" class="form__warning" role="note">
           Clients sending "{{ editedGroup.slug }}/&lt;model&gt;" will get an unknown-model error
           until they switch to the new slug.

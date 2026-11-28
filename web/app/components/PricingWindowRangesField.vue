@@ -93,10 +93,6 @@ function handleRemove(range: RangeForm): void {
         <Trash2 :size="14" />
       </button>
     </div>
-    <p class="form__hint">
-      An end before the start crosses midnight and belongs to the day it starts on. Use 24:00 to run
-      to the end of the day.
-    </p>
     <div class="range-list__actions">
       <button class="button" type="button" @click="handleAdd"><Plus :size="14" /> Add range</button>
       <button

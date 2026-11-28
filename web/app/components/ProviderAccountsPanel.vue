@@ -391,6 +391,7 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
 
   <AppDialog
     v-if="dialog?.kind === 'create' || dialog?.kind === 'edit'"
+    hide-description
     v-model:open="isDialogOpen"
     :title="
       dialog.kind === 'create' ? `Add ${provider.name} account` : `Edit ${dialog.account.name}`
@@ -453,7 +454,6 @@ async function handleSignedIn(account: ProviderAccount): Promise<void> {
         <label class="check-field"
           ><input v-model="form.paysBeyondPlan" type="checkbox" /> Pays beyond plan</label
         >
-        <p class="form__hint">Serve models outside this account's Plan, paid from its wallet.</p>
       </template>
       <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
       <div class="dialog__actions">

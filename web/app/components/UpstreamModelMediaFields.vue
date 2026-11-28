@@ -36,9 +36,6 @@ const form = defineModel<MediaForm>({ required: true });
       suffix="/ image"
       unit-label="US dollars per generated image"
     />
-    <p class="form__hint">
-      A price by size tier, such as 2K, for a Provider whose price depends on the size.
-    </p>
   </template>
 
   <template v-if="kind === 'video'">
@@ -48,7 +45,6 @@ const form = defineModel<MediaForm>({ required: true });
       suffix="/ second"
       unit-label="US dollars per output second"
     />
-    <p class="form__hint">The price per second of output video, by resolution, such as 720P.</p>
     <div class="form__grid">
       <label class="field"
         ><span class="field__label">Shortest duration (seconds)</span

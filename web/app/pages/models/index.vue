@@ -10,7 +10,6 @@ import {
   publishedModelName,
 } from '~/lib/modelGroups';
 import {
-  DISPLAY_NAME_MAX_LENGTH,
   displayNameProblem,
   displayNameValue,
   type ModelDetail,
@@ -308,6 +307,7 @@ async function toggleModel(model: ModelSummary): Promise<void> {
 
     <AppDialog
       v-model:open="isCreateDialogOpen"
+      hide-description
       title="Create Model"
       description='Clients send "<group slug>/<name>" as the model, once for each of its Groups.'
     >
@@ -330,19 +330,11 @@ async function toggleModel(model: ModelSummary): Promise<void> {
         <p v-if="displayNameProblem(newModelDisplayName)" class="form__error" role="alert">
           {{ displayNameProblem(newModelDisplayName) }}
         </p>
-        <p v-else class="form__hint">
-          Shown only in the dashboard. Clients still send the name above. Up to
-          {{ DISPLAY_NAME_MAX_LENGTH }} characters.
-        </p>
         <ModelGroupPicker v-model="newModelGroupIds" />
         <div class="field">
           <span class="field__label">Kind</span>
           <AppSelect v-model="newModelKind" :options="MODEL_KIND_OPTIONS" label="Kind" />
         </div>
-        <p class="form__hint">
-          What the Model produces. Its Routes can only go to Upstream Models of this Kind, and it
-          can't be changed later.
-        </p>
         <p v-if="dialogError" class="form__error" role="alert">{{ dialogError }}</p>
         <div class="dialog__actions">
           <button class="button" type="button" @click="isCreateDialogOpen = false">Cancel</button>

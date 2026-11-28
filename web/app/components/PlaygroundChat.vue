@@ -559,10 +559,7 @@ const codeRequest = computed(() => {
 
     <section class="panel bench__settings" aria-label="Settings">
       <header class="panel-heading">
-        <div>
-          <h2>Settings</h2>
-          <p>{{ settingsHint }}</p>
-        </div>
+        <h2>Settings</h2>
       </header>
       <div class="panel-body">
         <PlaygroundSettings
@@ -583,7 +580,7 @@ const codeRequest = computed(() => {
           <header class="sheet__header">
             <div>
               <DialogTitle class="dialog__title">Settings</DialogTitle>
-              <DialogDescription class="dialog__description">
+              <DialogDescription class="sr-only">
                 {{ settingsHint }}
               </DialogDescription>
             </div>

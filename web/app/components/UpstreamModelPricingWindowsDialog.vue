@@ -118,6 +118,7 @@ async function save(entries: readonly AttachedWindowForm[]): Promise<void> {
   <AppDialog
     v-model:open="isOpen"
     wide
+    hide-description
     :title="title"
     description="At most one attachment may apply at any moment. Leave a price empty to keep the standard one, and a bound empty to leave the Validity Period open."
   >
@@ -203,10 +204,6 @@ async function save(entries: readonly AttachedWindowForm[]): Promise<void> {
           @update:model-value="handleAttach"
         />
       </div>
-      <p class="form__hint">
-        Manage the windows' schedules on the
-        <NuxtLink to="/pricing-windows">Pricing Windows</NuxtLink> page.
-      </p>
       <p v-if="saveError" class="form__error" role="alert">{{ saveError }}</p>
       <div class="dialog__actions">
         <button class="button" type="button" @click="isOpen = false">Cancel</button>

@@ -189,6 +189,7 @@ async function afterAction(done: UserAction): Promise<void> {
 
     <AppDialog
       v-if="action?.kind === 'reset-password'"
+      hide-description
       v-model:open="isActionOpen"
       title="Reset password"
       :description="`Set a new password for ${action.user.email}. They are signed out everywhere and sign in again with it.`"

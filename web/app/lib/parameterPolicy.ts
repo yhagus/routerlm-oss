@@ -36,16 +36,16 @@ export interface ParameterPolicy {
 export type PolicyParameter = keyof ParameterValues;
 export type RuleKind = 'defaults' | 'forced' | 'caps';
 
-export const POLICY_PARAMETERS: { name: PolicyParameter; label: string; hint: string }[] = [
-  { name: 'temperature', label: 'Temperature', hint: '0 to 2' },
-  { name: 'topP', label: 'Top P', hint: '0 to 1' },
-  { name: 'maxOutputTokens', label: 'Max output tokens', hint: 'Whole number' },
-  { name: 'reasoningEffort', label: 'Reasoning effort', hint: 'None to xhigh' },
-  { name: 'reasoningBudgetTokens', label: 'Thinking budget', hint: 'Whole number of tokens' },
-  { name: 'stopSequences', label: 'Stop sequences', hint: 'One per line' },
-  { name: 'serviceTier', label: 'Service tier', hint: 'Dropped where unsupported' },
-  { name: 'voice', label: 'Voice', hint: 'Speech, Forced only' },
-  { name: 'watermark', label: 'Watermark', hint: 'Media Kinds, off when not set' },
+export const POLICY_PARAMETERS: { name: PolicyParameter; label: string }[] = [
+  { name: 'temperature', label: 'Temperature' },
+  { name: 'topP', label: 'Top P' },
+  { name: 'maxOutputTokens', label: 'Max output tokens' },
+  { name: 'reasoningEffort', label: 'Reasoning effort' },
+  { name: 'reasoningBudgetTokens', label: 'Thinking budget' },
+  { name: 'stopSequences', label: 'Stop sequences' },
+  { name: 'serviceTier', label: 'Service tier' },
+  { name: 'voice', label: 'Voice' },
+  { name: 'watermark', label: 'Watermark' },
 ];
 
 export const RULE_KINDS: { kind: RuleKind; label: string }[] = [

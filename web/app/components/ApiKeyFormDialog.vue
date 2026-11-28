@@ -179,6 +179,7 @@ async function submit(): Promise<void> {
   <AppDialog
     v-model:open="isOpen"
     wide
+    hide-description
     :title="apiKey ? `Edit ${apiKey.name}` : 'Create API Key'"
     :description="
       apiKey

@@ -58,14 +58,6 @@ const groupOptions = computed(() =>
   allowedGroupOptions(groups.value, props.integration?.allowedModelGroups ?? []),
 );
 
-const allowedSummary = computed(() => {
-  const models = pickedLabels(allowedModelIds.value, modelOptions.value, 'Deleted Model');
-  const groupNames = pickedLabels(allowedModelGroupIds.value, groupOptions.value, 'Deleted group');
-  const names = [...models, ...groupNames.map((group) => `every Model in ${group}`)];
-  if (names.length === 0) return 'Its API Keys may use every Model, including ones added later.';
-  return `Its API Keys may use only ${names.join(', ')}.`;
-});
-
 function sameIds(first: string[], second: string[]): boolean {
   return first.length === second.length && first.every((id) => second.includes(id));
 }
@@ -129,6 +121,7 @@ async function submit(): Promise<void> {
 <template>
   <AppDialog
     v-model:open="isOpen"
+    hide-description
     :title="integration ? `Edit ${integration.name}` : 'Create Integration'"
     :description="
       integration
@@ -173,18 +166,10 @@ async function submit(): Promise<void> {
         <span v-if="isLoadingModelChoices || isLoadingGroups" class="field__note"
           >Loading Models and Groups…</span
         >
-        <span v-else class="field__note"
-          >Its API Keys may call every Model currently in an allowed Group. Leave both Models and
-          Groups empty to allow every Model. {{ allowedSummary }}</span
-        >
       </div>
       <div class="field">
         <label class="check-field"
           ><input v-model="directUpstreamAccess" type="checkbox" /> Direct Upstream Access</label
-        >
-        <span class="field__note"
-          >Its Customer keys may be granted it, so they can also call every usable Upstream Model as
-          <code>upstream/&lt;provider&gt;/&lt;model&gt;</code>.</span
         >
       </div>
       <p v-if="error" class="form__error" role="alert">{{ error }}</p>

@@ -60,6 +60,7 @@ async function handleUse(): Promise<void> {
 <template>
   <AppDialog
     v-model:open="isOpen"
+    hide-description
     :title="`Use a usage reset on ${account.name}`"
     description="The Provider restores this account's Quota Meters early. A usage reset can be used only once."
   >

@@ -544,6 +544,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
 
     <AppDialog
       v-if="dialog?.kind === 'edit'"
+      hide-description
       v-model:open="isDialogOpen"
       title="Edit Model"
       description="Clients that still send an old name, or a Group it left, get an unknown-model error."
@@ -567,7 +568,6 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
         <p v-if="displayNameProblem(newDisplayName)" class="form__error" role="alert">
           {{ displayNameProblem(newDisplayName) }}
         </p>
-        <p v-else class="form__hint">Shown only in the dashboard. Leave blank to show the name.</p>
         <ModelGroupPicker v-model="newGroupIds" />
         <p v-if="hasNoGroup" class="form__warning" role="note">
           Pick at least one Group to save. Clients then send "&lt;group slug&gt;/{{ model?.name }}"
@@ -583,6 +583,7 @@ async function moveRoute(index: number, offset: -1 | 1): Promise<void> {
 
     <AppDialog
       v-if="dialog?.kind === 'add-route'"
+      hide-description
       v-model:open="isDialogOpen"
       title="Add Route"
       description="The new Route goes last. Move it up to try it sooner."
