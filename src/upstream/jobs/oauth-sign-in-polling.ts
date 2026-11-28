@@ -2,6 +2,7 @@ import { InjectQueue, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import type { Job, Queue } from 'bullmq';
+import { trackBackgroundWork } from '@/libs/models/background-work';
 import { OAUTH_SIGN_INS_QUEUE } from '@/queue/models/queue-names';
 import { signInNeedsRedis } from '@/upstream/models/oauth-sign-in';
 import { PollOauthSignInCommand } from '@/upstream/commands/impl/poll-oauth-sign-in.command';
@@ -42,6 +43,8 @@ export class OauthSignInPollingProcessor extends WorkerHost {
   }
 
   async process(job: PollJob): Promise<void> {
-    await this.commandBus.execute(new PollOauthSignInCommand(job.data.signInId));
+    await trackBackgroundWork(
+      this.commandBus.execute(new PollOauthSignInCommand(job.data.signInId)),
+    );
   }
 }

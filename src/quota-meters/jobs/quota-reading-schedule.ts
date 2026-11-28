@@ -6,6 +6,7 @@ import type { Job, Queue } from 'bullmq';
 import { and, eq, exists, isNotNull, isNull, lt, lte, or } from 'drizzle-orm';
 import type { Database } from '@/db/schemas/relations';
 import { providerAccounts, providers, quotaMeters } from '@/db/schemas';
+import { trackBackgroundWork } from '@/libs/models/background-work';
 import { QUOTA_METERS_QUEUE } from '@/queue/models/queue-names';
 import { ReadProviderAccountQuotaCommand } from '@/quota-meters/commands/impl/read-provider-account-quota.command';
 
@@ -90,6 +91,6 @@ export class QuotaReadingScheduleProcessor extends WorkerHost {
   }
 
   async process(_job: Job): Promise<void> {
-    await this.schedule.readDueProviderAccounts();
+    await trackBackgroundWork(this.schedule.readDueProviderAccounts());
   }
 }
