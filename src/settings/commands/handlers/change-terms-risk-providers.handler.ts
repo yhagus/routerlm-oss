@@ -1,5 +1,5 @@
-import { CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
-import { SnapshotService } from '@/snapshot/providers/snapshot.service';
+import { CommandBus, CommandHandler, type ICommandHandler } from '@nestjs/cqrs';
+import { ReloadSnapshotCommand } from '@/snapshot/commands/impl/reload-snapshot.command';
 import { toTermsRiskProvidersSetting } from '@/settings/models/terms-risk-providers-view';
 import type { TermsRiskProvidersSetting } from '@/settings/models/terms-risk-providers';
 import { SettingsStore } from '@/settings/providers/settings-store';
@@ -9,12 +9,12 @@ import { ChangeTermsRiskProvidersCommand } from '@/settings/commands/impl/change
 export class ChangeTermsRiskProvidersHandler implements ICommandHandler<ChangeTermsRiskProvidersCommand> {
   constructor(
     private readonly store: SettingsStore,
-    private readonly snapshot: SnapshotService,
+    private readonly commandBus: CommandBus,
   ) {}
 
   async execute({ allowed }: ChangeTermsRiskProvidersCommand): Promise<TermsRiskProvidersSetting> {
     await this.store.write('allowTermsRiskProviders', allowed);
-    await this.snapshot.changed();
+    await this.commandBus.execute(new ReloadSnapshotCommand());
     return toTermsRiskProvidersSetting({ value: allowed, isDefault: false });
   }
 }
