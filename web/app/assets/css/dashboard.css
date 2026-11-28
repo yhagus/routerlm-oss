@@ -3292,7 +3292,7 @@ tbody tr:hover {
 }
 .usage-summary {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1px;
   margin-bottom: 16px;
   border: 1px solid var(--line);
@@ -3341,6 +3341,20 @@ tbody tr:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.usage-summary__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: help;
+}
+.usage-summary__tooltip {
+  max-width: 280px;
+  white-space: normal;
+}
 .usage-summary__failed {
   color: var(--danger-ink);
   font-weight: 650;
@@ -3360,20 +3374,13 @@ tbody tr:hover {
   .usage-summary__stat {
     grid-column: span 2;
   }
-  .usage-summary__stat:nth-child(n + 4) {
-    grid-column: span 3;
-  }
 }
 @media (max-width: 640px) {
   .usage-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .usage-summary__stat,
-  .usage-summary__stat:nth-child(n + 4) {
+  .usage-summary__stat {
     grid-column: auto;
-  }
-  .usage-summary__stat:last-child {
-    grid-column: 1 / -1;
   }
   .usage-summary__note {
     white-space: normal;

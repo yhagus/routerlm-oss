@@ -1,8 +1,17 @@
 <script setup lang="ts">
+import { Info } from '@lucide/vue';
 import { computed } from 'vue';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { compactNumber, percent } from '~/lib/chart';
 import { ERROR_ORIGIN_LABELS, ERROR_ORIGINS } from '~/lib/errorOrigins';
-import { formatCost, formatCount, formatDuration, type UsageSummary } from '~/lib/usage';
+import {
+  formatCost,
+  formatCount,
+  formatDuration,
+  formatOutputSpeed,
+  OUTPUT_SPEED_HINT,
+  type UsageSummary,
+} from '~/lib/usage';
 
 const props = defineProps<{
   summary: UsageSummary | null | undefined;
@@ -34,6 +43,7 @@ const failedByOriginNote = computed(() => {
 });
 
 const hasMedianDuration = computed(() => (props.summary?.durationMsP50 ?? null) !== null);
+const hasMedianOutputSpeed = computed(() => (props.summary?.outputSpeedP50 ?? null) !== null);
 
 function formatTokens(count: number | null | undefined): string {
   return count === null || count === undefined ? NO_DATA : compactNumber(count);
@@ -113,9 +123,32 @@ function formatTokens(count: number | null | undefined): string {
       </strong>
       <p class="usage-summary__note tabular">
         <template v-if="described">
-          p95 {{ formatLatency(described.durationMsP95) }} · first token
+          p95 {{ formatLatency(described.durationMsP95) }} · Time to First Token
           {{ formatLatency(described.timeToFirstTokenMsP50) }}
         </template>
+      </p>
+    </div>
+
+    <div class="usage-summary__stat">
+      <TooltipProvider :delay-duration="100">
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <button type="button" class="usage-summary__label usage-summary__hint">
+              Output Speed <Info :size="11" aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent class="usage-summary__tooltip">{{ OUTPUT_SPEED_HINT }}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <strong class="tabular">
+        {{ formatOutputSpeed(summary?.outputSpeedP50 ?? null) }}
+        <small v-if="hasMedianOutputSpeed">median</small>
+      </strong>
+      <p class="usage-summary__note tabular">
+        <template v-if="summary && summary.outputSpeedP5 !== null">
+          p5 {{ formatOutputSpeed(summary.outputSpeedP5) }}
+        </template>
+        <template v-else-if="summary">No streamed request to measure</template>
       </p>
     </div>
   </div>
