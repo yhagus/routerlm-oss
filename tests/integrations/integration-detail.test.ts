@@ -10,6 +10,7 @@ import {
 import { insertOpenAiChatModel } from '@tests/support/inference';
 import { createIntegration } from '@tests/support/integrations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000000';
@@ -38,9 +39,7 @@ describe("An Integration's detail page (e2e)", () => {
   });
 
   beforeEach(async () => {
-    await db.execute(
-      sql`truncate table integrations, api_keys, usage_logs, models, providers cascade`,
-    );
+    await truncateTables(db, sql.raw('integrations, api_keys, usage_logs, models, providers'));
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
   });

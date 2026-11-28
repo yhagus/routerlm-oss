@@ -5,6 +5,7 @@ import type { Database } from '@/db/schemas/relations';
 import { errorCaptures, usageLogs } from '@/db/schemas';
 import { createIntegration } from '@tests/support/integrations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 
@@ -18,7 +19,7 @@ describe("A deleted Integration's records (e2e)", () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table integrations, usage_logs cascade`);
+    await truncateTables(db, sql.raw('integrations, usage_logs'));
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, ADA);
   });

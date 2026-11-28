@@ -6,6 +6,7 @@ import { createApiKey } from '@tests/support/api-keys';
 import type { ControlPlaneClient } from '@tests/support/control-plane-client';
 import { createIntegration } from '@tests/support/integrations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 import type { ControlPlaneTransport } from './key-scenarios';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
@@ -33,7 +34,7 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
     });
 
     beforeEach(async () => {
-      await db.execute(sql`truncate table integrations, api_keys, usage_logs cascade`);
+      await truncateTables(db, sql.raw('integrations, api_keys, usage_logs'));
       await deleteAllUsers(db);
       adaCookie = await setUpFirstUser(app, ADA);
       acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });

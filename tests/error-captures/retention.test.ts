@@ -5,6 +5,7 @@ import { eq, sql } from 'drizzle-orm';
 import { getDrizzleToken } from '@nestjs/drizzle';
 import type { Database } from '@/db/schemas/relations';
 import { errorCaptures, settings, usageLogs } from '@/db/schemas';
+import { truncateTables } from '@tests/support/truncate';
 
 const redisUrl = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
 redisUrl.pathname = `/${(process.pid % 15) + 1}`;
@@ -39,7 +40,7 @@ describe('Error Capture retention (e2e)', () => {
   });
 
   async function insertCapturesAged(...ageDays: number[]) {
-    await db.execute(sql`truncate table usage_logs cascade`);
+    await truncateTables(db, sql.raw('usage_logs'));
     const [{ id: usageLogId }] = await db
       .insert(usageLogs)
       .values({

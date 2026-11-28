@@ -5,6 +5,7 @@ import type { Database } from '@/db/schemas/relations';
 import { httpControlPlaneClient } from '@tests/support/control-plane-client';
 import { createIntegration } from '@tests/support/integrations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
+import { truncateTables } from '@tests/support/truncate';
 import { type ControlPlaneTransport, describeKeyScenarios } from './key-scenarios';
 import { describeLastUsedScenarios } from './last-used-scenarios';
 import { describeModelScenarios } from './model-scenarios';
@@ -30,7 +31,7 @@ describe('Control plane HTTP adapter (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await db.execute(sql`truncate table integrations, api_keys cascade`);
+    await truncateTables(db, sql.raw('integrations, api_keys'));
     await deleteAllUsers(db);
     adaCookie = await setUpFirstUser(app, { email: 'ada@example.com', password: "ada's password" });
   });

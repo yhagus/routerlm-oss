@@ -10,6 +10,7 @@ import { FakeUpstream, openAiChatFixture } from '@tests/support/fake-upstream';
 import { insertOpenAiChatModel, UPSTREAM_MODEL_ID } from '@tests/support/inference';
 import { createIntegration } from '@tests/support/integrations';
 import { insertModelGroup } from '@tests/support/model-groups';
+import { truncateTables } from '@tests/support/truncate';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
 import { writtenUsageLog } from '@tests/support/usage-logs';
 import { untilUsageQueueIsDrained } from '@tests/support/usage-queue';
@@ -46,7 +47,7 @@ describe("Inference with a Customer's API Key (e2e)", () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
     await deleteAllUpstreamData(db);
-    await db.execute(sql`truncate table integrations, api_keys cascade`);
+    await truncateTables(db, sql.raw('integrations, api_keys'));
     ({ modelId: smartModelId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,
