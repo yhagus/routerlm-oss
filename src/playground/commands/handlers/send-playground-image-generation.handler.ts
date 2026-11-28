@@ -26,7 +26,7 @@ export class SendPlaygroundImageGenerationHandler implements ICommandHandler<Sen
       new RunMediaInferenceCommand(
         contract,
         body,
-        { kind: 'playground', userId: user.id },
+        { kind: 'playground', userId: user.id, userEmail: user.email },
         connection,
         usage.record,
         target,

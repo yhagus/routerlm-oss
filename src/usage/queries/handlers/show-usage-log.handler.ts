@@ -3,7 +3,7 @@ import { type IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { asc, eq } from 'drizzle-orm';
 import type { Database } from '@/db/schemas/relations';
-import { attempts, usageLogs, users } from '@/db/schemas';
+import { attempts, usageLogs } from '@/db/schemas';
 import type { UsageLogDetail } from '@/usage/models/usage';
 import { usageLogSummaryColumns } from '@/usage/models/usage-log-columns';
 import { ShowUsageLogQuery } from '@/usage/queries/impl/show-usage-log.query';
@@ -14,11 +14,7 @@ export class ShowUsageLogHandler implements IQueryHandler<ShowUsageLogQuery> {
 
   async execute({ id }: ShowUsageLogQuery): Promise<UsageLogDetail> {
     const [[usageLog], usageLogAttempts] = await Promise.all([
-      this.db
-        .select(usageLogSummaryColumns)
-        .from(usageLogs)
-        .leftJoin(users, eq(users.id, usageLogs.userId))
-        .where(eq(usageLogs.id, id)),
+      this.db.select(usageLogSummaryColumns).from(usageLogs).where(eq(usageLogs.id, id)),
       this.db
         .select({
           id: attempts.id,

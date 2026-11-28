@@ -48,7 +48,7 @@ export interface TrafficModel {
 
 export type TrafficSource =
   | { kind: 'api-key'; apiKeyId: string; apiKeyName: string }
-  | { kind: 'playground'; userId: string };
+  | { kind: 'playground'; userId: string; userEmail: string };
 
 export interface TrafficCaller {
   source: TrafficSource;
@@ -363,10 +363,10 @@ function usageLogTargetOf({
 
 function attribution(
   source: TrafficSource,
-): Pick<NewUsageLog, 'apiKeyId' | 'userId' | 'isPlayground'> {
+): Pick<NewUsageLog, 'apiKeyId' | 'userId' | 'userEmail' | 'isPlayground'> {
   return source.kind === 'api-key'
-    ? { apiKeyId: source.apiKeyId, userId: null, isPlayground: false }
-    : { apiKeyId: null, userId: source.userId, isPlayground: true };
+    ? { apiKeyId: source.apiKeyId, userId: null, userEmail: null, isPlayground: false }
+    : { apiKeyId: null, userId: source.userId, userEmail: source.userEmail, isPlayground: true };
 }
 
 function tokenUsage(random: Random, profile: TrafficProfile): TokenUsage {

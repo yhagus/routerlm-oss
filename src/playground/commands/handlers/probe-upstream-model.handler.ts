@@ -59,7 +59,7 @@ export class ProbeUpstreamModelHandler implements ICommandHandler<ProbeUpstreamM
           { infer: true },
         ),
       },
-      caller: { kind: 'playground', userId: user.id },
+      caller: { kind: 'playground', userId: user.id, userEmail: user.email },
       connection,
       onUsage: usage.record,
     });

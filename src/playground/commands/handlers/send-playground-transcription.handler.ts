@@ -24,7 +24,7 @@ export class SendPlaygroundTranscriptionHandler implements ICommandHandler<SendP
       new RunMediaInferenceCommand(
         openAiTranscriptionClientContract,
         asksForPlainText(body),
-        { kind: 'playground', userId: user.id },
+        { kind: 'playground', userId: user.id, userEmail: user.email },
         connection,
         usage.record,
         target,

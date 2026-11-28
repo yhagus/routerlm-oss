@@ -109,7 +109,7 @@ describe('Playground (e2e)', () => {
 
     expect(enqueued).toHaveBeenCalledOnce();
     const [[, job]] = enqueued.mock.calls;
-    expect(job.caller).toEqual({ kind: 'playground', userId: adaId });
+    expect(job.caller).toEqual({ kind: 'playground', userId: adaId, userEmail: ADA.email });
     expect(JSON.stringify(job)).not.toContain('What is in this picture?');
   });
 
@@ -119,7 +119,7 @@ describe('Playground (e2e)', () => {
     await sendToPlayground({ ...PLAYGROUND_REQUEST, model: 'unknown' }).expect(404);
 
     const [[, job]] = enqueued.mock.calls;
-    expect(job.caller).toEqual({ kind: 'playground', userId: adaId });
+    expect(job.caller).toEqual({ kind: 'playground', userId: adaId, userEmail: ADA.email });
     expect(job.errorCapture?.request.headers.cookie).toBe('[REDACTED]');
     expect(JSON.stringify(job.errorCapture)).not.toContain(adaCookie);
   });

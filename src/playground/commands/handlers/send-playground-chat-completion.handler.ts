@@ -31,7 +31,7 @@ export class SendPlaygroundChatCompletionHandler implements ICommandHandler<Send
       new RunInferenceCommand(
         openAiChatClientConverter,
         body,
-        { kind: 'playground', userId: user.id },
+        { kind: 'playground', userId: user.id, userEmail: user.email },
         connection,
         reportUsage,
         target,
