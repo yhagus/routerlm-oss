@@ -27,6 +27,7 @@ const props = withDefaults(
     menuClass?: string;
     menuAlign?: 'start' | 'end';
     emptyText?: string;
+    triggerClass?: string;
   }>(),
   {
     placeholder: 'Select an option',
@@ -82,14 +83,16 @@ function handleTriggerArrowKey(event: KeyboardEvent): void {
       <PopoverTrigger as-child>
         <button
           type="button"
-          class="select-control select-control--custom"
+          :class="triggerClass ?? 'select-control select-control--custom'"
           :aria-label="label"
           aria-haspopup="listbox"
           @keydown.down.up="handleTriggerArrowKey"
         >
-          <slot name="leading" />
-          <span class="select-control__value">{{ selectedLabel }}</span>
-          <span class="select-control__chevron"><ChevronDown :size="14" /></span>
+          <slot name="trigger">
+            <slot name="leading" />
+            <span class="select-control__value">{{ selectedLabel }}</span>
+            <span class="select-control__chevron"><ChevronDown :size="14" /></span>
+          </slot>
         </button>
       </PopoverTrigger>
       <PopoverPortal>

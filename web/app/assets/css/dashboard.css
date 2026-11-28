@@ -2903,6 +2903,9 @@ tbody tr:hover {
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
 }
+.dialog--extra-wide {
+  width: min(880px, calc(100vw - 32px));
+}
 .form__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3250,6 +3253,29 @@ tbody tr:hover {
 .field__with-mark .text-input {
   flex: 1;
   min-width: 0;
+}
+.app-select.logo-picker {
+  flex: none;
+  min-width: 0;
+}
+.logo-picker__trigger {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.logo-picker__trigger:hover {
+  opacity: 0.8;
+}
+.logo-picker__trigger .provider-mark {
+  width: 34px;
+  height: 34px;
+}
+.dialog .select-control {
+  height: 34px;
 }
 .logo-select-menu .app-select-options {
   max-height: 260px;

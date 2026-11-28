@@ -414,6 +414,3 @@ export function optionalNumber(typed: string | number): number | null {
 export function numberField(value: number | null): string {
   return value === null ? '' : String(value);
 }
-
-export const TERMS_RISK_HINT =
-  'Using this Provider through a gateway may breach its terms of use. Blocked until Allow terms-risk providers is turned on in Settings.';

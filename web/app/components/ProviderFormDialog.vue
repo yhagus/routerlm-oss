@@ -2,7 +2,6 @@
 import { apiErrorMessage } from '~/lib/api';
 import { REASONING_EFFORTS, SERVICE_TIER_LABELS, SERVICE_TIERS } from '~/lib/parameterPolicy';
 import { PROVIDER_LOGOS } from '~/lib/providerLogos';
-import { TERMS_RISK_HINT } from '~/lib/upstream';
 import {
   chatProtocolsOf,
   providerFieldsFromForm,
@@ -46,6 +45,7 @@ const logoOptions = [
   ...[...PROVIDER_LOGOS].map(([key, mark]) => ({ label: mark.label, value: key })),
 ];
 
+const nameInputId = useId();
 const form = ref(providerFormFor(props.provider));
 const isSlugTyped = ref(false);
 const isSlugAuto = computed(() => !props.provider && !isSlugTyped.value);
@@ -118,23 +118,51 @@ async function save(): Promise<void> {
 <template>
   <AppDialog
     v-model:open="isOpen"
-    wide
+    extra-wide
+    hide-description
     :title="provider ? `Edit ${provider.name}` : 'Add Provider'"
-    description="One endpoint per Protocol the Provider serves, so a Kind may have several. Its base URL is what the Protocol's path is appended to: /chat/completions for Chat Completions, /v1/messages for Messages, /responses for Responses."
+    description="The Provider's name, endpoints and request quirks."
   >
     <form class="form" @submit.prevent="save" @invalid.capture="handleInvalidField">
       <div class="form__grid">
-        <label class="field"
-          ><span class="field__label">Name</span
-          ><span class="field__with-mark">
-            <ProviderLogo
-              class="provider-mark--sm"
-              :logo="form.logo || null"
-              :name="form.name"
-              :base-url="formBaseUrl"
+        <div class="field">
+          <label class="field__label" :for="nameInputId">Name</label>
+          <span class="field__with-mark">
+            <AppSelect
+              v-model="form.logo"
+              class="logo-picker"
+              trigger-class="logo-picker__trigger"
+              :options="logoOptions"
+              label="Logo"
+              searchable
+              menu-class="logo-select-menu"
+            >
+              <template #trigger>
+                <ProviderLogo
+                  class="provider-mark--sm"
+                  :logo="form.logo || null"
+                  :name="form.name"
+                  :base-url="formBaseUrl"
+                />
+              </template>
+              <template #option-leading="{ option }">
+                <ProviderLogo
+                  class="provider-mark--xs"
+                  :logo="option.value || null"
+                  :name="form.name"
+                  :base-url="formBaseUrl"
+                />
+              </template>
+            </AppSelect>
+            <input
+              :id="nameInputId"
+              :value="form.name"
+              class="text-input"
+              required
+              @input="handleNameInput"
             />
-            <input :value="form.name" class="text-input" required @input="handleNameInput" /> </span
-        ></label>
+          </span>
+        </div>
         <label class="field"
           ><span class="field__label">Slug{{ isSlugAuto ? ' (auto)' : '' }}</span
           ><input
@@ -147,87 +175,11 @@ async function save(): Promise<void> {
             @input="handleSlugInput"
         /></label>
       </div>
-      <p v-if="!provider" class="form__hint">
-        {{
-          isSlugAuto
-            ? 'Slug is generated from the name. Type in it to set your own.'
-            : 'Slug is set by hand. Clear it to follow the name again.'
-        }}
-      </p>
       <ProviderEndpointsField v-model="form.endpoints" />
-      <p class="form__hint">The quirks below follow the chat endpoint's Protocol.</p>
       <div class="field">
         <span class="field__label">Authentication</span>
         <AppSelect v-model="form.authStyle" :options="authStyleOptions" label="Authentication" />
       </div>
-      <div class="field">
-        <span class="field__label">Logo</span>
-        <AppSelect
-          v-model="form.logo"
-          :options="logoOptions"
-          label="Logo"
-          searchable
-          menu-class="logo-select-menu"
-        >
-          <template #option-leading="{ option }">
-            <ProviderLogo
-              class="provider-mark--xs"
-              :logo="option.value || null"
-              :name="form.name"
-              :base-url="formBaseUrl"
-            />
-          </template>
-        </AppSelect>
-      </div>
-      <p class="form__hint">Automatic picks a logo by the base URL's host, or shows initials.</p>
-      <label class="check-field"
-        ><input v-model="form.termsRisk" type="checkbox" /> Terms risk</label
-      >
-      <p class="form__hint">{{ TERMS_RISK_HINT }}</p>
-      <div v-if="hasOpenAiChat" class="field">
-        <span class="field__label">Reasoning content in history</span>
-        <AppSelect
-          v-model="form.reasoningContentInHistory"
-          :options="reasoningOptions"
-          label="Reasoning content in history"
-        />
-      </div>
-      <fieldset v-if="isOpenAiProtocol" class="check-group">
-        <legend class="field__label">Request fields</legend>
-        <label v-if="hasOpenAiChat" class="check-field"
-          ><input v-model="form.acceptsCacheControl" type="checkbox" /> cache_control markers</label
-        >
-        <label class="check-field"
-          ><input v-model="form.acceptsPromptCacheKey" type="checkbox" /> prompt_cache_key</label
-        >
-        <label v-if="hasOpenAiChat" class="check-field"
-          ><input v-model="form.usesMaxCompletionTokens" type="checkbox" />
-          max_completion_tokens</label
-        >
-        <template v-if="hasOpenAiResponses">
-          <label class="check-field"
-            ><input v-model="form.includesEncryptedReasoning" type="checkbox" /> include encrypted
-            reasoning</label
-          >
-          <label class="check-field"
-            ><input v-model="form.systemAsDeveloperMessage" type="checkbox" /> System prompt as a
-            developer message</label
-          >
-          <label class="check-field"
-            ><input v-model="form.alwaysStreams" type="checkbox" /> Always stream upstream</label
-          >
-        </template>
-      </fieldset>
-      <fieldset v-if="hasOpenAiResponses" class="check-group">
-        <legend class="field__label">Dropped parameters</legend>
-        <label v-for="parameter in DROPPABLE_PARAMETERS" :key="parameter" class="check-field"
-          ><input v-model="form.droppedParameters" type="checkbox" :value="parameter" />
-          {{ parameter }}</label
-        >
-      </fieldset>
-      <p v-if="hasOpenAiResponses" class="form__hint">
-        Left out of every request, for a Provider that refuses them.
-      </p>
       <label v-if="hasAnthropicMessages" class="field"
         ><span class="field__label">Cache marker limit</span
         ><NumberInput
@@ -237,50 +189,28 @@ async function save(): Promise<void> {
           :min="0"
           placeholder="4"
       /></label>
-      <p v-if="hasAnthropicMessages" class="form__hint">
-        How many cache markers the gateway may add to a request. 0 adds none; blank means 4.
-      </p>
+      <fieldset v-if="hasOpenAiResponses" class="check-group">
+        <legend class="field__label">Dropped parameters</legend>
+        <label v-for="parameter in DROPPABLE_PARAMETERS" :key="parameter" class="check-field"
+          ><input v-model="form.droppedParameters" type="checkbox" :value="parameter" />
+          {{ parameter }}</label
+        >
+      </fieldset>
+      <label class="check-field"
+        ><input v-model="form.termsRisk" type="checkbox" /> Terms risk</label
+      >
 
       <details class="form-advanced">
         <summary class="form-advanced__summary">Advanced</summary>
         <div class="form-advanced__body">
-          <template v-if="hasOpenAiChat">
-            <fieldset class="check-group">
-              <legend class="field__label">Reasoning as thinking</legend>
-              <label class="check-field"
-                ><input v-model="form.hasReasoningAsThinking" type="checkbox" /> Send reasoning as a
-                thinking object</label
-              >
-            </fieldset>
-            <p class="form__hint">
-              For Providers that refuse reasoning_effort and take
-              <code>{ type: "enabled", effort }</code> instead. Give the Provider's name for each
-              reasoning effort.
-            </p>
-            <template v-if="form.hasReasoningAsThinking">
-              <div class="form-advanced__efforts">
-                <label v-for="effort in REASONING_EFFORTS" :key="effort" class="field"
-                  ><span class="field__label">{{ effort }}</span
-                  ><input
-                    v-model="form.thinkingEfforts[effort]"
-                    class="text-input"
-                    required
-                    spellcheck="false"
-                /></label>
-              </div>
-              <div class="field">
-                <span class="field__label">Upstream Models without effort</span>
-                <TagListInput
-                  v-model="form.upstreamModelsWithoutEffort"
-                  label="Upstream Models without effort"
-                  placeholder="Upstream Model id, then Enter"
-                />
-              </div>
-              <p class="form__hint">
-                These get thinking with no effort, by their id at the Provider.
-              </p>
-            </template>
-          </template>
+          <div v-if="hasOpenAiChat" class="field">
+            <span class="field__label">Reasoning content in history</span>
+            <AppSelect
+              v-model="form.reasoningContentInHistory"
+              :options="reasoningOptions"
+              label="Reasoning content in history"
+            />
+          </div>
           <template v-if="hasOpenAiChat">
             <div class="field">
               <span class="field__label">Forwarded client headers</span>
@@ -290,26 +220,7 @@ async function save(): Promise<void> {
                 placeholder="Lowercase header name, then Enter"
               />
             </div>
-            <p class="form__hint">
-              Request headers passed on to the Provider when the client sent them, such as
-              user-agent. Credentials and connection headers are rejected on save.
-            </p>
             <ProviderFixedHeadersField v-model="form.fixedHeaders" />
-            <p class="form__hint">
-              Sent on every request to this Provider. The credential always wins.
-            </p>
-          </template>
-          <template v-if="isOpenAiProtocol">
-            <fieldset class="check-group">
-              <legend class="field__label">Client fields</legend>
-              <label class="check-field"
-                ><input v-model="form.forwardsClientPromptCacheKey" type="checkbox" /> Forward the
-                client's prompt_cache_key</label
-              >
-            </fieldset>
-            <p class="form__hint">
-              Passed on as the client sent it; the gateway adds none of its own.
-            </p>
           </template>
 
           <div class="form__grid">
@@ -322,10 +233,6 @@ async function save(): Promise<void> {
                 placeholder="Not offered"
             /></label>
           </div>
-          <p class="form__hint">
-            What the Provider calls each Service Tier in service_tier, such as priority for fast.
-            Blank means the Provider has no such tier.
-          </p>
 
           <div class="field">
             <span class="field__label">Exhausted error codes</span>
@@ -335,11 +242,6 @@ async function save(): Promise<void> {
               placeholder="Code, then Enter"
             />
           </div>
-          <p class="form__hint">
-            Errors that mean a Provider Account's plan quota ran out: it becomes Exhausted instead
-            of going into Cooldown. Digits are read as a status code, anything else as an error code
-            or type.
-          </p>
 
           <div class="form__grid">
             <div class="field">
@@ -359,20 +261,6 @@ async function save(): Promise<void> {
                 :placeholder="formBaseUrl || 'Same as the base URL'"
             /></label>
           </div>
-          <p v-if="form.quotaReader" class="form__hint">
-            Blank reads the quota from the base URL's host.
-          </p>
-
-          <fieldset class="check-group">
-            <legend class="field__label">Credentials</legend>
-            <label v-for="kind in CREDENTIAL_KINDS" :key="kind" class="check-field"
-              ><input v-model="form.credentialKinds" type="checkbox" :value="kind" />
-              {{ CREDENTIAL_KIND_LABELS[kind] }}</label
-            >
-          </fieldset>
-          <p class="form__hint">
-            What its Provider Accounts may hold. An OAuth Login also needs a sign-in flow below.
-          </p>
 
           <div class="field">
             <span class="field__label">OAuth Login</span>
@@ -382,9 +270,6 @@ async function save(): Promise<void> {
               label="OAuth Login"
             />
           </div>
-          <p class="form__hint">
-            Each sign-in flow is built into the gateway; pick the one the Provider shares.
-          </p>
           <div v-if="form.oauthLoginFlow === 'kimi-code'" class="form__grid">
             <label class="field"
               ><span class="field__label">Global auth host</span
@@ -445,12 +330,82 @@ async function save(): Promise<void> {
                 spellcheck="false"
             /></label>
           </div>
+
+          <fieldset v-if="isOpenAiProtocol" class="check-group">
+            <legend class="field__label">Request fields</legend>
+            <label v-if="hasOpenAiChat" class="check-field"
+              ><input v-model="form.acceptsCacheControl" type="checkbox" /> cache_control
+              markers</label
+            >
+            <label class="check-field"
+              ><input v-model="form.acceptsPromptCacheKey" type="checkbox" />
+              prompt_cache_key</label
+            >
+            <label v-if="hasOpenAiChat" class="check-field"
+              ><input v-model="form.usesMaxCompletionTokens" type="checkbox" />
+              max_completion_tokens</label
+            >
+            <template v-if="hasOpenAiResponses">
+              <label class="check-field"
+                ><input v-model="form.includesEncryptedReasoning" type="checkbox" /> include
+                encrypted reasoning</label
+              >
+              <label class="check-field"
+                ><input v-model="form.systemAsDeveloperMessage" type="checkbox" /> System prompt as
+                a developer message</label
+              >
+              <label class="check-field"
+                ><input v-model="form.alwaysStreams" type="checkbox" /> Always stream
+                upstream</label
+              >
+            </template>
+          </fieldset>
+          <fieldset v-if="isOpenAiProtocol" class="check-group">
+            <legend class="field__label">Client fields</legend>
+            <label class="check-field"
+              ><input v-model="form.forwardsClientPromptCacheKey" type="checkbox" /> Forward the
+              client's prompt_cache_key</label
+            >
+          </fieldset>
+          <fieldset class="check-group">
+            <legend class="field__label">Credentials</legend>
+            <label v-for="kind in CREDENTIAL_KINDS" :key="kind" class="check-field"
+              ><input v-model="form.credentialKinds" type="checkbox" :value="kind" />
+              {{ CREDENTIAL_KIND_LABELS[kind] }}</label
+            >
+          </fieldset>
+          <template v-if="hasOpenAiChat">
+            <fieldset class="check-group">
+              <legend class="field__label">Reasoning as thinking</legend>
+              <label class="check-field"
+                ><input v-model="form.hasReasoningAsThinking" type="checkbox" /> Send reasoning as a
+                thinking object</label
+              >
+            </fieldset>
+            <template v-if="form.hasReasoningAsThinking">
+              <div class="form-advanced__efforts">
+                <label v-for="effort in REASONING_EFFORTS" :key="effort" class="field"
+                  ><span class="field__label">{{ effort }}</span
+                  ><input
+                    v-model="form.thinkingEfforts[effort]"
+                    class="text-input"
+                    required
+                    spellcheck="false"
+                /></label>
+              </div>
+              <div class="field">
+                <span class="field__label">Upstream Models without effort</span>
+                <TagListInput
+                  v-model="form.upstreamModelsWithoutEffort"
+                  label="Upstream Models without effort"
+                  placeholder="Upstream Model id, then Enter"
+                />
+              </div>
+            </template>
+          </template>
         </div>
       </details>
 
-      <p v-if="provider?.isFromCatalog" class="form__hint">
-        From the Catalog. Your edits are kept: seeding never overwrites an existing Provider.
-      </p>
       <p v-if="error" class="form__error" role="alert">{{ error }}</p>
       <div class="dialog__actions">
         <button class="button" type="button" @click="isOpen = false">Cancel</button>

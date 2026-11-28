@@ -8,7 +8,13 @@ import {
   DialogTitle,
 } from 'reka-ui';
 
-defineProps<{ title: string; description: string; wide?: boolean }>();
+defineProps<{
+  title: string;
+  description: string;
+  wide?: boolean;
+  extraWide?: boolean;
+  hideDescription?: boolean;
+}>();
 const isOpen = defineModel<boolean>('open', { required: true });
 </script>
 
@@ -16,9 +22,14 @@ const isOpen = defineModel<boolean>('open', { required: true });
   <DialogRoot v-model:open="isOpen">
     <DialogPortal>
       <DialogOverlay class="dialog-overlay" />
-      <DialogContent class="dialog" :class="{ 'dialog--wide': wide }">
+      <DialogContent
+        class="dialog"
+        :class="{ 'dialog--wide': wide || extraWide, 'dialog--extra-wide': extraWide }"
+      >
         <DialogTitle class="dialog__title">{{ title }}</DialogTitle>
-        <DialogDescription class="dialog__description">{{ description }}</DialogDescription>
+        <DialogDescription :class="hideDescription ? 'sr-only' : 'dialog__description'">{{
+          description
+        }}</DialogDescription>
         <slot />
       </DialogContent>
     </DialogPortal>
