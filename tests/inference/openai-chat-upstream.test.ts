@@ -283,4 +283,56 @@ describe('An openai-chat upstream (e2e)', () => {
     expect(lastEvent).toContain('upstream_error');
     expect(response.text).not.toContain('message_stop');
   });
+
+  function tokenChunk(delta: object): string {
+    return `data: ${JSON.stringify({
+      id: 'chatcmpl-upstream-1',
+      object: 'chat.completion.chunk',
+      created: 1794700000,
+      model: UPSTREAM_MODEL_ID,
+      choices: [{ index: 0, delta, finish_reason: null }],
+    })}\n\n`;
+  }
+
+  async function streamTokenChunks(deltas: object[]): Promise<string[]> {
+    upstream.reply({
+      kind: 'stream',
+      events: `${deltas.map(tokenChunk).join('')}data: [DONE]\n\n`,
+    });
+    const response = await chat({
+      model: 'smart',
+      messages: [{ role: 'user', content: 'Hi' }],
+      stream: true,
+    }).expect(200);
+    return response.text.trim().split('\n\n');
+  }
+
+  function choicesOf(events: string[]): unknown[] {
+    return events
+      .filter((event) => event !== 'data: [DONE]')
+      .map((event) => JSON.parse(event.slice('data: '.length)).choices);
+  }
+
+  it.each([
+    ['text', [{ content: 'Hel' }, { content: 'lo' }]],
+    ['reasoning', [{ reasoning_content: 'Thinking' }]],
+    ['mixed reasoning and text', [{ reasoning_content: 'Hmm', content: 'Hi' }]],
+    ['empty and null fields', [{}, { content: null, reasoning_content: null }, { content: '' }]],
+  ])(
+    'streams %s chunks the same as the same chunks with an empty tool_calls list',
+    async (_, deltas) => {
+      const withoutToolCalls = await streamTokenChunks(deltas);
+      const withEmptyToolCalls = await streamTokenChunks(
+        deltas.map((delta) => ({ ...delta, tool_calls: [] })),
+      );
+
+      expect(choicesOf(withEmptyToolCalls)).toEqual(choicesOf(withoutToolCalls));
+    },
+  );
+
+  it("ends the client's stream with an error event when a chunk's delta is not an object", async () => {
+    const events = await streamTokenChunks([{ content: 'Hel' }, ['lo']]);
+
+    expect(events.at(-1)).toContain('"code":"upstream_error"');
+  });
 });

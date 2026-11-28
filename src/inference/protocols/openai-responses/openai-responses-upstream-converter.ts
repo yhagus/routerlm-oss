@@ -13,7 +13,6 @@ import type {
   ToolChoice,
   UserContentPart,
 } from '@/inference/models/internal-format';
-import { isJsonObject } from '@/inference/protocols/json-object';
 import type { ServerSentEvent } from '@/inference/protocols/server-sent-events';
 import {
   type UpstreamHttpRequest,
@@ -318,11 +317,26 @@ function tokenUsageOf(usage: ResponsesUsage | undefined): TokenUsage {
   };
 }
 
+const tokenDeltaEventSchema = z.object({
+  type: z.enum([
+    'response.output_text.delta',
+    'response.refusal.delta',
+    'response.reasoning_text.delta',
+    'response.reasoning_summary_text.delta',
+  ]),
+  delta: z.string(),
+});
+type TokenDeltaEvent = z.infer<typeof tokenDeltaEventSchema>;
+const TOKEN_DELTA_TYPES: ReadonlySet<string> = new Set(tokenDeltaEventSchema.shape.type.options);
+const TOKEN_DELTA_KINDS: Record<TokenDeltaEvent['type'], 'text-delta' | 'reasoning-delta'> = {
+  'response.output_text.delta': 'text-delta',
+  'response.refusal.delta': 'text-delta',
+  'response.reasoning_text.delta': 'reasoning-delta',
+  'response.reasoning_summary_text.delta': 'reasoning-delta',
+};
+
 const streamEventSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('response.output_text.delta'), delta: z.string() }),
-  z.object({ type: z.literal('response.refusal.delta'), delta: z.string() }),
-  z.object({ type: z.literal('response.reasoning_text.delta'), delta: z.string() }),
-  z.object({ type: z.literal('response.reasoning_summary_text.delta'), delta: z.string() }),
+  tokenDeltaEventSchema,
   z.object({
     type: z.literal('response.reasoning_summary_part.added'),
     summary_index: z.number(),
@@ -350,8 +364,6 @@ const streamEventSchema = z.discriminatedUnion('type', [
 ]);
 type StreamEvent = z.infer<typeof streamEventSchema>;
 
-const typedEventSchema = z.object({ type: z.string() });
-
 const READ_EVENT_TYPES: ReadonlySet<string> = new Set<StreamEvent['type']>([
   'response.output_text.delta',
   'response.refusal.delta',
@@ -373,20 +385,19 @@ class ResponsesStreamParser implements UpstreamStreamParser {
 
   parse({ data }: ServerSentEvent): InferenceStreamEvent[] {
     const json = parseJson(data);
-    const tokenEvents = eventsOfTokenDelta(json);
-    if (tokenEvents) {
-      return tokenEvents;
+    const type = eventTypeOf(json);
+    if (typeof type !== 'string') {
+      throw new UpstreamProtocolError('Not a response stream event: it has no string type');
     }
-    const typed = typedEventSchema.safeParse(json);
-    if (!typed.success) {
-      throw new UpstreamProtocolError(`Not a response stream event: ${typed.error.message}`);
-    }
-    if (!READ_EVENT_TYPES.has(typed.data.type)) {
+    if (!READ_EVENT_TYPES.has(type)) {
       return [];
     }
     const event = streamEventSchema.safeParse(json);
     if (!event.success) {
       throw new UpstreamProtocolError(`Not a response stream event: ${event.error.message}`);
+    }
+    if (isTokenDeltaEvent(event.data)) {
+      return [eventOfTokenDelta(event.data)];
     }
     return [...this.reader.read(event.data)];
   }
@@ -400,22 +411,16 @@ function startStream(): UpstreamStreamParser {
   return new ResponsesStreamParser();
 }
 
-const TOKEN_DELTA_TYPES: ReadonlyMap<string, 'text-delta' | 'reasoning-delta'> = new Map([
-  ['response.output_text.delta', 'text-delta'],
-  ['response.refusal.delta', 'text-delta'],
-  ['response.reasoning_text.delta', 'reasoning-delta'],
-  ['response.reasoning_summary_text.delta', 'reasoning-delta'],
-]);
+function isTokenDeltaEvent(event: StreamEvent): event is TokenDeltaEvent {
+  return TOKEN_DELTA_TYPES.has(event.type);
+}
 
-function eventsOfTokenDelta(json: unknown): InferenceStreamEvent[] | undefined {
-  if (!isJsonObject(json) || typeof json.type !== 'string' || typeof json.delta !== 'string') {
-    return undefined;
-  }
-  const deltaType = TOKEN_DELTA_TYPES.get(json.type);
-  if (!deltaType) {
-    return undefined;
-  }
-  return [{ type: deltaType, text: json.delta }];
+function eventOfTokenDelta(event: TokenDeltaEvent): InferenceStreamEvent {
+  return { type: TOKEN_DELTA_KINDS[event.type], text: event.delta };
+}
+
+function eventTypeOf(json: unknown): unknown {
+  return typeof json === 'object' && json !== null && 'type' in json ? json.type : undefined;
 }
 
 function parseJson(data: string): unknown {
@@ -441,16 +446,8 @@ class ResponseStreamReader {
   private readonly toolIndexes = new Map<number, number>();
   private readonly toolsWithDeltas = new Set<number>();
 
-  *read(event: StreamEvent): Iterable<InferenceStreamEvent> {
+  *read(event: Exclude<StreamEvent, TokenDeltaEvent>): Iterable<InferenceStreamEvent> {
     switch (event.type) {
-      case 'response.output_text.delta':
-      case 'response.refusal.delta':
-        yield { type: 'text-delta', text: event.delta };
-        return;
-      case 'response.reasoning_text.delta':
-      case 'response.reasoning_summary_text.delta':
-        yield { type: 'reasoning-delta', text: event.delta };
-        return;
       case 'response.reasoning_summary_part.added':
         if (event.summary_index > 0) {
           yield { type: 'reasoning-delta', text: PART_SEPARATOR };
