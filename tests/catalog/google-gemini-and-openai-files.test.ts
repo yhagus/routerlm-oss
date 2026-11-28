@@ -58,6 +58,7 @@ describe('The Google Gemini and OpenAI Catalog files', () => {
       'alibaba-model-studio-intl': 'alibaba',
       'alibaba-token-plan': 'alibaba-token-plan',
       anthropic: 'anthropic',
+      'bitdeer-ai': undefined,
       clinepass: 'cline-pass',
       commandcode: undefined,
       deepseek: 'deepseek',

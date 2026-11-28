@@ -1,0 +1,159 @@
+{
+  "slug": "bitdeer-ai",
+  "name": "Bitdeer AI",
+  "logo": "bitdeer",
+  "termsRisk": false,
+  "verified": false,
+  "endpoints": [
+    {
+      "kind": "chat",
+      "protocol": "openai-chat",
+      "baseUrl": "https://api-inference.bitdeer.ai/v1"
+    },
+    {
+      "kind": "chat",
+      "protocol": "anthropic-messages",
+      "baseUrl": "https://api-inference.bitdeer.ai"
+    },
+    {
+      "kind": "chat",
+      "protocol": "openai-responses",
+      "baseUrl": "https://api-inference.bitdeer.ai/v1"
+    }
+  ],
+  "authStyle": "bearer",
+  "quirks": {
+    "exhaustedErrorCodes": ["insufficient_balance", "insufficient_quota"]
+  },
+  "credentialKinds": ["api-key"],
+  "source": {
+    "urls": [
+      "https://developers.bitdeer.ai/docs/api/models-catalog",
+      "https://developers.bitdeer.ai/docs/api/authentication",
+      "https://developers.bitdeer.ai/docs/api/errors",
+      "https://developers.bitdeer.ai/docs/api/bitdeer-llm/text-generation/create-chat-completion",
+      "https://developers.bitdeer.ai/docs/api/bitdeer-llm/text-generation/create-response",
+      "https://developers.bitdeer.ai/docs/api/bitdeer-llm/text-generation/create-message",
+      "https://developers.bitdeer.ai/docs/guides/llm/structured-outputs",
+      "https://developers.bitdeer.ai/docs/guides/deprecations/deprecation-history",
+      "https://www.bitdeer.ai/en/pricing/ai-models"
+    ],
+    "retrievedOn": "2026-11-28"
+  },
+  "notes": "Bitdeer AI serverless inference: hosted open-weight models behind one pay-as-you-go API key, served from Singapore, priced in USD per million tokens. The model list is the five text models of Bitdeer's Model Catalog page. Prices are the list prices shown in the Bitdeer console on 2026-11-28 (the public pricing page renders its table with JavaScript only); most models carry a discount with no published end date, which is in each model's notes and not reflected in Cost. Three chat endpoints on api-inference.bitdeer.ai: chat completions and Responses under /v1, and the Anthropic-compatible Messages API. The authentication page says Authorization: Bearer works for every key format and every endpoint, while x-api-key works only for 20-character keys without the ak- prefix, so the Provider uses bearer auth. Each model lists no Protocols, so it is sent on chat completions; Bitdeer documents no per-model limit on Responses or Anthropic Messages, but neither was called with a real key. Unverified: no Bitdeer key was available, so each endpoint was only probed with a fake key on 2026-11-28. Chat completions and Responses answered 401 invalid_api_key in the OpenAI error shape and Anthropic Messages answered 401 authentication_error in the Anthropic error shape, as the errors page documents; the host checks the key before routing, so the 401 confirms the host and auth scheme rather than each path. Errors (developers.bitdeer.ai/docs/api/errors): 402 insufficient_balance (balance does not cover the request) and 429 insufficient_quota (the key's usage allowance is used up, retrying does not help) are exhaustedErrorCodes; 429 rate_limit_exceeded (default 100 RPM per account) and 503 maintenance stay a Cooldown. Anthropic Messages errors carry no code (402 is billing_error), so there they stay a plain failure. Reasoning comes back as reasoning_content on chat completions. Bitdeer publishes no context window or max output per model, so both are the original model's limits, from the original Provider's Catalog file or models.dev. Release dates are the day each model was first released by any Provider, copied from the original Provider's Catalog file or from models.dev. Where Bitdeer publishes no cache read or cache write price, the price is left empty, as for the other resellers in the Catalog. Not shipped: BAAI/bge-m3 (embeddings), BAAI/bge-reranker-v2-m3 (rerank) and seedream-5.0-lite (image generation, $0.035 per image), since the gateway has no Protocol for them on Bitdeer, and the GPU Cloud instances.",
+  "upstreamModels": [
+    {
+      "upstreamModelId": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      "name": "DeepSeek V4.1 Flash 1017",
+      "releaseDate": "2026-10-17",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 393216,
+      "inputPrice": 0.3,
+      "outputPrice": 1.2,
+      "cacheReadPrice": 0.006,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://developers.bitdeer.ai/docs/api/models-catalog",
+          "https://developers.bitdeer.ai/docs/guides/llm/structured-outputs",
+          "https://www.bitdeer.ai/en/pricing/ai-models",
+          "https://api-docs.deepseek.com/quick_start/pricing"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "List prices; the console showed 52% off (input $0.144, cached input $0.003, output $0.576) with no end date. The console lists text and image input, function calling, structured output and reasoning, with a 1M context. Release date, context window and max output come from the deepseek Catalog file (deepseek-flash). Bitdeer publishes no cache write price for this model."
+    },
+    {
+      "upstreamModelId": "zai-org/GLM-5.3",
+      "name": "GLM-5.3",
+      "releaseDate": "2026-08-14",
+      "protocols": [],
+      "capabilities": ["tools", "reasoning"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 1.4,
+      "outputPrice": 4.4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://developers.bitdeer.ai/docs/api/models-catalog",
+          "https://developers.bitdeer.ai/docs/guides/llm/structured-outputs",
+          "https://www.bitdeer.ai/en/pricing/ai-models"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "List prices; the console showed 55% off (input $0.63, output $1.98) with no end date. Text input only per the Model Catalog. Bitdeer's structured outputs guide gives GLM-5.3 JSON Object mode but not JSON Schema mode, so it has no structured-output capability here. Release date, context window, max output and the tools and reasoning capabilities come from the zai Catalog file. Bitdeer publishes no cache prices for this model."
+    },
+    {
+      "upstreamModelId": "zai-org/GLM-5.3-Flash",
+      "name": "GLM-5.3-Flash",
+      "releaseDate": "2026-08-26",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 131072,
+      "inputPrice": 0.15,
+      "outputPrice": 0.5,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://developers.bitdeer.ai/docs/api/models-catalog",
+          "https://developers.bitdeer.ai/docs/guides/llm/structured-outputs",
+          "https://www.bitdeer.ai/en/pricing/ai-models"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "List prices; the console showed 45% off (input $0.083, output $0.275) with no end date. Image input per the Model Catalog; JSON Schema mode without strict enforcement per Bitdeer's structured outputs guide. Release date, context window, max output and the tools and reasoning capabilities come from the zai Catalog file. Bitdeer publishes no cache prices for this model."
+    },
+    {
+      "upstreamModelId": "Qwen/Qwen3.8-27B",
+      "name": "Qwen3.8 27B",
+      "releaseDate": "2026-08-14",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1000000,
+      "maxOutputTokens": 32768,
+      "inputPrice": 0.5,
+      "outputPrice": 3,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://developers.bitdeer.ai/docs/api/models-catalog",
+          "https://developers.bitdeer.ai/docs/guides/llm/structured-outputs",
+          "https://www.bitdeer.ai/en/pricing/ai-models",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "List prices; the console showed 20% off (input $0.40, output $2.40) with no end date. Image input per the Model Catalog; strict JSON Schema per Bitdeer's structured outputs guide. Release date, context window, max output and the tools and reasoning capabilities come from models.dev (its huggingface listing of Qwen/Qwen3.8-27B). Bitdeer publishes no cache prices for this model."
+    },
+    {
+      "upstreamModelId": "nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B",
+      "name": "Nemotron 3.5 Super VL 120B A12B",
+      "releaseDate": "2026-10-15",
+      "protocols": [],
+      "capabilities": ["vision", "tools", "reasoning", "structured-output"],
+      "contextSize": 1048576,
+      "maxOutputTokens": 8192,
+      "inputPrice": 0.1,
+      "outputPrice": 0.4,
+      "cacheReadPrice": null,
+      "cacheWritePrice": null,
+      "source": {
+        "urls": [
+          "https://developers.bitdeer.ai/docs/api/models-catalog",
+          "https://developers.bitdeer.ai/docs/guides/llm/structured-outputs",
+          "https://www.bitdeer.ai/en/pricing/ai-models",
+          "https://models.dev/"
+        ],
+        "retrievedOn": "2026-11-28"
+      },
+      "notes": "The console showed no discount. Image input per the Model Catalog; JSON Schema mode without strict enforcement per Bitdeer's structured outputs guide. Release date, context window, max output and the tools and reasoning capabilities come from models.dev (its nvidia listing of nvidia/nemotron-3.5-super-vl-120b-a12b). Bitdeer publishes no cache prices for this model."
+    }
+  ]
+}

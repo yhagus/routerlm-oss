@@ -42,6 +42,7 @@ describe('db:seed script (e2e)', () => {
         'alibaba-model-studio-intl',
         'alibaba-token-plan',
         'anthropic',
+        'bitdeer-ai',
         'clinepass',
         'commandcode',
         'deepseek',
