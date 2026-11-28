@@ -13,6 +13,7 @@ import type { Env } from '@/config/schemas/env.schema';
 import type { Database } from '@/db/schemas/relations';
 import { publishPrivateUpstreamsAllowed } from '@/libs/models/private-upstreams-policy';
 import { RedisConnection } from '@/redis/providers/redis-connection';
+import { SettingsStore } from '@/settings/providers/settings-store';
 import { loadSnapshot } from '@/snapshot/models/load-snapshot';
 import { EMPTY_SNAPSHOT, type Snapshot } from '@/snapshot/models/snapshot';
 
@@ -37,6 +38,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
     redis: RedisConnection,
     private readonly config: ConfigService<Env, true>,
     private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly settings: SettingsStore,
   ) {
     this.publisher = redis.client;
     this.subscriber = redis.createSubscriber();
@@ -96,7 +98,7 @@ export class SnapshotService implements OnApplicationBootstrap, OnApplicationShu
   private reload(): Promise<boolean> {
     const reloaded = this.lastReload.then(async () => {
       try {
-        this.snapshot = await loadSnapshot(this.db);
+        this.snapshot = await loadSnapshot(this.db, this.settings);
         publishPrivateUpstreamsAllowed(this.snapshot.allowsPrivateUpstreams);
         return true;
       } catch (error) {

@@ -5,7 +5,7 @@ import {
   type AttachedPricingWindowRow,
   selectAttachedPricingWindows,
 } from '@/pricing-windows/models/upstream-model-pricing-windows';
-import { SettingsStore } from '@/settings/providers/settings-store';
+import type { SettingsStore } from '@/settings/providers/settings-store';
 import { planOf } from '@/upstream/models/plan-choice';
 import {
   apiKeys,
@@ -32,7 +32,7 @@ import type {
 } from './snapshot';
 import { providerIsUsable } from './provider-usability';
 
-export async function loadSnapshot(db: Database): Promise<Snapshot> {
+export async function loadSnapshot(db: Database, settings: SettingsStore): Promise<Snapshot> {
   const [
     keyRows,
     providerRows,
@@ -84,8 +84,8 @@ export async function loadSnapshot(db: Database): Promise<Snapshot> {
     db.select({ id: modelGroups.id, slug: modelGroups.slug }).from(modelGroups),
     db.select().from(modelGroupMembers),
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
-    new SettingsStore(db).read('allowTermsRiskProviders'),
-    new SettingsStore(db).read('allowPrivateUpstreams'),
+    settings.read('allowTermsRiskProviders'),
+    settings.read('allowPrivateUpstreams'),
   ]);
 
   const apiKeysByKeyId = new Map<string, SnapshotApiKey>(
