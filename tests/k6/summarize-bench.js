@@ -2,48 +2,69 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const results = join(dirname(fileURLToPath(import.meta.url)), 'results');
+const here = dirname(fileURLToPath(import.meta.url));
+const results = join(here, 'results');
+
+const compose = Bun.YAML.parse(readFileSync(join(here, 'docker-compose.yml'), 'utf8'));
+
+const MIB_PER_MEMORY_UNIT = { k: 1 / 1024, m: 1, g: 1024 };
+
+function mebibytesOf(memLimit) {
+  const match = /^(\d+(?:\.\d+)?)([kmg])$/i.exec(String(memLimit));
+  if (!match) throw new Error(`Cannot read the Compose mem_limit "${memLimit}"`);
+  return Number(match[1]) * MIB_PER_MEMORY_UNIT[match[2].toLowerCase()];
+}
+
+function limitsOf(serviceName) {
+  const service = compose.services[serviceName];
+  if (!service) throw new Error(`docker-compose.yml has no service ${serviceName}`);
+  if (service.cpus === undefined || service.mem_limit === undefined) return undefined;
+  return { cpuLimit: Number(service.cpus), memLimitMiB: mebibytesOf(service.mem_limit) };
+}
+
+function memoryText(mebibytes) {
+  return mebibytes >= 1024 ? `${mebibytes / 1024} GB` : `${mebibytes} MB`;
+}
+
+function specText(limits) {
+  if (!limits) return 'uncapped';
+  return `${limits.cpuLimit} CPU / ${memoryText(limits.memLimitMiB)}`;
+}
+
+function node(label, containers, serviceName, note) {
+  const limits = limitsOf(serviceName);
+  const spec = note ? `${specText(limits)} (${note})` : specText(limits);
+  return { label, containers, spec, ...limits };
+}
+
+function dualGateway() {
+  const replica = limitsOf('backend-a');
+  const replicas = ['backend-a', 'backend-b'].map(limitsOf);
+  const total = {
+    cpuLimit: replicas.reduce((sum, limits) => sum + limits.cpuLimit, 0),
+    memLimitMiB: replicas.reduce((sum, limits) => sum + limits.memLimitMiB, 0),
+  };
+  const spec = `${specText(total)} (${replicas.length} replicas x ${specText(replica)})`;
+  return { label: 'Gateway (app)', containers: /backend-[ab]-1/, spec, ...total };
+}
 
 const GATEWAY_BY_TOPOLOGY = {
-  dual: { containers: /backend-[ab]-1/, spec: '2 CPU / 2 GB (2 replicas x 1 CPU / 1 GB)' },
-  single: { containers: /-backend-1/, spec: '2 CPU / 2 GB (1 process)' },
-  cluster: { containers: /backend-cluster-1/, spec: '2 CPU / 2 GB (1 container, 2 processes)' },
+  dual: dualGateway,
+  single: () => node('Gateway (app)', /-backend-1/, 'backend', '1 process'),
+  cluster: () =>
+    node('Gateway (app)', /backend-cluster-1/, 'backend-cluster', '1 container, 2 processes'),
 };
-const gateway = GATEWAY_BY_TOPOLOGY[process.env.TOPOLOGY ?? 'dual'];
-if (!gateway) throw new Error('TOPOLOGY must be dual, single or cluster');
+const gatewayOfTopology = GATEWAY_BY_TOPOLOGY[process.env.TOPOLOGY ?? 'dual'];
+if (!gatewayOfTopology) throw new Error('TOPOLOGY must be dual, single or cluster');
 
 const NODES = [
-  { label: 'Gateway (app)', ...gateway, cpuLimit: 2, memLimitMiB: 2048 },
-  { label: 'Worker', containers: /worker-1/, spec: '1 CPU / 1 GB', cpuLimit: 1, memLimitMiB: 1024 },
-  {
-    label: 'PostgreSQL',
-    containers: /-db-1/,
-    spec: '1 CPU / 1 GB',
-    cpuLimit: 1,
-    memLimitMiB: 1024,
-  },
-  {
-    label: 'Redis',
-    containers: /redis-1/,
-    spec: '0.5 CPU / 512 MB',
-    cpuLimit: 0.5,
-    memLimitMiB: 512,
-  },
-  {
-    label: 'Fake upstream',
-    containers: /fake-upstream-1/,
-    spec: '1 CPU / 512 MB (test equipment)',
-    cpuLimit: 1,
-    memLimitMiB: 512,
-  },
-  {
-    label: 'Load balancer (nginx)',
-    containers: /-lb-1/,
-    spec: '1 CPU / 256 MB (test equipment)',
-    cpuLimit: 1,
-    memLimitMiB: 256,
-  },
-  { label: 'k6 (load generator)', containers: /k6-run/, spec: 'uncapped (test equipment)' },
+  gatewayOfTopology(),
+  node('Worker', /worker-1/, 'worker'),
+  node('PostgreSQL', /-db-1/, 'db'),
+  node('Redis', /redis-1/, 'redis'),
+  node('Fake upstream', /fake-upstream-1/, 'fake-upstream', 'test equipment'),
+  node('Load balancer (nginx)', /-lb-1/, 'lb', 'test equipment'),
+  node('k6 (load generator)', /k6-run/, 'k6', 'test equipment'),
 ];
 
 const SCENARIOS = [
