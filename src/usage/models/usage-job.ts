@@ -1,12 +1,13 @@
 import type {
   ClientProtocol,
   ErrorOrigin,
+  FinishReason,
   PricesByTier,
   GatewayErrorCode,
   RecordedAttemptFailure,
   UpstreamProtocol,
 } from '@/db/schemas';
-import type { ServiceTier, TokenUsage } from '@/inference/models/internal-format';
+import type { ReasoningEffort, ServiceTier, TokenUsage } from '@/inference/models/internal-format';
 
 export interface MediaUnits {
   imagesOut?: number;
@@ -15,6 +16,12 @@ export interface MediaUnits {
   audioSeconds?: number;
   characters?: number;
   tier?: string;
+}
+
+export interface SentParameters {
+  maxOutputTokens: number | null;
+  reasoningEffort: ReasoningEffort | null;
+  thinkingBudgetTokens: number | null;
 }
 
 export const RECORD_USAGE_JOB = 'record';
@@ -124,6 +131,11 @@ export interface UsageJob {
   requestBytes: number;
   responseBytes: number;
   timeToFirstTokenMs: number | null;
+  isReasoningStreamed?: boolean;
+  finishReason?: FinishReason | null;
+  sentParameters?: SentParameters | null;
+  toolCount?: number;
+  toolCallCount?: number;
   durationMs: number;
   isCancelled: boolean;
   attempts: AttemptRecord[];

@@ -147,6 +147,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     await this.callerLimits.assertWithinLimits(caller);
     const clientRequest = converter.parseRequest(body);
     meter.requestParsed(clientRequest.stream !== null);
+    meter.toolsDefined(clientRequest.tools.length);
     const destination = this.resolve(inferenceTarget, clientRequest, converter, caller, meter);
     const context: ResponseContext = {
       requestId: randomUUID().replaceAll('-', ''),
@@ -269,12 +270,14 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
     if (!request.stream) {
       const { response, upstreamRequestId } = await this.upstream.complete(call);
       meter.attemptAnswered(upstreamRequestId);
-      meter.usageReported(response.usage, response.servedTierValue);
+      meter.parametersSent(request);
+      meter.responseReceived(response);
       meter.attemptSucceeded();
       return { kind: 'response', body: converter.writeResponse(response, request, context) };
     }
     const upstream = await this.upstream.openStream(call);
     meter.attemptAnswered(upstream.upstreamRequestId);
+    meter.parametersSent(request);
     return { kind: 'stream', upstream, writer: converter.startStream(request, context), target };
   }
 
@@ -330,9 +333,7 @@ export class RunInferenceHandler implements ICommandHandler<RunInferenceCommand>
         text = writer.start();
         for (let batch = await upstream.nextBatch(); batch; batch = await upstream.nextBatch()) {
           for (const event of batch) {
-            if (event.type === 'usage') {
-              meter.usageReported(event.usage, event.servedTierValue);
-            }
+            meter.streamEventRelayed(event);
             text += writer.write(event);
           }
           if (text !== '') {

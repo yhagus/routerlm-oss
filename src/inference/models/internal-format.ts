@@ -78,7 +78,13 @@ export interface InferenceRequest {
   stream: { includeUsage: boolean } | null;
 }
 
-export type StopReason = 'end' | 'max-tokens' | 'tool-calls' | 'stop-sequence' | 'content-filter';
+export type StopReason =
+  | 'end'
+  | 'max-tokens'
+  | 'tool-calls'
+  | 'stop-sequence'
+  | 'content-filter'
+  | 'other';
 
 export interface TokenUsage {
   inputTokens: number | null;

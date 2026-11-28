@@ -1,5 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import type { ClientProtocol, ErrorOrigin, GatewayErrorCode, UpstreamProtocol } from '@/db/schemas';
+import type {
+  ClientProtocol,
+  ErrorOrigin,
+  FinishReason,
+  GatewayErrorCode,
+  UpstreamProtocol,
+} from '@/db/schemas';
 import {
   capturedBody,
   capturedHeaders,
@@ -11,6 +17,7 @@ import type {
   CapturedMessage,
   ErrorCaptureRecord,
   MediaUnits,
+  SentParameters,
   ServedBy,
   ServingTarget,
   UsageCaller,
@@ -18,13 +25,28 @@ import type {
 } from '@/usage/models/usage-job';
 import type { AttemptFailedError, UpstreamFailureResponse } from './attempt-failure';
 import type { GatewayError } from './gateway-error';
-import type { TokenUsage } from './internal-format';
+import type {
+  InferenceRequest,
+  InferenceResponse,
+  InferenceStreamEvent,
+  StopReason,
+  TokenUsage,
+} from './internal-format';
 import type { AttemptTarget } from './route-selection';
 import { pricesForRequest } from './request-prices';
 import { type SentServiceTier, serviceTierOfWireValue } from './service-tier';
 
 const ANSWERED_UPSTREAM_STATUS = 200;
 const FIRST_ERROR_STATUS = 400;
+
+const FINISH_REASONS = {
+  end: 'stop',
+  'stop-sequence': 'stop',
+  'max-tokens': 'length',
+  'tool-calls': 'tool_calls',
+  'content-filter': 'content_filter',
+  other: 'other',
+} as const satisfies Record<StopReason, FinishReason>;
 
 interface OpenAttempt {
   target: AttemptTarget;
@@ -63,6 +85,11 @@ export class UsageMeter {
   private usage: TokenUsage | null = null;
   private units: MediaUnits | null = null;
   private timeToFirstTokenMs: number | null = null;
+  private isReasoningStreamed = false;
+  private finishReason: FinishReason | null = null;
+  private sentParameters: SentParameters | null = null;
+  private toolCount = 0;
+  private toolCallCount = 0;
   private responseBytes = 0;
   private clientRequest: ClientRequest | null = null;
   private readonly failedAttempts: FailedAttempt[] = [];
@@ -81,6 +108,10 @@ export class UsageMeter {
 
   requestParsed(isStreamed: boolean): void {
     this.isStreamed = isStreamed;
+  }
+
+  toolsDefined(toolCount: number): void {
+    this.toolCount = toolCount;
   }
 
   modelRequested(requestedModelName: string): void {
@@ -139,9 +170,49 @@ export class UsageMeter {
       ...pricesForRequest(target.upstreamModel, serviceTier, this.receivedAt),
       unitPrices: target.upstreamModel.unitPrices,
     };
-    if (this.isStreamed) {
-      this.timeToFirstTokenMs = elapsedSince(this.receivedMs);
+  }
+
+  parametersSent({ maxOutputTokens, reasoning }: InferenceRequest): void {
+    this.sentParameters = {
+      maxOutputTokens: maxOutputTokens ?? null,
+      reasoningEffort: reasoning?.effort ?? null,
+      thinkingBudgetTokens: reasoning?.budgetTokens ?? null,
+    };
+  }
+
+  responseReceived(response: InferenceResponse): void {
+    this.usageReported(response.usage, response.servedTierValue);
+    this.finishReason = FINISH_REASONS[response.stopReason];
+    this.toolCallCount = response.content.filter((part) => part.type === 'tool-call').length;
+  }
+
+  streamEventRelayed(event: InferenceStreamEvent): void {
+    switch (event.type) {
+      case 'text-delta':
+      case 'tool-call-delta':
+        this.outputStarted();
+        break;
+      case 'reasoning-delta':
+        this.outputStarted();
+        this.isReasoningStreamed = true;
+        break;
+      case 'tool-call-start':
+        this.outputStarted();
+        this.toolCallCount += 1;
+        break;
+      case 'finish':
+        this.finishReason = FINISH_REASONS[event.stopReason];
+        break;
+      case 'usage':
+        this.usageReported(event.usage, event.servedTierValue);
+        break;
+      case 'reasoning-signature':
+        break;
     }
+  }
+
+  private outputStarted(): void {
+    this.timeToFirstTokenMs ??= elapsedSince(this.receivedMs);
   }
 
   usageReported(usage: TokenUsage, servedTierValue: string | undefined): void {
@@ -218,6 +289,7 @@ export class UsageMeter {
         hasAnswered ? ANSWERED_UPSTREAM_STATUS : null,
       );
     }
+    const hasSucceeded = !isCancelled && this.errorCode === null && httpStatus < FIRST_ERROR_STATUS;
     return {
       usageLogId: this.usageLogId,
       receivedAt: this.receivedAt.toISOString(),
@@ -238,6 +310,11 @@ export class UsageMeter {
       requestBytes: this.requestBytes,
       responseBytes: this.responseBytes,
       timeToFirstTokenMs: this.timeToFirstTokenMs,
+      isReasoningStreamed: this.isReasoningStreamed,
+      finishReason: hasSucceeded ? this.finishReason : null,
+      sentParameters: this.sentParameters,
+      toolCount: this.toolCount,
+      toolCallCount: this.toolCallCount,
       durationMs: elapsedSince(this.receivedMs),
       isCancelled,
       attempts: this.attempts,
