@@ -30,8 +30,8 @@ describe('Error Captures API (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('usage_logs, api_keys, models, providers'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('usage_logs, api_keys, models, providers'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     const [{ id: modelId }] = await db
       .insert(models)

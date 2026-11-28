@@ -28,7 +28,7 @@ describe('Stored Provider quirks that no longer validate (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     const { providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'broken',
       baseUrl: upstream.baseUrl,

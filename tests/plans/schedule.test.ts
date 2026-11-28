@@ -44,7 +44,7 @@ describe('Scheduled Plan and Plan Coverage readings (e2e)', () => {
 
   beforeEach(async () => {
     tokenHarbor.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(worker);
   });
 
   afterAll(async () => {

@@ -1,6 +1,5 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
 
@@ -30,16 +29,15 @@ const ACME_LARGE = {
 
 describe('The Protocols an Upstream Model lists (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
   let cookie: string;
   let providerId: string;
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const provider = await request(app.getHttpServer())
       .post('/api/providers')

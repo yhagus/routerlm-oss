@@ -39,7 +39,7 @@ describe('Usage Logs of speech (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     await insertDashScopeSpeechModel(app, db, {
       modelName: 'narrator',
       baseUrl: `${upstream.origin}/api/v1`,

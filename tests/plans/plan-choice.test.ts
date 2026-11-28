@@ -29,7 +29,7 @@ describe('Choosing the Plan of a Provider Account (e2e)', () => {
 
   beforeEach(async () => {
     tokenHarbor.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     providerId = await insertTokenHarbor(db, tokenHarbor.baseUrl, []);
   });

@@ -27,8 +27,8 @@ describe('Playground transcription (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
-    await deleteAllUsers(db);
+    await deleteAllUpstreamData(app);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     ({ routeId } = await insertDashScopeTranscriptionModel(app, db, {
       modelName: 'scribe',

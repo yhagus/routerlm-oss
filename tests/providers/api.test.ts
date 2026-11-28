@@ -24,7 +24,7 @@ describe('Providers (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
   });
 

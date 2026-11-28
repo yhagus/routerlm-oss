@@ -61,8 +61,8 @@ describe('Snapshot refresh across backend instances (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await deleteAllUpstreamData(db);
-    await deleteAllPricingWindows(db);
+    await deleteAllUpstreamData(dashboardInstance, inferenceInstance);
+    await deleteAllPricingWindows(dashboardInstance);
     cookie = await setUpFirstUser(dashboardInstance, {
       email: 'ops@example.com',
       password: 'ops password',

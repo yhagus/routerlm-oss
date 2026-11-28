@@ -1,10 +1,10 @@
+import type { INestApplicationContext } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { IsoWeekday } from '@/db/schemas';
-import type { Database } from '@/db/schemas/relations';
 import { truncateTables } from './truncate';
 
-export async function deleteAllPricingWindows(db: Database): Promise<void> {
-  await truncateTables(db, sql.raw('pricing_windows'));
+export async function deleteAllPricingWindows(app: INestApplicationContext): Promise<void> {
+  await truncateTables(app, sql.raw('pricing_windows'));
 }
 
 const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;

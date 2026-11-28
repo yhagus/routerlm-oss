@@ -52,7 +52,7 @@ describe('A Terms Risk Provider is unusable unless a User allows it (e2e)', () =
   beforeEach(async () => {
     upstream.reset();
     upstream.reply(COMPLETION);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     await db.delete(settings).where(eq(settings.key, 'allowTermsRiskProviders'));
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiChatModel(app, db, {

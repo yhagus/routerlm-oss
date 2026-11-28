@@ -1,7 +1,6 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import { sql } from 'drizzle-orm';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import { authenticateWithApiKey, createApiKey } from '@tests/support/api-keys';
 import { createIntegration } from '@tests/support/integrations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
@@ -11,17 +10,16 @@ const ADA = { email: 'ada@example.com', password: "ada's password" };
 
 describe('API Keys an Integration issued, in the dashboard API (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
   let adaCookie: string;
   let acme: { id: string; secret: string };
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('integrations, api_keys'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('integrations, api_keys'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
   });

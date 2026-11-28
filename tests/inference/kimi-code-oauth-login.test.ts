@@ -64,7 +64,7 @@ describe('Inference from a Provider Account holding an OAuth Login (e2e)', () =>
 
   beforeEach(async () => {
     kimi.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',

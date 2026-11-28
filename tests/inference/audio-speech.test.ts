@@ -42,7 +42,7 @@ describe('Speech on /v1/audio/speech (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ routeId, providerId } = await insertDashScopeSpeechModel(app, db, {
       modelName: 'narrator',
       baseUrl: `${upstream.origin}/api/v1`,

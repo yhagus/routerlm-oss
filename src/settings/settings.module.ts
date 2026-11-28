@@ -7,6 +7,5 @@ import { SettingsController } from './settings.controller';
 @Module({
   controllers: [SettingsController],
   providers: [SettingsStore, ...CommandHandlers, ...QueryHandlers],
-  exports: [SettingsStore],
 })
 export class SettingsModule {}

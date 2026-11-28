@@ -90,7 +90,7 @@ describe('Exhausted Provider Accounts (e2e)', () => {
   beforeEach(async () => {
     inferenceUpstream.reset();
     quotaUpstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const inserted = await insertAnthropicMessagesModel(app, db, {
       modelName: 'smart',

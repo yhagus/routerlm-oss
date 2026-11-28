@@ -64,7 +64,7 @@ describe('Plan Coverage (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     ({ providerId, providerAccountId: primaryAccountId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,

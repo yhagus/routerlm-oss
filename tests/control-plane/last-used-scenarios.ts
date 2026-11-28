@@ -1,7 +1,6 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import { sql } from 'drizzle-orm';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import type { ControlPlaneClient } from '@tests/support/control-plane-client';
 import { createIntegration } from '@tests/support/integrations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
@@ -13,20 +12,19 @@ const ADA = { email: 'ada@example.com', password: "ada's password" };
 export function describeLastUsedScenarios(transport: ControlPlaneTransport): void {
   describe(`Integration Secret last use over ${transport.name} (e2e)`, () => {
     let app: NestNodeApplication;
-    let db: Database;
     let client: ControlPlaneClient;
     let closeClient: () => Promise<void>;
     let adaCookie: string;
     let acme: { id: string; secret: string };
 
     beforeAll(async () => {
-      ({ app, db } = await createTestApp());
+      ({ app } = await createTestApp());
       ({ client, close: closeClient } = await transport.connect(app));
     });
 
     beforeEach(async () => {
-      await truncateTables(db, sql.raw('integrations, api_keys'));
-      await deleteAllUsers(db);
+      await truncateTables(app, sql.raw('integrations, api_keys'));
+      await deleteAllUsers(app);
       adaCookie = await setUpFirstUser(app, ADA);
       acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
     });

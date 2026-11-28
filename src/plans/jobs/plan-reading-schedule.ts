@@ -6,7 +6,7 @@ import type { Job, Queue } from 'bullmq';
 import { and, eq, isNotNull } from 'drizzle-orm';
 import type { Database } from '@/db/schemas/relations';
 import { providerAccounts, providers } from '@/db/schemas';
-import { trackBackgroundWork } from '@/libs/models/background-work';
+import { BackgroundWork } from '@/libs/providers/background-work';
 import { PLANS_QUEUE } from '@/queue/models/queue-names';
 import { ReadProviderAccountPlanCommand } from '@/plans/commands/impl/read-provider-account-plan.command';
 import { ReadProviderPlanCoverageCommand } from '@/plans/commands/impl/read-provider-plan-coverage.command';
@@ -68,11 +68,14 @@ export class PlanReadingSchedule implements OnApplicationBootstrap {
 
 @Processor(PLANS_QUEUE)
 export class PlanReadingScheduleProcessor extends WorkerHost {
-  constructor(private readonly schedule: PlanReadingSchedule) {
+  constructor(
+    private readonly schedule: PlanReadingSchedule,
+    private readonly backgroundWork: BackgroundWork,
+  ) {
     super();
   }
 
   async process(_job: Job): Promise<void> {
-    await trackBackgroundWork(this.schedule.readPlansAndCoverage());
+    await this.backgroundWork.track(this.schedule.readPlansAndCoverage());
   }
 }

@@ -17,7 +17,7 @@ describe('GET /v1/models (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
   });
 
   afterAll(async () => {

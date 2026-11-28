@@ -83,7 +83,7 @@ describe('Quota Meters of an OpenAI Codex Provider Account (e2e)', () => {
 
   beforeEach(async () => {
     openAi.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiResponsesModel(app, db, {
       modelName: 'smart',

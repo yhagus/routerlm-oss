@@ -75,7 +75,7 @@ describe('Signing in to OpenAI Codex as the Codex CLI (e2e)', () => {
   beforeEach(async () => {
     await pollQueue.obliterate({ force: true });
     openAi.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     cookie = await setUpFirstUser(app, OPERATOR);
     const provider = await request(app.getHttpServer())
       .post('/api/providers')

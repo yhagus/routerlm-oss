@@ -37,7 +37,7 @@ describe('Service Tier (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ modelId, routeId, providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
@@ -110,7 +110,7 @@ describe('Service Tier (e2e)', () => {
   });
 
   it("sends a Responses client's flex tier to an openai-responses upstream", async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     ({ providerId } = await insertOpenAiResponsesModel(app, db, {
       modelName: 'smart',

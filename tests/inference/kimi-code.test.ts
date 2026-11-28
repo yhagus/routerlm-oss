@@ -92,7 +92,7 @@ describe('Inference from Kimi Code with an API key (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const inserted = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',

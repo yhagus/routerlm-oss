@@ -1,22 +1,20 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
 const ADA = { email: 'ada@example.com', password: "ada's password" };
 
 describe('Server time zone API (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
   let adaCookie: string;
   const originalTimeZone = process.env.TZ;
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await deleteAllUsers(db);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

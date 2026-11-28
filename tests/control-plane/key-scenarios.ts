@@ -41,8 +41,8 @@ export function describeKeyScenarios(transport: ControlPlaneTransport): void {
     });
 
     beforeEach(async () => {
-      await truncateTables(db, sql.raw('integrations, api_keys, models, model_groups'));
-      await deleteAllUsers(db);
+      await truncateTables(app, sql.raw('integrations, api_keys, models, model_groups'));
+      await deleteAllUsers(app);
       adaCookie = await setUpFirstUser(app, ADA);
       acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
     });

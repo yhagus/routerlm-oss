@@ -51,7 +51,7 @@ describe('The Provider Endpoint an Upstream Model is sent through (e2e)', () => 
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,
@@ -129,7 +129,7 @@ describe('The Provider Endpoint an Upstream Model is sent through (e2e)', () => 
   });
 
   it("probes through the model's first listed endpoint", async () => {
-    await deleteAllUsers(db);
+    await deleteAllUsers(app);
     const cookie = await setUpFirstUser(app, ADA);
     await listProtocols(['anthropic-messages', 'openai-chat']);
     const [{ id: upstreamModelRowId }] = await db

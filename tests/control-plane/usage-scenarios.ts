@@ -34,8 +34,8 @@ export function describeUsageScenarios(transport: ControlPlaneTransport): void {
     });
 
     beforeEach(async () => {
-      await truncateTables(db, sql.raw('integrations, api_keys, usage_logs'));
-      await deleteAllUsers(db);
+      await truncateTables(app, sql.raw('integrations, api_keys, usage_logs'));
+      await deleteAllUsers(app);
       adaCookie = await setUpFirstUser(app, ADA);
       acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
       acmeCaller = await customerCaller(acme, 'Acme SaaS', 'cus_1');

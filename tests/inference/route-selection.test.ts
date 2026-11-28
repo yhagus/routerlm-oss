@@ -36,7 +36,7 @@ describe('Route selection (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ key: apiKey } = await insertApiKey(app, db));
   });
 

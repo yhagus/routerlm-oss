@@ -33,7 +33,7 @@ describe('Private upstreams at connect time (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await allowPrivateUpstreams(app, true);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.localhostBaseUrl,

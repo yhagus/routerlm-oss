@@ -81,7 +81,7 @@ describe('Client documentation (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     await insertOpenAiChatModel(app, db, { modelName: DOCS_MODEL_NAME, baseUrl: upstream.baseUrl });
     ({ key: apiKey } = await insertApiKey(app, db));
   });

@@ -31,7 +31,7 @@ describe('Reading the Plan of a TokenHarbor Provider Account when it is added (e
 
   beforeEach(async () => {
     tokenHarbor.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     providerId = await insertTokenHarbor(db, tokenHarbor.baseUrl, ['glm-5.3']);
   });

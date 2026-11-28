@@ -27,8 +27,8 @@ describe('Playground speech (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
-    await deleteAllUsers(db);
+    await deleteAllUpstreamData(app);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     ({ routeId } = await insertDashScopeSpeechModel(app, db, {
       modelName: 'narrator',

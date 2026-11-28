@@ -154,7 +154,7 @@ describe('An anthropic-messages upstream (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     await insertAnthropicMessagesModel(app, db, {
       modelName: 'smart',
       baseUrl: new URL(upstream.baseUrl).origin,

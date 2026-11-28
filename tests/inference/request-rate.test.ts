@@ -46,8 +46,8 @@ describe('Request Rate of an API Key (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
-    await truncateTables(db, sql.raw('integrations, api_keys, usage_logs'));
+    await deleteAllUpstreamData(app, worker);
+    await truncateTables(app, sql.raw('integrations, api_keys, usage_logs'), worker);
     await insertOpenAiChatModel(app, db, { modelName: 'smart', baseUrl: upstream.baseUrl });
     adaCookie = await setUpFirstUser(app, ADA);
     acme = await createIntegration(app, adaCookie, { name: 'Acme SaaS' });
@@ -173,7 +173,7 @@ describe('Request Rate of an API Key (e2e)', () => {
     const server = app.getHttpServer();
     await chat(key).expect(200);
     await untilUsageQueueIsDrained(usageQueue);
-    await truncateTables(db, sql.raw('usage_logs'));
+    await truncateTables(app, sql.raw('usage_logs'), worker);
 
     const messages = await request(server)
       .post('/v1/messages')

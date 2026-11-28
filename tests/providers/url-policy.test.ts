@@ -1,7 +1,6 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
 import { CATALOG_DIRECTORY, loadCatalog } from '@/catalog/models/load-catalog';
-import type { Database } from '@/db/schemas/relations';
 import { allowPrivateUpstreams } from '@tests/support/private-upstreams';
 import { createTestApp, setUpFirstUser } from '@tests/support/test-app';
 import { deleteAllUpstreamData } from '@tests/support/upstream';
@@ -37,16 +36,15 @@ const OPENAI_CODEX_LOGIN = {
 
 describe('Provider URL policy (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
   let cookie: string;
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
     await allowPrivateUpstreams(app, false);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
   });
 

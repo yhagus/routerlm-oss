@@ -30,7 +30,7 @@ describe("Changing a Provider's quota reader (e2e)", () => {
   });
 
   beforeEach(async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const created = await request(app.getHttpServer())
       .post('/api/providers')

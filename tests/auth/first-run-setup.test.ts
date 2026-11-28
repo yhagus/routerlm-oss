@@ -1,20 +1,18 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import { createTestApp, deleteAllUsers, setUpFirstUser } from '@tests/support/test-app';
 
 const FIRST_USER = { email: 'ada@example.com', password: 'correct horse battery' };
 
 describe('Authentication: first-run setup (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await deleteAllUsers(db);
+    await deleteAllUsers(app);
   });
 
   afterAll(async () => {

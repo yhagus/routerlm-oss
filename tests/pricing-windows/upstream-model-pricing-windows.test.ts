@@ -1,6 +1,5 @@
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import request from 'supertest';
-import type { Database } from '@/db/schemas/relations';
 import {
   deleteAllPricingWindows,
   utcWallClockInDays,
@@ -26,7 +25,6 @@ const MISSING_ID = '00000000-0000-4000-8000-000000000000';
 
 describe('Window Prices on Upstream Models (e2e)', () => {
   let app: NestNodeApplication;
-  let db: Database;
   let cookie: string;
   let providerId: string;
   let chatModelId: string;
@@ -38,12 +36,12 @@ describe('Window Prices on Upstream Models (e2e)', () => {
   const LATE_ON_ANOTHER_DAY = [{ weekdays: [ANOTHER_DAY], start: '18:00', end: '24:00' }];
 
   beforeAll(async () => {
-    ({ app, db } = await createTestApp());
+    ({ app } = await createTestApp());
   });
 
   beforeEach(async () => {
-    await deleteAllUpstreamData(db);
-    await deleteAllPricingWindows(db);
+    await deleteAllUpstreamData(app);
+    await deleteAllPricingWindows(app);
     cookie = await setUpFirstUser(app, OPERATOR);
     const provider = await request(app.getHttpServer())
       .post('/api/providers')

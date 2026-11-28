@@ -5,7 +5,6 @@ import {
   type AttachedPricingWindowRow,
   selectAttachedPricingWindows,
 } from '@/pricing-windows/models/upstream-model-pricing-windows';
-import type { SettingsStore } from '@/settings/providers/settings-store';
 import { planOf } from '@/upstream/models/plan-choice';
 import {
   apiKeys,
@@ -32,7 +31,15 @@ import type {
 } from './snapshot';
 import { providerIsUsable } from './provider-usability';
 
-export async function loadSnapshot(db: Database, settings: SettingsStore): Promise<Snapshot> {
+export interface SnapshotSettings {
+  allowsTermsRiskProviders: boolean;
+  allowsPrivateUpstreams: boolean;
+}
+
+export async function loadSnapshot(
+  db: Database,
+  { allowsTermsRiskProviders, allowsPrivateUpstreams }: SnapshotSettings,
+): Promise<Snapshot> {
   const [
     keyRows,
     providerRows,
@@ -43,8 +50,6 @@ export async function loadSnapshot(db: Database, settings: SettingsStore): Promi
     modelGroupRows,
     membershipRows,
     routeRows,
-    allowsTermsRiskProviders,
-    allowsPrivateUpstreams,
   ] = await Promise.all([
     db
       .select({
@@ -84,8 +89,6 @@ export async function loadSnapshot(db: Database, settings: SettingsStore): Promi
     db.select({ id: modelGroups.id, slug: modelGroups.slug }).from(modelGroups),
     db.select().from(modelGroupMembers),
     db.select().from(routes).orderBy(asc(routes.priority), asc(routes.createdAt)),
-    settings.read('allowTermsRiskProviders'),
-    settings.read('allowPrivateUpstreams'),
   ]);
 
   const apiKeysByKeyId = new Map<string, SnapshotApiKey>(
@@ -104,8 +107,8 @@ export async function loadSnapshot(db: Database, settings: SettingsStore): Promi
         authStyle: provider.authStyle,
         quirks: storedProviderQuirksSchema.safeParse(provider.quirks),
         serviceTierValues: provider.serviceTierValues,
-        isUsable: providerIsUsable(provider, allowsTermsRiskProviders.value),
-        isRefusedForTermsRisk: provider.termsRisk && !allowsTermsRiskProviders.value,
+        isUsable: providerIsUsable(provider, allowsTermsRiskProviders),
+        isRefusedForTermsRisk: provider.termsRisk && !allowsTermsRiskProviders,
         providerAccounts: (accountsByProviderId.get(provider.id) ?? []).flatMap(
           (account): SnapshotProviderAccount[] => {
             const credential = snapshotCredentialOf(account);
@@ -228,7 +231,7 @@ export async function loadSnapshot(db: Database, settings: SettingsStore): Promi
     modelsByName,
     upstreamModelsById,
     upstreamModelsByProviderSlug,
-    allowsPrivateUpstreams: allowsPrivateUpstreams.value,
+    allowsPrivateUpstreams,
   };
 }
 

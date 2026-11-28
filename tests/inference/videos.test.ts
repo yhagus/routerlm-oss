@@ -46,7 +46,7 @@ describe('Video Jobs on /v1/videos (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     ({ modelId, providerId, providerAccountId } = await insertDashScopeVideoModel(app, db, {
       modelName: 'director',
       baseUrl: `${upstream.origin}/api/v1`,

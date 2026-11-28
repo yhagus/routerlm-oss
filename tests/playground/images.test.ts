@@ -27,8 +27,8 @@ describe('Playground image generation (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
-    await deleteAllUsers(db);
+    await deleteAllUpstreamData(app);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     ({ routeId, providerAccountId } = await insertDashScopeImageModel(app, db, {
       modelName: 'painter',

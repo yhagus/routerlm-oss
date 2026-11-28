@@ -23,8 +23,8 @@ describe('Deleting an Integration (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await truncateTables(db, sql.raw('integrations, api_keys, models'));
-    await deleteAllUsers(db);
+    await truncateTables(app, sql.raw('integrations, api_keys, models'));
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 

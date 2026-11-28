@@ -60,8 +60,8 @@ describe('Probe of an Upstream Model with an OAuth Login account (e2e)', () => {
 
   beforeEach(async () => {
     kimi.reset();
-    await deleteAllUpstreamData(db);
-    await deleteAllUsers(db);
+    await deleteAllUpstreamData(app);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     ({ providerId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',

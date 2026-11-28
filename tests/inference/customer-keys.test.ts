@@ -46,8 +46,8 @@ describe("Inference with a Customer's API Key (e2e)", () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
-    await truncateTables(db, sql.raw('integrations, api_keys'));
+    await deleteAllUpstreamData(app, worker);
+    await truncateTables(app, sql.raw('integrations, api_keys'), worker);
     ({ modelId: smartModelId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
       baseUrl: upstream.baseUrl,

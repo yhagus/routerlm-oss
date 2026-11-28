@@ -78,8 +78,8 @@ describe('Probe of an Upstream Model (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
-    await deleteAllUsers(db);
+    await deleteAllUpstreamData(app);
+    await deleteAllUsers(app);
     adaCookie = await setUpFirstUser(app, ADA);
     ({ providerId, providerAccountId: mainAccountId } = await insertOpenAiChatModel(app, db, {
       modelName: 'smart',
@@ -256,7 +256,7 @@ describe('Probe of an Upstream Model (e2e)', () => {
   });
 
   it('refuses a video Upstream Model', async () => {
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     adaCookie = await setUpFirstUser(app, ADA);
     await insertDashScopeVideoModel(app, db, {
       modelName: 'director',

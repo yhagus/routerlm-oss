@@ -40,7 +40,7 @@ describe('Usage Logs of transcription (e2e)', () => {
   beforeEach(async () => {
     upstream.reset();
     await untilUsageQueueIsDrained(usageQueue);
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app, worker);
     await insertDashScopeTranscriptionModel(app, db, {
       modelName: 'scribe',
       baseUrl: `${upstream.origin}/api/v1`,

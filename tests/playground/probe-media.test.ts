@@ -33,7 +33,7 @@ describe('Probe of a media Upstream Model (e2e)', () => {
 
   beforeEach(async () => {
     upstream.reset();
-    await deleteAllUpstreamData(db);
+    await deleteAllUpstreamData(app);
     adaCookie = await setUpFirstUser(app, ADA);
   });
 
