@@ -1,5 +1,4 @@
 {
-  "scripts/check-web-mirrors.ts": 12,
   "web/app/lib/api-keys.ts": 2,
   "web/app/lib/attemptFailures.ts": 1,
   "web/app/lib/errorCaptures.ts": 2,

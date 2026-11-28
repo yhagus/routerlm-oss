@@ -1,22 +1,17 @@
-// Fails when a list the dashboard (web/) copies from the backend has drifted
-// from the backend's own. web/ is a separate app and can't import src/, so it
-// keeps hand-written copies; this check is what keeps them honest. Run by
-// `bun run check` at the root and in web/. To mirror another list, add it to
-// MIRRORS below.
-//
-// A web constant whose doc comment says it copies "the backend's `NAME`" must
-// have a MIRRORS entry: the check fails on a marked copy nobody compares.
-//
-// TYPE_MIRRORS does the same for response types: a web interface copied from a
-// backend one must have the same field names, inherited ones included.
 import { readdirSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
 import {
   AUTH_STYLES,
+  AUTO_PLAN_CHOICE,
   CAPABILITIES,
+  CREDENTIAL_KINDS,
   MODEL_KINDS,
+  NO_PLAN_CHOICE,
+  OAUTH_LOGIN_FLOWS,
+  OAUTH_REGIONS,
   PLAN_READERS,
   PROTOCOL_KINDS,
+  QUOTA_READERS,
   UPSTREAM_PROTOCOLS,
 } from '@/db/schemas/upstream';
 import { MAX_REQUEST_RATE, MAX_SPEND_LIMIT_USD } from '@/api-keys/schemas/api-key.schema';
@@ -25,10 +20,12 @@ import {
   CAPTURE_OUTCOMES,
   FAILED_HOPS,
 } from '@/error-captures/schemas/error-capture-page-query.schema';
+import { REASONING_EFFORTS, SERVICE_TIERS } from '@/inference/models/internal-format';
 import { MAX_UPLOAD_BYTES } from '@/inference/models/media-upload';
 import { WINDOW_PRICES_STATUSES } from '@/pricing-windows/models/pricing-window-activity';
 import { AUDIO_FORMATS } from '@/inference/models/speech-synthesis';
 import { VIDEO_RATIOS, VIDEO_RESOLUTIONS } from '@/inference/models/video-generation';
+import { USAGE_STATUSES } from '@/usage/schemas/usage.schema';
 
 interface Mirror {
   name: string;
@@ -43,6 +40,12 @@ const MIRRORS: Mirror[] = [
   { name: 'AUTH_STYLES', webFile: 'web/app/lib/upstream.ts', backend: AUTH_STYLES },
   { name: 'CAPABILITIES', webFile: 'web/app/lib/upstream.ts', backend: CAPABILITIES },
   { name: 'PLAN_READERS', webFile: 'web/app/lib/upstream.ts', backend: PLAN_READERS },
+  { name: 'QUOTA_READERS', webFile: 'web/app/lib/upstream.ts', backend: QUOTA_READERS },
+  { name: 'CREDENTIAL_KINDS', webFile: 'web/app/lib/upstream.ts', backend: CREDENTIAL_KINDS },
+  { name: 'OAUTH_REGIONS', webFile: 'web/app/lib/upstream.ts', backend: OAUTH_REGIONS },
+  { name: 'OAUTH_LOGIN_FLOWS', webFile: 'web/app/lib/upstream.ts', backend: OAUTH_LOGIN_FLOWS },
+  { name: 'AUTO_PLAN_CHOICE', webFile: 'web/app/lib/upstream.ts', backend: [AUTO_PLAN_CHOICE] },
+  { name: 'NO_PLAN_CHOICE', webFile: 'web/app/lib/upstream.ts', backend: [NO_PLAN_CHOICE] },
   {
     name: 'PROTOCOL_KINDS',
     webFile: 'web/app/lib/upstream.ts',
@@ -75,6 +78,13 @@ const MIRRORS: Mirror[] = [
     backend: [String(MAX_UPLOAD_BYTES)],
   },
   {
+    name: 'REASONING_EFFORTS',
+    webFile: 'web/app/lib/parameterPolicy.ts',
+    backend: REASONING_EFFORTS,
+  },
+  { name: 'SERVICE_TIERS', webFile: 'web/app/lib/parameterPolicy.ts', backend: SERVICE_TIERS },
+  { name: 'USAGE_STATUSES', webFile: 'web/app/lib/usage.ts', backend: USAGE_STATUSES },
+  {
     name: 'MAX_SPEND_LIMIT_USD',
     webFile: 'web/app/lib/api-keys.ts',
     backend: [String(MAX_SPEND_LIMIT_USD)],
@@ -83,6 +93,30 @@ const MIRRORS: Mirror[] = [
     name: 'MAX_REQUEST_RATE',
     webFile: 'web/app/lib/api-keys.ts',
     backend: [String(MAX_REQUEST_RATE)],
+  },
+];
+
+interface UncomparedNamesake {
+  name: string;
+  webFile: string;
+  reason: string;
+}
+
+const UNCOMPARED_NAMESAKES: UncomparedNamesake[] = [
+  {
+    name: 'GROUP_SEPARATOR',
+    webFile: 'web/app/lib/numberInput.ts',
+    reason: 'groups digits in a number input; the backend one splits a Model Group from a model',
+  },
+  {
+    name: 'OVERVIEW_RANGES',
+    webFile: 'web/app/lib/overview.ts',
+    reason: 'maps each range to its label, a shape the list comparison cannot read',
+  },
+  {
+    name: 'POLICY_PARAMETERS',
+    webFile: 'web/app/lib/parameterPolicy.ts',
+    reason: 'describes each parameter for its form, a shape the list comparison cannot read',
   },
 ];
 
@@ -141,10 +175,12 @@ function fieldNamesOf(mirrors: readonly TypeMirror[]): Map<string, string[] | un
 }
 
 const WEB_LIB = 'web/app/lib';
+const BACKEND_ROOT = 'src';
+const EXPORTED_CONSTANT = /^export const ([A-Z][A-Z\d_]*)\b/gm;
 
 function webEntriesOf(source: string, name: string): string[] | undefined {
   const declaration = new RegExp(`export const ${name}\\b[^=]*=\\s*([[{])`).exec(source);
-  if (!declaration) return numericEntryOf(source, name);
+  if (!declaration) return numericEntryOf(source, name) ?? stringEntryOf(source, name);
   const opener = declaration[1];
   const closer = opener === '[' ? ']' : '}';
   const start = declaration.index + declaration[0].length;
@@ -171,32 +207,59 @@ function numericEntryOf(source: string, name: string): string[] | undefined {
   return [String(sum)];
 }
 
-/** `file: NAME` for each web constant marked as a copy of "the backend's `X`". */
-function markedCopiesIn(directory: string): { webFile: string; name: string }[] {
-  const marked =
-    /\/\*\*(?:(?!\*\/)[\s\S])*the backend's `\w+`(?:(?!\*\/)[\s\S])*\*\/\s*export const (\w+)/g;
-  return readdirSync(directory)
+function stringEntryOf(source: string, name: string): string[] | undefined {
+  const declaration = new RegExp(`export const ${name}\\b[^=]*=\\s*(["'])([^"']*)\\1;`).exec(
+    source,
+  );
+  const value = declaration?.[2];
+  return value === undefined ? undefined : [value];
+}
+
+interface ExportedConstant {
+  file: string;
+  name: string;
+}
+
+function typeScriptFilesIn(directory: string, options: { recursive: boolean }): string[] {
+  return readdirSync(directory, { recursive: options.recursive, encoding: 'utf8' })
     .filter((file) => file.endsWith('.ts'))
-    .flatMap((file) => {
-      const webFile = `${directory}/${file}`;
-      return [...readFileSync(webFile, 'utf8').matchAll(marked)].map((match) => ({
-        webFile,
-        name: match[1] ?? '',
-      }));
-    });
+    .map((file) => `${directory}/${file}`);
+}
+
+function exportedConstantsIn(files: readonly string[]): ExportedConstant[] {
+  return files.flatMap((file) =>
+    [...readFileSync(file, 'utf8').matchAll(EXPORTED_CONSTANT)].map((match) => ({
+      file,
+      name: match[1] ?? '',
+    })),
+  );
+}
+
+function isListedIn(
+  entries: readonly { name: string; webFile: string }[],
+  constant: ExportedConstant,
+): boolean {
+  return entries.some((entry) => entry.webFile === constant.file && entry.name === constant.name);
 }
 
 const problems: string[] = [];
-for (const copy of markedCopiesIn(WEB_LIB)) {
-  const mirrored = MIRRORS.some(
-    (mirror) => mirror.webFile === copy.webFile && mirror.name === copy.name,
+
+const backendConstantNames = new Set(
+  exportedConstantsIn(typeScriptFilesIn(BACKEND_ROOT, { recursive: true })).map(
+    (constant) => constant.name,
+  ),
+);
+const webNamesakes = exportedConstantsIn(typeScriptFilesIn(WEB_LIB, { recursive: false })).filter(
+  (constant) => backendConstantNames.has(constant.name),
+);
+for (const namesake of webNamesakes) {
+  if (isListedIn(MIRRORS, namesake) || isListedIn(UNCOMPARED_NAMESAKES, namesake)) continue;
+  problems.push(
+    `${namesake.file}: ${namesake.name} has the name of a backend constant but nothing compares them. ` +
+      'Add it to MIRRORS in scripts/check-web-mirrors.ts, or to UNCOMPARED_NAMESAKES with the reason it is not a copy.',
   );
-  if (!mirrored) {
-    problems.push(
-      `${copy.webFile}: ${copy.name} is marked as a copy of the backend but has no MIRRORS entry in scripts/check-web-mirrors.ts.`,
-    );
-  }
 }
+
 for (const mirror of MIRRORS) {
   const web = webEntriesOf(readFileSync(mirror.webFile, 'utf8'), mirror.name);
   if (!web) {
