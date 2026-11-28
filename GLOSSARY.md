@@ -200,7 +200,7 @@ Output tokens per second while a streamed response is being generated, after its
 _Avoid_: TPS, throughput, tokens per second
 
 **Finish Reason**:
-Why a successful response stopped, in the gateway's own words whatever the Provider called it: it finished, it hit the output limit, it called a tool, or the Provider filtered it.
+Why a successful response stopped, in the gateway's own words whatever the Provider called it: it finished, it hit the output limit, it called a tool, or the Provider filtered it. A Provider value the gateway cannot map reads as "other".
 _Avoid_: Stop reason, end reason
 
 **Error Origin**:
